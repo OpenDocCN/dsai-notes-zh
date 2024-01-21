@@ -1,4 +1,7 @@
 +   [UCB Data8：计算与推断思维](docs/ucb-data8-notes/README.md)
++   [UCB Prob140：面向数据科学的概率论](docs/ucb-prob140-notes/README.md)
 +   [UCB Data100：数据科学的原理和技巧](docs/ucb-ds100-notes/README.md)
 +   [斯坦福 Stats60：21 世纪的统计思维](docs/stat21/README.md)
 +   [MIT 18.06 线性代数笔记](docs/mit-18.06-linalg-notes/README.md)
++   [UCSD COGS108 数据科学实战中文笔记](docs/ucsd-cogs108-notes/README.md)
++   [USF MSDS501 计算数据科学中文讲义](docs/usf-msds501-notes/README.md)
