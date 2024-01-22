@@ -7,3 +7,7 @@
 +   [MIT 18.06 线性代数笔记](docs/mit-18.06-linalg-notes/README.md)
 +   [UCSD COGS108 数据科学实战中文笔记](docs/ucsd-cogs108-notes/README.md)
 +   [USF MSDS501 计算数据科学中文讲义](docs/usf-msds501-notes/README.md)
++   [台湾大学林轩田机器学习笔记](docs/ntu-hsuantienlin-ml/README.md)
++   [SciPyCon 2018 sklearn 教程](docs/scipycon-2018-sklearn-tut/README.md)
++   [机器学习超级复习笔记](docs/super-ml-rev-notes/README.md)
++   [VT CS4624：Python 机器学习在线指南](docs/vt-cs4624-pyml/README.md)
