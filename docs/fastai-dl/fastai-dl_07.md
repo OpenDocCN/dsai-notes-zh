@@ -514,19 +514,31 @@ learn, [o.numel() for o in learn.model.parameters()]
               OrderedDict([('input_shape', [-1, 40]),
                            ('output_shape', [-1, 10]),
                            ('trainable', True),
-                           ('nb_params', 410)]))])*learn.lr_find()learn.sched.plot()
+                           ('nb_params', 410)]))])
+'''
+learn.lr_find()
+learn.sched.plot()
 ```
 
 ```py
-%time learn.fit(lr, 2)A Jupyter Widget[ 0\.       1.7658   1.64148  0.42129]                       
+%time learn.fit(lr, 2)
+'''
+A Jupyter Widget
+[ 0\.       1.7658   1.64148  0.42129]                       
 [ 1\.       1.68074  1.57897  0.44131]                       
 
 CPU times: user 1min 11s, sys: 32.3 s, total: 1min 44s
-Wall time: 55.1 s%time learn.fit(lr, 2, cycle_len=1)A Jupyter Widget[ 0\.       1.60857  1.51711  0.46631]                       
+Wall time: 55.1 s
+'''
+%time learn.fit(lr, 2, cycle_len=1)
+'''
+A Jupyter Widget
+[ 0\.       1.60857  1.51711  0.46631]                       
 [ 1\.       1.59361  1.50341  0.46924]                       
 
 CPU times: user 1min 12s, sys: 31.8 s, total: 1min 44s
 Wall time: 55.3 s
+'''
 ```
 
 通过一个具有 122,880 个参数的简单单隐藏层模型，我们实现了 46.9%的准确率。让我们改进这一点，并逐渐构建一个基本的 ResNet 架构。
@@ -542,8 +554,9 @@ class ConvNet(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
         self.layers = nn.ModuleList([
-            **nn.Conv2d(layers[i], layers[i + 1], kernel_size=3, stride=2)**
-            for i in range(len(layers) - 1)])
+            nn.Conv2d(layers[i], layers[i + 1], kernel_size=3, stride=2)
+            for i in range(len(layers) - 1)
+        ])
         self.pool = nn.AdaptiveMaxPool2d(1)
         self.out = nn.Linear(layers[-1], c)
 
@@ -563,7 +576,10 @@ class ConvNet(nn.Module):
 +   `stride=2` 将使用每隔一个 3x3 区域，这将使每个维度的输出分辨率减半（即具有与 2x2 最大池化相同的效果）
 
 ```py
-learn = ConvLearner.from_model_data(ConvNet([3, 20, 40, 80], 10), data)learn.summary()*OrderedDict([('Conv2d-1',
+learn = ConvLearner.from_model_data(ConvNet([3, 20, 40, 80], 10), data)
+learn.summary()
+'''
+OrderedDict([('Conv2d-1',
               OrderedDict([('input_shape', [-1, 3, 32, 32]),
                            ('output_shape', [-1, 20, 15, 15]),
                            ('trainable', True),
@@ -586,7 +602,8 @@ learn = ConvLearner.from_model_data(ConvNet([3, 20, 40, 80], 10), data)learn.sum
               OrderedDict([('input_shape', [-1, 80]),
                            ('output_shape', [-1, 10]),
                            ('trainable', True),
-                           ('nb_params', 810)]))])*
+                           ('nb_params', 810)]))])
+'''
 ```
 
 +   `ConvNet([3, 20, 40, 80], 10)` - 从 3 个 RGB 通道开始，20、40、80 个特征，然后预测 10 个类别。
@@ -598,28 +615,34 @@ learn = ConvLearner.from_model_data(ConvNet([3, 20, 40, 80], 10), data)learn.sum
 +   这个模型被称为“完全卷积网络” - 每一层都是卷积的，除了最后一层。
 
 ```py
-learn.lr_find(**end_lr=100**)
+learn.lr_find(end_lr=100)
 learn.sched.plot()
 ```
 
 +   `lr_find` 尝试的默认最终学习率是 10。如果在那一点上损失仍在变好，您可以通过指定 `end_lr` 来覆盖。
 
 ```py
-%time learn.fit(1e-1, 2)*A Jupyter Widget*
+%time learn.fit(1e-1, 2)
 '''
+A Jupyter Widget
+
 [ 0\.       1.72594  1.63399  0.41338]                       
 [ 1\.       1.51599  1.49687  0.45723]                       
 
 CPU times: user 1min 14s, sys: 32.3 s, total: 1min 46s
-Wall time: 56.5 s*%time learn.fit(1e-1, 4, cycle_len=1)*A Jupyter Widget*
+Wall time: 56.5 s
 '''
+%time learn.fit(1e-1, 4, cycle_len=1)
+'''
+A Jupyter Widget
 [ 0\.       1.36734  1.28901  0.53418]                       
 [ 1\.       1.28854  1.21991  0.56143]                       
 [ 2\.       1.22854  1.15514  0.58398]                       
 [ 3\.       1.17904  1.12523  0.59922]                       
 
 CPU times: user 2min 21s, sys: 1min 3s, total: 3min 24s
-Wall time: 1min 46s*
+Wall time: 1min 46s
+'''
 ```
 
 +   准确率在 60%左右稳定下来。考虑到它使用约 30,000 个参数（与 122k 参数的 47%相比）
@@ -645,13 +668,15 @@ class ConvLayer(nn.Module):
 class ConvNet2(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
-        self.layers = nn.ModuleList([ConvLayer(layers[i], layers[i + 1])
-            for i in range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            ConvLayer(layers[i], layers[i + 1])
+            for i in range(len(layers) - 1)
+        ])
         self.out = nn.Linear(layers[-1], c)
 
     def forward(self, x):
         for l in self.layers: x = l(x)
-        x = **F.adaptive_max_pool2d(x, 1)**
+        x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
         return F.log_softmax(self.out(x), dim=-1)
 ```
@@ -681,9 +706,9 @@ class BnLayer(nn.Module):
         x = F.relu(self.conv(x))
         x_chan = x.transpose(0,1).contiguous().view(x.size(1), -1)
         if self.training:
-            **self.means = x_chan.mean(1)[:,None,None]**
-           ** self.stds  = x_chan.std (1)[:,None,None]**
-        return **(x-self.means) / self.stds *self.m + self.a**
+           self.means = x_chan.mean(1)[:,None,None]
+           self.stds  = x_chan.std (1)[:,None,None]
+        return (x-self.means) / self.stds *self.m + self.a
 ```
 
 +   计算每个通道或每个滤波器的均值和每个通道或每个滤波器的标准差。然后减去均值并除以标准差。
@@ -718,7 +743,7 @@ class BnLayer(nn.Module):
 class ConvBnNet(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
-        **self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)**
+        self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
         self.layers = nn.ModuleList([BnLayer(layers[i], layers[i + 1])
             for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
@@ -748,10 +773,14 @@ class ConvBnNet2(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
-        self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            for i in range(len(layers) - 1)])
-        self.layers2 = nn.ModuleList([BnLayer(layers[i+1], layers[i + 1], 1)
-            for i in range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            BnLayer(layers[i], layers[i+1])
+            for i in range(len(layers) - 1)
+        ])
+        self.layers2 = nn.ModuleList([
+            BnLayer(layers[i+1], layers[i + 1], 1)
+            for i in range(len(layers) - 1)
+        ])
         self.out = nn.Linear(layers[-1], c)
 
     def forward(self, x):
@@ -761,19 +790,27 @@ class ConvBnNet2(nn.Module):
             x = l2(x)
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
-        return F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)%time learn.fit(1e-2, 2)*A Jupyter Widget*
+        return F.log_softmax(self.out(x), dim=-1)
+learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)
+%time learn.fit(1e-2, 2)
+
 '''
+A Jupyter Widget
 [ 0\.       1.53499  1.43782  0.47588]                       
 [ 1\.       1.28867  1.22616  0.55537]                       
 
 CPU times: user 1min 22s, sys: 34.5 s, total: 1min 56s
-Wall time: 58.2 s*%time learn.fit(1e-2, 2, cycle_len=1)*A Jupyter Widget*
+Wall time: 58.2 s
 '''
+%time learn.fit(1e-2, 2, cycle_len=1)
+'''
+A Jupyter Widget
 [ 0\.       1.10933  1.06439  0.61582]                       
 [ 1\.       1.04663  0.98608  0.64609]                       
 
 CPU times: user 1min 21s, sys: 32.9 s, total: 1min 54s
-Wall time: 57.6 s*
+Wall time: 57.6 s
+'''
 ```
 
 准确率与之前相同。现在深度为 12 层，即使对于批量归一化来说也太深了。可以训练 12 层深的卷积网络，但开始变得困难。而且似乎并没有太多帮助。
@@ -782,7 +819,9 @@ Wall time: 57.6 s*
 
 ```py
 class ResnetLayer(BnLayer):
-    def forward(self, x): return **x + super().forward(x)**class Resnet(nn.Module):
+    def forward(self, x): 
+        return x + super().forward(x)
+class Resnet(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
