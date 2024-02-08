@@ -31,7 +31,9 @@ learn = ConvLearner.pretrained(arch, data, ps=0.5, precompute=True)
 +   `precompute=True`：预先计算出最后一个卷积层的激活。请记住，激活是根据一些权重/参数计算出来的数字，这些权重/参数构成了卷积核/滤波器，并且它们被应用于前一层的激活或输入。
 
 ```py
-learn *Sequential(
+learn 
+'''
+Sequential(
   (0): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True)
   (1): Dropout(p=0.5)
   (2): Linear(in_features=1024, out_features=512)
@@ -40,7 +42,8 @@ learn *Sequential(
   (5): Dropout(p=0.5)
   (6): Linear(in_features=512, out_features=120)
   (7): LogSoftmax()
-)*
+)
+'''
 ```
 
 `learn` — 这将显示我们在末尾添加的层。这些是我们在`precompute=True`时训练的层
@@ -62,7 +65,7 @@ learn *Sequential(
 ## 什么是`Dropout`和什么是`p`？[[08:17](https://youtu.be/gbceqO8PpBg?t=8m17s)]
 
 ```py
-*Dropout(p=0.5)*
+Dropout(p=0.5)
 ```
 
 如果我们对`Conv2`层应用了`p=0.5`的 dropout，它看起来像上面那样。我们遍历，选择一个激活，并以 50%的概率删除它。因此，`p=0.5`是删除该单元的概率。输出实际上并没有太大变化，只是有点。
@@ -86,7 +89,7 @@ learn *Sequential(
 在 Fast.ai 中，您可以传递`ps`，这是所有添加层的`p`值。它不会改变预训练网络中的辍学，因为它应该已经使用了适当水平的辍学进行训练：
 
 ```py
-learn = ConvLearner.pretrained(arch, data, **ps=0.5**, precompute=True)
+learn = ConvLearner.pretrained(arch, data, ps=0.5, precompute=True)
 ```
 
 您可以通过设置`ps=0.`来删除辍学，但即使经过几个时期，我们开始严重过拟合（训练损失≪验证损失）：

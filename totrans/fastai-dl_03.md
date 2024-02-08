@@ -108,14 +108,27 @@ learn.bn_freeze(True)
 
 ```py
 train_data_dir = f'{PATH}train' 
-validation_data_dir = f'{PATH}valid'train_datagen = ImageDataGenerator(rescale=1\. / 255,
-    shear_range=0.2, zoom_range=0.2, horizontal_flip=True)test_datagen = ImageDataGenerator(rescale=1\. / 255)train_generator = train_datagen.flow_from_directory(train_data_dir,
+validation_data_dir = f'{PATH}valid'
+train_datagen = ImageDataGenerator(
+    rescale=1. / 255,
+    shear_range=0.2, 
+    zoom_range=0.2, 
+    horizontal_flip=True
+)
+test_datagen = ImageDataGenerator(rescale=1. / 255)
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
     target_size=(sz, sz),
-    batch_size=batch_size, class_mode='binary')validation_generator = test_datagen.flow_from_directory(
+    batch_size=batch_size, 
+    class_mode='binary'
+)
+validation_generator = test_datagen.flow_from_directory(
     validation_data_dir,
     shuffle=False,
     target_size=(sz, sz),
-    batch_size=batch_size, class_mode='binary')
+    batch_size=batch_size, 
+    class_mode='binary'
+)
 ```
 
 +   训练文件夹和验证文件夹的子文件夹与标签名称的想法是常见的，Keras 也这样做。
@@ -145,8 +158,13 @@ predictions = Dense(1, activation='sigmoid')(x)
 **3\. 冻结层并编译**
 
 ```py
-model = Model(inputs=base_model.input, outputs=predictions)for layer in base_model.layers: layer.trainable = Falsemodel.compile(optimizer='rmsprop', loss='binary_crossentropy', 
-    metrics=['accuracy'])
+model = Model(inputs=base_model.input, outputs=predictions)
+for layer in base_model.layers: 
+    layer.trainable = Falsemodel.compile(
+        optimizer='rmsprop', 
+        loss='binary_crossentropy', 
+        metrics=['accuracy']
+    )
 ```
 
 +   通过循环层并手动调用`layer.trainable=False`来冻结它们
@@ -158,9 +176,14 @@ model = Model(inputs=base_model.input, outputs=predictions)for layer in base_mod
 **4\. 拟合**
 
 ```py
-model.fit_generator(train_generator, **train_generator.n//batch_size**,
-    epochs=3, **workers=4**, validation_data=validation_generator,
-    validation_steps=validation_generator.n // batch_size)
+model.fit_generator(
+    train_generator, 
+    train_generator.n//batch_size,
+    epochs=3, 
+    workers=4, 
+    validation_data=validation_generator,
+    validation_steps=validation_generator.n // batch_size
+)
 ```
 
 +   Keras 希望知道每个 epoch 有多少批次。
@@ -170,12 +193,24 @@ model.fit_generator(train_generator, **train_generator.n//batch_size**,
 **5\. 微调：解冻一些层，编译，然后再次拟合**
 
 ```py
-split_at = 140for layer in model.layers[:split_at]: layer.trainable = False
-for layer in model.layers[split_at:]: layer.trainable = Truemodel.compile(optimizer='rmsprop', loss='binary_crossentropy',
-    metrics=['accuracy'])%%time model.fit_generator(train_generator, 
-    train_generator.n // batch_size, epochs=1, workers=3,
+split_at = 140
+for layer in model.layers[:split_at]: 
+    layer.trainable = False
+for layer in model.layers[split_at:]: 
+    layer.trainable = True
+model.compile(
+    optimizer='rmsprop', 
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+%%time model.fit_generator(
+    train_generator, 
+    train_generator.n // batch_size, 
+    epochs=1, 
+    workers=3,
     validation_data=validation_generator,
-    validation_steps=validation_generator.n // batch_size)
+    validation_steps=validation_generator.n // batch_size
+)
 ```
 
 **Pytorch** — 如果您想要部署到移动设备，PyTorch 仍处于早期阶段。
@@ -239,7 +274,11 @@ FileLink(f'{SUBM}subm.gz')
 如果我们想通过模型运行单个图像以获得预测，会怎样？
 
 ```py
-fn = data.val_ds.fnames[0]; fn*'train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'*Image.open(PATH + fn)
+fn = data.val_ds.fnames[0]; fn
+'''
+'train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'
+'''
+Image.open(PATH + fn)
 ```
 
 +   我们将从验证集中选择第一个文件。
@@ -247,9 +286,11 @@ fn = data.val_ds.fnames[0]; fn*'train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'*Imag
 这是获得预测的最简单方法：
 
 ```py
-trn_tfms, val_tfms = tfms_from_model(arch, sz)im = val_tfms(Image.open(PATH+fn)
+trn_tfms, val_tfms = tfms_from_model(arch, sz)
+im = val_tfms(Image.open(PATH+fn))
 
-preds = learn.predict_array(im[None])np.argmax(preds)
+preds = learn.predict_array(im[None])
+np.argmax(preds)
 ```
 
 +   图像必须被转换。`tfms_from_model`返回训练转换和验证转换。在这种情况下，我们将使用验证转换。
@@ -330,11 +371,23 @@ from planet import f2
 metrics=[f2]
 f_model = resnet34label_csv = f'**{PATH}**train_v2.csv'
 n = len(list(open(label_csv)))-1
-val_idxs = get_cv_idxs(n)def get_data(sz):
-    tfms = tfms_from_model(f_model, sz,
-        aug_tfms=transforms_top_down, max_zoom=1.05) return ImageClassifierData.from_csv(PATH, 'train-jpg',
-               label_csv, tfms=tfms, suffix='.jpg',
-               val_idxs=val_idxs, test_name='test-jpg')data = get_data(256)
+val_idxs = get_cv_idxs(n)
+def get_data(sz):
+    tfms = tfms_from_model(
+        f_model, sz,
+        aug_tfms=transforms_top_down, 
+        max_zoom=1.05
+    ) 
+    return ImageClassifierData.from_csv(
+        PATH, 
+        'train-jpg',
+        label_csv, 
+        tfms=tfms, 
+        suffix='.jpg',
+        val_idxs=val_idxs, 
+        test_name='test-jpg'
+    )
+data = get_data(256)
 ```
 
 +   使用 Keras 风格的方法无法进行多标签分类，其中子文件夹是标签的名称。所以我们使用`from_csv`
@@ -358,7 +411,8 @@ x,y = next(iter(data.val_dl))
 ```py
 list(zip(data.classes, y[0]))
 
-*[('agriculture', 1.0),
+'''
+[('agriculture', 1.0),
  ('artisinal_mine', 0.0),
  ('bare_ground', 0.0),
  ('blooming', 0.0),
@@ -374,7 +428,8 @@ list(zip(data.classes, y[0]))
  ('road', 0.0),
  ('selective_logging', 0.0),
  ('slash_burn', 1.0),
- ('water', 1.0)]*
+ ('water', 1.0)]
+'''
 ```
 
 在幕后，PyTorch 和 fast.ai 将我们的标签转换为独热编码标签。如果实际标签是狗，它看起来像：
@@ -394,7 +449,8 @@ plt.imshow(data.val_ds.denorm(to_np(x))[0]*1.4);
 +   尝试这样的图像是很好的，因为这些图像根本不像 ImageNet。你所做的绝大多数涉及卷积神经网络的事情实际上都不像 ImageNet（医学成像，分类不同种类的钢管，卫星图像等）
 
 ```py
-sz=64data = get_data(sz)
+sz=64
+data = get_data(sz)
 data = data.resize(int(sz*1.3), 'tmp')
 ```
 
@@ -403,7 +459,8 @@ data = data.resize(int(sz*1.3), 'tmp')
 +   ImageNet 中没有像上面那样的图像。而且只有前几层对我们有用。所以从较小的图像开始在这种情况下效果很好。
 
 ```py
-learn = ConvLearner.pretrained(f_model, data, metrics=metrics)lrf=learn.lr_find() 
+learn = ConvLearner.pretrained(f_model, data, metrics=metrics)
+lrf=learn.lr_find() 
 learn.sched.plot()
 ```
 
@@ -440,7 +497,7 @@ learn.sched.plot_loss()
 ```
 
 ```py
-**sz = 128**
+sz = 128
 learn.set_data(get_data(sz))
 learn.freeze()
 learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
@@ -465,7 +522,7 @@ learn.save(f'{sz}')
 [ 5\.       0.08729  0.08248  0.93108]                         
 [ 6\.       0.08218  0.08315  0.92971]
 '''
-**sz = 256**
+sz = 256
 learn.set_data(get_data(sz))
 learn.freeze()
 learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
@@ -492,7 +549,10 @@ learn.save(f'{sz}')
 '''
 log_preds,y = learn.TTA()
 preds = np.mean(np.exp(log_preds),0)
-f2(preds,y)*0.93626519738612801*
+f2(preds,y)
+'''
+0.93626519738612801
+'''
 ```
 
 有几个人问了这个问题[[01:38:46](https://youtu.be/9C06ZPF8Uuc?t=1h38m46s)]：
@@ -504,8 +564,11 @@ data = data.resize(int(sz*1.3), 'tmp')
 当我们指定要应用的转换时，我们发送一个大小：
 
 ```py
-tfms = tfms_from_model(f_model, sz,
-        aug_tfms=transforms_top_down, max_zoom=1.05)
+tfms = tfms_from_model(
+    f_model, sz,
+    aug_tfms=transforms_top_down, 
+    max_zoom=1.05
+)
 ```
 
 数据加载器的一项工作是按需调整图像的大小。这与`data.resize`无关。如果初始图像是 1000x1000，读取该 JPEG 并将其调整为 64x64 比训练卷积网络需要更多时间。`data.resize`告诉它我们不会使用大于`sz*1.3`的图像，因此请通过一次并创建新的这个大小的 JPEG。由于图像是矩形的，因此最小边为`sz*1.3`的新 JPEG（中心裁剪）。这将节省您大量时间。
@@ -529,7 +592,9 @@ metrics=[f2]
 ## 可视化层[[01:56:42](https://youtu.be/9C06ZPF8Uuc?t=1h56m42s)]
 
 ```py
-learn.summary()*[('Conv2d-1',
+learn.summary()
+'''
+[('Conv2d-1',
   OrderedDict([('input_shape', [-1, 3, 64, 64]),
                ('output_shape', [-1, 64, 32, 32]),
                ('trainable', False),
@@ -551,8 +616,9 @@ learn.summary()*[('Conv2d-1',
   OrderedDict([('input_shape', [-1, 64, 16, 16]),
                ('output_shape', [-1, 64, 16, 16]),
                ('trainable', False),
-               ('nb_params', 36864)]))*
+               ('nb_params', 36864)]))
  ...
+'''
 ```
 
 +   `‘input_shape’, [-1, **3, 64, 64**]` — PyTorch 在图像尺寸之前列出通道。当按照这个顺序进行 GPU 计算时，一些计算会更快。这是通过转换步骤在幕后完成的。
@@ -600,8 +666,18 @@ PATH='data/rossmann/'
 ## 查看 CSV 文件
 
 ```py
-table_names = ['train', 'store', 'store_states', 'state_names', 
-               'googletrend', 'weather', 'test']tables = [pd.read_csv(f'{PATH}{fname}.csv', low_memory=False) for fname in table_names]for t in tables: display(t.head())
+table_names = [
+    'train', 'store', 
+    'store_states', 
+    'state_names', 
+    'googletrend', 
+    'weather', 'test'
+]
+tables = [
+    pd.read_csv(f'{PATH}{fname}.csv', low_memory=False) 
+    for fname in table_names
+]
+for t in tables: display(t.head())
 ```
 
 +   `StoreType` — 您经常会得到一些列包含“代码”的数据集。实际上，这个代码的含义并不重要。不要过多地了解它，先看看数据说了什么。
@@ -612,10 +688,16 @@ table_names = ['train', 'store', 'store_states', 'state_names',
 
 ```py
 def join_df(left, right, left_on, right_on=None, suffix='_y'):
-    if right_on is None: right_on = left_on
+    if right_on is None: 
+        right_on = left_on
 
-    return left.merge(right, how='left', left_on=left_on,
-        right_on=right_on, suffixes=("", suffix))
+    return left.merge(
+        right, 
+        how='left', 
+        left_on=left_on,
+        right_on=right_on, 
+        suffixes=("", suffix)
+    )
 ```
 
 来自 Fast.ai 库：
