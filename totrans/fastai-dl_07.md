@@ -601,13 +601,13 @@ learn.sched.plot()
 ```py
 %time learn.fit(1e-1, 2)*A Jupyter Widget*
 '''
-[0\.       1.72594  1.63399  0.41338]                       
+[ 0\.       1.72594  1.63399  0.41338]                       
 [ 1\.       1.51599  1.49687  0.45723]                       
 
 CPU times: user 1min 14s, sys: 32.3 s, total: 1min 46s
 Wall time: 56.5 s*%time learn.fit(1e-1, 4, cycle_len=1)*A Jupyter Widget*
 '''
-[0\.       1.36734  1.28901  0.53418]                       
+[ 0\.       1.36734  1.28901  0.53418]                       
 [ 1\.       1.28854  1.21991  0.56143]                       
 [ 2\.       1.22854  1.15514  0.58398]                       
 [ 3\.       1.17904  1.12523  0.59922]                       
@@ -757,13 +757,13 @@ class ConvBnNet2(nn.Module):
         x = x.view(x.size(0), -1)
         return F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)%time learn.fit(1e-2, 2)*A Jupyter Widget*
 '''
-[0\.       1.53499  1.43782  0.47588]                       
+[ 0\.       1.53499  1.43782  0.47588]                       
 [ 1\.       1.28867  1.22616  0.55537]                       
 
 CPU times: user 1min 22s, sys: 34.5 s, total: 1min 56s
 Wall time: 58.2 s*%time learn.fit(1e-2, 2, cycle_len=1)*A Jupyter Widget*
 '''
-[0\.       1.10933  1.06439  0.61582]                       
+[ 0\.       1.10933  1.06439  0.61582]                       
 [ 1\.       1.04663  0.98608  0.64609]                       
 
 CPU times: user 1min 21s, sys: 32.9 s, total: 1min 54s
@@ -804,13 +804,13 @@ class ResnetLayer(BnLayer):
 ```py
 learn = ConvLearner.from_model_data(Resnet([10, 20, 40, 80, 160], 10), data)wd=1e-5%time learn.fit(1e-2, 2, wds=wd)*A Jupyter Widget*
 '''
-[0\.       1.58191  1.40258  0.49131]                       
+[ 0\.       1.58191  1.40258  0.49131]                       
 [ 1\.       1.33134  1.21739  0.55625]                       
 
 CPU times: user 1min 27s, sys: 34.3 s, total: 2min 1s
 Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A Jupyter Widget*
 '''
-[0\.       1.11534  1.05117  0.62549]                       
+[ 0\.       1.11534  1.05117  0.62549]                       
 [ 1\.       1.06272  0.97874  0.65185]                       
 [ 2\.       0.92913  0.90472  0.68154]                        
 [ 3\.       0.97932  0.94404  0.67227]                        
@@ -821,7 +821,7 @@ Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A
 CPU times: user 5min 2s, sys: 1min 59s, total: 7min 1s
 Wall time: 3min 39s*%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)*A Jupyter Widget*
 '''
-[0\.       0.8307   0.83635  0.7126 ]                        
+[ 0\.       0.8307   0.83635  0.7126 ]                        
 [ 1\.       0.74295  0.73682  0.74189]                        
 [ 2\.       0.66492  0.69554  0.75996]                        
 [ 3\.       0.62392  0.67166  0.7625 ]                        

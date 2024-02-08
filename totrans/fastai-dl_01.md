@@ -120,7 +120,7 @@ data = ImageClassifierData.from_paths(PATH, tfms=tfms_from_model(resnet34, sz))
 learn = ConvLearner.pretrained(resnet34, data, precompute=True)
 learn.fit(0.01, 3)
 '''
-[0\.       0.04955  0.02605  0.98975]                         
+[ 0\.       0.04955  0.02605  0.98975]                         
 [ 1\.       0.03977  0.02916  0.99219]                         
 [ 2\.       0.03372  0.02929  0.98975]
 '''
@@ -398,7 +398,7 @@ learn.sched.plot()
 ```py
 
 '''
-[0\.       0.04955  0.02605  0.98975]                         
+[ 0\.       0.04955  0.02605  0.98975]                         
 [ 1\.       0.03977  0.02916  0.99219]                         
 [ 2\.       0.03372  0.02929  0.98975]
 '''

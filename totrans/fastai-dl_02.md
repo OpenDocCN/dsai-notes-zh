@@ -25,7 +25,7 @@
 ```py
 
 '''
-[0\.       0.04955  0.02605  0.98975]
+[ 0\.       0.04955  0.02605  0.98975]
 '''
 
 ```
@@ -71,7 +71,7 @@
 ## 回到数据增强：
 
 ```py
-tfms = tfms_from_model(resnet34, sz, **aug_tfms=transforms_side_on**, max_zoom=1.1)
+tfms = tfms_from_model(resnet34, sz, aug_tfms=transforms_side_on, max_zoom=1.1)
 ```
 
 +   `transform_side_on` - 用于侧面照片的预定义转换集（还有`transform_top_down`）。稍后我们将学习如何创建自定义转换列表。
@@ -94,9 +94,9 @@ learn = ConvLearner.pretrained(arch, data, precompute=True)learn.fit(1e-2, 1)
 +   要使用数据增强，我们必须执行`learn.precompute=False`：
 
 ```py
-learn.precompute=Falselearn.fit(1e-2, 3, **cycle_len=1**)
+learn.precompute=Falselearn.fit(1e-2, 3, cycle_len=1)
 '''
-[0\.       0.03597  0.01879  0.99365]                         
+[ 0\.       0.03597  0.01879  0.99365]                         
 [ 1\.       0.02605  0.01836  0.99365]                         
 [ 2\.       0.02189  0.0196   0.99316]
 '''
@@ -176,7 +176,7 @@ lr=np.array([1e-4,1e-3,1e-2])
 ```py
 learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
 '''
-[0\.       0.04538  0.01965  0.99268]                          
+[ 0\.       0.04538  0.01965  0.99268]                          
 [ 1\.       0.03385  0.01807  0.99268]                          
 [ 2\.       0.03194  0.01714  0.99316]                          
 [ 3\.       0.0358   0.0166   0.99463]                          
@@ -218,8 +218,12 @@ learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
 要做到这一点，您只需`learn.TTA()`——这将将准确性提高到 99.65%！
 
 ```py
-log_preds,y = **learn.TTA()**
-probs = np.mean(np.exp(log_preds),0)accuracy(probs, y)*0.99650000000000005*
+log_preds,y = learn.TTA()
+probs = np.mean(np.exp(log_preds),0)
+accuracy(probs, y)
+'''
+0.99650000000000005
+'''
 ```
 
 **关于增强方法的问题[**[**01:01:36**](https://youtu.be/JNxcznsrRb8?t=1h1m36s)**]**：为什么不使用边框或填充使其变成正方形？通常 Jeremy 不会做太多填充，而是会做一点**缩放**。有一种叫做**反射填充**的东西在卫星图像中效果很好。一般来说，使用 TTA 加数据增强，最好的做法是尽可能使用尽可能大的图像。此外，固定裁剪位置加上随机对比度、亮度、旋转变化可能对 TTA 更好。
@@ -238,8 +242,10 @@ probs = np.mean(np.exp(log_preds),0)accuracy(probs, y)*0.99650000000000005*
 
 ```py
 preds = np.argmax(probs, axis=1)
-probs = probs[:,1]from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(y, preds)plot_confusion_matrix(cm, data.classes)
+probs = probs[:,1]
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y, preds)
+plot_confusion_matrix(cm, data.classes)
 ```
 
 ## 让我们再次看看图片[[01:13:00](https://youtu.be/JNxcznsrRb8?t=1h13m)]
@@ -281,12 +287,15 @@ from fastai.conv_learner import *
 from fastai.model import *
 from fastai.dataset import *
 from fastai.sgdr import *
-from fastai.plots import *PATH = 'data/dogbreed/'
+from fastai.plots import *
+PATH = 'data/dogbreed/'
 sz = 224
 arch = resnext101_64
-bs=16label_csv = f'{PATH}labels.csv'
+bs=16
+label_csv = f'{PATH}labels.csv'
 n = len(list(open(label_csv)))-1
-val_idxs = get_cv_idxs(n)!ls {PATH}
+val_idxs = get_cv_idxs(n)
+!ls {PATH}
 ```
 
 这与我们以前的数据集有点不同。它没有一个包含每个狗品种的单独文件夹的`train`文件夹，而是有一个带有正确标签的 CSV 文件。我们将使用 Pandas 读取 CSV 文件。Pandas 是我们在 Python 中用来进行结构化数据分析的工具，比如 CSV，通常被导入为`pd`：
@@ -304,9 +313,10 @@ label_df.pivot_table(index='breed', aggfunc=len).sort_values('id', ascending=Fal
 
 ```py
 tfms = tfms_from_model(arch, sz, aug_tfms=transforms_side_on, 
-                       max_zoom=1.1)data = ImageClassifierData.from_csv(PATH, 'train', 
-                 f'{PATH}labels.csv', test_name='test', 
-                 val_idxs=val_idxs, suffix='.jpg', tfms=tfms, bs=bs)
+                max_zoom=1.1)
+data = ImageClassifierData.from_csv(PATH, 'train', 
+                f'{PATH}labels.csv', test_name='test', 
+                val_idxs=val_idxs, suffix='.jpg', tfms=tfms, bs=bs)
 ```
 
 +   `max_zoom`——我们将放大 1.1 倍
@@ -324,7 +334,10 @@ tfms = tfms_from_model(arch, sz, aug_tfms=transforms_side_on,
 +   `suffix='.jpg'` — 文件名以`.jpg`结尾，但 CSV 文件没有。因此我们将设置`suffix`以便它知道完整的文件名。
 
 ```py
-fn = PATH + data.trn_ds.fnames[0]; fn*'data/dogbreed/train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'*
+fn = PATH + data.trn_ds.fnames[0]; fn
+'''
+'data/dogbreed/train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'
+'''
 ```
 
 +   你可以通过说`data.trn_ds`来访问训练数据集，`trn_ds`包含很多东西，包括文件名（`fnames`）
@@ -334,7 +347,10 @@ img = PIL.Image.open(fn); img
 ```
 
 ```py
-img.size*(500, 375)*
+img.size
+'''
+(500, 375)
+'''
 ```
 
 +   现在我们检查图像大小。如果它们很大，那么你必须非常仔细地考虑如何处理它们。如果它们很小，也是具有挑战性的。大多数 ImageNet 模型都是在 224x224 或 299x299 的图像上训练的
@@ -373,7 +389,11 @@ def get_data(sz, bs):
 +   这是常规的两行代码。当我们开始使用新数据集时，我们希望一切都能快速进行。因此，我们可以指定大小并从 64 开始，这样会运行得更快。稍后，我们将使用更大的图像和更大的架构，到那时，你可能会耗尽 GPU 内存。如果你看到 CUDA 内存不足错误，你需要做的第一件事是重新启动内核（你无法从中恢复），然后减小批量大小。
 
 ```py
-data = get_data(224, bs)learn = ConvLearner.pretrained(arch, data, precompute=True)learn.fit(1e-2, 5)*[0\.      1.99245 1.0733  0.76178]                             
+data = get_data(224, bs)
+learn = ConvLearner.pretrained(arch, data, precompute=True)
+learn.fit(1e-2, 5)
+'''
+[0\.      1.99245 1.0733  0.76178]                             
 [1\.      1.09107 0.7014  0.8181 ]                             
 [2\.      0.80813 0.60066 0.82148]                             
 [3\.      0.66967 0.55302 0.83125]                             
@@ -385,7 +405,8 @@ data = get_data(224, bs)learn = ConvLearner.pretrained(arch, data, precompute=Tr
 +   对于 120 个类别来说，83%是相当不错的。
 
 ```py
-**learn.precompute = False**learn.fit(1e-2, 5, cycle_len=1)
+learn.precompute = False
+learn.fit(1e-2, 5, cycle_len=1)
 ```
 
 +   提醒：一个`epoch`是对数据的一次遍历，一个`cycle`是你说一个周期中有多少个 epoch
@@ -406,7 +427,9 @@ learn.set_data(get_data(299, bs))
 > 从小图像开始训练几个时期，然后切换到更大的图像，并继续训练是一个非常有效的避免过拟合的方法。
 
 ```py
-learn.fit(1e-2, 3, cycle_len=1)*[0\.      0.35614 0.22239 0.93018]                            
+learn.fit(1e-2, 3, cycle_len=1)
+'''
+[0\.      0.35614 0.22239 0.93018]                            
 [1\.      0.28341 0.2274  0.92627]
 [2\.* *0.28341**0.2274* *0.92627]
 '''
@@ -416,7 +439,9 @@ learn.fit(1e-2, 3, cycle_len=1)*[0\.      0.35614 0.22239 0.93018]
 +   如你所见，验证集损失（0.2274）远低于训练集损失（0.28341） — 这意味着它是**欠拟合**。当你欠拟合时，意味着`cycle_len=1`太短了（学习率在适当缩小之前被重置）。所以我们将添加`cycle_mult=2`（即第一个周期是 1 个时期，第二个周期是 2 个时期，第三个周期是 4 个时期）
 
 ```py
-learn.fit(1e-2, 3, cycle_len=1, **cycle_mult=2**)[0\.      0.27171 0.2118  0.93192]                            
+learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.      0.27171 0.2118  0.93192]                            
 [1\.      0.28743 0.21008 0.9324 ]
 [2\.      0.25328 0.20953 0.93288]                            
 [3\.      0.23716 0.20868 0.93001]
@@ -430,7 +455,10 @@ learn.fit(1e-2, 3, cycle_len=1, **cycle_mult=2**)[0\.      0.27171 0.2118  0.931
 ```py
 log_preds, y = learn.TTA()
 probs = np.exp(log_preds)
-accuracy(log_preds,y), metrics.log_loss(y, probs)*(0.9393346379647749, 0.20101565705592733)*
+accuracy(log_preds,y), metrics.log_loss(y, probs)
+'''
+(0.9393346379647749, 0.20101565705592733)
+'''
 ```
 
 其他尝试：
