@@ -42,13 +42,13 @@ class Char3Model(nn.Module):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
 
-        *# The 'green arrow' from our diagram*
+        # The 'green arrow' from our diagram
         self.l_in = nn.Linear(n_fac, n_hidden)
 
-        *# The 'orange arrow' from our diagram*
+        # The 'orange arrow' from our diagram
         self.l_hidden = nn.Linear(n_hidden, n_hidden)
 
-        *# The 'blue arrow' from our diagram*
+        # The 'blue arrow' from our diagram
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
     def forward(self, c1, c2, c3):
@@ -70,7 +70,7 @@ class Char3Model(nn.Module):
 
 ```py
 class CharLoopModel(nn.Module):
-    *# This is an RNN!*
+    # This is an RNN!
     def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
@@ -125,16 +125,17 @@ class CharSeqStatefulRnn(nn.Module):
         self.e = nn.Embedding(vocab_size, n_fac)
         self.rnn = nn.RNN(n_fac, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
-        **self.init_hidden(bs)**
+        self.init_hidden(bs)
 
     def forward(self, cs):
         bs = cs[0].size(0)
         if self.h.size(1) != bs: self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
-        **self.h = repackage_var(h)**
+        self.h = repackage_var(h)
         return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): 
+        self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   构造函数中的一个额外行。`self.init_hidden(bs)` 将 `self.h` 设置为一堆零。
@@ -144,7 +145,12 @@ class CharSeqStatefulRnn(nn.Module):
 +   为了避免这种情况，我们告诉它不时忘记它的历史。我们仍然可以记住状态（隐藏矩阵中的值）而不必记住如何到达那里的一切。
 
 ```py
-def repackage_var(h):return Variable(h.data) if type(h) == Variable else tuple(repackage_var(v) for v in h)
+def repackage_var(h):
+    return (
+        Variable(h.data) 
+        if type(h) == Variable 
+        else tuple(repackage_var(v) for v in h)
+    )
 ```
 
 +   从 `Variable` `h` 中取出张量（记住，张量本身没有任何历史概念），并从中创建一个新的 `Variable`。新变量具有相同的值，但没有操作历史，因此当它尝试反向传播时，它将在那里停止。
@@ -188,13 +194,22 @@ def repackage_var(h):return Variable(h.data) if type(h) == Variable else tuple(r
 在使用期望数据符合特定格式的现有 API 时，您可以将数据更改为符合该格式，也可以编写自己的数据集子类来处理您的数据已经存在的格式。两者都可以，但在这种情况下，我们将把我们的数据放在 TorchText 已经支持的格式中。Fast.ai 对 TorchText 的包装器已经有了一些东西，您可以在每个路径中有一个训练路径和验证路径，并且每个路径中有一个或多个文本文件，其中包含一堆文本，这些文本被连接在一起用于您的语言模型。
 
 ```py
-from torchtext import vocab, data from fastai.nlp import * 
-from fastai.lm_rnn import * PATH='data/nietzsche/' TRN_PATH = 'trn/' 
+from torchtext import vocab, data 
+from fastai.nlp import * 
+from fastai.lm_rnn import * 
+PATH='data/nietzsche/' 
+TRN_PATH = 'trn/' 
 VAL_PATH = 'val/' 
-TRN = f'**{PATH}{TRN_PATH}**' 
-VAL = f'**{PATH}{VAL_PATH}**'%ls {PATH}
-*models/  nietzsche.txt  trn/  val/*%ls {PATH}trn
-*trn.txt*
+TRN = f'{PATH}{TRN_PATH}' 
+VAL = f'{PATH}{VAL_PATH}'
+%ls {PATH}
+'''
+models/  nietzsche.txt  trn/  val/
+'''
+%ls {PATH}trn
+'''
+trn.txt
+'''
 ```
 
 +   复制了尼采文件，粘贴到训练和验证目录中。然后从训练集中删除最后 20%的行，并删除验证集中除最后 20%之外的所有内容[25:15]。
@@ -211,7 +226,9 @@ FILES = dict(train=TRN_PATH, validation=VAL_PATH, test=VAL_PATH)
 md = LanguageModelData.from_text_files(PATH, TEXT, **FILES, bs=bs, bptt=bptt, min_freq=3)
 
 len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)
-*(963, 56, 1, 493747)*
+'''
+(963, 56, 1, 493747)
+'''
 ```
 
 +   在 TorchText 中，我们创建了一个叫做`Field`的东西，最初`Field`只是关于如何进行文本预处理的描述。
@@ -244,12 +261,14 @@ class CharSeqStatefulRnn(nn.Module):
 
     def forward(self, cs):
         bs = cs[0].size(0)
-        **if self.h.size(1) != bs: self.init_hidden(bs)**
+        if self.h.size(1) != bs: 
+            self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
-        return **F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)**
+        return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): 
+        self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   **问题 #3**：Jeremy 在说小批次大小保持恒定时对我们撒谎了。最后一个小批次很可能比其他小批次短，除非数据集恰好可以被`bptt`乘以`bs`整除。这就是为什么我们要检查`self.h`的第二维是否与输入的`bs`相同。如果不相同，将其设置回零，并使用输入的`bs`。这发生在周期结束和周期开始时（将其设置回完整的批次大小）。
@@ -262,7 +281,8 @@ class CharSeqStatefulRnn(nn.Module):
 
 ```py
 m = CharSeqStatefulRnn(md.nt, n_fac, 512).cuda() 
-opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
+opt = optim.Adam(m.parameters(), 1e-3)
+fit(m, md, 4, opt, F.nll_loss)
 ```
 
 ## 让我们通过拆解 RNN 来获得更多见解
@@ -288,7 +308,8 @@ class CharSeqStatefulRnn2(nn.Module):
 
     def forward(self, cs):
         bs = cs[0].size(0)
-        if self.h.size(1) != bs: self.init_hidden(bs)
+        if self.h.size(1) != bs: 
+            self.init_hidden(bs)
         outp = []
         o = self.h
         for c in cs: 
@@ -298,7 +319,8 @@ class CharSeqStatefulRnn2(nn.Module):
         self.h = repackage_var(o)
         return F.log_softmax(outp, dim=-1).view(-1, self.vocab_size)
 
-    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): 
+        self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   `for`循环回来并将线性函数的结果附加到列表中 - 最终将它们堆叠在一起。
@@ -350,12 +372,14 @@ class CharSeqStatefulGRU(nn.Module):
 
     def forward(self, cs):
         bs = cs[0].size(0)
-        if self.h.size(1) != bs: self.init_hidden(bs)
+        if self.h.size(1) != bs: 
+            self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
         return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): 
+        self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 结果，我们可以将损失降低到 1.36（`RNNCell`为 1.54）。在实践中，GRU 和 LSTM 是人们使用的。
@@ -367,7 +391,8 @@ LSTM 中还有一个称为“单元状态”的状态（不仅仅是隐藏状态
 ```py
 from fastai import sgdr
 
-n_hidden=512class CharSeqStatefulLSTM(nn.Module):
+n_hidden=512
+class CharSeqStatefulLSTM(nn.Module):
     def __init__(self, vocab_size, n_fac, bs, nl):
         super().__init__()
         self.vocab_size,self.nl = vocab_size,nl
@@ -378,14 +403,15 @@ n_hidden=512class CharSeqStatefulLSTM(nn.Module):
 
     def forward(self, cs):
         bs = cs[0].size(0)
-        if self.h[0].size(1) != bs: self.init_hidden(bs)
+        if self.h[0].size(1) != bs: 
+            self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
         return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
     def init_hidden(self, bs):
- **self.h = (V(torch.zeros(self.nl, bs, n_hidden)),
-                  V(torch.zeros(self.nl, bs, n_hidden)))**
+        self.h = (V(torch.zeros(self.nl, bs, n_hidden)),
+                  V(torch.zeros(self.nl, bs, n_hidden)))
 ```
 
 代码与 GRU 相同。添加的一件事是`dropout`，它在每个时间步之后进行 dropout 并将隐藏层加倍 - 希望它能够学到更多并且在这样做时更具弹性。
@@ -404,7 +430,10 @@ lo = LayerOptimizer(optim.Adam, m, 1e-2, 1e-5)
 +   `lo.opt`返回优化器。
 
 ```py
-on_end = lambda sched, cycle: save_model(m, f'**{PATH}**models/cyc_**{cycle}**')cb = [CosAnneal(lo, len(md.trn_dl), cycle_mult=2, on_cycle_end=on_end)]fit(m, md, 2**4-1, lo.opt, F.nll_loss, callbacks=cb)
+on_end = lambda sched, cycle: 
+save_model(m, f'{PATH}models/cyc_{cycle}')
+cb = [CosAnneal(lo, len(md.trn_dl), cycle_mult=2, on_cycle_end=on_end)]
+fit(m, md, 2**4-1, lo.opt, F.nll_loss, callbacks=cb)
 ```
 
 +   当我们调用`fit`时，现在可以传递`LayerOptimizer`和`callbacks`。
@@ -423,14 +452,18 @@ on_end = lambda sched, cycle: save_model(m, f'**{PATH}**models/cyc_**{cycle}**')
 def get_next(inp):
     idxs = TEXT.numericalize(inp)
     p = m(VV(idxs.transpose(0,1)))
-    r = **torch.multinomial(p[-1].exp(), 1)**
-    return TEXT.vocab.itos[to_np(r)[0]]def get_next_n(inp, n):
+    r = torch.multinomial(p[-1].exp(), 1)
+    return TEXT.vocab.itos[to_np(r)[0]]
+def get_next_n(inp, n):
     res = inp
     for i in range(n):
         c = get_next(inp)
         res += c
         inp = inp[1:]+c
-    return resprint(get_next_n('for thos', 400))*for those the skemps), or imaginates, though they deceives. it should so each ourselvess and new present, step absolutely for the science." the contradity and measuring,  the whole!* *293\. perhaps, that every life a values of blood of intercourse when it senses there is unscrupulus, his very rights, and still impulse, love? just after that thereby how made with the way anything, and set for harmless philos*
+    return resprint(get_next_n('for thos', 400))
+'''
+for those the skemps), or imaginates, though they deceives. it should so each ourselvess and new present, step absolutely for the science." the contradity and measuring,  the whole!* *293\. perhaps, that every life a values of blood of intercourse when it senses there is unscrupulus, his very rights, and still impulse, love? just after that thereby how made with the way anything, and set for harmless philos
+'''
 ```
 
 +   在第 6 课中，当我们测试`CharRnn`模型时，我们注意到它一遍又一遍地重复。在这个新版本中使用的`torch.multinomial`处理了这个问题。`p[-1]`用于获取最终输出（三角形），`exp`用于将对数概率转换为概率。然后我们使用`torch.multinomial`函数，根据给定的概率给出一个样本。如果概率是[0, 1, 0, 0]，并要求它给我们一个样本，它将始终返回第二个项目。如果是[0.5, 0, 0.5]，它将 50%的时间给出第一个项目，50%的时间给出第二个项目（[多项分布的评论](http://onlinestatbook.com/2/probability/multinomial.html)）
@@ -450,8 +483,10 @@ CIFAR 10 数据以图像格式可在[此处](http://pjreddie.com/media/files/cif
 ```py
 from fastai.conv_learner import *
 PATH = "data/cifar10/"
-os.makedirs(PATH,exist_ok=True)classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))def get_data(sz,bs):
+os.makedirs(PATH,exist_ok=True)
+classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))
+def get_data(sz,bs):
      tfms = tfms_from_stats(stats, sz, aug_tfms=[RandomFlipXY()], pad=sz//8)
      return ImageClassifierData.from_paths(PATH, val_name='test', tfms=tfms, bs=bs)bs=256
 ```
@@ -475,7 +510,9 @@ class SimpleNet(nn.Module):
     def __init__(self, layers):
         super().__init__()
         self.layers = nn.ModuleList([
-            nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)])
+            nn.Linear(layers[i], layers[i + 1]) 
+            for i in range(len(layers) - 1)
+        ])
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
@@ -659,7 +696,8 @@ class ConvLayer(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(ni, nf, kernel_size=3, stride=2, padding=1)
 
-    def forward(self, x): return F.relu(self.conv(x))
+    def forward(self, x): 
+        return F.relu(self.conv(x))
 ```
 
 +   `padding=1` - 当进行卷积时，图像的每一侧都会缩小 1 个像素。因此，它不是从 32x32 到 16x16，而实际上是 15x15。`padding` 将添加一个边框，以便我们可以保留边缘像素信息。对于大图像来说，这不是一个大问题，但当缩小到 4x4 时，您真的不想丢弃整个部分。
@@ -744,8 +782,10 @@ class ConvBnNet(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
-        self.layers = nn.ModuleList([BnLayer(layers[i], layers[i + 1])
-            for i in range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            BnLayer(layers[i], layers[i + 1])
+            for i in range(len(layers) - 1)
+        ])
         self.out = nn.Linear(layers[-1], c)
 
     def forward(self, x):
@@ -791,6 +831,7 @@ class ConvBnNet2(nn.Module):
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
         return F.log_softmax(self.out(x), dim=-1)
+
 learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)
 %time learn.fit(1e-2, 2)
 
@@ -825,12 +866,18 @@ class Resnet(nn.Module):
     def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
-        self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            for i in range(len(layers) - 1)])
-        self.layers2 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            for i in range(len(layers) - 1)])
-        self.layers3 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            for i in range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            BnLayer(layers[i], layers[i+1])
+            for i in range(len(layers) - 1)
+        ])
+        self.layers2 = nn.ModuleList([
+            ResnetLayer(layers[i+1], layers[i + 1], 1)
+            for i in range(len(layers) - 1)
+        ])
+        self.layers3 = nn.ModuleList([
+            ResnetLayer(layers[i+1], layers[i + 1], 1)
+            for i in range(len(layers) - 1)
+        ])
         self.out = nn.Linear(layers[-1], c)
 
     def forward(self, x):
@@ -847,14 +894,18 @@ class Resnet(nn.Module):
 +   然后添加一堆层，使其深度增加 3 倍，仍然可以很好地训练，只是因为`x + super().forward(x)`。
 
 ```py
-learn = ConvLearner.from_model_data(Resnet([10, 20, 40, 80, 160], 10), data)wd=1e-5%time learn.fit(1e-2, 2, wds=wd)*A Jupyter Widget*
+learn = ConvLearner.from_model_data(Resnet([10, 20, 40, 80, 160], 10), data)wd=1e-5%time learn.fit(1e-2, 2, wds=wd)
 '''
+A Jupyter Widget
 [ 0\.       1.58191  1.40258  0.49131]                       
 [ 1\.       1.33134  1.21739  0.55625]                       
 
 CPU times: user 1min 27s, sys: 34.3 s, total: 2min 1s
-Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A Jupyter Widget*
+Wall time: 1min 3s
 '''
+%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)
+'''
+A Jupyter Widget
 [ 0\.       1.11534  1.05117  0.62549]                       
 [ 1\.       1.06272  0.97874  0.65185]                       
 [ 2\.       0.92913  0.90472  0.68154]                        
@@ -864,8 +915,11 @@ Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A
 [ 6\.       0.73235  0.76302  0.73633]                        
 
 CPU times: user 5min 2s, sys: 1min 59s, total: 7min 1s
-Wall time: 3min 39s*%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)*A Jupyter Widget*
+Wall time: 3min 39s
 '''
+%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)
+'''
+A Jupyter Widget
 [ 0\.       0.8307   0.83635  0.7126 ]                        
 [ 1\.       0.74295  0.73682  0.74189]                        
 [ 2\.       0.66492  0.69554  0.75996]                        
@@ -900,12 +954,13 @@ Wall time: 3min 39s*%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)*A Jupyter Widg
 [ 31\.        0.32937   0.55605   0.82227]                    
 
 CPU times: user 22min 52s, sys: 8min 58s, total: 31min 51s
-Wall time: 16min 38s*
+Wall time: 16min 38s
+'''
 ```
 
 ResNet 块
 
-`**return** **x + super().forward(x)**`
+`return x + super().forward(x)`
 
 *y = x + f(x)*
 
@@ -928,12 +983,18 @@ class Resnet2(nn.Module):
     def __init__(self, layers, c, p=0.5):
         super().__init__()
         self.conv1 = BnLayer(3, 16, stride=1, kernel_size=7)
-        self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            for i in range(len(layers) - 1)])
-        self.layers2 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            for i in range(len(layers) - 1)])
-        self.layers3 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            for i in range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            BnLayer(layers[i], layers[i+1])
+            for i in range(len(layers) - 1)
+        ])
+        self.layers2 = nn.ModuleList([
+            ResnetLayer(layers[i+1], layers[i + 1], 1)
+            for i in range(len(layers) - 1)
+        ])
+        self.layers3 = nn.ModuleList([
+            ResnetLayer(layers[i+1], layers[i + 1], 1)
+            for i in range(len(layers) - 1)
+        ])
         self.out = nn.Linear(layers[-1], c)
         self.drop = nn.Dropout(p)
 
@@ -944,11 +1005,19 @@ class Resnet2(nn.Module):
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
         x = self.drop(x)
-        return F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data(Resnet2([**16, 32, 64, 128, 256**], 10, 0.2), data)wd=1e-6%time learn.fit(1e-2, 2, wds=wd)
+        return F.log_softmax(self.out(x), dim=-1)
+        
+learn = ConvLearner.from_model_data(Resnet2([**16, 32, 64, 128, 256**], 10, 0.2), data)
+wd=1e-6
+%time learn.fit(1e-2, 2, wds=wd)
 %time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)
-%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)log_preds,y = learn.TTA()
-preds = np.mean(np.exp(log_preds),0)metrics.log_loss(y,preds), accuracy(preds,y)
-*(0.44507397166057938, 0.84909999999999997)*
+%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)
+log_preds,y = learn.TTA()
+preds = np.mean(np.exp(log_preds),0)
+metrics.log_loss(y,preds), accuracy(preds,y)
+'''
+(0.44507397166057938, 0.84909999999999997)
+'''
 ```
 
 85%是 2012 年或 2013 年 CIFAR 10 的最新技术。如今，它已经达到了 97%，因此还有改进的空间，但所有都基于这些技术：
@@ -969,9 +1038,12 @@ preds = np.mean(np.exp(log_preds),0)metrics.log_loss(y,preds), accuracy(preds,y)
 PATH = "data/dogscats/"
 sz = 224
 arch = resnet34  # <-- Name of the function 
-bs = 64m = arch(pretrained=True) # Get a model w/ pre-trained weight loaded
-m*ResNet(
-  (conv1): Conv2d (3, 64,* ***kernel_size=(7, 7)****, stride=(2, 2), padding=(3, 3), bias=False)
+bs = 64
+m = arch(pretrained=True) # Get a model w/ pre-trained weight loaded
+m
+'''
+ResNet(
+  (conv1): Conv2d (3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
   (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
   (relu): ReLU(inplace)
   (maxpool): MaxPool2d(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), dilation=(1, 1))
@@ -998,9 +1070,9 @@ m*ResNet(
       (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
     )
   )
-  (**layer2**): Sequential(
+  (layer2): Sequential(
     (0): BasicBlock(
-      (conv1): Conv2d (64, 128, kernel_size=(3, 3),* ***stride=(2, 2)****, padding=(1, 1), bias=False)
+      (conv1): Conv2d (64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
       (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
       (relu): ReLU(inplace)
       (conv2): Conv2d (128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
@@ -1031,9 +1103,12 @@ m*ResNet(
       (conv2): Conv2d (128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
       (bn2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
     )
-  )* *...* *(avgpool): AvgPool2d(kernel_size=7, stride=7, padding=0, ceil_mode=False, count_include_pad=True)
+  )
+  ...
+  (avgpool): AvgPool2d(kernel_size=7, stride=7, padding=0, ceil_mode=False, count_include_pad=True)
   (fc): Linear(in_features=512, out_features=1000)
-)*
+)
+'''
 ```
 
 我们的 ResNet 模型具有 Relu → BatchNorm。TorchVision 使用 BatchNorm → Relu。有三个不同版本的 ResNet 在流传，最好的是 PreAct ([`arxiv.org/pdf/1603.05027.pdf`](https://arxiv.org/pdf/1603.05027.pdf))。
@@ -1046,9 +1121,11 @@ m*ResNet(
 
 ```py
 m = nn.Sequential(*children(m)[:-2], 
-                  nn.Conv2d(512, 2, 3, padding=1), 
-                  nn.AdaptiveAvgPool2d(1), Flatten(), 
-                  nn.LogSoftmax())
+    nn.Conv2d(512, 2, 3, padding=1), 
+    nn.AdaptiveAvgPool2d(1), 
+    Flatten(), 
+    nn.LogSoftmax()
+)
 ```
 
 +   删除最后两层
@@ -1061,7 +1138,10 @@ m = nn.Sequential(*children(m)[:-2],
 
 ```py
 tfms = tfms_from_model(arch, sz, aug_tfms=transforms_side_on, max_zoom=1.1)
-data = ImageClassifierData.from_paths(PATH, tfms=tfms, bs=bs)learn = ConvLearner.from_model_data(m, data)learn.freeze_to(-4)learn.fit(0.01, 1)
+data = ImageClassifierData.from_paths(PATH, tfms=tfms, bs=bs)
+learn = ConvLearner.from_model_data(m, data)
+learn.freeze_to(-4)
+learn.fit(0.01, 1)
 learn.fit(0.01, 1, cycle_len=1)
 ```
 
@@ -1091,7 +1171,11 @@ sf = SaveFeatures(m[-4])
 py = m(Variable(x.cuda()))
 sf.remove()
 
-py = np.exp(to_np(py)[0]); py*array([ 1.,  0.], dtype=float32)*feat = np.maximum(0, sf.features[0])
+py = np.exp(to_np(py)[0]); py
+'''
+array([ 1.,  0.], dtype=float32)
+'''
+feat = np.maximum(0, sf.features[0])
 feat.shape
 ```
 
@@ -1116,7 +1200,8 @@ class SaveFeatures():
         self.hook = m.register_forward_hook(self.hook_fn)
     def hook_fn(self, module, input, output): 
         self.features = to_np(output)
-    def remove(self): self.hook.remove()
+    def remove(self): 
+        self.hook.remove()
 ```
 
 ## Jeremy 的问题[[02:14:27](https://youtu.be/H3g26EVADgY?t=2h14m27s)]：“您对深度学习的探索”和“如何跟上从业者的重要研究”
