@@ -494,12 +494,18 @@ learn = ConvLearner.from_model_data(SimpleNet([32*32*3, 40,10]), data)
 +   现在我们提高一个 API 级别 - 而不是调用 `fit` 函数，我们从一个自定义模型创建一个 `learn` 对象。`ConfLearner.from_model_data` 接受标准的 PyTorch 模型和模型数据对象。
 
 ```py
-learn, [o.numel() for o in learn.model.parameters()]*(SimpleNet(
+learn, [o.numel() for o in learn.model.parameters()]
+'''
+(SimpleNet(
    (layers): ModuleList(
      (0): Linear(in_features=3072, out_features=40)
      (1): Linear(in_features=40, out_features=10)
    )
- ), [122880, 40, 400, 10])*learn.summary()*OrderedDict([('Linear-1',
+ ), [122880, 40, 400, 10])
+ '''
+ learn.summary()
+ '''
+ OrderedDict([('Linear-1',
               OrderedDict([('input_shape', [-1, 3072]),
                            ('output_shape', [-1, 40]),
                            ('trainable', True),

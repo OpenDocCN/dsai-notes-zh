@@ -74,21 +74,28 @@ movie_ratings = [(b[0], movie_names[i]) for i,b in zip(topMovies,movie_bias)]
 关于排序键--Python 有`itemgetter`函数，但普通的`lambda`只是多了一个字符。
 
 ```py
-sorted(movie_ratings, key=lambda o: o[0])[:15]*[(-0.96070349, 'Battlefield Earth (2000)'),
+sorted(movie_ratings, key=lambda o: o[0])[:15]
+'''
+[(-0.96070349, 'Battlefield Earth (2000)'),
  (-0.76858485, 'Speed 2: Cruise Control (1997)'),
  (-0.73675376, 'Wild Wild West (1999)'),
  (-0.73655486, 'Anaconda (1997)'),
- ...]*sorted(movie_ratings, key=itemgetter(0))[:15]
+ ...]
+'''
+sorted(movie_ratings, key=itemgetter(0))[:15]
 ```
 
 ## 最佳电影
 
 ```py
-sorted(movie_ratings, key=lambda o: o[0], reverse=True)[:15]*[(1.3070084, 'Shawshank Redemption, The (1994)'),
+sorted(movie_ratings, key=lambda o: o[0], reverse=True)[:15]
+'''
+[(1.3070084, 'Shawshank Redemption, The (1994)'),
  (1.1196285, 'Godfather, The (1972)'),
  (1.0844109, 'Usual Suspects, The (1995)'),
  (0.96578616, "Schindler's List (1993)"),
- ...]*
+ ...]
+'''
 ```
 
 ## 嵌入解释[[18:42](https://youtu.be/sHcLkfRrgoQ?t=18m42s)]
@@ -97,10 +104,14 @@ sorted(movie_ratings, key=lambda o: o[0], reverse=True)[:15]*[(1.3070084, 'Shaws
 
 ```py
 movie_emb = to_np(m.i(V(topMovieIdx)))
-movie_emb.shape*(3000, 50)*from sklearn.decomposition import PCA
+movie_emb.shape*(3000, 50)
+from sklearn.decomposition import PCA
 pca = PCA(n_components=3)
 movie_pca = pca.fit(movie_emb.T).components_
-movie_pca.shape*(3, 3000)*
+movie_pca.shape
+'''
+(3, 3000)
+'''
 ```
 
 我们将看一下第一个维度“轻松观看 vs. 严肃”（我们不知道它代表什么，但可以通过观察来推测）：
@@ -108,17 +119,25 @@ movie_pca.shape*(3, 3000)*
 ```py
 fac0 = movie_pca[0] 
 movie_comp = [(f, movie_names[i]) for f,i in zip(fac0, topMovies)]
-sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]*[(0.06748189, 'Independence Day (a.k.a. ID4) (1996)'),
+sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]
+sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]
+'''
+[(0.06748189, 'Independence Day (a.k.a. ID4) (1996)'),
  (0.061572548, 'Police Academy 4: Citizens on Patrol (1987)'),
  (0.061050549, 'Waterworld (1995)'),
  (0.057877172, 'Rocky V (1990)'),
  ...
-]*sorted(movie_comp, key=itemgetter(0))[:10]*[(-0.078433245, 'Godfather: Part II, The (1974)'),
+]
+'''
+sorted(movie_comp, key=itemgetter(0))[:10]
+'''
+[(-0.078433245, 'Godfather: Part II, The (1974)'),
  (-0.072180331, 'Fargo (1996)'),
  (-0.071351372, 'Pulp Fiction (1994)'),
  (-0.068537779, 'Goodfellas (1990)'),
  ...
-]*
+]
+'''
 ```
 
 第二个维度“对话驱动 vs. CGI”
@@ -126,7 +145,9 @@ sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]sorted(movie_comp, key=i
 ```py
 fac1 = movie_pca[1]
 movie_comp = [(f, movie_names[i]) for f,i in zip(fac1, topMovies)]
-sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]*[(0.058975246, 'Bonfire of the Vanities (1990)'),
+sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]
+'''
+[(0.058975246, 'Bonfire of the Vanities (1990)'),
  (0.055992026, '2001: A Space Odyssey (1968)'),
  (0.054682467, 'Tank Girl (1995)'),
  (0.054429606, 'Purple Rose of Cairo, The (1985)'),
@@ -134,7 +155,8 @@ sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]*[(0.058975246, 'Bonfire
  (-0.090635143, 'Aladdin (1992)'),
  (-0.089208141, 'Star Wars: Episode V - The Empire Strikes Back (1980)'),
  (-0.088854566, 'Star Wars: Episode IV - A New Hope (1977)'),
- ...]*
+ ...]
+'''
 ```
 
 绘图
@@ -237,8 +259,9 @@ Skip-Gram 是特定于 NLP 的。将一个无标签的问题转化为有标签�
 为了确保我们完全熟悉 SGD，我们将使用它来学习`*y = ax + b*`。如果我们可以用 2 个参数解决问题，我们可以使用相同的技术来解决 1 亿个参数。
 
 ```py
-*# Here we generate some fake data*
-def lin(a,b,x): return a*x+b
+# Here we generate some fake data
+def lin(a,b,x): 
+    return a*x+b
 
 def gen_fake_data(n, a, b):
     x = s = np.random.uniform(0,1,n) 
@@ -257,7 +280,10 @@ plt.scatter(x,y, s=8); plt.xlabel("x"); plt.ylabel("y");
 > 分类 - 目标输出是一个类标签
 
 ```py
-def mse(y_hat, y): return ((y_hat - y) ** 2).mean()def mse_loss(a, b, x, y): return mse(lin(a,b,x), y)
+def mse(y_hat, y): 
+    return ((y_hat - y) ** 2).mean()
+def mse_loss(a, b, x, y): 
+    return mse(lin(a,b,x), y)
 ```
 
 +   `y_hat` - 预测
@@ -281,21 +307,21 @@ b = V(np.random.randn(1), requires_grad=True)
 ```py
 learning_rate = 1e-3
 for t in range(10000):
-    *# Forward pass: compute predicted y using operations on Variables*
+    # Forward pass: compute predicted y using operations on Variables
     loss = mse_loss(a,b,x,y)
     if t % 1000 == 0: print(loss.data[0])
 
-    *# Computes the gradient of loss with respect to all Variables with requires_grad=True.*
-    *# After this call a.grad and b.grad will be Variables holding the gradient*
-    *# of the loss with respect to a and b respectively*
+    # Computes the gradient of loss with respect to all Variables with requires_grad=True.
+    # After this call a.grad and b.grad will be Variables holding the gradient
+    # of the loss with respect to a and b respectively
     loss.backward()
 
-    *# Update a and b using gradient descent; a.data and b.data are Tensors,*
-    *# a.grad and b.grad are Variables and a.grad.data and b.grad.data are Tensors*
+    # Update a and b using gradient descent; a.data and b.data are Tensors,
+    # a.grad and b.grad are Variables and a.grad.data and b.grad.data are Tensors
     a.data -= learning_rate * a.grad.data
     b.data -= learning_rate * b.grad.data
 
-    *# Zero the gradients*
+    # Zero the gradients
     a.grad.data.zero_()
     b.grad.data.zero_()
 ```
@@ -317,8 +343,10 @@ for t in range(10000):
 我们实际上需要做微积分，但其他方面应该看起来类似：
 
 ```py
-x, y = gen_fake_data(50, 3., 8.)a_guess,b_guess = -1., 1.
-mse_loss(y, a_guess, b_guess, x)lr=0.01 
+x, y = gen_fake_data(50, 3., 8.)
+a_guess,b_guess = -1., 1.
+mse_loss(y, a_guess, b_guess, x)
+lr=0.01 
 def upd():
      global a_guess, b_guess
      y_pred = lin(a_guess, b_guess, x)
@@ -372,9 +400,16 @@ def upd():
 
 ```py
 text = open(f'{PATH}nietzsche.txt').read()
-print(text[:400])*'PREFACE\n\n\nSUPPOSING that Truth is a woman--what then? Is there not ground\nfor suspecting that all philosophers, in so far as they have been\ndogmatists, have failed to understand women--that the terrible\nseriousness and clumsy importunity with which they have usually paid\ntheir addresses to Truth, have been unskilled and unseemly methods for\nwinning a woman? Certainly she has never allowed herself '*chars = sorted(list(set(text))) 
+print(text[:400])
+'''
+'PREFACE\n\n\nSUPPOSING that Truth is a woman--what then? Is there not ground\nfor suspecting that all philosophers, in so far as they have been\ndogmatists, have failed to understand women--that the terrible\nseriousness and clumsy importunity with which they have usually paid\ntheir addresses to Truth, have been unskilled and unseemly methods for\nwinning a woman? Certainly she has never allowed herself '
+'''
+chars = sorted(list(set(text))) 
 vocab_size = len(chars)+1 
-print('total chars:', vocab_size)*total chars: 85*
+print('total chars:', vocab_size)
+'''
+total chars: 85
+'''
 ```
 
 +   总是好的为填充放置一个空字符或空字符。
@@ -394,7 +429,10 @@ indices_char = dict((i, c) for i, c in enumerate(chars))
 
 ```py
 idx = [char_indices[c] for c in text]
-idx[:10]*[40, 42, 29, 30, 25, 27, 29, 1, 1, 1]*
+idx[:10]
+'''
+[40, 42, 29, 30, 25, 27, 29, 1, 1, 1]
+'''
 ```
 
 ## 问题：基于字符的模型与基于单词的模型[[1:22:30](https://youtu.be/sHcLkfRrgoQ?t=1h22m30s)]
@@ -443,10 +481,13 @@ n_fac = 42
 class Char3Model(nn.Module):
      def __init__(self, vocab_size, n_fac):
          super().__init__()
-                  self.e = nn.Embedding(vocab_size, n_fac)
-                  self.l_in = nn.Linear(n_fac, n_hidden)
-                   self.l_hidden = nn.Linear(n_hidden, n_hidden)
-                  self.l_out = nn.Linear(n_hidden, vocab_size) def forward(self, c1, c2, c3):
+         self.e = nn.Embedding(vocab_size, n_fac)
+         self.l_in = nn.Linear(n_fac, n_hidden)
+         self.l_hidden = nn.Linear(n_hidden, n_hidden)
+         self.l_out = nn.Linear(n_hidden, vocab_size) 
+     
+     def forward(self, c1, c2, c3):
+         
          in1 = F.relu(self.l_in(self.e(c1)))
          in2 = F.relu(self.l_in(self.e(c2)))
          in3 = F.relu(self.l_in(self.e(c3)))
@@ -466,7 +507,7 @@ class Char3Model(nn.Module):
 +   `V(torch.zeros(in1.size()).cuda())`只是为了使这三行相同，以便稍后更容易放入循环中。
 
 ```py
-md = ColumnarModelData.from_arrays('.', [-1], np.stack(**[x1,x2,x3]**, axis=1), y, bs=512)
+md = ColumnarModelData.from_arrays('.', [-1], np.stack([x1,x2,x3], axis=1), y, bs=512)
 ```
 
 我们将重用`ColumnarModelData`[[1:32:20](https://youtu.be/sHcLkfRrgoQ?t=1h32m20s)]。如果我们堆叠`x1`，`x2`和`x3`，我们将在`forward`方法中得到`c1`，`c2`，`c3`。当您想以原始方式训练模型时，`ColumnarModelData.from_arrays`会派上用场，您在`[x1, x2, x3]`中放入的内容，将在`**def** **forward**(self, c1, c2, c3)`中返回。
@@ -482,7 +523,7 @@ m = Char3Model(vocab_size, n_fac).cuda()
 ```py
 it = iter(md.trn_dl)
 *xs,yt = next(it)
-t = m(*V(xs)
+t = m(*V(xs))
 ```
 
 +   `iter`来获取一个迭代器
@@ -519,10 +560,21 @@ def get_next(inp):
 
 ```py
 get_next('y. ')
-*'T'**get_next('ppl')
-'e'*get_next(' th')
-*'e'*get_next('and')
+'''
+'T'
+'''
+get_next('ppl')
+'''
+'e'
+'''
+get_next(' th')
+'''
+'e'
+'''
+get_next('and')
+'''
 ' '
+'''
 ```
 
 ## 让我们创建我们的第一个 RNN[[1:37:45](https://youtu.be/sHcLkfRrgoQ?t=1h37m45s)]
@@ -534,16 +586,26 @@ get_next('y. ')
 让我们实现这个。这次，我们将使用前 8 个字符来预测第 9 个。这是如何创建输入和输出的，就像上次一样：
 
 ```py
-cs = 8c_in_dat = [[idx[i+j] for i in range(cs)] for j in range(len(idx)-cs)]c_out_dat = [idx[j+cs] for j in range(len(idx)-cs)]xs = np.stack(c_in_dat, axis=0)y = np.stack(c_out_dat)xs[:cs,:cs]
-*array([[40, 42, 29, 30, 25, 27, 29,  1],
+cs = 8
+c_in_dat = [[idx[i+j] for i in range(cs)] for j in range(len(idx)-cs)]
+c_out_dat = [idx[j+cs] for j in range(len(idx)-cs)]
+xs = np.stack(c_in_dat, axis=0)
+y = np.stack(c_out_dat)
+xs[:cs,:cs]
+'''
+array([[40, 42, 29, 30, 25, 27, 29,  1],
        [42, 29, 30, 25, 27, 29,  1,  1],
        [29, 30, 25, 27, 29,  1,  1,  1],
        [30, 25, 27, 29,  1,  1,  1, 43],
        [25, 27, 29,  1,  1,  1, 43, 45],
        [27, 29,  1,  1,  1, 43, 45, 40],
        [29,  1,  1,  1, 43, 45, 40, 40],
-       [ 1,  1,  1, 43, 45, 40, 40, 39]])*y[:cs]
-*array([ 1,  1, 43, 45, 40, 40, 39, 43])*
+       [ 1,  1,  1, 43, 45, 40, 40, 39]])
+'''
+y[:cs]
+'''
+array([ 1,  1, 43, 45, 40, 40, 39, 43])
+'''
 ```
 
 请注意，它们是重叠的（即 0-7 预测 8，1-8 预测 9）。
@@ -557,7 +619,7 @@ md = ColumnarModelData.from_arrays('.', val_idx, xs, y, bs=512)
 
 ```py
 class CharLoopModel(nn.Module):
-    *# This is an RNN!*
+    # This is an RNN!
     def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
@@ -600,7 +662,7 @@ class CharLoopConcatModel(nn.Module):
     def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
-        self.l_in = nn.Linear(**n_fac+n_hidden**, n_hidden)
+        self.l_in = nn.Linear(n_fac+n_hidden, n_hidden)
         self.l_hidden = nn.Linear(n_hidden, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
@@ -644,11 +706,13 @@ class CharRnn(nn.Module):
 
 ```py
 m = CharRnn(vocab_size, n_fac).cuda() 
-opt = optim.Adam(m.parameters(), 1e-3)ht = V(torch.zeros(1, 512,n_hidden)) 
+opt = optim.Adam(m.parameters(), 1e-3)
+ht = V(torch.zeros(1, 512,n_hidden)) 
 outp, hn = m.rnn(t, ht) 
 outp.size(), hn.size()
-
-*(torch.Size([8, 512, 256]), torch.Size([1, 512, 256]))*
+'''
+(torch.Size([8, 512, 256]), torch.Size([1, 512, 256]))
+'''
 ```
 
 在 PyTorch 版本中，隐藏状态是一个秩为 3 的张量`h = V(torch.zeros(1, bs, n_hidden)`（在我们的版本中，它是秩为 2 的张量）[[1:51:58](https://youtu.be/sHcLkfRrgoQ?t=1h51m58s)]。我们以后会学到更多关于这个，但事实证明你可以有第二个向后运行的 RNN。这个想法是它会更好地找到向后的关系——它被称为“双向 RNN”。你也可以有一个 RNN 馈送到一个 RNN，这被称为“多层 RNN”。对于这些 RNN，你将需要张量中的额外轴来跟踪额外层的隐藏状态。现在，我们只有 1 个，然后返回 1 个。
@@ -660,13 +724,18 @@ def get_next(inp):
     idxs = T(np.array([char_indices[c] for c in inp]))
     p = m(*VV(idxs))
     i = np.argmax(to_np(p))
-    return chars[i]def get_next_n(inp, n):
+    return chars[i]
+def get_next_n(inp, n):
     res = inp
     for i in range(n):
         c = get_next(inp)
         res += c
         inp = inp[1:]+c
-    return resget_next_n('for thos', 40) *'for those the same the same the same the same th'*
+    return res
+get_next_n('for thos', 40) 
+'''
+'for those the same the same the same the same th'
+'''
 ```
 
 这次，我们循环`n`次，每次调用`get_next`，每次我们将我们的输入替换为删除第一个字符并添加我们刚预测的字符。
@@ -695,14 +764,19 @@ array([[40, 42, 29, 30, 25, 27, 29,  1],
 这次我们可以通过采用**不重叠**的字符集来使其更有效。因为我们正在进行多输出，对于输入字符 0 到 7，输出将是字符 1 到 8 的预测。
 
 ```py
-xs[:cs,:cs]array([[40, 42, 29, 30, 25, 27, 29,  1],
+xs[:cs,:cs]
+'''
+array([[40, 42, 29, 30, 25, 27, 29,  1],
        [ 1,  1, 43, 45, 40, 40, 39, 43],
        [33, 38, 31,  2, 73, 61, 54, 73],
        [ 2, 44, 71, 74, 73, 61,  2, 62],
        [72,  2, 54,  2, 76, 68, 66, 54],
        [67,  9,  9, 76, 61, 54, 73,  2],
        [73, 61, 58, 67, 24,  2, 33, 72],
-       [ 2, 73, 61, 58, 71, 58,  2, 67]])ys[:cs,:cs]
+       [ 2, 73, 61, 58, 71, 58,  2, 67]])
+'''
+ys[:cs,:cs]
+'''
 array([[42, 29, 30, 25, 27, 29,  1,  1],
        [ 1, 43, 45, 40, 40, 39, 43, 33],
        [38, 31,  2, 73, 61, 54, 73,  2],
@@ -711,6 +785,7 @@ array([[42, 29, 30, 25, 27, 29,  1,  1],
        [ 9,  9, 76, 61, 54, 73,  2, 73],
        [61, 58, 67, 24,  2, 33, 72,  2],
        [73, 61, 58, 71, 58,  2, 67, 68]])
+'''
 ```
 
 这不会使我们的模型更准确，但我们可以更有效地训练它。
