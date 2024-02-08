@@ -1,0 +1,587 @@
+- en: 'Deep Learning 2: Part 1 Lesson 5'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-5-dd904506bee8](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-5-dd904506bee8)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*fast.ai course*](http://www.fast.ai/)*. These notes
+    will continue to be updated and improved as I continue to review the course to
+    “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Lesson 5](http://forums.fast.ai/t/wiki-lesson-5/9403)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: I. Introduction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'There is not enough publications on structured deep learning, but it is definitely
+    happening in industries:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[](https://towardsdatascience.com/structured-deep-learning-b8ca4138b848?source=post_page-----dd904506bee8--------------------------------)
+    [## Structured Deep Learning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: by Kerem Turgutlu
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: towardsdatascience.com](https://towardsdatascience.com/structured-deep-learning-b8ca4138b848?source=post_page-----dd904506bee8--------------------------------)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can download images from Google by using [this tool](https://github.com/hardikvasa/google-images-download)
+    and solve your own problems:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[](https://towardsdatascience.com/fun-with-small-image-data-sets-part-2-54d683ca8c96?source=post_page-----dd904506bee8--------------------------------)
+    [## Fun with small image data-sets (Part 2)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: by Nikhil B
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: towardsdatascience.com](https://towardsdatascience.com/fun-with-small-image-data-sets-part-2-54d683ca8c96?source=post_page-----dd904506bee8--------------------------------)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Introduction on how to train Neural Net (a great technical writing):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[](https://towardsdatascience.com/how-do-we-train-neural-networks-edd985562b73?source=post_page-----dd904506bee8--------------------------------)
+    [## How do we ‘train’ neural networks ?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: by Vitaly Bushaev
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: towardsdatascience.com](https://towardsdatascience.com/how-do-we-train-neural-networks-edd985562b73?source=post_page-----dd904506bee8--------------------------------)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Students are competing with Jeremy in [Kaggle seedling classification competition](https://www.kaggle.com/c/plant-seedlings-classification/leaderboard).
+  prefs: []
+  type: TYPE_NORMAL
+- en: II. Collaborative Filtering — using MovieLens dataset
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The notebook discussed can be found [here(lesson5-movielens.ipynb)](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson5-movielens.ipynb).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s take a look at the data. We will use `userId` (categorical), `movieId`(categorical)
+    and `rating` (dependent) for modeling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Create subset for Excel**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We create a crosstab of the most popular movies and most movie-addicted users
+    which we will copy into Excel for visualization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[This](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/collab_filter.xlsx)
+    is the excel file with above information. To begin with, we will use **matrix
+    factorization/decomposition** instead of building a neural net.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Blue cells — the actual rating
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Purple cells — our predictions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Red cell — our loss function i.e. Root Mean Squared Error (RMSE)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Green cells — movie embeddings (randomly initialized)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Orange cells — user embeddings (randomly initialized)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Each prediction is a dot product of movie embedding vector and user embedding
+    vector. In linear algebra term, it is equivalent of matrix product as one is a
+    row and one is a column. If there is no actual rating, we set the prediction to
+    zero (think of this as test data — not training data).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We then use Gradient Descent to minimize our loss. Microsoft excel has a “solver”
+    in the add-ins that would minimize a variable by changing selected cells (`GRG
+    Nonlinear` is the method you want to use).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This can be called “shallow learning” (as opposed to deep learning) as there
+    is no nonlinear layer or a second linear layer. So what did we just do intuitively?
+    The five numbers for each movie is called “embeddings” (latent factors) — the
+    first number might represent how much it is sci-fi and fantasy, the second might
+    be how much special effect is used for a movie, the third might be how dialog
+    driven it is, etc. Similarly, each user also has 5 numbers representing, for example,
+    how much does the user like sci-fi fantasy, special effects, and dialog-driven
+    in movies. Our prediction is a cross product of these vectors. Since we do not
+    have every movie review for every user, we are trying to figure out which movies
+    are similar this movie and how other users who rated other movies similarly to
+    this user rate this movie (hence the name “collaborative”).
+  prefs: []
+  type: TYPE_NORMAL
+- en: What do we do with a new user or a new movie — do we have to retrain a model?
+    We do not have a time to cover this now, but basically you need to have a new
+    user model or a new movie model that you would use initially and over time you
+    will need to re-train the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Simple Python version [**[**26:03**](https://youtu.be/J99NV9Cr75I?t=26m3s)**]**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This should look familiar by now. We create a validation set by picking random
+    set of ID’s. `wd` is a weight decay for L2 regularization, and `n_factors` is
+    how big an embedding matrix we want.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We create a model data object from CSV file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then get a learner that is suitable for the model data, and fit the model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Output MSE
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since the output is Mean Squared Error, you can take RMSE by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output is about 0.88 which outperforms the bench mark of 0.91.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can get a prediction in a usual way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And you can also plot using seaborn `sns` (built on top of matplotlib):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Dot product with Python**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`T` is a tensor in Torch'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When we have a mathematical operator between tensors in numpy or PyTorch, it
+    will do element-wise assuming that they both have the same dimensionality. The
+    below is how you would calculate the dot product of two vectors (e.g. (1, 2)⋅(2,
+    2) = 6 — the first rows of matrix a and b):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Building our first custom layer (i.e. PyTorch module) [**[**33:55**](https://youtu.be/J99NV9Cr75I?t=33m55s)**]**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We do this by creating a Python class that extends `nn.Module` and override`forward`
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we can call it and get the expected result (notice that we do not need
+    to say `model.forward(a, b)` to call the `forward` function — it is a PyTorch
+    magic.) [[40:14](https://youtu.be/J99NV9Cr75I?t=40m14s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Building more complex module [**[**41:31**](https://youtu.be/J99NV9Cr75I?t=41m31s)**]**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This implementation has two additions to the `DotProduct` class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Two `nn.Embedding` matrices
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Look up our users and movies in above embedding matrices
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It is quite possible that user ID’s are not contiguous which makes it hard to
+    use as an index of embedding matrix. So we will start by creating indexes that
+    starts from zero and contiguous and replace `ratings.userId` column with the index
+    by using Panda’s `apply` function with an anonymous function `lambda` and do the
+    same for `ratings.movieId` .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Tip:* `{o:i for i,o in enumerate(u_uniq)}` is a handy line of code to keep
+    in your tool belt!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that `__init__` is a constructor which is now needed because our class
+    needs to keep track of “states” (how many movies, mow many users, how many factors,
+    etc). We initialized the weights to random numbers between 0 and 0.05 and you
+    can find more information about a standard algorithm for weight initialization,
+    “Kaiming Initialization” [here](http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/)
+    (PyTorch has He initialization utility function but we are trying to do things
+    from scratch here) [[46:58](https://youtu.be/J99NV9Cr75I?t=46m58s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Embedding` is not a tensor but a **variable**. A variable does the exact same
+    operations as a tensor but it also does automatic differentiation. To pull a tensor
+    out of a variable, call `data` attribute. All the tensor functions have a variation
+    with trailing underscore (e.g. `uniform_`) will do things in-place.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: We are reusing `ColumnarModelData` (from fast.ai library) from Rossmann notebook,
+    and that is the reason behind why there are both categorical and continuous variables
+    in `def forward(self, cats, conts)` function in `EmbeddingDot` class [[50:20](https://youtu.be/J99NV9Cr75I?t=50m20s)].
+    Since we do not have continuous variable in this case, we will ignore `conts`
+    and use the first and second columns of `cats` as `users` and `movies` . Note
+    that they are mini-batches of users and movies. It is important not to manually
+    loop through mini-batches because you will not get GPU acceleration, instead,
+    process a whole mini-batch at a time as you see in line 3 and 4 of `forward` function
+    above [[51:00](https://youtu.be/J99NV9Cr75I?t=51m)–52:05].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`optim` is what gives us the optimizers in PyTorch. `model.parameters()` is
+    one of the function inherited from `nn.Modules` that gives us all the weight to
+    be updated/learned.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function is from fast.ai library [[54:40](https://youtu.be/J99NV9Cr75I?t=54m40s)]
+    and is closer to regular PyTorch approach compared to `learner.fit()` we have
+    been using. It will not give you features like “stochastic gradient descent with
+    restarts” or “differential learning rate” out of box.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Let’s improve our model**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Bias** — to adjust to generally popular movies or generally enthusiastic
+    users.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`squeeze` is PyTorch version of *broadcasting* [[1:04:11](https://youtu.be/J99NV9Cr75I?t=1h4m11s)]
+    for more information, see Machine Learning class or [numpy documentation](https://docs.scipy.org/doc/numpy-1.13.0/user/basics.broadcasting.html).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can we squish the ratings so that it is between 1 and 5? Yes! By putting the
+    prediction through sigmoid function will result in number between 1 and 0\. So
+    in our case, we can multiply that by 4 and add 1 — which will result in number
+    between 1 and 5.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`F` is a PyTorch functional (`torch.nn.functional`) that contains all functions
+    for tensors, and is imported as `F` in most cases.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s take a look at fast.ai code [[1:13:44](https://youtu.be/J99NV9Cr75I?t=1h13m44s)]
+    we used in our **Simple Python version.** In `column_data.py` file, `CollabFilterDataSet.get_leaner`
+    calls `get_model` function that creates `EmbeddingDotBias` class that is identical
+    to what we created.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural Net Version [[1:17:21](https://youtu.be/J99NV9Cr75I?t=1h17m21s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We go back to excel sheet to understand the intuition. Notice that we create
+    user_idx to look up Embeddings just like we did in the python code earlier. If
+    we were to one-hot-encode the user_idx and multiply it by user embeddings, we
+    will get the applicable row for the user. If it is just matrix multiplication,
+    why do we need Embeddings? It is for computational performance optimization purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rather than calculating the dot product of user embedding vector and movie embedding
+    vector to get a prediction, we will concatenate the two and feed it through neural
+    net.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that we no longer has bias terms since `Linear` layer in PyTorch already
+    has a build in bias. `nh` is a number of activations a linear layer creates (Jeremy
+    calls it “num hidden”).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It only has one hidden layer, so maybe not “deep”, but this is definitely a
+    neural network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that the loss functions are also in `F` (here, it s mean squared loss).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we have neural net, there are many things we can try:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Add dropouts
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use different embedding sizes for user embedding and movie embedding
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Not only user and movie embeddings, but append movie genre embedding and/or
+    timestamp from the original data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Increase/decrease number of hidden layers and activations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Increase/decrease regularization
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**What is happening in the training loop?** [[1:33:21](https://youtu.be/J99NV9Cr75I?t=1h33m21s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Currently, we are passing off the updating of weights to PyTorch’s optimizer.
+    What does an optimizer do? and what is a `momentum`?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: We are going to implement gradient descent in an excel sheet ([graddesc.xlsm](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/graddesc.xlsm))
+    — see worksheets right to left. First we create a random *x*’s, and *y*’s that
+    are linearly correlated with the *x*’s (e.g. *y*= *a*x* + *b*). By using sets
+    of *x*’s and *y*’s, we will try to learn *a* and *b.*
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To calculate the error, we first need a prediction, and square the difference:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To reduce the error, we increase/decrease *a* and *b* a little bit and figure
+    out what would make the error decrease. This is called finding the derivative
+    through finite differencing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finite differencing gets complicated in high dimensional spaces [[1:41:46](https://youtu.be/J99NV9Cr75I?t=1h41m46s)],
+    and it becomes very memory intensive and takes a long time. So we want to find
+    some way to do this more quickly. It is worthwhile to look up things like Jacobian
+    and Hessian (Deep Learning book: [section 4.3.1 page 84](http://www.deeplearningbook.org/contents/numerical.html)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chain Rule and Backpropagation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The faster approach is to do this analytically [[1:45:27](https://youtu.be/J99NV9Cr75I?t=1h45m27s)].
+    For this, we need a chain rule:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overview of [chain rule](https://www.khanacademy.org/math/multivariable-calculus/multivariable-derivatives/differentiating-vector-valued-functions/a/multivariable-chain-rule-simple-version)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is a great article by Chris Olah on [Backpropagation as a chain rule](http://colah.github.io/posts/2015-08-Backprop/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we replace the finite-difference with an actual derivative [WolframAlpha](https://www.wolframalpha.com/)
+    gave us (notice that finite-difference output is fairly close to the actual derivative
+    and good way to do quick sanity check if you need to calculate your own derivative):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Online” training — mini-batch with size 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: And this is how you do SGD with excel sheet. If you were to change the prediction
+    value with the output from CNN spreadsheet, we can train CNN with SGD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Momentum [[1:53:47](https://youtu.be/J99NV9Cr75I?t=1h53m47s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Come on, take a hint — that’s a good direction. Please keep doing that but more.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'With this approach, we will use a linear interpolation between the current
+    mini-batch’s derivative and the step (and direction) we took after the last mini-batch
+    (cell K9):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compared to *de*/*db* whose sign (+/-) is random, the one with momentum will
+    keep going the same direction a little bit faster up till certain point. This
+    will reduce a number of epochs required for training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adam [[1:59:04](https://youtu.be/J99NV9Cr75I?t=1h59m4s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Adam is much faster but the issue has been that final predictions are not as
+    good as as they are with SGD with momentum. It seems as though that it was due
+    to the combined usage of Adam and weight decay. The new version that fixes this
+    issue is called **AdamW**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`cell J8` : a linear interpolation of derivative and previous direction (identical
+    to what we had in momentum)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`cell L8` : a linear interpolation of derivative squared + derivative squared
+    from last step ( `cell L7`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The idea is called “exponentially weighted moving average” (in another words,
+    average with previous values multiplicatively decreased)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Learning rate is much higher than before because we are dividing it by square
+    root of `L8` .
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you take a look at fast.ai library (model.py), you will notice that in `fit`
+    function, it does not just calculate average loss, but it is calculating the **exponentially
+    weighted moving average of loss**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Another helpful concept is whenever you see `α(…) + (1-α)(…)`, immediately think
+    **linear interpolation.**
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Some intuitions**'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We calculated exponentially weighted moving average of gradient squared, take
+    a square root of that, and divided the learning rate by it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gradient squared is always positive.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When there is high variance in gradients, gradient squared will be large.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When the gradients are constant, gradient squared will be small.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If gradients are changing a lot, we want to be careful and divide the learning
+    rate by a big number (slow down)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If gradients are not changing much, we will take a bigger step by dividing the
+    learning rate with a small number
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Adaptive learning rate** — keep track of the average of the squares of the
+    gradients and use that to adjust the learning rate. So there is just one learning
+    rage, but effectively every parameter at every epoch is getting a bigger jump
+    if the gradient is constant; smaller jump otherwise.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are two momentums — one for gradient, and the other for gradient squared
+    (in PyTorch, it is called a beta which is a tuple of two numbers)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: AdamW[[2:11:18](https://youtu.be/J99NV9Cr75I?t=2h11m18s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When there are much more parameters than data points, regularizations become
+    important. We had seen dropout previously, and weight decay is another type of
+    regularization. Weight decay (L2 regularization) penalizes large weights by adding
+    squared weights (times weight decay multiplier) to the loss. Now the loss function
+    wants to keep the weights small because increasing the weights will increase the
+    loss; hence only doing so when the loss improves by more than the penalty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The problem is that since we added the squared weights to the loss function,
+    this affects the moving average of gradients and the moving average of the squared
+    gradients for Adam. This result in decreasing the amount of weight decay when
+    there is high variance in gradients, and increasing the amount of weight decay
+    when there is little variation. In other words, “penalize large weights unless
+    gradients varies a lot” which is not what we intended. AdamW removed the weight
+    decay out of the loss function, and added it directly when updating the weights.
+  prefs: []
+  type: TYPE_NORMAL

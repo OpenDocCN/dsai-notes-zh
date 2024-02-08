@@ -1,0 +1,970 @@
+- en: 'Deep Learning 2: Part 1 Lesson 6'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-6-de70d626976c](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-6-de70d626976c)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*fast.ai course*](http://www.fast.ai/)*. These notes
+    will continue to be updated and improved as I continue to review the course to
+    “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Lesson 6](http://forums.fast.ai/t/wiki-lesson-6/9404)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[## Optimization for Deep Learning Highlights in 2017'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table of contents: Deep Learning ultimately is about finding a minimum that
+    generalizes well -- with bonus points for…'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: ruder.io](http://ruder.io/deep-learning-optimization-2017/index.html?source=post_page-----de70d626976c--------------------------------)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Review from last week [[2:15](https://youtu.be/sHcLkfRrgoQ?t=2m15s)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: We took a deep dive to collaborative filtering last week, and we ended up re-creating
+    `EmbeddingDotBias` class (`column_data.py`) in fast.ai library. Let’s visualize
+    what the embeddings look like [[notebook](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson5-movielens.ipynb)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside of a learner `learn`, you can get a PyTorch model itself by calling `learn.model`
+    . `@property` looks like a regular function, but requires no parenthesis when
+    you call it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`learn.models` is an instance of `CollabFilterModel` which is a thin wrapper
+    of PyTorch model that allows us to use “layer groups” which is not a concept available
+    in PyTorch and fast.ai uses it to apply different learning rates to different
+    sets of layers (layer group).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyTorch model prints out the layers nicely including layer name which is what
+    we called them in the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`m.ib` refers to an embedding layer for an item bias — movie bias, in our case.
+    What is nice about PyTorch models and layers is that we can call them as if they
+    are functions. So if you want to get a prediction, you call `m(...)` and pass
+    in variables.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Layers require variables not tensors because it needs to keep track of the derivatives
+    — that is the reason for `V(...)` to convert tensor to variable. PyTorch 0.4 will
+    get rid of variables and we will be able to use tensors directly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `to_np` function will take a variable or a tensor (regardless of being on
+    the CPU or GPU) and returns a numpy array. Jeremy’s approach [[12:03](https://youtu.be/sHcLkfRrgoQ?t=12m3s)]
+    is to use numpy for everything except when he explicitly needs something to run
+    on the GPU or he needs its derivatives — in which case he uses PyTorch. Numpy
+    has been around longer than PyTorch and works well with other libraries such as
+    OpenCV, Pandas, etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A question regarding CPU vs. GPU in production. The suggested approach is to
+    do inference on CPU as it is more scalable and you do not need to put things in
+    batches. You can move a model onto the CPU by typing `m.cpu()`, similarly a variable
+    by typing`V(topMovieIndex).cpu()` (from CPU to GPU would be `m.cuda()`).If your
+    server does not have GPU, it will run inference on CPU automatically. For loading
+    a saved model that was trained on GPU, take a look at this line of code in `torch_imports.py`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we have movie bias for top 3000 movies, and let’s take a look at ratings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`zip` will allow you to iterate through multiple lists at the same time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Worst movies
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: About sorting key — Python has `itemgetter` function but plain `lambda` is just
+    one more character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Best movies
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Embedding interpretation [[18:42](https://youtu.be/sHcLkfRrgoQ?t=18m42s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Each movie has 50 embeddings and it is hard to visualize 50 dimensional space,
+    so we will turn it into a three dimensional space. We can compress dimensions
+    using several techniques: Principal Component Analysis ([PCA](https://plot.ly/ipython-notebooks/principal-component-analysis/))
+    (Rachel’s Computational Linear Algebra class covers this in detail — which is
+    almost identical to Singular Value Decomposition (SVD))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will take a look at the first dimension “easy watching vs. serious” (we
+    do not know what it represents but can certainly speculate by looking at them):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The second dimension “dialog driven vs. CGI”
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Plot
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: What actually happens when you say `learn.fit` ?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Entity Embeddings of Categorical Variables](https://arxiv.org/pdf/1604.06737.pdf)
+    [[24:42](https://youtu.be/sHcLkfRrgoQ?t=24m42s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The second paper to talk about categorical embeddings. FIG. 1\. caption should
+    sound familiar as they talk about how entity embedding layers are equivalent to
+    one-hot encoding followed by a matrix multiplication.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The interesting thing they did was, they took the entity embeddings trained
+    by a neural network, replaced each categorical variable with the learned entity
+    embeddings, then fed that into Gradient Boosting Machine (GBM), Random Forest
+    (RF), and KNN — which reduced the error to something almost as good as neural
+    network (NN). This is a great way to give the power of neural net within your
+    organization without forcing others to learn deep learning because they can continue
+    to use what they currently use and use the embeddings as input. GBM and RF train
+    much faster than NN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They also plotted the embeddings of states in Germany which interestingly (“whackingly
+    enough” as Jeremy would call it) resembled an actual map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They also plotted the distances of stores in physical space and embedding space
+    — which showed a beautiful and clear correlation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There also seems to be correlation between days of the week, or months of the
+    year. Visualizing embeddings can be interesting as it shows you what you expected
+    see or what you didn’t.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A question about Skip-Gram to generate embeddings [[31:31](https://youtu.be/sHcLkfRrgoQ?t=31m31s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Skip-Gram is specific to NLP. A good way to turn an unlabeled problem into a
+    labeled problem is to “invent” labels. Word2Vec’s approach was to take a sentence
+    of 11 words, delete the middle word, and replace it with a random word. Then they
+    gave a label 1 to the original sentence; 0 to the fake one, and built a machine
+    learning model to find the fake sentences. As a result, they now have embeddings
+    they can use for other purposes. If you do this as a single matrix multiplier
+    (shallow model) rather than deep neural net, you can train this very quickly —
+    the disadvantage is that it is a less predictive model, but the advantages are
+    that you can train on a very large dataset and more importantly, the resulting
+    embeddings have *linear characteristics* which allow us to add, subtract, or draw
+    nicely. In NLP, we should move past Word2Vec and Glove (i.e. linear based methods)
+    because these embeddings are less predictive. The state of the art language model
+    uses deep RNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn any kind of feature space, you either need labeled data or you need
+    to invent a fake task [[35:45](https://youtu.be/sHcLkfRrgoQ?t=35m45s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Is one fake task better than another? Not well studied yet.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Intuitively, we want a task which helps a machine to learn the kinds of relationships
+    that you care about.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In computer vision, a type of fake task people use is to apply unreal and unreasonable
+    data augmentations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you can’t come up with great fake tasks, just use crappy one — it is often
+    surprising how little you need.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Autoencoder** [[38:10](https://youtu.be/sHcLkfRrgoQ?t=38m10s)] — it recently
+    won an [insurance claim competition](https://www.kaggle.com/c/porto-seguro-safe-driver-prediction/discussion/44629).
+    Take a single policy, run it through neural net, and have it reconstruct itself
+    (make sure that intermediate layers have less activations than the input variable).
+    Basically, it is a task whose input = output which works surprisingly well as
+    a fake task.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In computer vision, you can train on cats and dogs and use it for CT scans.
+    Maybe it might work for language/NLP! (future research)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Rossmann](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson3-rossman.ipynb)
+    [[41:04](https://youtu.be/sHcLkfRrgoQ?t=41m4s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A way to use test set properly was added to the notebook.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For more detailed explanations, see Machine Learning course.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`apply_cats(joined_test, joined)` is used to make sure that the test set and
+    the training set have the same categorical codes.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Keep track of `mapper` which contains the mean and standard deviation of each
+    continuous column, and apply the same `mapper` to the test set.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Do not rely on Kaggle public board — rely on your own thoughtfully created validation
+    set.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Going over a good [Kernel](https://www.kaggle.com/thie1e/exploratory-analysis-rossmann)
+    for Rossmann
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Sunday effect on sales
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is a jump on sales before and after the store closing. 3rd place winner
+    deleted closed store rows before they started any analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Don’t touch your data unless you, first of all, analyze to see what you are
+    doing is okay — no assumptions.**'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Vim tricks [[49:12](https://youtu.be/sHcLkfRrgoQ?t=49m12s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`:tag ColumnarModelData` will take you to the class definition'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`ctrl + ]` will take you to a definition of what’s under the cursor'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`ctrl + t` to go back'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`*` to find the usage of what’s under the cursor'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can switch between tabs with `:tabn` and `:tabp`, With `:tabe <filepath>`
+    you can add a new tab; and with a regular `:q` or `:wq` you close a tab. If you
+    map `:tabn` and `:tabp` to your F7/F8 keys you can easily switch between files.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inside of ColumnarModelData [[51:01](https://youtu.be/sHcLkfRrgoQ?t=51m1s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Slowly but surely, what used to be just “magic” start to look familiar. As
+    you can see, `get_learner` returns `Learner` which is fast.ai concept that wraps
+    data and PyTorch model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inside of `MixedInputModel` you see how it is creating `Embedding` which we
+    now know more about. `nn.ModuleList` is used to register a list of layers. We
+    will talk about `BatchNorm` next week, but rest, we have seen before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, we now understand what’s going on in the `forward` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: call embedding layer with *i*th categorical variable and concatenate them all
+    together
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: put that through dropout
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: go through each one of our linear layers, call it, apply relu and dropout
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: then final linear layer has a size of 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: if `y_range` is passed in, apply sigmoid and fit the output within a range (which
+    we learned last week)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Stochastic Gradient Descent — SGD](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson6-sgd.ipynb)
+    [[59:56](https://youtu.be/sHcLkfRrgoQ?t=59m56s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To make sure we are totally comfortable with SGD, we will use it to learn `*y
+    = ax + b*` . If we can solve something with 2 parameters, we can use the same
+    technique to solve 100 million parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: To get started, we need a loss function. This is a regression problem since
+    the output is continuous output, and the most common loss function is the mean
+    squared error (MSE).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regression — the target output is a real number or a whole vector of real numbers
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Classification — the target output is a class label
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`y_hat` — predictions'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We will make 10,000 more fake data and turn them into PyTorch variables because
+    Jeremy doesn’t like taking derivatives and PyTorch can do that for him:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then create random weight for `a` and `b` , they are the variables we want to
+    learn, so set `requires_grad=True` .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then set the learning rate and do 10,000 epoch of full gradient descent (not
+    SGD as each epoch will look at all of the data):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: calculate the loss (remember, `a` and `b` are set to random initially)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: from time to time (every 1000 epochs), print out the loss
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`loss.backward()` will calculate gradients for all variables with `requires_grad=True`
+    and fill in `.grad` property'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: update `a` to whatever it was minus LR * `grad` ( `.data` accesses a tensor
+    inside of a variable)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: when there are multiple loss functions or many output layers contributing to
+    the gradient, PyTorch will add them together. So you need to tell when to set
+    gradients back to zero (`zero_()` in the `_` means that the variable is changed
+    in-place).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The last 4 lines of code is what is wrapped in `optim.SGD.step` function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Let’s do this with just Numpy (without PyTorch) [[1:07:01](https://youtu.be/sHcLkfRrgoQ?t=1h7m1s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We actually have to do calculus, but everything else should look similar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Just for fun, you can use `matplotlib.animation.FuncAnimation` to animate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Tip: Fast.ai AMI did not come with `ffmpeg` . So if you see `KeyError: ''ffmpeg''`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run `print(animation.writers.list())` and print out a list of available MovieWriters
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `ffmpeg` is among it. Otherwise [install it](https://github.com/adaptlearning/adapt_authoring/wiki/Installing-FFmpeg).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Recurrent Neural Network — RNN](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson6-rnn.ipynb)
+    [[1:09:16](https://youtu.be/sHcLkfRrgoQ?t=1h9m16s)]'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Let’s learn how to write philosophy like Nietzsche. This is similar to a language
+    model we learned in lesson 4, but this time, we will do it one character at a
+    time. RNN is no different from what we have already learned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some examples:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[SwiftKey](https://blog.swiftkey.com/neural-networks-a-meaningful-leap-for-mobile-typing/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Andrej Karpathy LaTex generator](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Basic NN with single hidden layer
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: All shapes are activations (an activation is a number that has been calculated
+    by a relu, matrix product, etc.). An arrow is a layer operation (possibly more
+    than one). Check out Machine Learning course lesson 9–11 for creating this from
+    scratch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Image CNN with single dense hidden layer
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We will cover how to flatten a layer next week more, but the main method is
+    called “adaptive max pooling” — where we average across the height and the width
+    and turn it into a vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`batch_size` dimension and activation function (e.g. relu, softmax) are not
+    shown here'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting char 3 using chars 1 & 2 [[1:18:04](https://youtu.be/sHcLkfRrgoQ?t=1h18m4s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We are going to implement this one for NLP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Input can be one-hot-encoded character (length of vector = # of unique characters)
+    or a single integer and pretend it is one-hot-encoded by using an embedding layer.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The difference from the CNN one is that then char 2 inputs gets added.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: layer operations not shown; remember arrows represent layer operations
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s implement this without torchtext or fast.ai library so we can see.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`set` will return all unique characters.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Always good to put a null or an empty character for padding.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mapping of every character to a unique ID, and a unique ID to a character
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we can represent the text with its ID’s:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Question: Character based model vs. word based model [[1:22:30](https://youtu.be/sHcLkfRrgoQ?t=1h22m30s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Generally, you want to combine character level model and word level model (e.g.
+    for translation).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Character level model is useful when a vocabulary contains unusual words — which
+    word level model will just treat as “unknown”. When you see a word you have not
+    seen before, you can use a character level model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is also something in between that is called Byte Pair Encoding (BPE) which
+    looks at n-gram of characters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Create inputs [[1:23:48](https://youtu.be/sHcLkfRrgoQ?t=1h23m48s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that `c1_dat[n+1] == c4_dat[n]` since we are skipping by 3 (the third argument
+    of `range`)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`x`’s are our inputs, `y` is our target value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build a model [[1:26:08](https://youtu.be/sHcLkfRrgoQ?t=1h26m8s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`n_hiddein` — “# activations” in the diagram.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`n_fac` — the size of the embedding matrix.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here is the updated version of the previous diagram. Notice that now arrows
+    are colored. All the arrows with the same color will use the same weight matrix.
+    The idea here is that a character would not have different meaning (semantically
+    or conceptually) depending on whether it is the first, the second, or the third
+    item in a sequence, so treat them the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[Video [1:27:57]](https://youtu.be/sHcLkfRrgoQ?t=1h27m57s)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[1:29:58](https://youtu.be/sHcLkfRrgoQ?t=1h29m58s)] It is important that this
+    `l_hidden` uses a square weight matrix whose size matches the output of `l_in`.
+    Then `h` and `in2` will be the same shape allowing us to sum them together as
+    you see in `self.l_hidden(h+in2)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`V(torch.zeros(in1.size()).cuda())` is only there to make the three lines identical
+    to make it easier to put in a for loop later.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will reuse `ColumnarModelData`[[1:32:20](https://youtu.be/sHcLkfRrgoQ?t=1h32m20s)].
+    If we stack `x1` , `x2`, and `x3`, we will get `c1`, `c2`, `c3` in the `forward`
+    method. `ColumnarModelData.from_arrays` will come in handy when you want to train
+    a model in raw-er approach, what you put in `[x1, x2, x3]` , you will get back
+    in `**def** **forward**(self, c1, c2, c3)`
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: We create a standard PyTorch model (not `Learner`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Because it is a standard PyTorch model, don’t forget `.cuda`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`iter` to grab an iterator'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`next` returns a mini-batch'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: “Variabize” the `xs` tensor, and put it through the model — which will give
+    us 512x85 tensor containing prediction (batch size * unique character)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create a standard PyTorch optimizer — for which you need to pass in a list of
+    things to optimize, which is returned by `m.parameters()`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: We do not find a learning rate finder and SGDR because we are not using `Learner`,
+    so we would need to manually do learning rate annealing (set LR a little bit lower)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Testing a model [[1:35:58](https://youtu.be/sHcLkfRrgoQ?t=1h35m58s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function takes three characters and return what the model predict as the
+    fourth. Note: `np.argmax` returns index of the maximum values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s create our first RNN [[1:37:45](https://youtu.be/sHcLkfRrgoQ?t=1h37m45s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We can simplify the previous diagram as below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting char n using chars 1 to n-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s implement this. This time, we will use the first 8 characters to predict
+    the 9th. Here is how we create inputs and output just like the last time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Notice that they are overlaps (i.e. 0–7 to predict 8, 1–8 to predict 9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create the model [[1:43:03](https://youtu.be/sHcLkfRrgoQ?t=1h43m3s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Most of the code is the same as before. You will notice that there is one `for`
+    loop in `forward` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hyperbolic Tangent (Tanh) [[1:43:43](https://youtu.be/sHcLkfRrgoQ?t=1h43m43s)]
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: It is a sigmoid that is offset. It is common to use hyperbolic tanh in the hidden
+    state to hidden state transition because it stops it from flying off too high
+    or too low. For other purposes, relu is more common.
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: This now is a quite deep network as it uses 8 characters instead of 2\. And
+    as networks get deeper, they become harder to train.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Adding vs. Contatenating
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We now will try something else for `self.l_hidden(**h+inp**)`[[1:46:04](https://youtu.be/sHcLkfRrgoQ?t=1h46m4s)].
+    The reason is that the input state and the hidden state are qualitatively different.
+    Input is the encoding of a character, and h is an encoding of series of characters.
+    So adding them together, we might lose information. Let’s concatenate them instead.
+    Don’t forget to change the input to match the shape (`n_fac+n_hidden` instead
+    of `n_fac`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: This gives some improvement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: RNN with PyTorch [[1:48:47](https://youtu.be/sHcLkfRrgoQ?t=1h48m47s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: PyTorch will write the `for` loop automatically for us and also the linear input
+    layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: For reasons that will become apparent later on, `self.rnn` will return not only
+    the output but also the hidden state.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The minor difference in PyTorch is that `self.rnn` will append a new hidden
+    state to a tensor instead of replacing (in other words, it will give back all
+    ellipses in the diagram) . We only want the final one so we do `outp[-1]`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: In PyTorch version, a hidden state is rank 3 tensor `h = V(torch.zeros(1, bs,
+    n_hidden))` (in our version, it was rank 2 tensor) [[1:51:58](https://youtu.be/sHcLkfRrgoQ?t=1h51m58s)].
+    We will learn more about this later, but it turns out you can have a second RNN
+    that goes backwards. The idea is that it is going to be better at finding relationships
+    that go backwards — it is called “bi-directional RNN”. Also you can have an RNN
+    feeds to an RNN which is called “multi layer RNN”. For these RNN’s, you will need
+    the additional axis in the tensor to keep track of additional layers of hidden
+    state. For now, we will just have 1 there, and get back 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Test the model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: This time, we loop `n` times calling `get_next` each time, and each time we
+    will replace our input by removing the first character and adding the character
+    we just predicted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For an interesting homework, try writing your own `nn.RNN` “`JeremysRNN`” without
+    looking at PyTorch source code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-output [[1:55:31](https://youtu.be/sHcLkfRrgoQ?t=1h55m31s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: From the last diagram, we can simplify even further by treating char 1 the same
+    as char 2 to n-1\. You notice the triangle (the output) also moved inside of the
+    loop, in other words, we create a prediction after each character.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting chars 2 to n using chars 1 to n-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One of the reasons we may want to do this is the redundancies we had seen before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can make it more efficient by taking **non-overlapping** sets of character
+    this time. Because we are doing multi-output, for an input char 0 to 7, the output
+    would be the predictions for char 1 to 8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: This will not make our model any more accurate, but we can train it more efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Notice that we are no longer doing `outp[-1]` since we want to keep all of
+    them. But everything else is identical. One complexity[[2:00:37](https://youtu.be/sHcLkfRrgoQ?t=2h37s)]
+    is that we want to use the negative log-likelihood loss function as before, but
+    it expects two rank 2 tensors (two mini-batches of vectors). But here, we have
+    rank 3 tensor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 characters (time steps)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 84 probabilities
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: for 512 minibatch
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Let’s write a custom loss function [[2:02:10](https://youtu.be/sHcLkfRrgoQ?t=2h2m10s)]:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`F.nll_loss` is the PyTorch loss function.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Flatten our inputs and targets.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Transpose the first two axes because PyTorch expects 1\. sequence length (how
+    many time steps), 2\. batch size, 3\. hidden state itself. `yt.size()` is 512
+    by 8, whereas `sl, bs` is 8 by 512.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyTorch does not generally actually shuffle the memory order when you do things
+    like ‘transpose’, but instead it keeps some internal metadata to treat it as if
+    it is transposed. When you transpose a matrix, PyTorch just updates the metadata
+    . If you ever see an error that says “this tensor is not continuous” , add `.contiguous()`
+    after it and error goes away.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.view` is same as `np.reshape`. `-1` indicates as long as it needs to be.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remember that `fit(...)` is the lowest level fast.ai abstraction that implements
+    the training loop. So all the arguments are standard PyTorch things except for
+    `md` which is our model data object which wraps up the test set, the training
+    set, and the validation set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Question [[2:06:04](https://youtu.be/sHcLkfRrgoQ?t=2h6m4s)]: Now that we put
+    a triangle inside of the loop, do we need a bigger sequence size?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we have a short sequence like 8, the first character has nothing to go on.
+    It starts with an empty hidden state of zeros.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will learn how to avoid that problem next week.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The basic idea is “why should we reset the hidden state to zeros every time?”
+    (see code below). If we can line up these mini-batches somehow so that the next
+    mini-batch joins up correctly representingthe next letter in Nietsche’s works,
+    then we can move `h = V(torch.zeros(1, bs, n_hidden))` to the constructor.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: Gradient Explosion [[2:08:21](https://youtu.be/sHcLkfRrgoQ?t=2h8m21s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`self.rnn(inp, h)` is a loop applying the same matrix multiply again and again.
+    If that matrix multiply tends to increase the activations each time, we are effectively
+    doing that to the power of 8 — we call this a gradient explosion. We want to make
+    sure the initial `l_hidden` will not cause our activations on average to increase
+    or decrease.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A nice matrix that does exactly that is called identity matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can overwrite the randomly initialized hidden-hidden weight with an identity
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: This was introduced by Geoffrey Hinton et. al. in 2015 ([A Simple Way to Initialize
+    Recurrent Networks of Rectified Linear Units](https://arxiv.org/abs/1504.00941))
+    — after RNN has been around for decades. It works very well, and you can use higher
+    learning rate since it is well behaved.
+  prefs: []
+  type: TYPE_NORMAL

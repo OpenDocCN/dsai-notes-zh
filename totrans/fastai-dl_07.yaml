@@ -1,0 +1,1207 @@
+- en: 'Deep Learning 2: Part 1 Lesson 7'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-7-1b9503aff0c](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-7-1b9503aff0c)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*fast.ai course*](http://www.fast.ai/)*. These notes
+    will continue to be updated and improved as I continue to review the course to
+    “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Lesson 7](http://forums.fast.ai/t/wiki-lesson-7/9405)'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The theme of Part 1 is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: classification and regression with deep learning
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: identifying and learning best and established practices
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: focus is on classification and regression which is predicting “a thing” (e.g.
+    a number, a small number of labels)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Part 2 of the course:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: focus is on generative modeling which means predicting “lots of things” — for
+    example, creating a sentence as in neural translation, image captioning, or question
+    answering while creating an image such as in style transfer, super-resolution,
+    segmentation and so forth.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: not as much best practices but a little more speculative from recent papers
+    that may not be fully tested.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Review of Char3Model [[02:49](https://youtu.be/H3g26EVADgY?t=2m49s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Reminder: RNN is not in any way different or unusual or magical — just a standard
+    fully connected network.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard fully connected network
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arrows represent one or more layer operations — generally speaking a linear
+    followed by a non-linear function, in this case matrix multiplications followed
+    by `relu` or `tanh`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arrows of the same color represent exactly the same weight matrix being used.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: One slight difference from previous is that there are inputs coming in at the
+    second and third layers. We tried two approaches — concatenating and adding these
+    inputs to the current activations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: By using `nn.Linear` we get both the weight matrix and the bias vector wrapped
+    up for free for us.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To deal with the fact that there is no orange arrow coming in for the first
+    ellipse , we invented an empty matrix
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Almost identical except for the `for` loop
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: PyTorch version — `nn.RNN` will create the loop and keep track of `h` as it
+    goes along.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We are using white section to predict the green character — which seems wasteful
+    as the next section mostly overlaps with the current section.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We then tried splitting it into non-overlapping pieces in multi-output model:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In this approach, we are throwing away our `h` activation after processing each
+    section and started a new one. In order to predict the second character using
+    the first one in the next section, it has nothing to go on but a default activation.
+    Let’s not throw away `h` .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stateful RNN [[08:52](https://youtu.be/H3g26EVADgY?t=8m52s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: One additional line in constructor. `self.init_hidden(bs)` sets `self.h` to
+    bunch of zeros.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Wrinkle #1** [[10:51](https://youtu.be/H3g26EVADgY?t=10m51s)] — if we were
+    to simply do `self.h = h` , and we trained on a document that is a million characters
+    long, then the size of unrolled version of the RNN has a million layers (ellipses).
+    One million layer fully connected network is going to be very memory intensive
+    because in order to do a chain rule, we have to multiply one million layers while
+    remembering all one million gradients every batch.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To avoid this, we tell it to forget its history from time to time. We can still
+    remember the state (the values in our hidden matrix) without remembering everything
+    about how we got there.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Grab the tensor out of `Variable` `h` (remember, a tensor itself does not have
+    any concept of history), and create a new `Variable` out of that. The new variable
+    has the same value but no history of operations, therefore when it tries to back-propagate,
+    it will stop there.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`forward` will process 8 characters, it then back propagate through eight layers,
+    keep track of the values in out hidden state, but it will throw away its history
+    of operations. This is called **back-prop through time (bptt)**.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In other words, after the `for` loop, just throw away the history of operations
+    and start afresh. So we are keeping our hidden state but we are not keeping our
+    hidden state history.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Another good reason not to back-propagate through too many layers is that if
+    you have any kind of gradient instability (e.g. gradient explosion or gradient
+    banishing), the more layers you have, the harder the network gets to train (slower
+    and less resilient).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On the other hand, the longer `bptt` means that you are able to explicitly capture
+    a longer memory and more state.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Wrinkle #2** [[16:00](https://youtu.be/H3g26EVADgY?t=16m)] — how to create
+    mini-batches. We do not want to process one section at a time, but a bunch in
+    parallel at a time.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When we started looking at TorchText for the first time, we talked about how
+    it creates these mini-batches.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeremy said we take a whole long document consisting of the entire works of
+    Nietzsche or all of the IMDB reviews concatenated together, we split this into
+    64 equal sized chunks (NOT chunks of size 64).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For a document that is 64 million characters long, each “chunk” will be 1 million
+    characters. We stack them together and now split them by `bptt` — 1 mini-bach
+    consists of 64 by `bptt` matrix.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The first character of the second chunk(1,000,001th character) is likely be
+    in the middle of a sentence. But it is okay since it only happens once every million
+    characters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Question: Data augmentation for this kind of dataset? [[20:34](https://youtu.be/H3g26EVADgY?t=20m34s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There is no known good way. Somebody recently won a Kaggle competition by doing
+    data augmentation which randomly inserted parts of different rows — something
+    like that may be useful here. But there has not been any recent state-of-the-art
+    NLP papers that are doing this kind of data augmentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Question: How do we choose the size of bptt? [[21:36](https://youtu.be/H3g26EVADgY?t=21m36s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are a couple things to think about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: the first is that mini-batch matrix has a size of `bs` (# of chunks) by `bptt`
+    so your GPU RAM must be able to fit that by your embedding matrix. So if you get
+    CUDA out of memory error, you need reduce one of these.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If your training is unstable (e.g. your loss is shooting off to NaN suddenly),
+    then you could try decreasing your `bptt` because you have less layers to gradient
+    explode through.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If it is too slow [[22:44](https://youtu.be/H3g26EVADgY?t=22m44s)], try decreasing
+    your `bptt` because it will do one of those steps at a time. `for` loop cannot
+    be parallelized (for the current version). There is a recent thing called QRNN
+    (Quasi-Recurrent Neural Network) which does parallelize it and we hope to cover
+    in part 2.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: So pick the highest number that satisfies all these.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stateful RNN & TorchText [[23:23](https://youtu.be/H3g26EVADgY?t=23m23s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When using an existing API which expects data to be certain format, you can
+    either change your data to fit that format or you can write your own dataset sub-class
+    to handle the format that your data is already in. Either is fine, but in this
+    case, we will put our data in the format TorchText already support. Fast.ai wrapper
+    around TorchText already has something where you can have a training path and
+    validation path, and one or more text files in each path containing bunch of text
+    that are concatenated together for your language model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Made a copy of Nietzsche file, pasted into training and validation directory.
+    Then deleted the last 20% of the rows from training set, and deleted everything
+    but the last 20% from the validation set [[25:15](https://youtu.be/H3g26EVADgY?t=25m15s)].
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The other benefit of doing it this way is that it seems like it is more realistic
+    to have a validation set that was not a random shuffled set of rows of text, but
+    it was totally separate part of the corpus.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When you are doing a language model, you do not really need separate files.
+    You can have multiple files but they just get concatenated together anyway.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: In TorchText, we make this thing called `Field` and initially `Field` is just
+    a description of how to go about pre-processing the text.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`lower` — we told it to lowercase the text'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`tokenize` — Last time, we used a function that splits on whitespace that gave
+    us a word model. This time, we want a character model, so use `list` function
+    to tokenize strings. Remember, in Python, `list(''abc'')` will return `[''a'',
+    ''b'', ''c'']` .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bs` : batch size, `bptt` : we renamed `cs` , `n_fac` : size of embedding,
+    `n_hidden` : size of our hidden state'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We do not have a separate test set, so we’ll just use validation set for testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TorchText randomize the length of `bptt` a little bit each time. It does not
+    always give us exactly 8 characters; 5% of the time, it will cut it in half and
+    add on a small standard deviation to make it slightly bigger or smaller than 8\.
+    We cannot shuffle the data since it needs to be contiguous, so this is a way to
+    introduce some randomness.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Question [[31:46](https://youtu.be/H3g26EVADgY?t=31m46s)]: Does the size remain
+    constant per mini-batch? Yes, we need to do matrix multiplication with `h` weight
+    matrix, so mini-batch size must remain constant. But sequence length can change
+    no problem.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`len(md.trn_dl)` : length of data loader (i.e. how many mini-batches), `md.nt`
+    : number of tokens (i.e. how many unique things are in the vocabulary)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Once you run `LanguageModelData.from_text_files` , `TEXT` will contain an extra
+    attribute called `vocab`. `TEXT.vocab.itos` list of unique items in the vocabulary,
+    and `TEXT.vocab.stoi` is a reverse mapping from each item to number.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Wrinkle #3** [[33:51](https://youtu.be/H3g26EVADgY?t=33m51s)]: Jeremy lied
+    to us when he said that mini-batch size remains constant. It is very likely that
+    the last mini-batch is shorter than the rest unless the dataset is exactly divisible
+    by `bptt` times `bs` . That is why we check whether `self.h` ‘s second dimension
+    is the same as `bs` of the input. If it is not the same, set it back to zero with
+    the input’s `bs` . This happens at the end of the epoch and the beginning of the
+    epoch (setting back to the full batch size).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Wrinkle #4** [[35:44](https://youtu.be/H3g26EVADgY?t=35m44s)]: The last wrinkle
+    is something that slightly sucks about PyTorch and maybe somebody can be nice
+    enough to try and fix it with a PR. Loss functions are not happy receiving a rank
+    3 tensor (i.e. three dimensional array). There is no particular reason they ought
+    to not be happy receiving a rank 3 tensor (sequence length by batch size by results
+    — so you can just calculate loss for each of the two initial axis). Works for
+    rank 2 or 4, but not 3.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.view` will reshape rank 3 tensor into rank 2 of `-1` (however big as necessary)
+    by `vocab_size`. TorchText automatically changes the **target** to be flattened
+    out, so we do not need to do that for actual values (when we looked at a mini-batch
+    in lesson 4, we noticed that it was flattened. Jeremy said we will learn about
+    why later, so later is now.)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PyTorch (as of 0.3), `log_softmax` requires us to specify which axis we want
+    to do the softmax over (i.e. which axis we want to sum to one). In this case we
+    want to do it over the last axis `dim = -1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s gain more insight by unpacking RNN [[42:48](https://youtu.be/H3g26EVADgY?t=42m48s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We remove the use of `nn.RNN` and replace it with `nn.RNNCell` . PyTorch source
+    code looks like the following. You should be able to read and understand (Note:
+    they do not concatenate the input and the hidden state, but they sum them together
+    — which was our first approach):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Question about `tanh` [[44:06](https://youtu.be/H3g26EVADgY?t=44m6s)]: As we
+    have seen last week, `tanh` is forcing the value to be between -1 and 1\. Since
+    we are multiplying by this weight matrix again and again, we would worry that
+    `relu` (since it is unbounded) might have more gradient explosion problem. Having
+    said that, you can specify `RNNCell` to use different `nonlineality` whose default
+    is `tanh` and ask it to use `relu` if you wanted to.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`for` loop is back and append the result of linear function to a list — which
+    in end gets stacked up together.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: fast.ai library actually does exactly this in order to use regularization approaches
+    that are not supported by PyTorch.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gated Recurrent Unit (GRU) [[46:44](https://youtu.be/H3g26EVADgY?t=46m44s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In practice, nobody really uses `RNNCell` since even with `tanh` , gradient
+    explosions are still a problem and we need use low learning rate and small `bptt`
+    to get them to train. So what we do is to replace `RNNCell` with something like
+    `GRUCell` .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[http://www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/](http://www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normally, the input gets multiplied by a weight matrix to create new activations
+    `h` and get added to the existing activations straight away. That is not wha happens
+    here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Input goes into `h˜` and it doesn’t just get added to the previous activations,
+    but the previous activation gets multiplied by `r` (reset gate) which has a value
+    of 0 or 1.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`r` is calculated as below — matrix multiplication of some weight matrix and
+    the concatenation of our previous hidden state and new input. In other words,
+    this is a little one hidden layer neural net. It gets put through the sigmoid
+    function as well. This mini neural net learns to determine how much of the hidden
+    states to remember (maybe forget it all when it sees a full-stop character — beginning
+    of a new sentence).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`z` gate (update gate) determines what degree to use `h˜` (the new input version
+    of hidden states) and what degree to leave the hidden state the same as before.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[http://colah.github.io/posts/2015-08-Understanding-LSTMs/](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear interpolation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Above is what `GRUCell` code looks like, and our new model that utilize this
+    is below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: As a result, we can lower the loss down to 1.36 (`RNNCell` one was 1.54). In
+    practice, GRU and LSTM are what people uses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Putting it all together: Long Short-Term Memory [[54:09](https://youtu.be/H3g26EVADgY?t=54m9s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'LSTM has one more piece of state in it called “cell state” (not just hidden
+    state), so if you do use a LSTM, you have to return a tuple of matrices in `init_hidden`
+    (exactly the same size as hidden state):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The code is identical to GRU one. The one thing that was added was `dropout`
+    which does dropout after each time step and doubled the hidden layer — in a hope
+    that it will be able to learn more and be resilient as it does so.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Callbacks (specifically SGDR) without Learner class [[55:23](https://youtu.be/H3g26EVADgY?t=55m23s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: After creating a standard PyTorch model, we usually do something like `opt =
+    optim.Adam(m.parameters(), 1e-3)`. Instead, we will use fast.ai `LayerOptimizer`
+    which takes an optimizer `optim.Adam` , our model `m` , learning rate `1e-2` ,
+    and optionally weight decay `1e-5` .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A key reason `LayerOptimizer` exists is to do differential learning rates and
+    differential weight decay. The reason we need to use it is that all of the mechanics
+    inside fast.ai assumes that you have one of these. If you want to use callbacks
+    or SGDR in code you are not using the Learner class, you need to use this.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`lo.opt` returns the optimizer.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: When we call `fit`, we can now pass the `LayerOptimizer` and also `callbacks`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here, we use cosine annealing callback — which requires a `LayerOptimizer` object.
+    It does cosine annealing by changing learning rate in side the `lo` object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Concept: Create a cosine annealing callback which is going to update the learning
+    rates in the layer optimizer `lo` . The length of an epoch is equal to `len(md.trn_dl)`
+    — how many mini-batches are there in an epoch is the length of the data loader.
+    Since it is doing cosine annealing, it needs to know how often to reset. You can
+    pass in `cycle_mult` in usual way. We can even save our model automatically just
+    like we did with `cycle_save_name` in `Learner.fit`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We can do callback at a start of a training, epoch or a batch, or at the end
+    of a training, an epoch, or a batch.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It has been used for `CosAnneal` (SGDR), and decoupled weight decay (AdamW),
+    loss-over-time graph, etc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Testing [[59:55](https://youtu.be/H3g26EVADgY?t=59m55s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: In lesson 6, when we were testing `CharRnn` model, we noticed that it repeated
+    itself over and over. `torch.multinomial` used in this new version deals with
+    this problem. `p[-1]` to get the final output (the triangle), `exp` to convert
+    log probability to probability. We then use `torch.multinomial` function which
+    will give us a sample using the given probabilities. If probability is [0, 1,
+    0, 0] and ask it to give us a sample, it will always return the second item. If
+    it was [0.5, 0, 0.5], it will give the first item 50% of the time, and second
+    item . 50% of the time ([review of multinomial distribution](http://onlinestatbook.com/2/probability/multinomial.html))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To play around with training character based language models like this, try
+    running `get_next_n` at different levels of loss to get a sense of what it looks
+    like. The example above is at 1.25, but at 1.3, it looks like a total junk.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When you are playing around with NLP, particularly generative model like this,
+    and the results are kind of okay but not great, do not be disheartened because
+    that means you are actually very VERY nearly there!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Back to computer vision: CIFAR 10](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson7-cifar10.ipynb)
+    [[1:01:58](https://youtu.be/H3g26EVADgY?t=1h1m58s)]'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: CIFAR 10 is an old and well known dataset in academia — well before ImageNet,
+    there was CIFAR 10\. It is small both in terms of number of images and size of
+    images which makes it interesting and challenging. You will likely be working
+    with thousands of images rather than one and a half million images. Also a lot
+    of the things we are looking at like in medical imaging, we are looking at a specific
+    area where there is a lung nodule, you are probably looking at 32 by 32 pixels
+    at most.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It also runs quickly, so it is much better to test our your algorithms. As Ali
+    Rahini mentioned in NIPS 2017, Jeremy has the concern that many people are not
+    doing carefully tuned and throught-about experiments in deep learning, but instead,
+    they throw lots of GPUs and TPUs or lots of data and consider that a day. It is
+    important to test many versions of your algorithm on dataset like CIFAR 10 rather
+    than ImageNet that takes weeks. MNIST is also good for studies and experiments
+    even though people tend to complain about it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CIFAR 10 data in image format is available [here](http://pjreddie.com/media/files/cifar.tgz)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`classes` — image labels'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`stats` —When we use pre-trained models, you can call `tfms_from_model` which
+    creates the necessary transforms to convert our data set into a normalized dataset
+    based on the means and standard deviations of each channel in the original model
+    that was trained in. Since we are training a model from scratch, we ned to tell
+    it the mean and standard deviation of our data to normalize it. Make sure you
+    can calculate the mean and the standard deviation for each channel.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`tfms` — For CIFAR 10 data augmentation, people typically do horizontal flip
+    and black padding around the edge and randomly select 32 by 32 area within the
+    padded image.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From [this notebook](https://github.com/KeremTurgutlu/deeplearning/blob/master/Exploring%20Optimizers.ipynb)
+    by our student Kerem Turgutlu:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`nn.ModuleList` — whenever you create a list of layers in PyTorch, you have
+    to wrap it in `ModuleList` to register these as attributes.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we step up one level of API higher — rather than calling `fit` function,
+    we create a `learn` object *from a custom model*. `ConfLearner.from_model_data`
+    takes standard PyTorch model and model data object.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: With a simple one hidden layer model with 122,880 parameters, we achieved 46.9%
+    accuracy. Let’s improve this and gradually build up to a basic ResNet architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CNN [[01:12:30](https://youtu.be/H3g26EVADgY?t=1h12m30s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s replace a fully connected model with a convolutional model. Fully connected
+    layer is simply doing a dot product. That is why the weight matrix is big (3072
+    input * 40 = 122880). We are not using the parameters very efficiently because
+    every single pixel in the input has a different weight. What we want to do is
+    a group of 3 by 3 pixels that have particular patterns to them (i.e. convolution).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will use a filter with three by three kernel. When there are multiple filters,
+    the output will have additional dimension.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replace `nn.Linear` with `nn.Conv2d`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: First two parameters are exactly the same as `nn.Linear` — the number of features
+    coming in, and the number of features coming out
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`kernel_size=3` , the size of the filter'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`stride=2` will use every other 3 by 3 area which will halve the output resolution
+    in each dimension (i.e. it has the same effect as 2 by 2 max-pooling)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`ConvNet([3, 20, 40, 80], 10)` — It start with 3 RGB channels, 20, 40, 80 features,
+    then 10 classes to predict.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`AdaptiveMaxPool2d` — This followed by a linear layer is how you get from 3
+    by 3 down to a prediction of one of 10 classes and is now a standard for state-of-the-art
+    algorithms. The very last layer, we do a special kind of max-pooling for which
+    you specify the output activation resolution rather than how big of an area to
+    poll. In other words, here we do 3 by 3 max-pool which is equivalent of 1 by 1
+    *adaptive* max-pool.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`x = x.view(x.size(0), -1)` — `x` has a shape of # of the features by 1 by
+    1, so it will remove the last two layers.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This model is called “fully convolutional network” — where every layer is convolutional
+    except for the very last.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The default final learning rate `lr_find` tries is 10\. If the loss is still
+    getting better at that point, you can overwrite by specifying `end_lr` .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: It flattened out around 60% accuracy. Considering it uses about 30,000 parameters
+    (compared to 47% with 122k parameters)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Time per epoch is about the same since their architectures are both simple and
+    most of time is spent doing memory transfer.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Refactored [[01:21:57](https://youtu.be/H3g26EVADgY?t=1h21m57s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Simplify `forward` function by creating `ConvLayer` (our first custom layer!).
+    In PyTorch, layer definition and neural network definitions are identical. Anytime
+    you have a layer, you can use it as a neural net, when you have a neural net,
+    you can use it as a layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`padding=1` — When you do convolution the image shrink by 1 pixel on each side.
+    So it does not go from 32 by 32 to 16 by 16 but actually 15 by 15\. `padding`
+    will add a border so we can keep the edge pixel information. It is not as big
+    of a deal for a big image, but when it’s down to 4 by 4, you really don’t want
+    to throw away a whole piece.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Another difference from the last model is that `nn.AdaptiveMaxPool2d` does not
+    have any state (i.e. no weights). So we can just call it as a function `F.adaptive_max_pool2d`
+    .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: BatchNorm [[1:25:10](https://youtu.be/H3g26EVADgY?t=1h25m10s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The last model, when we tried to add more layers, we had trouble training. The
+    reason we had trouble training was that if we used larger learning rates, it would
+    go off to NaN and if we used smaller learning rate, it would take forever and
+    doesn’t have a chance to explore properly — so it was not resilient.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To make it resilient, we will use something called batch normalization. BatchNorm
+    came out about two years ago and it has been quite transformative since it suddenly
+    makes it really easy to train deeper networks.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We can simply use `nn.BatchNorm` but to learn about it, we will write it from
+    scratch.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It is unlikely that the weight matrices on average are not going to cause your
+    activations to keep getting smaller and smaller or keep getting bigger and bigger.
+    It is important to keep them at reasonable scale. So we start things off with
+    zero-mean standard deviation one by normalizing the input. What we really want
+    to do is to do this for all layers, not just the inputs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Calculate the mean of each channel or each filter and standard deviation of
+    each channel or each filter. Then subtract the means and divide by the standard
+    deviations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We no longer need to normalize our input because it is normalizing it per channel
+    or for later layers it is normalizing per filter.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Turns out this is not enough since SGD is bloody-minded [[01:29:20](https://youtu.be/H3g26EVADgY?t=1h29m20s)].
+    If SGD decided that it wants matrix to be bigger/smaller overall, doing `(x=self.means)
+    / self.stds` is not enough because SGD will undo it and try to do it again in
+    the next mini-batch. So we will add two parameters: `a` — adder (initial value
+    zeros) and `m` — multiplier (initial value ones) for each channel.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Parameter` tells PyTorch that it is allowed to learn these as weights.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Why does this work? If it wants to scale the layer up, it does not have to
+    scale up every single value in the matrix. It can just scale up this single trio
+    of numbers `self.m` , if it wants to shift it all up or down a bit, it does not
+    have to shift the entire weight matrix, they can just shift this trio of numbers
+    `self.a`. Intuition: We are normalizing the data and then we are saying you can
+    then shift it and scale it using far fewer parameters than would have been necessary
+    if it were to actually shift and scale the entire set of convolutional filters.
+    In practice, it allows us to increase our learning rates, it increase the resilience
+    of training, and it allows us to add more layers and still train effectively.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The other thing batch norm does is that it regularizes, in other words, you
+    can often decrease or remove dropout or weight decay. The reason why is each mini-batch
+    is going to have a different mean and a different standard deviation to the previous
+    mini-batch. So they keep changing and it is changing the meaning of the filters
+    in a subtle way acting as a noise (i.e. regularization).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In real version, it does not use this batch’s mean and standard deviation but
+    takes an exponentially weighted moving average standard deviation and mean.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`**if** self.training` — this is important because when you are going through
+    the validation set, you do not want to be changing the meaning of the model. There
+    are some types of layer that are actually sensitive to what the mode of the network
+    is whether it is in training mode or evaluation/test mode. There was a bug when
+    we implemented mini net for MovieLens that dropout was applied during the validation
+    — which was fixed. In PyTorch, there are two such layer: dropout and batch norm.
+    `nn.Dropout` already does the check.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[[01:37:01](https://youtu.be/H3g26EVADgY?t=1h37m1s)] The key difference in
+    fast.ai which no other library does is that these means and standard deviations
+    get updated in training mode in every other library as soon as you basically say
+    I am training, regardless of whether that layer is set to trainable or not. With
+    a pre-trained network, that is a terrible idea. If you have a pre-trained network
+    for specific values of those means and standard deviations in batch norm, if you
+    change them, it changes the meaning of those pre-trained layers. In fast.ai, always
+    by default, it will not touch those means and standard deviations if your layer
+    is frozen. As soon as you un-freeze it, it will start updating them unless you
+    set `learn.bn_freeze=True`. In practice, this often seems to work a lot better
+    for pre-trained models particularly if you are working with data that is quite
+    similar to what the pre-trained model was trained with.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Where do you put batch-norm layer? We will talk more in a moment, but for now,
+    after `relu`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ablation Study [[01:39:41](https://youtu.be/H3g26EVADgY?t=1h39m41s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: It is something where you try turning on and off different pieces of your model
+    to see which bits make which impacts, and one of the things that wasn’t done in
+    the original batch norm paper was any kind of effective ablation. And one of the
+    things therefore that was missing was this question which was just asked — where
+    to put the batch norm. That oversight caused a lot of problems because it turned
+    out the original paper did not actually put it in the best spot. Other people
+    since then have now figured that out and when Jeremy show people code where it
+    is actually in the spot that is better, people say his batch norm is in the wrong
+    spot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Try and always use batch norm on every layer if you can
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Don’t stop normalizing your data so that people using your data will know how
+    you normalized your data. Other libraries might not deal with batch norm for pre-trained
+    models correctly, so when people start re-training, it might cause problems.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rest of the code is similar — Using `BnLayer` instead of `ConvLayer`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A single convolutional layer was added at the start trying to get closer to
+    the modern approaches. It has a bigger kernel size and a stride of 1\. The basic
+    idea is that we want the first layer to have a richer input. It does convolution
+    using the 5 by 5 area which allows it to try and find more interesting richer
+    features in that 5 by 5 area, then spit out bigger output (in this case, it’s
+    10 by 5 by 5 filters). Typically it is 5 by 5 or 7 by 7, or even 11 by 11 convolution
+    with quite a few filters coming out (e.g. 32 filters).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Since `padding = kernel_size — 1 / 2` and `stride=1` , the input size is the
+    same as the output size — just more filters.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It is a good way of trying to create a richer starting point.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deep BatchNorm [[01:50:52](https://youtu.be/H3g26EVADgY?t=1h50m52s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s increase the depth of the model. We cannot just add more of stride 2 layers
+    since it halves the size of the image each time. Instead, after each stride 2
+    layer, we insert a stride 1 layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The accuracy remained the same as before. This is now 12 layers deep, and it
+    is too deep even for batch norm to handle. It is possible to train 12 layer deep
+    conv net but it starts to get difficult. And it does not seem to be helping much
+    if at all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ResNet [[01:52:43](https://youtu.be/H3g26EVADgY?t=1h52m43s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`ResnetLayer` inherit from `BnLayer` and override `forward`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then add bunch of layers and make it 3 times deeper, ad it still trains beautifully
+    just because of `x + super().forward(x)` .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**ResNet block** [[01:53:18](https://youtu.be/H3g26EVADgY?t=1h53m18s)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`**return** **x + super().forward(x)**`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*y = x + f(x)*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where *x* is prediction from the previous layer, *y* is prediction from the
+    current layer.Shuffle around the formula and we get:formula shuffle
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*f(x) = y − x*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The difference *y − x* is **residual**. The residual is the error in terms of
+    what we have calculated so far. What this is saying is that try to find a set
+    of convolutional weights that attempts to fill in the amount we were off by. So
+    in other words, we have an input, and we have a function which tries to predict
+    the error (i.e. how much we are off by). Then we add a prediction of how much
+    we were wrong by to the input, then add another prediction of how much we were
+    wrong by that time, and repeat that layer after layer — zooming into the correct
+    answer. This is based on a theory called **boosting**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The full ResNet does two convolutions before it gets added back to the original
+    input (we did just one here).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In every block `x = l3(l2(l(x)))` , one of the layers is not a `ResnetLayer`
+    but a standard convolution with `stride=2` — this is called a “bottleneck layer”.
+    ResNet does not convolutional layer but a different form of bottleneck block which
+    we will cover in Part 2.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ResNet 2 [[01:59:33](https://youtu.be/H3g26EVADgY?t=1h59m33s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here, we increased the size of features and added dropout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '85% was a state-of-the-art back in 2012 or 2013 for CIFAR 10\. Nowadays, it
+    is up to 97% so there is a room for improvement but all based on these tecniques:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Better approaches to data augmentation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Better approaches to regularization
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some tweaks on ResNet
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Question [[02:01:07](https://youtu.be/H3g26EVADgY?t=2h1m7s)]: Can we apply
+    “training on the residual” approach for non-image problem? Yes! But it has been
+    ignored everywhere else. In NLP, “transformer architecture” recently appeared
+    and was shown to be the state of the art for translation, and it has a simple
+    ResNet structure in it. This general approach is called “skip connection” (i.e.
+    the idea of skipping over a layer) and appears a lot in computer vision, but nobody
+    else much seems to be using it even through there is nothing computer vision specific
+    about it. Good opportunity!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Dogs vs. Cats](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson7-CAM.ipynb)
+    [[02:02:03](https://youtu.be/H3g26EVADgY?t=2h2m3s)]'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Going back dogs and cats. We will create resnet34 (if you are interested in
+    what the trailing number means, [see here](https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py)
+    — just different parameters).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Our ResNet model had Relu → BatchNorm. TorchVision does BatchNorm →Relu. There
+    are three different versions of ResNet floating around, and the best one is PreAct
+    ([https://arxiv.org/pdf/1603.05027.pdf](https://arxiv.org/pdf/1603.05027.pdf)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, the final layer has a thousands features because ImageNet has 1000
+    features, so we need to get rid of it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When you use fast.ai’s `ConvLearner` , it deletes the last two layers for you.
+    fast.ai replaces `AvgPool2d` with Adaptive Average Pooling and Adaptive Max Pooling
+    and concatenate the two together.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For this exercise, we will do a simple version.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Remove the last two layers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Add a convolution which just has 2 outputs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Do average pooling then softmax
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is no linear layer at the end. This is a different way of producing just
+    two numbers — which allows us to do CAM!
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`ConvLearner.from_model` is what we learned about earlier — allows us to create
+    a Learner object with custom model.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then freeze the layer except the ones we just added.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Class Activation Maps (CAM) [[02:08:55](https://youtu.be/H3g26EVADgY?t=2h8m55s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We pick a specific image, and use a technique called CAM where we take a model
+    and we ask it which parts of the image turned out to be important.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'How did it do this? Let’s work backwards. The way it did it was by producing
+    this matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Big numbers correspond to the cat. So what is this matrix? This matrix simply
+    equals to the value of feature matrix `feat` times `py` vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`py` vector is the predictions that says “I am 100% confident it’s a cat.”
+    `feat` is the values (2×7×7) coming out of the final convolutional layer (the
+    `Conv2d` layer we added). If we multiply `feat` by `py` , we get all of the first
+    channel and none of the second channel. Therefore, it is going to return the value
+    of the last convolutional layers for the section which lines up with being a cat.
+    In other words, if we multiply `feat` by `[0, 1]` , it will line up with being
+    a dog.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Put it in another way, in the model, the only thing that happened after the
+    convolutional layer was an average pooling layer. The average pooling layer took
+    took the 7 by 7 grid and averaged out how much each part is “cat-like”. We then
+    took the “cattyness” matrix, resized it to be the same size as the original cat
+    image, and overlaid it on top, then you get the heat map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The way you can use this technique at home is
+  prefs: []
+  type: TYPE_NORMAL
+- en: when you have a large image, you can calculate this matrix on a quick small
+    little convolutional net
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: zoom into the area that has the highest value
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: re-run it just on that part
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We skipped this over quickly as we ran out of time, but we will learn more about
+    these kind of approaches in Part 2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '“Hook” is the mechanism that lets us ask the model to return the matrix. `register_forward_hook`
+    asks PyTorch that every time it calculates a layer it runs the function given
+    — sort of like a callback that happens every time it calculates a layer. In the
+    following case, it saves the value of the particular layer we were interested
+    in:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Questions to Jeremy [[02:14:27](https://youtu.be/H3g26EVADgY?t=2h14m27s)]:
+    “Your journey into Deep Learning” and “How to keep up with important research
+    for practitioners”'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '“If you intend to come to Part 2, you are expected to master all the techniques
+    er have learned in Part 1”. Here are something you can do:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Watch each of the video at least 3 times.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Make sure you can re-create the notebooks without watching the videos — maybe
+    do so with different datasets to make it more interesting.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Keep an eye on the forum for recent papers, recent advances.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Be tenacious and keep working at it!
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL

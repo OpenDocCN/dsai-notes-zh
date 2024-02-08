@@ -1,0 +1,1394 @@
+- en: 'Deep Learning 2: Part 2 Lesson 9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-9-5f0cf9e4bb5b)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*fast.ai course*](http://www.fast.ai/)*. These notes
+    will continue to be updated and improved as I continue to review the course to
+    “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Links
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[**Forum**](http://forums.fast.ai/t/part-2-lesson-9-in-class/14028/1) **/**
+    [**Video**](https://youtu.be/0frKXR-2PBY)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Review
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'From Last week:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Pathlib; JSON
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dictionary comprehensions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Defaultdict
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to jump around fastai source
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: matplotlib OO API
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lambda functions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bounding box coordinates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Custom head; bounding box regression
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'From Part 1:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: How to view model inputs from a DataLoader
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to view model outputs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data Augmentation and Bounding Box [[2:58](https://youtu.be/0frKXR-2PBY?t=2m58s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Notebook](https://github.com/fastai/fastai/blob/master/courses/dl2/pascal.ipynb)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Awkward rough edges of fastai:**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A *classifier* is anything with dependent variable is categorical or binomial.
+    As opposed to *regression* which is anything with dependent variable is continuous.
+    Naming is a little confusing but will be sorted out in future. Here, `continuous`
+    is `True` because our dependent variable is the coordinates of bounding box —
+    hence this is actually a regressor data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s create some data augmentation [[4:40](https://youtu.be/0frKXR-2PBY?t=4m40s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Normally, we use these shortcuts Jeremy created for us, but they are simply
+    lists of random augmentations. But you can easily create your own (most if not
+    all of them start with “Random”).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the image gets rotated and lighting varies, but bounding box
+    is *not moving* and is *in a wrong spot* [[6:17](https://youtu.be/0frKXR-2PBY?t=6m17s)].
+    This is the problem with data augmentations when your dependent variable is pixel
+    values or in some way connected to the independent variable — they need to be
+    augmented together. As you can see in the bounding box coordinates `[ 115\. 63\.
+    240\. 311.]` , our image is 224 by 224 — so it is neither scaled nor cropped.
+    The dependent variable needs to go through all the geometric transformation as
+    the independent variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To do this [[7:10](https://youtu.be/0frKXR-2PBY?t=7m10s)], every transformation
+    has an optional `tfm_y` parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`TrmType.COORD` indicates that the *y* value represents coordinate. This needs
+    to be added to all the augmentations as well as `tfms_from_model` which is responsible
+    for cropping, zooming, resizing, padding, etc.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, the bounding box moves with the image and is in the right spot. You may
+    notice that sometimes it looks odd like the middle on in the bottom row. This
+    is the constraint of the information we have. If the object occupied the corners
+    of the original bounding box, your new bounding box needs to be bigger after the
+    image rotates. So you must **be careful of not doing too higher rotations with
+    bounding boxes** because there is not enough information for them to stay accurate.
+    If we were doing polygons or segmentations, we would not have this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This why the box gets bigger
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here, we do maximum of 3 degree rotation to avoid this problem [[9:14](https://youtu.be/0frKXR-2PBY?t=9m14s)].
+    It also only rotates half of the time (`p=0.5`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: custom_head [[9:34](https://youtu.be/0frKXR-2PBY?t=9m34s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`learn.summary()` will run a small batch of data through a model and prints
+    out the size of tensors at every layer. As you can see, right before the `Flatten`
+    layer, the tensor has the shape of 512 by 7 by 7\. So if it were a rank 1 tensor
+    (i.e. a single vector) its length will be 25088 (512 * 7 * 7)and that is why our
+    custom header’s input size is 25088\. Output size is 4 since it is the bounding
+    box coordinates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Single object detection [[10:35](https://youtu.be/0frKXR-2PBY?t=10m35s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s combine the two to create something that can classify and localize the
+    largest object in each image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are 3 things that we need to do to train a neural network:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Architecture
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Loss Function
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 1\. Providing Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We need a `ModelData` object whose independent variable is the images, and dependent
+    variable is a tuple of bounding box coordinates and class label. There are several
+    ways to do this, but here is a particularly lazy and convinient way Jeremy came
+    up with is to create two `ModelData` objects representing the two different dependent
+    variables we want (one with bounding boxes coordinates, one with classes).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A dataset can be anything with `__len__` and `__getitem__`. Here''s a dataset
+    that adds a 2nd label to an existing dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`ds` : contains both independent and dependent variables'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`y2` : contains the additional dependent variables'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`(x, (y,self.y2[i]))` : `__getitem___` returns an independent variable and
+    the combination of two dependent variables.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We’ll use it to add the classes to the bounding boxes labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here is an example dependent variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can replace the dataloaders’ datasets with these new ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have to `denorm`alize the images from the dataloader before they can be plotted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 2\. Choosing Architecture [[13:54](https://youtu.be/0frKXR-2PBY?t=13m54s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The architecture will be the same as the one we used for the classifier and
+    bounding box regression, but we will just combine them. In other words, if we
+    have `c` classes, then the number of activations we need in the final layer is
+    4 plus `c`. 4 for bounding box coordinates and `c` probabilities (one per class).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll use an extra linear layer this time, plus some dropout, to help us train
+    a more flexible model. In general, we want our custom head to be capable of solving
+    the problem on its own if the pre-trained backbone it is connected to is appropriate.
+    So in this case, we are trying to do quite a bit — classifier and bounding box
+    regression, so just the single linear layer does not seem enough. If you were
+    wondering why there is no `BatchNorm1d` after the first `ReLU` , ResNet backbone
+    already has `BatchNorm1d` as its final layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 3\. Loss Function [[15:46](https://youtu.be/0frKXR-2PBY?t=15m46s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The loss function needs to look at these `4 + len(cats)` activations and decide
+    if they are good — whether these numbers accurately reflect the position and class
+    of the largest object in the image. We know how to do this. For the first 4 activations,
+    we will use L1Loss just like we did before (L1Loss is like a Mean Squared Error
+    — instead of sum of squared errors, it uses sum of absolute values). For rest
+    of the activations, we can use cross entropy loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`input` : activations'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`target` : ground truth'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bb_t,c_t = target` : Our custom dataset returns a tuple containing bounding
+    box coordinates and classes. This assignment will destructure them.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bb_i,c_i = input[:, :4], input[:, 4:]` : the first `:` is for the batch dimension.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`b_i = F.sigmoid(bb_i)*224` : we know our image is 224 by 224\. `Sigmoid` will
+    force it to be between 0 and 1, and multiply it by 224 to help our neural net
+    to be in the range of what it has to be.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Question:** As a general rule, is it better to put BatchNorm before or after
+    ReLU [[18:02](https://youtu.be/0frKXR-2PBY?t=18m2s)]? Jeremy would suggest to
+    put it after a ReLU because BathNorm is meant to move towards zero-mean one-standard
+    deviation. So if you put ReLU right after it, you are truncating it at zero so
+    there is no way to create negative numbers. But if you put ReLU then BatchNorm,
+    it does have that ability and gives slightly better results. Having said that,
+    it is not too big of a deal either way. You see during this part of the course,
+    most of the time, Jeremy does ReLU then BatchNorm but sometimes does the opposite
+    when he wants to be consistent with the paper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: What is the intuition behind using dropout after a BatchNorm?
+    Doesn’t BatchNorm already do a good job of regularizing [[19:12](https://youtu.be/0frKXR-2PBY?t=19m12s)]?
+    BatchNorm does an okay job of regularizing but if you think back to part 1 when
+    we discussed a list of things we do to avoid overfitting and adding BatchNorm
+    is one of them as is data augmentation. But it’s perfectly possible that you’ll
+    still be overfitting. One nice thing about dropout is that is it has a parameter
+    to say how much to drop out. Parameters are great specifically parameters that
+    decide how much to regularize because it lets you build a nice big over parameterized
+    model and then decide on how much to regularize it. Jeremy tends to always put
+    in a drop out starting with `p=0` and then as he adds regularization, he can just
+    change the dropout parameter without worrying about if he saved a model he want
+    to be able to load it back, but if he had dropout layers in one but no in another,
+    it will not load anymore. So this way, it stays consistent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we have out inputs and targets, we can calculate the L1 loss and add the
+    cross entropy [[20:39](https://youtu.be/0frKXR-2PBY?t=20m39s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`F.l1_loss(bb_i, bb_t) + F.cross_entropy(c_i, c_t)*20`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is our loss function. Cross entropy and L1 loss may be of wildly different
+    scales — in which case in the loss function, the larger one is going to dominate.
+    In this case, Jeremy printed out the values and found out that if we multiply
+    cross entropy by 20 that makes them about the same scale.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: It is nice to print out information as you train, so we grabbed L1 loss and
+    added it as metrics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: A detection accuracy is in the low 80’s which is the same as what it was before.
+    This is not surprising because ResNet was designed to do classification so we
+    wouldn’t expect to be able to improve things in such a simple way. It certainly
+    wasn’t designed to do bounding box regression. It was explicitly actually designed
+    in such a way to not care about geometry — it takes the last 7 by 7 grid of activations
+    and averages them all together throwing away all the information about where everything
+    came from.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interestingly, when we do accuracy (classification) and bounding box at the
+    same time, the L1 seems a little bit better than when we just do bounding box
+    regression [[22:46](https://youtu.be/0frKXR-2PBY?t=22m46s)]. If that is counterintuitive
+    to you, then this would be one of the main things to think about after this lesson
+    since it is a really important idea. The idea is this — figuring out what the
+    main object in an image is, is kind of the hard part. Then figuring out exactly
+    where the bounding box is and what class it is is the easy part in a way. So when
+    you have a single network that’s both saying what is the object and where is the
+    object, it’s going to share all the computation about finding the object. And
+    all that shared computation is very efficient. When we back propagate the errors
+    in the class and in the place, that’s all the information that is going to help
+    the computation around finding the biggest object. So anytime you have multiple
+    tasks which share some concept of what those tasks would need to do to complete
+    their work, it is very likely they should share at least some layers of the network
+    together. Later today, we will look at a model where most of the layers are shared
+    except for the last one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here are the result [[24:34](https://youtu.be/0frKXR-2PBY?t=24m34s)]. As before,
+    it does a good job when there is single major object in the image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi label classification [[25:29](https://youtu.be/0frKXR-2PBY?t=25m29s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Notebook](https://github.com/fastai/fastai/blob/master/courses/dl2/pascal-multi.ipynb)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We want to keep building models that are slightly more complex than the last
+    model so that if something stops working, we know exactly where it broke. Here
+    are functions from the previous notebook:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Setup
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multi class [[26:12](https://youtu.be/0frKXR-2PBY?t=26m12s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: One of the students pointed out that by using Pandas, we can do things much
+    simpler than using `collections.defaultdict` and shared [this gist](https://gist.github.com/binga/1bc4ebe5e41f670f5954d2ffa9d6c0ed).
+    The more you get to know Pandas, the more often you realize it is a good way to
+    solve lots of different problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: When you are incrementally building on top of smaller models,
+    do you reuse them as pre-trained weights? or do you toss it away then retrain
+    from scratch [[27:11](https://youtu.be/0frKXR-2PBY?t=27m11s)]? When Jeremy is
+    figuring stuff out as he goes like this, he would generally lean towards tossing
+    away because reusing pre-trained weights introduces unnecessary complexities.
+    However, if he is trying to get to a point where he can train on really big images,
+    he will generally start on much smaller and often re-use these weights.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Multi-class classification is pretty straight forward [[28:28](https://youtu.be/0frKXR-2PBY?t=28m28s)].
+    One minor tweak is the use of `set` in this line so that each object type appear
+    once.:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: SSD and YOLO [[29:10](https://youtu.be/0frKXR-2PBY?t=29m10s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have an input image that goes through a conv net which outputs a vector of
+    size `4+c` where `c=len(cats)` . This gives us an object detector for a single
+    largest object. Let’s now create one that finds 16 objects. The obvious way to
+    do this would be to take the last linear layer and rather than having `4+c` outputs,
+    we could have `16x(4+c)` outputs. This gives us 16 sets of class probabilities
+    and 16 sets of bounding box coordinates. Then we would just need a loss function
+    that will check whether those 16 sets of bounding boxes correctly represented
+    the up to 16 objects in the image (we will go into the loss function later).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second way to do this is rather than using `nn.linear`, what if instead,
+    we took from our ResNet convolutional backbone and added an `nn.Conv2d` with stride
+    2 [[31:32](https://youtu.be/0frKXR-2PBY?t=31m32s)]? This will give us a `4x4x[#
+    of filters]` tensor — here let’s make it `4x4x(4+c)` so that we get a tensor where
+    the number of elements is exactly equal to the number of elements we wanted. Now
+    if we created a loss function that took a `4x4x(4+c)` tensor and and mapped it
+    to 16 objects in the image and checked whether each one was correctly represented
+    by these `4+c` activations, this would work as well. It turns out, both of these
+    approaches are actually used [[33:48](https://youtu.be/0frKXR-2PBY?t=33m48s)].
+    The approach where the output is one big long vector from a fully connected linear
+    layer is used by a class of models known as [YOLO (You Only Look Once)](https://arxiv.org/abs/1506.02640),
+    where else, the approach of the convolutional activations is used by models which
+    started with something called [SSD (Single Shot Detector)](https://arxiv.org/abs/1512.02325).
+    Since these things came out very similar times in late 2015, things are very much
+    moved towards SSD. So the point where this morning, [YOLO version 3](https://pjreddie.com/media/files/papers/YOLOv3.pdf)
+    came out and is now doing SSD, so that’s what we are going to do. We will also
+    learn about why this makes more sense as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Anchor boxes [[35:04](https://youtu.be/0frKXR-2PBY?t=35m04s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let’s imagine that we had another `Conv2d(stride=2)` then we would have `2x2x(4+c)`
+    tensor. Basically, it is creating a grid that looks something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is how the geometry of the activations of the second extra convolutional
+    stride 2 layer are. Remember, stride 2 convolution does the same thing to the
+    geometry of the activations as a stride 1 convolution followed by maxpooling assuming
+    the padding is ok.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s talk about what we might do here [[36:09](https://youtu.be/0frKXR-2PBY?t=36m9s)].
+    We want each of these grid cell to be responsible for finding the largest object
+    in that part of the image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Receptive Field [[37:20](https://youtu.be/0frKXR-2PBY?t=37m20s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Why do we care about the idea that we would like each convolutional grid cell
+    to be responsible for finding things that are in the corresponding part of the
+    image? The reason is because of something called the receptive field of that convolutional
+    grid cell. The basic idea is that throughout your convolutional layers, every
+    piece of those tensors has a receptive field which means which part of the input
+    image was responsible for calculating that cell. Like all things in life, the
+    easiest way to see this is with Excel [[38:01](https://youtu.be/0frKXR-2PBY?t=38m1s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Take a single activation (in this case in the maxpool layer)and let’s see where
+    it came from [[38:45](https://youtu.be/0frKXR-2PBY?t=38m45s)]. In excel you can
+    do Formulas → Trace Precedents. Tracing all the way back to the input layer, you
+    can see that it came from this 6 x 6 portion of the image (as well as filters).
+    What is more, the middle portion has lots of weights coming out of where else
+    cells in the outside only have one weight coming out. So we call this 6 x 6 cells
+    the receptive field of the one activation we picked.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3x3 convolution with opacity 15% — clearly the center of the box has more dependencies
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the receptive field is not just saying it’s this box but also that
+    the center of the box has more dependencies [[40:27](https://youtu.be/0frKXR-2PBY?t=40m27s)]
+    This is a critically important concept when it comes to understanding architectures
+    and understanding why conv nets work the way they do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Architecture [[41:18](https://youtu.be/0frKXR-2PBY?t=41m18s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The architecture is, we will have a ResNet backbone followed by one or more
+    2D convolutions (one for now) which is going to give us a `4x4` grid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**SSD_Head**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start with ReLU and dropout
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then stride 1 convolution. The reason we start with a stride 1 convolution is
+    because that does not change the geometry at all — it just lets us add an extra
+    layer of calculation. It lets us create not just a linear layer but now we have
+    a little mini neural network in our custom head. `StdConv` is defined above —
+    it does convolution, ReLU, BatchNorm, and dropout. Most research code you see
+    won’t define a class like this, instead they write the entire thing again and
+    again. Don’t be like that. Duplicate code leads to errors and poor understanding.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Stride 2 convolution [[44:56](https://youtu.be/0frKXR-2PBY?t=44m56s)]
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: At the end, the output of step 3 is `4x4` which gets passed to `OutConv`. `OutConv`
+    has two separate convolutional layers each of which is stride 1 so it is not changing
+    the geometry of the input. One of them is of length of the number of classes (ignore
+    `k` for now and `+1` is for “background” — i.e. no object was detected), the other’s
+    length is 4\. Rather than having a single conv layer that outputs `4+c`, let’s
+    have two conv layers and return their outputs in a list. This allows these layers
+    to specialize just a little bit. We talked about this idea that when you have
+    multiple tasks, they can share layers, but they do not have to share all the layers.
+    In this case, our two tasks of creating a classifier and creating and creating
+    bounding box regression share every single layers except the very last one.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: At the end, we flatten out the convolution because Jeremy wrote the loss function
+    to expect flattened out tensor, but we could totally rewrite it to not do that.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[Fastai Coding Style](https://github.com/fastai/fastai/blob/master/docs/style.md)
+    [[42:58](https://youtu.be/0frKXR-2PBY?t=42m58s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The first draft was released this week. It is very heavily orient towards the
+    idea of expository programming which is the idea that programming code should
+    be something that you can use to explain an idea, ideally as readily as mathematical
+    notation, to somebody that understands your coding method. The idea goes back
+    a very long way, but it was best described in the Turing Award lecture of 1979
+    by probably Jeremy’s greatest computer science hero Ken Iverson. He had been working
+    on it since well before 1964 but 1964 was the first example of this approach of
+    programming he released which is called APL and 25 years later, he won the Turing
+    Award. He then passed on the baton to his son Eric Iverson. Fastai style guide
+    is an attempt at taking some of these ideas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Loss Function [[47:44](https://youtu.be/0frKXR-2PBY?t=47m44s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The loss function needs to look at each of these 16 sets of activations, each
+    of which has four bounding box coordinates and `c+1` class probabilities and decide
+    if those activations are close or far away from the object which is the closest
+    to this grid cell in the image. If nothing is there, then whether it is predicting
+    background correctly. That turns out to be very hard to do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Matching Problem [[48:43](https://youtu.be/0frKXR-2PBY?t=48m43s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The loss function needs to take each of the objects in the image and match them
+    to one of these convolutional grid cells to say “this grid cell is responsible
+    for this particular object” so then it can go ahead and say “okay, how close are
+    the 4 coordinates and how close are the class probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is our goal [[49:56](https://youtu.be/0frKXR-2PBY?t=49m56s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our dependent variable looks like the one on the left, and our final convolutional
+    layer is going to be `4x4x(c+1)` in this case `c=20`. We then flatten that out
+    into a vector. Our goal is to come up with a function which takes in a dependent
+    variable and also some particular set of activations that ended up coming out
+    of the model and returns a higher number if these activations are not a good reflection
+    of the ground truth bounding boxes; or a lower number if it is a good reflection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Testing [[51:58](https://youtu.be/0frKXR-2PBY?t=51m58s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Make sure these shapes make sense. Let’s now look at the ground truth `y` [[53:24](https://youtu.be/0frKXR-2PBY?t=53m24s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note that bounding box coordinates have been scaled to between 0 and 1 — basically
+    we are treating the image as being 1x1, so they are relative to the size of the
+    image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We already have `show_ground_truth` function. This `torch_gt` (gt: ground truth)
+    function simply converts tensors into numpy array.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The above is a ground truth. Here is our `4x4` grid cells from our final convolutional
+    layer [[54:44](https://youtu.be/0frKXR-2PBY?t=54m44s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Each of these square boxes, different papers call them different things. The
+    three terms you’ll hear are: anchor boxes, prior boxes, or default boxes. We will
+    stick with the term anchor boxes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What we are going to do for this loss function is we are going to go through
+    a matching problem where we are going to take every one of these 16 boxes and
+    see which one of these three ground truth objects has the highest amount of overlap
+    with a given square [[55:21](https://youtu.be/0frKXR-2PBY?t=55m21s)]. To do this,
+    we have to have some way of measuring amount of overlap and a standard function
+    for this is called [Jaccard index](https://en.wikipedia.org/wiki/Jaccard_index)
+    (IoU).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are going to go through and find the Jaccard overlap for each one of the
+    three objects versus each of the 16 anchor boxes [[57:11](https://youtu.be/0frKXR-2PBY?t=57m11s)].
+    That is going to give us a `3x16` matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are the *coordinates* of all of our anchor boxes (centers, height, width):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here are the amount of overlap between 3 ground truth objects and 16 anchor
+    boxes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'What we could do now is we could take the max of dimension 1 (row-wise) which
+    will tell us for each ground truth object, what the maximum amount that overlaps
+    with some grid cell as well as the index:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will also going to look at max over a dimension 0 (column-wise) which will
+    tell us what is the maximum amount of overlap for each grid cell across all of
+    the ground truth objects [[59:08](https://youtu.be/0frKXR-2PBY?t=59m8s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: What is particularly interesting here is that it tells us for every grid cell
+    what is the index of the ground truth object which overlaps with it the most.
+    Zero is a bit overloaded here — zero could either mean the amount of overlap was
+    zero or its largest overlap is with object index zero. It is going to turn out
+    not to matter but just FYI.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is a function called `map_to_ground_truth` which we will not worry about
+    for now [[59:57](https://youtu.be/0frKXR-2PBY?t=59m57s)]. It is super simple code
+    but it is slightly awkward to think about. Basically what it does is it combines
+    these two sets of overlaps in a way described in the SSD paper to assign every
+    anchor box to a ground truth object. The way it assign that is each of the three
+    (row-wise max) gets assigned as is. For the rest of the anchor boxes, they get
+    assigned to anything which they have an overlap of at least 0.5 with (column-wise).
+    If neither applies, it is considered to be a cell which contains background.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can see a list of all the assignments [[1:01:05](https://youtu.be/0frKXR-2PBY?t=1h1m5s)].
+    Anywhere that has `gt_overlap < 0.5` gets assigned background. The three row-wise
+    max anchor box has high number to force the assignments. Now we can combine these
+    values to classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then add a threshold and finally comes up with the three classes that are being
+    predicted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And here are what each of these anchor boxes is meant to be predicting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So that was the matching stage [[1:02:29](https://youtu.be/0frKXR-2PBY?t=1h2m29s)].
+    For L1 loss, we can:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: take the activations which matched (`pos_idx = [11, 13, 14]`)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: subtract from those the ground truth bounding boxes
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: take the absolute value of the difference
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: take the mean of that.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For classifications, we can just do a cross entropy
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will end up with 16 predicted bounding boxes, most of them will be background.
+    If you are wondering what it predicts in terms of bounding box of background,
+    the answer is it totally ignores it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tweak 1\. How do we interpret the activations [[1:04:16](https://youtu.be/0frKXR-2PBY?t=1h4m16s)]?
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The way we interpret the activation is defined here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: We grab the activations, we stick them through `tanh` (remember `tanh` is the
+    same shape as sigmoid except it is scaled to be between -1 and 1) which forces
+    it to be within that range. We then grab the actual position of the anchor boxes,
+    and we will move them around according to the value of the activations divided
+    by two (`actn_bbs[:,:2]/2`). In other words, each predicted bounding box can be
+    moved by up to 50% of a grid size from where its default position is. Ditto for
+    its height and width — it can be up to twice as big or half as big as its default
+    size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tweak 2\. We actually use binary cross entropy loss instead of cross entropy
+    [[1:05:36](https://youtu.be/0frKXR-2PBY?t=1h5m36s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Binary cross entropy is what we normally use for multi-label classification.
+    Like in the planet satellite competition, each satellite image could have multiple
+    things. If it has multiple things in it, you cannot use softmax because softmax
+    really encourages just one thing to have the high number. In our case, each anchor
+    box can only have one object associated with it, so it is not for that reason
+    that we are avoiding softmax. It is something else — which is it is possible for
+    an anchor box to have nothing associated with it. There are two ways to handle
+    this idea of “background”; one would be to say background is just a class, so
+    let’s use softmax and just treat background as one of the classes that the softmax
+    could predict. A lot of people have done it this way. But that is a really hard
+    thing to ask neural network to do [[1:06:52](https://youtu.be/0frKXR-2PBY?t=1h5m52s)]
+    — it is basically asking whether this grid cell does not have any of the 20 objects
+    that I am interested with Jaccard overlap of more than 0.5\. It is a really hard
+    to thing to put into a single computation. On the other hand, what if we just
+    asked for each class; “is it a motorbike?” “is it a bus?”, “ is it a person?”
+    etc and if all the answer is no, consider that background. That is the way we
+    do it here. It is not that we can have multiple true labels, but we can have zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In `forward` :'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First we take the one hot embedding of the target (at this stage, we do have
+    the idea of background)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then we remove the background column (the last one) which results in a vector
+    either of all zeros or one one.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Use binary cross-entropy predictions.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This is a minor tweak, but it is the kind of minor tweak that Jeremy wants you
+    to think about and understand because it makes a really big difference to your
+    training and when there is some increment over a previous paper, it would be something
+    like this [[1:08:25](https://youtu.be/0frKXR-2PBY?t=1h8m25s)]. It is important
+    to understand what this is doing and more importantly why.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So now we have [[1:09:39](https://youtu.be/0frKXR-2PBY?t=1h9m39s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A custom loss function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A way to calculate Jaccard index
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A way to convert activations to bounding box
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A way to map anchor boxes to ground truth
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Now all it’s left is SSD loss function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SSD Loss Function [[1:09:55](https://youtu.be/0frKXR-2PBY?t=1h9m55s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `ssd_loss` function which is what we set as the criteria, it loops through
+    each image in the mini-batch and call `ssd_1_loss` function (i.e. SSD loss for
+    one image).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`ssd_1_loss` is where it is all happening. It begins by de-structuring `bbox`
+    and `clas`. Let’s take a closer look at `get_y` [[1:10:38](https://youtu.be/0frKXR-2PBY?t=1h10m38s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: A lot of code you find on the internet does not work with mini-batches. It only
+    does one thing at a time which we don’t want. In this case, all these functions
+    (`get_y`, `actn_to_bb`, `map_to_ground_truth`) is working on, not exactly a mini-batch
+    at a time, but a whole bunch of ground truth objects at a time. The data loader
+    is being fed a mini-batch at a time to do the convolutional layers. Because we
+    can have *different numbers of ground truth objects in each image* but a tensor
+    has to be the strict rectangular shape, fastai automatically pads it with zeros
+    (any target values that are shorter) [[1:11:08](https://youtu.be/0frKXR-2PBY?t=1h11m8s)].
+    This was something that was added recently and super handy, but that does mean
+    that you then have to make sure that you get rid of those zeros. So `get_y` gets
+    rid of any of the bounding boxes that are just padding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Get rid of the padding
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Turn the activations to bounding boxes
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Do the Jaccard
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Do map_to_ground_truth
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Check that there is an overlap greater than something around 0.4~0.5 (different
+    papers use different values for this)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Find the indices of things that matched
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Assign background class for the ones that did not match
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then finally get L1 loss for the localization, binary cross entropy loss for
+    the classification, and return them which gets added in `ssd_loss`
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Training [[1:12:47](https://youtu.be/0frKXR-2PBY?t=1h12m47s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Result [[1:13:16](https://youtu.be/0frKXR-2PBY?t=1h13m16s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In practice, we want to remove the background and also add some threshold for
+    probabilities, but it is on the right track. The potted plant image, the result
+    is not surprising as all of our anchor boxes were small (4x4 grid). To go from
+    here to something that is going to be more accurate, all we are going to do is
+    to create way more anchor boxes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: For the multi-label classification, why aren’t we multiplying
+    the categorical loss by a constant like we did before [[1:15:20](https://youtu.be/0frKXR-2PBY?t=1h15m20s)]?
+    Great question. It is because later on it will turn out we do not need to.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More anchors! [[1:14:47](https://youtu.be/0frKXR-2PBY?t=1h14m47s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are 3 ways to do this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create anchor boxes of different sizes (zoom):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: From left (1x1, 2x2, 4x4 grids of anchor boxes). Notice that some of the anchor
+    box is bigger than the original image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2\. Create anchor boxes of different aspect ratios:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3\. Use more convolutional layers as sources of anchor boxes (the boxes are
+    randomly jittered so that we can see ones that are overlapping [[1:16:28](https://youtu.be/0frKXR-2PBY?t=1h16m28s)]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Combining these approaches, you can create lots of anchor boxes (Jeremy said
+    he wouldn’t print it, but here it is):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`anchors` : middle and height, width'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`anchor_cnr` : top left and bottom right corners'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Review of key concept [[1:18:00](https://youtu.be/0frKXR-2PBY?t=1h18m)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have a vector of ground truth (sets of 4 bounding box coordinates and a class)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We have a neural net that takes some input and spits out some output activations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Compare the activations and the ground truth, calculate a loss, find the derivative
+    of that, and adjust weights according to the derivative times a learning rate.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We need a loss function that can take ground truth and activation and spit out
+    a number that says how good these activations are. To do this, we need to take
+    each one of `m` ground truth objects and decide which set of `(4+c)` activations
+    is responsible for that object [[1:21:58](https://youtu.be/0frKXR-2PBY?t=1h21m58s)]
+    — which one we should be comparing to decide whether the class is correct and
+    bounding box is close or not (matching problem).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Since we are using SSD approach, so it is not arbitrary which ones we match
+    up [[1:23:18](https://youtu.be/0frKXR-2PBY?t=1h23m18s)]. We want to match up the
+    set of activations whose receptive field has the maximum density from where the
+    real object is.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The loss function needs to be some consistent task. If in the first image, the
+    top left object corresponds with the first 4+c activations, and in the second
+    image, we threw things around and suddenly it’s now going with the last 4+c activations,
+    the neural net doesn’t know what to learn.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Once matching problem is resolved, the rest is just the same as the single object
+    detection.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Architectures:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: YOLO — the last layer is fully connected (no concept of geometry)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: SSD — the last layer is convolutional
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: k (zooms x ratios)[[1:29:39](https://youtu.be/0frKXR-2PBY?t=1h29m39s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For every grid cell which can be different sizes, we can have different orientations
+    and zooms representing different anchor boxes which are just like conceptual ideas
+    that every one of anchor boxes is associated with one set of `4+c` activations
+    in our model. So however many anchor boxes we have, we need to have that times
+    `(4+c)` activations. That does not mean that each convolutional layer needs that
+    many activations. Because 4x4 convolutional layer already has 16 sets of activations,
+    the 2x2 layer has 4 sets of activations, and finally 1x1 has one set. So we basically
+    get 1 + 4 + 16 for free. So we only needs to know `k` where `k` is the number
+    of zooms by the number of aspect ratios. Where else, the grids, we will get for
+    free through our architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model Architecture [[1:31:10](https://youtu.be/0frKXR-2PBY?t=1h31m10s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: The model is nearly identical to what we had before. But we have a number of
+    stride 2 convolutions which is going to take us through to 4x4, 2x2, and 1x1 (each
+    stride 2 convolution halves our grid size in both directions).
+  prefs: []
+  type: TYPE_NORMAL
+- en: After we do our first convolution to get to 4x4, we will grab a set of outputs
+    from that because we want to save away the 4x4 anchors.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Once we get to 2x2, we grab another set of now 2x2 anchors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then finally we get to 1x1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We then concatenate them all together, which gives us the correct number of
+    activations (one activation for every anchor box).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Training [[1:32:50](https://youtu.be/0frKXR-2PBY?t=1h32m50s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we printed out those detections with at least probability of `0.2` . Some
+    of them look pretty hopeful but others not so much.
+  prefs: []
+  type: TYPE_NORMAL
+- en: History of object detection [[1:33:43](https://youtu.be/0frKXR-2PBY?t=1h33m43s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Scalable Object Detection using Deep Neural Networks](https://arxiv.org/abs/1312.2249)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When people refer to the multi-box method, they are talking about this paper.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This was the paper that came up with the idea that we can have a loss function
+    that has this matching process and then you can use that to do object detection.
+    So everything since that time has been trying to figure out how to make this better.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In parallel, Ross Girshick was going down a totally different direction. He
+    had these two-stage process where the first stage used the classical computer
+    vision approaches to find edges and changes of gradients to guess which parts
+    of the image may represent distinct objects. Then fit each of those into a convolutional
+    neural network which was basically designed to figure out if that is the kind
+    of object we are interested in.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: R-CNN and Fast R-CNN are hybrid of traditional computer vision and deep learning.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'What Ross and his team then did was they took the multibox idea and replaced
+    the traditional non-deep learning computer vision part of their two stage process
+    with the conv net. So now they have two conv nets: one for region proposals (all
+    of the things that might be objects) and the second part was the same as his earlier
+    work.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[You Only Look Once: Unified, Real-Time Object Detection](https://arxiv.org/abs/1506.02640)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[SSD: Single Shot MultiBox Detector](https://arxiv.org/abs/1512.02325)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At similar time these paper came out. Both of these did something pretty cool
+    which is they achieved similar performance as the Faster R-CNN but with 1 stage.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: They took the multibox idea and they tried to figure out how to deal with messy
+    outputs. The basic ideas were to use, for example, hard negative mining where
+    they would go through and find all of the matches that did not look that good
+    and throw them away, use very tricky and complex data augmentation methods, and
+    all kind of hackery. But they got them to work pretty well.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002) (RetinaNet)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then something really cool happened late last year which is this thing called
+    focal loss.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: They actually realized why this messy thing wasn’t working. When we look at
+    an image, there are 3 different granularities of convolutional grid (4x4, 2x2,
+    1x1) [[1:37:28](https://youtu.be/0frKXR-2PBY?t=1h37m28s)]. The 1x1 is quite likely
+    to have a reasonable overlap with some object because most photos have some kind
+    of main subject. On the other hand, in the 4x4 grid cells, the most of 16 anchor
+    boxes are not going to have a much of an overlap with anything. So if somebody
+    was to say to you “$20 bet, what do you reckon this little clip is?” and you are
+    not sure, you will say “background” because most of the time, it is the background.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Question**: I understand why we have a 4x4 grid of receptive fields with
+    1 anchor box each to coarsely localize objects in the image. But what I think
+    I’m missing is why we need multiple receptive fields at different sizes. The first
+    version already included 16 receptive fields, each with a single anchor box associated.
+    With the additions, there are now many more anchor boxes to consider. Is this
+    because you constrained how much a receptive field could move or scale from its
+    original size? Or is there another reason? [[1:38:47](https://youtu.be/0frKXR-2PBY?t=1h38m47s)]
+    It is kind of backwards. The reason Jeremy did the constraining was because he
+    knew he was going to be adding more boxes later. But really, the reason is that
+    the Jaccard overlap between one of those 4x4 grid cells and a picture where a
+    single object that takes up most of the image is never going to be 0.5\. The intersection
+    is much smaller than the union because the object is too big. So for this general
+    idea to work where we are saying you are responsible for something that you have
+    better than 50% overlap with, we need anchor boxes which will on a regular basis
+    have a 50% or higher overlap which means we need to have a variety of sizes, shapes,
+    and scales. This all happens in the loss function. The vast majority of the interesting
+    stuff in all of the object detection is the loss function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Focal Loss [[1:40:38](https://youtu.be/0frKXR-2PBY?t=1h40m38s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The key thing is this very first picture. The blue line is the binary cross
+    entropy loss. If the answer is not a motorbike [[1:41:46](https://youtu.be/0frKXR-2PBY?t=1h41m46s)],
+    and I said “I think it’s not a motorbike and I am 60% sure” with the blue line,
+    the loss is still about 0.5 which is pretty bad. So if we want to get our loss
+    down, then for all these things which are actually back ground, we have to be
+    saying “I am sure that is background”, “I am sure it’s not a motorbike, or a bus,
+    or a person” — because if I don’t say we are sure it is not any of these things,
+    then we still get loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That is why the motorbike example did not work [[1:42:39](https://youtu.be/0frKXR-2PBY?t=1h42m39s)].
+    Because even when it gets to lower right corner and it wants to say “I think it’s
+    a motorbike”, there is no payoff for it to say so. If it is wrong, it gets killed.
+    And the vast majority of the time, it is background. Even if it is not background,
+    it is not enough just to say “it’s not background” — you have to say which of
+    the 20 things it is.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So the trick is to trying to find a different loss function [[1:44:00](https://youtu.be/0frKXR-2PBY?t=1h44m)]
+    that looks more like the purple line. Focal loss is literally just a scaled cross
+    entropy loss. Now if we say “I’m .6 sure it’s not a motorbike” then the loss function
+    will say “good for you! no worries” [[1:44:42](https://youtu.be/0frKXR-2PBY?t=1h44m42s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The actual contribution of this paper is to add `(1 − pt)^γ` to the start of
+    the equation [[1:45:06](https://youtu.be/0frKXR-2PBY?t=1h45m6s)] which sounds
+    like nothing but actually people have been trying to figure out this problem for
+    years. When you come across a paper like this which is game-changing, you shouldn’t
+    assume you are going to have to write thousands of lines of code. Very often it
+    is one line of code, or the change of a single constant, or adding log to a single
+    place.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A couple of terrific things about this paper [[1:46:08](https://youtu.be/0frKXR-2PBY?t=1h46m8s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equations are written in a simple manner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: They “refactor”
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Implementing Focal Loss [[1:49:27](https://youtu.be/0frKXR-2PBY?t=1h49m27s)]:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Remember, -log(pt) is the cross entropy loss and focal loss is just a scaled
+    version. When we defined the binomial cross entropy loss, you may have noticed
+    that there was a weight which by default was none:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When you call `F.binary_cross_entropy_with_logits`, you can pass in the weight.
+    Since we just wanted to multiply a cross entropy by something, we can just define
+    `get_weight`. Here is the entirety of focal loss [[1:50:23](https://youtu.be/0frKXR-2PBY?t=1h50m23s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you were wondering why alpha and gamma are 0.25 and 2, here is another excellent
+    thing about this paper, because they tried lots of different values and found
+    that these work well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training [[1:51:25](https://youtu.be/0frKXR-2PBY?t=1h51m25s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: This time things are looking quite a bit better. So our last step, for now,
+    is to basically figure out how to pull out just the interesting ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Non Maximum Suppression [[1:52:15](https://youtu.be/0frKXR-2PBY?t=1h52m15s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: All we are going to do is we are going to go through every pair of these bounding
+    boxes and if they overlap by more than some amount, say 0.5, using Jaccard and
+    they are both predicting the same class, we are going to assume they are the same
+    thing and we are going to pick the one with higher `p` value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is really boring code, Jeremy didn’t write it himself and copied somebody
+    else’s. No reason particularly to go through it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are some things still to fix here [[1:53:43](https://youtu.be/0frKXR-2PBY?t=1h53m43s)].
+    The trick will be to use something called feature pyramid. That is what we are
+    going to do in lesson 14.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Talking a little more about SSD paper [[1:54:03](https://youtu.be/0frKXR-2PBY?t=1h54m3s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When this paper came out, Jeremy was excited because this and YOLO were the
+    first kind of single-pass good quality object detection method that come along.
+    There has been this continuous repetition of history in the deep learning world
+    which is things that involve multiple passes of multiple different pieces, over
+    time, particularly where they involve some non-deep learning pieces (like R-CNN
+    did), over time, they always get turned into a single end-to-end deep learning
+    model. So I tend to ignore them until that happens because that’s the point where
+    people have figured out how to show this as a deep learning model, as soon as
+    they do that they generally end up something much faster and much more accurate.
+    So SSD and YOLO were really important.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model is 4 paragraphs. Papers are really concise which means you need to
+    read them pretty carefully. Partly, though, you need to know which bits to read
+    carefully. The bits where they say “here we are going to prove the error bounds
+    on this model,” you could ignore that because you don’t care about proving error
+    bounds. But the bit which says here is what the model is, you need to read real
+    carefully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jeremy reads a section **2.1 Model** [[1:56:37](https://youtu.be/0frKXR-2PBY?t=1h56m37s)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you jump straight in and read a paper like this, these 4 paragraphs would
+    probably make no sense. But now that we’ve gone through it, you read those and
+    hopefully thinking “oh that’s just what Jeremy said, only they sad it better than
+    Jeremy and less words [[2:00:37](https://youtu.be/0frKXR-2PBY?t=2h37s)]. If you
+    start to read a paper and go “what the heck”, the trick is to then start reading
+    back over the citations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jeremy reads **Matching strategy** and **Training objective** (a.k.a. Loss function)[[2:01:44](https://youtu.be/0frKXR-2PBY?t=2h1m44s)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some paper tips [[2:02:34](https://youtu.be/0frKXR-2PBY?t=2h2m34s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Scalable Object Detection using Deep Neural Networks](https://arxiv.org/pdf/1312.2249.pdf)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: “Training objective” is loss function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Double bars and two 2’s like this means Mean Squared Error
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'log(c) and log(1-c), and x and (1-x) they are all the pieces for binary cross
+    entropy:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This week, go through the code and go through the paper and see what is going
+    on. Remember what Jeremy did to make it easier for you was he took that loss function,
+    he copied it into a cell and split it up so that each bit was in a separate cell.
+    Then after every sell, he printed or plotted that value. Hopefully this is a good
+    starting point.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1860 @@
+- en: 'Deep Learning 2: Part 2 Lesson 10'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-10-422d87c3340c](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-10-422d87c3340c)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*fast.ai course*](http://www.fast.ai/)*. These notes
+    will continue to be updated and improved as I continue to review the course to
+    “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Video](https://youtu.be/h5Tz7gZT9Fo) / [Forum](http://forums.fast.ai/t/part-2-lesson-10-wiki/14364/1)'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Review of Last Week [[0:16](https://youtu.be/h5Tz7gZT9FoY?t=16s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Many students are struggling with last week’s material, so if you are finding
+    it difficult, that’s fine. The reason Jeremy put it up there up front is so that
+    we have something to cogitate about, think about, and gradually work towards,
+    so by lesson 14, you’ll get a second crack at it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To understand the pieces, you’ll need to understand the shapes of convolutional
+    layer outputs, receptive fields, and loss functions — which are all the things
+    you’ll need to understand for all of your deep learning studies anyway.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: One key thing is that we started out with something simple — a single object
+    classifier, single object bounding box without a classifier, and then single object
+    classifier and bounding box. The bit where we go to multiple objects is actually
+    almost identical to that except we first have to solve the matching problem. We
+    ended up creating far more activations than we need for our our number of ground
+    truth bounding boxes, so we match each ground truth object to a subset of those
+    activations. Once we’ve done that, the loss function that we then do to each matched
+    pair is almost identical to this loss function (i.e. the one for single object
+    classifier and bounding box).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you are feeling stuck, go back to lesson 8 and make sure you understand Dataset,
+    DataLoader, and most importantly the loss function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: So once we have something which can predict the class and bounding box for one
+    object, we went to multiple objects by just creating more activations [[2:40](https://youtu.be/h5Tz7gZT9Fo?t=2m40s)].
+    We had to then deal with the matching problem, having dealt with a matching problem,
+    we then moved each of those anchor boxes in and out a little bit and around a
+    little bit, so they tried to line up with particular ground truth objects.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We talked about how we took advantage of the convolutional nature of the network
+    to try to have activations that had a receptive field that was similar to the
+    ground truth object we were predicting. Chloe provided the following fantastic
+    picture to talk about what SSD_MultiHead.forward does line by line:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: by [Chloe Sultan](http://forums.fast.ai/u/chloews)
+  prefs: []
+  type: TYPE_NORMAL
+- en: What Chloe’s done here is she’s focused particularly on the dimensions of the
+    tensor at each point in the path as we gradually downsampled using stride 2 convolutions,
+    making sure she understands why those grid sizes happen then understanding how
+    the outputs come out of those.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is where you’ve got to remember this `pbd.set_trace()`. I just went in
+    just before the class and went into `SSD_MultiHead.forward` and entered `pdb.set_trace()`
+    and then I ran a single batch. Then I could just print out the size of all these.
+    We make mistakes and that’s why we have debuggers and know how to check things
+    and do things in small little bits along the way.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We then talked about increasing *k* [[5:49](https://youtu.be/h5Tz7gZT9Fo?t=5m49s)]
+    which is the number of anchor boxes for each convolutional grid cell which we
+    can do with different zooms, aspect ratios, and that gives us a plethora of activations
+    and therefore predicted bounding boxes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then we went down to a small number using Non Maximum Suppression.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Non Maximum Suppression is kind of hacky, ugly, and totally heuristic, and we
+    did not even talk about the code because it seems hideous. Somebody actually came
+    up with a paper recently which attempts to do an end-to-end conv net to replace
+    that NMS piece ([https://arxiv.org/abs/1705.02950](https://arxiv.org/abs/1705.02950)).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Not enough people are reading papers! What we are doing in class now is implementing
+    papers, the papers are the real ground truth. And I think you know from talking
+    to people a lot of the reason people aren’t reading paper is because a lot of
+    people don’g think they are capable of reading papers. They don’t think they are
+    the kind of people that read papers, but you are. You are here. We started looking
+    at a paper last week and we read the words that were in English and we largely
+    understood them. If you look at the picture above carefully, you’ll realize `SSD_MultiHead.forward`
+    is not doing the same. You might then wonder if this is better. My answer is probably.
+    Because SSD_MultiHead.forward was the first thing I tried just to get something
+    out there. Between this and YOLO3 paper, they are probably much better ways.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: One thing you’ll notice in particular they use a smaller k but they have a lot
+    more sets of grids 1x1, 3x3, 5x5, 10x10, 19x19, 38x38 — 8732 per class. A lot
+    more than we had, so that’ll be an interesting thing to experiment with.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Another thing I noticed is that we had 4x4, 2x2, 1c1 which means there are a
+    lot of overlap — every set fits within every other set. In this case where you’ve
+    got 1, 3, 5, you don’t have that overlap. So it might actually make it easier
+    to learn. There’s lots of interesting you can play with.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Perhaps most important thing I would recommend is to put the code and the equations
+    next to each other. You are either math person or code person. By having them
+    side by side, you will learn a little bit of the other.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Learning the math is hard because of the notation might seem hard to look up
+    but there are good resources such as [wikipedia](https://en.wikipedia.org/wiki/List_of_mathematical_symbols).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Another thing you should try doing is to re-create things that you see in the
+    papers. Here was the key most important figure 1 from the focal loss paper.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: I did discover a minor bug in my code last week [[12:14](https://youtu.be/h5Tz7gZT9Fo?t=12m14s)]
+    — the way I was flattening out the convolutional activations did not line up with
+    how I was using them in the loss function, and fixing that made it quite a bit
+    better.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Question**: Usually, when we down sample, we increase the number of filters,
+    or depth. when we’re doing sampling from 7x7 to 4x4 etc, why are we decreasing
+    the number from 512 to 256? Why not decrease dimension in SSD head? (performance
+    related?) [[12:58](https://youtu.be/_ercfViGrgY?t=12m58s)] We have a number of
+    out paths and we want each one to be the same, so we don’t want each one to have
+    different number of filters and also this is what the papers did so I was trying
+    to match up with that. Having these 256 — it’s a different concept because we
+    are taking advantage of not just the last layer but the layers before that as
+    well. Life is easier if we make them more consistent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Natural Language Processing [[14:10](https://youtu.be/h5Tz7gZT9Fo?t=14m10s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Where we are going :'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have seen in every lesson this idea of taking a pre-trained model, whip off
+    some some stuff on the top, replace it with something new, and get it to do something
+    similar. We’ve kind of dived in a little bit deeper to that to say with `ConvLearner.pretrained`
+    it had a standard way of sticking stuff on the top which does a particular thing
+    (i.e. classification). Then we learned actually we can stick any PyTorch module
+    we like on the end and have it do anything we like with a `custom_head` and so
+    suddenly you discover there’s some really interesting things we can do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In fact, Yang Lu said “what if we did a different kind of custom head?” and
+    the different custom head was let’s take the original pictures, rotate them, and
+    the make our dependent variable the opposite of that rotation and see if it can
+    learn to un-rotate it. This is a super useful thing, in fact, I think Google photos
+    nowadays has this option that it’ll actually automatically rotate your photos
+    for you. But the cool thing is, as he showed here, you can build that network
+    right now by doing exactly the same as our previous lesson. But your custom head
+    is one that spits out a single number which is how much to rotate by, and your
+    dataset has a dependent variable which is how much you rotated by.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[http://forums.fast.ai/t/fun-with-lesson8-rotation-adjustment-things-you-can-do-without-annotated-dataset/14261/1](http://forums.fast.ai/t/fun-with-lesson8-rotation-adjustment-things-you-can-do-without-annotated-dataset/14261/1)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: So you suddenly realize with this idea of a backbone plus a custom head, you
+    can do almost anything you can think about [[16:30](https://youtu.be/h5Tz7gZT9Fo?t=16m30s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Today, we are going to look at the same idea and see how that applies to NLP.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the next lesson, we are going to go further and say if NLP and computer vision
+    lets you do the same basic ideas, how do we combine the two. We are going to learn
+    about a model that can actually learn to find word structures from images, images
+    from word structures, or images from images. That will form the basis if you wanted
+    to go further of doing things like going from an image to a sentence (i.e. image
+    captioning) or going from a sentence to an image which we kind of started to do,
+    a phrase to image.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: From there, we’ve got to go deeper then into computer vision to think what other
+    kinds of things we can do with this idea of pre-trained network plus a custom
+    head. So we will look at various kinds of image enhancement like increasing the
+    resolution of a low-res photo to guess what was missing or adding artistic filters
+    on top of photos, or changing photos of horses into photos of zebras, etc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then finally that’s going to bring us all the way back to bounding boxes again.
+    To get there, we’re going to first of all learn about segmentation which is not
+    just figuring out where a bounding box is, but figuring out what every single
+    pixel in an image is a part of — so this pixel is a part of a person, this pixel
+    is a part of a car. Then we are going to use that idea, particularly an idea called
+    UNet, which turns out that this idea of UNet, we can apply to bounding boxes —
+    where it’s called feature pyramids. We’ll use that to get really good results
+    with bounding boxes. That’s kind of our path from here. It’s all going to build
+    on each other but take us into lots of different areas.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'torchtext to fastai.text [[18:56](https://youtu.be/h5Tz7gZT9Fo?t=18m56s)]:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For NLP, last part, we relied on a library called torchtext but as good as it
+    was, I’ve since then found the limitation of it too problematic to keep using
+    it. As a lot of you complained on the forums, it’s pretty darn slow partly that’s
+    because it’s not doing parallel processing and partly it’s because it doesn’t
+    remember what you did last time and it does it all over again from scratch. Then
+    it’s hard to do fairly simple things like a lot of you were trying to get into
+    the toxic comment competition on Kaggle which was a multi-label problem and trying
+    to do that with torchtext, I eventually got it working but it took me like a week
+    of hacking away which is kind of ridiculous. To fix all these problems, we’ve
+    created a new library called fastai.text. Fastai.text is a replacement for the
+    combination of torchtext and fastai.nlp. So don’t use fastai.nlp anymore — that’s
+    obsolete. It’s slower, it’s more confusing, it’s less good in every way, but there’s
+    a lot of overlaps. Intentionally, a lot of the classes and functions have the
+    same names, but this is the non-torchtext version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IMDb [[20:32](https://youtu.be/h5Tz7gZT9Fo?t=20m32s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Notebook](https://github.com/fastai/fastai/blob/master/courses/dl2/imdb.ipynb)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will work with IMDb again. For those of you who have forgotten, go back and
+    checkout [lesson 4](/@hiromi_suenaga/deep-learning-2-part-1-lesson-4-2048a26d58aa).
+    This is a dataset of movie reviews, and we used it to find out whether we might
+    enjoy Zombiegeddon or not, and we thought probably my kind of thing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We need to download the IMDB large movie reviews from this site: [http://ai.stanford.edu/~amaas/data/sentiment/](http://ai.stanford.edu/~amaas/data/sentiment/)
+    Direct link : [Link](http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz)'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Standardize format [[21:27](https://youtu.be/h5Tz7gZT9Fo?t=21m27s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The basic paths for NLP is that we have to take sentences and turn them into
+    numbers, and there is a couple to get there. At the moment, somewhat intentionally,
+    fastai.text does not provide that many helper functions. It’s really designed
+    more to let you handle things in a fairly flexible way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As you can see here [[21:59](https://youtu.be/h5Tz7gZT9Fo?t=21m59s)], I wrote
+    something called get_texts which goes through each thing in `CLASSES`. There are
+    three classes in IMDb: negative, positive, and then there’s another folder “unsupervised”
+    which contains the ones they haven’t gotten around to labeling yet — so we will
+    just call that a class for now. So we just go through each one of those classes,
+    then find every file in that folder, and open it up, read it, and chuck it into
+    the end of the array. As you can see, with pathlib, it’s super easy to grab stuff
+    and pull it in, and then the label is just whatever class we are up to so far.
+    We will do that for both training set and test set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: there are 75,000 in train, 25,000 in test. 50,000 in the train set are unsupervised,
+    and we won’t actually be able to use them when we get to the classification. Jeremy
+    found this much easier than torch.text approach of having lots of layers and wrappers
+    because in the end, reading text files is not that hard.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: One thing that’s always good idea is to sort things randomly [[23:19](https://youtu.be/h5Tz7gZT9Fo?t=23m19s)].
+    It is useful to know this simple trick for sorting things randomly particularly
+    when you’ve got multiple things you have to sort the same way. In this case, you
+    have labels and `texts. np.random.permutation`, if you give it an integer, it
+    gives you a random list from 0 up to and not including the number you give it
+    in some random order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can them pass that in as an indexer to give you a list that’s sorted in
+    that random order. So in this case, it is going to sort `trn_texts` and `trn_labels`
+    in the same random way. So that’s a useful little idiom to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we have our texts and labels sorted, we can create a dataframe from them
+    [[24:07](https://youtu.be/h5Tz7gZT9Fo?t=24m7s)]. Why are we doing this? The reason
+    is because there is a somewhat standard approach starting to appear for text classification
+    datasets which is to have your training set as a CSV file with the labels first,
+    and the text of the NLP documents second. So it basically looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: So you have your labels and texts, and then a file called classes.txt which
+    just lists the classes. I say somewhat standard because in a reasonably recent
+    academic paper Yann LeCun and a team of researcher looked at quite a few datasets
+    and they use this format for all of them. So that’s what I started using as well
+    for my recent paper. You’ll find that this notebook, if you put your data into
+    this format, the whole notebook will work every time [[25:17](https://youtu.be/h5Tz7gZT9Fo?t=25m17s)].
+    So rather than having a thousand different formats, I just said let’s just pick
+    a standard format and your job is to put your data in that format which is the
+    CSV file. The CSV files have no header by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You’ll notice at the start, we have two different paths [[25:51](https://youtu.be/h5Tz7gZT9Fo?t=25m51s)].
+    One was the classification path, and the other was the language model path. In
+    NLP, you’ll see LM all the time. LM means language model. The classification path
+    is going to contain the information that we are going to use to create a sentiment
+    analysis model. The language model path is going to contain the information we
+    need to create a language model. So they are a little bit different. One thing
+    that is different is that when we create the train.csv in the classification path,
+    we remove everything that has a label of 2 because label of 2 is “unsupervised”
+    and we can’t use it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The second difference is the labels [[26:51](https://youtu.be/h5Tz7gZT9Fo?t=26m51s)].
+    For the classification path, the labels are the actual labels, but for the language
+    model, there are no labels so we just use a bunch of zeros and that just makes
+    it a little easier because we can use a consistent dataframe/CSV format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now the language model, we can create our own validation set, so you’ve probably
+    come across by now, `sklearn.model_selection.train_test_split` which is a really
+    simple function that grabs a dataset and randomly splits it into a training set
+    and a validation set according to whatever proportion you specify. In this case,
+    we concatenate our classification training and validation together, split it by
+    10%, now we have 90,000 training, 10,000 validation for our language model. So
+    that’s getting the data in a standard format for our language model and our classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Language model tokens [[28:03](https://youtu.be/h5Tz7gZT9Fo?t=28m3s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The next thing we need to do is tokenization. Tokenization means at this stage,
+    for a document (i.e. a movie review), we have a big long string and we want to
+    turn it into a list of tokens which is similar to a list of words but not quite.
+    For example, `don’t` we want it to be `do` and `n’t`, we probably want full stop
+    to be a token, and so forth. Tokenization is something that we passed off to a
+    terrific library called spaCy — partly terrific because the Australian wrote it
+    and partly terrific because it’s good at what it does. We put a bit of stuff on
+    top of spaCy but the vast majority of the work’s been done by spaCy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Before we pass it to spaCy, Jeremy wrote this simple `fixup` function which
+    is each time he’s looked at different datasets (about a dozen in building this),
+    every one had different weird things that needed to be replaced. So here are all
+    the ones he’s come up with so far, and hopefully this will help you out as well.
+    All the entities are html unescaped and there are bunch more things we replace.
+    Have a look at the result of running this on text that you put in and make sure
+    there’s no more weird tokens in there.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`get_all function` calls `get_texts` and get_texts is going to do a few things
+    [[29:40](https://youtu.be/h5Tz7gZT9Fo?t=29m40s)]. One of which is to apply that
+    `fixup` that we just mentioned.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s look through this because there is some interesting things to point out
+    [[29:57](https://youtu.be/h5Tz7gZT9Fo?t=29m57s)]. We are going to use pandas to
+    open our train.csv from the language model path, but we are passing in an extra
+    parameter you may not have seen before called `chunksize`. Python and pandas can
+    both be pretty inefficient when it comes to storing and using text data. So you’ll
+    see that very few people in NLP are working with large corpuses. And Jeremy thinks
+    the part of the reason is that traditional tools made it really difficult — you
+    run out of memory all the time. So this process he is showing us today, he has
+    used on corpuses of over a billion words successfully using this exact code. One
+    of the simple trick is this thing called `chunksize` with pandas. That that means
+    is that pandas does not return a data frame, but it returns an iterator that we
+    can iterate through chunks of a data frame. That is why we don’t say `tok_trn
+    = get_text(df_trn)` but instead we call `get_all` which loops through the data
+    frame but actually what it’s really doing is it’s looping through chunks of the
+    data frame so each of those chunks is basically a data frame representing a subset
+    of the data [[31:05]](https://youtu.be/h5Tz7gZT9Fo?t=31m5s).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: When I’m working with NLP data, many times I come across data
+    with foreign texts/characters. Is it better to discard them or keep them [[31:31](https://youtu.be/h5Tz7gZT9Fo?t=31m31s)]?
+    No no, definitely keep them. This whole process is unicode and I’ve actually used
+    this on Chinese text. This is designed to work on pretty much anything. In general,
+    most of the time, it’s not a good idea to remove anything. Old-fashioned NLP approaches
+    tended to do all this like lemmatization and all these normalization steps to
+    get rid things, lower case everything, etc. But that’s throwing away information
+    which you don’t know ahead of time whether it’s useful or not. So don’t throw
+    away information.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So we go through each chunk each of which is a data frame and we call `get_texts`
+    [[32:19](https://youtu.be/h5Tz7gZT9Fo?t=32m19s)]. `get_texts` will grab the labels
+    and makes them into integers, and it’s going to grab the texts. A couple things
+    to point out:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we include the text, we have “beginning of stream” (`BOS`) token which
+    we defined in the beginning. There’s nothing special about these particular strings
+    of letters — they are just ones I figured don’t appear in normal texts very often.
+    So every text is going to start with `‘xbos’` — why is that? Because it’s often
+    useful for your model to know when a new text is starting. For example, if it’s
+    a language model, we are going to concatenate all the texts together. So it would
+    be really helpful for it to know all this articles finished and a new one started
+    so I should probably forget some of their context now.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ditto is quite often texts have multiple fields like a title and abstract, and
+    then a main document. So by the same token, we’ve got this thing here which lets
+    us actually have multiple fields in our CSV. So this process is designed to be
+    very flexible. Again at the start of each one, we put a special “field starts
+    here” token followed by the number of the field that’s starting here for as many
+    fields as we have. Then we apply `fixup` to it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then most importantly [[33:54](https://youtu.be/h5Tz7gZT9Fo?t=33m54s)], we tokenize
+    it — we tokenize it by doing a “process all multiprocessing” (`proc_all_mp`).
+    Tokenizing tends to be pretty slow but we’ve all got multiple cores in our machines
+    now, and some of the better machines on AWS can have dozens of cores. spaCy is
+    not very amenable to multi processing but Jeremy finally figured out how to get
+    it to work. The good news is that it’s all wrapped up in this one function now.
+    So all you need to pass to that function is a list of things to tokenize which
+    each part of that list will be tokenized on a different core. There is also a
+    function called `partition_by_cores` which takes a list and splits it into sublists.
+    The number of sublists is the number of cores that you have in your computer.
+    On Jeremy’s machine without multiprocessing, this takes about an hour and a half,
+    and with multiprocessing, it takes about 2 minutes. So it’s a really hand thing
+    to have. Feel free to look inside it and take advantage of it for your own stuff.
+    Remember, we all have multiple cores even in our laptops and very few things in
+    Python take advantage or it unless you make a bit of an effort to make it work.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here is the result at the end [[35:42](https://youtu.be/h5Tz7gZT9Fo?t=35m42s)].
+    Beginning of the stream token (`xbos`), beginning of field number 1 token (`xfld
+    1`), and tokenized text. You’ll see that the punctuation is on whole now a separate
+    token.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`**t_up**`: `t_up mgm` — MGM was originally capitalized. But the interesting
+    thing is that normally people either lowercase everything or they leave the case
+    as is. Now if you leave the case as is, then “SCREW YOU” and “screw you” are two
+    totally different sets of tokens that have to be learnt from scratch. Or if you
+    lowercase them all, then there is no difference at all. So how do you fix this
+    so that you both get a semantic impact of “I’M SHOUTING NOW” but not have to learn
+    the shouted version vs. the normal version. So the idea is to come up with a unique
+    token to mean the next thing is all uppercase. Then we lowercase it, so now whatever
+    used to be uppercase is lowercased, and then we can learn the semantic meaning
+    of all uppercase.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`**tk_rep**`: Similarly, if you have 29 `!` in a row, we don’t learn a separate
+    token for 29 exclamation marks — instead we put in a special token for “the next
+    thing repeats lots of times” and then put the number 29 and an exclamation mark
+    (i.e. `tk_rep 29 !`). So there are a few tricks like that. If you are interested
+    in NLP, have a look at the tokenizer code for these little tricks that Jeremy
+    added in because some of them are kind of fun.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The nice thing with doing things this way is we can now just `np.save` that
+    and load it back up later [[37:44](https://youtu.be/h5Tz7gZT9Fo?t=37m44s)]. We
+    don’t have to recalculate all this stuff each time like we tend to have to do
+    with torchtext or a lot of other libraries. Now that we got it tokenized, the
+    next thing we need to do is to turn it into numbers which we call numericalizing
+    it. The way we numericalize it is very simple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We make a list list of all the words that appear in some order
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then we replace every word with its index into that list
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The list of all the tokens, we call that the vocabulary.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here is an example of some of the vocabulary [[38:28](https://youtu.be/h5Tz7gZT9Fo?t=38m28s)].
+    The Counter class in Python is very handy for this. It basically gives us a list
+    of unique items and their counts. Here are the 25 most common things in the vocabulary.
+    Generally speaking, we don’t want every unique token in our vocabulary. If it
+    doesn’t appear at least twice then might just be a spelling mistake or a word
+    we can’t learn anything about it if it doesn’t appear that often. Also the stuff
+    we are going to be learning about so far in this part gets a bit clunky once you’ve
+    got a vocabulary bigger than 60,000\. Time permitting, we may look at some work
+    Jeremy has been doing recently on handling larger vocabularies, otherwise that
+    might have to come in a future course. But actually for classification, doing
+    more than about 60,000 words doesn’t seem to help anyway.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: So we are going to limit our vocabulary to 60,000 words, things that appear
+    at least twice [[39:33](https://youtu.be/h5Tz7gZT9Fo?t=39m33s)]. Here is a simple
+    way to do that. Use `.most_common`, pass in the max vocab size. That’ll sort it
+    by the frequency and if it appears less often than a minimum frequency, then don’t
+    bother with it at all. That gives us `itos` — that’s the same name that torchtext
+    used and it means integer-to-string. This is just the list of unique tokens in
+    the vocab. We’ll insert two more tokens — a vocab item for unknown (`_unk_`) and
+    a vocab item for padding (`_pad_`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can then create the dictionary which goes in the opposite direction (string
+    to integer)[[40:19](https://youtu.be/h5Tz7gZT9Fo?t=40m19s)]. That won’t cover
+    everything because we intentionally truncated it down to 60,000 words. If we come
+    across something that is not in the dictionary, we want to replace it with zero
+    for unknown so we can use `defaultdict` with a lambda function that always returns
+    zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: So now we have our `stoi` dictionary defined, we can then call that for every
+    word for every sentence [[40:50](https://youtu.be/h5Tz7gZT9Fo?t=40m50s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here is our numericalized version:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Of course, the nice thing is we can save that step as well. Each time we get
+    to another step, we can save it. These are not very big files compared to what
+    you are used with images. Text is generally pretty small.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Very important to also save that vocabulary (`itos`). The list of numbers means
+    nothing unless you know what each number refers to, and that’s what `itos` tells
+    you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: So you save those three things, and later on you can load them back up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now our vocab size is 60,002 and our training language model has 90,000 documents
+    in it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: That’s the preprocessing you do [[42:01](https://youtu.be/h5Tz7gZT9Fo?t=42m1s)].
+    We can probably wrap a little bit more of that in utility functions if we want
+    to but it’s all pretty straight forward and that exact code will work for any
+    dataset you have once you’ve got it in that CSV format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-training [[42:19](https://youtu.be/h5Tz7gZT9Fo?t=42m19s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here is kind of a new insight that’s not new at all which is that we’d like
+    to pre-train something. We know from lesson 4 that if we pre-train our classifier
+    by first creating a language model and then fine-tuning that as a classifier,
+    that was helpful. It actually got us a new state-of-the-art result — we got the
+    best IMDb classifier result that had been published by quite a bit. We are not
+    going that far enough though, because IMDb movie reviews are not that different
+    to any other English document; compared to how different they are to a random
+    string or even to a Chinese document. So just like ImageNet allowed us to train
+    things that recognize stuff that kind of looks like pictures, and we could use
+    it on stuff that was nothing to do with ImageNet like satellite images. Why don’t
+    we train a language model that’s good at English and then fine-tune it to be good
+    at movie reviews.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So this basic insight led Jeremy to try building a language model on Wikipedia.
+    Stephen Merity has already processed Wikipedia, found a subset of nearly the most
+    of it, but throwing away the stupid little articles leaving bigger articles. He
+    calls that wikitext103\. Jeremy grabbed wikitext103 and trained a language model
+    on it. He used exactly the same approach he’s about to show you for training an
+    IMDb language model, but instead he trained a wikitext103 language model. He saved
+    it and made it available for anybody who wants to use it at [this URL](http://files.fast.ai/models/wt103/).
+    The idea now is let’s train an IMDb language model which starts with these weights.
+    Hopefully to you folks, this is an extremely obvious, extremely non-controversial
+    idea because it’s basically what we’ve done in nearly every class so far. But
+    when Jeremy first mentioned this to people in the NLP community June or July of
+    last year, there couldn’t have been less interest and was told it was stupid [[45:03](https://youtu.be/h5Tz7gZT9Fo?t=45m3s)].
+    Because Jeremy was obstreperous, he ignored them even though they know much more
+    about NLP and tried it anyway. And let’s see what happened.
+  prefs: []
+  type: TYPE_NORMAL
+- en: wikitext103 conversion [[46:11](https://youtu.be/h5Tz7gZT9Fo?t=46m11s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here is how we do it. Grab the wikitext models. If you do `wget -r`, it will
+    recursively grab the whole directory which has a few things in it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: We need to make sure that our language model has exactly the same embedding
+    size, number of hidden, and number of layers as Jeremy’s wikitext one did otherwise
+    you can’t load the weights in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here are our pre-trained path and our pre-trained language model path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s go ahead and `torch.load` in those weights from the forward wikitext103
+    model. We don’t normally use torch.load, but that’s the PyTorch way of grabbing
+    a file. It basically gives you a dictionary containing the name of the layer and
+    a tensor/array of those weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now the problem is that wikitext language model was built with a certain vocabulary
+    which was not the same as ours [[47:14](https://youtu.be/h5Tz7gZT9Fo?t=47m14s)].
+    Our #40 is not the same as wikitext103 model’s #40\. So we need to map one to
+    the other. That’s very very simple because luckily Jeremy saved `itos` for the
+    wikitext vocab.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here is the list of what each word is for wikitext103 model, and we can do the
+    same `defaultdict` trick to map it in reverse. We’ll use -1 to mean that it is
+    not in the wikitext dictionary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: So now we can just say our new set of weights is just a whole bunch of zeros
+    with vocab size by embedding size (i.e. we are going to create an embedding matrix)
+    [[47:57](https://youtu.be/h5Tz7gZT9Fo?t=47m57s)]. We then go through every one
+    of the words in our IMDb vocabulary. We are going to look it up in `stoi2` (string-to-integer
+    for the wikitext103 vocabulary) and see if it’s a word there. If that is a word
+    there, then we won’t get the `-1`. So `r` will be greater than or equal to zero,
+    so in that case, we will just set that row of the embedding matrix to the weight
+    which was stored inside the named element `‘0.encoder.weight’`. You can look at
+    this dictionary `wgts` and it’s pretty obvious what each name corresponds to.
+    It looks very similar to the names that you gave it when you set up your module,
+    so here are the encoder weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we don’t find it [[49:02](https://youtu.be/h5Tz7gZT9Fo?t=49m2s)], we will
+    use the row mean — in other words, here is the average embedding weight across
+    all of the wikitext103\. So we will end up with an embedding matrix for every
+    word that’s in both our vocabulary for IMDb and the wikitext103 vocab, we will
+    use the wikitext103 embedding matrix weights; for anything else, we will just
+    use whatever was the average weight from the wikitext103 embedding matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will then replace the encoder weights with `new_w` turn into a tensor [[49:35](https://youtu.be/h5Tz7gZT9Fo?t=49m35s)].
+    We haven’t talked much about weight tying, but basically the decoder (the thing
+    that turns the final prediction back into a word) uses exactly the same weights,
+    so we pop it there as well. Then there is a bit of weird thing with how we do
+    embedding dropout that ends up with a whole separate copy of them for a reason
+    that doesn’t matter much. So we popped the weights back where they need to go.
+    So this is now a set of torch state which we can load in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Language model [[50:18](https://youtu.be/h5Tz7gZT9Fo?t=50m18s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let’s create our language model. Basic approach we are going to use is we are
+    going to concatenate all of the documents together into a single list of tokens
+    of length 24,998,320\. That is going to be what we pass in as a training set.
+    So for the language model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We take all our documents and just concatenate them back to back.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We are going to be continuously trying to predict what’s the next word after
+    these words.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will set up a whole bunch of dropouts.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Once we have a model data object, we can grab the model from it, so that’s going
+    to give us a learner.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then as per usual, we can call `learner.fit`. We do a single epoch on the last
+    layer just to get that okay. The way it’s set up is the last layer is the embedding
+    words because that’s obviously the thing that’s going to be the most wrong because
+    a lot of those embedding weights didn’t even exist in the vocab. So we will train
+    a single epoch of just the embedding weights.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Then we’ll start doing a few epochs of the full model. How is it looking? In
+    lesson 4, we had the loss of 4.23 after 14 epochs. In this case, we have 4.12
+    loss after 1 epoch. So by pre-training on wikitext103, we have a better loss after
+    1 epoch than the best loss we got for the language model otherwise.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Question**: What is the wikitext103 model? Is it a AWD LSTM again [[52:41](https://youtu.be/h5Tz7gZT9Fo?t=52m41s)]?
+    Yes, we are about to dig into that. The way I trained it was literally the same
+    lines of code that you see above, but without pre-training it on wikitext103.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A quick discussion about fastai doc project [[53:07](https://youtu.be/h5Tz7gZT9Fo?t=53m7s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The goal of fastai doc project is to create documentation that makes readers
+    say “wow, that’s the most fantastic documentation I’ve ever read” and we have
+    some specific ideas about how to do that. It’s the same kind of idea of top-down,
+    thoughtful, take full advantage of the medium approach, interactive experimental
+    code first that we are all familiar with. If you are interested in getting involved,
+    you can see the basic approach in [the docs directory](https://github.com/fastai/fastai/tree/master/docs).
+    In there, there is, amongst other things, [transforms-tmpl.adoc](https://raw.githubusercontent.com/fastai/fastai/master/docs/transforms-tmpl.adoc).
+    `adoc` is [AsciiDoc](http://asciidoc.org/). AsciiDoc is like markdown but it’s
+    like what markdown needs to be to create actual books. A lot of actual books are
+    written in AsciiDoc and it’s as easy to use as markdown but there’s way more cool
+    stuff you can do with it. [Here](https://raw.githubusercontent.com/fastai/fastai/master/docs/transforms.adoc)
+    is more standard asciiDoc example. You can do things like inserting a table of
+    contents (`:toc:`). `::` means put a definition list here. `+` means this is a
+    continuation of the previous list item. So there are many super handy features
+    and it is like turbo-charged markdown. So this asciidoc creates this HTML and
+    no custom CSS or anything added:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We literally started this project 4 hours ago. So you have a table of contents
+    with hyper links to specific sections. We have cross reference we can click on
+    to jump straight to the cross reference. Each method comes along with its details
+    and so on. To make things even easier, they’ve created a special template for
+    argument, cross reference, method, etc. The idea is, it will almost be like a
+    book. There will be tables, pictures, video segments, and hyperlink throughout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You might be wondering what about docstrings. But actually, if you look at the
+    Python standard library and look at the docstring for `re.compile()`, for example,
+    it’s a single line. Nearly every docstring in Python is a single line. And Python
+    then does exactly this — they have a website containing the documentation that
+    says “this is what regular expressions are, and this is what you need to know
+    about them, and if you want do them fast, you need to compile, and here is some
+    information about compile” etc. These information is not in the docstring and
+    that’s how we are going to do as well — our docstring will be one line unless
+    you need like two sometimes. Everybody is welcome to help contribute to the documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Hoes this compare to word2vec [[58:31](https://youtu.be/h5Tz7gZT9Fo?t=58m31s)]?
+    This is actually a great thing for you to spend time thinking about during the
+    week. I’ll give you the summary now but it’s a very important conceptual difference.
+    The main conceptual difference is “what is word2vec?” Word2vec is a single embedding
+    matrix — each word has a vector and that’s it. In other words, it’s a single layer
+    from a pre-trained model — specifically that layer is the input layer. Also specifically
+    that pre-trained model is a linear model that is pre-trained on something called
+    a co-occurrence matrix. So we have no particular reason to believe that this model
+    has learned anything much about English language or that it has any particular
+    capabilities because it’s just a single linear layer and that’s it. What’s this
+    wikitext103 model? It’s a language model and it has a 400 dimensional embedding
+    matrix, 3 hidden layers with 1,150 activations per layer, and regularization and
+    all that stuff tied input output matrices — it’s basically a state-of-the-art
+    AWD LSTM. What’s the difference between a single layer of a single linear model
+    vs. a three layer recurrent neural network? Everything! They are very different
+    levels of capabilities. So you will see when you try using a pre-trained language
+    model vs. word2vec layer, you’ll get very different results for the vast majority
+    of tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: What if the numpy array does not fit in memory? Is it possible
+    to write a PyTorch data loader directly from a large CSV file [[1:00:32](https://youtu.be/h5Tz7gZT9Fo?t=1h32s)]?
+    It almost certainly won’t come up, so I’m not going to spend time on it. These
+    things are tiny — they are just integers. Think about how many integers you would
+    need to run out of memories? That’s not gonna happen. They don’t have to fit in
+    GPU memory, just in your memory. I’ve actually done another Wikipedia model which
+    I called giga wiki which was on all of Wikipedia and even that easily fits in
+    memory. The reason I’m not using it is because it turned out not to really help
+    very much vs. wikitext103\. I’ve built a bigger model than anybody else I’ve found
+    in the academic literature and it fits in memory on a single machine.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: What is the idea behind averaging the weights of embeddings [[1:01:24](https://youtu.be/h5Tz7gZT9Fo?t=1h1m24s)]?
+    They have to be set to something. These are words that weren’t there, so the other
+    option is we could leave them as zero. But that seems like a very extreme thing
+    to do. Zero is a very extreme number. Why would it be zero? We could set it equal
+    to some random numbers, but if so, what would be the mean and standard deviation
+    of those random numbers? Should they be uniform? If we just average the rest of
+    the embeddings, then we have something that’s reasonably scaled. Just to clarify,
+    this is how we are initializing words that didn’t appear in the training corpus.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Back to Language Model [[1:02:20](https://youtu.be/h5Tz7gZT9Fo?t=1h2m20s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is a ton of stuff we’ve seen before, but it’s changed a little bit. It’s
+    actually a lot easier than it was in part 1, but I want to go a little bit deeper
+    into the language model loader.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is the `LanguageModelLoader` and I really hope that by now, you’ve learned
+    in your editor or IDE how to jump to symbols [[1:02:37](https://youtu.be/h5Tz7gZT9Fo?t=1h2m37s)].
+    I don’t want it to be a burden for you to find out what the source code of `LanguageModelLoader`
+    is. If your editor doesn’t make it easy, don’t use that editor anymore. There’s
+    lots of good free editors that make this easy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So this is the source code for LanguageModelLoader, and it’s interesting to
+    notice that it’s not doing anything particularly tricky. It’s not deriving from
+    anything at all. What makes something that’s capable of being a data loader is
+    that it’s something you can iterate over.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is the `fit` function inside fastai.model [[1:03:41](https://youtu.be/h5Tz7gZT9Fo?t=1h3m41s)].
+    This is where everything ends up eventually which goes through each epoch, creates
+    an iterator from the data loader, and then just does a for loop through it. So
+    anything you can do a for loop through can be a data loader. Specifically it needs
+    to return tuples of independent and dependent variables for mini-batches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So anything with a `__iter__` method is something that can act as an iterator
+    [[1:04:09](https://youtu.be/h5Tz7gZT9Fo?t=1h4m9s)]. `yield` is a neat little Python
+    keywords you probably should learn about if you don’t already know it. But it
+    basically spits out a thing and waits for you to ask for another thing — normally
+    in a for loop or something. In this case, we start by initializing the language
+    model passing it in the numbers `nums` this is the numericalized long list of
+    all of our documents concatenated together. The first thing we do is to “batchfy”
+    it. This is the thing which quite a few of you got confused about last time. If
+    our batch size is 64 and we have 25 million numbers in our list. We are not creating
+    items of length 64 — we are creating 64 items in total. So each of them is of
+    size `t` divided by 64 which is 390k. So that’s what we do here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`data = data.view(self.bs, -1).t().contiguous()`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We reshape it so that this axis is of length 64 and `-1` is everything else
+    (390k blob), and we transpose it. So that means that we now have 64 columns, 390k
+    rows. Then what we do each time we do an iterate is we grab one batch of some
+    sequence length, which is approximately equal to `bptt` (back prop through time)
+    which we set to 70\. We just grab that many rows. So from `i` to `i+70` rows,
+    we try to predict that plus one. Remember, we are trying to predict one past where
+    we are up to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So we have 64 columns and each of those is 1/64th of our 25 million tokens,
+    and hundreds of thousands long, and we just grab 70 at a time [[1:06:29](https://youtu.be/h5Tz7gZT9Fo?t=1h6m29s)].
+    So each of those columns, each time we grab it, it’s going to kind of hook up
+    to the previous column. That’s why we get this consistency. This language model
+    is stateful which is really important.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Pretty much all of the cool stuff in the language model is stolen from Stephen
+    Merity’s AWD-LSTM [[1:06:59](https://youtu.be/h5Tz7gZT9Fo?t=1h6m59s)] including
+    this little trick here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we always grab 70 at a time and then we go back and do a new epoch, we’re
+    going to grab exactly the same batches every time — there is no randomness. Normally,
+    we shuffle our data every time we do an epoch or every time we grab some data
+    we grab it at random. You can’t do that with a language model because this set
+    has to join up to the previous set because it’s trying to learn the sentence.
+    If you suddenly jump somewhere else, that doesn’t make any sense as a sentence.
+    So Stephen’s idea is to say “okay, since we can’t shuffle the order, let’s instead
+    randomly change the sequence length”. Basically, 95% of the time, we will use
+    `bptt` (i.e. 70) but 5% of the time, we’ll use half that. Then he says “you know
+    what, I’m not even going to make that the sequence length, I’m going to create
+    a normally distributed random number with that average and a standard deviation
+    of 5, and I’ll make that the sequence length.” So the sequence length is seventy-ish
+    and that means every time we go through, we are getting slightly different batches.
+    So we’ve got that little bit of extra randomness. Jeremy asked Stephen Merity
+    where he came up with this idea, did he think of it? and he said “I think I thought
+    of it, but it seemed so obvious that I bet I didn’t think of it” — which is true
+    of every time Jeremy comes up with an idea in deep learning. It always seems so
+    obvious that you just assume somebody else has thought of it. But Jeremy thinks
+    Stephen thought of it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`LanguageModelLoader` is a nice thing to look at if you are trying to do something
+    a bit unusual with a data loader [[1:08:55](https://youtu.be/h5Tz7gZT9Fo?t=1h8m55s)].
+    It’s a simple role model you can use as to creating a data loader from scratch
+    — something that spits out batches of data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our language model loader took in all of the documents concatenated together
+    along with batch size and bptt [[1:09:14](https://youtu.be/h5Tz7gZT9Fo?t=1h9m14s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now generally speaking, we want to create a learner and the way we normally
+    do that is by getting a model data object and calling some kind of method which
+    have various names but often we call that method `get_model`. The idea is that
+    the model data object has enough information to know what kind of model to give
+    you. So we have to create that model data object which means we need LanguageModelData
+    class which is very easy to do [[1:09:51](https://youtu.be/h5Tz7gZT9Fo?t=1h9m51s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here are all of the pieces. We are going to create a custom learner, a custom
+    model data class, and a custom model class. So a model data class, again this
+    one doesn’t inherit from anything so you really see there’s almost nothing to
+    do. You need to tell it most importantly what’s your training set (give it a data
+    loader), what’s the validation set (give it a data loader), and optionally, give
+    it a test set (data loader), plus anything else that needs to know. It might need
+    to know the bptt, it needs to know number of tokens(i.e. the vocab size), and
+    it needs to know what is the padding index. And so that it can save temporary
+    files and models, model datas as always need to know the path. So we just grab
+    all that stuff and we dump it. That’s it. That’s the entire initializer. There
+    is no logic there at all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then all of the work happens inside `get_model`[[1:10:55](https://youtu.be/h5Tz7gZT9Fo?t=1h10m55s)].
+    get_model calls something we will look at later, which just grabs a normal PyTorch
+    nn.Module architecture, and chucks it on GPU. Note: with PyTorch, we would say
+    `.cuda()`, with fastai it’s better to say `to_gpu()`, the reason is that if you
+    don’t have GPU, it will leave it on the CPU. It also provides a global variable
+    you can set to choose whether it goes on the GPU or not, so it’s a better approach.
+    We wrapped the model in a `LanguageModel` and the `LanguageModel` is a subclass
+    of `BasicModel` which almost does nothing except it defines layer groups. Remember
+    when we do discriminative learning rates where different layers have different
+    learning rates or we freeze different amounts, we don’t provide a different learning
+    rate for every layer because there can be a thousand layers. We provide a different
+    learning rate for every layer group. So when you create a custom model, you just
+    have to override this one thing which returns a list of all of your layer groups.
+    In this case, the last layer group contains the last part of the model and one
+    bit of dropout. The rest of it (`*` here means pull this apart) so this is going
+    to be one layer per RNN layer. So that’s all that is.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then finally turn that into a learner [[1:12:41](https://youtu.be/h5Tz7gZT9Fo?t=1h12m41s)].
+    So a learner, you just pass in the model and it turns it into a learner. In this
+    case, we have overridden learner and the only thing we’ve done is to say I want
+    the default loss function to be cross entropy. This entire set of custom model,
+    custom model data, custom learner all fits on a single screen. They always basically
+    look like this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The interesting part of this code base is `get_language_model` [[1:13:18](https://youtu.be/h5Tz7gZT9Fo?t=1h13m18s)].
+    Because that gives us our AWD LSTM. It actually contains the big idea. The big,
+    incredibly simple idea that everybody else here thinks it’s really obvious that
+    everybody in the NLP community Jeremy spoke to thought was insane. That is, every
+    model can be thought of as a backbone plus a head, and if you pre-train the backbone
+    and stick on a random head, you can do fine-tuning and that’s a good idea.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These two bits of code, literally right next to each other, this is all there
+    is inside `fastai.lm_rnn`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`get_language_model`: Creates an RNN encoder and then creates a sequential
+    model that sticks on top of that — a linear decoder.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`get_rnn_classifier`: Creates an RNN encoder, then a sequential model that
+    sticks on top of that — a pooling linear classifier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ll see what these differences are in a moment, but you get the basic idea.
+    They are doing pretty much the same thing. They’ve got this head and they are
+    sticking on a simple linear layer on top.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: There was a question earlier about whether that any of this translates
+    to other languages [[1:14:52](https://youtu.be/h5Tz7gZT9Fo?t=1h14m52s)]. Yes,
+    this whole thing works in any languages. Would you have to retrain your language
+    model on a corpus from that language? Absolutely! So the wikitext103 pre-trained
+    language model knows English. You could use it maybe as a pre-trained start for
+    like French or German model, start by retraining the embedding layer from scratch
+    might be helpful. Chinese, maybe not so much. But given that a language model
+    can be trained from any unlabeled documents at all, you’ll never have to do that.
+    Because almost every language in the world has plenty of documents — you can grab
+    newspapers, web pages, parliamentary records, etc. As long as you have a few thousand
+    documents showing somewhat normal usage of that language, you can create a language
+    model. One of our students tried this approach for Thai and he said the first
+    model he built easily beat the previous state-of-the-art Thai classifier. For
+    those of you that are international fellow, this is an easy way for you to whip
+    out a paper in which you either create the first ever classifier in your language
+    or beat everybody else’s classifier in your language. Then you can tell them that
+    you’ve been a student of deep learning for six months and piss off all the academics
+    in your country.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is our RNN encoder [[1:16:49](https://youtu.be/h5Tz7gZT9Fo?t=1h16m49s)].
+    It is a standard nn.Module. It looks like there is more going on in it than there
+    actually is, but really all there is is we create an embedding layer, create an
+    LSTM for each layer that’s been asked for, that’s it. Everything else in it is
+    dropout. Basically all of the interesting stuff (just about) in the AWS LSTM paper
+    is all of the places you can put dropout. Then the forward is basically the same
+    thing. Call the embedding layer, add some dropout, go through each layer, call
+    that RNN layer, append it to our list of outputs, add dropout, that’s about it.
+    So it’s pretty straight forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The paper you want to be reading is the AWD LSTM paper which is [Regularizing
+    and Optimizing LSTM Language Models](https://arxiv.org/abs/1708.02182). It’s well
+    written, pretty accessible, and entirely implemented inside fastai as well — so
+    you can see all of the code for that paper. A lot of the code actually is shamelessly
+    plagiarized with Stephen’s permission from his excellent GitHub repo [AWD LSTM](https://github.com/Smerity/awd-lstm-lm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The paper refers to other papers. For things like why is it that the encoder
+    weight and the decoder weight are the same. It’s because there is this thing called
+    “tie weights.” Inside `get_language_model`, there is a thing called `tie_weights`
+    which defaults to true. If it’s true, then we literally use the same weight matrix
+    for the encoder and the decoder. They are pointing at the same block of memory.
+    Why is that? What’s the result of it? That’s one of the citations in Stephen’s
+    paper which is also a well written paper you can look up and learn about weight
+    tying.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have basically a standard RNN [[1:19:52](https://youtu.be/h5Tz7gZT9Fo?t=1h19m52s)].
+    The only reason where it’s not standard is it has lots more types of dropout in
+    it. In a sequential model on top of the RNN, we stick a linear decoder which is
+    literally half the screen of code. It has a single linear layer, we initialize
+    the weights to some range, we add some dropout, and that’s it. So it’s a linear
+    layer with dropout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So the language model is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: RNN → A linear layer with dropout
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Choosing dropout [[1:20:36](https://youtu.be/h5Tz7gZT9Fo?t=1h20m36s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: What dropout you choose matters a lot .Through a lot of experimentation, Jeremy
+    found a bunch of dropouts that tend to work pretty well for language models. But
+    if you have less data for your language model, you’ll need more dropout. If you
+    have more data, you can benefit from less dropout. You don’t want to regularize
+    more than you have to. Rather than having to tune every one of these five things,
+    Jeremy’s claim is they are already pretty good ratios to each other, so just tune
+    this number (`0.7` below), we just multiply it all by something. If you are overfitting,
+    then you’ll need to increase the number, if you are underfitting, you’ll need
+    to decrease this. Because other than that, these ratio seem pretty good.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Measuring accuracy [[1:21:45](https://youtu.be/h5Tz7gZT9Fo?t=1h21m45s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One important idea which may seem minor but again it’s incredibly controversial
+    is that we should measure accuracy when we look at a language model . Normally
+    for language models, we look at a loss value which is just cross entropy loss
+    but specifically we nearly always take e to the power of that which the NLP community
+    calls “perplexity”. So perplexity is just `e^(cross entropy)`. There is a lot
+    of problems with comparing things based on cross entropy loss. Not sure if there’s
+    time to go into it in detail now, but the basic problem is that it is like that
+    thing we learned about focal loss. Cross entropy loss — if you are right, it wants
+    you to be really confident that you are right. So it really penalizes a model
+    that doesn’t say “I’m so sure this is wrong” and it’s wrong. Whereas accuracy
+    doesn’t care at all about how confident you are — it cares about whether you are
+    right. This is much more often the thing which you care about in real life. The
+    accuracy is how often do we guess the next word correctly and it’s a much more
+    stable number to keep track of. So that’s a simple little thing that Jeremy does.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: We train for a while and we get down to a 3.9 cross entropy loss which is equivalent
+    of ~49.40 perplexity (`e^3.9`) [[1:23:14](https://youtu.be/h5Tz7gZT9Fo?t=1h23m14s)].
+    To give you a sense of what’s happening with language models, if you look at academic
+    papers from about 18 months ago, you’ll see them talking about state-of-the-art
+    perplexity of over a hundred. The rate at which our ability to understand language
+    and measuring language model accuracy or perplexity is not a terrible proxy for
+    understanding language. If I can guess what you are going to say next, I need
+    to understand language well and the kind of things you might talk about pretty
+    well. The perplexity number has just come down so much that it’s been amazing,
+    and it will come down a lot more. NLP in the last 12–18 months, it really feels
+    like 2011–2012 computer vision. We are starting to understand transfer learning
+    and fine-tuning, and basic models are getting so much better. Everything you thought
+    about what NLP can and can’t do is rapidly going out of date. There’s still lots
+    of things NLP is not good at to be clear. Just like in 2012, there were lots of
+    stuff computer vision wasn’t good at. But it’s changing incredibly rapidly and
+    now is a very very good time to be getting very good at NLP or starting startups
+    base on NLP because there is a whole bunch of stuff which computers would absolutely
+    terrible at two years ago and now not quite good as people and then next year,
+    they’ll be much better than people.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Question**: What is your ratio of paper reading vs. coding in a week [[1:25:24](https://youtu.be/h5Tz7gZT9Fo?t=1h25m24s)]?
+    Gosh, what do you think, Rachel? You see me. I mean, it’s more coding, right?
+    “It’s a lot more coding. I feel like it also really varies from week to week”
+    (Rachel). With that bounding box stuff, there were all these papers and no map
+    through them, so I didn’t even know which one to read first and then I’d read
+    the citations and didn’t understand any of them. So there was a few weeks of just
+    kind of reading papers before I even know what to start coding. That’s unusual
+    though. Anytime I start reading a paper, I’m always convinced that I’m not smart
+    enough to understand it, always, regardless of the paper. And somehow eventually
+    I do. But I try to spend as much time as I can coding.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nearly always after I’ve read a paper [[1:26:34](https://youtu.be/h5Tz7gZT9Fo?t=1h26m34s)],
+    even after I’ve read the bit that says this is the problem I’m trying to solve,
+    I’ll stop there and try to implement something that I think might solve that problem.
+    And then I’ll go back and read the paper, and I read little bits about these are
+    how I solve these problem bits, and I’ll be like “oh that’s a good idea” and then
+    I’ll try to implement those. That’s why for example, I didn’t actually implement
+    SSD. My custom head is not the same as their head. It’s because I kind of read
+    the gist of it and then I tried to create something as best as I could, then go
+    back to the papers and try to see why. So by the time I got to the focal loss
+    paper, Rachel will tell you, I was driving myself crazy with how come I can’t
+    find small objects? How come it’s always predicting background? I read the focal
+    loss paper and I was like “that’s why!!” It’s so much better when you deeply understand
+    the problem they are trying to solve. I do find the vast majority of the time,
+    by the time I read that bit of the paper which is solving a problem, I’m then
+    like “yeah, but these three ideas I came up with, they didn’t try.” Then you suddenly
+    realize that you’ve got new ideas. Or else, if you just implement the paper mindlessly,
+    you tend not to have these insights about better ways to do it .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Is your dropout rate the same through the training or do you
+    adjust it and weights accordingly [[1:26:27](https://youtu.be/h5Tz7gZT9Fo?t=1h26m27s)]?
+    Varying dropout is really interesting and there are some recent papers that suggest
+    gradually changing dropout [[1:28:09](https://youtu.be/h5Tz7gZT9Fo?t=1h28m9s)].
+    It was either good idea to gradually make it smaller or gradually make it bigger,
+    I’m not sure which. Maybe one of us can try and find it during the week. I haven’t
+    seen it widely used. I tried it a little bit with the most recent paper I wrote
+    and I had some good results. I think I was gradually make it smaller, but I can’t
+    remember.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Am I correct in thinking that this language model is build on
+    word embeddings? Would it be valuable to try this with phrase or sentence embeddings?
+    I ask this because I saw from Google the other day, universal sentence encoder
+    [[1:28:45](https://youtu.be/h5Tz7gZT9Fo?t=1h28m45s)]. This is much better than
+    that. This is not just an embedding of a sentence, this is an entire model. An
+    embedding by definition is like a fixed thing. A sentence or a phase embedding
+    is always a model that creates that. We’ve got a model that’s trying to understand
+    language. It’s not just as phrase or as sentence — it’s a document in the end,
+    and it’s not just an embedding that we are training through the whole thing. This
+    has been a huge problem with NLP for years now is this attachment they have to
+    embeddings. Even the paper that the community has been most excited about recently
+    from [AI2](http://allenai.org/) (Allen Institute for Artificial Intelligence)
+    called ELMo — they found much better results across lots of models, but again
+    it was an embedding. They took a fixed model and created a fixed set of numbers
+    which they then fed into a model. But in computer vision, we’ve known for years
+    that that approach of having fixed set of features, they’re called hyper columns
+    in computer vision, people stopped using them like 3 or 4 years ago because fine-tuning
+    the entire model works much better. For those of you that have spent quite a lot
+    of time with NLP and not much time with computer vision, you’re going to have
+    to start re-learning. All that stuff you have been told about this idea that there
+    are these things called embeddings and that you learn them ahead of time and then
+    you apply these fixed things whether it be word level or phrase level or whatever
+    level — don’t do that. You want to actually create a pre-trained model and fine-tune
+    it end-to-end, then you’ll see some specific results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: For using accuracy instead of perplexity as a metric for the
+    model, could we work that into the loss function rather than just use it as a
+    metric [[1:31:21](https://youtu.be/h5Tz7gZT9Fo?t=1h31m21s)]? No, you never want
+    to do that whether it be computer vision or NLP or whatever. It’s too bumpy. So
+    cross entropy is fine as a loss function. And I’m not saying instead of, I use
+    it in addition to. I think it’s good to look at the accuracy and to look at the
+    cross entropy. But for your loss function, you need something nice and smoothy.
+    Accuracy doesn’t work very well.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`save_encoder` [[1:31:55](https://youtu.be/h5Tz7gZT9Fo?t=1h31m55s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You’ll see there are two different versions of `save`. `save` saves the whole
+    model as per usual. `save_encoder` just saves that bit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other words, in the sequential model, it saves just `rnn_enc` and not `LinearDecoder(n_tok,
+    emb_sz, dropout, tie_encoder=enc)` (which is the bit that actually makes it into
+    a language model). We don’t care about that bit in the classifier, we just care
+    about `rnn_end`. That’s why we save two different models here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Classifier tokens [[1:32:31](https://youtu.be/h5Tz7gZT9Fo?t=1h32m31s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s now create the classifier. We will go through this pretty quickly because
+    it’s the same. But when you go back during the week and look at the code, convince
+    yourself it’s the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: We don’t create a new `itos` vocabulary, we obviously want to use the same vocabulary
+    we had in the language model because we are about to reload the same encoder [[1:32:48](https://youtu.be/h5Tz7gZT9Fo?t=1h32m48s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Classifier
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: The construction of the model hyper parameters are the same [[1:33:16](https://youtu.be/h5Tz7gZT9Fo?t=1h33m16s)].
+    We can change the dropout. Pick a batch size that is as big as you can that doesn’t
+    run out of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: TextDataset [[1:33:37](https://youtu.be/h5Tz7gZT9Fo?t=1h33m37s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This bit is interesting. There’s fun stuff going on here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: The basic idea here is that for the classifier, we do really want to look at
+    one document. Is this document positive or negative? So we do want to shuffle
+    the documents. But those documents have different lengths and so if we stick them
+    all into one batch (this is a handy thing that fastai does for you) — you can
+    stick things of different lengths into a batch and it will automatically pat them,
+    so you don’t have to worry about that. But if they are wildly different lengths,
+    then you’re going to be wasting a lot of computation times. If there is one thing
+    that’s 2,000 words long and everything else is 50 words long, that means you end
+    up with 2000 wide tensor. That’s pretty annoying. So James Bradbury who is one
+    of Stephen Merity’s colleagues and the guy who came up with torchtext came up
+    with a neat idea which was “let’s sort the dataset by length-ish”. So kind of
+    make it so the first things in the list are, on the whole, shorter than the things
+    at the end, but a little bit random as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is how Jeremy implemented that [[1:35:10](https://youtu.be/h5Tz7gZT9Fo?t=1h35m10s)].
+    The first thing we need is a Dataset. So we have a Dataset passing in the documents
+    and their labels. Here is `TextDataSet` which inherits from `Dataset` and `Dataset`
+    from PyTorch is also shown below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Actually `Dataset` doesn’t do anything at all [[1:35:34](https://youtu.be/h5Tz7gZT9Fo?t=1h35m34s)].
+    It says you need `__getitem__` if you don’t have one, you’re going to get an error.
+    Same is true for `__len__`. So this is an abstract class. To `TextDataset`, we
+    are going to pass in our `x` and `y`, and `__getitem__` will grab `x` and `y`,
+    and return them — it couldn’t be much simpler. Optionally, 1\. they could reverse
+    it, 2\. stick an end of stream at the end, 3\. stick start of stream at the beginning.
+    But we are not doing any of those things, so literally all we are doing is putting
+    `x` and `y` and `__getitem__` returns them as a tuple. The length is however long
+    the `x` is. That’s all `Dataset` is — something with a length that you can index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Turning it to a DataLoader [[1:36:27](https://youtu.be/h5Tz7gZT9Fo?t=1h36m27s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: To turn it into a DataLoader, you simply pass the Dataset to the DataLoader
+    constructor, and it’s now going to give you a batch of that at a time. Normally
+    you can say shuffle equals true or shuffle equals false, it’ll decide whether
+    to randomize it for you. In this case though, we are actually going to pass in
+    a sampler parameter and sampler is a class we are going to define that tells the
+    data loader how to shuffle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For validation set, we are going to define something that actually just sorts.
+    It just deterministically sorts it so that all the shortest documents will be
+    at the start, all the longest documents will be at the end, and that’s going to
+    minimize the amount of padding.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For training sampler, we are going to create this thing called sort-ish sampler
+    which also sorts (ish!)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What’s great about PyTorch is that they came up with this idea for an API for
+    their data loader where we can hook in new classes to make it behave in different
+    ways [[1:37:27](https://youtu.be/h5Tz7gZT9Fo?t=1h37m27s)]. SortSampler is something
+    which has a length which is the length of the data source and has an iterator
+    which is simply an iterator which goes through the data source sorted by length
+    (which is passed in as `key`). For the SortishSampler, it basically does the same
+    thing with a little bit of randomness. It’s just another of those beautiful design
+    things in PyTorch that Jeremy discovered. He could take James Bradbury’s ideas
+    which he had written a whole new set of classes around, and he could just use
+    inbuilt hooks inside PyTorch. You will notice data loader is not actually PyTorch’s
+    data loader — it’s actually fastai’s data loader. But it’s basically almost entirely
+    plagiarized from PyTorch but customized in some ways to make it faster mainly
+    using multi-threading instead of multi-processing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Does the pre-trained LSTM depth and `bptt` need to match with
+    the new one we are training [[1:39:00](https://youtu.be/h5Tz7gZT9Fo?t=1h39m)]?
+    No, the `bptt` doesn’t need to match at all. That’s just like how many things
+    we look at at a time. It has nothing to do with the architecture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So now we can call that function we just saw before `get_rnn_classifier` [[1:39:16](https://youtu.be/h5Tz7gZT9Fo?t=1h39m16s)].
+    It’s going to create exactly the same encoder more or less, and we are going to
+    pass in the same architectural details as before. But this time, with the head
+    we add on, you have a few more things you can do. One is you can add more than
+    one hidden layer. In `layers=[em_sz*3, 50, c]`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`em_sz * 3`: this is what the input to my head (i.e. classifier section) is
+    going to be.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`50`: this is the output of the first layer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`c`: this is the output of the second layer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: And you can add as many as you like. So you can basically create a little multi-layer
+    neural net classifier at the end. Similarly, for `drops=[dps[4], 0.1]`, these
+    are the dropouts to go after each of these layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: We are going to use RNN_Learner just like before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: We are going to use discriminative learning rates for different layers [[1:40:20](https://youtu.be/h5Tz7gZT9Fo?t=1h40m20s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can try using weight decay or not. Jeremy has been fiddling around a bit
+    with that to see what happens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We start out just training the last layer and we get 92.9% accuracy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then we unfreeze one more layer, get 93.3% accuracy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then we fine-tune the whole thing [[1:40:47](https://youtu.be/h5Tz7gZT9Fo?t=1h40m47s)].
+    This was the main attempt before our paper came along at using a pre-trained model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Learned in Translation: Contextualized Word Vectors](https://arxiv.org/abs/1708.00107)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What they did is they used a pre-trained translation model but they didn’t fine
+    tune the whole thing. They just took the activations of the translation model
+    and when they tried IMDb, they got 91.8% — which we beat easily after only fine-tuning
+    one layer. They weren’t state-of-the-art, the state-of-the-art is 94.1% which
+    we beat after fine-tuning the whole thing for 3 epochs and by the end, we are
+    at 94.8% which is obviously a huge difference because in terms of error rate,
+    that’s gone done from 5.9%. A simple little trick is go back to the start of this
+    notebook and reverse the order of all of the documents, and then re-run the whole
+    thing. When you get to the bit that says `fwd_wt_103`, replace `fwd` for forward
+    with `bwd` for backward. That’s a backward English language model that learns
+    to read English backward. So if you redo this whole thing, put all the documents
+    in reverse, and change this to backward, you now have a second classifier which
+    classifies things by positive or negative sentiment based on the reverse document.
+    If you then take the two predictions and take the average of them, you basically
+    have a bi-directional model (which you trained each bit separately)and that gets
+    you to 95.4% accuracy. So we basically lowered it from 5.9% to 4.6%. So this kind
+    of 20% change in the state-of-the-art is almost unheard of. It doesn’t happen
+    very often. So you can see this idea of using transfer learning, it’s ridiculously
+    powerful that every new field thinks their new field is too special and you can’t
+    do it. So it’s a big opportunity for all of us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Universal Language Model Fine-tuning for Text Classification [[1:44:02](https://youtu.be/h5Tz7gZT9Fo?t=1h44m2s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'So we turned this into a paper, and when I say we, I did it with this guy Sebastian
+    Ruder. Now you might remember his name because in lesson 5, I told you that I
+    actually had shared lesson 4 with Sebastian because I think he is an awesome researcher
+    who I thought might like it. I didn’t know him personally at all. Much to my surprise,
+    he actually watched the video. He watched the whole video and said:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sebastian: “That’s actually quite fantastic! We should turn this into a paper.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Jeremy: “I don’t write papers. I don’t care about papers and am not interested
+    in papers — that sounds really boring”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sebastian: “Okay, how about I write the paper for you.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Jeremy: “You can’t really write a paper about this yet because you’d have to
+    do like studies to compare it to other things (they are called ablation studies)
+    to see which bit actually works. There’s no rigor here, I just put in everything
+    that came in my head and chucked it all together and it happened to work”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sebastian: “Okay, what if I write all the paper and do all your ablation studies,
+    then can we write the paper?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Jeremy: “Well, it’s like a whole library that I haven’t documented and I’m
+    not going to yet and you don’t know how it all works”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sebastian: “Okay, if I wrote the paper, and do the ablation studies, and figure
+    out from scratch how the code works without bothering you, then can we write the
+    paper?”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Jeremy: “Um… yeah, if you did all those things, then we can write the paper.
+    Okay!”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then two days later, he comes back and says “okay, I’ve done a draft of the
+    paper.” So, I share this story to say, if you are some student in Ireland and
+    you want to do good work, don’t let anybody stop you. I did not encourage him
+    to say the least. But in the end, he said “I want to do this work, I think it’s
+    going to be good, and I’ll figure it out” and he wrote a fantastic paper. He did
+    the ablation study and he figured out how fastai works, and now we are planning
+    to write another paper together. You’ve got to be a bit careful because sometimes
+    I get messages from random people saying like “I’ve got lots of good ideas, can
+    we have coffee?” — “I don’t want… I can have coffee in my office anytime, thank
+    you”. But it’s very different to say “hey, I took your ideas and I wrote a paper,
+    and I did a bunch of experiments, and I figured out how your code works, and I
+    added documentation to it — should we submit this to a conference?” You see what
+    I mean? There is nothing to stop you doing amazing work and if you do amazing
+    work that helps somebody else, in this case, I’m happy that we have a paper. I
+    don’t particularly care about papers but I think it’s cool that these ideas now
+    have this rigorous study.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let me show you what he did [[1:47:19](https://youtu.be/h5Tz7gZT9Fo?t=1h47m19s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'He took all my code, so I’d already done all the fastai.text and as you have
+    seen, it lets us work with large corpuses. Sebastian is fantastically well-read
+    and he said “here’s a paper that Yann LeCun and some guys just came out with where
+    they tried lots of classification datasets so I’m going to try running your code
+    on all these datasets.” So these are the datasets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some of them had many many hundreds of thousands of documents and they were
+    far bigger than I had tried — but I thought it should work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'And he had a few good ideas as we went along and so you should totally make
+    sure you read the paper. He said “well, this thing that you called in the lessons
+    differential learning rates, differential kind of means something else. Maybe
+    we should rename it” so we renamed it. It’s now called discriminative learning
+    rate. So this idea that we had from part one where we use different learning rates
+    for different layers, after doing some literature research, it does seem like
+    that hasn’t been done before so it’s now officially a thing — discriminative learning
+    rates. This is something we learnt in lesson 1 but it now has an equation with
+    Greek and everything [[1:48:41](https://youtu.be/h5Tz7gZT9Fo?t=1h48m41s)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you see an equation with Greek and everything, that doesn’t necessarily
+    mean it’s more complex than anything we did in lesson 1 because this one isn’t.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again, that idea of like unfreezing a layer at a time, also seems to never been
+    done before so it’s now a thing and it’s got the very clever name “gradual unfreezing”
+    [[1:48:57](https://youtu.be/h5Tz7gZT9Fo?t=1h48m57s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Slanted triangular learning rate [[1:49:10](https://youtu.be/h5Tz7gZT9Fo?t=1h49m10s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'So then, as promised, we will look at slanted triangular learning rates . This
+    actually was not my idea. Leslie Smith, one of my favorite researchers who you
+    all now know about, emailed me a while ago and said “I’m so over cyclical learning
+    rates. I don’t do that anymore. I now do a slightly different version where I
+    have one cycle which goes up quickly at the start, and then slowly down afterwards.
+    I often find it works better.” I’ve tried going back over all of my old datasets
+    and it works better for all of them — every one I tried. So this is what the learning
+    rate look like. You can use it in fastai just by adding `use_clr=` to your `fit`.
+    The first number is the ratio between the highest learning rate and the lowest
+    learning rate so the initial learning rate is 1/32 of the peak. The second number
+    is the ratio between the first peak and the last peak. The basic idea is if you
+    are doing a cycle length 10, that you want the first epoch to be the upward bit
+    and the other 9 epochs to be the downward bit, then you would use 10\. I find
+    that works pretty well and that was also Leslie’s suggestion is make about 1/10
+    of it the upward bit and 9/10 the downward bit. Since he told me about it, maybe
+    two days ago, he wrote this amazing paper: [A DISCIPLINED APPROACH TO NEURAL NETWORK
+    HYPER-PARAMETERS](https://arxiv.org/abs/1803.09820). In which, he describes something
+    very slightly different to this again, but the same basic idea. This is a must
+    read paper. It’s got all the kinds of ideas that fastai talks about a lot in great
+    depth and nobody else is talking about this. It’s kind of a slog, unfortunately
+    Leslie had to go away on a trop before he really had time to edit it properly,
+    so it’s a little bit slow reading, but don’t let that stop you. It’s amazing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The equation on the right is from my paper with Sebastian. Sebastian asked “Jeremy,
+    can you send me the math equation behind that code you wrote?” and I said “no,
+    I just wrote the code. I could not turn it into math” so he figured out the math
+    for it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concat pooling [[1:51:36](https://youtu.be/h5Tz7gZT9Fo?t=1h51m36s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So you might have noticed, the first layer of our classifier was equal to embedding
+    size*3 . Why times 3? Times 3 because, and again, this seems to be something which
+    people haven’t done before, so a new idea “concat pooling”. It is that we take
+    the average pooling over the sequence of the activations, the max pooling of the
+    sequence over the activations, and the final set of activations, and just concatenate
+    them all together. This is something which we talked about in part 1 but doesn’t
+    seem to be in the literature before so it’s now called “concat pooling” and it’s
+    now got an equation and everything but this is the entirety of the implementation.
+    So you can go through this paper and see how the fastai code implements each piece.
+  prefs: []
+  type: TYPE_NORMAL
+- en: BPT3C [[1:52:46](https://youtu.be/h5Tz7gZT9Fo?t=1h52m46s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One of the kind of interesting pieces is the difference between `RNN_Encoder`
+    which you’ve already seen and MultiBatchRNN encoder. So what’s the difference
+    there? The key difference is that the normal RNN encoder for the language model,
+    we could just do `bptt` chunk at a time. But for the classifier, we need to do
+    the whole document. We need to do the whole movie review before we decide if it’s
+    positive or negative. And the whole movie review can easily be 2,000 words long
+    and we can’t fit 2.000 words worth of gradients in my GPU memory for every single
+    one of my weights. So what do we do? So the idea was very simple which is I go
+    through my whole sequence length one batch of `bptt` at a time. And I call `super().forward`
+    (in other words, the `RNN_Encoder`) to grab its outputs, and then I’ve got this
+    maximum sequence length parameter where it says “okay, as long as you are doing
+    no more than that sequence length, then start appending it to my list of outputs.”
+    So in other words, the thing that it sends back to this pooling is only as many
+    activations as we’ve asked it to keep. That way, you can figure out what `max_seq`
+    can your particular GPU handle. So it’s still using the whole document, but let’s
+    say `max_seq` is 1,000 words and your longest document length is 2, 000 words.
+    It’s still going through RNN creating states for those first thousand words, but
+    it’s not actually going to store the activations for the backprop of the first
+    thousand. It’s only going to keep the last thousand. So that means that it can’t
+    back-propagate the loss back to any state that was created in the first thousand
+    words — basically that’s now gone. So it’s a really simple piece of code and honestly
+    when I wrote it I didn’t spend much time thinking about it, it seems so obviously
+    the only way this could possibly work. But again, it seems to be a new thing,
+    so we now have backprop through time for text classification. You can see there’s
+    lots of little pieces in this paper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Results [[1:55:56](https://youtu.be/h5Tz7gZT9Fo?t=1h55m56s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: What was the result? On every single dataset we tried, we got better result
+    than any previous academic paper for text classification. All different types.
+    Honestly, IMDb was the only one I spent any time trying to optimize the model,
+    so most of them, we just did it whatever came out first. So if we actually spent
+    time with it, I think this would be a lot better. The things that these are comparing
+    to, most of them are different on each table because they are customized algorithms
+    on the whole. So this is saying one simple fine-tuning algorithm can beat these
+    really customized algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ablation studies [[1:56:56](https://youtu.be/h5Tz7gZT9Fo?t=1h56m56s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Here is the ablation studies Sebastian did. I was really keen that if you are
+    going to publish a paper, we had to say why it works. So Sebastian went through
+    and tried removing all of those different contributions I mentioned. So what is
+    we don’t use gradual freezing? What if we don’t use discriminative learning rates?
+    What if instead of discrimination rates, we use cosign annealing? What if we don’t
+    do any pre-training with Wikipedia? What if we don’t do any fine tuning? And the
+    really interesting one to me was, what’s the validation error rate on IMDb if
+    we only used a hundred training examples (vs. 200, vs. 500, etc). And you can
+    see, very interestingly, the full version of this approach is nearly as accurate
+    on just a hundred training examples — it’s still very accurate vs. full 20,000
+    training examples. Where as if you are training from scratch on 100, it’s almost
+    random. It’s what I expected. I’ve said to Sebastian I really think that this
+    is most beneficial when you don’t have much data. This is where fastai is most
+    interested in contributing — small data regimes, small compute regimes, and so
+    forth. So he did these studies to check.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tricks to run ablation studies [[1:58:32](https://youtu.be/h5Tz7gZT9Fo?t=1h58m32s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Trick #1: VNC'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The first trick is something which I know you’re all going to find really handy.
+    I know you’ve all been annoyed when you are running something in a Jupyter notebook,
+    and you lose your internet connection for long enough that it decides you’ve gone
+    away, and then your session disappears, and you have to start it again from scratch.
+    So what do you do? There is a very simple cool thing called VNC where you can
+    install on your AWS instance or PaperSpace, or whatever:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: X Windows (`xorg`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lightweight window manager (`lxde-core`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: VNC server (`tightvncserver`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Firefox (`firefox`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Terminal (`lxterminal`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some fonts (`xfonts-100dpi`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chuck the lines at the end of your `./vnc/xstartup` configuration file, and
+    then run this command (`tightvncserver :13 -geometry 1200x900`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It’s now running a server where you can then run the TightVNC Viewer or any
+    VNC viewer on your computer and you point it at your server. But specifically,
+    what you do is you use SSH port forwarding to forward :5913 to localhost:5913:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then you connect to port 5013 on localhost. It will send it off to port 5913
+    on your server which is the VNC port (because you said `:13`) and it will display
+    an X Windows desktop. Then you can click on the Linux start like button and click
+    on Firefox and you now have Firefox. You see here in Firefox, it says localhost
+    because this Firefox is running on my AWS server. So you now run Firefox, you
+    start your thing running, and then you close your VNC viewer remembering that
+    Firefox is displaying on this virtual VNC display, not in a real display, so then
+    later on that day, you log back into VNC viewer and it pops up again. So it’s
+    like a persistent desktop, and it’s shockingly fast. It works really well. There’s
+    lots of different VNC servers and clients, but this one works fine for me.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Trick #2: Google Fire [[2:01:27](https://youtu.be/h5Tz7gZT9Fo?t=2h1m27s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Trick #2 is to create Python scripts, and this is what we ended up doing. So
+    I ended up creating a little Python script for Sebastian to kind of say this is
+    the basic steps you need to do, and now you need to create different versions
+    for everything else. And I suggested to him that he tried using this thing called
+    Google Fire. What Google Fire does is, you create a function with tons of parameters,
+    so these are all the things that Sebastian wanted to try doing — different dropout
+    amounts, different learning rates, do I use pre-training or not, do I use CLR
+    or not, do I use discriminative learning rate or not, etc. So you create a function,
+    and then you add something saying:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: You do nothing else at all — you don’t have to add any metadata, any docstrings,
+    anything at all, and you then call that script and automatically you now have
+    a command line interface. That’s a super fantastic easy way to run lots of different
+    variations in a terminal. This ends up being easier if you want to do lots of
+    variations than using a notebook because you can just have a bash script that
+    tries all of them and spits them all out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Trick #3: IMDb scripts [[2:02:47](https://youtu.be/h5Tz7gZT9Fo?t=2h2m47s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You’ll find inside the `courses/dl2`, there’s now something called `imdb_scripts`,
+    and I put all the scripts Sebastian and I used. Because we needed to tokenize
+    and numericalize every dataset, then train a language model and a classifier for
+    every dataset. And we had to do all of those things in a variety of different
+    ways to compare them, so we had scripts for all those things. You can check out
+    and see all of the scripts that we used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Trick #4: pip install -e [[2:03:32](https://youtu.be/h5Tz7gZT9Fo?t=2h3m32s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When you are doing a lot of scripts, you got different code all over the place.
+    Eventually it might get frustrating that you don’t want to symlink your fastai
+    library again and again. But you probably don’t want to pip install it because
+    that version tends to be a little bit old as we move so fast that you want to
+    use the current version in Git. If you say `pip install -e .` from fastai repo
+    base, it does something quite neat which is basically creates a symlink to the
+    fastai library (i.e. your locally cloned Git repo) inside site-packages directory.
+    Your site-packages directory is your main Python library. So if you do this, you
+    can then access fastai from anywhere but every time you do `git pull`, you’ve
+    got the most recent version. One downside of this is that it installs any updated
+    versions of packages from pip which can confuse Conda a little bit, so another
+    alternative here is just do symlink the fastai library to your site packages library.
+    That works just as well. You can use fastai from anywhere and it’s quite handy
+    when you want to run scripts that use fastai from different directories on your
+    system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Trick #5: SentencePiece [[2:05:06](https://youtu.be/h5Tz7gZT9Fo?t=2h5m6s)]'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This is something you can try if you like. You don’t have to tokenize. Instead
+    of tokenizing words, you can tokenize what are called sub-word units.For example,
+    “unsupervised” could be tokenized as “un” and “supervised”. “Tokenizer” can be
+    tokenized as [“token”, “izer”]. Then you could do the same thing. The language
+    model that works on sub-word units, a classifier that works on sub-word units,
+    etc. How well does that work? I started playing with it and with not too much
+    playing, I was getting classification results that were nearly as good as using
+    word level tokenization — not quite as good, but nearly as good. I suspect with
+    more careful thinking and playing around, maybe I could have gotten as good or
+    better. But even if I couldn’t, if you create a sub-word-unit wikitext model,
+    then IMDb language model, and then classifier forwards and backwards and then
+    ensemble it with the forwards and backwards word level ones, you should be able
+    to beat us. So here is an approach you may be able to beat our state-of-the-art
+    result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sebastian told me this particular project — Google has a project called sentence
+    peace which actually uses a neural net to figure out the optimal splitting up
+    of words and so you end up with vocabulary of sub-word units. In my playing around,
+    I found that create vocabulary of about 30,000 sub-word units seems to be about
+    optimal. If you are interested, there is something you can try. It is a bit of
+    a pain to install — it’s C++, doesn’t have create error message, but it will work.
+    There is a Python library for it. If anybody tries this, I’m happy to help them
+    get it working. There’s been little, if any, experiments with ensembling sub-word
+    and word level classification, and I do think it should be the best approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Have a great week!
+  prefs: []
+  type: TYPE_NORMAL
