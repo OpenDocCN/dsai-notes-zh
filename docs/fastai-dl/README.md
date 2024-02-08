@@ -1,4 +1,4 @@
-# FastAI 笔记
+# fast.ai 深度学习笔记
 
 > 译者：[飞龙](https://github.com/wizardforcel)
 > 

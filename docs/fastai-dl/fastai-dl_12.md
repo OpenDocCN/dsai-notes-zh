@@ -1,4 +1,4 @@
-# 深度学习 2：第 2 部分 第 12 课
+# 深度学习 2：第 2 部分第 12 课
 
 > 原文：[`medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-12-215dfbf04a94`](https://medium.com/@hiromi_suenaga/deep-learning-2-part-2-lesson-12-215dfbf04a94)
 > 
