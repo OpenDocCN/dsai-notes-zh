@@ -1,6 +1,10 @@
 # 深度学习 2：第 1 部分第 6 课
 
 > 原文：[`medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-6-de70d626976c`](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-6-de70d626976c)
+> 
+> 译者：[飞龙](https://github.com/wizardforcel)
+> 
+> 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 *我从* [*fast.ai 课程*](http://www.fast.ai/)*中的个人笔记。这些笔记将继续更新和改进，因为我继续复习这门课程以“真正”理解它。非常感谢* [*Jeremy*](https://twitter.com/jeremyphoward) *和* [*Rachel*](https://twitter.com/math_rachel) *给了我这个学习的机会。*
 
