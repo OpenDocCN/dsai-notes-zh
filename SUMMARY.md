@@ -12,4 +12,4 @@
 +   [机器学习超级复习笔记](docs/super-ml-rev-notes/README.md)
 +   [VT CS4624：Python 机器学习在线指南](docs/vt-cs4624-pyml/README.md)
 +   [fast.ai 数值线性代数讲义中文版 v2](docs/fastai-num-linalg-v2/README.md)
-+   [fast.ai 深度学习笔记2](docs/fastai-dl/README.md)
++   [fast.ai 深度学习笔记](docs/fastai-dl/README.md)
