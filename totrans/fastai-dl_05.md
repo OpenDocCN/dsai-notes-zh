@@ -141,9 +141,12 @@ b = T([[2., 2], [10, 10]])
 当我们在 numpy 或 PyTorch 中的张量之间有数学运算符时，它将假定它们具有相同的维度进行逐元素操作。下面是如何计算两个向量的点积的方法（例如(1, 2)⋅(2, 2) = 6 - 矩阵 a 和 b 的第一行）：
 
 ```py
-(a*b).sum(1)6
+(a*b).sum(1)
+'''
+6
 70
 [torch.FloatTensor of size 2]
+'''
 ```
 
 ## **构建我们的第一个自定义层（即 PyTorch 模块）[33:55]**
@@ -152,16 +155,20 @@ b = T([[2., 2], [10, 10]])
 
 ```py
 class DotProduct (nn.Module):
-   def forward(self, u, m): return (u*m).sum(1)
+   def forward(self, u, m): 
+        return (u*m).sum(1)
 ```
 
 现在我们可以调用它并获得预期结果（请注意，我们不需要说`model.forward(a, b)`来调用`forward`函数 - 这是 PyTorch 的魔法。）[40:14]：
 
 ```py
 model = DotProduct()
-**model(a,b)**6
+model(a,b)
+'''
+6
 70
 [torch.FloatTensor of size 2]
+'''
 ```
 
 ## **构建更复杂的模块[41:31]**
@@ -177,9 +184,12 @@ model = DotProduct()
 ```py
 u_uniq = ratings.userId.unique() 
 user2idx = {o:i for i,o in enumerate(u_uniq)} 
-ratings.userId = ratings.userId.apply(lambda x: user2idx[x]) m_uniq = ratings.movieId.unique() 
+ratings.userId = ratings.userId.apply(lambda x: user2idx[x]) 
+m_uniq = ratings.movieId.unique() 
 movie2idx = {o:i for i,o in enumerate(m_uniq)} 
-ratings.movieId = ratings.movieId.apply(lambda x: movie2idx[x]) n_users=int(ratings.userId.nunique()) n_movies=int(ratings.movieId.nunique())
+ratings.movieId = ratings.movieId.apply(lambda x: movie2idx[x]) 
+n_users=int(ratings.userId.nunique()) 
+n_movies=int(ratings.movieId.nunique())
 ```
 
 *提示：*`{o:i for i,o in enumerate(u_uniq)}`是一行方便的代码，可以保存在您的工具包中！
@@ -231,20 +241,28 @@ fit(model, data, 3, opt, F.mse_loss)
 
 ```py
 min_rating,max_rating = ratings.rating.min(),ratings.rating.max()
-min_rating,max_ratingdef get_emb(ni,nf):
+min_rating,max_rating
+def get_emb(ni,nf):
     e = nn.Embedding(ni, nf)
     e.weight.data.uniform_(-0.01,0.01)
-    return eclass EmbeddingDotBias(nn.Module):
+    return e
+class EmbeddingDotBias(nn.Module):
     def __init__(self, n_users, n_movies):
         super().__init__()
-        (self.u, self.m, self.ub, self.mb) = [get_emb(*o) for o in [
-            (n_users, n_factors), (n_movies, n_factors), (n_users,1), (n_movies,1)
-        ]]
+        (self.u, self.m, self.ub, self.mb) = [
+            get_emb(*o) 
+            for o in [
+                (n_users, n_factors), 
+                (n_movies, n_factors), 
+                (n_users,1), 
+                (n_movies,1)
+            ]
+        ]
 
     def forward(self, cats, conts):
         users,movies = cats[:,0],cats[:,1]
         um = (self.u(users)* self.m(movies)).sum(1)
-        res = um + **self.ub(users)**.squeeze() + **self.mb(movies)**.squeeze()
+        res = um + self.ub(users).squeeze() + self.mb(movies).squeeze()
         res = F.sigmoid(res) * (max_rating-min_rating) + min_rating
         return res
 ```
@@ -258,10 +276,13 @@ min_rating,max_ratingdef get_emb(ni,nf):
 ```py
 wd=2e-4
 model = EmbeddingDotBias(cf.n_users, cf.n_items).cuda()
-opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)fit(model, data, 3, opt, F.mse_loss)
+opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)
+fit(model, data, 3, opt, F.mse_loss)
+'''
 [ 0\.       0.85056  0.83742]                                     
 [ 1\.       0.79628  0.81775]                                     
 [ 2\.       0.8012   0.80994]
+'''
 ```
 
 让我们看看我们在**简单的 Python 版本**中使用的 fast.ai 代码[[1:13:44](https://youtu.be/J99NV9Cr75I?t=1h13m44s)]。在`column_data.py`文件中，`CollabFilterDataSet.get_leaner`调用`get_model`函数，该函数创建了`EmbeddingDotBias`类，与我们创建的内容相同。
@@ -276,8 +297,13 @@ opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)fit(mode
 class EmbeddingNet(nn.Module):
     def __init__(self, n_users, n_movies, nh=10, p1=0.5, p2=0.5):
         super().__init__()
-        (self.u, self.m) = [get_emb(*o) for o in [
-            (n_users, n_factors), (n_movies, n_factors)]]
+        (self.u, self.m) = [
+            get_emb(*o) 
+            for o in [
+                (n_users, n_factors), 
+                (n_movies, n_factors)
+            ]
+        ]
         self.lin1 = nn.Linear(n_factors*2, nh)
         self.lin2 = nn.Linear(nh, 1)
         self.drop1 = nn.Dropout(p1)
@@ -298,9 +324,13 @@ class EmbeddingNet(nn.Module):
 wd=1e-5
 model = EmbeddingNet(n_users, n_movies).cuda()
 opt = optim.Adam(model.parameters(), 1e-3, weight_decay=wd)
-fit(model, data, 3, opt, F.mse_loss)A Jupyter Widget[ 0\.       0.88043  0.82363]                                    
+fit(model, data, 3, opt, F.mse_loss)
+'''
+A Jupyter Widget
+[ 0\.       0.88043  0.82363]                                    
 [ 1\.       0.8941   0.81264]                                    
 [ 2\.       0.86179  0.80706]
+'''
 ```
 
 请注意，损失函数也在`F`中（这里是均方损失）。

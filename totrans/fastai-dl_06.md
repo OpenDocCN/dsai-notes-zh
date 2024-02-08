@@ -24,7 +24,8 @@ ruder.io](http://ruder.io/deep-learning-optimization-2017/index.html?source=post
 
 ```py
 @property
-def model(self): return self.models.model
+def model(self): 
+    return self.models.model
 ```
 
 `learn.models`是`CollabFilterModel`的一个实例，它是 PyTorch 模型的一个薄包装，允许我们使用“层组”，这是 PyTorch 中没有的概念，fast.ai 使用它来对不同的层组应用不同的学习率。
@@ -32,12 +33,15 @@ def model(self): return self.models.model
 PyTorch 模型很好地打印出层，包括层名称，这就是我们在代码中称呼它们的方式。
 
 ```py
-m=learn.model; m*EmbeddingDotBias (
+m=learn.model; m
+'''
+EmbeddingDotBias (
   (u): Embedding(671, 50)
   (i): Embedding(9066, 50)
   (ub): Embedding(671, 1)
   (ib): Embedding(9066, 1)
-)*
+)
+'''
 ```
 
 `m.ib`指的是一个项目偏差的嵌入层--在我们的例子中是电影偏差。PyTorch 模型和层的好处是我们可以像调用函数一样调用它们。所以如果你想得到一个预测，你调用`m(...)`并传入变量。
@@ -53,7 +57,8 @@ movie_bias = to_np(m.ib(V(topMovieIdx)))
 关于生产中的 CPU vs. GPU 的问题。建议的方法是在 CPU 上进行推断，因为它更具可扩展性，而且你不需要将事物放入批处理中。你可以通过键入`m.cpu()`将模型移动到 CPU 上，类似地，通过键入`V(topMovieIndex).cpu()`将变量移动到 CPU 上（从 CPU 到 GPU 的操作是`m.cuda()`）。如果你的服务器没有 GPU，它将自动在 CPU 上运行推断。要加载在 GPU 上训练的保存模型，请查看`torch_imports.py`中的这行代码：
 
 ```py
-def load_model(m, p): m.load_state_dict(torch.load(p, map_location=lambda storage, loc: storage))
+def load_model(m, p): 
+    m.load_state_dict(torch.load(p, map_location=lambda storage, loc: storage))
 ```
 
 现在我们有了前 3000 部电影的电影偏差，让我们来看一下评分：
