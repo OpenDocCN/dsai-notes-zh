@@ -59,7 +59,7 @@ def load_model(m, p): m.load_state_dict(torch.load(p, map_location=lambda storag
 现在我们有了前 3000 部电影的电影偏差，让我们来看一下评分：
 
 ```py
-movie_ratings = [(b[0], movie_names[i]) **for** i,b **in** zip(topMovies,movie_bias)]
+movie_ratings = [(b[0], movie_names[i]) for i,b in zip(topMovies,movie_bias)]
 ```
 
 `zip`将允许你同时迭代多个列表。
@@ -69,17 +69,17 @@ movie_ratings = [(b[0], movie_names[i]) **for** i,b **in** zip(topMovies,movie_b
 关于排序键--Python 有`itemgetter`函数，但普通的`lambda`只是多了一个字符。
 
 ```py
-sorted(movie_ratings, key=**lambda** o: o[0])[:15]*[(-0.96070349, 'Battlefield Earth (2000)'),
+sorted(movie_ratings, key=lambda o: o[0])[:15]*[(-0.96070349, 'Battlefield Earth (2000)'),
  (-0.76858485, 'Speed 2: Cruise Control (1997)'),
  (-0.73675376, 'Wild Wild West (1999)'),
  (-0.73655486, 'Anaconda (1997)'),
- ...]*sorted(movie_ratings, key=**itemgetter**(0))[:15]
+ ...]*sorted(movie_ratings, key=itemgetter(0))[:15]
 ```
 
 ## 最佳电影
 
 ```py
-sorted(movie_ratings, key=**lambda** o: o[0], reverse=**True**)[:15]*[(1.3070084, 'Shawshank Redemption, The (1994)'),
+sorted(movie_ratings, key=lambda o: o[0], reverse=True)[:15]*[(1.3070084, 'Shawshank Redemption, The (1994)'),
  (1.1196285, 'Godfather, The (1972)'),
  (1.0844109, 'Usual Suspects, The (1995)'),
  (0.96578616, "Schindler's List (1993)"),
@@ -102,7 +102,7 @@ movie_pca.shape*(3, 3000)*
 
 ```py
 fac0 = movie_pca[0] 
-movie_comp = [(f, movie_names[i]) **for** f,i **in** zip(fac0, topMovies)]
+movie_comp = [(f, movie_names[i]) for f,i in zip(fac0, topMovies)]
 sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]sorted(movie_comp, key=itemgetter(0), reverse=True)[:10]*[(0.06748189, 'Independence Day (a.k.a. ID4) (1996)'),
  (0.061572548, 'Police Academy 4: Citizens on Patrol (1987)'),
  (0.061050549, 'Waterworld (1995)'),
@@ -233,12 +233,12 @@ Skip-Gram 是特定于 NLP 的。将一个无标签的问题转化为有标签�
 
 ```py
 *# Here we generate some fake data*
-**def** lin(a,b,x): **return** a*x+b
+def lin(a,b,x): return a*x+b
 
-**def** gen_fake_data(n, a, b):
+def gen_fake_data(n, a, b):
     x = s = np.random.uniform(0,1,n) 
     y = lin(a,b,x) + 0.1 * np.random.normal(0,3,n)
-    **return** x, y
+    return x, y
 
 x, y = gen_fake_data(50, 3., 8.)
 
@@ -252,7 +252,7 @@ plt.scatter(x,y, s=8); plt.xlabel("x"); plt.ylabel("y");
 > 分类 - 目标输出是一个类标签
 
 ```py
-**def** **mse**(y_hat, y): **return** ((y_hat - y) ** 2).mean()**def** **mse_loss**(a, b, x, y): **return** mse(lin(a,b,x), y)
+def mse(y_hat, y): return ((y_hat - y) ** 2).mean()def mse_loss(a, b, x, y): return mse(lin(a,b,x), y)
 ```
 
 +   `y_hat` - 预测
@@ -267,18 +267,18 @@ x,y = V(x),V(y)
 然后为`a`和`b`创建随机权重，它们是我们想要学习的变量，因此设置`requires_grad=True`。
 
 ```py
-a = V(np.random.randn(1), requires_grad=**True**) 
-b = V(np.random.randn(1), requires_grad=**True**)
+a = V(np.random.randn(1), requires_grad=True) 
+b = V(np.random.randn(1), requires_grad=True)
 ```
 
 然后设置学习率，并进行 10000 个完全梯度下降的周期（不是 SGD，因为每个周期将查看所有数据）：
 
 ```py
 learning_rate = 1e-3
-**for** t **in** range(10000):
+for t in range(10000):
     *# Forward pass: compute predicted y using operations on Variables*
     loss = mse_loss(a,b,x,y)
-    **if** t % 1000 == 0: print(loss.data[0])
+    if t % 1000 == 0: print(loss.data[0])
 
     *# Computes the gradient of loss with respect to all Variables with requires_grad=True.*
     *# After this call a.grad and b.grad will be Variables holding the gradient*
@@ -314,8 +314,8 @@ learning_rate = 1e-3
 ```py
 x, y = gen_fake_data(50, 3., 8.)a_guess,b_guess = -1., 1.
 mse_loss(y, a_guess, b_guess, x)lr=0.01 
-**def** **upd**():
-     **global** a_guess, b_guess
+def upd():
+     global a_guess, b_guess
      y_pred = lin(a_guess, b_guess, x)
      dydb = 2 * (y_pred - y)
      dyda = x*dydb
@@ -388,7 +388,7 @@ indices_char = dict((i, c) for i, c in enumerate(chars))
 现在我们可以用它的 ID 来表示文本：
 
 ```py
-**idx** = [char_indices[c] for c in text]
+idx = [char_indices[c] for c in text]
 idx[:10]*[40, 42, 29, 30, 25, 27, 29, 1, 1, 1]*
 ```
 
@@ -435,13 +435,13 @@ n_fac = 42
 这是上一个图表的更新版本。请注意，现在箭头是彩色的。所有具有相同颜色的箭头将使用相同的权重矩阵。这里的想法是，一个字符不会根据它在序列中是第一个、第二个还是第三个项目而具有不同的含义（语义上或概念上），因此将它们视为相同。
 
 ```py
-**class** **Char3Model**(nn.Module):
-     **def** **__init__**(self, vocab_size, n_fac):
+class Char3Model(nn.Module):
+     def __init__(self, vocab_size, n_fac):
          super().__init__()
                   self.e = nn.Embedding(vocab_size, n_fac)
                   self.l_in = nn.Linear(n_fac, n_hidden)
                    self.l_hidden = nn.Linear(n_hidden, n_hidden)
-                  self.l_out = nn.Linear(n_hidden, vocab_size) **def** **forward**(self, c1, c2, c3):
+                  self.l_out = nn.Linear(n_hidden, vocab_size) def forward(self, c1, c2, c3):
          in1 = F.relu(self.l_in(self.e(c1)))
          in2 = F.relu(self.l_in(self.e(c2)))
          in3 = F.relu(self.l_in(self.e(c3)))
@@ -451,7 +451,7 @@ n_fac = 42
          h = F.tanh(self.l_hidden(h+in2))
          h = F.tanh(self.l_hidden(h+in3))
 
-         **return** F.log_softmax(self.l_out(h))
+         return F.log_softmax(self.l_out(h))
 ```
 
 [视频[1:27:57]](https://youtu.be/sHcLkfRrgoQ?t=1h27m57s)
@@ -503,11 +503,11 @@ fit(m, md, 1, opt, F.nll_loss)
 ## 测试一个模型[[1:35:58](https://youtu.be/sHcLkfRrgoQ?t=1h35m58s)]
 
 ```py
-**def** **get_next**(inp):
-     idxs = T(np.array([char_indices[c] **for** c **in** inp]))
+def get_next(inp):
+     idxs = T(np.array([char_indices[c] for c in inp]))
      p = m(*VV(idxs))
      i = np.argmax(to_np(p))
-     **return** chars[i]
+     return chars[i]
 ```
 
 这个函数接受三个字符，并返回模型预测的第四个。注意：`np.argmax`返回最大值的索引。
@@ -529,7 +529,7 @@ get_next('y. ')
 让我们实现这个。这次，我们将使用前 8 个字符来预测第 9 个。这是如何创建输入和输出的，就像上次一样：
 
 ```py
-cs = 8c_in_dat = [[idx[i+j] **for** i **in** range(cs)] **for** j **in** range(len(idx)-cs)]c_out_dat = [idx[j+cs] **for** j **in** range(len(idx)-cs)]xs = np.stack(c_in_dat, axis=0)y = np.stack(c_out_dat)xs[:cs,:cs]
+cs = 8c_in_dat = [[idx[i+j] for i in range(cs)] for j in range(len(idx)-cs)]c_out_dat = [idx[j+cs] for j in range(len(idx)-cs)]xs = np.stack(c_in_dat, axis=0)y = np.stack(c_out_dat)xs[:cs,:cs]
 *array([[40, 42, 29, 30, 25, 27, 29,  1],
        [42, 29, 30, 25, 27, 29,  1,  1],
        [29, 30, 25, 27, 29,  1,  1,  1],
@@ -551,23 +551,23 @@ md = ColumnarModelData.from_arrays('.', val_idx, xs, y, bs=512)
 ## 创建模型[[1:43:03](https://youtu.be/sHcLkfRrgoQ?t=1h43m3s)]
 
 ```py
-**class** **CharLoopModel**(nn.Module):
+class CharLoopModel(nn.Module):
     *# This is an RNN!*
-    **def** __init__(self, vocab_size, n_fac):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.l_in = nn.Linear(n_fac, n_hidden)
         self.l_hidden = nn.Linear(n_hidden, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(bs, n_hidden).cuda())
-        **for** c **in** cs:
+        for c in cs:
             inp = F.relu(self.l_in(self.e(c)))
             h = F.tanh(self.l_hidden(h+inp))
 
-        **return** F.log_softmax(self.l_out(h), dim=-1)
+        return F.log_softmax(self.l_out(h), dim=-1)
 ```
 
 大部分代码与以前相同。您会注意到`forward`函数中有一个`for`循环。
@@ -591,23 +591,23 @@ fit(m, md, 1, opt, F.nll_loss)
 现在我们将尝试为`self.l_hidden(**h+inp**)`[[1:46:04](https://youtu.be/sHcLkfRrgoQ?t=1h46m4s)]尝试其他方法。原因是输入状态和隐藏状态在质上是不同的。输入是字符的编码，h 是一系列字符的编码。因此，将它们相加，我们可能会丢失信息。让我们改为连接它们。不要忘记更改输入以匹配形状（`n_fac+n_hidden`而不是`n_fac`）。
 
 ```py
-**class** **CharLoopConcatModel**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class CharLoopConcatModel(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.l_in = nn.Linear(**n_fac+n_hidden**, n_hidden)
         self.l_hidden = nn.Linear(n_hidden, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(bs, n_hidden).cuda())
-        **for** c **in** cs:
-            inp = **torch.cat**((h, self.e(c)), 1)
+        for c in cs:
+            inp = torch.cat((h, self.e(c)), 1)
             inp = F.relu(self.l_in(inp))
             h = F.tanh(self.l_hidden(inp))
 
-        **return** F.log_softmax(self.l_out(h), dim=-1)
+        return F.log_softmax(self.l_out(h), dim=-1)
 ```
 
 这带来了一些改进。
@@ -617,20 +617,20 @@ fit(m, md, 1, opt, F.nll_loss)
 PyTorch 将自动为我们编写`for`循环，还会编写线性输入层。
 
 ```py
-**class** **CharRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class CharRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         **self.rnn = nn.RNN(n_fac, n_hidden)**
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(1, bs, n_hidden))
         inp = self.e(torch.stack(cs))
         **outp,h = self.rnn(inp, h)**
 
-        **return** F.log_softmax(self.l_out(**outp[-1]**), dim=-1)
+        return F.log_softmax(self.l_out(**outp[-1]**), dim=-1)
 ```
 
 +   出于以后会变得明显的原因，`self.rnn`将返回不仅输出，还有隐藏状态。
@@ -651,17 +651,17 @@ outp.size(), hn.size()
 ## 测试模型
 
 ```py
-**def** get_next(inp):
-    idxs = T(np.array([char_indices[c] **for** c **in** inp]))
+def get_next(inp):
+    idxs = T(np.array([char_indices[c] for c in inp]))
     p = m(*VV(idxs))
     i = np.argmax(to_np(p))
-    **return** chars[i]**def** get_next_n(inp, n):
+    return chars[i]def get_next_n(inp, n):
     res = inp
-    **for** i **in** range(n):
+    for i in range(n):
         c = get_next(inp)
         res += c
         inp = inp[1:]+c
-    **return** resget_next_n('for thos', 40) *'for those the same the same the same the same th'*
+    return resget_next_n('for thos', 40) *'for those the same the same the same the same th'*
 ```
 
 这次，我们循环`n`次，每次调用`get_next`，每次我们将我们的输入替换为删除第一个字符并添加我们刚预测的字符。
@@ -711,19 +711,19 @@ array([[42, 29, 30, 25, 27, 29,  1,  1],
 这不会使我们的模型更准确，但我们可以更有效地训练它。
 
 ```py
-**class** **CharSeqRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class CharSeqRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.rnn = nn.RNN(n_fac, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(1, bs, n_hidden))
         inp = self.e(torch.stack(cs))
         outp,h = self.rnn(inp, h)
-        **return** F.log_softmax(self.l_out(**outp**), dim=-1)
+        return F.log_softmax(self.l_out(outp), dim=-1)
 ```
 
 请注意，我们不再做`outp[-1]`，因为我们想保留所有这些。但其他一切都是相同的。一个复杂性[[2:00:37](https://youtu.be/sHcLkfRrgoQ?t=2h37s)]是我们想要像以前一样使用负对数似然损失函数，但它期望两个秩为 2 的张量（两个矢量的小批量）。但在这里，我们有秩为 3 的张量：
@@ -737,10 +737,10 @@ array([[42, 29, 30, 25, 27, 29,  1,  1],
 ## 让我们编写一个自定义损失函数[[2:02:10](https://youtu.be/sHcLkfRrgoQ?t=2h2m10s)]:
 
 ```py
-**def** nll_loss_seq(inp, targ):
+def nll_loss_seq(inp, targ):
     sl,bs,nh = inp.size()
     targ = targ.transpose(0,1).contiguous().view(-1)
-    **return** F.nll_loss(inp.view(-1,nh), targ)
+    return F.nll_loss(inp.view(-1,nh), targ)
 ```
 
 +   `F.nll_loss`是 PyTorch 的损失函数。
@@ -768,19 +768,19 @@ fit(m, md, 4, opt, null_loss_seq)
 +   基本思想是“为什么我们每次都要将隐藏状态重置为零？”（见下面的代码）。如果我们可以以某种方式排列这些小批量，使得下一个小批量正确连接起来，代表尼采作品中的下一个字母，那么我们可以将`h = V(torch.zeros(1, bs, n_hidden))`移到构造函数中。
 
 ```py
-**class** **CharSeqRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class CharSeqRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.rnn = nn.RNN(n_fac, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         **h = V(torch.zeros(1, bs, n_hidden))**
         inp = self.e(torch.stack(cs))
         outp,h = self.rnn(inp, h)
-        **return** F.log_softmax(self.l_out(outp), dim=-1)
+        return F.log_softmax(self.l_out(outp), dim=-1)
 ```
 
 ## 梯度爆炸 [[2:08:21](https://youtu.be/sHcLkfRrgoQ?t=2h8m21s)]

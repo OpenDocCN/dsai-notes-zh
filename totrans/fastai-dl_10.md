@@ -83,8 +83,8 @@ Chloe 在这里所做的是特别关注每个路径中张量的维度，逐渐�
 我们将再次使用 IMDb。对于那些忘记了的人，请返回查看 lesson 4。这是一个电影评论数据集，我们用它来找出我们是否会喜欢“Zombiegeddon”，我们认为可能是我喜欢的类型。
 
 ```py
-**from** **fastai.text** **import** *
-**import** **html**
+from fastai.text import *
+import html
 ```
 
 > 我们需要从这个网站下载 IMDB 大型电影评论：[`ai.stanford.edu/~amaas/data/sentiment/`](http://ai.stanford.edu/~amaas/data/sentiment/) 直接链接：[链接](http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz)
@@ -100,20 +100,20 @@ NLP 的基本路径是我们必须将句子转换为数字，有几种方法可�
 
 ```py
 CLAS_PATH=Path('data/imdb_clas/')
-CLAS_PATH.mkdir(exist_ok=**True**)LM_PATH=Path('data/imdb_lm/')
-LM_PATH.mkdir(exist_ok=**True**)
+CLAS_PATH.mkdir(exist_ok=True)LM_PATH=Path('data/imdb_lm/')
+LM_PATH.mkdir(exist_ok=True)
 ```
 
 正如你在这里看到的[[21:59](https://youtu.be/h5Tz7gZT9Fo?t=21m59s)]，我写了一个名为 get_texts 的东西，它遍历了`CLASSES`中的每一个东西。IMDb 中有三个类别：负面、正面，然后还有另一个文件夹“unsupervised”，其中包含他们尚未标记的样本，所以我们暂时将其称为一个类别。所以我们只是遍历每一个类别，然后找到该文件夹中的每个文件，打开它，读取它，并将其放入数组的末尾。正如你所看到的，使用 pathlib，很容易获取并导入东西，然后标签就是到目前为止的任何类别。我们将为训练集和测试集都这样做。
 
 ```py
-CLASSES = ['neg', 'pos', 'unsup']**def** get_texts(path):
+CLASSES = ['neg', 'pos', 'unsup']def get_texts(path):
     texts,labels = [],[]
-    **for** idx,label **in** enumerate(CLASSES):
-        **for** fname **in** (path/label).glob('*.*'):
+    for idx,label in enumerate(CLASSES):
+        for fname in (path/label).glob('*.*'):
             texts.append(fname.open('r').read())
             labels.append(idx)
-    **return** np.array(texts),np.array(labels)trn_texts,trn_labels = get_texts(PATH/'train')
+    return np.array(texts),np.array(labels)trn_texts,trn_labels = get_texts(PATH/'train')
 val_texts,val_labels = get_texts(PATH/'test')len(trn_texts),len(val_texts)*(75000, 25000)*
 ```
 
@@ -146,9 +146,9 @@ df_trn = pd.DataFrame({'text':trn_texts, 'labels':trn_labels},
                       columns=col_names)
 df_val = pd.DataFrame({'text':val_texts, 'labels':val_labels},
                       columns=col_names)df_trn[df_trn['labels']!=2].to_csv(CLAS_PATH/'train.csv',
-                                   header=**False**, index=**False**)
-df_val.to_csv(CLAS_PATH/'test.csv', header=**False**, index=**False**)(CLAS_PATH/'classes.txt').open('w')
-    .writelines(f'**{o}\n**' **for** o **in** CLASSES)
+                                   header=False, index=False)
+df_val.to_csv(CLAS_PATH/'test.csv', header=False, index=False)(CLAS_PATH/'classes.txt').open('w')
+    .writelines(f'**{o}\n**' for o in CLASSES)
 (CLAS_PATH/'classes.txt').open().readlines()*['neg\n', 'pos\n', 'unsup\n']*
 ```
 
@@ -169,8 +169,8 @@ trn_texts,val_texts = sklearn.model_selection.train_test_split(
 df_trn = pd.DataFrame({'text':trn_texts, 'labels':
                        [0]*len(trn_texts)}, columns=col_names)
 df_val = pd.DataFrame({'text':val_texts, 'labels':
-                       [0]*len(val_texts)}, columns=col_names)df_trn.to_csv(LM_PATH/'train.csv', header=**False**, index=**False**)
-df_val.to_csv(LM_PATH/'test.csv', header=**False**, index=**False**)
+                       [0]*len(val_texts)}, columns=col_names)df_trn.to_csv(LM_PATH/'train.csv', header=False, index=False)
+df_val.to_csv(LM_PATH/'test.csv', header=False, index=False)
 ```
 
 ## 语言模型标记[[28:03](https://youtu.be/h5Tz7gZT9Fo?t=28m3s)]
@@ -184,7 +184,7 @@ chunksize=24000
 在将其传递给 spaCy 之前，Jeremy 编写了这个简单的`fixup`函数，每次他查看不同的数据集（在构建过程中大约有十几个），每个数据集都有不同的奇怪之处需要替换。所以这是他迄今为止想出的所有内容，希望这也能帮助到你。所有实体都是 html 未转义的，还有更多我们替换的内容。看看在你输入的文本上运行这个函数的结果，并确保里面没有更多奇怪的标记。
 
 ```py
-re1 = re.compile(r'  +')**def** fixup(x):
+re1 = re.compile(r'  +')def fixup(x):
    x = x.replace('#39;', "'").replace('amp;', '&')
         .replace('#146;', "'").replace('nbsp;', ' ')
         .replace('#36;', '$').replace('**\\**n', "**\n**")
@@ -192,26 +192,26 @@ re1 = re.compile(r'  +')**def** fixup(x):
         .replace('**\\**"', '"').replace('<unk>','u_n')
         .replace(' @.@ ','.').replace(' @-@ ','-')
         .replace('**\\**', ' **\\** ')
-    **return** re1.sub(' ', html.unescape(x))**def** get_texts(df, n_lbls=1):
+    return re1.sub(' ', html.unescape(x))def get_texts(df, n_lbls=1):
     labels = df.iloc[:,range(n_lbls)].values.astype(np.int64)
     texts = f'**\n{BOS}** **{FLD}** 1 ' + df[n_lbls].astype(str)
-    **for** i **in** range(n_lbls+1, len(df.columns)): 
+    for i in range(n_lbls+1, len(df.columns)): 
         texts += f' **{FLD}** {i-n_lbls} ' + df[i].astype(str)
     texts = texts.apply(fixup).values.astype(str) tok = Tokenizer().proc_all_mp(partition_by_cores(texts))
-    **return** tok, list(labels)
+    return tok, list(labels)
 ```
 
 `get_all`函数调用`get_texts`，而`get_texts`将做一些事情[[29:40](https://youtu.be/h5Tz7gZT9Fo?t=29m40s)]。其中之一是应用我们刚提到的`fixup`。
 
 ```py
-**def** get_all(df, n_lbls):
+def get_all(df, n_lbls):
     tok, labels = [], []
-    **for** i, r **in** enumerate(df):
+    for i, r in enumerate(df):
         print(i)
         tok_, labels_ = get_texts(r, n_lbls)
         tok += tok_;
         labels += labels_
-    **return** tok, labels
+    return tok, labels
 ```
 
 让我们仔细看一下，因为有一些有趣的事情要指出。我们将使用 pandas 打开我们的 train.csv 文件，但是我们传入了一个你可能以前没有见过的额外参数，叫做`chunksize`。当涉及存储和使用文本数据时，Python 和 pandas 都可能非常低效。所以你会发现，在 NLP 领域很少有人在处理大型语料库。Jeremy 认为部分原因是传统工具使得这一过程非常困难——你总是会耗尽内存。所以他今天向我们展示的这个过程，他已经成功地在超过十亿字的语料库上使用了这段代码。其中一个简单的技巧就是 pandas 中的`chunksize`。这意味着 pandas 不会返回一个数据框，而是返回一个我们可以迭代遍历数据框块的迭代器。这就是为什么我们不说`tok_trn = get_text(df_trn)`，而是调用`get_all`，它会遍历数据框，但实际上它正在遍历数据框的块，因此每个块基本上是代表数据子集的数据框。
@@ -227,15 +227,15 @@ re1 = re.compile(r'  +')**def** fixup(x):
 +   然后最重要的是[[33:54](https://youtu.be/h5Tz7gZT9Fo?t=33m54s)], 我们对其进行标记化 - 通过进行“process all multiprocessing” (`proc_all_mp`) 进行标记化。标记化往往会很慢，但现在我们的机器都有多个核心，AWS 上一些更好的机器可以有几十个核心。spaCy 不太适合多处理，但 Jeremy 最终找到了让它工作的方法。好消息是现在所有这些都包含在这一个函数中。所以你只需要传递给该函数一个要标记化的事物列表，该列表的每个部分将在不同的核心上进行标记化。还有一个名为`partition_by_cores`的函数，它接受一个列表并将其拆分为子列表。子列表的数量就是您计算机上的核心数量。在 Jeremy 的机器上，没有多处理，这需要大约一个半小时，而使用多处理，大约需要 2 分钟。所以这是一个非常方便的东西。随时查看并利用它来处理您自己的东西。记住，我们的笔记本电脑中都有多个核心，而且很少有 Python 中的东西能够利用它，除非您稍微努力使其工作。
 
 ```py
-df_trn = pd.read_csv(LM_PATH/'train.csv', header=**None**, 
+df_trn = pd.read_csv(LM_PATH/'train.csv', header=None, 
                      chunksize=chunksize)
-df_val = pd.read_csv(LM_PATH/'test.csv', header=**None**, 
+df_val = pd.read_csv(LM_PATH/'test.csv', header=None, 
                      chunksize=chunksize)tok_trn, trn_labels = get_all(df_trn, 1)
 tok_val, val_labels = get_all(df_val, 1)*0
 1
 2
 3
-0*(LM_PATH/'tmp').mkdir(exist_ok=**True**)
+0*(LM_PATH/'tmp').mkdir(exist_ok=True)
 ```
 
 这是最终结果[[35:42](https://youtu.be/h5Tz7gZT9Fo?t=35m42s)]。流的开始标记（`xbos`），第 1 个字段的开始标记（`xfld 1`），以及标记化的文本。您会看到标点现在是一个单独的标记。
@@ -265,7 +265,7 @@ tok_val = np.load(LM_PATH/'tmp'/'tok_val.npy')
 这里是一些词汇的例子。Python 中的 Counter 类对此非常有用。它基本上为我们提供了一个独特项目和它们的计数的列表。这里是词汇中最常见的 25 个东西。一般来说，我们不希望在我们的词汇表中有每个独特的标记。如果它不至少出现两次，那可能只是一个拼写错误或者一个我们无法学到任何东西的词，如果它不经常出现的话。此外，在这一部分我们将要学习的东西一旦词汇量超过 60,000 就会变得有些笨重。如果时间允许，我们可能会看一下 Jeremy 最近在处理更大词汇量方面所做的一些工作，否则这可能会在未来的课程中出现。但实际上，对于分类来说，超过 60,000 个词并没有什么帮助。
 
 ```py
-freq = Counter(p **for** o **in** tok_trn **for** p **in** o)
+freq = Counter(p for o in tok_trn for p in o)
 freq.most_common(25)*[('the', 1207984),
  ('.', 991762),
  (',', 985975),
@@ -297,7 +297,7 @@ freq.most_common(25)*[('the', 1207984),
 
 ```py
 max_vocab = 60000
-min_freq = 2itos = [o **for** o,c **in** freq.most_common(max_vocab) **if** c>min_freq]
+min_freq = 2itos = [o for o,c in freq.most_common(max_vocab) if c>min_freq]
 itos.insert(0, '_pad_')
 itos.insert(0, '_unk_')
 ```
@@ -305,16 +305,16 @@ itos.insert(0, '_unk_')
 然后我们可以创建一个字典，它是相反的（从字符串到整数）。这不会覆盖所有内容，因为我们故意将它截断到 60,000 个词。如果我们遇到字典中没有的东西，我们希望用零替换它，表示未知，所以我们可以使用带有 lambda 函数的 defaultdict，它总是返回零。
 
 ```py
-stoi = collections.defaultdict(**lambda**:0, 
-                               {v:k **for** k,v **in** enumerate(itos)})
+stoi = collections.defaultdict(lambda:0, 
+                               {v:k for k,v in enumerate(itos)})
 len(itos)*60002*
 ```
 
 现在我们定义了我们的`stoi`字典，我们可以为每个句子的每个单词调用它。
 
 ```py
-trn_lm = np.array([[stoi[o] **for** o **in** p] **for** p **in** tok_trn])
-val_lm = np.array([[stoi[o] **for** o **in** p] **for** p **in** tok_val])
+trn_lm = np.array([[stoi[o] for o in p] for p in tok_trn])
+val_lm = np.array([[stoi[o] for o in p] for p in tok_val])
 ```
 
 这是我们的数字化版本：
@@ -378,7 +378,7 @@ PRE_LM_PATH = PRE_PATH**/**'fwd_wt103.h5'
 现在的问题是，wikitext 语言模型是建立在一个特定词汇表上的，这个词汇表与我们的不同。我们的#40 不同于 wikitext103 模型的#40。所以我们需要将一个映射到另一个。这非常简单，因为幸运的是 Jeremy 保存了 wikitext 词汇表的`itos`。
 
 ```py
-wgts = torch.load(PRE_LM_PATH, map_location=**lambda** storage, 
+wgts = torch.load(PRE_LM_PATH, map_location=lambda storage, 
                   loc: storage)enc_wgts = to_np(wgts['0.encoder.weight'])
 row_m = enc_wgts.mean(0)
 ```
@@ -386,8 +386,8 @@ row_m = enc_wgts.mean(0)
 这是 wikitext103 模型中每个单词的列表，我们可以使用相同的`defaultdict`技巧来反向映射。我们将使用-1 来表示它不在 wikitext 词典中。
 
 ```py
-itos2 = pickle.load((PRE_PATH**/**'itos_wt103.pkl').open('rb'))stoi2 = collections.defaultdict(**lambda**:**-**1, {v:k **for** k,v 
-                                              **in** enumerate(itos2)})
+itos2 = pickle.load((PRE_PATH**/**'itos_wt103.pkl').open('rb'))stoi2 = collections.defaultdict(lambda:-1, {v:k for k,v 
+                                              in enumerate(itos2)})
 ```
 
 现在我们可以说我们的新权重集只是一个由词汇大小乘以嵌入大小（即我们将创建一个嵌入矩阵）的一大堆零。然后我们遍历我们 IMDb 词汇表中的每一个单词。我们将在 wikitext103 词汇表的`stoi2`（字符串到整数）中查找它，并查看它是否是一个单词。如果那是一个单词，那么我们就不会得到`-1`。所以`r`将大于或等于零，那么在这种情况下，我们将把嵌入矩阵的那一行设置为存储在名为`‘0.encoder.weight’`的元素内的权重。你可以查看这个字典`wgts`，很明显每个名称对应什么。它看起来非常类似于你在设置模块时给它的名称，所以这里是编码器权重。
@@ -396,9 +396,9 @@ itos2 = pickle.load((PRE_PATH**/**'itos_wt103.pkl').open('rb'))stoi2 = collectio
 
 ```py
 new_w = np.zeros((vs, em_sz), dtype=np.float32)
-**for** i,w **in** enumerate(itos):
+for i,w in enumerate(itos):
     r = stoi2[w]
-    new_w[i] = enc_wgts[r] **if** r**>**=0 **else** row_m
+    new_w[i] = enc_wgts[r] if r**>**=0 else row_m
 ```
 
 然后我们将用`new_w`替换编码器权重，变成一个张量[[49:35](https://youtu.be/h5Tz7gZT9Fo?t=49m35s)]。我们没有谈论过权重绑定，但基本上解码器（将最终预测转换回单词的部分）使用完全相同的权重，所以我们也将它放在那里。然后有一个关于我们如何进行嵌入丢弃的奇怪事情，最终导致它们有一个完全独立的副本，原因并不重要。所以我们把权重放回它们需要去的地方。所以现在这是一组 torch 状态，我们可以加载进去。
@@ -519,7 +519,7 @@ md = LanguageModelData(PATH, 1, vs, trn_dl, val_dl, bs=bs,
 你选择的 dropout 很重要。通过大量实验，Jeremy 发现了一些对语言模型非常有效的 dropout。但如果你的语言模型数据较少，你需要更多的 dropout。如果你有更多的数据，你可以从更少的 dropout 中受益。你不想过度正则化。Jeremy 的观点是，这些比例已经相当不错，所以只需调整这个数字（下面的`0.7`），我们只需将其乘以某个值。如果你过拟合，那么你需要增加这个数字，如果你欠拟合，你需要减少这个数字。因为除此之外，这些比例似乎相当不错。
 
 ```py
-drops = np.array([0.25, 0.1, 0.2, 0.02, 0.15])***0.7**learner= md.get_model(opt_fn, em_sz, nh, nl, 
+drops = np.array([0.25, 0.1, 0.2, 0.02, 0.15])*0.7learner= md.get_model(opt_fn, em_sz, nh, nl, 
     dropouti=drops[0], dropout=drops[1], wdrop=drops[2],
     dropoute=drops[3], dropouth=drops[4])learner.metrics = [accuracy]
 learner.freeze_to(-1)
@@ -532,7 +532,7 @@ learner.freeze_to(-1)
 ```py
 learner.model.load_state_dict(wgts)lr=1e-3
 lrs = lrlearner.fit(lrs/2, 1, wds=wd, use_clr=(32,2), cycle_len=1)*epoch      trn_loss   val_loss   accuracy                     
-    0      4.398856   4.175343   0.28551**[4.175343, 0.2855095456305303]*learner.save('lm_last_ft')learner.load('lm_last_ft')learner.unfreeze()learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=**True**)learner.sched.plot()
+    0      4.398856   4.175343   0.28551**[4.175343, 0.2855095456305303]*learner.save('lm_last_ft')learner.load('lm_last_ft')learner.unfreeze()learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=True)learner.sched.plot()
 ```
 
 我们训练一段时间，将交叉熵损失降至 3.9，相当于约 49.40 的困惑度（`e³.9`）。要让你了解语言模型的情况，如果你看一下大约 18 个月前的学术论文，你会看到他们谈论的最先进的困惑度超过一百。我们理解语言的能力以及衡量语言模型准确性或困惑度的速度并不是理解语言的一个可怕的代理。如果我能猜到你接下来要说什么，我需要很好地理解语言以及你可能会谈论的事情。困惑度数字已经下降了很多，这是令人惊讶的，而且它还会下降很多。在过去的 12-18 个月里，NLP 真的感觉像是 2011-2012 年的计算机视觉。我们开始理解迁移学习和微调，基本模型变得更好了很多。你对 NLP 能做什么和不能做什么的想法正在迅速过时。当然，NLP 仍然有很多不擅长的地方。就像在 2012 年，计算机视觉有很多不擅长的地方一样。但它的变化速度非常快，现在是非常好的时机，要么变得非常擅长 NLP，要么基于 NLP 创办初创公司，因为两年前计算机绝对擅长的一堆事情，现在还不如人类，而明年，它们将比人类好得多。
@@ -586,14 +586,14 @@ learner.sched.plot_loss()
 现在让我们创建分类器。我们将快速浏览一下，因为它是相同的。但当你在这一周回顾代码时，确信它是相同的。
 
 ```py
-df_trn = pd.read_csv(CLAS_PATH/'train.csv', header=**None**, 
+df_trn = pd.read_csv(CLAS_PATH/'train.csv', header=None, 
                      chunksize=chunksize)
-df_val = pd.read_csv(CLAS_PATH/'test.csv', header=**None**, 
+df_val = pd.read_csv(CLAS_PATH/'test.csv', header=None, 
                      chunksize=chunksize)tok_trn, trn_labels = get_all(df_trn, 1)
 tok_val, val_labels = get_all(df_val, 1)*0
 1
 0
-1*(CLAS_PATH/'tmp').mkdir(exist_ok=**True**)np.save(CLAS_PATH/'tmp'/'tok_trn.npy', tok_trn)
+1*(CLAS_PATH/'tmp').mkdir(exist_ok=True)np.save(CLAS_PATH/'tmp'/'tok_trn.npy', tok_trn)
 np.save(CLAS_PATH/'tmp'/'tok_val.npy', tok_val)np.save(CLAS_PATH/'tmp'/'trn_labels.npy', trn_labels)
 np.save(CLAS_PATH/'tmp'/'val_labels.npy', val_labels)tok_trn = np.load(CLAS_PATH/'tmp'/'tok_trn.npy')
 tok_val = np.load(CLAS_PATH/'tmp'/'tok_val.npy')
@@ -603,10 +603,10 @@ tok_val = np.load(CLAS_PATH/'tmp'/'tok_val.npy')
 
 ```py
 itos = pickle.load((LM_PATH/'tmp'/'itos.pkl').open('rb'))
-stoi = collections.defaultdict(**lambda**:0, {v:k **for** k,v **in** 
+stoi = collections.defaultdict(lambda:0, {v:k for k,v in 
                                           enumerate(itos)})
-len(itos)*60002*trn_clas = np.array([[stoi[o] **for** o **in** p] **for** p **in** tok_trn])
-val_clas = np.array([[stoi[o] **for** o **in** p] **for** p **in** tok_val])np.save(CLAS_PATH/'tmp'/'trn_ids.npy', trn_clas)
+len(itos)*60002*trn_clas = np.array([[stoi[o] for o in p] for p in tok_trn])
+val_clas = np.array([[stoi[o] for o in p] for p in tok_val])np.save(CLAS_PATH/'tmp'/'trn_ids.npy', trn_clas)
 np.save(CLAS_PATH/'tmp'/'val_ids.npy', val_clas)
 ```
 
@@ -648,11 +648,11 @@ val_ds = TextDataset(val_clas, val_labels)
 ## 将其转换为 DataLoader
 
 ```py
-trn_samp = SortishSampler(trn_clas, key=**lambda** x: len(trn_clas[x]), 
+trn_samp = SortishSampler(trn_clas, key=lambda x: len(trn_clas[x]), 
                           bs=bs//2)
-val_samp = SortSampler(val_clas, key=**lambda** x: len(val_clas[x]))trn_dl = DataLoader(trn_ds, bs//2, transpose=**True**, num_workers=1,
+val_samp = SortSampler(val_clas, key=lambda x: len(val_clas[x]))trn_dl = DataLoader(trn_ds, bs//2, transpose=True, num_workers=1,
                     pad_idx=1, sampler=trn_samp)
-val_dl = DataLoader(val_ds, bs, transpose=**True**, num_workers=1, 
+val_dl = DataLoader(val_ds, bs, transpose=True, num_workers=1, 
                     pad_idx=1, sampler=val_samp)
 md = ModelData(PATH, trn_dl, val_dl)
 ```

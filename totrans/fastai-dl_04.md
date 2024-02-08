@@ -92,7 +92,7 @@ learn = ConvLearner.pretrained(arch, data, **ps=0.5**, precompute=True)
 您可以通过设置`ps=0.`来删除辍学，但即使经过几个时期，我们开始严重过拟合（训练损失≪验证损失）：
 
 ```py
-[2\.      **0.3521**   **0.55247**  0.84189]
+[2\.      0.3521   0.55247  0.84189]
 ```
 
 当`ps=0.`时，辍学层甚至不会添加到模型中：
@@ -119,10 +119,10 @@ learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True,
 )*learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True, 
             **xtra_fc=[700, 300]**); learn*Sequential(
   (0): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True)
-  (1): Linear(in_features=1024, out_features=****700****)
+  (1): Linear(in_features=1024, out_features=**700**)
   (2): ReLU()
   (3): BatchNorm1d(700, eps=1e-05, momentum=0.1, affine=True)
-  (4): Linear(in_features=700, out_features=****300****)
+  (4): Linear(in_features=700, out_features=**300**)
   (5): ReLU()
   (6): BatchNorm1d(300, eps=1e-05, momentum=0.1, affine=True)
   (7): Linear(in_features=300, out_features=120)
@@ -255,7 +255,7 @@ y_range = (0, max_log_y*1.2)
 +   当您对数据取对数时，得到均方根误差将实际上得到均方根百分比误差。
 
 ```py
-md = **ColumnarModelData.from_data_frame**(PATH, val_idx, df, 
+md = ColumnarModelData.from_data_frame(PATH, val_idx, df, 
          yl.astype(np.float32), cat_flds=cat_vars, bs=128, 
          test_df=df_test)
 ```
@@ -312,7 +312,7 @@ m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars),
 
 ```py
 cat_sz = [(c, len(joined_samp[c].cat.categories)+1) 
-             **for** c **in** cat_vars]
+             for c in cat_vars]
 cat_sz*[('Store', 1116),
  ('DayOfWeek', 8),
  ('Year', 4),
@@ -344,7 +344,7 @@ cat_sz*[('Store', 1116),
 +   确定嵌入大小的经验法则是基数大小除以 2，但不超过 50。
 
 ```py
-emb_szs = [(c, min(50, (c+1)//2)) **for** _,c **in** cat_sz]
+emb_szs = [(c, min(50, (c+1)//2)) for _,c in cat_sz]
 emb_szs*[(1116, 50),
  (8, 4),
  (4, 2),
@@ -424,15 +424,19 @@ lr = 1e-3
 +   `y_range`：现在我们不会担心这个
 
 ```py
-m.fit(lr, 3, metrics=[exp_rmspe])*A Jupyter Widget**[ 0\.       0.02479  0.02205* ***0.19309****]                          
-[ 1\.       0.02044  0.01751* ***0.18301****]                          
-[ 2\.       0.01598  0.01571* ***0.17248****]*
+m.fit(lr, 3, metrics=[exp_rmspe])*A Jupyter Widget*
+'''
+[0\.       0.02479  0.02205* *0.19309**]                          
+[ 1\.       0.02044  0.01751* *0.18301**]                          
+[ 2\.       0.01598  0.01571* *0.17248**]*
 ```
 
 +   `metrics`：这是一个自定义指标，指定在每个时期结束时调用的函数并打印结果
 
 ```py
-m.fit(lr, 1, metrics=[exp_rmspe], cycle_len=1)*[ 0\.       0.00676  0.01041  0.09711]* 
+m.fit(lr, 1, metrics=[exp_rmspe], cycle_len=1)
+'''
+[0\.       0.00676  0.01041  0.09711]* 
 ```
 
 通过使用所有的训练数据，我们实现了大约 0.09711 的 RMSPE。公共排行榜和私人排行榜之间存在很大差异，但我们肯定处于比赛的前端。
@@ -597,7 +601,7 @@ review[0]*"I have to say when a name like Zombiegeddon and an atom bomb on the f
 字段是如何预处理一些文本的定义。
 
 ```py
-TEXT = data.Field(lower=**True**, tokenize=spacy_tok)
+TEXT = data.Field(lower=True, tokenize=spacy_tok)
 ```
 
 +   `lower=True` — 将文本转换为小写
@@ -687,7 +691,7 @@ next(iter(md.trn_dl))*(Variable containing:
      19   8879     33  ...      41     24    733
     552   8250     57  ...     219     57   1777
       5     19      2  ...    3099      8     48
- [torch.cuda.LongTensor of size 75x64 (GPU 0)], Variable containing:* ***35******7******33*** *⋮   
+ [torch.cuda.LongTensor of size 75x64 (GPU 0)], Variable containing:* *35**7**33* *⋮   
      22
    3885
   21587
@@ -808,7 +812,7 @@ m[0].bs=bs
 
 ```py
 nexts = torch.topk(res[-1], 10)[1]
-[TEXT.vocab.itos[o] **for** o **in** to_np(nexts)]*['film',
+[TEXT.vocab.itos[o] for o in to_np(nexts)]*['film',
  'movie',
  'of',
  'thing',
@@ -824,9 +828,9 @@ nexts = torch.topk(res[-1], 10)[1]
 
 ```py
 print(ss,"**\n**")
-**for** i **in** range(50):
+for i in range(50):
     n=res[-1].topk(2)[1]
-    n = n[1] **if** n.data[0]==0 **else** n[0]
+    n = n[1] if n.data[0]==0 else n[0]
     print(TEXT.vocab.itos[n.data[0]], end=' ')
     res,*_ = m(n[0].unsqueeze(0))
 print('...')*. So, it wasn't quite was I was expecting, but I really liked it anyway! The best* *film ever ! <eos> i saw this movie at the toronto international film festival . i was very impressed . i was very impressed with the acting . i was very impressed with the acting . i was surprised to see that the actors were not in the movie . ...*
@@ -845,7 +849,7 @@ TEXT = pickle.load(open(f'**{PATH}**models/TEXT.pkl','rb'))
 `sequential=False`告诉 torchtext 文本字段应该被标记化（在这种情况下，我们只想存储“正面”或“负面”单个标签）。
 
 ```py
-IMDB_LABEL = data.Field(sequential=**False**)
+IMDB_LABEL = data.Field(sequential=False)
 ```
 
 这一次，我们需要将每个评论视为单独的而不是作为一个大段的文本，因为每个评论都有不同的情感附着。
@@ -853,7 +857,7 @@ IMDB_LABEL = data.Field(sequential=**False**)
 `splits`是 torchtext 的一个方法，用于创建训练、测试和验证集。IMDB 数据集内置在 torchtext 中，因此我们可以利用它。查看`lang_model-arxiv.ipynb`，了解如何定义自己的 fastai/torchtext 数据集。
 
 ```py
-**splits** = torchtext.datasets.IMDB.splits(TEXT, IMDB_LABEL, 'data/')t = splits[0].examples[0]t.label, ' '.join(t.text[:16])*('pos', 'ashanti is a very 70s sort of film ( 1979 , to be precise ) .')*
+splits = torchtext.datasets.IMDB.splits(TEXT, IMDB_LABEL, 'data/')t = splits[0].examples[0]t.label, ' '.join(t.text[:16])*('pos', 'ashanti is a very 70s sort of film ( 1979 , to be precise ) .')*
 ```
 
 fastai 可以直接从 torchtext 的`splits`创建一个`ModelData`对象。
@@ -867,7 +871,7 @@ md2 = TextData.from_splits(PATH, splits, bs)
 ```py
 m3 = md2.get_model(opt_fn, 1500, bptt, emb_sz=em_sz, n_hid=nh, 
                    n_layers=nl, dropout=0.1, dropouti=0.4,
-                   wdrop=0.5, dropoute=0.05, dropouth=0.3)m3.reg_fn = partial(seq2seq_reg, alpha=2, beta=1)m3.**load_encoder**(f'adam3_20_enc')
+                   wdrop=0.5, dropoute=0.05, dropouth=0.3)m3.reg_fn = partial(seq2seq_reg, alpha=2, beta=1)m3.load_encoder(f'adam3_20_enc')
 ```
 
 因为我们正在微调一个预训练模型，我们将使用不同的学习率，并增加用于剪切的最大梯度，以使 SGDR 更好地工作。
@@ -877,7 +881,11 @@ m3.clip=25.
 lrs=np.array([1e-4,1e-3,1e-2])m3.freeze_to(-1)
 m3.fit(lrs/2, 1, metrics=[accuracy])
 m3.unfreeze()
-m3.fit(lrs, 1, metrics=[accuracy], cycle_len=1)*[ 0\.       0.45074  0.28424  0.88458]**[ 0\.       0.29202  0.19023  0.92768]*
+m3.fit(lrs, 1, metrics=[accuracy], cycle_len=1)
+'''
+[0\.       0.45074  0.28424  0.88458]*
+'''
+[0\.       0.29202  0.19023  0.92768]*
 ```
 
 我们确保除了最后一层外，所有层都被冻结。然后我们进行一些训练，解冻它，再进行一些训练。好处是一旦你有了一个预训练的语言模型，它实际上训练速度非常快。

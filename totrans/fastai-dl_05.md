@@ -172,10 +172,10 @@ model = DotProduct()
 
 ```py
 u_uniq = ratings.userId.unique() 
-user2idx = {o:i **for** i,o **in** enumerate(u_uniq)} 
-ratings.userId = ratings.userId.apply(**lambda** x: user2idx[x]) m_uniq = ratings.movieId.unique() 
-movie2idx = {o:i **for** i,o **in** enumerate(m_uniq)} 
-ratings.movieId = ratings.movieId.apply(**lambda** x: movie2idx[x]) n_users=int(ratings.userId.nunique()) n_movies=int(ratings.movieId.nunique())
+user2idx = {o:i for i,o in enumerate(u_uniq)} 
+ratings.userId = ratings.userId.apply(lambda x: user2idx[x]) m_uniq = ratings.movieId.unique() 
+movie2idx = {o:i for i,o in enumerate(m_uniq)} 
+ratings.movieId = ratings.movieId.apply(lambda x: movie2idx[x]) n_users=int(ratings.userId.nunique()) n_movies=int(ratings.movieId.nunique())
 ```
 
 *提示：*`{o:i for i,o in enumerate(u_uniq)}`是一行方便的代码，可以保存在您的工具包中！
@@ -233,7 +233,7 @@ min_rating,max_ratingdef get_emb(ni,nf):
     return eclass EmbeddingDotBias(nn.Module):
     def __init__(self, n_users, n_movies):
         super().__init__()
-        (self.u, self.m, **self.ub**, **self.mb**) = [get_emb(*o) for o in [
+        (self.u, self.m, self.ub, self.mb) = [get_emb(*o) for o in [
             (n_users, n_factors), (n_movies, n_factors), (n_users,1), (n_movies,1)
         ]]
 
@@ -270,11 +270,11 @@ opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)fit(mode
 
 ```py
 class EmbeddingNet(nn.Module):
-    def __init__(self, n_users, n_movies, **nh**=10, p1=0.5, p2=0.5):
+    def __init__(self, n_users, n_movies, nh=10, p1=0.5, p2=0.5):
         super().__init__()
         (self.u, self.m) = [get_emb(*o) for o in [
             (n_users, n_factors), (n_movies, n_factors)]]
-        self.lin1 = **nn.Linear**(n_factors*2, nh)
+        self.lin1 = nn.Linear(n_factors*2, nh)
         self.lin2 = nn.Linear(nh, 1)
         self.drop1 = nn.Dropout(p1)
         self.drop2 = nn.Dropout(p2)
@@ -294,7 +294,7 @@ class EmbeddingNet(nn.Module):
 wd=1e-5
 model = EmbeddingNet(n_users, n_movies).cuda()
 opt = optim.Adam(model.parameters(), 1e-3, weight_decay=wd)
-fit(model, data, 3, opt, **F.mse_loss**)A Jupyter Widget[ 0\.       0.88043  0.82363]                                    
+fit(model, data, 3, opt, F.mse_loss)A Jupyter Widget[ 0\.       0.88043  0.82363]                                    
 [ 1\.       0.8941   0.81264]                                    
 [ 2\.       0.86179  0.80706]
 ```

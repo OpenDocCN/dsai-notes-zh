@@ -37,8 +37,8 @@
 +   与以前的一个细微差别是第二层和第三层有输入进来。我们尝试了两种方法 —— 将这些输入连接或添加到当前激活中。
 
 ```py
-**class** **Char3Model**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class Char3Model(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
 
@@ -51,7 +51,7 @@
         *# The 'blue arrow' from our diagram*
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, c1, c2, c3):
+    def forward(self, c1, c2, c3):
         in1 = F.relu(self.l_in(self.e(c1)))
         in2 = F.relu(self.l_in(self.e(c2)))
         in3 = F.relu(self.l_in(self.e(c3)))
@@ -61,7 +61,7 @@
         h = F.tanh(self.l_hidden(h+in2))
         h = F.tanh(self.l_hidden(h+in3))
 
-        **return** F.log_softmax(self.l_out(h))
+        return F.log_softmax(self.l_out(h))
 ```
 
 +   通过使用 `nn.Linear`，我们免费获得了权重矩阵和偏置向量。
@@ -69,42 +69,42 @@
 +   为了解决第一个椭圆中没有橙色箭头的问题，我们发明了一个空矩阵
 
 ```py
-**class** **CharLoopModel**(nn.Module):
+class CharLoopModel(nn.Module):
     *# This is an RNN!*
-    **def** __init__(self, vocab_size, n_fac):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.l_in = nn.Linear(n_fac, n_hidden)
         self.l_hidden = nn.Linear(n_hidden, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(bs, n_hidden).cuda())
-        **for** c **in** cs:
+        for c in cs:
             inp = F.relu(self.l_in(self.e(c)))
             h = F.tanh(self.l_hidden(h+inp))
 
-        **return** F.log_softmax(self.l_out(h), dim=-1)
+        return F.log_softmax(self.l_out(h), dim=-1)
 ```
 
 +   几乎相同，除了 `for` 循环
 
 ```py
-**class** **CharRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac):
+class CharRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac):
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
         self.rnn = nn.RNN(n_fac, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
 
-    **def** forward(self, *cs):
+    def forward(self, *cs):
         bs = cs[0].size(0)
         h = V(torch.zeros(1, bs, n_hidden))
         inp = self.e(torch.stack(cs))
         outp,h = self.rnn(inp, h)
 
-        **return** F.log_softmax(self.l_out(outp[-1]), dim=-1)
+        return F.log_softmax(self.l_out(outp[-1]), dim=-1)
 ```
 
 +   PyTorch 版本 — `nn.RNN` 将创建循环并跟踪 `h`。
@@ -118,8 +118,8 @@
 ## 有状态的 RNN
 
 ```py
-**class** **CharSeqStatefulRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac, bs):
+class CharSeqStatefulRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac, bs):
         self.vocab_size = vocab_size
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
@@ -127,14 +127,14 @@
         self.l_out = nn.Linear(n_hidden, vocab_size)
         **self.init_hidden(bs)**
 
-    **def** forward(self, cs):
+    def forward(self, cs):
         bs = cs[0].size(0)
-        **if** self.h.size(1) != bs: self.init_hidden(bs)
+        if self.h.size(1) != bs: self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         **self.h = repackage_var(h)**
-        **return** F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
+        return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    **def** init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   构造函数中的一个额外行。`self.init_hidden(bs)` 将 `self.h` 设置为一堆零。
@@ -188,8 +188,8 @@ def repackage_var(h):return Variable(h.data) if type(h) == Variable else tuple(r
 在使用期望数据符合特定格式的现有 API 时，您可以将数据更改为符合该格式，也可以编写自己的数据集子类来处理您的数据已经存在的格式。两者都可以，但在这种情况下，我们将把我们的数据放在 TorchText 已经支持的格式中。Fast.ai 对 TorchText 的包装器已经有了一些东西，您可以在每个路径中有一个训练路径和验证路径，并且每个路径中有一个或多个文本文件，其中包含一堆文本，这些文本被连接在一起用于您的语言模型。
 
 ```py
-**from** **torchtext** **import** vocab, data **from** **fastai.nlp** **import** * 
-**from** **fastai.lm_rnn** **import** * PATH='data/nietzsche/' TRN_PATH = 'trn/' 
+from torchtext import vocab, data from fastai.nlp import * 
+from fastai.lm_rnn import * PATH='data/nietzsche/' TRN_PATH = 'trn/' 
 VAL_PATH = 'val/' 
 TRN = f'**{PATH}{TRN_PATH}**' 
 VAL = f'**{PATH}{VAL_PATH}**'%ls {PATH}
@@ -204,7 +204,7 @@ VAL = f'**{PATH}{VAL_PATH}**'%ls {PATH}
 +   当您进行语言模型时，您实际上不需要单独的文件。您可以有多个文件，但它们最终会被连接在一起。
 
 ```py
-TEXT = data.Field(lower=**True**, tokenize=list)
+TEXT = data.Field(lower=True, tokenize=list)
 bs=64; bptt=8; n_fac=42; n_hidden=256
 
 FILES = dict(train=TRN_PATH, validation=VAL_PATH, test=VAL_PATH)
@@ -233,8 +233,8 @@ len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)
 +   一旦运行`LanguageModelData.from_text_files`，`TEXT`将包含一个名为`vocab`的额外属性。`TEXT.vocab.itos`是词汇表中唯一项目的列表，`TEXT.vocab.stoi`是从每个项目到数字的反向映射。
 
 ```py
-**class** **CharSeqStatefulRnn**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac, bs):
+class CharSeqStatefulRnn(nn.Module):
+    def __init__(self, vocab_size, n_fac, bs):
         self.vocab_size = vocab_size
         super().__init__()
         self.e = nn.Embedding(vocab_size, n_fac)
@@ -242,14 +242,14 @@ len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)
         self.l_out = nn.Linear(n_hidden, vocab_size)
         self.init_hidden(bs)
 
-    **def** forward(self, cs):
+    def forward(self, cs):
         bs = cs[0].size(0)
         **if self.h.size(1) != bs: self.init_hidden(bs)**
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
-        **return** **F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)**
+        return **F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)**
 
-    **def** init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   **问题 #3**：Jeremy 在说小批次大小保持恒定时对我们撒谎了。最后一个小批次很可能比其他小批次短，除非数据集恰好可以被`bptt`乘以`bs`整除。这就是为什么我们要检查`self.h`的第二维是否与输入的`bs`相同。如果不相同，将其设置回零，并使用输入的`bs`。这发生在周期结束和周期开始时（将其设置回完整的批次大小）。
@@ -270,35 +270,35 @@ opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
 我们移除了`nn.RNN`的使用，并用`nn.RNNCell`替换。PyTorch 源代码如下。您应该能够阅读和理解（注意：它们不会连接输入和隐藏状态，而是将它们相加 - 这是我们的第一种方法）：
 
 ```py
-**def** RNNCell(input, hidden, w_ih, w_hh, b_ih, b_hh):
-    **return** F.tanh(F.linear(input, w_ih, b_ih) + F.linear(hidden, w_hh, b_hh))
+def RNNCell(input, hidden, w_ih, w_hh, b_ih, b_hh):
+    return F.tanh(F.linear(input, w_ih, b_ih) + F.linear(hidden, w_hh, b_hh))
 ```
 
 关于`tanh`的问题[[44:06](https://youtu.be/H3g26EVADgY?t=44m6s)]：正如我们上周所看到的，`tanh`强制值在-1 和 1 之间。由于我们一遍又一遍地乘以这个权重矩阵，我们担心`relu`（因为它是无界的）可能会有更多的梯度爆炸问题。话虽如此，您可以指定`RNNCell`使用不同的`nonlineality`，其默认值为`tanh`，并要求其使用`relu`。
 
 ```py
-**class** **CharSeqStatefulRnn2**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac, bs):
+class CharSeqStatefulRnn2(nn.Module):
+    def __init__(self, vocab_size, n_fac, bs):
         super().__init__()
         self.vocab_size = vocab_size
         self.e = nn.Embedding(vocab_size, n_fac)
-        self.rnn = **nn.RNNCell**(n_fac, n_hidden)
+        self.rnn = nn.RNNCell(n_fac, n_hidden)
         self.l_out = nn.Linear(n_hidden, vocab_size)
         self.init_hidden(bs)
 
-    **def** forward(self, cs):
+    def forward(self, cs):
         bs = cs[0].size(0)
-        **if** self.h.size(1) != bs: self.init_hidden(bs)
+        if self.h.size(1) != bs: self.init_hidden(bs)
         outp = []
         o = self.h
-        **for** c **in** cs: 
+        for c in cs: 
             o = self.rnn(self.e(c), o)
             outp.append(o)
         outp = self.l_out(torch.stack(outp))
         self.h = repackage_var(o)
-        **return** F.log_softmax(outp, dim=-1).view(-1, self.vocab_size)
+        return F.log_softmax(outp, dim=-1).view(-1, self.vocab_size)
 
-    **def** init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 +   `for`循环回来并将线性函数的结果附加到列表中 - 最终将它们堆叠在一起。
@@ -324,7 +324,7 @@ opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
 +   线性插值
 
 ```py
-**def** GRUCell(input, hidden, w_ih, w_hh, b_ih, b_hh):
+def GRUCell(input, hidden, w_ih, w_hh, b_ih, b_hh):
     gi = F.linear(input, w_ih, b_ih)
     gh = F.linear(hidden, w_hh, b_hh)
     i_r, i_i, i_n = gi.chunk(3, 1)
@@ -333,14 +333,14 @@ opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
     resetgate = F.sigmoid(i_r + h_r)
     inputgate = F.sigmoid(i_i + h_i)
     newgate = F.tanh(i_n + resetgate * h_n)
-    **return** newgate + inputgate * (hidden - newgate)
+    return newgate + inputgate * (hidden - newgate)
 ```
 
 上面是`GRUCell`代码的样子，我们利用这个新模型如下：
 
 ```py
-**class** **CharSeqStatefulGRU**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac, bs):
+class CharSeqStatefulGRU(nn.Module):
+    def __init__(self, vocab_size, n_fac, bs):
         super().__init__()
         self.vocab_size = vocab_size
         self.e = nn.Embedding(vocab_size, n_fac)
@@ -348,14 +348,14 @@ opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
         self.l_out = nn.Linear(n_hidden, vocab_size)
         self.init_hidden(bs)
 
-    **def** forward(self, cs):
+    def forward(self, cs):
         bs = cs[0].size(0)
-        **if** self.h.size(1) != bs: self.init_hidden(bs)
+        if self.h.size(1) != bs: self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
-        **return** F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
+        return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    **def** init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
+    def init_hidden(self, bs): self.h = V(torch.zeros(1, bs, n_hidden))
 ```
 
 结果，我们可以将损失降低到 1.36（`RNNCell`为 1.54）。在实践中，GRU 和 LSTM 是人们使用的。
@@ -365,25 +365,25 @@ opt = optim.Adam(m.parameters(), 1e-3)fit(m, md, 4, opt, F.nll_loss)
 LSTM 中还有一个称为“单元状态”的状态（不仅仅是隐藏状态），因此如果使用 LSTM，必须在`init_hidden`中返回一个矩阵元组（与隐藏状态完全相同的大小）：
 
 ```py
-**from** **fastai** **import** sgdr
+from fastai import sgdr
 
-n_hidden=512**class** **CharSeqStatefulLSTM**(nn.Module):
-    **def** __init__(self, vocab_size, n_fac, bs, nl):
+n_hidden=512class CharSeqStatefulLSTM(nn.Module):
+    def __init__(self, vocab_size, n_fac, bs, nl):
         super().__init__()
         self.vocab_size,self.nl = vocab_size,nl
         self.e = nn.Embedding(vocab_size, n_fac)
-        self.rnn = nn.LSTM(n_fac, n_hidden, nl, **dropout**=0.5)
+        self.rnn = nn.LSTM(n_fac, n_hidden, nl, dropout=0.5)
         self.l_out = nn.Linear(n_hidden, vocab_size)
         self.init_hidden(bs)
 
-    **def** forward(self, cs):
+    def forward(self, cs):
         bs = cs[0].size(0)
-        **if** self.h[0].size(1) != bs: self.init_hidden(bs)
+        if self.h[0].size(1) != bs: self.init_hidden(bs)
         outp,h = self.rnn(self.e(cs), self.h)
         self.h = repackage_var(h)
-        **return** F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
+        return F.log_softmax(self.l_out(outp), dim=-1).view(-1, self.vocab_size)
 
-    **def** init_hidden(self, bs):
+    def init_hidden(self, bs):
  **self.h = (V(torch.zeros(self.nl, bs, n_hidden)),
                   V(torch.zeros(self.nl, bs, n_hidden)))**
 ```
@@ -404,7 +404,7 @@ lo = LayerOptimizer(optim.Adam, m, 1e-2, 1e-5)
 +   `lo.opt`返回优化器。
 
 ```py
-on_end = **lambda** sched, cycle: save_model(m, f'**{PATH}**models/cyc_**{cycle}**')cb = [CosAnneal(lo, len(md.trn_dl), cycle_mult=2, on_cycle_end=on_end)]fit(m, md, 2**4-1, lo.opt, F.nll_loss, callbacks=cb)
+on_end = lambda sched, cycle: save_model(m, f'**{PATH}**models/cyc_**{cycle}**')cb = [CosAnneal(lo, len(md.trn_dl), cycle_mult=2, on_cycle_end=on_end)]fit(m, md, 2**4-1, lo.opt, F.nll_loss, callbacks=cb)
 ```
 
 +   当我们调用`fit`时，现在可以传递`LayerOptimizer`和`callbacks`。
@@ -420,17 +420,17 @@ on_end = **lambda** sched, cycle: save_model(m, f'**{PATH}**models/cyc_**{cycle}
 ## 测试[[59:55](https://youtu.be/H3g26EVADgY?t=59m55s)]
 
 ```py
-**def** get_next(inp):
+def get_next(inp):
     idxs = TEXT.numericalize(inp)
     p = m(VV(idxs.transpose(0,1)))
     r = **torch.multinomial(p[-1].exp(), 1)**
-    **return** TEXT.vocab.itos[to_np(r)[0]]**def** get_next_n(inp, n):
+    return TEXT.vocab.itos[to_np(r)[0]]def get_next_n(inp, n):
     res = inp
-    **for** i **in** range(n):
+    for i in range(n):
         c = get_next(inp)
         res += c
         inp = inp[1:]+c
-    **return** resprint(get_next_n('for thos', 400))*for those the skemps), or imaginates, though they deceives. it should so each ourselvess and new present, step absolutely for the science." the contradity and measuring,  the whole!* *293\. perhaps, that every life a values of blood of intercourse when it senses there is unscrupulus, his very rights, and still impulse, love? just after that thereby how made with the way anything, and set for harmless philos*
+    return resprint(get_next_n('for thos', 400))*for those the skemps), or imaginates, though they deceives. it should so each ourselvess and new present, step absolutely for the science." the contradity and measuring,  the whole!* *293\. perhaps, that every life a values of blood of intercourse when it senses there is unscrupulus, his very rights, and still impulse, love? just after that thereby how made with the way anything, and set for harmless philos*
 ```
 
 +   在第 6 课中，当我们测试`CharRnn`模型时，我们注意到它一遍又一遍地重复。在这个新版本中使用的`torch.multinomial`处理了这个问题。`p[-1]`用于获取最终输出（三角形），`exp`用于将对数概率转换为概率。然后我们使用`torch.multinomial`函数，根据给定的概率给出一个样本。如果概率是[0, 1, 0, 0]，并要求它给我们一个样本，它将始终返回第二个项目。如果是[0.5, 0, 0.5]，它将 50%的时间给出第一个项目，50%的时间给出第二个项目（[多项分布的评论](http://onlinestatbook.com/2/probability/multinomial.html)）
@@ -448,12 +448,12 @@ CIFAR 10 是学术界中一个古老而著名的数据集 —— 在 ImageNet �
 CIFAR 10 数据以图像格式可在[此处](http://pjreddie.com/media/files/cifar.tgz)获取
 
 ```py
-**from** **fastai.conv_learner** **import** *
+from fastai.conv_learner import *
 PATH = "data/cifar10/"
-os.makedirs(PATH,exist_ok=**True**)classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))**def** get_data(sz,bs):
-     tfms = **tfms_from_stats**(stats, sz, aug_tfms=[RandomFlipXY()], pad=sz//8)
-     **return** ImageClassifierData.from_paths(PATH, val_name='test', tfms=tfms, bs=bs)bs=256
+os.makedirs(PATH,exist_ok=True)classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))def get_data(sz,bs):
+     tfms = tfms_from_stats(stats, sz, aug_tfms=[RandomFlipXY()], pad=sz//8)
+     return ImageClassifierData.from_paths(PATH, val_name='test', tfms=tfms, bs=bs)bs=256
 ```
 
 +   `classes` — 图像标签
@@ -471,18 +471,18 @@ lr=1e-2
 来自我们的学生 Kerem Turgutlu 的[这个笔记本](https://github.com/KeremTurgutlu/deeplearning/blob/master/Exploring%20Optimizers.ipynb)：
 
 ```py
-**class** **SimpleNet**(nn.Module):
-    **def** __init__(self, layers):
+class SimpleNet(nn.Module):
+    def __init__(self, layers):
         super().__init__()
-        self.layers = **nn.ModuleList**([
-            nn.Linear(layers[i], layers[i + 1]) **for** i **in** range(len(layers) - 1)])
+        self.layers = nn.ModuleList([
+            nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)])
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = x.view(x.size(0), -1)
-        **for** l **in** self.layers:
+        for l in self.layers:
             l_x = l(x)
             x = F.relu(l_x)
-        **return** F.log_softmax(l_x, dim=-1)
+        return F.log_softmax(l_x, dim=-1)
 ```
 
 +   `nn.ModuleList` - 每当您在 PyTorch 中创建一组层时，您必须将其包装在 `ModuleList` 中以将这些注册为属性。
@@ -494,7 +494,7 @@ learn = ConvLearner.from_model_data(SimpleNet([32*32*3, 40,10]), data)
 +   现在我们提高一个 API 级别 - 而不是调用 `fit` 函数，我们从一个自定义模型创建一个 `learn` 对象。`ConfLearner.from_model_data` 接受标准的 PyTorch 模型和模型数据对象。
 
 ```py
-learn, [o.numel() **for** o **in** learn.model.parameters()]*(SimpleNet(
+learn, [o.numel() for o in learn.model.parameters()]*(SimpleNet(
    (layers): ModuleList(
      (0): Linear(in_features=3072, out_features=40)
      (1): Linear(in_features=40, out_features=10)
@@ -532,20 +532,20 @@ Wall time: 55.3 s
 +   我们将使用一个 3x3 核的滤波器。当有多个滤波器时，输出将具有额外的维度。
 
 ```py
-**class** **ConvNet**(nn.Module):
-    **def** __init__(self, layers, c):
+class ConvNet(nn.Module):
+    def __init__(self, layers, c):
         super().__init__()
         self.layers = nn.ModuleList([
             **nn.Conv2d(layers[i], layers[i + 1], kernel_size=3, stride=2)**
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.pool = nn.AdaptiveMaxPool2d(1)
         self.out = nn.Linear(layers[-1], c)
 
-    **def** forward(self, x):
-        **for** l **in** self.layers: x = F.relu(l(x))
+    def forward(self, x):
+        for l in self.layers: x = F.relu(l(x))
         x = self.pool(x)
         x = x.view(x.size(0), -1)
-        **return** F.log_softmax(self.out(x), dim=-1)
+        return F.log_softmax(self.out(x), dim=-1)
 ```
 
 +   用 `nn.Conv2d` 替换 `nn.Linear`
@@ -599,11 +599,15 @@ learn.sched.plot()
 +   `lr_find` 尝试的默认最终学习率是 10。如果在那一点上损失仍在变好，您可以通过指定 `end_lr` 来覆盖。
 
 ```py
-%time learn.fit(1e-1, 2)*A Jupyter Widget**[ 0\.       1.72594  1.63399  0.41338]                       
+%time learn.fit(1e-1, 2)*A Jupyter Widget*
+'''
+[0\.       1.72594  1.63399  0.41338]                       
 [ 1\.       1.51599  1.49687  0.45723]                       
 
 CPU times: user 1min 14s, sys: 32.3 s, total: 1min 46s
-Wall time: 56.5 s*%time learn.fit(1e-1, 4, cycle_len=1)*A Jupyter Widget**[ 0\.       1.36734  1.28901  0.53418]                       
+Wall time: 56.5 s*%time learn.fit(1e-1, 4, cycle_len=1)*A Jupyter Widget*
+'''
+[0\.       1.36734  1.28901  0.53418]                       
 [ 1\.       1.28854  1.21991  0.56143]                       
 [ 2\.       1.22854  1.15514  0.58398]                       
 [ 3\.       1.17904  1.12523  0.59922]                       
@@ -621,29 +625,29 @@ Wall time: 1min 46s*
 通过创建 `ConvLayer`（我们的第一个自定义层）简化 `forward` 函数。在 PyTorch 中，层定义和神经网络定义是相同的。每当您有一个层时，您可以将其用作神经网络，当您有一个神经网络时，您可以将其用作层。
 
 ```py
-**class** **ConvLayer**(nn.Module):
-    **def** __init__(self, ni, nf):
+class ConvLayer(nn.Module):
+    def __init__(self, ni, nf):
         super().__init__()
         self.conv = nn.Conv2d(ni, nf, kernel_size=3, stride=2, padding=1)
 
-    **def** forward(self, x): **return** F.relu(self.conv(x))
+    def forward(self, x): return F.relu(self.conv(x))
 ```
 
 +   `padding=1` - 当进行卷积时，图像的每一侧都会缩小 1 个像素。因此，它不是从 32x32 到 16x16，而实际上是 15x15。`padding` 将添加一个边框，以便我们可以保留边缘像素信息。对于大图像来说，这不是一个大问题，但当缩小到 4x4 时，您真的不想丢弃整个部分。
 
 ```py
-**class** **ConvNet2**(nn.Module):
-    **def** __init__(self, layers, c):
+class ConvNet2(nn.Module):
+    def __init__(self, layers, c):
         super().__init__()
         self.layers = nn.ModuleList([ConvLayer(layers[i], layers[i + 1])
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
 
-    **def** forward(self, x):
-        **for** l **in** self.layers: x = l(x)
+    def forward(self, x):
+        for l in self.layers: x = l(x)
         x = **F.adaptive_max_pool2d(x, 1)**
         x = x.view(x.size(0), -1)
-        **return** F.log_softmax(self.out(x), dim=-1)
+        return F.log_softmax(self.out(x), dim=-1)
 ```
 
 +   与上一个模型的另一个不同之处是 `nn.AdaptiveMaxPool2d` 没有任何状态（即没有权重）。因此，我们可以将其作为一个函数 `F.adaptive_max_pool2d` 调用。
@@ -659,21 +663,21 @@ Wall time: 1min 46s*
 +   平均来看，权重矩阵不太可能导致激活不断变小或不断变大。保持它们在合理的范围内很重要。因此，我们从零均值标准差为 1 开始通过对输入进行归一化。我们真正想要做的是对所有层进行这样的操作，而不仅仅是对输入。
 
 ```py
-**class** **BnLayer**(nn.Module):
-    **def** __init__(self, ni, nf, stride=2, kernel_size=3):
+class BnLayer(nn.Module):
+    def __init__(self, ni, nf, stride=2, kernel_size=3):
         super().__init__()
         self.conv = nn.Conv2d(ni, nf, kernel_size=kernel_size, 
-                              stride=stride, bias=**False**, padding=1)
+                              stride=stride, bias=False, padding=1)
         self.a = nn.Parameter(torch.zeros(nf,1,1))
         self.m = nn.Parameter(torch.ones(nf,1,1))
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = F.relu(self.conv(x))
         x_chan = x.transpose(0,1).contiguous().view(x.size(1), -1)
-        **if** self.training:
+        if self.training:
             **self.means = x_chan.mean(1)[:,None,None]**
            ** self.stds  = x_chan.std (1)[:,None,None]**
-        **return** **(x-self.means) / self.stds *self.m + self.a**
+        return **(x-self.means) / self.stds *self.m + self.a**
 ```
 
 +   计算每个通道或每个滤波器的均值和每个通道或每个滤波器的标准差。然后减去均值并除以标准差。
@@ -705,20 +709,20 @@ Wall time: 1min 46s*
 +   不要停止对数据进行归一化，这样使用您的数据的人就会知道您是如何对数据进行归一化的。其他库可能无法正确处理预训练模型的批量归一化，因此当人们开始重新训练时可能会出现问题。
 
 ```py
-**class** **ConvBnNet**(nn.Module):
-    **def** __init__(self, layers, c):
+class ConvBnNet(nn.Module):
+    def __init__(self, layers, c):
         super().__init__()
         **self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)**
-        self.layers = nn.ModuleList([**BnLayer**(layers[i], layers[i + 1])
-            **for** i **in** range(len(layers) - 1)])
+        self.layers = nn.ModuleList([BnLayer(layers[i], layers[i + 1])
+            for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
-        **for** l **in** self.layers: x = l(x)
+        for l in self.layers: x = l(x)
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
-        **return** F.log_softmax(self.out(x), dim=-1)
+        return F.log_softmax(self.out(x), dim=-1)
 ```
 
 +   代码的其余部分类似——使用`BnLayer`而不是`ConvLayer`
@@ -734,28 +738,32 @@ Wall time: 1min 46s*
 让我们增加模型的深度。我们不能只添加更多的步幅为 2 的层，因为每次都会将图像的大小减半。相反，在每个步幅为 2 的层之后，我们插入一个步幅为 1 的层。
 
 ```py
-**class** **ConvBnNet2**(nn.Module):
-    **def** __init__(self, layers, c):
+class ConvBnNet2(nn.Module):
+    def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
         self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.layers2 = nn.ModuleList([BnLayer(layers[i+1], layers[i + 1], 1)
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
-        **for** l,l2 **in** zip(self.layers, self.layers2):
+        for l,l2 in zip(self.layers, self.layers2):
             x = l(x)
             x = l2(x)
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
-        **return** F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)%time learn.fit(1e-2, 2)*A Jupyter Widget**[ 0\.       1.53499  1.43782  0.47588]                       
+        return F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data((ConvBnNet2([10, 20, 40, 80, 160], 10), data)%time learn.fit(1e-2, 2)*A Jupyter Widget*
+'''
+[0\.       1.53499  1.43782  0.47588]                       
 [ 1\.       1.28867  1.22616  0.55537]                       
 
 CPU times: user 1min 22s, sys: 34.5 s, total: 1min 56s
-Wall time: 58.2 s*%time learn.fit(1e-2, 2, cycle_len=1)*A Jupyter Widget**[ 0\.       1.10933  1.06439  0.61582]                       
+Wall time: 58.2 s*%time learn.fit(1e-2, 2, cycle_len=1)*A Jupyter Widget*
+'''
+[0\.       1.10933  1.06439  0.61582]                       
 [ 1\.       1.04663  0.98608  0.64609]                       
 
 CPU times: user 1min 21s, sys: 32.9 s, total: 1min 54s
@@ -767,26 +775,26 @@ Wall time: 57.6 s*
 ## ResNet
 
 ```py
-**class** **ResnetLayer**(BnLayer):
-    **def** forward(self, x): **return** **x + super().forward(x)****class** **Resnet**(nn.Module):
-    **def** __init__(self, layers, c):
+class ResnetLayer(BnLayer):
+    def forward(self, x): return **x + super().forward(x)**class Resnet(nn.Module):
+    def __init__(self, layers, c):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=2)
         self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.layers2 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.layers3 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
-        **for** l,l2,l3 **in** zip(self.layers, self.layers2, self.layers3):
+        for l,l2,l3 in zip(self.layers, self.layers2, self.layers3):
             x = l3(l2(l(x)))
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
-        **return** F.log_softmax(self.out(x), dim=-1)
+        return F.log_softmax(self.out(x), dim=-1)
 ```
 
 +   `ResnetLayer`继承自`BnLayer`并覆盖`forward`。
@@ -794,11 +802,15 @@ Wall time: 57.6 s*
 +   然后添加一堆层，使其深度增加 3 倍，仍然可以很好地训练，只是因为`x + super().forward(x)`。
 
 ```py
-learn = ConvLearner.from_model_data(Resnet([10, 20, 40, 80, 160], 10), data)wd=1e-5%time learn.fit(1e-2, 2, wds=wd)*A Jupyter Widget**[ 0\.       1.58191  1.40258  0.49131]                       
+learn = ConvLearner.from_model_data(Resnet([10, 20, 40, 80, 160], 10), data)wd=1e-5%time learn.fit(1e-2, 2, wds=wd)*A Jupyter Widget*
+'''
+[0\.       1.58191  1.40258  0.49131]                       
 [ 1\.       1.33134  1.21739  0.55625]                       
 
 CPU times: user 1min 27s, sys: 34.3 s, total: 2min 1s
-Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A Jupyter Widget**[ 0\.       1.11534  1.05117  0.62549]                       
+Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A Jupyter Widget*
+'''
+[0\.       1.11534  1.05117  0.62549]                       
 [ 1\.       1.06272  0.97874  0.65185]                       
 [ 2\.       0.92913  0.90472  0.68154]                        
 [ 3\.       0.97932  0.94404  0.67227]                        
@@ -807,7 +819,9 @@ Wall time: 1min 3s*%time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)*A
 [ 6\.       0.73235  0.76302  0.73633]                        
 
 CPU times: user 5min 2s, sys: 1min 59s, total: 7min 1s
-Wall time: 3min 39s*%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)*A Jupyter Widget**[ 0\.       0.8307   0.83635  0.7126 ]                        
+Wall time: 3min 39s*%time learn.fit(1e-2, 8, cycle_len=4, wds=wd)*A Jupyter Widget*
+'''
+[0\.       0.8307   0.83635  0.7126 ]                        
 [ 1\.       0.74295  0.73682  0.74189]                        
 [ 2\.       0.66492  0.69554  0.75996]                        
 [ 3\.       0.62392  0.67166  0.7625 ]                        
@@ -865,27 +879,27 @@ ResNet 块
 在这里，我们增加了特征的大小并添加了 dropout。
 
 ```py
-**class** **Resnet2**(nn.Module):
-    **def** __init__(self, layers, c, p=0.5):
+class Resnet2(nn.Module):
+    def __init__(self, layers, c, p=0.5):
         super().__init__()
         self.conv1 = BnLayer(3, 16, stride=1, kernel_size=7)
         self.layers = nn.ModuleList([BnLayer(layers[i], layers[i+1])
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.layers2 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.layers3 = nn.ModuleList([ResnetLayer(layers[i+1], layers[i + 1], 1)
-            **for** i **in** range(len(layers) - 1)])
+            for i in range(len(layers) - 1)])
         self.out = nn.Linear(layers[-1], c)
         self.drop = nn.Dropout(p)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.conv1(x)
-        **for** l,l2,l3 **in** zip(self.layers, self.layers2, self.layers3):
+        for l,l2,l3 in zip(self.layers, self.layers2, self.layers3):
             x = l3(l2(l(x)))
         x = F.adaptive_max_pool2d(x, 1)
         x = x.view(x.size(0), -1)
         x = self.drop(x)
-        **return** F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data(Resnet2([**16, 32, 64, 128, 256**], 10, 0.2), data)wd=1e-6%time learn.fit(1e-2, 2, wds=wd)
+        return F.log_softmax(self.out(x), dim=-1)learn = ConvLearner.from_model_data(Resnet2([**16, 32, 64, 128, 256**], 10, 0.2), data)wd=1e-6%time learn.fit(1e-2, 2, wds=wd)
 %time learn.fit(1e-2, 3, cycle_len=1, cycle_mult=2, wds=wd)
 %time learn.fit(1e-2, 8, cycle_len=4, wds=wd)log_preds,y = learn.TTA()
 preds = np.mean(np.exp(log_preds),0)metrics.log_loss(y,preds), accuracy(preds,y)
@@ -916,7 +930,7 @@ m*ResNet(
   (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
   (relu): ReLU(inplace)
   (maxpool): MaxPool2d(kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), dilation=(1, 1))
-  (****layer1****): Sequential(
+  (**layer1**): Sequential(
     (0): BasicBlock(
       (conv1): Conv2d (64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
       (bn1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
@@ -939,7 +953,7 @@ m*ResNet(
       (bn2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
     )
   )
-  (****layer2****): Sequential(
+  (**layer2**): Sequential(
     (0): BasicBlock(
       (conv1): Conv2d (64, 128, kernel_size=(3, 3),* ***stride=(2, 2)****, padding=(1, 1), bias=False)
       (bn1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
@@ -1002,7 +1016,7 @@ m = nn.Sequential(*children(m)[:-2],
 
 ```py
 tfms = tfms_from_model(arch, sz, aug_tfms=transforms_side_on, max_zoom=1.1)
-data = ImageClassifierData.from_paths(PATH, tfms=tfms, bs=bs)learn = **ConvLearner.from_model_data**(m, data)learn.freeze_to(-4)learn.fit(0.01, 1)
+data = ImageClassifierData.from_paths(PATH, tfms=tfms, bs=bs)learn = ConvLearner.from_model_data(m, data)learn.freeze_to(-4)learn.fit(0.01, 1)
 learn.fit(0.01, 1, cycle_len=1)
 ```
 
@@ -1019,7 +1033,7 @@ learn.fit(0.01, 1, cycle_len=1)
 大数字对应于猫。那么这个矩阵是什么？这个矩阵简单地等于特征矩阵`feat`乘以`py`向量的值：
 
 ```py
-f2=np.dot(np.rollaxis(**feat**,0,3), **py**)
+f2=np.dot(np.rollaxis(feat,0,3), py)
 f2-=f2.min()
 f2/=f2.max()
 f2
@@ -1051,13 +1065,13 @@ feat.shape
 “Hook”是让我们要求模型返回矩阵的机制。`register_forward_hook`要求 PyTorch 每次计算一个层时运行给定的函数 - 类似于每次计算一个层时发生的回调。在以下情况下，它保存了我们感兴趣的特定层的值：
 
 ```py
-**class** **SaveFeatures**():
-    features=**None**
-    **def** __init__(self, m): 
+class SaveFeatures():
+    features=None
+    def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
-    **def** hook_fn(self, module, input, output): 
+    def hook_fn(self, module, input, output): 
         self.features = to_np(output)
-    **def** remove(self): self.hook.remove()
+    def remove(self): self.hook.remove()
 ```
 
 ## Jeremy 的问题[[02:14:27](https://youtu.be/H3g26EVADgY?t=2h14m27s)]：“您对深度学习的探索”和“如何跟上从业者的重要研究”

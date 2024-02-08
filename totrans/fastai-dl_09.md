@@ -49,7 +49,7 @@
 ```py
 tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
                        aug_tfms=augs)
-md = Image**Classifier**Data.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms,
+md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms,
                                   **continuous=True**, bs=4)
 ```
 
@@ -75,7 +75,9 @@ for i,ax in enumerate(axes.flat):
     b = bb_hw(to_np(y[idx]))
     print(b)
     show_img(ima, ax=ax)
-    draw_rect(ax, b)*[ 115\.   63\.  240\.  311.]
+    draw_rect(ax, b)
+'''
+[115\.   63\.  240\.  311.]
 [ 115\.   63\.  240\.  311.]
 [ 115\.   63\.  240\.  311.]
 [ 115\.   63\.  240\.  311.]
@@ -110,7 +112,9 @@ for i,ax in enumerate(axes.flat):
     b = bb_hw(to_np(y[idx]))
     print(b)
     show_img(ima, ax=ax)
-    draw_rect(ax, b)*[  48\.   34\.  112\.  188.]
+    draw_rect(ax, b)
+'''
+[ 48\.   34\.  112\.  188.]
 [  65\.   36\.  107\.  185.]
 [  49\.   27\.  131\.  195.]
 [  24\.   18\.  147\.  204.]
@@ -128,7 +132,7 @@ for i,ax in enumerate(axes.flat):
 ```py
 tfm_y = TfmType.COORD
 augs = [RandomFlip(tfm_y=tfm_y),
-        RandomRotate(**3**, **p=0.5**, tfm_y=tfm_y),
+        RandomRotate(3, **p=0.5**, tfm_y=tfm_y),
         RandomLighting(0.05,0.05, tfm_y=tfm_y)]tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
                  tfm_y=tfm_y, aug_tfms=augs)
 md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
@@ -169,21 +173,21 @@ f_model=resnet34
 sz=224
 bs=64val_idxs = get_cv_idxs(len(trn_fns))
 tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
-                       tfm_y=TfmType.COORD, aug_tfms=augs)md = ImageClassifierData.from_csv(PATH, JPEGS, **BB_CSV**, tfms=tfms, 
-                       continuous=True, val_idxs=val_idxs)md2 = ImageClassifierData.from_csv(PATH, JPEGS, **CSV**,
+                       tfm_y=TfmType.COORD, aug_tfms=augs)md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
+                       continuous=True, val_idxs=val_idxs)md2 = ImageClassifierData.from_csv(PATH, JPEGS, CSV,
                        tfms=tfms_from_model(f_model, sz))
 ```
 
 数据集可以是任何具有`__len__`和`__getitem__`的东西。这里有一个数据集，它向现有数据集添加了第二个标签：
 
 ```py
-**class** **ConcatLblDataset**(Dataset):
-    **def** __init__(self, ds, y2): self.ds,self.y2 = ds,y2
-    **def** __len__(self): **return** len(self.ds)
+class ConcatLblDataset(Dataset):
+    def __init__(self, ds, y2): self.ds,self.y2 = ds,y2
+    def __len__(self): return len(self.ds)
 
-    **def** __getitem__(self, i):
+    def __getitem__(self, i):
         x,y = self.ds[i]
-        **return** (x, (y,self.y2[i]))
+        return (x, (y,self.y2[i]))
 ```
 
 +   `ds`：包含独立和依赖变量
@@ -251,20 +255,20 @@ learn.opt_fn = optim.Adam
 损失函数需要查看这些`4 + len(cats)`激活，并决定它们是否良好——这些数字是否准确反映了图像中最大对象的位置和类别。我们知道如何做到这一点。对于前 4 个激活，我们将像以前一样使用 L1Loss（L1Loss 类似于均方误差——它使用绝对值的和，而不是平方误差的和）。对于其余的激活，我们可以使用交叉熵损失。
 
 ```py
-**def** detn_loss(input, target):
+def detn_loss(input, target):
     bb_t,c_t = target
     bb_i,c_i = input[:, :4], input[:, 4:]
     bb_i = F.sigmoid(bb_i)*224
  *# I looked at these quantities separately first then picked a 
     # multiplier to make them approximately equal*
-    **return** F.l1_loss(bb_i, bb_t) + F.cross_entropy(c_i, c_t)*20**def** detn_l1(input, target):
+    return F.l1_loss(bb_i, bb_t) + F.cross_entropy(c_i, c_t)*20def detn_l1(input, target):
     bb_t,_ = target
     bb_i = input[:, :4]
     bb_i = F.sigmoid(bb_i)*224
-    **return** F.l1_loss(V(bb_i),V(bb_t)).data**def** detn_acc(input, target):
+    return F.l1_loss(V(bb_i),V(bb_t)).datadef detn_acc(input, target):
     _,c_t = target
     c_i = input[:, 4:]
-    **return** accuracy(c_i, c_t)learn.crit = detn_loss
+    return accuracy(c_i, c_t)learn.crit = detn_loss
 learn.metrics = [detn_acc, detn_l1]
 ```
 
@@ -336,13 +340,13 @@ learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))epoch      trn_loss   val_los
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2**from** **fastai.conv_learner** **import** *
-**from** **fastai.dataset** **import** *
+%autoreload 2from fastai.conv_learner import *
+from fastai.dataset import *
 
-**import** **json**, **pdb**
-**from** **PIL** **import** ImageDraw, ImageFont
-**from** **matplotlib** **import** patches, patheffects
-torch.backends.cudnn.benchmark=**True**
+import json, pdb
+from PIL import ImageDraw, ImageFont
+from matplotlib import patches, patheffects
+torch.backends.cudnn.benchmark=True
 ```
 
 ## 设置
@@ -355,54 +359,54 @@ IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations',
 FILE_NAME,ID,IMG_ID,CAT_ID,BBOX = 'file_name','id','image_id', 
                                   'category_id','bbox'
 
-cats = dict((o[ID], o['name']) **for** o **in** trn_j[CATEGORIES])
-trn_fns = dict((o[ID], o[FILE_NAME]) **for** o **in** trn_j[IMAGES])
-trn_ids = [o[ID] **for** o **in** trn_j[IMAGES]]
+cats = dict((o[ID], o['name']) for o in trn_j[CATEGORIES])
+trn_fns = dict((o[ID], o[FILE_NAME]) for o in trn_j[IMAGES])
+trn_ids = [o[ID] for o in trn_j[IMAGES]]
 
 JPEGS = 'VOCdevkit/VOC2007/JPEGImages'
-IMG_PATH = PATH/JPEGS**def** get_trn_anno():
-    trn_anno = collections.defaultdict(**lambda**:[])
-    **for** o **in** trn_j[ANNOTATIONS]:
-        **if** **not** o['ignore']:
+IMG_PATH = PATH/JPEGSdef get_trn_anno():
+    trn_anno = collections.defaultdict(lambda:[])
+    for o in trn_j[ANNOTATIONS]:
+        if not o['ignore']:
             bb = o[BBOX]
             bb = np.array([bb[1], bb[0], bb[3]+bb[1]-1, 
                            bb[2]+bb[0]-1])
             trn_anno[o[IMG_ID]].append((bb,o[CAT_ID]))
-    **return** trn_anno
+    return trn_anno
 
-trn_anno = get_trn_anno()**def** show_img(im, figsize=**None**, ax=**None**):
-    **if** **not** ax: fig,ax = plt.subplots(figsize=figsize)
+trn_anno = get_trn_anno()def show_img(im, figsize=None, ax=None):
+    if not ax: fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.set_xticks(np.linspace(0, 224, 8))
     ax.set_yticks(np.linspace(0, 224, 8))
     ax.grid()
     ax.set_yticklabels([])
     ax.set_xticklabels([])
-    **return** ax
+    return ax
 
-**def** draw_outline(o, lw):
+def draw_outline(o, lw):
     o.set_path_effects([patheffects.Stroke(
         linewidth=lw, foreground='black'), patheffects.Normal()])
 
-**def** draw_rect(ax, b, color='white'):
+def draw_rect(ax, b, color='white'):
     patch = ax.add_patch(patches.Rectangle(b[:2], *b[-2:], 
-                         fill=**False**, edgecolor=color, lw=2))
+                         fill=False, edgecolor=color, lw=2))
     draw_outline(patch, 4)
 
-**def** draw_text(ax, xy, txt, sz=14, color='white'):
+def draw_text(ax, xy, txt, sz=14, color='white'):
     text = ax.text(*xy, txt,
         verticalalignment='top', color=color, fontsize=sz, 
         weight='bold')
-    draw_outline(text, 1)**def** bb_hw(a): **return** np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
+    draw_outline(text, 1)def bb_hw(a): return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
 
-**def** draw_im(im, ann):
+def draw_im(im, ann):
     ax = show_img(im, figsize=(16,8))
-    **for** b,c **in** ann:
+    for b,c in ann:
         b = bb_hw(b)
         draw_rect(ax, b)
         draw_text(ax, b[:2], cats[c], sz=16)
 
-**def** draw_idx(i):
+def draw_idx(i):
     im_a = trn_anno[i]
     im = open_image(IMG_PATH/trn_fns[i])
     draw_im(im, im_a)
@@ -411,10 +415,10 @@ trn_anno = get_trn_anno()**def** show_img(im, figsize=**None**, ax=**None**):
 ## 多类别[[26:12](https://youtu.be/0frKXR-2PBY?t=26m12s)]
 
 ```py
-MC_CSV = PATH/'tmp/mc.csv'trn_anno[12]*[(array([ 96, 155, 269, 350]), 7)]*mc = [set([cats[p[1]] **for** p **in** trn_anno[o]]) **for** o **in** trn_ids]
-mcs = [' '.join(str(p) **for** p **in** o) **for** o **in** mc]df = pd.DataFrame({'fn': [trn_fns[o] **for** o **in** trn_ids], 
+MC_CSV = PATH/'tmp/mc.csv'trn_anno[12]*[(array([ 96, 155, 269, 350]), 7)]*mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
+mcs = [' '.join(str(p) for p in o) for o in mc]df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids], 
                    'clas': mcs}, columns=['fn','clas'])
-df.to_csv(MC_CSV, index=**False**)
+df.to_csv(MC_CSV, index=False)
 ```
 
 有一个学生指出，通过使用 Pandas，我们可以比使用`collections.defaultdict`更简单地完成一些事情，并分享了这个[gist](https://gist.github.com/binga/1bc4ebe5e41f670f5954d2ffa9d6c0ed)。您越了解 Pandas，就越会意识到它是解决许多不同问题的好方法。
@@ -437,10 +441,10 @@ learn.opt_fn = optim.Adamlr = 2e-2learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))*
     4      0.018805   0.074934   0.975165**[0.074934497, 0.97516526281833649]*learn.save('mclas')learn.load('mclas')y = learn.predict()
 x,_ = next(iter(md.val_dl))
 x = to_np(x)fig, axes = plt.subplots(3, 4, figsize=(12, 8))
-**for** i,ax **in** enumerate(axes.flat):
+for i,ax in enumerate(axes.flat):
     ima=md.val_ds.denorm(x)[i]
     ya = np.nonzero(y[i]>0.4)[0]
-    b = '**\n**'.join(md.classes[o] **for** o **in** ya)
+    b = '**\n**'.join(md.classes[o] for o in ya)
     ax = show_img(ima, ax=ax)
     draw_text(ax, (0,0), b)
 plt.tight_layout()
@@ -449,7 +453,7 @@ plt.tight_layout()
 多类别分类非常直接。在这一行中使用`set`的一个小调整，以便每种对象类型只出现一次。
 
 ```py
-mc = [**set**([cats[p[1]] **for** p **in** trn_anno[o]]) **for** o **in** trn_ids]
+mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
 ```
 
 ## SSD 和 YOLO
@@ -481,22 +485,22 @@ mc = [**set**([cats[p[1]] **for** p **in** trn_anno[o]]) **for** o **in** trn_id
 架构是，我们将有一个 ResNet 主干，后面跟着一个或多个 2D 卷积（现在只有一个），这将给我们一个`4x4`的网格。
 
 ```py
-**class** **StdConv**(nn.Module):
-    **def** __init__(self, nin, nout, stride=2, drop=0.1):
+class StdConv(nn.Module):
+    def __init__(self, nin, nout, stride=2, drop=0.1):
         super().__init__()
         self.conv = nn.Conv2d(nin, nout, 3, stride=stride, 
                               padding=1)
         self.bn = nn.BatchNorm2d(nout)
         self.drop = nn.Dropout(drop)
 
-    **def** forward(self, x): 
-        **return** self.drop(self.bn(F.relu(self.conv(x))))
+    def forward(self, x): 
+        return self.drop(self.bn(F.relu(self.conv(x))))
 
-**def** flatten_conv(x,k):
+def flatten_conv(x,k):
     bs,nf,gx,gy = x.size()
     x = x.permute(0,2,3,1).contiguous()
-    **return** x.view(bs,-1,nf//k)**class** **OutConv**(nn.Module):
-    **def** __init__(self, k, nin, bias):
+    return x.view(bs,-1,nf//k)class OutConv(nn.Module):
+    def __init__(self, k, nin, bias):
         super().__init__()
         self.k = k
         self.oconv1 = nn.Conv2d(nin, (len(id2cat)+1)*k, 3, 
@@ -504,21 +508,21 @@ mc = [**set**([cats[p[1]] **for** p **in** trn_anno[o]]) **for** o **in** trn_id
         self.oconv2 = nn.Conv2d(nin, 4*k, 3, padding=1)
         self.oconv1.bias.data.zero_().add_(bias)
 
-    **def** forward(self, x):
-        **return** [flatten_conv(self.oconv1(x), self.k),
-                flatten_conv(self.oconv2(x), self.k)]**class** **SSD_Head**(nn.Module):
-    **def** __init__(self, k, bias):
+    def forward(self, x):
+        return [flatten_conv(self.oconv1(x), self.k),
+                flatten_conv(self.oconv2(x), self.k)]class SSD_Head(nn.Module):
+    def __init__(self, k, bias):
         super().__init__()
         self.drop = nn.Dropout(0.25)
         self.sconv0 = StdConv(512,256, stride=1)
         self.sconv2 = StdConv(256,256)
         self.out = OutConv(k, 256, bias)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.drop(F.relu(x))
         x = self.sconv0(x)
         x = self.sconv2(x)
-        **return** self.out(x)
+        return self.out(x)
 
 head_reg4 = SSD_Head(k, -3.)
 models = ConvnetBuilder(f_model, 0, 0, 0, custom_head=head_reg4)
@@ -589,10 +593,10 @@ bbox,clas*(Variable containing:
 我们已经有了`show_ground_truth`函数。这个`torch_gt`（gt：地面真相）函数简单地将张量转换为 numpy 数组。
 
 ```py
-**def** torch_gt(ax, ima, bbox, clas, prs=**None**, thresh=0.4):
-    **return** show_ground_truth(ax, ima, to_np((bbox*224).long()),
+def torch_gt(ax, ima, bbox, clas, prs=None, thresh=0.4):
+    return show_ground_truth(ax, ima, to_np((bbox*224).long()),
          to_np(clas), 
-         to_np(prs) **if** prs **is** **not** **None** **else** **None**, thresh)fig, ax = plt.subplots(figsize=(7,7))
+         to_np(prs) if prs is not None else None, thresh)fig, ax = plt.subplots(figsize=(7,7))
 torch_gt(ax, ima, bbox, clas)
 ```
 
@@ -778,7 +782,7 @@ pos_idx *11
 
 ```py
 gt_clas[1-pos] = len(id2cat)
-[id2cat[o] **if** o<len(id2cat) **else** 'bg' **for** o **in** gt_clas.data]*['bg',
+[id2cat[o] if o<len(id2cat) else 'bg' for o in gt_clas.data]*['bg',
  'bg',
  'bg',
  'bg',
@@ -824,7 +828,7 @@ loc_loss,clas_loss*(Variable containing:
 
 ```py
 fig, axes = plt.subplots(3, 4, figsize=(16, 12))
-**for** idx,ax **in** enumerate(axes.flat):
+for idx,ax in enumerate(axes.flat):
     ima=md.val_ds.ds.denorm(to_np(x))[idx]
     bbox,clas = get_y(y[0][idx], y[1][idx])
     ima=md.val_ds.ds.denorm(to_np(x))[idx]
@@ -840,11 +844,11 @@ plt.tight_layout()
 我们解释激活的方式在这里定义：
 
 ```py
-**def** actn_to_bb(actn, anchors):
+def actn_to_bb(actn, anchors):
     actn_bbs = torch.tanh(actn)
     actn_centers = (actn_bbs[:,:2]/2 * grid_sizes) + anchors[:,:2]
     actn_hw = (actn_bbs[:,2:]/2+1) * anchors[:,2:]
-    **return** hw2corners(actn_centers, actn_hw)
+    return hw2corners(actn_centers, actn_hw)
 ```
 
 我们抓取激活，将它们通过`tanh`（记住`tanh`与 sigmoid 形状相同，只是缩放到-1 和 1 之间）强制使其在该范围内。然后我们抓取锚框的实际位置，并根据激活值除以二（`actn_bbs[:,:2]/2`）将它们移动。换句话说，每个预测的边界框可以从其默认位置最多移动一个网格大小的 50%。高度和宽度也是如此 - 它可以是默认大小的两倍大或一半小。
@@ -852,20 +856,20 @@ plt.tight_layout()
 ## 微调 2.我们实际上使用二元交叉熵损失而不是交叉熵
 
 ```py
-**class** **BCE_Loss**(nn.Module):
-    **def** __init__(self, num_classes):
+class BCE_Loss(nn.Module):
+    def __init__(self, num_classes):
         super().__init__()
         self.num_classes = num_classes
 
-    **def** forward(self, pred, targ):
+    def forward(self, pred, targ):
         t = one_hot_embedding(targ, self.num_classes+1)
         t = V(t[:,:-1].contiguous())*#.cpu()*
         x = pred[:,:-1]
         w = self.get_weight(x,t)
-        **return** F.binary_cross_entropy_with_logits(x, t, w, 
-                            size_average=**False**)/self.num_classes
+        return F.binary_cross_entropy_with_logits(x, t, w, 
+                            size_average=False)/self.num_classes
 
-    **def** get_weight(self,x,t): **return** **None**
+    def get_weight(self,x,t): return None
 ```
 
 二元交叉熵是我们通常用于多标签分类的。就像在行星卫星竞赛中，每个卫星图像可能有多个物体。如果它有多个物体，你不能使用 softmax，因为 softmax 真的鼓励只有一个物体有高的数字。在我们的情况下，每个锚框只能与一个物体相关联，所以我们避免使用 softmax 并不是因为这个原因。还有其他原因——即一个锚框可能没有任何与之相关联的物体。处理这种“背景”的想法有两种方法；一种是说背景只是一个类，所以让我们使用 softmax，将背景视为 softmax 可以预测的类之一。很多人都是这样做的。但这是一个非常困难的事情要求神经网络做[[1:06:52](https://youtu.be/0frKXR-2PBY?t=1h5m52s)] — 基本上是在问这个网格单元是否没有我感兴趣的 20 个物体中的任何一个，Jaccard 重叠大于 0.5。这是一个非常难以放入单个计算中的事情。另一方面，如果我们只问每个类；“这是摩托车吗？”“这是公共汽车吗？”“这是一个人吗？”等等，如果所有的答案都是否定的，那就认为是背景。这就是我们在这里做的方式。并不是我们可以有多个真实标签，而是我们可以有零个。
@@ -895,7 +899,7 @@ plt.tight_layout()
 ## SSD 损失函数[[1:09:55](https://youtu.be/0frKXR-2PBY?t=1h9m55s)]
 
 ```py
-**def** ssd_1_loss(b_c,b_bb,bbox,clas,print_it=**False**):
+def ssd_1_loss(b_c,b_bb,bbox,clas,print_it=False):
     bbox,clas = get_y(bbox,clas)
     a_ic = actn_to_bb(b_bb, anchors)
     overlaps = jaccard(bbox.data, anchor_cnr.data)
@@ -907,16 +911,16 @@ plt.tight_layout()
     gt_bbox = bbox[gt_idx]
     loc_loss = ((a_ic[pos_idx] - gt_bbox[pos_idx]).abs()).mean()
     clas_loss  = loss_f(b_c, gt_clas)
-    **return** loc_loss, clas_loss
+    return loc_loss, clas_loss
 
-**def** ssd_loss(pred,targ,print_it=**False**):
+def ssd_loss(pred,targ,print_it=False):
     lcs,lls = 0.,0.
-    **for** b_c,b_bb,bbox,clas **in** zip(*pred,*targ):
+    for b_c,b_bb,bbox,clas in zip(*pred,*targ):
         loc_loss,clas_loss = ssd_1_loss(b_c,b_bb,bbox,clas,print_it)
         lls += loc_loss
         lcs += clas_loss
-    **if** print_it: print(f'loc: **{lls.data[0]}**, clas: **{lcs.data[0]}**')
-    **return** lls+lcs
+    if print_it: print(f'loc: **{lls.data[0]}**, clas: **{lcs.data[0]}**')
+    return lls+lcs
 ```
 
 `ssd_loss`函数是我们设置的标准，它循环遍历每个小批量中的图像，并调用`ssd_1_loss`函数（即一个图像的 SSD 损失）。
@@ -924,10 +928,10 @@ plt.tight_layout()
 `ssd_1_loss`是所有操作发生的地方。它从`bbox`和`clas`开始解构。让我们更仔细地看一下`get_y`[[1:10:38](https://youtu.be/0frKXR-2PBY?t=1h10m38s)]：
 
 ```py
-**def** get_y(bbox,clas):
+def get_y(bbox,clas):
     bbox = bbox.view(-1,4)/sz
     bb_keep = ((bbox[:,2]-bbox[:,0])>0).nonzero()[:,0]
-    **return** bbox[bb_keep],clas[bb_keep]
+    return bbox[bb_keep],clas[bb_keep]
 ```
 
 你在互联网上找到的很多代码都不能用于小批量。它一次只能做一件事，而我们不想要这样。在这种情况下，所有这些函数（`get_y`、`actn_to_bb`、`map_to_ground_truth`）都是在一次处理，不完全是一个小批量，而是一次处理一堆地面真实对象。数据加载器每次被馈送一个小批量以执行卷积层。因为我们可以在每个图像中有*不同数量的地面真实对象*，但张量必须是严格的矩形形状，fastai 会自动用零填充它（任何较短的目标值）[[1:11:08](https://youtu.be/0frKXR-2PBY?t=1h11m8s)]。这是最近添加的一个功能，非常方便，但这意味着你必须确保去掉这些零。因此，`get_y`会去掉任何只是填充的边界框。
@@ -1003,22 +1007,22 @@ anc_grids = [4, 2, 1]
 anc_zooms = [0.75, 1., 1.3]
 anc_ratios = [(1., 1.), (1., 0.5), (0.5, 1.)]
 
-anchor_scales = [(anz*i,anz*j) **for** anz **in** anc_zooms 
-                                    **for** (i,j) **in** anc_ratios]
+anchor_scales = [(anz*i,anz*j) for anz in anc_zooms 
+                                    for (i,j) in anc_ratios]
 k = len(anchor_scales)
-anc_offsets = [1/(o*2) **for** o **in** anc_grids]anc_x = np.concatenate([np.repeat(np.linspace(ao, 1-ao, ag), ag)
-                        **for** ao,ag **in** zip(anc_offsets,anc_grids)])
+anc_offsets = [1/(o*2) for o in anc_grids]anc_x = np.concatenate([np.repeat(np.linspace(ao, 1-ao, ag), ag)
+                        for ao,ag in zip(anc_offsets,anc_grids)])
 anc_y = np.concatenate([np.tile(np.linspace(ao, 1-ao, ag), ag)
-                        **for** ao,ag **in** zip(anc_offsets,anc_grids)])
+                        for ao,ag in zip(anc_offsets,anc_grids)])
 anc_ctrs = np.repeat(np.stack([anc_x,anc_y], axis=1), k, axis=0)anc_sizes = np.concatenate([np.array([[o/ag,p/ag] 
-              **for** i **in** range(ag*ag) **for** o,p **in** anchor_scales])
-                 **for** ag **in** anc_grids])
+              for i in range(ag*ag) for o,p in anchor_scales])
+                 for ag in anc_grids])
 grid_sizes = V(np.concatenate([np.array([ 1/ag 
-              **for** i **in** range(ag*ag) **for** o,p **in** anchor_scales])
-                  **for** ag **in** anc_grids]), 
-                      requires_grad=**False**).unsqueeze(1)
+              for i in range(ag*ag) for o,p in anchor_scales])
+                  for ag in anc_grids]), 
+                      requires_grad=False).unsqueeze(1)
 anchors = V(np.concatenate([anc_ctrs, anc_sizes], axis=1), 
-              requires_grad=**False**).float()
+              requires_grad=False).float()
 anchor_cnr = hw2corners(anchors[:,:2], anchors[:,2:])
 ```
 
@@ -1057,8 +1061,8 @@ anchor_cnr = hw2corners(anchors[:,:2], anchors[:,2:])
 ```py
 drop=0.4
 
-**class** **SSD_MultiHead**(nn.Module):
-    **def** __init__(self, k, bias):
+class SSD_MultiHead(nn.Module):
+    def __init__(self, k, bias):
         super().__init__()
         self.drop = nn.Dropout(drop)
         self.sconv0 = StdConv(512,256, stride=1, drop=drop)
@@ -1069,7 +1073,7 @@ drop=0.4
         self.out2 = OutConv(k, 256, bias)
         self.out3 = OutConv(k, 256, bias)
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = self.drop(F.relu(x))
         x = self.sconv0(x)
         x = self.sconv1(x)
@@ -1078,7 +1082,7 @@ drop=0.4
         o2c,o2l = self.out2(x)
         x = self.sconv3(x)
         o3c,o3l = self.out3(x)
-        **return** [torch.cat([o1c,o2c,o3c], dim=1),
+        return [torch.cat([o1c,o2c,o3c], dim=1),
                 torch.cat([o1l,o2l,o3l], dim=1)]
 
 head_reg4 = SSD_MultiHead(k, -4.)
@@ -1123,12 +1127,12 @@ b_clas,b_bb = batch
 x = to_np(x)
 
 fig, axes = plt.subplots(3, 4, figsize=(16, 12))
-**for** idx,ax **in** enumerate(axes.flat):
+for idx,ax in enumerate(axes.flat):
     ima=md.val_ds.ds.denorm(x)[idx]
     bbox,clas = get_y(y[0][idx], y[1][idx])
     a_ic = actn_to_bb(b_bb[idx], anchors)
     torch_gt(ax, ima, a_ic, b_clas[idx].max(1)[1], 
-             b_clas[idx].max(1)[0].sigmoid(), **0.2**)
+             b_clas[idx].max(1)[0].sigmoid(), 0.2)
 plt.tight_layout()
 ```
 
@@ -1187,32 +1191,32 @@ plt.tight_layout()
 记住，-log(pt)是交叉熵损失，焦点损失只是一个缩放版本。当我们定义二项式交叉熵损失时，您可能已经注意到默认情况下没有权重：
 
 ```py
-**class** **BCE_Loss**(nn.Module):
-    **def** __init__(self, num_classes):
+class BCE_Loss(nn.Module):
+    def __init__(self, num_classes):
         super().__init__()
         self.num_classes = num_classes
 
-    **def** forward(self, pred, targ):
+    def forward(self, pred, targ):
         t = one_hot_embedding(targ, self.num_classes+1)
         t = V(t[:,:-1].contiguous())*#.cpu()*
         x = pred[:,:-1]
         w = self.get_weight(x,t)
-        **return** F.binary_cross_entropy_with_logits(x, t, w, 
-                          size_average=**False**)/self.num_classes
+        return F.binary_cross_entropy_with_logits(x, t, w, 
+                          size_average=False)/self.num_classes
 
-    **def** get_weight(self,x,t): **return** **None**
+    def get_weight(self,x,t): return None
 ```
 
 当您调用`F.binary_cross_entropy_with_logits`时，可以传入权重。由于我们只想将交叉熵乘以某个值，我们可以定义`get_weight`。这是焦点损失的全部内容[[1:50:23](https://youtu.be/0frKXR-2PBY?t=1h50m23s)]：
 
 ```py
-**class** **FocalLoss**(BCE_Loss):
-    **def** get_weight(self,x,t):
+class FocalLoss(BCE_Loss):
+    def get_weight(self,x,t):
         alpha,gamma = 0.25,2.
         p = x.sigmoid()
         pt = p*t + (1-p)*(1-t)
         w = alpha*t + (1-alpha)*(1-t)
-        **return** w * (1-pt).pow(gamma)
+        return w * (1-pt).pow(gamma)
 ```
 
 如果您想知道为什么 alpha 和 gamma 是 0.25 和 2，这篇论文的另一个优点是，因为他们尝试了许多不同的值，并发现这些值效果很好：
@@ -1260,9 +1264,9 @@ learn.load('drop4')plot_results(0.75)
 这是非常无聊的代码，Jeremy 自己没有写，而是复制了别人的。没有特别的原因要去研究它。
 
 ```py
-**def** nms(boxes, scores, overlap=0.5, top_k=100):
+def nms(boxes, scores, overlap=0.5, top_k=100):
     keep = scores.new(scores.size(0)).zero_().long()
-    **if** boxes.numel() == 0: **return** keep
+    if boxes.numel() == 0: return keep
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
@@ -1278,11 +1282,11 @@ learn.load('drop4')plot_results(0.75)
     h = boxes.new()
 
     count = 0
-    **while** idx.numel() > 0:
+    while idx.numel() > 0:
         i = idx[-1]  *# index of current largest val*
         keep[count] = i
         count += 1
-        **if** idx.size(0) == 1: **break**
+        if idx.size(0) == 1: break
         idx = idx[:-1]  *# remove kept element from view*
         *# load bboxes of next highest vals*
         torch.index_select(x1, 0, idx, out=xx1)
@@ -1309,7 +1313,7 @@ learn.load('drop4')plot_results(0.75)
         IoU = inter/union  *# store result in iou*
         *# keep only elements with an IoU <= overlap*
         idx = idx[IoU.le(overlap)]
-    **return** keep, count**def** show_nmf(idx):
+    return keep, countdef show_nmf(idx):
     ima=md.val_ds.ds.denorm(x)[idx]
     bbox,clas = get_y(y[0][idx], y[1][idx])
     a_ic = actn_to_bb(b_bb[idx], anchors)
@@ -1319,9 +1323,9 @@ learn.load('drop4')plot_results(0.75)
     conf_scores = b_clas[idx].sigmoid().t().data
 
     out1,out2,cc = [],[],[]
-    **for** cl **in** range(0, len(conf_scores)-1):
+    for cl in range(0, len(conf_scores)-1):
         c_mask = conf_scores[cl] > 0.25
-        **if** c_mask.sum() == 0: **continue**
+        if c_mask.sum() == 0: continue
         scores = conf_scores[cl][c_mask]
         l_mask = c_mask.unsqueeze(1).expand_as(a_ic)
         boxes = a_ic[l_mask].view(-1, 4)
@@ -1335,7 +1339,7 @@ learn.load('drop4')plot_results(0.75)
     out2 = torch.cat(out2)
 
     fig, ax = plt.subplots(figsize=(8,8))
-    torch_gt(ax, ima, out2, cc, out1, 0.1)**for** i **in** range(12): show_nmf(i)
+    torch_gt(ax, ima, out2, cc, out1, 0.1)for i in range(12): show_nmf(i)
 ```
 
 这里还有一些需要修复的地方[[1:53:43](https://youtu.be/0frKXR-2PBY?t=1h53m43s)]。技巧将是使用称为特征金字塔的东西。这就是我们将在第 14 课中做的事情。

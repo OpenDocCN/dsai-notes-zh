@@ -57,7 +57,7 @@
 ## 翻译文件
 
 ```py
-**from** **fastai.text** **import** *
+from fastai.text import *
 ```
 
 从[`www.statmt.org/wmt15/translation-task.html`](http://www.statmt.org/wmt15/translation-task.html)获取的法语/英语平行文本。这是由克里斯·卡利森-伯奇（Chris Callison-Burch）创建的，他爬取了数百万个网页，然后使用*一组简单的启发式规则将法语 URL 转换为英语 URL（即用“fr”替换为“en”和其他大约 40 个手写规则），并假设这些文档是彼此的翻译*。
@@ -65,7 +65,7 @@
 ```py
 PATH = Path('data/translate')
 TMP_PATH = PATH/'tmp'
-TMP_PATH.mkdir(exist_ok=**True**)
+TMP_PATH.mkdir(exist_ok=True)
 fname='giga-fren.release2.fixed'
 en_fname = PATH/f'**{fname}**.en'
 fr_fname = PATH/f'**{fname}**.fr'
@@ -114,8 +114,8 @@ Stephen 使用了“编码器”这个词，但我们倾向于使用“骨干”
 ```py
 re_eq = re.compile('^(Wh[^?.!]+\?)')
 re_fq = re.compile('^([^?.!]+\?)')lines = ((re_eq.search(eq), re_fq.search(fq)) 
-         **for** eq, fq **in** zip(open(en_fname, encoding='utf-8'), 
-                           open(fr_fname, encoding='utf-8')))qs = [(e.group(), f.group()) **for** e,f **in** lines **if** e **and** f]
+         for eq, fq in zip(open(en_fname, encoding='utf-8'), 
+                           open(fr_fname, encoding='utf-8')))qs = [(e.group(), f.group()) for e,f in lines if e and f]
 ```
 
 我们遍历语料库，打开两个文件中的每一个，每一行是一个平行文本，将它们压缩在一起，获取英语问题和法语问题，并检查它们是否匹配正则表达式。
@@ -164,8 +164,8 @@ en_tok[0], fr_tok0
 你可以看到法语的标记化看起来非常不同，因为法语喜欢他们的撇号和连字符。因此，如果您尝试为法语句子使用英语标记器，您将得到一个相当糟糕的结果。您不需要了解大量的自然语言处理（NLP）理念来使用深度学习进行自然语言处理，但只需要一些基本的东西，比如使用正确的标记器对于您的语言是重要的。本周我们研究小组中的一些学生一直在尝试为中文实例构建语言模型，当然中文并没有真正的标记化概念，所以我们开始研究[sentence piece](https://github.com/google/sentencepiece)，它将事物分割成任意的子词单元，所以当 Jeremy 说标记化时，如果您使用的是没有空格的语言，您应该考虑使用 sentence piece 或其他类似的子词单元。希望在接下来的一两周内，我们将能够报告这些中文实验的一些早期结果。
 
 ```py
-np.percentile([len(o) **for** o **in** en_tok], 90), 
-    np.percentile([len(o) **for** o **in** fr_tok], 90)*(23.0, 28.0)*keep = np.array([len(o)<30 **for** o **in** en_tok])en_tok = np.array(en_tok)[keep]
+np.percentile([len(o) for o in en_tok], 90), 
+    np.percentile([len(o) for o in fr_tok], 90)*(23.0, 28.0)*keep = np.array([len(o)<30 for o in en_tok])en_tok = np.array(en_tok)[keep]
 fr_tok = np.array(fr_tok)[keep]pickle.dump(en_tok, (PATH/'en_tok.pkl').open('wb'))
 pickle.dump(fr_tok, (PATH/'fr_tok.pkl').open('wb'))en_tok = pickle.load((PATH/'en_tok.pkl').open('rb'))
 fr_tok = pickle.load((PATH/'fr_tok.pkl').open('rb'))
@@ -174,19 +174,19 @@ fr_tok = pickle.load((PATH/'fr_tok.pkl').open('rb'))
 所以在标记化之后，我们将其保存到磁盘。然后记住，在我们创建标记之后的下一步是将它们转换为数字。为此，我们有两个步骤——第一步是获取所有出现的单词的列表，然后我们将每个单词转换为索引。如果出现的单词超过 40,000 个，那么让我们在那里截断，以免变得太疯狂。我们插入一些额外的标记，用于流的开始（`_bos_`）、填充（`_pad_`）、流的结束（`_eos_`）和未知（`_unk`）。因此，如果我们尝试查找不在最常见的 40,000 个单词中的东西，那么我们使用`deraultdict`返回 3，即未知。
 
 ```py
-**def** toks2ids(tok,pre):
-    freq = Counter(p **for** o **in** tok **for** p **in** o)
-    itos = [o **for** o,c **in** freq.most_common(40000)]
+def toks2ids(tok,pre):
+    freq = Counter(p for o in tok for p in o)
+    itos = [o for o,c in freq.most_common(40000)]
     itos.insert(0, '_bos_')
     itos.insert(1, '_pad_')
     itos.insert(2, '_eos_')
     itos.insert(3, '_unk')
-    stoi = collections.defaultdict(**lambda**: 3, 
-                                   {v:k **for** k,v **in** enumerate(itos)})
-    ids = np.array([([stoi[o] **for** o **in** p] + [2]) **for** p **in** tok])
+    stoi = collections.defaultdict(lambda: 3, 
+                                   {v:k for k,v in enumerate(itos)})
+    ids = np.array([([stoi[o] for o in p] + [2]) for p in tok])
     np.save(TMP_PATH/f'**{pre}**_ids.npy', ids)
     pickle.dump(itos, open(TMP_PATH/f'**{pre}**_itos.pkl', 'wb'))
-    **return** ids,itos,stoi
+    return ids,itos,stoi
 ```
 
 现在我们可以继续，通过将每个标记放入我们刚刚创建的字符串到整数字典（`stoi`）中，将每个标记转换为 ID，然后在最后添加数字 2，即流的结束。你在这里看到的代码是 Jeremy 在迭代和实验时编写的代码。因为他在迭代和实验时编写的代码中，99%都是完全错误的、愚蠢的或令人尴尬的，你看不到。但是在他编写代码时，没有必要重构它并使其变得美观，所以他希望你看到他所有的小技巧。与其为`_eos_`标记使用某个常量并使用它，当他在原型设计时，他只做简单的事情。并不是说他最终会得到错误的代码，但他试图在美丽的代码和可行的代码之间找到一些折中。
@@ -203,13 +203,13 @@ fr_ids,fr_itos,fr_stoi = toks2ids(fr_tok,'fr')
 为了确认它是否有效，我们可以通过每个 ID，将 int 转换为字符串，并将其输出 - 现在我们的句子已经回来了，末尾有一个流标记。我们的英语词汇量为 17,000，法语词汇量为 25,000，所以我们处理的词汇量既不太大也不太复杂。
 
 ```py
-**def** load_ids(pre):
+def load_ids(pre):
     ids = np.load(TMP_PATH/f'**{pre}**_ids.npy')
     itos = pickle.load(open(TMP_PATH/f'**{pre}**_itos.pkl', 'rb'))
-    stoi = collections.defaultdict(**lambda**: 3, 
-                                   {v:k **for** k,v **in** enumerate(itos)})
-    **return** ids,itos,stoien_ids,en_itos,en_stoi = load_ids('en')
-fr_ids,fr_itos,fr_stoi = load_ids('fr')[fr_itos[o] **for** o **in** fr_ids[0]], len(en_itos), len(fr_itos)*(['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?', '_eos_'], 17573, 24793)*
+    stoi = collections.defaultdict(lambda: 3, 
+                                   {v:k for k,v in enumerate(itos)})
+    return ids,itos,stoien_ids,en_itos,en_stoi = load_ids('en')
+fr_ids,fr_itos,fr_stoi = load_ids('fr')[fr_itos[o] for o in fr_ids[0]], len(en_itos), len(fr_itos)*(['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?', '_eos_'], 17573, 24793)*
 ```
 
 ## 词向量[[32:53](https://youtu.be/tY0n9OT5_nA?t=32m53s)]
@@ -223,7 +223,7 @@ fasttext 词向量可从[`fasttext.cc/docs/en/english-vectors.html`](https://fas
 fasttext Python 库在 PyPI 中不可用，但这里有一个方便的技巧[[35:03](https://youtu.be/tY0n9OT5_nA?t=35m3s)]。如果有一个 GitHub 存储库，其中包含 setup.py 和 reqirements.txt，您只需在开头加上`git+`，然后将其放入`pip install`中，它就会起作用。几乎没有人似乎知道这一点，如果您去 fasttext 存储库，他们不会告诉您这一点 - 他们会告诉您必须下载它并`cd`进入它，等等，但您不必这样做。您只需运行以下命令：
 
 ```py
-*# ! pip install git+https://github.com/facebookresearch/fastText.git***import** **fastText** **as** **ft**
+*# ! pip install git+https://github.com/facebookresearch/fastText.git*import fastText as ft
 ```
 
 要使用 fastText 库，您需要下载[fasttext 词向量](https://github.com/facebookresearch/fastText/blob/master/pretrained-vectors.md)（下载“bin plus text”）。
@@ -235,16 +235,16 @@ en_vecs = ft.load_model(str((PATH/'wiki.en.bin')))fr_vecs = ft.load_model(str((P
 以上是我们的英语和法语模型。有文本版本和二进制版本。二进制版本更快，所以我们将使用它。文本版本也有点 buggy。我们将把它转换为标准的 Python 字典，以使其更容易使用[[35:55](https://youtu.be/tY0n9OT5_nA?t=35m55s)]。这只是通过字典理解遍历每个单词，并将其保存为 pickle 字典：
 
 ```py
-**def** get_vecs(lang, ft_vecs):
+def get_vecs(lang, ft_vecs):
     vecd = {w:ft_vecs.get_word_vector(w) 
-                **for** w **in** ft_vecs.get_words()}
+                for w in ft_vecs.get_words()}
     pickle.dump(vecd, open(PATH/f'wiki.**{lang}**.pkl','wb'))
-    **return** vecden_vecd = get_vecs('en', en_vecs)
+    return vecden_vecd = get_vecs('en', en_vecs)
 fr_vecd = get_vecs('fr', fr_vecs)en_vecd = pickle.load(open(PATH/'wiki.en.pkl','rb'))
-fr_vecd = pickle.load(open(PATH/'wiki.fr.pkl','rb'))ft_words = ft_vecs.get_words(include_freq=**True**)
-ft_word_dict = {k:v **for** k,v **in** zip(*ft_words)}
+fr_vecd = pickle.load(open(PATH/'wiki.fr.pkl','rb'))ft_words = ft_vecs.get_words(include_freq=True)
+ft_word_dict = {k:v for k,v in zip(*ft_words)}
 ft_words = sorted(ft_word_dict.keys(), 
-                     key=**lambda** x: ft_word_dict[x])
+                     key=lambda x: ft_word_dict[x])
 ```
 
 现在我们有了我们的 pickle 字典，我们可以继续查找一个单词，例如逗号[[36:07](https://youtu.be/tY0n9OT5_nA?t=36m7s)]。这将返回一个向量。向量的长度是这组词向量的维度。在这种情况下，我们有 300 维的英语和法语词向量。
@@ -267,19 +267,19 @@ en_vecs.mean(),en_vecs.std()*(0.0075652334, 0.29283327)*
 通常，语料库的序列长度具有相当长尾的分布，而最长的序列往往会压倒性地影响时间、内存使用等。因此，在这种情况下，我们将获取英语和法语的第 99 到 97 百分位数，并将它们截断到该数量。最初 Jeremy 使用的是 90 百分位数（因此变量名）：
 
 ```py
-enlen_90 = int(np.percentile([len(o) **for** o **in** en_ids], 99))
-frlen_90 = int(np.percentile([len(o) **for** o **in** fr_ids], 97))
+enlen_90 = int(np.percentile([len(o) for o in en_ids], 99))
+frlen_90 = int(np.percentile([len(o) for o in fr_ids], 97))
 enlen_90,frlen_90*(29, 33)*
 ```
 
 我们快要完成了[[37:24](https://youtu.be/tY0n9OT5_nA?t=37m24s)]。我们已经有了我们的标记化、数字化的英语和法语数据集。我们有一些词向量。现在我们需要为 PyTorch 准备好它。PyTorch 需要一个`Dataset`对象，希望到现在为止你可以说一个 Dataset 对象需要两个东西——一个长度(`__len__`)和一个索引器(`__getitem__`)。Jeremy 开始编写`Seq2SeqDataset`，结果只是一个通用的`Dataset`[[37:52](https://youtu.be/tY0n9OT5_nA?t=37m52s)]。
 
 ```py
-en_ids_tr = np.array([o[:enlen_90] **for** o **in** en_ids])
-fr_ids_tr = np.array([o[:frlen_90] **for** o **in** fr_ids])**class** **Seq2SeqDataset**(Dataset):
-    **def** __init__(self, x, y): self.x,self.y = x,y
-    **def** __getitem__(self, idx): **return** A(self.x[idx], self.y[idx])
-    **def** __len__(self): **return** len(self.x)
+en_ids_tr = np.array([o[:enlen_90] for o in en_ids])
+fr_ids_tr = np.array([o[:frlen_90] for o in fr_ids])class Seq2SeqDataset(Dataset):
+    def __init__(self, x, y): self.x,self.y = x,y
+    def __getitem__(self, idx): return A(self.x[idx], self.y[idx])
+    def __len__(self): return len(self.x)
 ```
 
 +   `A`：数组。它将遍历您传递的每个对象，如果它还不是一个 numpy 数组，它会将其转换为一个 numpy 数组，并返回一个元组，其中包含您传递的所有现在保证为 numpy 数组的对象[[38:32](https://youtu.be/tY0n9OT5_nA?t=38m32s)]。
@@ -316,14 +316,14 @@ val_ds = Seq2SeqDataset(fr_val,en_val)
 现在我们需要创建 DataLoaders[43:22]。我们只需获取我们的数据加载器并传入我们的数据集和批量大小。我们实际上必须转置数组 - 我们不会详细讨论为什么，但如果你感兴趣，我们可以在这一周讨论，但想一想为什么我们可能需要转置它们的方向。由于我们已经完成了所有的预处理，没有必要启动多个工作人员来进行增强等工作，因为没有工作要做。因此，`使 num_workers=1`会节省一些时间。我们必须告诉它我们的填充索引是什么 - 这非常重要，因为将会发生的是，我们有不同长度的句子，fastai 将自动将它们粘在一起并填充较短的句子，使它们长度相等。记住张量必须是矩形的。
 
 ```py
-bs=125trn_samp = SortishSampler(en_trn, key=**lambda** x: len(en_trn[x]), 
+bs=125trn_samp = SortishSampler(en_trn, key=lambda x: len(en_trn[x]), 
                           bs=bs)
-val_samp = SortSampler(en_val, key=**lambda** x: len(en_val[x]))trn_dl = DataLoader(trn_ds, bs, transpose=**True**, transpose_y=**True**, 
-                    num_workers=1, pad_idx=1, pre_pad=**False**, 
+val_samp = SortSampler(en_val, key=lambda x: len(en_val[x]))trn_dl = DataLoader(trn_ds, bs, transpose=True, transpose_y=True, 
+                    num_workers=1, pad_idx=1, pre_pad=False, 
                     sampler=trn_samp)
-val_dl = DataLoader(val_ds, int(bs*1.6), transpose=**True**, 
-                    transpose_y=**True**, num_workers=1, pad_idx=1,
-                    pre_pad=**False**, sampler=val_samp)
+val_dl = DataLoader(val_ds, int(bs*1.6), transpose=True, 
+                    transpose_y=True, num_workers=1, pad_idx=1,
+                    pre_pad=False, sampler=val_samp)
 md = ModelData(PATH, trn_dl, val_dl)
 ```
 
@@ -352,15 +352,15 @@ md = ModelData(PATH, trn_dl, val_dl)
 +   然后我们将把它传递到另一个 RNN 中，这是一个解码器。这将有一些新的东西，因为我们需要一个可以逐个单词地进行处理的东西。它会一直进行下去，直到它认为已经完成了句子。它不知道句子将有多长。它会一直进行下去，直到它认为已经完成了句子，然后停止并返回一个句子。
 
 ```py
-**def** create_emb(vecs, itos, em_sz):
+def create_emb(vecs, itos, em_sz):
     emb = nn.Embedding(len(itos), em_sz, padding_idx=1)
     wgts = emb.weight.data
     miss = []
-    **for** i,w **in** enumerate(itos):
-        **try**: wgts[i] = torch.from_numpy(vecs[w]*3)
-        **except**: miss.append(w)
+    for i,w in enumerate(itos):
+        try: wgts[i] = torch.from_numpy(vecs[w]*3)
+        except: miss.append(w)
     print(len(miss),miss[5:10])
-    **return** embnh,nl = 256,2
+    return embnh,nl = 256,2
 ```
 
 让我们从编码器开始[[48:15](https://youtu.be/tY0n9OT5_nA?t=48m15s)]。在这里的变量命名方面，编码器和解码器具有相同的属性。编码器版本有`enc`，解码器版本有`dec`。
@@ -391,8 +391,8 @@ md = ModelData(PATH, trn_dl, val_dl)
 Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的工作 - 还没有完成，但希望到达这里时，这种工作将是可能的[[56:50](https://youtu.be/tY0n9OT5_nA?t=56m50s)]。
 
 ```py
-**class** **Seq2SeqRNN**(nn.Module):
-    **def** __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
+class Seq2SeqRNN(nn.Module):
+    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
                  itos_dec, em_sz_dec, nh, out_sl, nl=2):
         super().__init__()
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
@@ -400,7 +400,7 @@ Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的�
         self.emb_enc_drop = nn.Dropout(0.15)
         self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
                               dropout=0.25)
-        self.out_enc = nn.Linear(nh, em_sz_dec, bias=**False**)
+        self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
 
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
         self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
@@ -409,7 +409,7 @@ Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的�
         self.out = nn.Linear(em_sz_dec, len(itos_dec))
         self.out.weight.data = self.emb_dec.weight.data
 
-    **def** forward(self, inp):
+    def forward(self, inp):
         sl,bs = inp.size()
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
@@ -418,17 +418,17 @@ Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的�
 
         dec_inp = V(torch.zeros(bs).long())
         res = []
-        **for** i **in** range(self.out_sl):
+        for i in range(self.out_sl):
             emb = self.emb_dec(dec_inp).unsqueeze(0)
             outp, h = self.gru_dec(emb, h)
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            **if** (dec_inp==1).all(): **break**
-        **return** torch.stack(res)
+            if (dec_inp==1).all(): break
+        return torch.stack(res)
 
-    **def** initHidden(self, bs): 
-        **return** V(torch.zeros(self.nl, bs, self.nh))
+    def initHidden(self, bs): 
+        return V(torch.zeros(self.nl, bs, self.nh))
 ```
 
 要知道的关键是编码器接收我们的输入并输出一个隐藏向量，希望它能学会包含关于句子内容以及如何设置的所有信息[[58:49](https://youtu.be/tY0n9OT5_nA?t=58m49s)]。如果它做不到，我们就不能将其输入解码器，并希望它将句子翻译成另一种语言。这就是我们希望它学会的。我们不会采取任何特殊措施来让它学会这样做 - 我们只会做三件事（数据、架构、损失函数），然后抱着幸运的心态。
@@ -458,12 +458,12 @@ Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的�
 损失函数是分类交叉熵损失。我们有一个概率列表，对应每个类别，其中类别是我们英语词汇中的所有单词，我们有一个目标，即正确的类别（即在此位置的正确单词）。有两个调整，这就是为什么我们需要编写自己的损失函数，但基本上可以看到它将是交叉熵损失。
 
 ```py
-**def** seq2seq_loss(input, target):
+def seq2seq_loss(input, target):
     sl,bs = target.size()
     sl_in,bs_in,nc = input.size()
-    **if** sl>sl_in: input = F.pad(input, (0,0,0,0,0,sl-sl_in))
+    if sl>sl_in: input = F.pad(input, (0,0,0,0,0,sl-sl_in))
     input = input[:sl]
-    **return** F.cross_entropy(input.view(-1,nc), target.view(-1))
+    return F.cross_entropy(input.view(-1,nc), target.view(-1))
 ```
 
 调整[[1:07:40](https://youtu.be/tY0n9OT5_nA?t=1h7m40s)]：
@@ -509,7 +509,9 @@ learn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch      trn_loss   val_loss
     8      3.238523   3.604765                              
     9      2.962041   3.587814                              
     10     2.96163    3.574888                              
-    11     2.866477   3.581224**[3.5812237]* learn.save('initial')
+    11     2.866477   3.581224**[3.5812237]
+'''
+ learn.save('initial')
 learn.load('initial')
 ```
 
@@ -522,10 +524,10 @@ x,y = next(iter(val_dl))
 probs = learn.model(V(x))
 preds = to_np(probs.max(2)[1])
 
-**for** i **in** range(180,190):
-    print(' '.join([fr_itos[o] **for** o **in** x[:,i] **if** o != 1]))
-    print(' '.join([en_itos[o] **for** o **in** y[:,i] **if** o != 1]))
-    print(' '.join([en_itos[o] **for** o **in** preds[:,i] **if** o!=1]))
+for i in range(180,190):
+    print(' '.join([fr_itos[o] for o in x[:,i] if o != 1]))
+    print(' '.join([en_itos[o] for o in y[:,i] if o != 1]))
+    print(' '.join([en_itos[o] for o in preds[:,i] if o!=1]))
     print()*quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
 what factors influencetheir location ? _eos_
 what factors might might influence on the their ? ? _eos_
@@ -582,15 +584,15 @@ why or why not _eos_*
 在这种特殊情况下，你将看到必须进行的所有更改。例如，当我们添加了`bidirectional=True`时，`Linear`层现在需要隐藏数量乘以 2（即`nh*2`）来反映我们隐藏状态中有第二个方向的事实。在`initHidden`中现在是`self.nl*2`。
 
 ```py
-**class** **Seq2SeqRNN_Bidir**(nn.Module):
-    **def** __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
+class Seq2SeqRNN_Bidir(nn.Module):
+    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
                  itos_dec, em_sz_dec, nh, out_sl, nl=2):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
         self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl,
-                              dropout=0.25, bidirectional=**True**)
-        self.out_enc = nn.Linear(nh***2**, em_sz_dec, bias=**False**)
+                              dropout=0.25, bidirectional=True)
+        self.out_enc = nn.Linear(nh*2, em_sz_dec, bias=False)
         self.drop_enc = nn.Dropout(0.05)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
         self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl,
@@ -600,7 +602,7 @@ why or why not _eos_*
         self.out = nn.Linear(em_sz_dec, len(itos_dec))
         self.out.weight.data = self.emb_dec.weight.data
 
-    **def** forward(self, inp):
+    def forward(self, inp):
         sl,bs = inp.size()
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
@@ -609,17 +611,17 @@ why or why not _eos_*
                 .contiguous().view(2,bs,-1)
         h = self.out_enc(self.drop_enc(h)) dec_inp = V(torch.zeros(bs).long())
         res = []
-        **for** i **in** range(self.out_sl):
+        for i in range(self.out_sl):
             emb = self.emb_dec(dec_inp).unsqueeze(0)
             outp, h = self.gru_dec(emb, h)
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            **if** (dec_inp==1).all(): **break**
-        **return** torch.stack(res)
+            if (dec_inp==1).all(): break
+        return torch.stack(res)
 
-    **def** initHidden(self, bs): 
-        **return** V(torch.zeros(self.nl***2**, bs, self.nh))
+    def initHidden(self, bs): 
+        return V(torch.zeros(self.nl*2, bs, self.nh))
 ```
 
 为什么将解码器设置为双向被认为是作弊？这不仅仅是作弊，而且我们有这种循环进行，所以不仅仅是有两个张量那么简单。那么如何将这两个单独的循环转换为最终结果呢？在休息期间讨论过后，Jeremy 已经从“每个人都知道这不起作用”变成“也许它可能起作用”，但需要更多的思考。在这一周期间，他可能会意识到这是一个愚蠢的想法，但我们会考虑一下。
@@ -644,7 +646,9 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch  
     8      3.257495   3.610536                              
     9      3.033345   3.540344                              
     10     2.967694   3.516766                              
-    11     2.718945   3.513977**[3.5139771]*
+    11     2.718945   3.513977**[3.5139771]
+'''
+
 ```
 
 ## 技巧#2 教师强制
@@ -654,35 +658,35 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch  
 设置的方式是我们有一个叫做`pr_force`的东西，它是强制的概率。如果某个随机数小于该概率，那么我们将用实际正确的东西替换我们的解码器输入。如果我们已经走得太远，如果它已经比目标序列长，我们就会停止，因为显然我们无法给出正确的东西。你可以看到 PyTorch 在这方面是多么美妙。去年课程的这个确切时刻，我们切换到 PyTorch 的关键原因是因为 Jeremy 尝试在 Keras 和 TensorFlow 中实现教师强制，结果比之前更疯狂。几周都没有进展，然后他在 Twitter 上看到 Andrej Karpathy 提到了一个叫做 PyTorch 的东西，很酷。他当天尝试了一下，第二天就有了教师强制。所有这些尝试调试的事情突然变得容易得多，这种动态的东西也变得容易得多。所以这是一个很好的例子，“嘿，我可以使用随机数和 if 语句”。
 
 ```py
-**class** **Seq2SeqStepper**(Stepper):
-    **def** step(self, xs, y, epoch):
-        self.m.pr_force = (10-epoch)*0.1 **if** epoch<10 **else** 0
+class Seq2SeqStepper(Stepper):
+    def step(self, xs, y, epoch):
+        self.m.pr_force = (10-epoch)*0.1 if epoch<10 else 0
         xtra = []
         output = self.m(*xs, y)
-        **if** isinstance(output,tuple): output,*xtra = output
+        if isinstance(output,tuple): output,*xtra = output
         self.opt.zero_grad()
         loss = raw_loss = self.crit(output, y)
-        **if** self.reg_fn: loss = self.reg_fn(output, xtra, raw_loss)
+        if self.reg_fn: loss = self.reg_fn(output, xtra, raw_loss)
         loss.backward()
-        **if** self.clip:   *# Gradient clipping*
+        if self.clip:   *# Gradient clipping*
             nn.utils.clip_grad_norm(trainable_params_(self.m), 
                                     self.clip)
         self.opt.step()
-        **return** raw_loss.data[0]
+        return raw_loss.data[0]
 ```
 
 这里是基本思想[[1:25:29](https://youtu.be/tY0n9OT5_nA?t=1h25m29s)]。在训练开始时，让`pr_force`非常高，以便几乎总是得到实际正确的前一个单词，因此它有一个有用的输入。然后随着我们训练的进一步，让`pr_force`逐渐减少，直到最后`pr_force`为零，它必须正确学习，这是可以的，因为现在它几乎总是输入合理的输入。
 
 ```py
-**class** **Seq2SeqRNN_TeacherForcing**(nn.Module):
-    **def** __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec,
+class Seq2SeqRNN_TeacherForcing(nn.Module):
+    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec,
                  itos_dec, em_sz_dec, nh, out_sl, nl=2):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
         self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
                               dropout=0.25)
-        self.out_enc = nn.Linear(nh, em_sz_dec, bias=**False**)
+        self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
         self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
                               dropout=0.1)
@@ -692,27 +696,27 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch  
         self.out.weight.data = self.emb_dec.weight.data
         self.pr_force = 1.
 
-    **def** forward(self, inp, y=**None**):
+    def forward(self, inp, y=None):
         sl,bs = inp.size()
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
         enc_out, h = self.gru_enc(emb, h)
         h = self.out_enc(h) dec_inp = V(torch.zeros(bs).long())
         res = []
-        **for** i **in** range(self.out_sl):
+        for i in range(self.out_sl):
             emb = self.emb_dec(dec_inp).unsqueeze(0)
             outp, h = self.gru_dec(emb, h)
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            **if** (dec_inp==1).all(): **break**
-            **if** (y **is** **not** **None**) **and** (random.random()<self.pr_force):
-                **if** i>=len(y): **break**
+            if (dec_inp==1).all(): break
+            if (y is not None) and (random.random()<self.pr_force):
+                if i>=len(y): break
                 dec_inp = y[i]
-        **return** torch.stack(res)
+        return torch.stack(res)
 
-    **def** initHidden(self, bs): 
-        **return** V(torch.zeros(self.nl, bs, self.nh))
+    def initHidden(self, bs): 
+        return V(torch.zeros(self.nl, bs, self.nh))
 ```
 
 `pr_force`: “probability of forcing”. High in the beginning zero by the end.
@@ -732,17 +736,17 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch  
 所以默认情况下，`stepper.step`使用一个称为`Stepper`的特定类，基本上调用模型，将梯度置零，调用损失函数，调用`backward`，如果需要进行梯度裁剪，然后调用优化器。这些是我们在“从头开始的 PyTorch”中看到的基本步骤。好处是，我们可以用其他东西替换它，而不是替换训练循环。如果你继承自`Stepper`，然后编写你自己版本的`step`，你可以只需复制并粘贴 step 的内容并添加任何你喜欢的内容。或者如果这是你要在之前或之后做的事情，你甚至可以调用`super.step`。在这种情况下，Jeremy 相当怀疑他不必要地复杂[[1:29:12](https://youtu.be/tY0n9OT5_nA?t=1h29m12s)] - 他可能本来可以做一些像这样的事情：
 
 ```py
-**class** **Seq2SeqStepper**(Stepper):
-    **def** step(self, xs, y, epoch):
-        self.m.pr_force = (10-epoch)*0.1 **if** epoch<10 **else** 0
-        **return** super.step(xs, y, epoch)
+class Seq2SeqStepper(Stepper):
+    def step(self, xs, y, epoch):
+        self.m.pr_force = (10-epoch)*0.1 if epoch<10 else 0
+        return super.step(xs, y, epoch)
 ```
 
 但正如他所说的，当他在原型设计时，他并没有仔细考虑如何最小化他的代码 - 他复制并粘贴了`step`的内容，并在顶部添加了一行，用于将模块中的`pr_force`逐渐线性减少前 10 个 epochs，10 个 epochs 后，它为零。所以总体上是一个 hack，但足够好用来尝试一下。好处是除了添加这三行之外，其他一切都是一样的：
 
 ```py
- **if** (y **is** **not** **None**) **and** (random.random()<self.pr_force):
-                **if** i>=len(y): **break**
+ if (y is not None) and (random.random()<self.pr_force):
+                if i>=len(y): break
                 dec_inp = y[i]
 ```
 
@@ -765,7 +769,9 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
     8      3.103834   3.790773                              
     9      3.121457   3.578682                              
     10     2.917534   3.532427                              
-    11     3.326946   3.490643**[3.490643]*
+    11     3.326946   3.490643**[3.490643]
+'''
+
 ```
 
 现在我们的损失降至 3.49。我们需要确保至少进行 10 个 epochs，因为在那之前，通过使用强制教师，这是作弊的。
@@ -783,16 +789,16 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
 让我们尝试实现注意力[[1:35:47](https://youtu.be/tY0n9OT5_nA?t=1h35m47s)]:
 
 ```py
-**def** rand_t(*sz): **return** torch.randn(sz)/math.sqrt(sz[0])
-**def** rand_p(*sz): **return** nn.Parameter(rand_t(*sz))**class** **Seq2SeqAttnRNN**(nn.Module):
-    **def** __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
+def rand_t(*sz): return torch.randn(sz)/math.sqrt(sz[0])
+def rand_p(*sz): return nn.Parameter(rand_t(*sz))class Seq2SeqAttnRNN(nn.Module):
+    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
                  itos_dec, em_sz_dec, nh, out_sl, nl=2):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
         self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
                               dropout=0.25)
-        self.out_enc = nn.Linear(nh, em_sz_dec, bias=**False**)
+        self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
         self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
                               dropout=0.1)
@@ -802,7 +808,7 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
         self.out.weight.data = self.emb_dec.weight.data self.W1 = rand_p(nh, em_sz_dec)
         self.l2 = nn.Linear(em_sz_dec, em_sz_dec)
         self.l3 = nn.Linear(em_sz_dec+nh, em_sz_dec)
-        self.V = rand_p(em_sz_dec) **def** forward(self, inp, y=**None**, ret_attn=**False**):
+        self.V = rand_p(em_sz_dec) def forward(self, inp, y=None, ret_attn=False):
         sl,bs = inp.size()
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
@@ -810,7 +816,7 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
         h = self.out_enc(h) dec_inp = V(torch.zeros(bs).long())
         res,attns = [],[]
         w1e = enc_out @ self.W1
-        **for** i **in** range(self.out_sl):
+        for i in range(self.out_sl):
             w2h = self.l2(h[-1])
             u = F.tanh(w1e + w2h)
             a = F.softmax(u @ self.V, 0)
@@ -823,13 +829,13 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            **if** (dec_inp==1).all(): **break**
-            **if** (y **is** **not** **None**) **and** (random.random()<self.pr_force):
-                **if** i>=len(y): **break**
+            if (dec_inp==1).all(): break
+            if (y is not None) and (random.random()<self.pr_force):
+                if i>=len(y): break
                 dec_inp = y[i] res = torch.stack(res)
-        **if** ret_attn: res = res,torch.stack(attns)
-        **return** res **def** initHidden(self, bs): 
-        **return** V(torch.zeros(self.nl, bs, self.nh))
+        if ret_attn: res = res,torch.stack(attns)
+        return res def initHidden(self, bs): 
+        return V(torch.zeros(self.nl, bs, self.nh))
 ```
 
 有了注意力，大部分代码都是相同的。唯一的主要区别是这一行：`Xa = (a.unsqueeze(2) * enc_out).sum(0)`。我们将进行加权平均，我们将如何进行加权平均是我们创建一个小型神经网络，我们将在这里看到：
@@ -909,11 +915,11 @@ learn.save('attn')
 
 ```py
 x,y = next(iter(val_dl))
-probs,attns = learn.model(V(x),ret_attn=**True**)
-preds = to_np(probs.max(2)[1])**for** i **in** range(180,190):
-    print(' '.join([fr_itos[o] **for** o **in** x[:,i] **if** o != 1]))
-    print(' '.join([en_itos[o] **for** o **in** y[:,i] **if** o != 1]))
-    print(' '.join([en_itos[o] **for** o **in** preds[:,i] **if** o!=1]))
+probs,attns = learn.model(V(x),ret_attn=True)
+preds = to_np(probs.max(2)[1])for i in range(180,190):
+    print(' '.join([fr_itos[o] for o in x[:,i] if o != 1]))
+    print(' '.join([en_itos[o] for o in y[:,i] if o != 1]))
+    print(' '.join([en_itos[o] for o in preds[:,i] if o!=1]))
     print()*quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
 what factors influencetheir location ? _eos_
 what factors might influence the their their their ? _eos_**qu’ est -ce qui ne peut pas changer ? _eos_
@@ -948,14 +954,14 @@ why or why not ? _eos_*
 我们还可以通过将`forward`函数添加返回注意力参数来从模型中提取注意力。你可以在`forward`函数参数中放任何你想要的东西。所以我们添加了一个返回注意力参数，默认为 false，因为显然训练循环不知道这一点，但然后我们在这里添加了一些东西，如果返回注意力，那么也将注意力添加进去（`if ret_attn: res = res,torch.stack(attns)`）。注意力就是值`a`，只需将其放入列表中（`attns.append(a)`）。现在我们可以调用带有返回注意力等于 true 的模型，并获得概率和注意力[[1:47:53](https://youtu.be/tY0n9OT5_nA?t=1h47m53s)]：
 
 ```py
-probs,attns = learn.model(V(x),ret_attn=**True**)
+probs,attns = learn.model(V(x),ret_attn=True)
 ```
 
 现在我们可以在每个时间步绘制注意力的图片。
 
 ```py
 attn = to_np(attns[...,180])fig, axes = plt.subplots(3, 3, figsize=(15, 10))
-**for** i,ax **in** enumerate(axes.flat):
+for i,ax in enumerate(axes.flat):
     ax.plot(attn[i])
 ```
 
@@ -984,10 +990,10 @@ attn = to_np(attns[...,180])fig, axes = plt.subplots(3, 3, figsize=(15, 10))
 我们将要做一些事情，第一次将我们专注的两个小世界——文本和图像[[1:55:49](https://youtu.be/tY0n9OT5_nA?t=1h55m49s)]结合起来。这个想法是由一位名叫 Andrea Frome 的杰出深度学习从业者和研究人员提出的。当时 Andrea 在谷歌工作，她疯狂的想法是单词可以有一个分布式表示，一个空间，特别是在那个时候只是单词向量。图像也可以在一个空间中表示。最后，如果我们有一个全连接层，它们最终会成为一个向量表示。我们能够合并这两者吗？我们能否以某种方式鼓励图像最终得到的向量空间与单词所在的向量空间相同？如果我们能做到这一点，那意味着什么？我们可以用它做什么？那么我们可以用它做什么，涵盖了诸如“如果我错了怎么办，如果我预测这张图片是一只猎犬，而我预测是大型喷气机，Yannet 的模型预测是柯基。正常的损失函数表示 Yannet 和 Jeremy 的模型一样好（即它们都是错误的）。但如果我们能以某种方式说，你知道柯基更接近猎犬而不是大型喷气机。所以 Yannet 的模型比 Jeremy 的更好。我们应该能够做到这一点，因为在单词向量空间中，猎犬和柯基是非常接近的，但大型喷气机不是那么接近。所以这将给我们一个很好的情况，希望我们的推理如果错误的话会以更合理的方式出错。这也将使我们能够搜索不在 ImageNet Synset ID（即 ImageNet 中的一个类别）中的事物。为什么我们必须训练一个全新的模型来找到狗和猫，当我们已经有找到柯基和虎斑猫的东西。为什么我们不能只是说找到狗？如果我们在单词向量空间中训练过它，我们完全可以，因为它们是单词向量，我们可以找到具有正确图像向量的东西等等。我们将在一会儿看一些我们可以用它做的很酷的事情，但首先让我们训练一个模型，这个模型不是学习一个类别（独热编码 ID），其中每个类别与其他每个类别的距离都是相等的，而是训练一个模型，我们正在寻找一个依赖变量，这是一个单词向量。那么什么单词向量？显然是你想要的单词的单词向量。所以如果是柯基，让我们训练它创建一个柯基单词向量，如果是大型喷气机，让我们训练它与一个依赖变量说这是大型喷气机的单词向量。
 
 ```py
-**from** **fastai.conv_learner** **import** *
-torch.backends.cudnn.benchmark=**True**
+from fastai.conv_learner import *
+torch.backends.cudnn.benchmark=True
 
-**import** **fastText** **as** **ft**PATH = Path('data/imagenet/')
+import fastText as ftPATH = Path('data/imagenet/')
 TMP_PATH = PATH/'tmp'
 TRANS_PATH = Path('data/translate/')
 PATH_TRN = PATH/'train'
@@ -1016,9 +1022,9 @@ Jeremy 一点也不喜欢香蕉，“香蕉”和“Jeremy”相关系数为 0.1
 现在让我们获取所有 ImageNet 类别，因为我们实际上想知道哪一个是柯基，哪一个是大型喷气机。
 
 ```py
-ft_words = ft_vecs.get_words(include_freq=**True**)
-ft_word_dict = {k:v **for** k,v **in** zip(*ft_words)}
-ft_words = sorted(ft_word_dict.keys(), key=**lambda** x: ft_word_dict[x])len(ft_words)*2519370***from** **fastai.io** **import** get_data
+ft_words = ft_vecs.get_words(include_freq=True)
+ft_word_dict = {k:v for k,v in zip(*ft_words)}
+ft_words = sorted(ft_word_dict.keys(), key=lambda x: ft_word_dict[x])len(ft_words)*2519370*from fastai.io import get_data
 ```
 
 我们在 files.fast.ai 上有一个所有这些的列表，我们可以获取它们。
@@ -1054,28 +1060,30 @@ class_dict['0']*['n01440764', 'tench']*
 
 ```py
 classid_lines = (PATH/WORDS_FN).open().readlines()
-classid_lines[:5]*['n00001740 entity\n',
+classid_lines[:5]
+'''
+['n00001740 entity\n',
  'n00001930 physical_entity\n',
  'n00002137 abstraction\n',
  'n00002452 thing\n',
- 'n00002684 object\n']*classids = dict(l.strip().split() **for** l **in** classid_lines)
+ 'n00002684 object\n']*classids = dict(l.strip().split() for l in classid_lines)
 len(classids),len(classids_1k)*(82115, 1000)*
 ```
 
 这是我们的两个世界 — 我们有 ImageNet 的一千个和 WordNet 中的 82,000 个。
 
 ```py
-lc_vec_d = {w.lower(): ft_vecs.get_word_vector(w) **for** w 
-                           **in** ft_words[-1000000:]}
+lc_vec_d = {w.lower(): ft_vecs.get_word_vector(w) for w 
+                           in ft_words[-1000000:]}
 ```
 
 我们想要将这两者联系起来，这只是简单地创建一些字典来基于 Synset ID 或 WordNet ID 进行映射。
 
 ```py
-syn_wv = [(k, lc_vec_d[v.lower()]) **for** k,v **in** classids.items()
-          **if** v.lower() **in** lc_vec_d]
-syn_wv_1k = [(k, lc_vec_d[v.lower()]) **for** k,v **in** classids_1k.items()
-          **if** v.lower() **in** lc_vec_d]
+syn_wv = [(k, lc_vec_d[v.lower()]) for k,v in classids.items()
+          if v.lower() in lc_vec_d]
+syn_wv_1k = [(k, lc_vec_d[v.lower()]) for k,v in classids_1k.items()
+          if v.lower() in lc_vec_d]
 syn2wv = dict(syn_wv)
 len(syn2wv)*49469*
 ```
@@ -1092,16 +1100,16 @@ syn_wv_1k = pickle.load((TMP_PATH/'syn_wv_1k.pkl').open('rb'))
 
 ```py
 images = []
-img_vecs = []**for** d **in** (PATH/'train').iterdir():
-    **if** d.name **not** **in** syn2wv: **continue**
+img_vecs = []for d in (PATH/'train').iterdir():
+    if d.name not in syn2wv: continue
     vec = syn2wv[d.name]
-    **for** f **in** d.iterdir():
+    for f in d.iterdir():
         images.append(str(f.relative_to(PATH)))
         img_vecs.append(vec)n_val=0
-**for** d **in** (PATH/'valid').iterdir():
-    **if** d.name **not** **in** syn2wv: **continue**
+for d in (PATH/'valid').iterdir():
+    if d.name not in syn2wv: continue
     vec = syn2wv[d.name]
-    **for** f **in** d.iterdir():
+    for f in d.iterdir():
         images.append(str(f.relative_to(PATH)))
         img_vecs.append(vec)
         n_val += 1n_val*28650*
@@ -1126,9 +1134,9 @@ img_vecs = pickle.load((TMP_PATH/'img_vecs.pkl').open('rb'))arch = resnet50n = l
 
 ```py
 tfms = tfms_from_model(arch, 224, transforms_side_on, max_zoom=1.1)
-md = ImageClassifierData.**from_names_and_array**(PATH, images,  
-        img_vecs, val_idxs=val_idxs, classes=**None**, tfms=tfms,
-        continuous=**True**, bs=256)x,y = next(iter(md.val_dl))
+md = ImageClassifierData.from_names_and_array(PATH, images,  
+        img_vecs, val_idxs=val_idxs, classes=None, tfms=tfms,
+        continuous=True, bs=256)x,y = next(iter(md.val_dl))
 ```
 
 让我们创建一个架构。我们下周会对此进行修订，但我们可以使用到目前为止学到的技巧，实际上非常简单。Fastai 有一个`ConvnetBuilder`，当你说`ConvLerner.pretrained`时就会调用它，并指定：
@@ -1148,16 +1156,16 @@ md = ImageClassifierData.**from_names_and_array**(PATH, images,
 所以这是一个卷积神经网络，没有任何 softmax 之类的东西，因为它是回归，最后只是一个线性层，这就是我们的模型。我们可以从该模型创建一个 ConvLearner，并为其提供一个优化函数。现在我们只需要一个损失函数。
 
 ```py
-models = ConvnetBuilder(arch, md.c, is_multi=**False**, is_reg=**True**, 
-             xtra_fc=[1024], ps=[0.2,0.2])learn = ConvLearner(md, models, precompute=**True**)
+models = ConvnetBuilder(arch, md.c, is_multi=False, is_reg=True, 
+             xtra_fc=[1024], ps=[0.2,0.2])learn = ConvLearner(md, models, precompute=True)
 learn.opt_fn = partial(optim.Adam, betas=(0.9,0.99))
 ```
 
 **损失函数**：回归的默认损失函数是 L1 损失（绝对差异）- 这并不坏。但不幸的是，在真正高维空间中（任何稍微了解一点机器学习的人可能都知道），一切都在外面（在这种情况下，是 300 维）。当一切都在外面时，距离并不毫无意义，但有点尴尬。事物往往要么靠在一起，要么远离，在这些真正高维空间中，一切都在边缘，这并不意味着太多。然而，有意义的是，如果一件事在这边的边缘，另一件事在那边的边缘，我们可以形成这些向量之间的角度，这个角度是有意义的。这就是为什么在寻找高维空间中事物之间的接近或远离时，我们使用余弦相似度。如果你以前没有见过余弦相似度，它基本上与欧几里德距离相同，但被归一化为单位范数（即除以长度）。因此，我们不关心向量的长度，我们只关心它的角度。有很多东西你可以在几个小时内轻松学会，但如果你以前没有见过，它可能有点神秘。现在，只需知道损失函数和高维空间中，你在尝试找到相似性时，你关心角度，而不关心距离。如果你没有使用以下自定义损失函数，它仍然可以工作，但效果会差一点。现在我们有了数据、架构和损失函数，因此，我们完成了。我们可以继续拟合。
 
 ```py
-**def** cos_loss(inp,targ):
-    **return** 1 - F.cosine_similarity(inp,targ).mean()
+def cos_loss(inp,targ):
+    return 1 - F.cosine_similarity(inp,targ).mean()
 learn.crit = cos_losslearn.lr_find(start_lr=1e-4, end_lr=1e15)learn.sched.plot()lr = 1e-2
 wd = 1e-7
 ```
@@ -1165,7 +1173,7 @@ wd = 1e-7
 我们正在训练所有的 ImageNet，这将需要很长时间。所以`precompute=True`是你的朋友。还记得`precompute=True`吗？那是我们很久以前学到的东西，它会缓存最终卷积层的输出，然后只训练完全连接的部分。即使使用`precompute=True`，在所有的 ImageNet 上训练一个时代大约需要 3 分钟。所以这大约是一个小时的训练时间，但很酷的是，使用 fastai，我们可以在一个小时左右的时间内在所有的 ImageNet 上训练一个新的自定义头部 40 个时代。
 
 ```py
-learn.precompute=**True**learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
+learn.precompute=Truelearn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
     0      0.104692   0.125685  
     1      0.112455   0.129307                                 
     2      0.110631   0.126568                                 
@@ -1185,7 +1193,9 @@ learn.precompute=**True**learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))
     16     0.097226   0.119724                                  
     17     0.094666   0.118746                                  
     18     0.094137   0.118744                                  
-    19     0.090076   0.117908**[0.11790786389489033]*learn.bn_freeze(**True**)learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
+    19     0.090076   0.117908**[0.11790786389489033]
+'''
+learn.bn_freeze(True)learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
     0      0.104692   0.125685  
     1      0.112455   0.129307                                 
     2      0.110631   0.126568                                 
@@ -1205,7 +1215,9 @@ learn.precompute=**True**learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))
     16     0.097226   0.119724                                  
     17     0.094666   0.118746                                  
     18     0.094137   0.118744                                  
-    19     0.090076   0.117908**[0.11790786389489033]*lrs = np.array([lr/1000,lr/100,lr])learn.precompute=**False**
+    19     0.090076   0.117908**[0.11790786389489033]
+'''
+lrs = np.array([lr/1000,lr/100,lr])learn.precompute=False
 learn.freeze_to(1)learn.save('pre0')learn.load('pre0')
 ```
 
@@ -1218,13 +1230,13 @@ learn.freeze_to(1)learn.save('pre0')learn.load('pre0')
 ```py
 syns, wvs = list(zip(*syn_wv_1k))
 wvs = np.array(wvs)%time pred_wv = learn.predict()*CPU times: user 18.4 s, sys: 7.91 s, total: 26.3 s
-Wall time: 7.17 s*start=300denorm = md.val_ds.denorm**def** show_img(im, figsize=**None**, ax=**None**):
-    **if** **not** ax: fig,ax = plt.subplots(figsize=figsize)
+Wall time: 7.17 s*start=300denorm = md.val_ds.denormdef show_img(im, figsize=None, ax=None):
+    if not ax: fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.axis('off')
-    **return** ax**def** show_imgs(ims, cols, figsize=**None**):
+    return axdef show_imgs(ims, cols, figsize=None):
     fig,axes = plt.subplots(len(ims)//cols, cols, figsize=figsize)
-    **for** i,ax **in** enumerate(axes.flat): show_img(ims[i], ax=ax)
+    for i,ax in enumerate(axes.flat): show_img(ims[i], ax=ax)
     plt.tight_layout()
 ```
 
@@ -1237,12 +1249,12 @@ show_imgs(denorm(md.val_ds[start:start+25][0]), 5, (10,10))
 **最近邻搜索**[[2:10:56](https://youtu.be/tY0n9OT5_nA?t=2h10m56s)]：现在我们可以使用最近邻搜索。所谓最近邻搜索意味着这里有一个 300 维向量，这里有很多其他 300 维向量，它最接近哪个？通常这需要很长时间，因为你必须查看每个 300 维向量，计算其距离，找出它有多远。但是有一个几乎不为人知的神奇库叫做**NMSLib**，它可以做得非常快。你们中有些人可能尝试过其他最近邻库，我保证这比你们使用的更快 —— 我可以告诉你这一点，因为这是由专业人士进行基准测试的。在每个可能的维度上，这是迄今为止最快的。我们想要在角距离上创建一个索引，并且需要在我们所有的 ImageNet 词向量上执行。添加一个完整的批次，创建索引，现在我们可以一次查询一堆向量，获取最近的 10 个邻居。该库使用多线程，绝对棒。你可以从 pip 安装（`pip install nmslib`），它就能用了。
 
 ```py
-**import** **nmslib****def** create_index(a):
+import nmslibdef create_index(a):
     index = nmslib.init(space='angulardist')
     index.addDataPointBatch(a)
     index.createIndex()
-    **return** index**def** get_knns(index, vecs):
-     **return** zip(*index.knnQueryBatch(vecs, k=10, num_threads=4))**def** get_knn(index, vec): **return** index.knnQuery(vec, k=10)nn_wvs = create_index(wvs)
+    return indexdef get_knns(index, vecs):
+     return zip(*index.knnQueryBatch(vecs, k=10, num_threads=4))def get_knn(index, vec): return index.knnQuery(vec, k=10)nn_wvs = create_index(wvs)
 ```
 
 它告诉你它们有多远以及它们的索引[[2:12:13](https://youtu.be/tY0n9OT5_nA?t=2h12m13s)].
@@ -1254,8 +1266,8 @@ idxs,dists = get_knns(nn_wvs, pred_wv)
 所以现在我们可以浏览并打印出前 3 个，结果是鸟实际上是一只鹭鸟。有趣的是第四个并没有说它是一只鹭鸟，Jeremy 查了一下。他对鸟类了解不多，但其他一切都是棕色带白色斑点，但第四个不是。所以我们不知道那是否真的是一只鹭鸟，或者是否被错误标记，但它看起来绝对不像其他鸟类。
 
 ```py
-[[classids[syns[id]] **for** id **in** ids[:3]] 
-                         **for** ids **in** idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
+[[classids[syns[id]] for id in ids[:3]] 
+                         for ids in idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['spoonbill', 'bustard', 'oystercatcher'],
@@ -1273,8 +1285,8 @@ idxs,dists = get_knns(nn_wvs, pred_wv)
 
 ```py
 all_syns, all_wvs = list(zip(*syn2wv.items()))
-all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knns(nn_allwvs, pred_wv)[[classids[all_syns[id]] **for** id **in** ids[:3]] 
-                             **for** ids **in** idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
+all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knns(nn_allwvs, pred_wv)[[classids[all_syns[id]] for id in ids[:3]] 
+                             for ids in idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['spoonbill', 'bustard', 'oystercatcher'],
@@ -1296,7 +1308,7 @@ all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knn
 nn_predwv = create_index(pred_wv)
 en_vecd = pickle.load(open(TRANS_PATH/'wiki.en.pkl','rb'))
 vec = en_vecd['boat']idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[:3]],
+show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
                       3, figsize=(9,3));
 ```
 
@@ -1304,7 +1316,7 @@ show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[:3]],
 
 ```py
 vec = (en_vecd['engine'] + en_vecd['boat'])/2 idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[:3]],
+show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
                       3, figsize=(9,3));
 ```
 
@@ -1312,7 +1324,7 @@ show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[:3]],
 
 ```py
 vec = (en_vecd['sail'] + en_vecd['boat'])/2idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[:3]],
+show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
                       3, figsize=(9,3));
 ```
 
@@ -1328,8 +1340,8 @@ show_img(img);
 
 ```py
 t_img = md.val_ds.transform(img)
-pred = learn.predict_array(t_img[**None**])idxs,dists = get_knn(nn_predwv, pred)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) **for** i **in** idxs[1:4]],
+pred = learn.predict_array(t_img[None])idxs,dists = get_knn(nn_predwv, pred)
+show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[1:4]],
                       3, figsize=(9,3));
 ```
 

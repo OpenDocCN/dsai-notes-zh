@@ -23,7 +23,11 @@
 +   训练输出：[*`*epoch #*`*,* `*training loss*`*,* `*validation loss*`*,* `*accuracy*`*]*
 
 ```py
-*[ 0\.       0.04955  0.02605  0.98975]*
+
+'''
+[0\.       0.04955  0.02605  0.98975]
+'''
+
 ```
 
 ## **学习率[4:54]**
@@ -75,7 +79,7 @@ tfms = tfms_from_model(resnet34, sz, **aug_tfms=transforms_side_on**, max_zoom=1
 +   这并不是在创建新数据，而是让卷积神经网络学习如何从略有不同的角度识别猫或狗。
 
 ```py
-data = ImageClassifierData.from_paths(PATH, tfms=**tfms**)
+data = ImageClassifierData.from_paths(PATH, tfms=tfms)
 learn = ConvLearner.pretrained(arch, data, precompute=True)learn.fit(1e-2, 1)
 ```
 
@@ -90,9 +94,13 @@ learn = ConvLearner.pretrained(arch, data, precompute=True)learn.fit(1e-2, 1)
 +   要使用数据增强，我们必须执行`learn.precompute=False`：
 
 ```py
-learn.precompute=Falselearn.fit(1e-2, 3, **cycle_len=1**)*[ 0\.       0.03597  0.01879  0.99365]                         
+learn.precompute=Falselearn.fit(1e-2, 3, **cycle_len=1**)
+'''
+[0\.       0.03597  0.01879  0.99365]                         
 [ 1\.       0.02605  0.01836  0.99365]                         
-[ 2\.       0.02189  0.0196   0.99316]*
+[ 2\.       0.02189  0.0196   0.99316]
+'''
+
 ```
 
 +   坏消息是准确性没有提高。训练损失在减少，但验证损失没有，但我们没有过拟合。过拟合是指训练损失远低于验证损失。换句话说，当你的模型在训练集上表现比在验证集上好得多时，这意味着你的模型没有泛化。
@@ -166,13 +174,17 @@ lr=np.array([1e-4,1e-3,1e-2])
 使用不同的学习率，我们的准确率达到了 99.5%！
 
 ```py
-learn.fit(lr, 3, cycle_len=1, **cycle_mult**=2)*[ 0\.       0.04538  0.01965  0.99268]                          
+learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.       0.04538  0.01965  0.99268]                          
 [ 1\.       0.03385  0.01807  0.99268]                          
 [ 2\.       0.03194  0.01714  0.99316]                          
 [ 3\.       0.0358   0.0166   0.99463]                          
 [ 4\.       0.02157  0.01504  0.99463]                          
 [ 5\.       0.0196   0.0151   0.99512]                          
-[ 6\.       0.01356  0.01518  0.9956 ]*
+[ 6\.       0.01356  0.01518  0.9956 ]
+'''
+
 ```
 
 +   之前我们说`3`是周期的数量，但实际上是**周期**。所以如果`cycle_len=2`，它将执行 3 个周期，每个周期为 2 个周期（即 6 个周期）。那为什么是 7 个？这是因为`cycle_mult`。
@@ -226,7 +238,7 @@ probs = np.mean(np.exp(log_preds),0)accuracy(probs, y)*0.99650000000000005*
 
 ```py
 preds = np.argmax(probs, axis=1)
-probs = probs[:,1]**from** **sklearn.metrics** **import** confusion_matrix
+probs = probs[:,1]from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y, preds)plot_confusion_matrix(cm, data.classes)
 ```
 
@@ -285,7 +297,7 @@ label_df.head()
 ```
 
 ```py
-label_df.**pivot_table**(index='breed', aggfunc=len).sort_values('id', ascending=False)
+label_df.pivot_table(index='breed', aggfunc=len).sort_values('id', ascending=False)
 ```
 
 每个品种有多少狗图像
@@ -365,13 +377,15 @@ data = get_data(224, bs)learn = ConvLearner.pretrained(arch, data, precompute=Tr
 [1\.      1.09107 0.7014  0.8181 ]                             
 [2\.      0.80813 0.60066 0.82148]                             
 [3\.      0.66967 0.55302 0.83125]                             
-[4\.      0.57405 0.52974 0.83564]*
+[4\.      0.57405 0.52974 0.83564]
+'''
+
 ```
 
 +   对于 120 个类别来说，83%是相当不错的。
 
 ```py
-**learn.precompute = False**learn.fit(1e-2, 5, **cycle_len**=1)
+**learn.precompute = False**learn.fit(1e-2, 5, cycle_len=1)
 ```
 
 +   提醒：一个`epoch`是对数据的一次遍历，一个`cycle`是你说一个周期中有多少个 epoch
@@ -394,7 +408,9 @@ learn.set_data(get_data(299, bs))
 ```py
 learn.fit(1e-2, 3, cycle_len=1)*[0\.      0.35614 0.22239 0.93018]                            
 [1\.      0.28341 0.2274  0.92627]
-[2\.* ***0.28341******0.2274*** *0.92627]*
+[2\.* *0.28341**0.2274* *0.92627]
+'''
+
 ```
 
 +   如你所见，验证集损失（0.2274）远低于训练集损失（0.28341） — 这意味着它是**欠拟合**。当你欠拟合时，意味着`cycle_len=1`太短了（学习率在适当缩小之前被重置）。所以我们将添加`cycle_mult=2`（即第一个周期是 1 个时期，第二个周期是 2 个时期，第三个周期是 4 个时期）

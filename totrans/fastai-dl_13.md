@@ -97,16 +97,16 @@ phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),
 所以酷的是，现在我们可以仅仅使用这些训练阶段来复制所有我们现有的计划。这里有一个名为`phases_sgdr`的函数，它使用新的训练阶段 API 来进行 SGDR。
 
 ```py
-**def** phases_sgdr(lr, opt_fn, num_cycle,cycle_len,cycle_mult):
+def phases_sgdr(lr, opt_fn, num_cycle,cycle_len,cycle_mult):
     phases = [TrainingPhase(epochs = cycle_len/ 20, opt_fn=opt_fn, 
                        lr=lr/100),
               TrainingPhase(epochs = cycle_len * 19/20, 
                    opt_fn=opt_fn, lr=lr, lr_decay=DecayType.COSINE)]
-    **for** i **in** range(1,num_cycle):
+    for i in range(1,num_cycle):
         phases.append(TrainingPhase(epochs=cycle_len*
                       (cycle_mult**i), opt_fn=opt_fn, lr=lr, 
                       lr_decay=DecayType.COSINE))
-    **return** phases
+    return phases
 ```
 
 所以你可以看到，如果他按照这个计划运行，这就是它的样子：
@@ -118,9 +118,9 @@ phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),
 现在我们可以用一个小函数来实现新的 1cycle。
 
 ```py
-**def** phases_1cycle(cycle_len,lr,div,pct,max_mom,min_mom):
+def phases_1cycle(cycle_len,lr,div,pct,max_mom,min_mom):
     tri_cyc = (1-pct/100) * cycle_len
-    **return** [TrainingPhase(epochs=tri_cyc/2, opt_fn=optim.SGD, 
+    return [TrainingPhase(epochs=tri_cyc/2, opt_fn=optim.SGD, 
                           lr=(lr/div,lr), lr_decay=DecayType.LINEAR,
                           momentum=(max_mom,min_mom),  
                           momentum_decay=DecayType.LINEAR),
@@ -271,14 +271,14 @@ data2 = get_data(32,batch_size)learn = ConvLearner.from_model_data(ShallowConvNe
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2**from** **fastai.conv_learner** **import** *
-**from** **pathlib** **import** Path
-**from** **scipy** **import** ndimage
+%autoreload 2from fastai.conv_learner import *
+from pathlib import Path
+from scipy import ndimage
 torch.cuda.set_device(3)
 
-torch.backends.cudnn.benchmark=**True**PATH = Path('data/imagenet')
-PATH_TRN = PATH/'train'm_vgg = to_gpu(vgg16(**True**)).eval()
-set_trainable(m_vgg, **False**)
+torch.backends.cudnn.benchmark=TruePATH = Path('data/imagenet')
+PATH_TRN = PATH/'train'm_vgg = to_gpu(vgg16(True)).eval()
+set_trainable(m_vgg, False)
 ```
 
 这里的想法是我们想要拍摄一只鸟的照片，并且我们想要创作一幅看起来像梵高画了这只鸟的画。顺便说一句，我正在做的很多事情都使用了 ImageNet。你不必为我所做的任何事情下载整个 ImageNet。在[files.fast.ai/data](http://files.fast.ai/data/)中有一个 ImageNet 样本，它有几个 G 的数据，对我们正在做的一切来说应该足够了。如果你想要得到真正出色的结果，你可以获取 ImageNet。你可以从[Kaggle](https://www.kaggle.com/c/imagenet-object-localization-challenge/data)下载。定位竞赛实际上包含了所有的分类数据。如果你有空间，最好拥有一份 ImageNet 的副本，因为它随时都会派上用场。
@@ -352,7 +352,7 @@ plt.imshow(opt_img);
 
 ```py
 opt_img = val_tfms(opt_img)/2
-opt_img_v = V(opt_img[**None**], requires_grad=**True**)
+opt_img_v = V(opt_img[None], requires_grad=True)
 opt_img_v.shape*torch.Size([1, 3, 288, 288])*
 ```
 
@@ -383,7 +383,7 @@ m_vgg = nn.Sequential(*children(m_vgg)[:37])
 这就是高层次的版本。我一会儿会回到细节，但关键是我们传入那个随机生成的图像的损失函数——优化图像的变量。因此，我们将该图像传递给我们的损失函数，它将使用损失函数进行更新，而损失函数是通过将我们当前的优化图像通过我们的 VGG 获取中间激活，并将其与目标激活进行比较来计算均方误差损失。我们运行一堆次数，然后将其打印出来。我们有我们的鸟，但没有它的表示形式。
 
 ```py
-targ_t = m_vgg(VV(img_tfm[**None**]))
+targ_t = m_vgg(VV(img_tfm[None]))
 targ_v = V(targ_t)
 targ_t.shape*torch.Size([1, 512, 18, 18])*max_iter = 1000
 show_iter = 100
@@ -403,22 +403,22 @@ optimizer = optim.LBFGS([opt_img_v], lr=0.5)
 现在的问题是，实际计算 Hessian（二阶导数）几乎肯定不是一个好主意。因为在你要前进的每个可能方向上，对于你测量梯度的每个方向，你还必须在每个方向上计算 Hessian。这变得非常庞大。所以我们不是真的计算它，我们走几步，基本上看一下梯度在每一步变化了多少，然后用那个小函数来近似 Hessian。再次强调，这似乎是一个非常明显的事情，但直到后来有人想到了，这花了相当长的时间。跟踪每一步都需要大量内存，所以别跟踪每一步，只保留最后的十步或二十步。第二部分，就是 L 到 LBFGS。有限内存的 BFGS 意味着保留最后的 10 或 20 个梯度，用它来近似曲率的量，然后用曲率和梯度来估计前进的方向和距离。在深度学习中通常不是一个好主意，有很多原因。这比 Adam 或 SGD 更新更费力，也使用更多内存，当你有一个 GPU 来存储和数亿个权重时，内存就成了一个更大的问题。但更重要的是，小批量是非常颠簸的，所以弄清楚曲率以决定到底要前进多远，有点像我们说的磨亮了粪便（是的，澳大利亚和英国的表达方式，你懂的）。有趣的是，实际上使用二阶导数信息，结果就像是一个吸引鞍点的磁铁。因此，有一些有趣的理论结果基本上说，如果使用二阶导数信息，它实际上会把你引向函数的恶劣平坦区域。所以通常不是一个好主意。
 
 ```py
-**def** actn_loss(x): **return** F.mse_loss(m_vgg(x), targ_v)*1000**def** step(loss_fn):
-    **global** n_iter
+def actn_loss(x): return F.mse_loss(m_vgg(x), targ_v)*1000def step(loss_fn):
+    global n_iter
     optimizer.zero_grad()
     loss = loss_fn(opt_img_v)
     loss.backward()
     n_iter+=1
-    **if** n_iter%show_iter==0: 
+    if n_iter%show_iter==0: 
         print(f'Iteration: n_iter, loss: **{loss.data[0]}**')
-    **return** loss
+    return loss
 ```
 
 但在这种情况下，我们不是在优化权重，而是在优化像素，所以所有规则都改变了，实际上 BFGS 是有意义的。因为每次它做更多的工作，它是一种不同类型的优化器，PyTorch 中的 API 也有点不同。正如你在这里看到的，当你说`optimizer.step`时，你实际上传入了损失函数。所以我们的损失函数是调用`step`，传入一个特定的损失函数，即我们的激活损失（`actn_loss`）。在循环内部，你不会说 step，step，step。而是看起来像这样。所以有点不同，你可以尝试重写这个来使用 SGD，它仍然会工作。只是会花更长的时间，我还没有尝试过用 SGD，我很想知道它需要多长时间。
 
 ```py
 n_iter=0
-**while** n_iter <= max_iter: optimizer.step(partial(step,actn_loss))*Iteration: n_iter, loss: 0.8466196656227112
+while n_iter <= max_iter: optimizer.step(partial(step,actn_loss))*Iteration: n_iter, loss: 0.8466196656227112
 Iteration: n_iter, loss: 0.34066855907440186
 Iteration: n_iter, loss: 0.21001280844211578
 Iteration: n_iter, loss: 0.15562333166599274
@@ -447,26 +447,26 @@ plt.imshow(x);
 要创建一个前向钩子，只需创建一个类。该类必须有一个名为`hook_fn`的东西。您的钩子函数将接收您挂钩的`module`，前向传递的`input`和`output`，然后您可以做任何您喜欢的事情。所以我要做的就是将这个模块的输出存储在某个属性中。就是这样。所以`hook_fn`实际上可以被称为您喜欢的任何东西，但“hook function”似乎是标准，因为您可以看到，在构造函数中发生的是我在某个属性中存储了`m.register_forward_hook`的结果（`m`将是我要挂钩的层），并传入您希望在调用模块的前向方法时调用的函数。当调用其前向方法时，它将调用`self.hook_fn`，该函数将在名为`features`的属性中存储输出。
 
 ```py
-**class** **SaveFeatures**():
-    features=**None**
-    **def** __init__(self, m): 
+class SaveFeatures():
+    features=None
+    def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
-    **def** hook_fn(self, module, input, output): self.features = output
-    **def** close(self): self.hook.remove()
+    def hook_fn(self, module, input, output): self.features = output
+    def close(self): self.hook.remove()
 ```
 
 现在我们可以像以前一样创建一个 VGG。让我们将其设置为不可训练，这样我们就不会浪费时间和内存来计算梯度。让我们遍历并找到所有的最大池层。让我们遍历这个模块的所有子层，如果是一个最大池层，让我们输出索引减 1——这样就会给我最大池之前的层。通常，最大池或步长 2 卷积之前的层是一个非常完整的表示，因为下一层正在改变网格。所以这对我来说是一个很好的地方来获取内容损失。我们在该网格大小上拥有的最语义化、最有趣的内容。这就是为什么我要选择这些索引。
 
 ```py
-m_vgg = to_gpu(vgg16(**True**)).eval()
-set_trainable(m_vgg, **False**)
+m_vgg = to_gpu(vgg16(True)).eval()
+set_trainable(m_vgg, False)
 ```
 
 这些是 VGG 中每个最大池之前的最后一层的索引[[1:32:30](https://youtu.be/xXXiC4YRGrQ?t=1h32m30s)]。
 
 ```py
-block_ends = [i-1 **for** i,o **in** enumerate(children(m_vgg))
-              **if** isinstance(o,nn.MaxPool2d)]
+block_ends = [i-1 for i,o in enumerate(children(m_vgg))
+              if isinstance(o,nn.MaxPool2d)]
 block_ends*[5, 12, 22, 32, 42]*
 ```
 
@@ -483,12 +483,12 @@ sf = SaveFeatures(children(m_vgg)[block_ends[3]])
 现在，每当我对这个 VGG 模型进行前向传递时，它都会将第 32 层的输出存储在`sf.features`中。
 
 ```py
-**def** get_opt():
+def get_opt():
     opt_img = np.random.uniform(0, 1, 
                                 size=img.shape).astype(np.float32)
     opt_img = scipy.ndimage.filters.median_filter(opt_img, [8,8,1])
-    opt_img_v = V(val_tfms(opt_img/2)[**None**], requires_grad=**True**)
-    **return** opt_img_v, optim.LBFGS([opt_img_v])opt_img_v, optimizer = get_opt()
+    opt_img_v = V(val_tfms(opt_img/2)[None], requires_grad=True)
+    return opt_img_v, optim.LBFGS([opt_img_v])opt_img_v, optimizer = get_opt()
 ```
 
 在这里[[1:33:33](https://youtu.be/xXXiC4YRGrQ?t=1h33m33s)]，我调用了我的 VGG 网络，但我没有将其存储在任何地方。我没有说`activations = m_vgg(VV(img_tfm[**None**]))`。我调用它，丢弃答案，然后抓取我们在`SaveFeatures`对象中存储的特征。
@@ -500,19 +500,19 @@ sf = SaveFeatures(children(m_vgg)[block_ends[3]])
 `get_opt` 包含了我们之前的相同的 4 行代码[[1:34:34](https://youtu.be/xXXiC4YRGrQ?t=1h34m34s)]。它只是给我一个要优化的随机图像和一个优化器来优化该图像。
 
 ```py
-m_vgg(VV(img_tfm[**None**]))
+m_vgg(VV(img_tfm[None]))
 targ_v = V(sf.features.clone())
-targ_v.shape*torch.Size([1, 512, 36, 36])***def** actn_loss2(x):
+targ_v.shape*torch.Size([1, 512, 36, 36])*def actn_loss2(x):
     m_vgg(x)
     out = V(sf.features)
-    **return** F.mse_loss(out, targ_v)*1000
+    return F.mse_loss(out, targ_v)*1000
 ```
 
 现在我可以继续做完全相同的事情。但现在我将使用不同的损失函数 `actn_loss2`（激活损失 #2），它不会说 `out=m_vgg`，再次，它调用 `m_vgg` 进行前向传递，丢弃结果，并获取 `sf.features`。所以现在这是我的第 32 层激活，然后我可以在其上执行均方误差损失。你可能已经注意到，最后一个损失函数和这个都乘以了一千。为什么它们乘以一千？这就像所有试图使这个课程不正确的事情。我以前没有使用一千，它就无法训练。今天午餐时间，什么都不起作用。经过几天的尝试让这个东西工作，最终偶然注意到“天哪，损失函数的数字真的很低（如 10E-7）”，我想如果它们不那么低会怎样。所以我将它们乘以一千，然后它开始工作了。那为什么它不起作用呢？因为我们正在使用单精度浮点数，而单精度浮点数并不那么精确。特别是当你得到的梯度有点小，然后你乘以学习率可能也很小，最终得到一个很小的数字。如果它太小，它们可能会被四舍五入为零，这就是发生的事情，我的模型还没有准备好。我相信有比乘以一千更好的方法，但无论如何。它运行得很好。无论你将损失函数乘以多少，因为你关心的只是它的方向和相对大小。有趣的是，这与我们在训练 ImageNet 时所做的事情类似。我们使用了半精度浮点数，因为 Volta 张量核要求如此。如果你想要训练半精度浮点数，实际上你必须将损失函数乘以一个缩放因子。我们使用了 1024 或 512。我认为 fast.ai 现在是第一个具有所有必要技巧以在半精度浮点数中进行训练的库，因此如果你有幸拥有 Volta 或者你可以支付 AWS P3，如果你有一个学习对象，你只需说 `learn.half`，它现在就会神奇地正确地训练半精度浮点数。它也内置在模型数据对象中，一切都是自动的。我相信没有其他库能做到这一点。
 
 ```py
 n_iter=0
-**while** n_iter <= max_iter: optimizer.step(partial(step,actn_loss2))*Iteration: n_iter, loss: 0.2112911492586136
+while n_iter <= max_iter: optimizer.step(partial(step,actn_loss2))*Iteration: n_iter, loss: 0.2112911492586136
 Iteration: n_iter, loss: 0.0902421623468399
 Iteration: n_iter, loss: 0.05904778465628624
 Iteration: n_iter, loss: 0.04517251253128052
@@ -564,12 +564,12 @@ style_img.shape, img.shape((1198, 1513, 3), (291, 483, 3))plt.imshow(style_img);
 “好的，是的，克里斯汀，你已经尝试过了。”“我已经尝试过了，大多数时候都有效，除非你有需要两种风格出现在同一个地方的有趣图片。所以看起来像是一半是草，一半是人群，你需要这两种风格。”（克里斯汀）。很酷，你仍然会做你的作业，但克里斯汀说她会替你做。
 
 ```py
-**def** scale_match(src, targ):
+def scale_match(src, targ):
     h,w,_ = img.shape
     sh,sw,_ = style_img.shape
     rat = max(h/sh,w/sw); rat
     res = cv2.resize(style_img, (int(sw*rat), int(sh*rat)))
-    **return** res[:h,:w]style = scale_match(img, style_img)plt.imshow(style)
+    return res[:h,:w]style = scale_match(img, style_img)plt.imshow(style)
 style.shape, img.shape*((291, 483, 3), (291, 483, 3))*
 ```
 
@@ -584,7 +584,7 @@ opt_img_v, optimizer = get_opt()
 这一次，我为所有的`block_ends`调用`SaveFeatures`，这将给我一个 SaveFeatures 对象的数组——每个模块都会出现在最大池化之前的层中。因为这一次，我想玩弄不同的激活层风格，更具体地说，我想让你来玩。所以现在我有了一个完整的数组。
 
 ```py
-sfs = [SaveFeatures(children(m_vgg)[idx]) **for** idx **in** block_ends]
+sfs = [SaveFeatures(children(m_vgg)[idx]) for idx in block_ends]
 ```
 
 `style_img`是我的梵高的绘画。所以我拿我的`style_img`，通过我的转换来创建我的转换风格图像（`style_tfm`）。
@@ -596,9 +596,9 @@ style_tfm = val_tfms(style_img)
 将其转换为一个变量，通过我的 VGG 模块的前向传播，现在我可以遍历所有的 SaveFeatures 对象并获取每组特征。请注意，我调用`clone`，因为以后，如果我再次调用我的 VGG 对象，它将替换这些内容。我还没有想过这是否有必要。如果你把它拿走了，那没关系。但我只是小心翼翼。现在这是每个`block_end`层的激活的数组。在这里，你可以看到所有这些形状：
 
 ```py
-m_vgg(VV(style_tfm[**None**]))
-targ_styles = [V(o.features.clone()) **for** o **in** sfs]
-[o.shape **for** o **in** targ_styles]*[torch.Size([1, 64, 288, 288]),
+m_vgg(VV(style_tfm[None]))
+targ_styles = [V(o.features.clone()) for o in sfs]
+[o.shape for o in targ_styles]*[torch.Size([1, 64, 288, 288]),
  torch.Size([1, 128, 144, 144]),
  torch.Size([1, 256, 72, 72]),
  torch.Size([1, 512, 36, 36]),
@@ -610,30 +610,30 @@ targ_styles = [V(o.features.clone()) **for** o **in** sfs]
 因此，要进行 Gram MSE 损失，它将是输入的 Gram 矩阵与目标的 Gram 矩阵的 MSE 损失。Gram 矩阵只是`x`与`x`转置(`x.t()`)的矩阵乘积，其中 x 简单地等于我已经将批处理和通道轴全部展平的输入。我只有一个图像，所以可以忽略批处理部分——基本上是通道。然后其他所有部分(`-1`)，在这种情况下是高度和宽度，是另一个维度，因为现在将是通道乘以高度和宽度，然后正如我们讨论过的，我们可以将其与其转置进行矩阵乘积。为了归一化，我们将其除以元素的数量(`b*c*h*w`)——如果我说`input.numel`（元素的数量）会更优雅，这将是相同的事情。再次，这给我了很小的数字，所以我乘以一个大数字使其变得更合理。所以这基本上就是我的损失。
 
 ```py
-**def** gram(input):
+def gram(input):
         b,c,h,w = input.size()
         x = input.view(b*c, -1)
-        **return** torch.mm(x, x.t())/input.numel()*1e6
+        return torch.mm(x, x.t())/input.numel()*1e6
 
-**def** gram_mse_loss(input, target): 
-        **return** F.mse_loss(gram(input), gram(target))
+def gram_mse_loss(input, target): 
+        return F.mse_loss(gram(input), gram(target))
 ```
 
 现在我的风格损失是将我的图像优化，通过 VGG 前向传递，获取所有 SaveFeatures 对象中特征的数组，然后在每一层上调用我的 Gram MSE 损失。这将给我一个数组，然后我只需将它们相加。现在你可以用不同的权重将它们相加，你可以添加子集，或者其他。在这种情况下，我只是获取了所有的。
 
 ```py
-**def** style_loss(x):
+def style_loss(x):
     m_vgg(opt_img_v)
-    outs = [V(o.features) **for** o **in** sfs]
-    losses = [gram_mse_loss(o, s) **for** o,s **in** zip(outs, targ_styles)]
-    **return** sum(losses) 
+    outs = [V(o.features) for o in sfs]
+    losses = [gram_mse_loss(o, s) for o,s in zip(outs, targ_styles)]
+    return sum(losses) 
 ```
 
 像以前一样将其传递给我的优化器：
 
 ```py
 n_iter=0
-**while** n_iter <= max_iter: optimizer.step(partial(step,style_loss))*Iteration: n_iter, loss: 230718.453125
+while n_iter <= max_iter: optimizer.step(partial(step,style_loss))*Iteration: n_iter, loss: 230718.453125
 Iteration: n_iter, loss: 219493.21875
 Iteration: n_iter, loss: 202618.109375
 Iteration: n_iter, loss: 481.5616760253906
@@ -658,7 +658,7 @@ plt.imshow(x);
 我添加了这个`SaveFeatures.close`，它只是调用`self.hook.remove()`。记住，我将 hook 存储为`self.hook`，所以`hook.remove()`会将其删除。最好将其删除，否则可能会一直使用内存。因此，在最后，我只需遍历每个 SaveFeatures 对象并关闭它：
 
 ```py
-**for** sf **in** sfs: sf.close()
+for sf in sfs: sf.close()
 ```
 
 ## 风格转移
@@ -674,20 +674,20 @@ opt_img_v, optimizer = get_opt()
 我的综合损失是一个特定层次的 MSE 损失，我所有层次的风格损失，将风格损失相加，加到内容损失上，我正在缩放内容损失。实际上，我已经将风格损失缩放为 1E6。所以它们都被精确地缩放了。将它们加在一起。再次，你可以尝试对不同的风格损失进行加权，或者你可以删除其中一些，所以这是最简单的版本。
 
 ```py
-**def** comb_loss(x):
+def comb_loss(x):
     m_vgg(opt_img_v)
-    outs = [V(o.features) **for** o **in** sfs]
-    losses = [gram_mse_loss(o, s) **for** o,s **in** zip(outs, targ_styles)]
+    outs = [V(o.features) for o in sfs]
+    losses = [gram_mse_loss(o, s) for o,s in zip(outs, targ_styles)]
     cnt_loss   = F.mse_loss(outs[3], targ_vs[3])*1000000
     style_loss = sum(losses)
-    **return** cnt_loss + style_loss
+    return cnt_loss + style_loss
 ```
 
 训练它：
 
 ```py
 n_iter=0
-**while** n_iter <= max_iter: optimizer.step(partial(step,comb_loss))*Iteration: n_iter, loss: 1802.36767578125
+while n_iter <= max_iter: optimizer.step(partial(step,comb_loss))*Iteration: n_iter, loss: 1802.36767578125
 Iteration: n_iter, loss: 1163.05908203125
 Iteration: n_iter, loss: 961.6024169921875
 Iteration: n_iter, loss: 853.079833984375
@@ -703,7 +703,7 @@ plt.axis('off');
 ```
 
 ```py
-**for** sf **in** sfs: sf.close()
+for sf in sfs: sf.close()
 ```
 
 天啊，它看起来真的很好。所以我觉得这很棒。这里的主要要点是，如果你想用神经网络解决问题，你所要做的就是设置一个损失函数，然后优化某些东西。而损失函数是一个较低的数字是你更满意的东西。因为当你优化它时，它会使那个数字尽可能低，它会做你想要它做的事情。所以在这里，Gatys 提出了一个损失函数，当它看起来像我们想要的东西时，它会是一个较小的数字，看起来像我们想要的风格。这就是我们所要做的。

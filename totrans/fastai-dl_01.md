@@ -25,20 +25,26 @@
 ```py
 %reload_ext autoreload
 %autoreload 2
-%matplotlib inline*# This file contains all the main external libs we'll use*
-**from** **fastai.imports** **import** ***from** **fastai.transforms** **import** *
-**from** **fastai.conv_learner** **import** *
-**from** **fastai.model** **import** *
-**from** **fastai.dataset** **import** *
-**from** **fastai.sgdr** **import** *
-**from** **fastai.plots** **import** *PATH = "data/dogscats/"
+%matplotlib inline*
+# This file contains all the main external libs we'll use
+from fastai.imports import *
+from fastai.transforms import *
+from fastai.conv_learner import *
+from fastai.model import *
+from fastai.dataset import *
+from fastai.sgdr import *
+from fastai.plots import *
+PATH = "data/dogscats/"
 sz=224
 ```
 
 **首先看图片 [**[**15:39**](https://youtu.be/IPBSB1HLNLo?t=15m40s)**]**
 
 ```py
-!ls {PATH}*models	sample	test1  tmp  train  valid*
+!ls {PATH}
+'''
+models	sample	test1  tmp  train  valid
+'''
 ```
 
 +   `!` 告诉使用 bash（shell）而不是 python
@@ -46,8 +52,14 @@ sz=224
 +   如果您不熟悉训练集和验证集，请查看实用机器学习课程（或阅读[Rachel 的博客](http://www.fast.ai/2017/11/13/validation-sets/)）
 
 ```py
-!ls {PATH}valid*cats  dogs*files = !ls {PATH}valid/cats | head
-files*['cat.10016.jpg',
+!ls {PATH}valid
+'''
+cats  dogs
+'''
+files = !ls {PATH}valid/cats | head
+files
+'''
+['cat.10016.jpg',
  'cat.1001.jpg',
  'cat.10026.jpg',
  'cat.10048.jpg',
@@ -56,20 +68,27 @@ files*['cat.10016.jpg',
  'cat.10071.jpg',
  'cat.10091.jpg',
  'cat.10103.jpg',
- 'cat.10104.jpg']*
+ 'cat.10104.jpg']
+'''
 ```
 
 +   这个文件夹结构是共享和提供图像分类数据集的最常见方法。每个文件夹告诉您标签（例如`dogs`或`cats`）。
 
 ```py
-img = plt.imread(f'**{PATH}**valid/cats/**{files[0]}**')
+img = plt.imread(f{PATH}valid/cats/{files[0]}')
 plt.imshow(img);
 ```
 
 +   `f’{PATH}valid/cats/{files[0]}’` — 这是 Python 3.6\. 格式化字符串，是一种方便的格式化字符串的方法。
 
 ```py
-img.shape*(198, 179, 3)*img[:4,:4]*array([[[ 29,  20,  23],
+img.shape
+'''
+(198, 179, 3)
+'''
+img[:4,:4]
+'''
+array([[[ 29,  20,  23],
         [ 31,  22,  25],
         [ 34,  25,  28],
         [ 37,  28,  31]],**[[ 60,  51,  54],
@@ -97,11 +116,15 @@ img.shape*(198, 179, 3)*img[:4,:4]*array([[[ 29,  20,  23],
 这是训练模型所需的三行代码：
 
 ```py
-**data** = ImageClassifierData.from_paths(PATH, tfms=tfms_from_model(resnet34, sz))
-**learn** = ConvLearner.pretrained(resnet34, data, precompute=**True**)
-**learn.fit**(0.01, 3)*[ 0\.       0.04955  0.02605  0.98975]                         
+data = ImageClassifierData.from_paths(PATH, tfms=tfms_from_model(resnet34, sz))
+learn = ConvLearner.pretrained(resnet34, data, precompute=True)
+learn.fit(0.01, 3)
+'''
+[0\.       0.04955  0.02605  0.98975]                         
 [ 1\.       0.03977  0.02916  0.99219]                         
-[ 2\.       0.03372  0.02929  0.98975]*
+[ 2\.       0.03372  0.02929  0.98975]
+'''
+
 ```
 
 +   这将进行 3 **轮**，这意味着它将三次查看整个图像集。
@@ -133,13 +156,19 @@ img.shape*(198, 179, 3)*img[:4,:4]*array([[[ 29,  20,  23],
 这是验证数据集标签（将其视为正确答案）的样子：
 
 ```py
-data.val_y*array([0, 0, 0, ..., 1, 1, 1])*
+data.val_y
+'''
+array([0, 0, 0, ..., 1, 1, 1])
+'''
 ```
 
 这些 0 和 1 代表什么？
 
 ```py
-data.classes*['cats', 'dogs']*
+data.classes
+'''
+['cats', 'dogs']
+'''
 ```
 
 +   `data`包含验证和训练数据
@@ -150,7 +179,13 @@ data.classes*['cats', 'dogs']*
 
 ```py
 log_preds = learn.predict()
-log_preds.shape*(2000, 2)*log_preds[:10]*array([[ -0.00002, -11.07446],
+log_preds.shape
+'''
+(2000, 2)
+'''
+log_preds[:10]
+'''
+array([[ -0.00002, -11.07446],
        [ -0.00138,  -6.58385],
        [ -0.00083,  -7.09025],
        [ -0.00029,  -8.13645],
@@ -159,14 +194,15 @@ log_preds.shape*(2000, 2)*log_preds[:10]*array([[ -0.00002, -11.07446],
        [ -0.00002, -10.82139],
        [ -0.00003, -10.33846],
        [ -0.00323,  -5.73731],
-       [ -0.0001 ,  -9.21326]], dtype=float32)*
+       [ -0.0001 ,  -9.21326]], dtype=float32)
+'''
 ```
 
 +   输出表示对猫的预测和对狗的预测
 
 ```py
-preds = np.argmax(log_preds, axis=1)  *# from log probabilities to 0 or 1*
-probs = np.exp(log_preds[:,1])        *# pr(dog)*
+preds = np.argmax(log_preds, axis=1)  # from log probabilities to 0 or 1
+probs = np.exp(log_preds[:,1])        # pr(dog)
 ```
 
 +   在 PyTorch 和 Fast.ai 中，大多数模型返回预测的对数而不是概率本身（我们将在课程中稍后学习原因）。现在，只需知道要获得概率，您必须执行`np.exp()`
@@ -174,32 +210,33 @@ probs = np.exp(log_preds[:,1])        *# pr(dog)*
 +   确保您熟悉 numpy（`np`）
 
 ```py
-*# 1\. A few correct labels at random* plot_val_with_title(rand_by_correct(**True**), "Correctly classified")
+# 1\. A few correct labels at random
+plot_val_with_title(rand_by_correct(True), "Correctly classified")
 ```
 
 +   图像上方的数字是狗的概率
 
 ```py
-*# 2\. A few incorrect labels at random*
-plot_val_with_title(rand_by_correct(**False**), "Incorrectly classified")
+# 2\. A few incorrect labels at random
+plot_val_with_title(rand_by_correct(False), "Incorrectly classified")
 ```
 
 ```py
-plot_val_with_title(most_by_correct(0, **True**), "Most correct cats")
+plot_val_with_title(most_by_correct(0, True), "Most correct cats")
 ```
 
 ```py
-plot_val_with_title(most_by_correct(1, **True**), "Most correct dogs")
+plot_val_with_title(most_by_correct(1, True), "Most correct dogs")
 ```
 
 更有趣的是，以下是模型认为肯定是狗的东西，但结果是猫，反之亦然：
 
 ```py
-plot_val_with_title(most_by_correct(0, **False**), "Most incorrect cats")
+plot_val_with_title(most_by_correct(0, False), "Most incorrect cats")
 ```
 
 ```py
-plot_val_with_title(most_by_correct(1, **False**), "Most incorrect dogs")
+plot_val_with_title(most_by_correct(1, False), "Most incorrect dogs")
 ```
 
 ```py
@@ -336,7 +373,7 @@ learn.fit(0.01, 3)
 +   方法`learn.lr_find()`可以帮助你找到一个最佳的学习率。它使用了 2015 年的论文[Cyclical Learning Rates for Training Neural Networks](http://arxiv.org/abs/1506.01186)中开发的技术，我们简单地从一个非常小的值开始不断增加学习率，直到损失停止减少。我们可以绘制跨批次的学习率，看看这是什么样子。
 
 ```py
-learn = ConvLearner.pretrained(arch, data, precompute=**True**)
+learn = ConvLearner.pretrained(arch, data, precompute=True)
 learn.lr_find()
 ```
 
@@ -359,9 +396,13 @@ learn.sched.plot()
 ## 选择迭代次数[[1:18:49](https://youtu.be/IPBSB1HLNLo?t=1h18m49s)]
 
 ```py
-*[ 0\.       0.04955  0.02605  0.98975]                         
+
+'''
+[0\.       0.04955  0.02605  0.98975]                         
 [ 1\.       0.03977  0.02916  0.99219]                         
-[ 2\.       0.03372  0.02929  0.98975]*
+[ 2\.       0.03372  0.02929  0.98975]
+'''
+
 ```
 
 +   你想要多少都可以，但如果运行时间太长，准确性可能会开始变差。这被称为“过拟合”，我们稍后会更多地了解它。

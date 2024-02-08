@@ -61,7 +61,7 @@ $ kg download -u john.doe -p mypassword -c dog-breed-identification
 ## 快速狗与猫[[13:39](https://youtu.be/9C06ZPF8Uuc?t=13m39s)]
 
 ```py
-**from** fastai.conv_learner **import** * 
+from fastai.conv_learner import * 
 PATH = 'data/dogscats/'
 sz=224; bs=64
 ```
@@ -92,7 +92,7 @@ learn = ConvLearner.pretrained(resnet50, data)
 
 ```py
 learn.unfreeze() 
-learn.**bn_freeze**(**True**) 
+learn.bn_freeze(True) 
 %time learn.fit([1e-5, 1e-4,1e-2], 1, cycle_len=1)
 ```
 
@@ -170,8 +170,8 @@ model.fit_generator(train_generator, **train_generator.n//batch_size**,
 **5\. 微调：解冻一些层，编译，然后再次拟合**
 
 ```py
-split_at = 140**for** layer **in** model.layers[:split_at]: layer.trainable = **False**
-**for** layer **in** model.layers[split_at:]: layer.trainable = **True**model.compile(optimizer='rmsprop', loss='binary_crossentropy',
+split_at = 140for layer in model.layers[:split_at]: layer.trainable = False
+for layer in model.layers[split_at:]: layer.trainable = Truemodel.compile(optimizer='rmsprop', loss='binary_crossentropy',
     metrics=['accuracy'])%%time model.fit_generator(train_generator, 
     train_generator.n // batch_size, epochs=1, workers=3,
     validation_data=validation_generator,
@@ -211,7 +211,7 @@ ds.columns = data.classes
 +   将列名设置为`data.classes`
 
 ```py
-ds.insert(0, 'id', [o[5:-4] **for** o **in** data.test_ds.fnames])
+ds.insert(0, 'id', [o[5:-4] for o in data.test_ds.fnames])
 ```
 
 +   在位置零插入一个名为`id`的新列。删除前 5 个和最后 4 个字母，因为我们只需要 ID（文件名看起来像`test/0042d6bf3e5f3700865886db32689436.jpg`）
@@ -222,8 +222,8 @@ ds.head()
 
 ```py
 SUBM = f'{PATH}sub/' 
-os.makedirs(SUBM, exist_ok=**True**) 
-ds.to_csv(f'{SUBM}subm.gz', compression='gzip', index=**False**)
+os.makedirs(SUBM, exist_ok=True) 
+ds.to_csv(f'{SUBM}subm.gz', compression='gzip', index=False)
 ```
 
 +   现在您可以调用`ds.to_csv`创建一个 CSV 文件，`compression='gzip'`将在服务器上对其进行压缩。
@@ -239,7 +239,7 @@ FileLink(f'{SUBM}subm.gz')
 如果我们想通过模型运行单个图像以获得预测，会怎样？
 
 ```py
-fn = data.val_ds.fnames[0]; fn*'train/**001513dfcb2ffafc82cccf4d8bbaba97.jpg**'*Image.open(PATH + fn)
+fn = data.val_ds.fnames[0]; fn*'train/001513dfcb2ffafc82cccf4d8bbaba97.jpg'*Image.open(PATH + fn)
 ```
 
 +   我们将从验证集中选择第一个文件。
@@ -325,14 +325,14 @@ Softmax 不喜欢预测多个事物。它想要选择一个事物。
 Fast.ai 库会在有多个标签时自动切换到多标签模式。所以你不需要做任何事情。但是这是幕后发生的事情：
 
 ```py
-**from** **planet** **import** f2
+from planet import f2
 
 metrics=[f2]
 f_model = resnet34label_csv = f'**{PATH}**train_v2.csv'
 n = len(list(open(label_csv)))-1
-val_idxs = get_cv_idxs(n)**def** get_data(sz):
+val_idxs = get_cv_idxs(n)def get_data(sz):
     tfms = tfms_from_model(f_model, sz,
-        aug_tfms=**transforms_top_down**, max_zoom=1.05) **return** ImageClassifierData.**from_csv**(PATH, 'train-jpg',
+        aug_tfms=transforms_top_down, max_zoom=1.05) return ImageClassifierData.from_csv(PATH, 'train-jpg',
                label_csv, tfms=tfms, suffix='.jpg',
                val_idxs=val_idxs, test_name='test-jpg')data = get_data(256)
 ```
@@ -409,20 +409,28 @@ learn.sched.plot()
 
 ```py
 lr = 0.2
-learn.fit(lr, 3, cycle_len=1, cycle_mult=2)*[ 0\.       0.14882  0.13552  0.87878]                        
+learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.       0.14882  0.13552  0.87878]                        
 [ 1\.       0.14237  0.13048  0.88251]                        
 [ 2\.       0.13675  0.12779  0.88796]                        
 [ 3\.       0.13528  0.12834  0.88419]                        
 [ 4\.       0.13428  0.12581  0.88879]                        
 [ 5\.       0.13237  0.12361  0.89141]                        
-[ 6\.       0.13179  0.12472  0.8896 ]*lrs = np.array(**[lr/9, lr/3, lr]**)learn.unfreeze()
-learn.fit(lrs, 3, cycle_len=1, cycle_mult=2)*[ 0\.       0.12534  0.10926  0.90892]                        
+[ 6\.       0.13179  0.12472  0.8896 ]
+'''
+lrs = np.array(**[lr/9, lr/3, lr]**)learn.unfreeze()
+learn.fit(lrs, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.       0.12534  0.10926  0.90892]                        
 [ 1\.       0.12035  0.10086  0.91635]                        
 [ 2\.       0.11001  0.09792  0.91894]                        
 [ 3\.       0.1144   0.09972  0.91748]                        
 [ 4\.       0.11055  0.09617  0.92016]                        
 [ 5\.       0.10348  0.0935   0.92267]                        
-[ 6\.       0.10502  0.09345  0.92281]*
+[ 6\.       0.10502  0.09345  0.92281]
+'''
+
 ```
 
 +   `[lr/9, lr/3, lr]` — 这是因为这些图像不像 ImageNet 图像，而且较早的层可能与它们需要的不太接近。
@@ -435,38 +443,54 @@ learn.sched.plot_loss()
 **sz = 128**
 learn.set_data(get_data(sz))
 learn.freeze()
-learn.fit(lr, 3, cycle_len=1, cycle_mult=2)*[ 0\.       0.09729  0.09375  0.91885]                         
+learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.       0.09729  0.09375  0.91885]                         
 [ 1\.       0.10118  0.09243  0.92075]                         
 [ 2\.       0.09805  0.09143  0.92235]                         
 [ 3\.       0.09834  0.09134  0.92263]                         
 [ 4\.       0.096    0.09046  0.9231 ]                         
 [ 5\.       0.09584  0.09035  0.92403]                         
-[ 6\.       0.09262  0.09059  0.92358]*learn.unfreeze()
+[ 6\.       0.09262  0.09059  0.92358]
+'''
+learn.unfreeze()
 learn.fit(lrs, 3, cycle_len=1, cycle_mult=2)
-learn.save(f'{sz}')*[ 0\.       0.09623  0.08693  0.92696]                         
+learn.save(f'{sz}')
+'''
+[0\.       0.09623  0.08693  0.92696]                         
 [ 1\.       0.09371  0.08621  0.92887]                         
 [ 2\.       0.08919  0.08296  0.93113]                         
 [ 3\.       0.09221  0.08579  0.92709]                         
 [ 4\.       0.08994  0.08575  0.92862]                         
 [ 5\.       0.08729  0.08248  0.93108]                         
-[ 6\.       0.08218  0.08315  0.92971]***sz = 256**
+[ 6\.       0.08218  0.08315  0.92971]
+'''
+**sz = 256**
 learn.set_data(get_data(sz))
 learn.freeze()
-learn.fit(lr, 3, cycle_len=1, cycle_mult=2)*[ 0\.       0.09161  0.08651  0.92712]                         
+learn.fit(lr, 3, cycle_len=1, cycle_mult=2)
+'''
+[0\.       0.09161  0.08651  0.92712]                         
 [ 1\.       0.08933  0.08665  0.92677]                         
 [ 2\.       0.09125  0.08584  0.92719]                         
 [ 3\.       0.08732  0.08532  0.92812]                         
 [ 4\.       0.08736  0.08479  0.92854]                         
 [ 5\.       0.08807  0.08471  0.92835]                         
-[ 6\.       0.08942  0.08448  0.9289 ]*learn.unfreeze()
+[ 6\.       0.08942  0.08448  0.9289 ]
+'''
+learn.unfreeze()
 learn.fit(lrs, 3, cycle_len=1, cycle_mult=2)
-learn.save(f'{sz}')*[ 0\.       0.08932  0.08218  0.9324 ]                         
+learn.save(f'{sz}')
+'''
+[0\.       0.08932  0.08218  0.9324 ]                         
 [ 1\.       0.08654  0.08195  0.93313]                         
 [ 2\.       0.08468  0.08024  0.93391]                         
 [ 3\.       0.08596  0.08141  0.93287]                         
 [ 4\.       0.08211  0.08152  0.93401]                         
 [ 5\.       0.07971  0.08001  0.93377]                         
-[ 6\.       0.07928  0.0792   0.93554]*log_preds,y = learn.TTA()
+[ 6\.       0.07928  0.0792   0.93554]
+'''
+log_preds,y = learn.TTA()
 preds = np.mean(np.exp(log_preds),0)
 f2(preds,y)*0.93626519738612801*
 ```
@@ -558,8 +582,8 @@ learn.summary()*[('Conv2d-1',
 [笔记本](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson3-rossman.ipynb)
 
 ```py
-**from** **fastai.structured** **import** *
-**from** **fastai.column_data** **import** *
+from fastai.structured import *
+from fastai.column_data import *
 np.set_printoptions(threshold=50, edgeitems=20)
 
 PATH='data/rossmann/'
@@ -590,7 +614,7 @@ table_names = ['train', 'store', 'store_states', 'state_names',
 def join_df(left, right, left_on, right_on=None, suffix='_y'):
     if right_on is None: right_on = left_on
 
-    return left.**merge**(right, how='left', left_on=left_on,
+    return left.merge(right, how='left', left_on=left_on,
         right_on=right_on, suffixes=("", suffix))
 ```
 

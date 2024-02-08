@@ -275,12 +275,12 @@ im0_d[FILE_NAME],im0_dID
 我们将 VOC 的高度/宽度转换为左上角/右下角，并切换 x/y 坐标以与 numpy 保持一致。如果给定的数据集格式不佳，请花一点时间使事情保持一致，并使它们成为您想要的方式。
 
 ```py
-trn_anno = **collections.defaultdict**(lambda:[])
+trn_anno = collections.defaultdict(lambda:[])
 for o in trn_j[ANNOTATIONS]:
     if not o['ignore']:
         bb = o[BBOX]
         bb = np.array([bb[1], bb[0], bb[3]+bb[1]-1, bb[2]+bb[0]-1])
-        trn_anno[o[IMG_ID]]**.append**((bb,o[CAT_ID]))
+        trn_anno[o[IMG_ID]].append((bb,o[CAT_ID]))
 
 len(trn_anno)*2501*
 ```
@@ -294,7 +294,9 @@ len(trn_anno)*2501*
 +   `7`：类标签/类别
 
 ```py
-im0_a = im_a[0]; im0_a*[(array(****[ 96, 155, 269, 350]****),* ***7****)]*im0_a = im_a[0]; im0_a*(array([ 96, 155, 269, 350]), 7)*cats[7]*'car'*
+im0_a = im_a[0]; im0_a*[(array(***
+'''
+[96, 155, 269, 350]****),* *7**)]*im0_a = im_a[0]; im0_a*(array([ 96, 155, 269, 350]), 7)*cats[7]*'car'*
 ```
 
 **示例 2**
@@ -414,12 +416,12 @@ draw_text(ax, b[:2], cats[im0_a[1]])
 **将所有内容打包起来 [1:21:20]**
 
 ```py
-**def** draw_im(im, ann):
+def draw_im(im, ann):
     ax = show_img(im, figsize=(16,8))
-    **for** b,c **in** ann:
+    for b,c in ann:
         b = bb_hw(b)
         draw_rect(ax, b)
-        draw_text(ax, b[:2], cats[c], sz=16)**def** draw_idx(i):
+        draw_text(ax, b[:2], cats[c], sz=16)def draw_idx(i):
     im_a = trn_anno[i]
     im = open_image(IMG_PATH/trn_fns[i])
     print(im.shape)
@@ -437,11 +439,11 @@ draw_text(ax, b[:2], cats[im0_a[1]])
 我们从左上角减去右下角并乘以（`np.product`）值以获得一个面积 `lambda x: np.product(x[0][-2:]-x[0][:2])`。
 
 ```py
-**def** get_lrg(b):
+def get_lrg(b):
     if not b: raise Exception()
     b = sorted(b, key=lambda x: np.product(x[0][-2:]-x[0][:2]), 
                reverse=True)
-    **return** b[0]
+    return b[0]
 ```
 
 **字典推导式 [1:27:04]**
@@ -482,7 +484,7 @@ bs=64
 
 ```py
 tfms = tfms_from_model(f_model, sz, aug_tfms=transforms_side_on, 
-                       crop_type=**CropType.NO**)
+                       crop_type=CropType.NO)
 md = ImageClassifierData.from_csv(PATH, JPEGS, CSV, tfms=tfms)
 ```
 
@@ -669,7 +671,7 @@ fastai 允许您使用`custom_head`在卷积网络的顶部添加自己的模块
 
 ```py
 head_reg4 = nn.Sequential(Flatten(), nn.Linear(25088,4))
-learn = ConvLearner.pretrained(f_model, md, **custom_head**=head_reg4)
+learn = ConvLearner.pretrained(f_model, md, custom_head=head_reg4)
 learn.opt_fn = optim.Adam
 learn.crit = nn.L1Loss()
 ```
@@ -716,7 +718,7 @@ learn.save('reg4')
 x,y = next(iter(md.val_dl))
 learn.model.eval()
 preds = to_np(learn.model(VV(x)))fig, axes = plt.subplots(3, 4, figsize=(12, 8))
-**for** i,ax **in** enumerate(axes.flat):
+for i,ax in enumerate(axes.flat):
     ima=md.val_ds.denorm(to_np(x))[i]
     b = bb_hw(preds[i])
     ax = show_img(ima, ax=ax)
