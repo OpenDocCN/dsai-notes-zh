@@ -64,10 +64,18 @@ augs = [RandomFlip(),
 通常，我们使用 Jeremy 为我们创建的这些快捷方式，但它们只是随机增强的列表。但您可以轻松创建自己的（大多数，如果不是全部，都以“Random”开头）。
 
 ```py
-tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO,
-                       aug_tfms=augs)
-md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms,
-                       continuous=True, bs=4)idx=3
+tfms = tfms_from_model(
+    f_model, sz, 
+    crop_type=CropType.NO,
+    aug_tfms=augs
+)
+md = ImageClassifierData.from_csv(
+    PATH, JPEGS, BB_CSV, 
+    tfms=tfms,
+    continuous=True, 
+    bs=4
+)
+idx=3
 fig,axes = plt.subplots(3,3, figsize=(9,9))
 for i,ax in enumerate(axes.flat):
     x,y=next(iter(md.aug_dl))
@@ -93,12 +101,23 @@ for i,ax in enumerate(axes.flat):
 要执行此操作[[7:10](https://youtu.be/0frKXR-2PBY?t=7m10s)]，每个转换都有一个可选的`tfm_y`参数：
 
 ```py
-augs = [RandomFlip(tfm_y=TfmType.COORD),
-        RandomRotate(30, tfm_y=TfmType.COORD),
-        RandomLighting(0.1,0.1, tfm_y=TfmType.COORD)]tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO,
-                       tfm_y=TfmType.COORD, aug_tfms=augs)
-md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
-                       continuous=True, bs=4)
+augs = [
+    RandomFlip(tfm_y=TfmType.COORD),
+    RandomRotate(30, tfm_y=TfmType.COORD),
+    RandomLighting(0.1,0.1, tfm_y=TfmType.COORD)
+]
+tfms = tfms_from_model(
+    f_model, sz, 
+    crop_type=CropType.NO,
+    tfm_y=TfmType.COORD, 
+    aug_tfms=augs
+)
+md = ImageClassifierData.from_csv(
+    PATH, JPEGS, BB_CSV, 
+    tfms=tfms, 
+    continuous=True, 
+    bs=4
+)
 ```
 
 `TrmType.COORD`表示*y*值表示坐标。这需要添加到所有增强以及`tfms_from_model`中，后者负责裁剪、缩放、调整大小、填充等。
@@ -131,12 +150,22 @@ for i,ax in enumerate(axes.flat):
 
 ```py
 tfm_y = TfmType.COORD
-augs = [RandomFlip(tfm_y=tfm_y),
-        RandomRotate(3, **p=0.5**, tfm_y=tfm_y),
-        RandomLighting(0.05,0.05, tfm_y=tfm_y)]tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
-                 tfm_y=tfm_y, aug_tfms=augs)
-md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
-                 continuous=True)
+augs = [
+    RandomFlip(tfm_y=tfm_y),
+    RandomRotate(3, **p=0.5**, tfm_y=tfm_y),
+    RandomLighting(0.05,0.05, tfm_y=tfm_y)
+]
+tfms = tfms_from_model(
+    f_model, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=tfm_y, 
+    aug_tfms=augs
+)
+md = ImageClassifierData.from_csv(
+    PATH, JPEGS, BB_CSV, 
+    tfms=tfms, 
+    continuous=True
+)
 ```
 
 因此，在这里，我们最多进行 3 度旋转，以避免这个问题[[9:14](https://youtu.be/0frKXR-2PBY?t=9m14s)]。它也只有一半的时间旋转（`p=0.5`）。
@@ -171,19 +200,34 @@ learn.crit = nn.L1Loss()
 ```py
 f_model=resnet34
 sz=224
-bs=64val_idxs = get_cv_idxs(len(trn_fns))
-tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
-                       tfm_y=TfmType.COORD, aug_tfms=augs)md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
-                       continuous=True, val_idxs=val_idxs)md2 = ImageClassifierData.from_csv(PATH, JPEGS, CSV,
-                       tfms=tfms_from_model(f_model, sz))
+bs=64
+val_idxs = get_cv_idxs(len(trn_fns))
+tfms = tfms_from_model(
+    f_model, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.COORD, 
+    aug_tfms=augs
+)
+md = ImageClassifierData.from_csv(
+    PATH, JPEGS, BB_CSV, 
+    tfms=tfms, 
+    continuous=True, 
+    val_idxs=val_idxs
+)
+md2 = ImageClassifierData.from_csv(
+    PATH, JPEGS, CSV,
+    tfms=tfms_from_model(f_model, sz)
+)
 ```
 
 数据集可以是任何具有`__len__`和`__getitem__`的东西。这里有一个数据集，它向现有数据集添加了第二个标签：
 
 ```py
 class ConcatLblDataset(Dataset):
-    def __init__(self, ds, y2): self.ds,self.y2 = ds,y2
-    def __len__(self): return len(self.ds)
+    def __init__(self, ds, y2): 
+        self.ds,self.y2 = ds,y2
+    def __len__(self): 
+        return len(self.ds)
 
     def __getitem__(self, i):
         x,y = self.ds[i]
@@ -222,7 +266,11 @@ md.val_dl.dataset = val_ds2
 x,y = next(iter(md.val_dl))
 idx = 3
 ima = md.val_ds.ds.denorm(to_np(x))[idx]
-b = bb_hw(to_np(y[0][idx])); b*array([  52.,   38.,  106.,  184.], dtype=float32)*ax = show_img(ima)
+b = bb_hw(to_np(y[0][idx])); b
+'''
+array([  52.,   38.,  106.,  184.], dtype=float32)
+'''
+ax = show_img(ima)
 draw_rect(ax, b)
 draw_text(ax, b[:2], md2.classes[y[1][idx]])
 ```
@@ -242,7 +290,7 @@ head_reg4 = nn.Sequential(
     nn.ReLU(),
     nn.BatchNorm1d(256),
     nn.Dropout(0.5),
-    nn.Linear(256,**4+len(cats)**),
+    nn.Linear(256, 4+len(cats)),
 )
 models = ConvnetBuilder(f_model, 0, 0, 0, custom_head=head_reg4)
 
@@ -259,16 +307,19 @@ def detn_loss(input, target):
     bb_t,c_t = target
     bb_i,c_i = input[:, :4], input[:, 4:]
     bb_i = F.sigmoid(bb_i)*224
- *# I looked at these quantities separately first then picked a 
-    # multiplier to make them approximately equal*
-    return F.l1_loss(bb_i, bb_t) + F.cross_entropy(c_i, c_t)*20def detn_l1(input, target):
+    # I looked at these quantities separately first then picked a 
+    # multiplier to make them approximately equal
+    return F.l1_loss(bb_i, bb_t) + F.cross_entropy(c_i, c_t)*20
+def detn_l1(input, target):
     bb_t,_ = target
     bb_i = input[:, :4]
     bb_i = F.sigmoid(bb_i)*224
-    return F.l1_loss(V(bb_i),V(bb_t)).datadef detn_acc(input, target):
+    return F.l1_loss(V(bb_i),V(bb_t)).data
+def detn_acc(input, target):
     _,c_t = target
     c_i = input[:, 4:]
-    return accuracy(c_i, c_t)learn.crit = detn_loss
+    return accuracy(c_i, c_t)
+learn.crit = detn_loss
 learn.metrics = [detn_acc, detn_l1]
 ```
 
@@ -294,10 +345,14 @@ learn.metrics = [detn_acc, detn_l1]
 
 ```py
 lr=1e-2
-learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))*epoch      trn_loss   val_loss   detn_acc   detn_l1       
+learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))
+'''
+epoch      trn_loss   val_loss   detn_acc   detn_l1       
     0      72.036466  45.186367  0.802133   32.647586 
     1      51.037587  36.34964   0.828425   25.389733     
-    2      41.4235    35.292709  0.835637   24.343577**[35.292709, 0.83563701808452606, 24.343576669692993]*
+    2      41.4235    35.292709  0.835637   24.343577
+[35.292709, 0.83563701808452606, 24.343576669692993]
+'''
 ```
 
 在训练时打印信息是很好的，所以我们抓取了 L1 损失并将其添加为指标。
@@ -306,13 +361,20 @@ learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))*epoch      trn_loss   val_loss   d
 learn.save('reg1_0')
 learn.freeze_to(-2)
 lrs = np.array([lr/100, lr/10, lr])
-learn.fit(lrs/5, 1, cycle_len=5, use_clr=(32,10))epoch      trn_loss   val_loss   detn_acc   detn_l1       
+learn.fit(lrs/5, 1, cycle_len=5, use_clr=(32,10))
+'''
+epoch      trn_loss   val_loss   detn_acc   detn_l1       
     0      34.448113  35.972973  0.801683   22.918499 
     1      28.889909  33.010857  0.830379   21.689888     
     2      24.237017  30.977512  0.81881    20.817996     
     3      21.132993  30.60677   0.83143    20.138552     
-    4      18.622983  30.54178   0.825571   19.832196[30.54178, 0.82557091116905212, 19.832195997238159]learn.unfreeze()
-learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))epoch      trn_loss   val_loss   detn_acc   detn_l1       
+    4      18.622983  30.54178   0.825571   19.832196
+[30.54178, 0.82557091116905212, 19.832195997238159]
+'''
+learn.unfreeze()
+learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))
+'''
+epoch      trn_loss   val_loss   detn_acc   detn_l1       
     0      15.957164  31.111507  0.811448   19.970753 
     1      15.955259  32.597153  0.81235    20.111022     
     2      15.648723  32.231941  0.804087   19.522853     
@@ -322,7 +384,9 @@ learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))epoch      trn_loss   val_los
     6      12.562566  30.000023  0.827524   18.82006      
     7      11.885125  30.28841   0.82512    18.904158     
     8      11.498326  30.070133  0.819712   18.635296     
-    9      11.015841  30.213772  0.815805   18.551489[30.213772, 0.81580528616905212, 18.551488876342773]
+    9      11.015841  30.213772  0.815805   18.551489
+[30.213772, 0.81580528616905212, 18.551488876342773]
+'''
 ```
 
 检测准确率在 80%左右，与之前相同。这并不令人惊讶，因为 ResNet 是设计用于分类的，所以我们不会指望能够以这种简单的方式改进事情。它确实不是设计用于边界框回归的。实际上，它是明确设计成不关心几何形状的——它取最后的 7x7 激活网格并将它们全部平均在一起，丢弃了所有关于每个位置的信息。
@@ -340,7 +404,8 @@ learn.fit(lrs/10, 1, cycle_len=10, use_clr=(32,10))epoch      trn_loss   val_los
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
+%autoreload 2
+from fastai.conv_learner import *
 from fastai.dataset import *
 
 import json, pdb
@@ -354,10 +419,11 @@ torch.backends.cudnn.benchmark=True
 ```py
 PATH = Path('data/pascal')
 trn_j = json.load((PATH / 'pascal_train2007.json').open())
-IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations', 
-                                 'categories']
-FILE_NAME,ID,IMG_ID,CAT_ID,BBOX = 'file_name','id','image_id', 
-                                  'category_id','bbox'
+IMAGES,ANNOTATIONS,CATEGORIES = [
+    'images', 'annotations', 'categories'
+]
+FILE_NAME,ID,IMG_ID,CAT_ID,BBOX = \
+    'file_name','id','image_id', 'category_id','bbox'
 
 cats = dict((o[ID], o['name']) for o in trn_j[CATEGORIES])
 trn_fns = dict((o[ID], o[FILE_NAME]) for o in trn_j[IMAGES])
@@ -369,12 +435,16 @@ IMG_PATH = PATH/JPEGSdef get_trn_anno():
     for o in trn_j[ANNOTATIONS]:
         if not o['ignore']:
             bb = o[BBOX]
-            bb = np.array([bb[1], bb[0], bb[3]+bb[1]-1, 
-                           bb[2]+bb[0]-1])
+            bb = np.array([
+                bb[1], bb[0], 
+                bb[3]+bb[1]-1, 
+                bb[2]+bb[0]-1
+            ])
             trn_anno[o[IMG_ID]].append((bb,o[CAT_ID]))
     return trn_anno
 
-trn_anno = get_trn_anno()def show_img(im, figsize=None, ax=None):
+trn_anno = get_trn_anno()
+def show_img(im, figsize=None, ax=None):
     if not ax: fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.set_xticks(np.linspace(0, 224, 8))
@@ -385,19 +455,31 @@ trn_anno = get_trn_anno()def show_img(im, figsize=None, ax=None):
     return ax
 
 def draw_outline(o, lw):
-    o.set_path_effects([patheffects.Stroke(
-        linewidth=lw, foreground='black'), patheffects.Normal()])
+    o.set_path_effects([
+        patheffects.Stroke(linewidth=lw, foreground='black'), 
+        patheffects.Normal()
+    ])
 
 def draw_rect(ax, b, color='white'):
-    patch = ax.add_patch(patches.Rectangle(b[:2], *b[-2:], 
-                         fill=False, edgecolor=color, lw=2))
+    patch = ax.add_patch(patches.Rectangle(
+        b[:2], *b[-2:], 
+        fill=False, 
+        edgecolor=color, 
+        lw=2
+    ))
     draw_outline(patch, 4)
 
 def draw_text(ax, xy, txt, sz=14, color='white'):
-    text = ax.text(*xy, txt,
-        verticalalignment='top', color=color, fontsize=sz, 
-        weight='bold')
-    draw_outline(text, 1)def bb_hw(a): return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
+    text = ax.text(
+        *xy, txt,
+        verticalalignment='top', 
+        color=color, 
+        fontsize=sz, 
+        weight='bold'
+    )
+    draw_outline(text, 1)
+def bb_hw(a): 
+    return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
 
 def draw_im(im, ann):
     ax = show_img(im, figsize=(16,8))
@@ -415,9 +497,17 @@ def draw_idx(i):
 ## 多类别[[26:12](https://youtu.be/0frKXR-2PBY?t=26m12s)]
 
 ```py
-MC_CSV = PATH/'tmp/mc.csv'trn_anno[12]*[(array([ 96, 155, 269, 350]), 7)]*mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
-mcs = [' '.join(str(p) for p in o) for o in mc]df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids], 
-                   'clas': mcs}, columns=['fn','clas'])
+MC_CSV = PATH/'tmp/mc.csv'
+trn_anno[12]
+'''
+[(array([ 96, 155, 269, 350]), 7)]
+'''
+mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
+mcs = [' '.join(str(p) for p in o) for o in mc]
+df = pd.DataFrame({
+    'fn': [trn_fns[o] for o in trn_ids], 
+    'clas': mcs
+}, columns=['fn','clas'])
 df.to_csv(MC_CSV, index=False)
 ```
 
@@ -428,23 +518,40 @@ df.to_csv(MC_CSV, index=False)
 ```py
 f_model=resnet34
 sz=224
-bs=64tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO)
-md = ImageClassifierData.from_csv(PATH, JPEGS, MC_CSV, tfms=tfms)learn = ConvLearner.pretrained(f_model, md)
-learn.opt_fn = optim.Adamlr = 2e-2learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))*epoch      trn_loss   val_loss   <lambda>                  
+bs=64
+tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO)
+md = ImageClassifierData.from_csv(PATH, JPEGS, MC_CSV, tfms=tfms)
+learn = ConvLearner.pretrained(f_model, md)
+learn.opt_fn = optim.Adamlr = 2e-2
+learn.fit(lr, 1, cycle_len=3, use_clr=(32,5))
+'''
+epoch      trn_loss   val_loss   <lambda>                  
     0      0.104836   0.085015   0.972356  
     1      0.088193   0.079739   0.972461                   
-    2      0.072346   0.077259   0.974114**[0.077258907, 0.9741135761141777]*lrs = np.array([lr/100, lr/10, lr])learn.freeze_to(-2)learn.fit(lrs/10, 1, cycle_len=5, use_clr=(32,5))*epoch      trn_loss   val_loss   <lambda>                   
+    2      0.072346   0.077259   0.974114
+[0.077258907, 0.9741135761141777]
+'''
+lrs = np.array([lr/100, lr/10, lr])
+learn.freeze_to(-2)learn.fit(lrs/10, 1, cycle_len=5, use_clr=(32,5))
+'''
+epoch      trn_loss   val_loss   <lambda>                   
     0      0.063236   0.088847   0.970681  
     1      0.049675   0.079885   0.973723                   
     2      0.03693    0.076906   0.975601                   
     3      0.026645   0.075304   0.976187                   
-    4      0.018805   0.074934   0.975165**[0.074934497, 0.97516526281833649]*learn.save('mclas')learn.load('mclas')y = learn.predict()
+    4      0.018805   0.074934   0.975165
+[0.074934497, 0.97516526281833649]
+'''
+learn.save('mclas')
+learn.load('mclas')
+y = learn.predict()
 x,_ = next(iter(md.val_dl))
-x = to_np(x)fig, axes = plt.subplots(3, 4, figsize=(12, 8))
+x = to_np(x)
+fig, axes = plt.subplots(3, 4, figsize=(12, 8))
 for i,ax in enumerate(axes.flat):
     ima=md.val_ds.denorm(x)[i]
     ya = np.nonzero(y[i]>0.4)[0]
-    b = '**\n**'.join(md.classes[o] for o in ya)
+    b = '\n'.join(md.classes[o] for o in ya)
     ax = show_img(ima, ax=ax)
     draw_text(ax, (0,0), b)
 plt.tight_layout()
@@ -488,8 +595,11 @@ mc = [set([cats[p[1]] for p in trn_anno[o]]) for o in trn_ids]
 class StdConv(nn.Module):
     def __init__(self, nin, nout, stride=2, drop=0.1):
         super().__init__()
-        self.conv = nn.Conv2d(nin, nout, 3, stride=stride, 
-                              padding=1)
+        self.conv = nn.Conv2d(
+            nin, nout, 3, 
+            stride=stride, 
+            padding=1
+        )
         self.bn = nn.BatchNorm2d(nout)
         self.drop = nn.Dropout(drop)
 
@@ -499,18 +609,24 @@ class StdConv(nn.Module):
 def flatten_conv(x,k):
     bs,nf,gx,gy = x.size()
     x = x.permute(0,2,3,1).contiguous()
-    return x.view(bs,-1,nf//k)class OutConv(nn.Module):
+    return x.view(bs,-1,nf//k)
+class OutConv(nn.Module):
     def __init__(self, k, nin, bias):
         super().__init__()
         self.k = k
-        self.oconv1 = nn.Conv2d(nin, (len(id2cat)+1)*k, 3, 
-                                padding=1)
+        self.oconv1 = nn.Conv2d(
+            nin, (len(id2cat)+1)*k, 3, 
+            padding=1
+        )
         self.oconv2 = nn.Conv2d(nin, 4*k, 3, padding=1)
         self.oconv1.bias.data.zero_().add_(bias)
 
     def forward(self, x):
-        return [flatten_conv(self.oconv1(x), self.k),
-                flatten_conv(self.oconv2(x), self.k)]class SSD_Head(nn.Module):
+        return [
+            flatten_conv(self.oconv1(x), self.k),
+            flatten_conv(self.oconv2(x), self.k)
+        ]
+class SSD_Head(nn.Module):
     def __init__(self, k, bias):
         super().__init__()
         self.drop = nn.Dropout(0.25)
@@ -566,7 +682,10 @@ x,y = V(x),V(y)
 learn.model.eval()
 batch = learn.model(x)
 b_clas,b_bb = batch
-b_clas.size(),b_bb.size()*(torch.Size([64, 16, 21]), torch.Size([64, 16, 4]))*
+b_clas.size(),b_bb.size()
+'''
+(torch.Size([64, 16, 21]), torch.Size([64, 16, 4]))
+'''
 ```
 
 确保这些形状是合理的。现在让我们看看地面真实`y`[[53:24](https://youtu.be/0frKXR-2PBY?t=53m24s)]：
@@ -577,15 +696,19 @@ b_clasi = b_clas[idx]
 b_bboxi = b_bb[idx]
 ima=md.val_ds.ds.denorm(to_np(x))[idx]
 bbox,clas = get_y(y[0][idx], y[1][idx])
-bbox,clas*(Variable containing:
+bbox,clas
+'''
+(Variable containing:
   0.6786  0.4866  0.9911  0.6250
   0.7098  0.0848  0.9911  0.5491
   0.5134  0.8304  0.6696  0.9063
- [torch.cuda.FloatTensor of size 3x4 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 3x4 (GPU 0)], 
+ Variable containing:
    8
   10
   17
- [torch.cuda.LongTensor of size 3 (GPU 0)])*
+ [torch.cuda.LongTensor of size 3 (GPU 0)])
+'''
 ```
 
 请注意，边界框坐标已缩放到 0 和 1 之间 - 基本上我们将图像视为 1x1，因此它们是相对于图像大小的。
@@ -594,9 +717,15 @@ bbox,clas*(Variable containing:
 
 ```py
 def torch_gt(ax, ima, bbox, clas, prs=None, thresh=0.4):
-    return show_ground_truth(ax, ima, to_np((bbox*224).long()),
-         to_np(clas), 
-         to_np(prs) if prs is not None else None, thresh)fig, ax = plt.subplots(figsize=(7,7))
+    return show_ground_truth(
+        ax, ima, 
+        to_np((bbox*224).long()),
+        to_np(clas), 
+        to_np(prs) 
+        if prs is not None 
+        else None, thresh
+    )
+fig, ax = plt.subplots(figsize=(7,7))
 torch_gt(ax, ima, bbox, clas)
 ```
 
@@ -616,7 +745,9 @@ torch_gt(ax, ima, anchor_cnr, b_clasi.max(1)[1])
 这是我们所有锚框（中心、高度、宽度）的*坐标*：
 
 ```py
-anchors*Variable containing:
+anchors
+'''
+Variable containing:
  0.1250  0.1250  0.2500  0.2500
  0.1250  0.3750  0.2500  0.2500
  0.1250  0.6250  0.2500  0.2500
@@ -633,22 +764,28 @@ anchors*Variable containing:
  0.8750  0.3750  0.2500  0.2500
  0.8750  0.6250  0.2500  0.2500
  0.8750  0.8750  0.2500  0.2500
-[torch.cuda.FloatTensor of size 16x4 (GPU 0)]*
+[torch.cuda.FloatTensor of size 16x4 (GPU 0)]
+'''
 ```
 
 这是 3 个地面真实对象和 16 个锚框之间的重叠量：
 
 ```py
 overlaps = jaccard(bbox.data, anchor_cnr.data)
-overlapsColumns 0 to 7   
+overlaps
+'''
+Columns 0 to 7   
 0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000    0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000    0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000 Columns 8 to 15   
 0.0000  0.0091 0.0922  0.0000  0.0000  0.0315  0.3985  0.0000  0.0356  0.0549 0.0103  0.0000  0.2598  0.4538  0.0653  0.0000  0.0000  0.0000 0.0000  0.1897  0.0000  0.0000  0.0000  0.0000 [torch.cuda.FloatTensor of size 3x16 (GPU 0)]
+'''
 ```
 
 现在我们可以取维度 1（按行）的最大值，这将告诉我们每个地面真实对象的最大重叠量以及索引：
 
 ```py
-overlaps.max(1)*(
+overlaps.max(1)
+'''
+(
   0.3985
   0.4538
   0.1897
@@ -656,13 +793,16 @@ overlaps.max(1)*(
   14
   13
   11
- [torch.cuda.LongTensor of size 3 (GPU 0)])*
+ [torch.cuda.LongTensor of size 3 (GPU 0)])
+'''
 ```
 
 我们还将查看维度 0（按列）的最大值，这将告诉我们每个网格单元与所有地面真实对象之间的最大重叠量是多少：
 
 ```py
-overlaps.max(0)*(
+overlaps.max(0)
+'''
+(
   0.0000
   0.0000
   0.0000
@@ -696,7 +836,8 @@ overlaps.max(0)*(
   1
   0
   0
- [torch.cuda.LongTensor of size 16 (GPU 0)])*
+ [torch.cuda.LongTensor of size 16 (GPU 0)])
+'''
 ```
 
 这里特别有趣的是，它告诉我们每个网格单元与之重叠最多的地面真实对象的索引是什么。零在这里有点过载 - 零可能意味着重叠量为零，也可能意味着它与对象索引零的重叠最大。这将被证明并不重要，但只是供参考。
@@ -705,7 +846,9 @@ overlaps.max(0)*(
 
 ```py
 gt_overlap,gt_idx = map_to_ground_truth(overlaps)
-gt_overlap,gt_idx*(
+gt_overlap,gt_idx
+'''
+(
   0.0000
   0.0000
   0.0000
@@ -739,13 +882,16 @@ gt_overlap,gt_idx*(
   1
   0
   0
- [torch.cuda.LongTensor of size 16 (GPU 0)])*
+ [torch.cuda.LongTensor of size 16 (GPU 0)])
+'''
 ```
 
 现在您可以看到所有分配的列表。任何`gt_overlap < 0.5`的地方都被分配为背景。三行最大锚框具有较高的数字以强制分配。现在我们可以将这些值组合到类别中：
 
 ```py
-gt_clas = clas[gt_idx]; gt_clas*Variable containing:
+gt_clas = clas[gt_idx]; gt_clas
+'''
+Variable containing:
   8
   8
   8
@@ -762,7 +908,8 @@ gt_clas = clas[gt_idx]; gt_clas*Variable containing:
  10
   8
   8
-[torch.cuda.LongTensor of size 16 (GPU 0)]*
+[torch.cuda.LongTensor of size 16 (GPU 0)]
+'''
 ```
 
 然后添加一个阈值，最后得出正在预测的三个类：
@@ -772,17 +919,22 @@ thresh = 0.5
 pos = gt_overlap > thresh
 pos_idx = torch.nonzero(pos)[:,0]
 neg_idx = torch.nonzero(1-pos)[:,0]
-pos_idx *11
+pos_idx 
+'''
+ 11
  13
  14
-[torch.cuda.LongTensor of size 3 (GPU 0)]*
+[torch.cuda.LongTensor of size 3 (GPU 0)]
+'''
 ```
 
 这里是每个锚框预测的含义：
 
 ```py
 gt_clas[1-pos] = len(id2cat)
-[id2cat[o] if o<len(id2cat) else 'bg' for o in gt_clas.data]*['bg',
+[id2cat[o] if o<len(id2cat) else 'bg' for o in gt_clas.data]
+'''
+['bg',
  'bg',
  'bg',
  'bg',
@@ -797,7 +949,8 @@ gt_clas[1-pos] = len(id2cat)
  'bg',
  'diningtable',
  'chair',
- 'bg']*
+ 'bg']
+'''
 ```
 
 那就是匹配阶段。对于 L1 损失，我们可以：
