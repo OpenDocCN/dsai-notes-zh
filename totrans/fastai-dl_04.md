@@ -114,13 +114,27 @@ Sequential(
 您可能已经注意到，它已经添加了两个`Linear`层。我们不必这样做。您可以设置`xtra_fc`参数。注意：您至少需要一个，它接受卷积层的输出（在此示例中为 4096）并将其转换为类别数（120 种狗品种）：
 
 ```py
-learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True, 
-            **xtra_fc=[]**); learn *Sequential(
+learn = ConvLearner.pretrained(
+    arch, data, 
+    ps=0., 
+    precompute=True, 
+    xtra_fc=[]
+); learn 
+'''
+Sequential(
   (0): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True)
   (1): Linear(in_features=1024, out_features=120)
   (2): LogSoftmax()
-)*learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True, 
-            **xtra_fc=[700, 300]**); learn*Sequential(
+)
+'''
+learn = ConvLearner.pretrained(
+    arch, data, 
+    ps=0., 
+    precompute=True, 
+    xtra_fc=[700, 300]
+); learn
+'''
+Sequential(
   (0): BatchNorm1d(1024, eps=1e-05, momentum=0.1, affine=True)
   (1): Linear(in_features=1024, out_features=**700**)
   (2): ReLU()
@@ -130,7 +144,8 @@ learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True,
   (6): BatchNorm1d(300, eps=1e-05, momentum=0.1, affine=True)
   (7): Linear(in_features=300, out_features=120)
   (8): LogSoftmax()
-)*
+)
+'''
 ```
 
 问题：有没有一种特定的方法可以确定是否过拟合？是的，您可以看到训练损失远低于验证损失。您无法确定是否过度拟合。零过拟合通常不是最佳选择。您唯一要做的就是使验证损失降低，因此您需要尝试一些方法，看看什么可以使验证损失降低。随着时间的推移，您会对您的特定问题过度拟合的程度有所了解。
@@ -140,8 +155,14 @@ learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True,
 问题：我们可以通过层设置不同的辍学率吗？是的，这就是为什么称为`ps`：
 
 ```py
-learn = ConvLearner.pretrained(arch, data, ps=[0., 0.2],
-            precompute=True, xtra_fc=[512]); learn*Sequential(
+learn = ConvLearner.pretrained(
+    arch, data, 
+    ps=[0., 0.2],
+    precompute=True, 
+    xtra_fc=[512]
+); learn
+'''
+Sequential(
   (0): BatchNorm1d(4096, eps=1e-05, momentum=0.1, affine=True)
   (1): Linear(in_features=4096, out_features=512)
   (2): ReLU()
@@ -149,7 +170,8 @@ learn = ConvLearner.pretrained(arch, data, ps=[0., 0.2],
   (4): Dropout(p=0.2)
   (5): Linear(in_features=512, out_features=120)
   (6): LogSoftmax()
-)*
+)
+'''
 ```
 
 +   目前还没有关于早期或后期层应该具有不同辍学率的经验法则。
@@ -179,13 +201,15 @@ cat_vars = ['Store', 'DayOfWeek', 'Year', 'Month', 'Day',
             'CompetitionOpenSinceYear', 'Promo2SinceYear', 'State',
             'Week', 'Events', 'Promo_fw', 'Promo_bw', 
             'StateHoliday_fw', 'StateHoliday_bw', 
-            'SchoolHoliday_fw', 'SchoolHoliday_bw']contin_vars = ['CompetitionDistance', 'Max_TemperatureC', 
+            'SchoolHoliday_fw', 'SchoolHoliday_bw']
+contin_vars = ['CompetitionDistance', 'Max_TemperatureC', 
                'Mean_TemperatureC', 'Min_TemperatureC', 
                'Max_Humidity', 'Mean_Humidity', 'Min_Humidity', 
                'Max_Wind_SpeedKm_h', 'Mean_Wind_SpeedKm_h', 
                'CloudCover', 'trend', 'trend_DE', 
                'AfterStateHoliday', 'BeforeStateHoliday', 'Promo', 
-               'SchoolHoliday']n = len(joined); n
+               'SchoolHoliday']
+n = len(joined); n
 ```
 
 +   像`Year`，`Month`这样的数字，尽管我们可以将它们视为连续的，但我们不必这样做。如果我们决定将`Year`作为分类变量，我们告诉我们的神经网络，对于每个不同的`Year`“级别”（2000、2001、2002），你可以完全不同地对待它；而如果我们说它是连续的，它必须提出某种平滑函数来拟合它们。因此，通常实际上是连续的但没有许多不同级别的事物（例如`Year`，`DayOfWeek`），通常最好将它们视为分类变量。
@@ -200,8 +224,10 @@ cat_vars = ['Store', 'DayOfWeek', 'Year', 'Month', 'Day',
 
 ```py
 for v in cat_vars: 
-    joined[v] = joined[v].astype('category').cat.as_ordered()for v in contin_vars:
-    joined[v] = joined[v].astype('float32')dep = 'Sales'
+    joined[v] = joined[v].astype('category').cat.as_ordered()
+for v in contin_vars:
+    joined[v] = joined[v].astype('float32')
+dep = 'Sales'
 joined = joined[cat_vars+contin_vars+[dep, 'Date']].copy()
 ```
 
@@ -248,19 +274,26 @@ val_idx = np.flatnonzero((df.index<=datetime.datetime(2014,9,17)) &
 对于任何 Kaggle 竞赛，重要的是您要对您的指标有一个很好的理解 - 您将如何被评判。在[这个比赛](https://www.kaggle.com/c/rossmann-store-sales#evaluation)中，我们将根据均方根百分比误差（RMSPE）进行评判。
 
 ```py
-def inv_y(a): return np.exp(a)def exp_rmspe(y_pred, targ):
+def inv_y(a): 
+    return np.exp(a)
+def exp_rmspe(y_pred, targ):
     targ = inv_y(targ)
     pct_var = (targ - inv_y(y_pred))/targ
-    return math.sqrt((pct_var**2).mean())max_log_y = np.max(yl)
+    return math.sqrt((pct_var**2).mean())
+max_log_y = np.max(yl)
 y_range = (0, max_log_y*1.2)
 ```
 
 +   当您对数据取对数时，得到均方根误差将实际上得到均方根百分比误差。
 
 ```py
-md = ColumnarModelData.from_data_frame(PATH, val_idx, df, 
-         yl.astype(np.float32), cat_flds=cat_vars, bs=128, 
-         test_df=df_test)
+md = ColumnarModelData.from_data_frame(
+    PATH, val_idx, df, 
+    yl.astype(np.float32), 
+    cat_flds=cat_vars, 
+    bs=128, 
+    test_df=df_test
+)
 ```
 
 +   像往常一样，我们将首先创建一个模型数据对象，其中包含验证集、训练集和可选的测试集。从中，我们将得到一个学习器，然后我们可以选择调用`lr_find`，然后调用`learn.fit`等等。
@@ -280,9 +313,14 @@ md = ColumnarModelData.from_data_frame(PATH, val_idx, df,
 现在我们有一个标准模型数据对象，我们熟悉并包含`train_dl`，`val_dl`，`train_ds`，`val_ds`等。
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars),
-                   0.04, 1, [1000,500], [0.001,0.01], 
-                   y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars),
+    0.04, 1, 
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 ```
 
 +   在这里，我们要求它创建一个适合我们模型数据的学习器。
@@ -314,9 +352,13 @@ m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars),
 **问题**：对于嵌入矩阵的维度有好的启发吗？我有！让我们看一看。
 
 ```py
-cat_sz = [(c, len(joined_samp[c].cat.categories)+1) 
-             for c in cat_vars]
-cat_sz*[('Store', 1116),
+cat_sz = [
+    (c, len(joined_samp[c].cat.categories)+1) 
+    for c in cat_vars
+]
+cat_sz
+'''
+[('Store', 1116),
  ('DayOfWeek', 8),
  ('Year', 4),
  ('Month', 13),
@@ -337,7 +379,8 @@ cat_sz*[('Store', 1116),
  ('StateHoliday_fw', 4),
  ('StateHoliday_bw', 4),
  ('SchoolHoliday_fw', 9),
- ('SchoolHoliday_bw', 9)]*
+ ('SchoolHoliday_bw', 9)]
+'''
 ```
 
 +   这里是每个分类变量及其基数的列表。
@@ -348,7 +391,9 @@ cat_sz*[('Store', 1116),
 
 ```py
 emb_szs = [(c, min(50, (c+1)//2)) for _,c in cat_sz]
-emb_szs*[(1116, 50),
+emb_szs
+'''
+[(1116, 50),
  (8, 4),
  (4, 2),
  (13, 7),
@@ -369,14 +414,21 @@ emb_szs*[(1116, 50),
  (4, 2),
  (4, 2),
  (9, 5),
- (9, 5)]*
+ (9, 5)]
+'''
 ```
 
 然后将嵌入大小传递给学习器：
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
-                   [1000,500], [0.001,0.01], y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars), 
+    0.04, 1,
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 ```
 
 **问题**：除了随机初始化，是否有初始化嵌入矩阵的方法？我们可能会在课程后面谈论更多关于预训练的内容，但基本思想是，如果 Rossmann 的其他人已经训练了一个神经网络来预测奶酪销售，你可能会从他们的店铺嵌入矩阵开始，以预测酒类销售。例如，Pinterest 和 Instacart 就是这样做的。Instacart 使用这种技术来为他们的购物者规划路线，Pinterest 使用它来决定在网页上显示什么。他们有产品/店铺的嵌入矩阵在组织中共享，这样人们就不必训练新的了。
@@ -407,8 +459,14 @@ add_datepart(test, "Date", drop=False)
 ## 学习者[[01:10:13](https://youtu.be/gbceqO8PpBg?t=1h10m13s)]
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
-                   [1000,500], [0.001,0.01], y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars), 
+    0.04, 1,
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 lr = 1e-3
 ```
 
@@ -427,8 +485,9 @@ lr = 1e-3
 +   `y_range`：现在我们不会担心这个
 
 ```py
-m.fit(lr, 3, metrics=[exp_rmspe])*A Jupyter Widget*
+m.fit(lr, 3, metrics=[exp_rmspe])
 '''
+A Jupyter Widget
 [ 0\.       0.02479  0.02205* *0.19309**]                          
 [ 1\.       0.02044  0.01751* *0.18301**]                          
 [ 2\.       0.01598  0.01571* *0.17248**]*
@@ -457,8 +516,14 @@ learn = ConvLearner.pretrained(arch, data, ps=0., precompute=True)
 对于这些类型的模型，实际上对于很多模型，我们构建的模型取决于数据。在这种情况下，我们需要知道我们有哪些嵌入矩阵。因此，在这种情况下，数据对象创建了学习者（与我们之前看到的相反）：
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
-                   [1000,500], [0.001,0.01], y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars), 
+    0.04, 1,
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 ```
 
 **步骤总结**（如果你想为自己的数据集使用这个）：
@@ -470,9 +535,13 @@ m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
 **步骤 3**。调用这行代码：
 
 ```py
-md = ColumnarModelData.from_data_frame(PATH, val_idx, df, 
-         yl.astype(np.float32), cat_flds=cat_vars, bs=128, 
-         test_df=df_test)
+md = ColumnarModelData.from_data_frame(
+    PATH, val_idx, df, 
+    yl.astype(np.float32), 
+    cat_flds=cat_vars, 
+    bs=128, 
+    test_df=df_test
+)
 ```
 
 **步骤 4**。创建一个您想要每个嵌入矩阵有多大的列表
@@ -480,8 +549,14 @@ md = ColumnarModelData.from_data_frame(PATH, val_idx, df,
 **步骤 5**。调用`get_learner` — 您可以使用这些确切的参数开始：
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
-                   [1000,500], [0.001,0.01], y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars), 
+    0.04, 1,
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 ```
 
 **步骤 6**。调用`m.fit`
@@ -501,7 +576,10 @@ m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
 这里我们有来自 arXiv（arXiv.org）的 18 个月的论文，这是一个例子：
 
 ```py
-' '.join(md.trn_ds[0].text[:150])*'<cat> csni <summ> the exploitation of mm - wave bands is one of the key - enabler for 5 g mobile \n radio networks . however , the introduction of mm - wave technologies in cellular \n networks is not straightforward due to harsh propagation conditions that limit \n the mm - wave access availability . mm - wave technologies require high - gain antenna \n systems to compensate for high path loss and limited power . as a consequence , \n directional transmissions must be used for cell discovery and synchronization \n processes : this can lead to a non - negligible access delay caused by the \n exploration of the cell area with multiple transmissions along different \n directions . \n    the integration of mm - wave technologies and conventional wireless access \n networks with the objective of speeding up the cell search process requires new \n'*
+' '.join(md.trn_ds[0].text[:150])
+'''
+'<cat> csni <summ> the exploitation of mm - wave bands is one of the key - enabler for 5 g mobile \n radio networks . however , the introduction of mm - wave technologies in cellular \n networks is not straightforward due to harsh propagation conditions that limit \n the mm - wave access availability . mm - wave technologies require high - gain antenna \n systems to compensate for high path loss and limited power . as a consequence , \n directional transmissions must be used for cell discovery and synchronization \n processes : this can lead to a non - negligible access delay caused by the \n exploration of the cell area with multiple transmissions along different \n directions . \n    the integration of mm - wave technologies and conventional wireless access \n networks with the objective of speeding up the cell search process requires new \n'
+'''
 ```
 
 +   `<cat>` — 论文的类别。CSNI 是计算机科学和网络
@@ -511,7 +589,10 @@ m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars), 0.04, 1,
 这是训练语言模型的输出看起来像什么。我们进行了一些简单的测试，输入一些初始文本，看模型认为接下来应该是什么：
 
 ```py
-sample_model(m, "<CAT> csni <SUMM> algorithms that")*...use the same network as a single node are not able to achieve the same performance as the traditional network - based routing algorithms . in this paper , we propose a novel routing scheme for routing protocols in wireless networks . the proposed scheme is based ...*
+sample_model(m, "<CAT> csni <SUMM> algorithms that")
+'''
+...use the same network as a single node are not able to achieve the same performance as the traditional network - based routing algorithms . in this paper , we propose a novel routing scheme for routing protocols in wireless networks . the proposed scheme is based ...
+'''
 ```
 
 它通过阅读 arXiv 论文学到，写关于计算机网络的人会这样说话。记住，它最初完全不懂英语。它最初为英语中的每个单词都有一个随机的嵌入矩阵。通过阅读大量的 arXiv 论文，它学会了哪些单词跟随其他单词。
@@ -519,13 +600,19 @@ sample_model(m, "<CAT> csni <SUMM> algorithms that")*...use the same network as 
 这里我们尝试指定一个类别为计算机视觉：
 
 ```py
-sample_model(m, "<CAT> cscv <SUMM> algorithms that")*...use the same data to perform image classification are increasingly being used to improve the performance of image classification algorithms . in this paper , we propose a novel method for image classification using a deep convolutional neural network ( cnn ) . the proposed method is ...*
+sample_model(m, "<CAT> cscv <SUMM> algorithms that")
+'''
+...use the same data to perform image classification are increasingly being used to improve the performance of image classification algorithms . in this paper , we propose a novel method for image classification using a deep convolutional neural network ( cnn ) . the proposed method is ...
+'''
 ```
 
 它不仅学会了写英语，而且在你说完“卷积神经网络”之后，你应该使用括号来指定一个缩写“(CNN)”。
 
 ```py
-sample_model(m,"<CAT> cscv <SUMM> algorithms. <TITLE> on ")*...the performance of deep learning for image classification <eos>*sample_model(m,"<CAT> csni <SUMM> algorithms. <TITLE> on ")*...the performance of wireless networks <eos>*sample_model(m,"<CAT> cscv <SUMM> algorithms. <TITLE> towards ")*...a new approach to image classification <eos>*sample_model(m,"<CAT> csni <SUMM> algorithms. <TITLE> towards ")*...a new approach to the analysis of wireless networks <eos>*
+sample_model(m,"<CAT> cscv <SUMM> algorithms. <TITLE> on ")
+'''
+...the performance of deep learning for image classification <eos>*sample_model(m,"<CAT> csni <SUMM> algorithms. <TITLE> on ")*...the performance of wireless networks <eos>*sample_model(m,"<CAT> cscv <SUMM> algorithms. <TITLE> towards ")*...a new approach to image classification <eos>*sample_model(m,"<CAT> csni <SUMM> algorithms. <TITLE> towards ")*...a new approach to the analysis of wireless networks <eos>
+'''
 ```
 
 语言模型可以非常深奥，因此我们将尝试构建它——不是因为我们真的在乎这个，而是因为我们试图创建一个用于执行其他任务的预训练模型。例如，给定一个 IMDB 电影评论，我们将确定它们是积极的还是消极的。这很像猫和狗——一个分类问题。因此，我们真的希望使用一个至少知道如何阅读英语的预训练网络。因此，我们将训练一个模型来预测句子的下一个单词（即语言模型），就像在计算机视觉中一样，在最后添加一些新层，并要求它预测某物是积极的还是消极的。
@@ -551,12 +638,15 @@ sample_model(m,"<CAT> cscv <SUMM> algorithms. <TITLE> on ")*...the performance o
 +   将文档组织成是否属于法律发现的一部分。
 
 ```py
-from fastai.learner import *import torchtext
+from fastai.learner import *
+import torchtext
 from torchtext import vocab, data
-from torchtext.datasets import language_modelingfrom fastai.rnn_reg import *
+from torchtext.datasets import language_modeling
+from fastai.rnn_reg import *
 from fastai.rnn_train import *
 from fastai.nlp import *
-from fastai.lm_rnn import *import dill as pickle
+from fastai.lm_rnn import *
+import dill as pickle
 ```
 
 +   `torchtext` — PyTorch 的 NLP 库
@@ -566,10 +656,15 @@ from fastai.lm_rnn import *import dill as pickle
 IMDB 大型电影评论数据集
 
 ```py
-PATH = 'data/aclImdb/'TRN_PATH = 'train/all/'
+PATH = 'data/aclImdb/'
+TRN_PATH = 'train/all/'
 VAL_PATH = 'test/all/'
 TRN = f'{PATH}{TRN_PATH}'
-VAL = f'{PATH}{VAL_PATH}'%ls {PATH}*imdbEr.txt  imdb.vocab  models/  README  test/  tmp/  train/*
+VAL = f'{PATH}{VAL_PATH}'
+%ls {PATH}
+'''
+imdbEr.txt  imdb.vocab  models/  README  test/  tmp/  train/
+'''
 ```
 
 在这种情况下，我们没有单独的测试和验证。就像在视觉中一样，训练目录中有一堆文件：
@@ -578,7 +673,8 @@ VAL = f'{PATH}{VAL_PATH}'%ls {PATH}*imdbEr.txt  imdb.vocab  models/  README  tes
 trn_files = !ls {TRN}
 trn_files[:10]
 
-*['0_0.txt',
+'''
+['0_0.txt',
  '0_3.txt',
  '0_9.txt',
  '10000_0.txt',
@@ -587,14 +683,26 @@ trn_files[:10]
  '1000_0.txt',
  '10001_0.txt',
  '10001_10.txt',
- '10001_4.txt']*review = !cat {TRN}{trn_files[6]}
-review[0]*"I have to say when a name like Zombiegeddon and an atom bomb on the front cover I was expecting a flat out chop-socky fung-ku, but what I got instead was a comedy. So, it wasn't quite was I was expecting, but I really liked it anyway! The best scene ever was the main cop dude pulling those kids over and pulling a Bad Lieutenant on them!! I was laughing my ass off. I mean, the cops were just so bad! And when I say bad, I mean The Shield Vic Macky bad. But unlike that show I was laughing when they shot people and smoked dope.<br /><br />Felissa Rose...man, oh man. What can you say about that hottie. She was great and put those other actresses to shame. She should work more often!!!!! I also really liked the fight scene outside of the building. That was done really well. Lots of fighting and people getting their heads banged up. FUN! Last, but not least Joe Estevez and William Smith were great as the...well, I wasn't sure what they were, but they seemed to be having fun and throwing out lines. I mean, some of it didn't make sense with the rest of the flick, but who cares when you're laughing so hard! All in all the film wasn't the greatest thing since sliced bread, but I wasn't expecting that. It was a Troma flick so I figured it would totally suck. It's nice when something surprises you but not totally sucking.<br /><br />Rent it if you want to get stoned on a Friday night and laugh with your buddies. Don't rent it if you are an uptight weenie or want a zombie movie with lots of flesh eating.<br /><br />P.S. Uwe Boil was a nice touch."*
+ '10001_4.txt']
+'''
+review = !cat {TRN}{trn_files[6]}
+review[0]
+'''
+"I have to say when a name like Zombiegeddon and an atom bomb on the front cover I was expecting a flat out chop-socky fung-ku, but what I got instead was a comedy. So, it wasn't quite was I was expecting, but I really liked it anyway! The best scene ever was the main cop dude pulling those kids over and pulling a Bad Lieutenant on them!! I was laughing my ass off. I mean, the cops were just so bad! And when I say bad, I mean The Shield Vic Macky bad. But unlike that show I was laughing when they shot people and smoked dope.<br /><br />Felissa Rose...man, oh man. What can you say about that hottie. She was great and put those other actresses to shame. She should work more often!!!!! I also really liked the fight scene outside of the building. That was done really well. Lots of fighting and people getting their heads banged up. FUN! Last, but not least Joe Estevez and William Smith were great as the...well, I wasn't sure what they were, but they seemed to be having fun and throwing out lines. I mean, some of it didn't make sense with the rest of the flick, but who cares when you're laughing so hard! All in all the film wasn't the greatest thing since sliced bread, but I wasn't expecting that. It was a Troma flick so I figured it would totally suck. It's nice when something surprises you but not totally sucking.<br /><br />Rent it if you want to get stoned on a Friday night and laugh with your buddies. Don't rent it if you are an uptight weenie or want a zombie movie with lots of flesh eating.<br /><br />P.S. Uwe Boil was a nice touch."
+'''
 ```
 
 现在我们将检查数据集中有多少单词：
 
 ```py
-!find {TRN} -name '*.txt' | xargs cat | wc -w*17486581*!find {VAL} -name '*.txt' | xargs cat | wc -w*5686719*
+!find {TRN} -name '*.txt' | xargs cat | wc -w
+'''
+17486581
+'''
+!find {VAL} -name '*.txt' | xargs cat | wc -w
+'''
+5686719
+'''
 ```
 
 在我们可以对文本进行任何操作之前，我们必须将其转换为标记列表。标记基本上就像一个单词。最终我们将把它们转换成一系列数字，但第一步是将其转换成一系列单词——这在 NLP 中称为“标记化”。一个好的标记器将很好地识别句子中的片段。每个分隔的标点符号将被分开，每个多部分单词的部分将被适当地分开。Spacy 做了很多 NLP 工作，Jeremy 知道它有最好的标记器。因此，Fast.ai 库被设计为与 Spacey 标记器以及 torchtext 一起很好地工作。
@@ -614,9 +722,12 @@ TEXT = data.Field(lower=True, tokenize=spacy_tok)
 现在我们创建通常的 Fast.ai 模型数据对象：
 
 ```py
-bs=64; bptt=70FILES = dict(train=TRN_PATH, validation=VAL_PATH, test=VAL_PATH)
-md = LanguageModelData.from_text_files(PATH, TEXT, **FILES, bs=bs, 
-                                       bptt=bptt, min_freq=10)
+bs=64; bptt=70
+FILES = dict(train=TRN_PATH, validation=VAL_PATH, test=VAL_PATH)
+md = LanguageModelData.from_text_files(
+    PATH, TEXT, **FILES, bs=bs, 
+    bptt=bptt, min_freq=10
+)
 ```
 
 +   `PATH`：通常是数据所在的位置，保存模型等
@@ -634,15 +745,24 @@ md = LanguageModelData.from_text_files(PATH, TEXT, **FILES, bs=bs,
 构建了我们的`ModelData`对象之后，它会自动填充`TEXT`对象的一个非常重要的属性：`TEXT.vocab`。这是一个*词汇表*，它存储了文本中看到的哪些唯一单词（或*标记*），以及每个单词将被映射到一个唯一的整数 ID。
 
 ```py
-*# 'itos': 'int-to-string'* 
-TEXT.vocab.itos[:12]*['<unk>', '<pad>', 'the', ',', '.', 'and', 'a', 'of', 'to', 'is', 'it', 'in']**# 'stoi': 'string to int'*
-TEXT.vocab.stoi['the']*2*
+# 'itos': 'int-to-string' 
+TEXT.vocab.itos[:12]
+'''
+['<unk>', '<pad>', 'the', ',', '.', 'and', 'a', 'of', 'to', 'is', 'it', 'in']
+'''
+# 'stoi': 'string to int'
+TEXT.vocab.stoi['the']
+'''
+2
+'''
 ```
 
 `itos`按频率排序，除了前两个特殊的。使用`vocab`，torchtext 将为我们将单词转换为整数 ID：
 
 ```py
-md.trn_ds[0].text[:12]*['i',
+md.trn_ds[0].text[:12]
+'''
+['i',
  'have',
  'always',
  'loved',
@@ -653,7 +773,11 @@ md.trn_ds[0].text[:12]*['i',
  'hopeful',
  'theme',
  ',',
- 'the']*TEXT.numericalize([md.trn_ds[0].text[:12]])*Variable containing:
+ 'the']
+'''
+TEXT.numericalize([md.trn_ds[0].text[:12]])
+'''
+Variable containing:
    12
    35
   227
@@ -666,7 +790,8 @@ md.trn_ds[0].text[:12]*['i',
   769
     3
     2
-[torch.cuda.LongTensor of size 12x1 (GPU 0)]*
+[torch.cuda.LongTensor of size 12x1 (GPU 0)]
+'''
 ```
 
 **问题**：通常会进行任何词干处理或词形还原吗？不是很常见。一般来说，我们只需要进行分词。为了尽可能通用，我们想知道接下来会发生什么，所以无论是将来时还是过去时，还是复数还是单数，我们并不真的知道哪些事情会有趣，哪些不会，所以似乎最好尽可能保持不变。
@@ -686,19 +811,27 @@ md.trn_ds[0].text[:12]*['i',
 +   然后我们每次抓取一小块，这些块的长度**大致**等于 BPTT。在这里，我们抓取一个大约 70 个字符长的部分，这是我们放入 GPU（即批次）的第一件事。
 
 ```py
-next(iter(md.trn_dl))*(Variable containing:
+next(iter(md.trn_dl))
+'''
+(Variable containing:
      12    567      3  ...    2118      4   2399
-    *** *35      7     33*** *...       6    148     55
+     35      7     33  ...       6    148     55
     227    103    533  ...    4892     31     10
          ...            ⋱           ...         
      19   8879     33  ...      41     24    733
     552   8250     57  ...     219     57   1777
       5     19      2  ...    3099      8     48
- [torch.cuda.LongTensor of size 75x64 (GPU 0)], Variable containing:* *35**7**33* *⋮   
+ [torch.cuda.LongTensor of size 75x64 (GPU 0)], 
+ Variable containing:
+     35
+      7
+     33
+      ⋮   
      22
    3885
   21587
- [torch.cuda.LongTensor of size 4800 (GPU 0)])*
+ [torch.cuda.LongTensor of size 4800 (GPU 0)])
+'''
 ```
 
 +   我们通过将数据加载器包装在`iter`中，然后调用`next`来获取我们的第一个训练批次。
@@ -720,7 +853,10 @@ next(iter(md.trn_dl))*(Variable containing:
 这里是：#批次；词汇表中的唯一标记数；数据集的长度；单词数
 
 ```py
-len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)*(4602, 34945, 1, 20621966)*
+len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)
+'''
+(4602, 34945, 1, 20621966)
+'''
 ```
 
 这是我们的嵌入矩阵的样子：
@@ -730,9 +866,9 @@ len(md.trn_dl), md.nt, len(md.trn_ds), len(md.trn_ds[0].text)*(4602, 34945, 1, 2
 +   嵌入大小为 200，比我们以前的嵌入向量要大得多。这并不奇怪，因为一个词比“星期天”的概念要复杂得多。**一般来说，一个词的嵌入大小会在 50 到 600 之间。**
 
 ```py
-em_sz = 200  *# size of each embedding vector*
-nh = 500     *# number of hidden activations per layer*
-nl = 3       *# number of layers*
+em_sz = 200  # size of each embedding vector
+nh = 500     # number of hidden activations per layer
+nl = 3       # number of layers
 ```
 
 研究人员发现大量的*动量*（我们稍后会了解）与这些*循环神经网络*模型不太兼容，因此我们创建了一个*Adam*优化器的版本，其动量小于默认值`0.9`。每当你在做自然语言处理时，你应该包括这一行：
@@ -746,9 +882,14 @@ Fast.ai 使用了由 Stephen Merity 开发的最先进的[AWD LSTM 语言模型]
 然而，其他参数（`alpha`，`beta`和`clip`）通常不需要调整。
 
 ```py
-learner = md.get_model(opt_fn, em_sz, nh, nl, dropouti=0.05,
-                       dropout=0.05, wdrop=0.1, dropoute=0.02, 
-                       dropouth=0.05)
+learner = md.get_model(
+    opt_fn, em_sz, nh, nl, 
+    dropouti=0.05,
+    dropout=0.05, 
+    wdrop=0.1, 
+    dropoute=0.02, 
+    dropouth=0.05
+)
 learner.reg_fn = partial(seq2seq_reg, alpha=2, beta=1)
 learner.clip=0.3
 ```
@@ -768,21 +909,39 @@ learner.clip=0.3
 ## 拟合
 
 ```py
-learner.fit(3e-3, 4, wds=1e-6, cycle_len=1, cycle_mult=2)learner.save_encoder('adam1_enc')learner.fit(3e-3, 4, wds=1e-6, cycle_len=10, 
-            cycle_save_name='adam3_10')learner.save_encoder('adam3_10_enc')learner.fit(3e-3, 1, wds=1e-6, cycle_len=20, 
-            cycle_save_name='adam3_20')learner.load_cycle('adam3_20',0)
+learner.fit(3e-3, 4, wds=1e-6, cycle_len=1, cycle_mult=2)
+learner.save_encoder('adam1_enc')
+learner.fit(
+    3e-3, 4, 
+    wds=1e-6, 
+    cycle_len=10, 
+    cycle_save_name='adam3_10'
+)
+learner.save_encoder('adam3_10_enc')
+learner.fit(
+    3e-3, 1, 
+    wds=1e-6, 
+    cycle_len=20, 
+    cycle_save_name='adam3_20'
+)
+learner.load_cycle('adam3_20',0)
 ```
 
 在情感分析部分，我们只需要语言模型的一半 - *编码器*，所以我们保存了那部分。
 
 ```py
-learner.save_encoder('adam3_20_enc')learner.load_encoder('adam3_20_enc')
+learner.save_encoder('adam3_20_enc')
+learner.load_encoder('adam3_20_enc')
 ```
 
 语言建模的准确性通常使用指标*困惑度*来衡量，这只是我们使用的损失函数的`exp()`。
 
 ```py
-math.exp(4.165)*64.3926824434624*pickle.dump(TEXT, open(f'**{PATH}**models/TEXT.pkl','wb'))
+math.exp(4.165)
+'''
+64.3926824434624
+'''
+pickle.dump(TEXT, open(f'{PATH}models/TEXT.pkl','wb'))
 ```
 
 ## 测试
@@ -791,23 +950,27 @@ math.exp(4.165)*64.3926824434624*pickle.dump(TEXT, open(f'**{PATH}**models/TEXT.
 
 ```py
 m=learner.model
-ss=""". So, it wasn't quite was I was expecting, but I really liked it anyway! The best"""s = [spacy_tok(ss)]
+ss=""". So, it wasn't quite was I was expecting, but I really liked it anyway! The best"""
+s = [spacy_tok(ss)]
 t=TEXT.numericalize(s)
-' '.join(s[0])*". So , it was n't quite was I was expecting , but I really liked it anyway ! The best"*
+' '.join(s[0])
+'''
+". So , it was n't quite was I was expecting , but I really liked it anyway ! The best"
+'''
 ```
 
 我们还没有添加使测试语言模型变得容易的方法，因此我们需要手动执行这些步骤。
 
 ```py
-*# Set batch size to 1*
+# Set batch size to 1
 m[0].bs=1
-*# Turn off dropout*
+# Turn off dropout
 m.eval()
-*# Reset hidden state*
+# Reset hidden state
 m.reset()
-*# Get predictions from model*
+# Get predictions from model
 res,*_ = m(t)
-*# Put the batch size back to what it was*
+# Put the batch size back to what it was
 m[0].bs=bs
 ```
 
@@ -815,7 +978,9 @@ m[0].bs=bs
 
 ```py
 nexts = torch.topk(res[-1], 10)[1]
-[TEXT.vocab.itos[o] for o in to_np(nexts)]*['film',
+[TEXT.vocab.itos[o] for o in to_np(nexts)]
+'''
+['film',
  'movie',
  'of',
  'thing',
@@ -824,19 +989,23 @@ nexts = torch.topk(res[-1], 10)[1]
  'performance',
  'scene',
  ',',
- 'actor']*
+ 'actor']
+'''
 ```
 
 ...让我们看看我们的模型是否可以自己生成更多文本！
 
 ```py
-print(ss,"**\n**")
+print(ss,"\n")
 for i in range(50):
     n=res[-1].topk(2)[1]
     n = n[1] if n.data[0]==0 else n[0]
     print(TEXT.vocab.itos[n.data[0]], end=' ')
     res,*_ = m(n[0].unsqueeze(0))
-print('...')*. So, it wasn't quite was I was expecting, but I really liked it anyway! The best* *film ever ! <eos> i saw this movie at the toronto international film festival . i was very impressed . i was very impressed with the acting . i was very impressed with the acting . i was surprised to see that the actors were not in the movie . ...*
+print('...')
+'''
+. So, it wasn't quite was I was expecting, but I really liked it anyway! The best* *film ever ! <eos> i saw this movie at the toronto international film festival . i was very impressed . i was very impressed with the acting . i was very impressed with the acting . i was surprised to see that the actors were not in the movie . ...
+'''
 ```
 
 ## 情感
@@ -846,7 +1015,7 @@ print('...')*. So, it wasn't quite was I was expecting, but I really liked it an
 要使用预训练模型，我们将需要语言模型的保存的词汇表，因为我们需要确保相同的单词映射到相同的 ID。
 
 ```py
-TEXT = pickle.load(open(f'**{PATH}**models/TEXT.pkl','rb'))
+TEXT = pickle.load(open(f'{PATH}models/TEXT.pkl','rb'))
 ```
 
 `sequential=False`告诉 torchtext 文本字段应该被标记化（在这种情况下，我们只想存储“正面”或“负面”单个标签）。
@@ -860,7 +1029,12 @@ IMDB_LABEL = data.Field(sequential=False)
 `splits`是 torchtext 的一个方法，用于创建训练、测试和验证集。IMDB 数据集内置在 torchtext 中，因此我们可以利用它。查看`lang_model-arxiv.ipynb`，了解如何定义自己的 fastai/torchtext 数据集。
 
 ```py
-splits = torchtext.datasets.IMDB.splits(TEXT, IMDB_LABEL, 'data/')t = splits[0].examples[0]t.label, ' '.join(t.text[:16])*('pos', 'ashanti is a very 70s sort of film ( 1979 , to be precise ) .')*
+splits = torchtext.datasets.IMDB.splits(TEXT, IMDB_LABEL, 'data/')
+t = splits[0].examples[0]
+t.label, ' '.join(t.text[:16])
+'''
+('pos', 'ashanti is a very 70s sort of film ( 1979 , to be precise ) .')
+'''
 ```
 
 fastai 可以直接从 torchtext 的`splits`创建一个`ModelData`对象。
@@ -872,30 +1046,47 @@ md2 = TextData.from_splits(PATH, splits, bs)
 现在你可以继续调用`get_model`来获取我们的学习者。然后我们可以加载预训练的语言模型（`load_encoder`）。
 
 ```py
-m3 = md2.get_model(opt_fn, 1500, bptt, emb_sz=em_sz, n_hid=nh, 
-                   n_layers=nl, dropout=0.1, dropouti=0.4,
-                   wdrop=0.5, dropoute=0.05, dropouth=0.3)m3.reg_fn = partial(seq2seq_reg, alpha=2, beta=1)m3.load_encoder(f'adam3_20_enc')
+m3 = md2.get_model(
+    opt_fn, 1500, bptt, 
+    emb_sz=em_sz, 
+    n_hid=nh, 
+    n_layers=nl, 
+    dropout=0.1, 
+    dropouti=0.4,
+    wdrop=0.5, 
+    dropoute=0.05, 
+    dropouth=0.3
+)
+m3.reg_fn = partial(seq2seq_reg, alpha=2, beta=1)
+m3.load_encoder(f'adam3_20_enc')
 ```
 
 因为我们正在微调一个预训练模型，我们将使用不同的学习率，并增加用于剪切的最大梯度，以使 SGDR 更好地工作。
 
 ```py
 m3.clip=25.
-lrs=np.array([1e-4,1e-3,1e-2])m3.freeze_to(-1)
+lrs=np.array([1e-4,1e-3,1e-2])
+m3.freeze_to(-1)
 m3.fit(lrs/2, 1, metrics=[accuracy])
 m3.unfreeze()
 m3.fit(lrs, 1, metrics=[accuracy], cycle_len=1)
 '''
-[ 0\.       0.45074  0.28424  0.88458]*
+[ 0\.       0.45074  0.28424  0.88458]
+[ 0\.       0.29202  0.19023  0.92768]
 '''
-[ 0\.       0.29202  0.19023  0.92768]*
 ```
 
 我们确保除了最后一层外，所有层都被冻结。然后我们进行一些训练，解冻它，再进行一些训练。好处是一旦你有了一个预训练的语言模型，它实际上训练速度非常快。
 
 ```py
-m3.fit(lrs, 7, metrics=[accuracy], cycle_len=2, 
-       cycle_save_name='imdb2')[ 0\.       0.29053  0.18292  0.93241]                        
+m3.fit(
+    lrs, 7, 
+    metrics=[accuracy], 
+    cycle_len=2, 
+    cycle_save_name='imdb2'
+)
+'''
+[ 0\.       0.29053  0.18292  0.93241]                        
 [ 1\.       0.24058  0.18233  0.93313]                        
 [ 2\.       0.24244  0.17261  0.93714]                        
 [ 3\.       0.21166  0.17143  0.93866]                        
@@ -908,7 +1099,13 @@ m3.fit(lrs, 7, metrics=[accuracy], cycle_len=2,
 [ 10\.        0.16327   0.17851   0.93998]                    
 [ 11\.        0.15795   0.16042   0.94267]                    
 [ 12\.        0.1602    0.16015   0.94199]                    
-[ 13\.        0.15503   0.1624    0.94171]m3.load_cycle('imdb2', 4)accuracy(*m3.predict_with_targs())*0.94310897435897434*
+[ 13\.        0.15503   0.1624    0.94171]
+'''
+m3.load_cycle('imdb2', 4)
+accuracy(*m3.predict_with_targs())
+'''
+0.94310897435897434
+'''
 ```
 
 Bradbury 等人最近发表的一篇论文，[学习中的翻译：上下文化的词向量](https://einstein.ai/research/learned-in-translation-contextualized-word-vectors)，对解决 IMDB 情感分析问题的最新学术研究进行了方便的总结。许多最新的算法都是针对这个特定问题进行调整的。
@@ -932,7 +1129,8 @@ Bradbury 等人最近发表的一篇论文，[学习中的翻译：上下文化�
 数据可从[`files.grouplens.org/datasets/movielens/ml-latest-small.zip`](http://files.grouplens.org/datasets/movielens/ml-latest-small.zip)获取
 
 ```py
-path='data/ml-latest-small/'ratings = pd.read_csv(path+'ratings.csv')
+path='data/ml-latest-small/'
+ratings = pd.read_csv(path+'ratings.csv')
 ratings.head()
 ```
 
@@ -949,12 +1147,27 @@ movies.head()
 
 ```py
 g=ratings.groupby('userId')['rating'].count()
-topUsers=g.sort_values(ascending=False)[:15]g=ratings.groupby('movieId')['rating'].count()
-topMovies=g.sort_values(ascending=False)[:15]top_r = ratings.join(topUsers, rsuffix='_r', how='inner', 
-                     on='userId')
-top_r = top_r.join(topMovies, rsuffix='_r', how='inner', 
-                   on='movieId')pd.crosstab(top_r.userId, top_r.movieId, top_r.rating, 
-            aggfunc=np.sum)
+topUsers=g.sort_values(ascending=False)[:15]
+g=ratings.groupby('movieId')['rating'].count()
+topMovies=g.sort_values(ascending=False)[:15]
+top_r = ratings.join(
+    topUsers, 
+    rsuffix='_r', 
+    how='inner', 
+    on='userId'
+)
+top_r = top_r.join(
+    topMovies, 
+    rsuffix='_r', 
+    how='inner', 
+    on='movieId'
+)
+pd.crosstab(
+    top_r.userId, 
+    top_r.movieId, 
+    top_r.rating, 
+    aggfunc=np.sum
+)
 ```
 
 这就是我们正在创建的——用户和电影的这种交叉表。

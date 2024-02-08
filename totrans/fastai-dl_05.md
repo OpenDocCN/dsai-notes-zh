@@ -55,9 +55,12 @@ ratings.head()
 
 ```py
 g=ratings.groupby('userId')['rating'].count()
-topUsers=g.sort_values(ascending=False)[:15]g=ratings.groupby('movieId')['rating'].count()
-topMovies=g.sort_values(ascending=False)[:15]top_r = ratings.join(topUsers, rsuffix='_r', how='inner', on='userId')
-top_r = top_r.join(topMovies, rsuffix='_r', how='inner', on='movieId')pd.crosstab(top_r.userId, top_r.movieId, top_r.rating, aggfunc=np.sum)
+topUsers=g.sort_values(ascending=False)[:15]
+g=ratings.groupby('movieId')['rating'].count()
+topMovies=g.sort_values(ascending=False)[:15]
+top_r = ratings.join(topUsers, rsuffix='_r', how='inner', on='userId')
+top_r = top_r.join(topMovies, rsuffix='_r', how='inner', on='movieId')
+pd.crosstab(top_r.userId, top_r.movieId, top_r.rating, aggfunc=np.sum)
 ```
 
 [这](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/collab_filter.xlsx)是包含上述信息的 Excel 文件。首先，我们将使用**矩阵分解**而不是构建神经网络。
@@ -99,7 +102,8 @@ cf = CollabFilterDataset.from_csv(path, 'ratings.csv', 'userId', 'movieId', 'rat
 然后我们得到一个适合模型数据的学习器，并拟合模型：
 
 ```py
-learn = cf.get_learner(n_factors, val_idxs, 64, opt_fn=optim.Adam)learn.fit(1e-2, 2, wds=wd, cycle_len=1, cycle_mult=2)
+learn = cf.get_learner(n_factors, val_idxs, 64, opt_fn=optim.Adam)
+learn.fit(1e-2, 2, wds=wd, cycle_len=1, cycle_mult=2)
 ```
 
 输出 MSE
