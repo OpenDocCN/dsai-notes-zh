@@ -127,8 +127,10 @@ Jeremy 喜欢构建模型的方式：
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
-from fastai.dataset import *from pathlib import Path
+%autoreload 2
+from fastai.conv_learner import *
+from fastai.dataset import *
+from pathlib import Path
 import json
 from PIL import ImageDraw, ImageFont
 from matplotlib import patches, patheffects
@@ -149,14 +151,17 @@ from matplotlib import patches, patheffects
 
 ```py
 PATH = Path('data/pascal')
-list(PATH.iterdir())*[PosixPath('data/pascal/PASCAL_VOC.zip'),
+list(PATH.iterdir())
+'''
+[PosixPath('data/pascal/PASCAL_VOC.zip'),
  PosixPath('data/pascal/VOCdevkit'),
  PosixPath('data/pascal/VOCtrainval_06-Nov-2007.tar'),
  PosixPath('data/pascal/pascal_train2012.json'),
  PosixPath('data/pascal/pascal_val2012.json'),
  PosixPath('data/pascal/pascal_val2007.json'),
  PosixPath('data/pascal/pascal_train2007.json'),
- PosixPath('data/pascal/pascal_test2007.json')]*
+ PosixPath('data/pascal/pascal_test2007.json')]
+'''
 ```
 
 **关于生成器的一点说明[**[**43:23**](https://youtu.be/Z0ssNAbe81M?t=43m23s)**]：**
@@ -179,14 +184,21 @@ list(PATH.iterdir())*[PosixPath('data/pascal/PASCAL_VOC.zip'),
 
 ```py
 trn_j = json.load((PATH/'pascal_train2007.json').open())
-trn_j.keys()*dict_keys(['images', 'type', 'annotations', 'categories'])*
+trn_j.keys()
+'''
+dict_keys(['images', 'type', 'annotations', 'categories'])
+'''
 ```
 
 这里的`/`不是除法符号，而是路径斜杠[[45:55](https://youtu.be/Z0ssNAbe81M?t=45m55s)]。`PATH/`可以让您获取该路径中的子项。`PATH/’pascal_train2007.json’`返回一个`pathlib`对象，该对象具有一个`open`方法。这个 JSON 文件不包含图像，而是包含对象的边界框和类别。
 
 ```py
 IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations', 
-                                 'categories'] **trn_j[IMAGES]**[:5]*[{'file_name': '000012.jpg', 'height': 333, 'id': 12, 'width': 500},  {'file_name': '000017.jpg', 'height': 364, 'id': 17, 'width': 480},  {'file_name': '000023.jpg', 'height': 500, 'id': 23, 'width': 334},  {'file_name': '000026.jpg', 'height': 333, 'id': 26, 'width': 500},  {'file_name': '000032.jpg', 'height': 281, 'id': 32, 'width': 500}]*
+                                 'categories'] 
+trn_j[IMAGES][:5]
+'''
+[{'file_name': '000012.jpg', 'height': 333, 'id': 12, 'width': 500},  {'file_name': '000017.jpg', 'height': 364, 'id': 17, 'width': 480},  {'file_name': '000023.jpg', 'height': 500, 'id': 23, 'width': 334},  {'file_name': '000026.jpg', 'height': 333, 'id': 26, 'width': 500},  {'file_name': '000032.jpg', 'height': 281, 'id': 32, 'width': 500}]
+'''
 ```
 
 ## 注释 [[49:16](https://youtu.be/Z0ssNAbe81M?t=49m16s)]
@@ -204,7 +216,9 @@ IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations',
 +   `iscrowd`：指定这是该对象的一群，而不仅仅是其中一个
 
 ```py
-**trn_j[ANNOTATIONS]**[:2]*[{'area': 34104,
+trn_j[ANNOTATIONS][:2]
+'''
+[{'area': 34104,
   'bbox': [155, 96, 196, 174],
   'category_id': 7,
   'id': 1,
@@ -219,23 +233,27 @@ IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations',
   'ignore': 0,
   'image_id': 17,
   'iscrowd': 0,
-  'segmentation': [[184, 61, 184, 199, 279, 199, 279, 61]]}]*
+  'segmentation': [[184, 61, 184, 199, 279, 199, 279, 61]]}]
+'''
 ```
 
 ## 类别 [[50:15](https://youtu.be/Z0ssNAbe81M?t=50m15s)]
 
 ```py
-**trn_j[CATEGORIES]**[:4]*[{'id': 1, 'name': 'aeroplane', 'supercategory': 'none'},
+trn_j[CATEGORIES][:4]
+'''
+[{'id': 1, 'name': 'aeroplane', 'supercategory': 'none'},
  {'id': 2, 'name': 'bicycle', 'supercategory': 'none'},
  {'id': 3, 'name': 'bird', 'supercategory': 'none'},
- {'id': 4, 'name': 'boat', 'supercategory': 'none'}]*
+ {'id': 4, 'name': 'boat', 'supercategory': 'none'}]
+'''
 ```
 
 使用常量而不是字符串很有帮助，因为我们可以获得制表符补全，不会输错。
 
 ```py
-FILE_NAME,ID,IMG_ID,CAT_ID,BBOX = 
-                   'file_name','id','image_id','category_id','bbox'cats = dict((o[ID], o['name']) for o in trn_j[CATEGORIES])
+FILE_NAME,ID,IMG_ID,CAT_ID,BBOX = 'file_name','id','image_id','category_id','bbox'
+cats = dict((o[ID], o['name']) for o in trn_j[CATEGORIES])
 trn_fns = dict((o[ID], o[FILE_NAME]) for o in trn_j[IMAGES])
 trn_ids = [o[ID] for o in trn_j[IMAGES]]
 ```
@@ -247,7 +265,9 @@ trn_ids = [o[ID] for o in trn_j[IMAGES]]
 ## 让我们看看这些图像。
 
 ```py
-list((PATH/'VOCdevkit'/'VOC2007').iterdir())*[PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages'),
+list((PATH/'VOCdevkit'/'VOC2007').iterdir())
+'''
+[PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages'),
  PosixPath('data/pascal/VOCdevkit/VOC2007/SegmentationObject'),
  PosixPath('data/pascal/VOCdevkit/VOC2007/ImageSets'),
  PosixPath('data/pascal/VOCdevkit/VOC2007/SegmentationClass'),
@@ -256,7 +276,8 @@ list(IMG_PATH.iterdir())[:5]*[PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImage
  PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages/005682.jpg'),
  PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages/005016.jpg'),
  PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages/001930.jpg'),
- PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages/007666.jpg')]*
+ PosixPath('data/pascal/VOCdevkit/VOC2007/JPEGImages/007666.jpg')]
+'''
 ```
 
 ## 创建字典（键：图像 ID，值：注释）
@@ -282,7 +303,10 @@ for o in trn_j[ANNOTATIONS]:
         bb = np.array([bb[1], bb[0], bb[3]+bb[1]-1, bb[2]+bb[0]-1])
         trn_anno[o[IMG_ID]].append((bb,o[CAT_ID]))
 
-len(trn_anno)*2501*
+len(trn_anno)
+'''
+2501
+'''
 ```
 
 **变量命名，编码风格哲学等**
@@ -294,21 +318,38 @@ len(trn_anno)*2501*
 +   `7`：类标签/类别
 
 ```py
-im0_a = im_a[0]; im0_a*[(array(***
+im0_a = im_a[0]; im0_a
 '''
-[96, 155, 269, 350]****),* *7**)]*im0_a = im_a[0]; im0_a*(array([ 96, 155, 269, 350]), 7)*cats[7]*'car'*
+[(array([96, 155, 269, 350]), 7)]
+'''
+im0_a = im_a[0]; im0_a
+'''
+(array([ 96, 155, 269, 350]), 7)
+'''
+cats[7]
+'''
+'car'
+'''
 ```
 
 **示例 2**
 
 ```py
-trn_anno[17]*[(array([61, 184, 198, 278]), 15), (array([77, 89, 335, 402]), 13)]*cats[15],cats[13]*('person', 'horse')*
+trn_anno[17]
+'''
+[(array([61, 184, 198, 278]), 15), (array([77, 89, 335, 402]), 13)]
+'''
+cats[15],cats[13]
+'''
+('person', 'horse')
+'''
 ```
 
 有些库采用 VOC 格式的边界框，因此当需要时，我们可以将其转换回来：
 
 ```py
-def bb_hw(a): return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
+def bb_hw(a): 
+    return np.array([a[1],a[0],a[3]-a[1],a[2]-a[0]])
 ```
 
 我们将使用 fast.ai 的`open_image`来显示它：
@@ -379,7 +420,8 @@ Matplotlib 的`plt.subplots`是一个非常有用的包装器，用于创建图�
 
 ```py
 def show_img(im, figsize=None, ax=None):
-    if not ax: fig,ax = plt.subplots(figsize=figsize)
+    if not ax: 
+        fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -394,8 +436,10 @@ def show_img(im, figsize=None, ax=None):
 
 ```py
 def draw_outline(o, lw):
-    o.set_path_effects([patheffects.Stroke(
-        linewidth=lw, foreground='black'), patheffects.Normal()])
+    o.set_path_effects([
+        patheffects.Stroke(linewidth=lw, foreground='black'), 
+        patheffects.Normal()
+    ])
 ```
 
 请注意参数列表中的 `*` 是 [splat 操作符](https://stackoverflow.com/questions/5239856/foggy-on-asterisk-in-python)。在这种情况下，与写出 `b[-2],b[-1]` 相比，这是一个小快捷方式。
@@ -404,10 +448,12 @@ def draw_outline(o, lw):
 def draw_rect(ax, b):
     patch = ax.add_patch(patches.Rectangle(b[:2], *b[-2:], 
                          fill=False, edgecolor='white', lw=2))
-    draw_outline(patch, 4)def draw_text(ax, xy, txt, sz=14):
+    draw_outline(patch, 4)
+def draw_text(ax, xy, txt, sz=14):
     text = ax.text(*xy, txt, verticalalignment='top', color='white',
                    fontsize=sz, weight='bold')
-    draw_outline(text, 1)ax = show_img(im)
+    draw_outline(text, 1)
+    ax = show_img(im)
 b = bb_hw(im0_a[0])
 draw_rect(ax, b)
 draw_text(ax, b[:2], cats[im0_a[1]])
@@ -421,11 +467,13 @@ def draw_im(im, ann):
     for b,c in ann:
         b = bb_hw(b)
         draw_rect(ax, b)
-        draw_text(ax, b[:2], cats[c], sz=16)def draw_idx(i):
+        draw_text(ax, b[:2], cats[c], sz=16)
+def draw_idx(i):
     im_a = trn_anno[i]
     im = open_image(IMG_PATH/trn_fns[i])
     print(im.shape)
-    draw_im(im, im_a)draw_idx(17)
+    draw_im(im, im_a)
+    draw_idx(17)
 ```
 
 当你使用新数据集时，快速探索它的能力是值得的。
@@ -440,9 +488,13 @@ def draw_im(im, ann):
 
 ```py
 def get_lrg(b):
-    if not b: raise Exception()
-    b = sorted(b, key=lambda x: np.product(x[0][-2:]-x[0][:2]), 
-               reverse=True)
+    if not b: 
+        raise Exception()
+    b = sorted(
+        b, 
+        key=lambda x: np.product(x[0][-2:]-x[0][:2]), 
+        reverse=True
+    )
     return b[0]
 ```
 
@@ -472,10 +524,12 @@ CSV = PATH/'tmp/lrg.csv'
 通常，最简单的方法是简单地创建要建模的数据的 CSV，而不是尝试创建自定义数据集 [1:29:06]。在这里，我们使用 Pandas 帮助我们创建一个图像文件名和类别的 CSV。`columns=[‘fn’,’cat’]` 是因为字典没有顺序，列的顺序很重要。
 
 ```py
-df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids],
-    'cat': [cats[trn_lrg_anno[o][1]] for o in trn_ids]}, 
-    columns=['fn','cat'])
-df.to_csv(CSV, index=False)f_model = resnet34
+df = pd.DataFrame({
+    'fn': [trn_fns[o] for o in trn_ids],
+    'cat': [cats[trn_lrg_anno[o][1]] for o in trn_ids]
+    }, columns=['fn','cat'])
+df.to_csv(CSV, index=False)
+f_model = resnet34
 sz=224
 bs=64
 ```
@@ -483,8 +537,11 @@ bs=64
 从这里开始就像狗与猫！
 
 ```py
-tfms = tfms_from_model(f_model, sz, aug_tfms=transforms_side_on, 
-                       crop_type=CropType.NO)
+tfms = tfms_from_model(
+    f_model, sz, 
+    aug_tfms=transforms_side_on, 
+    crop_type=CropType.NO
+)
 md = ImageClassifierData.from_csv(PATH, JPEGS, CSV, tfms=tfms)
 ```
 
@@ -533,8 +590,11 @@ learn.sched.plot(n_skip=5, n_skip_end=1)
 
 ```py
 lr = 2e-2
-learn.fit(lr, 1, cycle_len=1)*epoch      trn_loss   val_loss   accuracy                      
-    0      1.280753   0.604127   0.806941*
+learn.fit(lr, 1, cycle_len=1)
+'''
+epoch      trn_loss   val_loss   accuracy                      
+    0      1.280753   0.604127   0.806941
+'''
 ```
 
 解冻几层：
@@ -542,17 +602,23 @@ learn.fit(lr, 1, cycle_len=1)*epoch      trn_loss   val_loss   accuracy
 ```py
 lrs = np.array([lr/1000,lr/100,lr])
 learn.freeze_to(-2)
-learn.fit(lrs/5, 1, cycle_len=1)*epoch      trn_loss   val_loss   accuracy                      
-    0      0.780925   0.575539   0.821064*
+learn.fit(lrs/5, 1, cycle_len=1)
+'''
+epoch      trn_loss   val_loss   accuracy                      
+    0      0.780925   0.575539   0.821064
+'''
 ```
 
 解冻整个模型：
 
 ```py
 learn.unfreeze()
-learn.fit(lrs/5, 1, cycle_len=2)epoch      trn_loss   val_loss   accuracy                       
+learn.fit(lrs/5, 1, cycle_len=2)
+'''
+epoch      trn_loss   val_loss   accuracy                       
     0      0.676254   0.546998   0.834285       
     1      0.460609   0.533741   0.833233
+'''
 ```
 
 准确率没有太大改善 —— 由于许多图像具有多个不同的对象，要达到那么高的准确率几乎是不可能的。
@@ -624,13 +690,20 @@ plt.tight_layout()
 ```py
 BB_CSV = PATH/'tmp/bb.csv'
 bb = np.array([trn_lrg_anno[o][0] for o in trn_ids])
-bbs = [' '.join(str(p) for p in o) for o in bb]df = pd.DataFrame({'fn': [trn_fns[o] for o in trn_ids], 
-                   'bbox': bbs}, columns=['fn','bbox'])
-df.to_csv(BB_CSV, index=False)BB_CSV.open().readlines()[:5]*['fn,bbox\n',
+bbs = [' '.join(str(p) for p in o) for o in bb]
+df = pd.DataFrame({
+    'fn': [trn_fns[o] for o in trn_ids], 
+    'bbox': bbs
+}, columns=['fn','bbox'])
+df.to_csv(BB_CSV, index=False)
+BB_CSV.open().readlines()[:5]
+'''
+['fn,bbox\n',
  '000012.jpg,96 155 269 350\n',
  '000017.jpg,77 89 335 402\n',
  '000023.jpg,1 2 461 242\n',
- '000026.jpg,124 89 211 336\n']*
+ '000026.jpg,124 89 211 336\n']
+'''
 ```
 
 ## Training [[1:56:11](https://youtu.be/Z0ssNAbe81M?t=1h56m11s)]
@@ -648,17 +721,27 @@ bs=64
 此外，我们使用 CropType.NO，因为我们希望将矩形图像“压缩”成正方形，而不是中心裁剪，以免意外裁剪掉一些对象。（在像 imagenet 这样的情况下，这不是太大的问题，因为有一个要分类的单个对象，通常很大且位于中心位置）。
 
 ```py
-tfms = tfms_from_model(f_model, sz, crop_type=CropType.NO, 
-                       **tfm_y=TfmType.COORD**)
-md = ImageClassifierData.from_csv(PATH, JPEGS, BB_CSV, tfms=tfms, 
-                                  **continuous=True**)
+tfms = tfms_from_model(
+    f_model, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.COORD
+)
+md = ImageClassifierData.from_csv(
+    PATH, JPEGS, BB_CSV, 
+    tfms=tfms, 
+    continuous=True
+)
 ```
 
 下周我们将看一下`TfmType.COORD`，但现在，只需意识到当我们进行缩放和数据增强时，需要对边界框进行操作，而不仅仅是图像。
 
 ```py
 x,y=next(iter(md.val_dl))ima=md.val_ds.denorm(to_np(x))[0]
-b = bb_hw(to_np(y[0])); b*array([  49.,    0.,  131.,  205.], dtype=float32)*ax = show_img(ima)
+b = bb_hw(to_np(y[0])); b
+'''
+array([  49.,    0.,  131.,  205.], dtype=float32)
+'''
+ax = show_img(ima)
 draw_rect(ax, b)
 draw_text(ax, b[:2], 'label')
 ```
@@ -687,23 +770,34 @@ learn.sched.plot(5)78%|███████▊  | 25/32 [00:04<00:01,  6.16it/s
 
 ```py
 lr = 2e-3
-learn.fit(lr, 2, cycle_len=1, cycle_mult=2)*epoch      trn_loss   val_loss                            
+learn.fit(lr, 2, cycle_len=1, cycle_mult=2)
+'''
+epoch      trn_loss   val_loss                            
     0      49.523444  34.764141 
     1      36.864003  28.007317                           
-    2      30.925234  27.230705*lrs = np.array([lr/100,lr/10,lr])
+    2      30.925234  27.230705
+'''
+lrs = np.array([lr/100,lr/10,lr])
 learn.freeze_to(-2)
 lrf=learn.lr_find(lrs/1000)
 learn.sched.plot(1)
 ```
 
 ```py
-learn.fit(lrs, 2, cycle_len=1, cycle_mult=2)*epoch      trn_loss   val_loss                            
+learn.fit(lrs, 2, cycle_len=1, cycle_mult=2)
+'''
+epoch      trn_loss   val_loss                            
     0      25.616161  22.83597  
     1      21.812624  21.387115                           
-    2      17.867176  20.335539*learn.freeze_to(-3)
-learn.fit(lrs, 1, cycle_len=2)*epoch      trn_loss   val_loss                            
+    2      17.867176  20.335539
+'''
+learn.freeze_to(-3)
+learn.fit(lrs, 1, cycle_len=2)
+'''
+epoch      trn_loss   val_loss                            
     0      16.571885  20.948696 
-    1      15.072718  19.925312*
+    1      15.072718  19.925312
+'''
 ```
 
 验证损失是绝对值的平均值，像素偏离了。
@@ -717,7 +811,8 @@ learn.save('reg4')
 ```py
 x,y = next(iter(md.val_dl))
 learn.model.eval()
-preds = to_np(learn.model(VV(x)))fig, axes = plt.subplots(3, 4, figsize=(12, 8))
+preds = to_np(learn.model(VV(x)))
+fig, axes = plt.subplots(3, 4, figsize=(12, 8))
 for i,ax in enumerate(axes.flat):
     ima=md.val_ds.denorm(to_np(x))[i]
     b = bb_hw(preds[i])

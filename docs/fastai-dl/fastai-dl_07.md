@@ -488,7 +488,8 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), np.array([ 0.24703,  0.24349,  0.26159]))
 def get_data(sz,bs):
      tfms = tfms_from_stats(stats, sz, aug_tfms=[RandomFlipXY()], pad=sz//8)
-     return ImageClassifierData.from_paths(PATH, val_name='test', tfms=tfms, bs=bs)bs=256
+     return ImageClassifierData.from_paths(PATH, val_name='test', tfms=tfms, bs=bs)
+bs=256
 ```
 
 +   `classes` — 图像标签
@@ -735,8 +736,13 @@ class ConvNet2(nn.Module):
 class BnLayer(nn.Module):
     def __init__(self, ni, nf, stride=2, kernel_size=3):
         super().__init__()
-        self.conv = nn.Conv2d(ni, nf, kernel_size=kernel_size, 
-                              stride=stride, bias=False, padding=1)
+        self.conv = nn.Conv2d(
+            ni, nf, 
+            kernel_size=kernel_size, 
+            stride=stride, 
+            bias=False, 
+            padding=1
+        )
         self.a = nn.Parameter(torch.zeros(nf,1,1))
         self.m = nn.Parameter(torch.ones(nf,1,1))
 
