@@ -405,7 +405,11 @@ m_vgg = nn.Sequential(*children(m_vgg)[:37])
 ```py
 targ_t = m_vgg(VV(img_tfm[None]))
 targ_v = V(targ_t)
-targ_t.shape*torch.Size([1, 512, 18, 18])*max_iter = 1000
+targ_t.shape
+'''
+torch.Size([1, 512, 18, 18])
+'''
+max_iter = 1000
 show_iter = 100
 optimizer = optim.LBFGS([opt_img_v], lr=0.5)
 ```
@@ -423,7 +427,9 @@ optimizer = optim.LBFGS([opt_img_v], lr=0.5)
 现在的问题是，实际计算 Hessian（二阶导数）几乎肯定不是一个好主意。因为在你要前进的每个可能方向上，对于你测量梯度的每个方向，你还必须在每个方向上计算 Hessian。这变得非常庞大。所以我们不是真的计算它，我们走几步，基本上看一下梯度在每一步变化了多少，然后用那个小函数来近似 Hessian。再次强调，这似乎是一个非常明显的事情，但直到后来有人想到了，这花了相当长的时间。跟踪每一步都需要大量内存，所以别跟踪每一步，只保留最后的十步或二十步。第二部分，就是 L 到 LBFGS。有限内存的 BFGS 意味着保留最后的 10 或 20 个梯度，用它来近似曲率的量，然后用曲率和梯度来估计前进的方向和距离。在深度学习中通常不是一个好主意，有很多原因。这比 Adam 或 SGD 更新更费力，也使用更多内存，当你有一个 GPU 来存储和数亿个权重时，内存就成了一个更大的问题。但更重要的是，小批量是非常颠簸的，所以弄清楚曲率以决定到底要前进多远，有点像我们说的磨亮了粪便（是的，澳大利亚和英国的表达方式，你懂的）。有趣的是，实际上使用二阶导数信息，结果就像是一个吸引鞍点的磁铁。因此，有一些有趣的理论结果基本上说，如果使用二阶导数信息，它实际上会把你引向函数的恶劣平坦区域。所以通常不是一个好主意。
 
 ```py
-def actn_loss(x): return F.mse_loss(m_vgg(x), targ_v)*1000def step(loss_fn):
+def actn_loss(x): 
+    return F.mse_loss(m_vgg(x), targ_v)*1000
+def step(loss_fn):
     global n_iter
     optimizer.zero_grad()
     loss = loss_fn(opt_img_v)
@@ -438,7 +444,10 @@ def actn_loss(x): return F.mse_loss(m_vgg(x), targ_v)*1000def step(loss_fn):
 
 ```py
 n_iter=0
-while n_iter <= max_iter: optimizer.step(partial(step,actn_loss))*Iteration: n_iter, loss: 0.8466196656227112
+while n_iter <= max_iter: 
+    optimizer.step(partial(step,actn_loss))
+'''
+Iteration: n_iter, loss: 0.8466196656227112
 Iteration: n_iter, loss: 0.34066855907440186
 Iteration: n_iter, loss: 0.21001280844211578
 Iteration: n_iter, loss: 0.15562333166599274
@@ -447,7 +456,8 @@ Iteration: n_iter, loss: 0.10863320529460907
 Iteration: n_iter, loss: 0.0966048613190651
 Iteration: n_iter, loss: 0.08812198787927628
 Iteration: n_iter, loss: 0.08170554041862488
-Iteration: n_iter, loss: 0.07657770067453384*
+Iteration: n_iter, loss: 0.07657770067453384
+'''
 ```
 
 所以你可以看到损失函数在下降。我们的 VGG 模型第 37 层的激活与目标激活之间的均方误差，记住目标激活是应用于我们的鸟的 VGG。明白了吗？所以现在我们有了一个内容损失。现在，关于这个内容损失，我要说的一件事是我们不知道哪一层会起到最好的作用。所以如果我们能多做一些实验就好了。现在的情况很烦人：
@@ -471,8 +481,10 @@ class SaveFeatures():
     features=None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
-    def hook_fn(self, module, input, output): self.features = output
-    def close(self): self.hook.remove()
+    def hook_fn(self, module, input, output): 
+        self.features = output
+    def close(self): 
+        self.hook.remove()
 ```
 
 现在我们可以像以前一样创建一个 VGG。让我们将其设置为不可训练，这样我们就不会浪费时间和内存来计算梯度。让我们遍历并找到所有的最大池层。让我们遍历这个模块的所有子层，如果是一个最大池层，让我们输出索引减 1——这样就会给我最大池之前的层。通常，最大池或步长 2 卷积之前的层是一个非常完整的表示，因为下一层正在改变网格。所以这对我来说是一个很好的地方来获取内容损失。我们在该网格大小上拥有的最语义化、最有趣的内容。这就是为什么我要选择这些索引。
@@ -485,9 +497,14 @@ set_trainable(m_vgg, False)
 这些是 VGG 中每个最大池之前的最后一层的索引[[1:32:30](https://youtu.be/xXXiC4YRGrQ?t=1h32m30s)]。
 
 ```py
-block_ends = [i-1 for i,o in enumerate(children(m_vgg))
-              if isinstance(o,nn.MaxPool2d)]
-block_ends*[5, 12, 22, 32, 42]*
+block_ends = [
+    i-1 for i,o in enumerate(children(m_vgg))
+    if isinstance(o,nn.MaxPool2d)
+]
+block_ends
+'''
+[5, 12, 22, 32, 42]
+'''
 ```
 
 我要获取`32`——没有特定的原因，只是尝试其他东西。所以我要说`block_ends[3]`（即 32）。`children(m_vgg)[block_ends[3]]`会给我 VGG 的第 32 层作为一个模块。
@@ -504,11 +521,14 @@ sf = SaveFeatures(children(m_vgg)[block_ends[3]])
 
 ```py
 def get_opt():
-    opt_img = np.random.uniform(0, 1, 
-                                size=img.shape).astype(np.float32)
+    opt_img = np.random.uniform(
+        0, 1, 
+        size=img.shape
+    ).astype(np.float32)
     opt_img = scipy.ndimage.filters.median_filter(opt_img, [8,8,1])
     opt_img_v = V(val_tfms(opt_img/2)[None], requires_grad=True)
-    return opt_img_v, optim.LBFGS([opt_img_v])opt_img_v, optimizer = get_opt()
+    return opt_img_v, optim.LBFGS([opt_img_v])
+opt_img_v, optimizer = get_opt()
 ```
 
 在这里[[1:33:33](https://youtu.be/xXXiC4YRGrQ?t=1h33m33s)]，我调用了我的 VGG 网络，但我没有将其存储在任何地方。我没有说`activations = m_vgg(VV(img_tfm[**None**]))`。我调用它，丢弃答案，然后抓取我们在`SaveFeatures`对象中存储的特征。
@@ -522,7 +542,11 @@ def get_opt():
 ```py
 m_vgg(VV(img_tfm[None]))
 targ_v = V(sf.features.clone())
-targ_v.shape*torch.Size([1, 512, 36, 36])*def actn_loss2(x):
+targ_v.shape
+'''
+torch.Size([1, 512, 36, 36])
+'''
+def actn_loss2(x):
     m_vgg(x)
     out = V(sf.features)
     return F.mse_loss(out, targ_v)*1000
@@ -532,7 +556,10 @@ targ_v.shape*torch.Size([1, 512, 36, 36])*def actn_loss2(x):
 
 ```py
 n_iter=0
-while n_iter <= max_iter: optimizer.step(partial(step,actn_loss2))*Iteration: n_iter, loss: 0.2112911492586136
+while n_iter <= max_iter: 
+    optimizer.step(partial(step,actn_loss2))
+'''
+Iteration: n_iter, loss: 0.2112911492586136
 Iteration: n_iter, loss: 0.0902421623468399
 Iteration: n_iter, loss: 0.05904778465628624
 Iteration: n_iter, loss: 0.04517251253128052
@@ -541,7 +568,8 @@ Iteration: n_iter, loss: 0.03215853497385979
 Iteration: n_iter, loss: 0.028526008129119873
 Iteration: n_iter, loss: 0.025799645110964775
 Iteration: n_iter, loss: 0.02361033484339714
-Iteration: n_iter, loss: 0.021835438907146454*
+Iteration: n_iter, loss: 0.021835438907146454
+'''
 ```
 
 这只是在稍早的层上做同样的事情[[1:37:35](https://youtu.be/xXXiC4YRGrQ?t=1h37m35s)]。这只是让鸟看起来更像鸟。希望你能理解，较早的层越接近像素。有更多的网格单元，每个单元更小，更小的感受野，更简单的语义特征。所以我们越早得到，它看起来就越像一只鸟。
@@ -563,8 +591,13 @@ sf.close()
 我们接下来需要做的是创建风格损失。我们已经有了损失，即它有多像鸟。现在我们需要知道它有多像这幅绘画的风格。我们将做几乎相同的事情。我们将获取某一层的激活。现在问题是，某一层的激活，假设它是一个 5x5 的层（当然没有 5x5 的层，它是 224x224，但我们假装）。这里是一些激活，我们可以获取这些激活，无论是针对我们正在优化的图像还是我们的梵高绘画。让我们看看我们的梵高绘画。这就是它 —《星夜》
 
 ```py
-style_fn = PATH/'style'/'starry_night.jpg'style_img = open_image(style_fn)
-style_img.shape, img.shape((1198, 1513, 3), (291, 483, 3))plt.imshow(style_img);
+style_fn = PATH/'style'/'starry_night.jpg'
+style_img = open_image(style_fn)
+style_img.shape, img.shape
+'''
+((1198, 1513, 3), (291, 483, 3))
+'''
+plt.imshow(style_img);
 ```
 
 我从维基百科下载了这幅图像，我想知道为什么加载如此缓慢[[1:40:39](https://youtu.be/xXXiC4YRGrQ?t=1h40m39s)] — 结果，我下载的维基百科版本是 30,000 x 30,000 像素。他们有这种严肃的画廊品质存档真的很酷。我不知道这个存在。不要试图在上面运行神经网络。完全毁了我的 Jupyter 笔记本。
@@ -589,8 +622,13 @@ def scale_match(src, targ):
     sh,sw,_ = style_img.shape
     rat = max(h/sh,w/sw); rat
     res = cv2.resize(style_img, (int(sw*rat), int(sh*rat)))
-    return res[:h,:w]style = scale_match(img, style_img)plt.imshow(style)
-style.shape, img.shape*((291, 483, 3), (291, 483, 3))*
+    return res[:h,:w]
+style = scale_match(img, style_img)
+plt.imshow(style)
+style.shape, img.shape
+'''
+((291, 483, 3), (291, 483, 3))
+'''
 ```
 
 这是我们的绘画。我尝试调整绘画的大小，使其与我的鸟类图片大小相同。所以这就是所有这些在做的事情。不管我使用哪一部分，只要它有很多漂亮的风格就可以了。
@@ -618,11 +656,14 @@ style_tfm = val_tfms(style_img)
 ```py
 m_vgg(VV(style_tfm[None]))
 targ_styles = [V(o.features.clone()) for o in sfs]
-[o.shape for o in targ_styles]*[torch.Size([1, 64, 288, 288]),
+[o.shape for o in targ_styles]
+'''
+[torch.Size([1, 64, 288, 288]),
  torch.Size([1, 128, 144, 144]),
  torch.Size([1, 256, 72, 72]),
  torch.Size([1, 512, 36, 36]),
- torch.Size([1, 512, 18, 18])]*
+ torch.Size([1, 512, 18, 18])]
+'''
 ```
 
 你可以看到，能够快速地编写一个列表推导式在你的 Jupyter 玩耍中非常重要。因为你真的希望能够立即看到这是我的通道（64、128、256，...），以及我们期望的网格大小减半（288、144、72...），因为所有这些都出现在最大池化之前。
@@ -653,7 +694,10 @@ def style_loss(x):
 
 ```py
 n_iter=0
-while n_iter <= max_iter: optimizer.step(partial(step,style_loss))*Iteration: n_iter, loss: 230718.453125
+while n_iter <= max_iter: 
+    optimizer.step(partial(step,style_loss))
+'''
+Iteration: n_iter, loss: 230718.453125
 Iteration: n_iter, loss: 219493.21875
 Iteration: n_iter, loss: 202618.109375
 Iteration: n_iter, loss: 481.5616760253906
@@ -662,7 +706,8 @@ Iteration: n_iter, loss: 80.62625122070312
 Iteration: n_iter, loss: 49.52326965332031
 Iteration: n_iter, loss: 32.36254119873047
 Iteration: n_iter, loss: 21.831811904907227
-Iteration: n_iter, loss: 15.61091423034668*
+Iteration: n_iter, loss: 15.61091423034668
+'''
 ```
 
 这里有一张随机图像，风格类似于梵高，我觉得挺酷的。
@@ -707,7 +752,10 @@ def comb_loss(x):
 
 ```py
 n_iter=0
-while n_iter <= max_iter: optimizer.step(partial(step,comb_loss))*Iteration: n_iter, loss: 1802.36767578125
+while n_iter <= max_iter: 
+    optimizer.step(partial(step,comb_loss))
+'''
+Iteration: n_iter, loss: 1802.36767578125
 Iteration: n_iter, loss: 1163.05908203125
 Iteration: n_iter, loss: 961.6024169921875
 Iteration: n_iter, loss: 853.079833984375
@@ -716,7 +764,9 @@ Iteration: n_iter, loss: 739.18994140625
 Iteration: n_iter, loss: 706.310791015625
 Iteration: n_iter, loss: 681.6689453125
 Iteration: n_iter, loss: 662.4088134765625
-Iteration: n_iter, loss: 646.329833984375*x = val_tfms.denorm(np.rollaxis(to_np(opt_img_v.data),1,4))[0]
+Iteration: n_iter, loss: 646.329833984375
+'''
+x = val_tfms.denorm(np.rollaxis(to_np(opt_img_v.data),1,4))[0]
 plt.figure(figsize=(9,9))
 plt.imshow(x, interpolation='lanczos')
 plt.axis('off');

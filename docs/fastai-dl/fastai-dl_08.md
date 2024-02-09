@@ -193,8 +193,9 @@ dict_keys(['images', 'type', 'annotations', 'categories'])
 这里的`/`不是除法符号，而是路径斜杠[[45:55](https://youtu.be/Z0ssNAbe81M?t=45m55s)]。`PATH/`可以让您获取该路径中的子项。`PATH/’pascal_train2007.json’`返回一个`pathlib`对象，该对象具有一个`open`方法。这个 JSON 文件不包含图像，而是包含对象的边界框和类别。
 
 ```py
-IMAGES,ANNOTATIONS,CATEGORIES = ['images', 'annotations', 
-                                 'categories'] 
+IMAGES,ANNOTATIONS,CATEGORIES = [
+    'images', 'annotations', 'categories'
+] 
 trn_j[IMAGES][:5]
 '''
 [{'file_name': '000012.jpg', 'height': 333, 'id': 12, 'width': 500},  {'file_name': '000017.jpg', 'height': 364, 'id': 17, 'width': 480},  {'file_name': '000023.jpg', 'height': 500, 'id': 23, 'width': 334},  {'file_name': '000026.jpg', 'height': 333, 'id': 26, 'width': 500},  {'file_name': '000032.jpg', 'height': 281, 'id': 32, 'width': 500}]
@@ -446,12 +447,21 @@ def draw_outline(o, lw):
 
 ```py
 def draw_rect(ax, b):
-    patch = ax.add_patch(patches.Rectangle(b[:2], *b[-2:], 
-                         fill=False, edgecolor='white', lw=2))
+    patch = ax.add_patch(patches.Rectangle(
+        b[:2], *b[-2:], 
+        fill=False, 
+        edgecolor='white', 
+        lw=2
+    ))
     draw_outline(patch, 4)
 def draw_text(ax, xy, txt, sz=14):
-    text = ax.text(*xy, txt, verticalalignment='top', color='white',
-                   fontsize=sz, weight='bold')
+    text = ax.text(
+        *xy, txt, 
+        verticalalignment='top', 
+        color='white',
+        fontsize=sz, 
+        weight='bold'
+    )
     draw_outline(text, 1)
     ax = show_img(im)
 b = bb_hw(im0_a[0])
@@ -527,7 +537,7 @@ CSV = PATH/'tmp/lrg.csv'
 df = pd.DataFrame({
     'fn': [trn_fns[o] for o in trn_ids],
     'cat': [cats[trn_lrg_anno[o][1]] for o in trn_ids]
-    }, columns=['fn','cat'])
+}, columns=['fn','cat'])
 df.to_csv(CSV, index=False)
 f_model = resnet34
 sz=224
