@@ -34,7 +34,32 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 这（`LogReg`）是我们创建的那个小手写的`nn.Module`类[[9:15](https://youtu.be/37sFIak42Sc?t=555)]。我们定义了损失。我们定义了学习率，我们定义了优化器。`optim.SGD`是我们接下来要尝试手写的东西。所以`nn.NLLLoss`和`optim.SGD`，我们是从 PyTorch 中借鉴的，但我们自己编写了模块`LogReg`和训练循环。
 
-[PRE0]
+```py
+net2 = LogReg().cuda()
+loss=nn.NLLLoss()
+learning_rate = 1e-2
+optimizer=optim.SGD(net2.parameters(), lr=learning_rate)**for** epoch **in** range(1):
+    losses=[]
+    dl = iter(md.trn_dl)
+    **for** t **in** range(len(dl)):
+        *# Forward pass: compute predicted y and loss by passing x to
+        # the model.*
+        xt, yt = next(dl)
+        y_pred = net2(V(xt))
+        l = loss(y_pred, V(yt))
+        losses.append(l) *# Before the backward pass, use the optimizer object to zero
+        # all of the gradients for the variables it will update
+        # (which are the learnable weights of the model)*
+        optimizer.zero_grad() *# Backward pass: compute gradient of the loss with respect
+        # to model parameters*
+        l.backward() *# Calling the step function on an Optimizer makes an update
+        # to its parameters*
+        optimizer.step()
+
+    val_dl = iter(md.val_dl)
+    val_scores = [score(*next(val_dl)) **for** i **in** range(len(val_dl))]
+    print(np.mean(val_scores))
+```
 
 所以基本思想是我们将经历一些时期[[9:39](https://youtu.be/37sFIak42Sc?t=579)]，所以让我们经历一个时期。我们将跟踪每个小批次的损失，以便在最后报告。我们将把我们的训练数据加载器转换为迭代器，以便我们可以循环遍历它 - 遍历每个小批次。现在我们可以继续说`for`张量`in`数据加载器的长度，然后我们可以调用`next`来从该迭代器中获取下一个自变量和因变量。
 
@@ -54,7 +79,11 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 然后最后，我们可以将验证数据加载器转换为迭代器。然后我们可以遍历它的长度，每次取出一个 x 和 y，并询问我们定义的分数，即你预测了哪个，实际上是哪个，并检查它们是否相等。然后这些的平均值将是我们的准确率。
 
-[PRE1]
+```py
+**def** score(x, y):
+    y_pred = to_np(net2(V(x)))
+    **return** np.sum(y_pred.argmax(axis=1) == to_np(y))/len(y_pred)
+```
 
 **问题**: 为什么你要将其转换为迭代器而不是使用普通的 Python 循环[[14:53](https://youtu.be/37sFIak42Sc?t=893)]？我们正在使用普通的 Python 循环，所以问题实际上是与什么进行比较。所以，也许你在考虑的替代方案可能是，我们可以使用类似带有索引器的列表。问题在于我们每次获取一个新的小批次时，我们希望它是随机的。我们希望有一个不同的洗牌过的东西。所以这个`for t in range(len(dl))`，你实际上可以无限迭代。你可以循环遍历它任意次数。所以这种想法在不同的语言中被称为不同的东西，但很多语言称之为流处理，这是一种基本的想法，而不是说我想要第三个或第九个东西，而是说我想要下一个东西。这对网络编程非常有用——从网络中获取下一个东西。对于 UI 编程也非常有用——获取下一个事件，比如有人点击了一个按钮。事实证明，这对于这种数值编程也非常有用——就像我只想要下一个数据批次。这意味着数据可以是任意长的，因为我们一次只获取一部分。我想简短的回答是因为这是 PyTorch 的工作方式。PyTorch 的数据加载器被设计为以这种方式调用。所以 Python 有这个生成器的概念，它是一种可以创建行为像迭代器的函数的方式。Python 已经认识到这种流处理编程方法非常方便和有用，并且在各处支持它。所以基本上任何你使用`for ... in`循环的地方，任何你使用列表推导的地方，这些东西都可以是生成器或迭代器。通过这种方式编程，我们获得了很大的灵活性。听起来对吗，Terrence？你是编程语言专家。
 
@@ -88,7 +117,34 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 这就是梯度下降的公式。正如你所看到的，这是你可能想象到的最简单的事情。就像更新权重等于它们现在的值减去梯度乘以学习率一样。对偏差也是同样的操作。
 
-[PRE2]
+```py
+net2 = LogReg().cuda()
+loss_fn=nn.NLLLoss()
+lr = 1e-2
+w,b = net2.l1_w,net2.l1_b
+
+**for** epoch **in** range(1):
+    losses=[]
+    dl = iter(md.trn_dl)
+    **for** t **in** range(len(dl)):
+        xt, yt = next(dl)
+        y_pred = net2(V(xt))
+        l = loss(y_pred, Variable(yt).cuda())
+        losses.append(loss)
+
+        *# Backward pass: compute gradient of the loss with respect 
+        # to model parameters*
+        l.backward()
+        w.data -= w.grad.data * lr
+        b.data -= b.grad.data * lr
+
+        w.grad.data.zero_()
+        b.grad.data.zero_()   
+
+    val_dl = iter(md.val_dl)
+    val_scores = [score(*next(val_dl)) **for** i **in** range(len(val_dl))]
+    print(np.mean(val_scores))
+```
 
 问题：当我们在顶部执行`next`时，当循环结束时，我们如何获取下一个元素？所以这个(`**for** t **in** range(len(dl)):`)是在长度范围内的每个索引进行循环，所以这是 0、1、2...在这个循环结束时，它将打印出验证集的平均值，然后回到 epoch 的开始，在这一点上，它将创建一个新的迭代器。所以基本上在 Python 的后台当你调用`iter(md.trn_dl)`时，它基本上告诉它重置其状态以创建一个新的迭代器。如果你对它是如何工作感兴趣，所有的代码都可以供你查看。`md.trn_dl`是`fastai.dataset.ModelDataLoader`，所以我们可以看一下它的代码，看看它是如何构建的。所以你可以在这里看到，`__next__`函数跟踪了它在`self.i`中经历了多少次，这里是`__iter__`函数，当你创建一个新的迭代器时会调用这个函数。你可以看到它将其传递给另一个类型为 DataLoader 的东西，然后如果你对它是如何实现的感兴趣，你可以查看 DataLoader。
 
@@ -168,7 +224,11 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 **问题**：我有一个关于数据加载的问题。我知道这是一个 Fast AI 函数，但你能详细介绍一下它是如何创建批次的，如何完成的，以及如何做出这些决定吗？当然。基本上，PyTorch 中有一个非常好的设计，他们基本上说让我们创建一个叫做数据集的东西。数据集基本上看起来像一个列表。它有一个长度（例如数据集中有多少图像），并且可以像列表一样进行索引。所以如果你有数据集`d`，你可以这样做：
 
-[PRE3]
+```py
+d = Dataset(...)
+len(d)
+d[i]
+```
 
 这基本上就是 PyTorch 关心的数据集。所以你从数据集开始，就像`d[3]`给你第三张图像，等等。所以你拿一个数据集，你可以把它传递给一个数据加载器的构造函数`dl = DataLoader(d)`。这会给你一个现在可迭代的东西。所以你现在可以说`iter(dl)`，这是你可以调用 next 的东西（即`next(iter(dl))`）。当你调用数据加载器的构造函数时，你可以选择打开或关闭洗牌。打开洗牌意味着给我随机的小批量，关闭洗牌意味着按顺序进行。所以当你调用`next`时，假设你说`shuffle=True`并且批量大小是 64，它会在 0 到长度之间抓取 64 个随机整数，并调用这个（`d[i]`）64 次以获取 64 个不同的项目并将它们组合在一起。所以 Fast AI 使用完全相同的术语和完全相同的 API。我们只是以不同的方式处理一些细节。特别是在计算机视觉中，你经常想要做很多数据增强，比如翻转、稍微改变颜色、旋转，这些都是计算密集型的。甚至只是读取 JPEG 文件也是计算密集型的。所以 PyTorch 使用一种方法，即启动多个处理器并行进行处理，而 Fast AI 库则使用一种称为多线程的方法，这可能是更快的方法。
 
@@ -262,15 +322,33 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 我们将使用 IMDb 数据集。这是一个电影评论数据集。您可以按照以下步骤下载它：
 
-[PRE4]
+```py
+To get the dataset, in your terminal run the following commands:wget http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gzgunzip aclImdb_v1.tar.gztar -xvf aclImdb_v1.tar
+```
 
 一旦你下载了它，你会看到你有一个训练和一个测试目录，在你的训练目录中，你会看到有一个负面和一个正面目录。在你的正面目录中，你会看到有一堆文本文件。
 
-[PRE5]
+```py
+PATH='data/aclImdb/'
+names = ['neg','pos']%ls {PATH}*aclImdb_v1.tar.gz  imdbEr.txt  imdb.vocab  models/  README  test/  tmp/  train/*%ls {PATH}train*aclImdb/  all_val/         neg/  tmp/    unsupBow.feat  urls_pos.txt
+all/      labeledBow.feat  pos/  unsup/  urls_neg.txt   urls_unsup.txt*%ls {PATH}train/pos | head*0_9.txt
+10000_8.txt
+10001_10.txt
+10002_7.txt
+10003_8.txt
+10004_8.txt
+10005_7.txt
+10006_7.txt
+10007_7.txt
+10008_7.txt
+...*
+```
 
 这里是一个文本文件的例子：
 
-[PRE6]
+```py
+trn[0]*"Story of a man who has unnatural feelings for a pig. Starts out with a opening scene that is a terrific example of absurd comedy. A formal orchestra audience is turned into an insane, violent mob by the crazy chantings of it's singers. Unfortunately it stays absurd the WHOLE time with no general narrative eventually making it just too off putting. Even those from the era should be turned off. The cryptic dialogue would make Shakespeare seem easy to a third grader. On a technical level it's better than you might think with some good cinematography by future great Vilmos Zsigmond. Future stars Sally Kirkland and Frederic Forrest can be seen briefly."*
+```
 
 所以我们不知何故选出了一个男人对猪有不自然感情的故事作为我们的第一个选择。这并不是故意的，但没关系。
 
@@ -278,11 +356,16 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 所以在上面的例子中，我们有一个疯狂的暴力暴民，不幸的是太荒谬了，太令人反感了，那些来自那个时代的人应该被关掉。所以这个的标签是零，即负面的，所以这是一个负面的评论。
 
-[PRE7]
+```py
+trn_y[0]*0*
+```
 
 在 Fast AI 库中，有很多函数和类可以帮助你处理大多数机器学习的领域。对于自然语言处理，我们有一个简单的东西，就是来自文件夹的文本。
 
-[PRE8]
+```py
+trn,trn_y = texts_labels_from_folders(f'**{PATH}**train',names)
+val,val_y = texts_labels_from_folders(f'**{PATH}**test',names)
+```
 
 这将遍历并找到这里的所有文件夹（第一个参数`f'{PATH}train'`）与这些名称（第二个参数`names`）并创建一个带标签的数据集。不要让这些事情阻止你理解幕后发生的事情。我们可以获取它的源代码，你会看到它很小，就像 5 行。
 
@@ -318,11 +401,16 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 
 所以你可以看到，在这个版本中，如果我现在按空格分割这个文本，每个标记要么是一个单独的标点符号，要么是这个后缀`n't`，被视为一个单词。这就是我们可能想要对这段文本进行标记化的方式，因为你不希望`good.`成为一个对象。没有`good.`或`"movie"`是一个对象的概念。所以标记化是我们交给标记器的事情。Fast AI 中有一个我们可以使用的标记器，这就是我们如何使用标记器创建我们的术语文档矩阵：
 
-[PRE9]
+```py
+veczr = CountVectorizer(tokenizer=tokenize)
+```
 
 sklearn 有一个相当标准的 API，这很好。我相信你以前见过几次。一旦我们建立了某种“模型”，我们可以把`CountVectorizer`看作是一种模型，这只是定义它将要做什么。我们可以调用`fit_transform`来执行这个操作。
 
-[PRE10]
+```py
+trn_term_doc = veczr.fit_transform(trn)
+val_term_doc = veczr.transform(val)
+```
 
 在这种情况下，`fit_transform`将创建词汇表，并基于训练集创建术语文档矩阵。`transform`有点不同。它表示使用先前拟合的模型，这在这种情况下意味着使用先前创建的词汇表。我们不希望验证集和训练集在矩阵中有不同顺序的单词。因为那样它们会有不同的含义。所以这里说的是使用相同的词汇表为验证集创建一个词袋。
 
@@ -330,37 +418,67 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 当我们创建这个术语文档矩阵时，训练集有 25,000 行，因为有 25,000 条电影评论，有 75,132 列，这是唯一单词的数量。
 
-[PRE11]
+```py
+trn_term_doc<25000x75132 sparse matrix of type '<class 'numpy.int64'>'
+     with 3749745 stored elements in Compressed Sparse Row format>
+```
 
 现在，大多数文档并不包含这 75,132 个单词中的大部分。所以我们不想把它实际存储为内存中的普通数组。因为这样会非常浪费。所以，我们将其存储为稀疏矩阵。稀疏矩阵的作用是将其存储为一种只指示非零值位置的东西。所以它会说，文档编号 1，单词编号 4 出现了 4 次。文档编号 1，术语编号 123 出现了一次，依此类推。
 
-[PRE12]
+```py
+(1, 4) → 4
+(1, 123) → 1
+```
 
 这基本上就是它的存储方式。实际上有许多不同的存储方式，如果你学习 Rachel 的计算线性代数课程，你将了解不同类型的存储方式以及为什么选择它们，如何转换等等。但它们都类似于这样，你不需要太担心细节。重要的是它是高效的。
 
 所以我们可以拿到第一条评论，这给了我们一个 75,000 个长稀疏的一行长矩阵，其中有 93 个存储元素。换句话说，这些单词中有 93 个实际上在第一个文档中使用。
 
-[PRE13]
+```py
+trn_term_doc[0]<1x75132 sparse matrix of type '<class 'numpy.int64'>'
+	with 93 stored elements in Compressed Sparse Row format>
+```
 
 我们可以通过说`veczr.get_feature_names`来查看词汇表，这给我们提供了词汇表。这里是一些特征名称的元素的示例：
 
-[PRE14]
+```py
+vocab = veczr.get_feature_names(); vocab[5000:5005]['aussie', 'aussies', 'austen', 'austeniana', 'austens']
+```
 
 我并没有故意选择那个有澳大利亚的，但那是重要的单词，显然😄我这里没有使用分词器。我只是按空格分割，所以这与矢量化器所做的不完全相同。但为了简化事情，让我们拿到所有小写单词的集合。通过将其设置为集合，我们使它们成为唯一的。所以这大致是可能出现的单词列表。
 
-[PRE15]
+```py
+w0 = set([o.lower() **for** o **in** trn[0].split(' ')]); w0*{'a',
+ 'absurd',
+ 'an',
+ 'and',
+ 'audience',
+ 'be',
+ 'better',
+ 'briefly.',
+ 'by',
+ 'can',
+ ...
+}*len(w0)*91*
+```
 
 这个长度是 91，与 93 相似，唯一的区别是我没有使用真正的分词器。所以基本上就是这样。创建了这个唯一的单词列表并将它们映射。我们可以通过调用`veczr.vocabulary_`来查找特定单词的 ID。所以这就像`veczr.get_feature_names`的反向映射，它将整数映射到单词，`veczr.vocabulary_`将单词映射到整数。
 
-[PRE16]
+```py
+veczr.vocabulary_['absurd']*1297*
+```
 
 所以我们看到“荒谬”在第一个文档中出现了两次，所以让我们检查一下：
 
-[PRE17]
+```py
+trn_term_doc[0,1297]*2*
+```
 
 这就是，这是 2。否则，不幸的是，澳大利亚人没有出现在与猪有不自然关系的电影中，所以这是零：
 
-[PRE18]
+```py
+trn_term_doc[0,5000]0
+```
 
 这就是我们的术语文档矩阵。
 
@@ -440,15 +558,31 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 所以这是用 Python 写出来的。我们的自变量是我们的术语文档矩阵，我们的因变量只是`y`的标签。所以使用 numpy，这个`x[y==1]`将抓取因变量为 1 的行。然后我们可以对行求和，以获得该特征在所有文档中的总词数，再加 1 — Terrence 今天肯定会给我发关于伟哥的东西，我能感觉到。就是这样。然后对负面评论做同样的事情。然后当然最好取对数，因为如果我们取对数，那么我们可以将事物相加而不是相乘。一旦你将足够多的这些东西相乘在一起，它将接近零，你可能会用完浮点数。所以我们取这些比率的对数。然后，正如我所说的，我们将将其相乘，或者用对数，将其加到整个类别概率的比率上。
 
-[PRE19]
+```py
+**def** pr(y_i):
+    p = x[y==y_i].sum(0)
+    **return** (p+1) / ((y==y_i).sum()+1)x=trn_term_doc
+y=trn_yp = x[y==1].sum(0)+1 
+q = x[y==0].sum(0)+1
+r = np.log((p/p.sum())/(q/q.sum()))
+b = np.log(len(p)/len(q))
+```
 
 为了对每个文档说，将贝叶斯概率乘以计数，我们可以使用矩阵乘法。然后添加类别比率的对数，你可以使用`+ b`。所以我们最终得到的东西看起来很像逻辑回归。但我们并没有学到任何东西。不是从 SGD 的角度来看。我们只是使用这个理论模型进行计算。正如我所说，我们可以将其与零进行比较，看看它是更大还是更小 — 不再是 1，因为我们现在处于对数空间。然后我们可以将其与均值进行比较。这样的准确率约为 81%。所以朴素贝叶斯并不是没有用的。它给了我们一些东西。
 
-[PRE20]
+```py
+pre_preds = val_term_doc @ r.T + b
+preds = pre_preds.T>0
+(preds==val_y).mean()0.80691999999999997
+```
 
 事实证明，这个版本实际上是在看 a 出现的频率，比如“荒谬”出现了两次，至少对于这个问题来说，通常无论“荒谬”出现了两次还是一次都无关紧要[[1:29:03](https://youtu.be/37sFIak42Sc?t=5343)]。重要的是它出现了。所以人们倾向于尝试的是取术语矩阵文档并使用`.sign()`，它会将任何正数替换为`1`，将任何负数替换为`-1`（显然我们没有负计数）。这样就实现了二值化。它表示我不在乎你看到“荒谬”两次，我只在乎你看到它。所以如果我们对二值化版本做完全相同的事情，那么结果会更好。
 
-[PRE21]
+```py
+pre_preds = val_term_doc.sign() @ r.T + b
+preds = pre_preds.T>0
+(preds==val_y).mean()0.82623999999999997
+```
 
 # 逻辑回归[[1:30:01](https://youtu.be/37sFIak42Sc?t=5401)]
 
@@ -456,7 +590,12 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 那么让我们创建一个逻辑回归，并拟合一些系数。这实际上会给我们提供与之前完全相同的功能形式，但现在我们不再使用理论上的`r`和理论上的`b`，而是根据逻辑回归计算这两个值。这样更好。
 
-[PRE22]
+```py
+m = LogisticRegression(C=1e8, dual=**True**)
+m.fit(x, y)
+preds = m.predict(val_term_doc)
+(preds==val_y).mean()0.85504000000000002
+```
 
 所以这有点像是，为什么要基于某种理论模型进行某些操作呢？因为理论模型几乎永远不会像数据驱动模型那样准确。因为理论模型，除非你在处理某种物理问题或者某种你认为这实际上是世界如何运作的东西，否则没有……我不知道，我们是在真空中工作，有确切的重力等等。但是在现实世界中，事情是这样的——更好的方法是学习你的系数并计算它们。
 
@@ -464,7 +603,12 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 这是二值化版本[[1:32:20](https://youtu.be/37sFIak42Sc?t=5540)]。差不多一样。所以你可以看到我用术语文档矩阵的符号进行了拟合，并用`val_term_doc.sign()`进行了预测。
 
-[PRE23]
+```py
+m = LogisticRegression(C=1e8, dual=**True**)
+m.fit(trn_term_doc.sign(), y)
+preds = m.predict(val_term_doc.sign())
+(preds==val_y).mean()0.85487999999999997
+```
 
 现在问题是，对于我们词汇表中大约有 75,000 个术语的每个术语都会有一个系数，考虑到我们只有 25,000 条评论，这似乎是很多系数[[1:32:38](https://youtu.be/37sFIak42Sc?t=5558)]。所以也许我们应该尝试对此进行正则化。
 
@@ -474,7 +618,12 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 所以如果我打开正则化，将其设置为 0.1，那么现在是 88%：
 
-[PRE24]
+```py
+m = LogisticRegression(C=0.1, dual=**True**)
+m.fit(x, y)
+preds = m.predict(val_term_doc)
+(preds==val_y).mean()0.88275999999999999
+```
 
 这是有道理的。你会认为对于 25,000 个文档的 75,000 个参数，很可能会过拟合。事实上，它确实过拟合了。因此，这是添加 L2 正则化以避免过拟合。
 
@@ -486,13 +635,23 @@ sklearn 有一个相当标准的 API，这很好。我相信你以前见过几�
 
 所以你可以看到，如果我们使用正则化和二值化，我们实际上做得相当不错：
 
-[PRE25]
+```py
+m = LogisticRegression(C=0.1, dual=**True**)
+m.fit(trn_term_doc.sign(), y)
+preds = m.predict(val_term_doc.sign())
+(preds==val_y).mean()0.88404000000000005
+```
 
 **问题**：在我们学习关于类似于组合 L1 和 L2 的 Elastic-net 之前。我们可以这样做吗？是的，你可以这样做，但需要更深层次的模型。我从来没有见过有人发现这有用。
 
 最后我要提到的是，当你做 CountVectorizer 时，你也可以要求 n-gram。默认情况下，我们得到的是单字，也就是单个单词。但是如果我们说`ngram_range=(1,3)`，那也会给我们二元组和三元组。
 
-[PRE26]
+```py
+veczr =  CountVectorizer(ngram_range=(1,3), tokenizer=tokenize,
+                         max_features=800000)
+trn_term_doc = veczr.fit_transform(trn)
+val_term_doc = veczr.transform(val)trn_term_doc.shape*(25000, 800000)*vocab = veczr.get_feature_names()vocab[200000:200005]['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']
+```
 
 也就是说，如果我现在说好的，让我们继续使用 CountVectorizer，并获取特征名称，现在我的词汇表包括二元组：`'by vast'`，`'by vengeance'`和三元组：`'by vengeance .'`，`'by vera miles'`。所以现在做的事情与之前相同，但在分词之后，它不仅仅是抓取每个单词并说这是你的词汇表的一部分，而是抓取相邻的每两个单词和每三个单词。这实际上对利用词袋方法非常有帮助，因为我们现在可以看到`not good`与`not bad`与`not terrible`之间的区别。甚至像`"good"`这样的词可能是讽刺的。因此，实际上使用三元组特征将使朴素贝叶斯和逻辑回归变得更好。这确实让我们走得更远，使它们变得更有用。
 

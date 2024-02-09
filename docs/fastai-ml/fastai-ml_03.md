@@ -58,7 +58,16 @@
 
 ## 读取数据[[15:12](https://youtu.be/YSFG_W8JxBo?t=15m12s)]
 
-[PRE0]
+```py
+types = {'id': 'int64',
+         'item_nbr': 'int32',
+         'store_nbr': 'int8',
+         'unit_sales': 'float32',
+         'onpromotion': 'object'}%%time
+df_all = pd.read_csv(f'{PATH}train.csv', parse_dates=['date'], 
+                     dtype=types, infer_datetime_format=True)*CPU times: user 1min 41s, sys: 5.08s, total: 1min 46s
+Wall time: 1min 48s*
+```
 
 +   如果设置`low_memory=False`，无论您有多少内存，它都会耗尽内存。
 
@@ -78,7 +87,12 @@
 
 `'onpromotion': ‘object'` [[21:28](https://youtu.be/YSFG_W8JxBo?t=21m28s)]— `object`是一个通用的 Python 数据类型，速度慢且占用内存。原因是它是一个布尔值，还有缺失值，所以我们需要在将其转换为布尔值之前处理它，如下所示：
 
-[PRE1]
+```py
+df_all.onpromotion.fillna(False, inplace=True)
+df_all.onpromotion = df_all.onpromotion.map({'False': False, 
+                                             'True': True})
+df_all.onpromotion = df_all.onpromotion.astype(bool)%time df_all.to_feather('tmp/raw_groceries')
+```
 
 +   `fillna(False)`: 我们不会在没有先检查的情况下这样做，但一些探索性数据分析显示这可能是一个合适的做法（即缺失值表示 false）。
 
@@ -92,7 +106,9 @@
 
 Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录的每一列：
 
-[PRE2]
+```py
+%time df_all.describe(include='all')
+```
 
 ![](img/2568de2e53d9b99568f8fbdd2acddb1d.png)
 
@@ -100,7 +116,14 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 
 +   在这种情况下，训练集从 2013 年到 2017 年 8 月。
 
-[PRE3]
+```py
+df_test = pd.read_csv(f'{PATH}test.csv', parse_dates = ['date'],
+                      dtype=types, infer_datetime_format=True)df_test.onpromotion.fillna(False, inplace=True)
+df_test.onpromotion = df_test.onpromotion.map({'False': False, 
+                                               'True': True})
+df_test.onpromotion = df_test.onpromotion.astype(bool)
+df_test.describe(include='all')
+```
 
 ![](img/df1859cbc7988611eeea704f84096273.png)
 
@@ -112,13 +135,17 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 
 **问题**：四年前大约在同一时间段重要吗（例如在圣诞节左右）？确实。并不是说四年前没有有用的信息，所以我们不想完全抛弃它。但作为第一步，如果你要提交平均值，你不会提交 2012 年销售额的平均值，而可能想要提交上个月销售额的平均值。之后，我们可能希望更高权重最近的日期，因为它们可能更相关。但我们应该进行大量的探索性数据分析来检查。
 
-[PRE4]
+```py
+df_all.tail()
+```
 
 ![](img/80c10c4942f06fb03e584e5065725c9e.png)
 
 这是数据底部的样子。
 
-[PRE5]
+```py
+df_all.unit_sales = np.log1p(np.clip(df_all.unit_sales, 0, None))
+```
 
 +   我们必须对销售额取对数，因为我们正在尝试预测根据比率变化的某些东西，而他们告诉我们，在这个比赛中，均方根对数误差是他们关心的事情。
 
@@ -126,23 +153,47 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 
 +   `np.log1p`：值加 1 的对数。比赛细节告诉你他们将使用均方根对数加 1 误差，因为 log(0)没有意义。
 
-[PRE6]
+```py
+%time add_datepart(df_all, 'date')*CPU times: user 1min 35s, sys: 16.1 s, total: 1min 51s
+Wall time: 1min 53s*
+```
 
 我们可以像往常一样添加日期部分。这需要几分钟，所以我们应该先在样本上运行所有这些，以确保它有效。一旦你知道一切都是合理的，然后回去在整个集合上运行。
 
-[PRE7]
+```py
+n_valid = len(df_test)
+n_trn = len(df_all) - n_valid
+train, valid = split_vals(df_all, n_trn)
+train.shape, valid.shape*((122126576, 18), (3370464, 18))*
+```
 
 这些代码行与我们在推土机比赛中看到的代码行是相同的。我们不需要运行`train_cats`或`apply_cats`，因为所有的数据类型已经是数字的了（记住`apply_cats`将相同的分类代码应用于验证集和训练集）。
 
-[PRE8]
+```py
+%%time
+trn, y, nas  = proc_df(train, 'unit_sales')
+val, y_val, nas = proc_df(valid, 'unit_sales', nas)
+```
 
 调用`proc_df`来检查缺失值等。
 
-[PRE9]
+```py
+def rmse(x,y): return math.sqrt(((x-y)**2).mean())def print_score(m):
+    res = [rmse(m.predict(X_train), y_train),
+           rmse(m.predict(X_valid), y_valid),
+           m.score(X_train, y_train), m.score(X_valid, y_valid)]
+    if hasattr(m, 'oob_score_'): res.append(m.oob_score_)
+    print(res)
+```
 
 这些代码行再次是相同的。然后有两个变化：
 
-[PRE10]
+```py
+**set_rf_samples(1_000_000)**%time x = **np.array(trn, dtype=np.float32)***CPU times: user 1min 17s, sys: 18.9 s, total: 1min 36s
+Wall time: 1min 37s*m = RandomForestRegressor(n_estimators=20, min_samples_leaf=100, 
+                          n_jobs=8)
+%time m.fit(x, y)
+```
 
 我们上周学习了`set_rf_samples`。我们可能不想从 1.25 亿条记录中创建一棵树（不确定需要多长时间）。你可以从 10k 或 100k 开始，然后找出你可以运行多少。数据集的大小与构建随机森林所需时间之间没有关系，关系在于估计器数量乘以样本大小。
 
@@ -154,7 +205,9 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 
 如果你运行一行需要很长时间的代码，你可以在前面加上`%prun`。
 
-[PRE11]
+```py
+%prun m.fit(x, y)
+```
 
 +   这将运行一个分析器，并告诉你哪些代码行花费了最多的时间。这里是 scikit-learn 中将数据框转换为 numpy 数组的代码行。
 
@@ -164,15 +217,25 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 
 +   Jeremy 在分析器中注意到的另一件事是，当我们使用`set_rf_samples`时，我们不能使用 OOB 分数，因为如果这样做，它将使用其他 124 百万行来计算 OOB 分数。此外，我们希望使用最近日期的验证集，而不是随机的。
 
-[PRE12]
+```py
+print_score(m)*[0.7726754289860,* ***0.7658818632043****, 0.23234198105350, 0.2193243264]*
+```
 
 所以这让我们得到了 0.76 的验证均方根对数误差。
 
-[PRE13]
+```py
+m = RandomForestRegressor(n_estimators=20, **min_samples_leaf=10**, 
+                          n_jobs=8)
+%time m.fit(x, y)
+```
 
 这使我们降到了 0.71，尽管花了更长的时间。
 
-[PRE14]
+```py
+m = RandomForestRegressor(n_estimators=20, **min_samples_leaf=3**, 
+                          n_jobs=8)
+%time m.fit(x, y)
+```
 
 这将错误降低到 0.70。`min_samples_leaf=1`并没有真正帮助。所以我们在这里有一个“合理”的随机森林。但是这在排行榜上并没有取得好的结果[[33:42](https://youtu.be/YSFG_W8JxBo?t=33m42s)]。为什么？让我们回头看看数据：
 
@@ -224,17 +287,33 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 ## 解释机器学习模型[[50:38](https://youtu.be/YSFG_W8JxBo?t=50m38s) / [笔记本](https://github.com/fastai/fastai/blob/master/courses/ml1/lesson2-rf_interpretation.ipynb)]
 
-[PRE15]
+```py
+PATH = "data/bulldozers/"
+
+df_raw = pd.read_feather('tmp/raw')
+df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')
+```
 
 我们首先读取蓝色书籍对推土机比赛的 feather 文件。提醒：我们已经读取了 CSV 文件，将其处理为类别，并保存为 feather 格式。接下来我们调用`proc_df`将类别转换为整数，处理缺失值，并提取出因变量。然后创建一个像上周一样的验证集：
 
-[PRE16]
+```py
+**def** split_vals(a,n): **return** a[:n], a[n:]n_valid = 12000
+n_trn = len(df_trn)-n_valid
+X_train, X_valid = split_vals(df_trn, n_trn)
+y_train, y_valid = split_vals(y_trn, n_trn)
+raw_train, raw_valid = split_vals(df_raw, n_trn)
+```
 
 ## 绕道到第 1 课笔记本[[51:59](https://youtu.be/YSFG_W8JxBo?t=51m59s)]
 
 上周，在`proc_df`中有一个 bug，当传入`subset`时会打乱数据框，导致验证集不是最新的 12000 条记录。这个问题已经修复。
 
-[PRE17]
+```py
+## From lesson1-rf.ipynbdf_trn, y_trn, **nas** = proc_df(df_raw, 'SalePrice', subset=30000, 
+                             na_dict=**nas**)
+X_train, _ = split_vals(df_trn, 20000)
+y_train, _ = split_vals(y_trn, 20000)
+```
 
 **问题**：为什么`nas`既是该函数的输入又是输出[[53:03](https://youtu.be/YSFG_W8JxBo?t=53m3s)]？`proc_df`返回一个告诉您哪些列丢失以及每个丢失列的中位数的字典。
 
@@ -260,17 +339,31 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 只需确保样本大小足够大，以便如果多次调用相同的解释命令，每次都不会得到不同的结果。在实践中，50,000 是一个很高的数字，如果这还不够的话会令人惊讶（而且运行时间只需几秒）。
 
-[PRE18]
+```py
+set_rf_samples(50000)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
+                        max_features=0.5, n_jobs=-1, oob_score=True)
+m.fit(X_train, y_train)
+print_score(m)
+```
 
 这里我们可以做与上次完全相同的列表推导[[58:35](https://youtu.be/YSFG_W8JxBo?t=58m35s)]：
 
-[PRE19]
+```py
+%time preds = np.stack([t.predict(X_valid) **for** t **in** m.estimators_])
+np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 1.38 s, sys: 20 ms, total: 1.4 s
+Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)*
+```
 
 这是针对一个观察结果的方法。这需要相当长的时间，特别是它没有充分利用我的计算机有很多核心这一事实。列表推导本身是 Python 代码，Python 代码（除非您在做一些特殊的事情）运行在串行模式下，这意味着它在单个 CPU 上运行，不利用您的多 CPU 硬件。如果我们想在更多树和更多数据上运行此代码，执行时间会增加。墙上时间（实际花费的时间）大致等于 CPU 时间，否则如果它在许多核心上运行，CPU 时间将高于墙上时间[[1:00:05](https://youtu.be/YSFG_W8JxBo?t=1h5s)]。
 
 原来 Fast.ai 库提供了一个方便的函数称为`parallel_trees`：
 
-[PRE20]
+```py
+def get_preds(t): return t.predict(X_valid)
+%time preds = np.stack(**parallel_trees**(m, get_preds))
+np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 100 ms, sys: 180 ms, total: 280 ms
+Wall time: 505 ms**(9.1960278072006023, 0.21225113407342761)*
+```
 
 +   `parallel_trees`接受一个随机森林模型`m`和要调用的某个函数（这里是`get_preds`）。这会并行在每棵树上调用此函数。
 
@@ -282,7 +375,12 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 我们首先将数据复制一份，并将预测的标准差和预测本身（均值）作为新列添加进去：
 
-[PRE21]
+```py
+x = raw_valid.copy()
+x['pred_std'] = np.std(preds, axis=0)
+x['pred'] = np.mean(preds, axis=0)
+x.Enclosure.value_counts().plot.barh();
+```
 
 ![](img/d252129ec3961b66bd1bdb82125af420.png)
 
@@ -292,7 +390,11 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 在这里，我们取了我们的数据框，按`Enclosure`分组，然后取了 3 个字段的平均值[[1:04:00](https://youtu.be/YSFG_W8JxBo?t=1h4m)]:
 
-[PRE22]
+```py
+flds = ['Enclosure', 'SalePrice', 'pred', 'pred_std']
+enc_summ = x[flds].groupby('Enclosure', as_index=False).mean()
+enc_summ
+```
 
 ![](img/bd58ac7ad5332548ad0bf6dd86a15ccd.png)
 
@@ -302,27 +404,41 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 +   标准差有些变化
 
-[PRE23]
+```py
+enc_summ = enc_summ[~pd.isnull(enc_summ.SalePrice)]
+enc_summ.plot('Enclosure', 'SalePrice', 'barh', xlim=(0,11));
+```
 
 ![](img/5341d4e30fe46779f92e2e28d24e0753.png)
 
-[PRE24]
+```py
+enc_summ.plot('Enclosure', 'pred', 'barh', xerr='pred_std', 
+              alpha=0.6, xlim=(0,11));
+```
 
 ![](img/308feaabedab15f69099285ec08021c1.png)
 
 我们使用了上面预测的标准差来绘制误差线。这将告诉我们是否有一些组或一些行我们并不是很有信心。我们可以对产品尺寸做类似的事情：
 
-[PRE25]
+```py
+raw_valid.ProductSize.value_counts().plot.barh();
+```
 
 ![](img/bf732a0447aa7def8c890114c0bd8e3e.png)
 
-[PRE26]
+```py
+flds = ['ProductSize', 'SalePrice', 'pred', 'pred_std']
+summ = x[flds].groupby(flds[0]).mean()
+summ
+```
 
 ![](img/0375cf222fc5c14c245b092841beb128.png)
 
 你期望，平均而言，当你预测一个更大的数字时，你的标准差会更高。所以你可以按照预测的标准差与预测本身的比率排序[[1:05:51](https://youtu.be/YSFG_W8JxBo?t=1h5m51s)]。
 
-[PRE27]
+```py
+(summ.pred_std/summ.pred).sort_values(ascending=False)
+```
 
 ![](img/ee1e1a26bc04f8cf89be9a391af7cbdb.png)
 
@@ -340,11 +456,15 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 特征重要性告诉我们在这个随机森林中，哪些列很重要。在这个数据集中有几十列，而在这里，我们挑选出前十个。`rf_feat_importance` 是 Fast.ai 库的一部分，它接受一个模型 `m` 和一个数据框 `df_trn`（因为我们需要知道列的名称），然后会返回一个 Pandas 数据框，按重要性顺序显示每列的重要性。
 
-[PRE28]
+```py
+fi = rf_feat_importance(m, df_trn); fi[:10]
+```
 
 ![](img/cac676a1c93aa74c8505e2ac05395602.png)
 
-[PRE29]
+```py
+fi.plot('cols', 'imp', figsize=(10,6), legend=False);
+```
 
 ![](img/c729d0eda2fd7ad4756792f82ad2673a.png)
 
@@ -352,7 +472,10 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 我们也可以将其绘制为条形图：
 
-[PRE30]
+```py
+**def** plot_fi(fi): 
+  return fi.plot('cols','imp','barh', figsize=(12,7), legend=False)plot_fi(fi[:30]);
+```
 
 ![](img/7fe9dce9aba9b05771f592a1d5bb56ac.png)
 
@@ -366,11 +489,20 @@ Terrance 在这里做的是建立了四种不同的模型，并将这四种模�
 
 为了让生活更轻松，有时候最好抛弃一些数据，看看是否会有任何不同。在这种情况下，我们有一个随机森林，r²为 0.889。在这里，我们筛选出那些重要性等于或小于 0.005 的数据（即只保留重要性大于 0.005 的数据）。
 
-[PRE31]
+```py
+to_keep = fi[fi.imp>0.005].cols; len(to_keep)df_keep = df_trn[to_keep].copy()
+X_train, X_valid = split_vals(df_keep, n_trn)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
+                       max_features=0.5, n_jobs=-1, oob_score=True)
+m.fit(X_train, y_train)
+print_score(m)*[0.20685390156773095, 0.24454842802383558, 0.91015213846294174, 0.89319840835270514, 0.8942078920004991]*
+```
 
 r²并没有太大变化 - 实际上略微增加了一点。一般来说，删除多余的列不应该使情况变得更糟。如果情况变得更糟，那么这些列实际上并不多余。这可能会使结果略微好一点，因为当决定要分裂时，它需要考虑的事情更少，不太可能偶然发现一个糟糕的列。因此，有稍微更好的机会创建一个稍微更好的树，使用稍微更少的数据，但不会有太大变化。但这会使速度更快，让我们专注于重要的事情。让我们在这个新结果上重新运行特征重要性。
 
-[PRE32]
+```py
+fi = rf_feat_importance(m, df_keep)
+plot_fi(fi);
+```
 
 把这个文本翻译成中文。
 

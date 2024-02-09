@@ -30,7 +30,9 @@ Fastai 库是一组实现最先进结果的最佳技术。对于结构化数据�
 
 因此，我们取价格的对数并使用均方根误差（RMSE）。
 
-[PRE0]
+```py
+df_raw.SalePrice = np.log(df_raw.SalePrice)
+```
 
 然后我们通过以下方式将数据集中的所有内容转换为数字：
 
@@ -40,7 +42,11 @@ Fastai 库是一组实现最先进结果的最佳技术。对于结构化数据�
 
 +   `proc_df` 还用中位数替换连续列的缺失值，并添加名为 `[column name]_na` 的列，并将其设置为 true 以指示它是缺失的。
 
-[PRE1]
+```py
+m = RandomForestRegressor(n_jobs=-1)
+m.fit(df, y)
+m.score(df, y)*0.98304680998313232*
+```
 
 ## 什么是 R²？
 
@@ -86,7 +92,13 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 如果您的数据集中有一个时间部分（如蓝皮书比赛中），您可能希望预测未来的价格/价值等。Kaggle 所做的是在训练集中给我们提供代表特定日期范围的数据，然后测试集呈现了训练集中没有的未来日期集。因此，我们需要创建一个具有相同属性的验证集：
 
-[PRE2]
+```py
+**def** split_vals(a,n): **return** a[:n].copy(), a[n:].copy()n_valid = 12000  # same as Kaggle's test set size
+n_trn = len(df)-n_valid
+raw_train, raw_valid = split_vals(df_raw, n_trn)
+X_train, X_valid = split_vals(df, n_trn)
+y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.shape*((389125, 66), (389125,), (12000, 66))*
+```
 
 现在我们有了一个希望看起来像 Kaggle 测试集的东西-足够接近，使用这个将给我们相当准确的分数。我们想要这样做的原因是因为在 Kaggle 上，您只能提交很多次，如果您提交得太频繁，最终您会适应排行榜。在现实生活中，我们希望构建一个在生产中表现良好的模型。
 
@@ -108,7 +120,9 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 ## PEP8[[27:09](https://youtu.be/blyXCk4sgEg?t=27m9s)]
 
-[PRE3]
+```py
+**def** rmse(x,y): **return** math.sqrt(((x-y)**2).mean())
+```
 
 这是一个代码不符合 PEP8 规范的例子。能够用眼睛一次看到某些东西，并随着时间学会立即看出发生了什么具有很大的价值。在数据科学中，始终使用特定的字母或缩写表示特定的含义是有效的。但是如果你在家里面试中测试，要遵循 PEP8 标准。
 
@@ -118,7 +132,12 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 加快速度的一种方法是将 subset 参数传递给 proc_df，这将随机抽样数据：
 
-[PRE4]
+```py
+df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice', **subset=30000**, 
+                     na_dict=nas)
+X_train, _ = split_vals(df_trn, 20000)
+y_train, _ = split_vals(y_trn, 20000)
+```
 
 +   请确保验证集不会改变
 
@@ -132,7 +151,12 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 我们将建立由树组成的森林。让我们从树开始。在 scikit-learn 中，他们不称之为树，而是**估计器**。
 
-[PRE5]
+```py
+m = RandomForestRegressor(**n_estimators=1**, max_depth=3,
+                          bootstrap=**False**, n_jobs=-1)
+m.fit(X_train, y_train)
+print_score(m)
+```
 
 +   `n_estimators=1` — 创建只有一棵树的森林
 
@@ -180,7 +204,12 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 现在，我们的决策树的 R²为 0.4。让我们通过去掉`max_depth=3`来使其更好。这样做后，训练 R²变为 1（因为每个叶节点只包含一个元素），验证 R²为 0.73——比浅树好，但不如我们希望的那么好。
 
-[PRE6]
+```py
+m = RandomForestRegressor(n_estimators=1, bootstrap=**False**, 
+                          n_jobs=-1)
+m.fit(X_train, y_train)
+print_score(m)*[6.5267517864504e-17, 0.3847365289469930, 1.0, 0.73565273648797624]*
+```
 
 为了让这些树更好，我们将创建一个森林。要创建一个森林，我们将使用一种称为**bagging**的统计技术。
 
@@ -194,7 +223,11 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 如果我们创建了很多树——大的、深的、过度拟合的树，但每棵树只选择数据的随机 1/10。假设我们这样做了一百次（每次使用不同的随机样本）。它们都过度拟合了，但由于它们都使用不同的随机样本，它们在不同的方面以不同的方式过度拟合。换句话说，它们都有错误，但这些错误是随机的。一堆随机错误的平均值是零。如果我们取这些树的平均值，每棵树都是在不同的随机子集上训练的，那么错误将平均为零，剩下的就是真正的关系——这就是随机森林。
 
-[PRE7]
+```py
+m = RandomForestRegressor(n_jobs=-1) 
+m.fit(X_train, y_train) 
+print_score(m)
+```
 
 `n_estimators`默认为 10（记住，estimators 就是树）。
 
@@ -212,7 +245,12 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 ## 提出预测[[1:04:30](https://youtu.be/blyXCk4sgEg?t=1h4m30s)]
 
-[PRE8]
+```py
+preds = np.stack([t.predict(X_valid) **for** t **in** m.estimators_]) preds[:,0], np.mean(preds[:,0]), y_valid[0]*(array([ 9.21034,  8.9872 ,  8.9872 ,  8.9872 ,  8.9872 ,  9.21034,  8.92266,  9.21034,  9.21034,  8.9872 ]),  
+9.0700003890739005,  
+9.1049798563183568)*preds.shape
+*(10, 12000)*
+```
 
 每棵树都存储在名为`estimators_`的属性中。对于每棵树，我们将使用验证集调用`predict`。`np.stack`将它们连接在一起形成一个新轴，因此结果`preds`的形状为`(10, 12000)`（10 棵树，12000 个验证集）。对于第一个数据的 10 个预测的平均值为 9.07，实际值为 9.10。正如你所看到的，没有一个单独的预测接近 9.10，但平均值最终相当不错。
 
@@ -232,7 +270,12 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 我们可以意识到，在我们的第一棵树中，一些行没有用于训练。我们可以通过第一棵树传递那些未使用的行，并将其视为验证集。对于第二棵树，我们可以通过未用于第二棵树的行，依此类推。实际上，我们将为每棵树创建一个不同的验证集。为了计算我们的预测，我们将对所有未用于训练的行进行平均。如果您有数百棵树，那么很可能所有行都会在这些袋外样本中多次出现。然后，您可以在这些袋外预测上计算 RMSE、R²等。
 
-[PRE9]
+```py
+m = RandomForestRegressor(n_estimators=40, n_jobs=-1, 
+                          **oob_score=True**)
+m.fit(X_train, y_train)
+print_score(m)*[0.10198464613020647, 0.2714485881623037, 0.9786192457999483, 0.86840992079038759, 0.84831537630038534]*
+```
 
 将`oob_score`设置为 true 将执行此操作，并为模型创建一个名为`oob_score_`的属性，如您在 print_score 函数中看到的，如果具有此属性，它将在最后打印出来。
 
@@ -244,7 +287,11 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 之前，我们取了 30,000 行，并创建了使用该 30,000 行不同子集的所有模型。为什么不每次取一个完全不同的 30,000 子集？换句话说，让我们保留全部 389,125 条记录，如果我们想加快速度，每次选择一个不同的 30,000 子集。因此，而不是对整个行集进行自助抽样，只需随机抽取数据的一个子集。
 
-[PRE10]
+```py
+df_trn, y_trn = proc_df(df_raw, 'SalePrice')
+X_train, X_valid = split_vals(df_trn, n_trn)
+y_train, y_valid = split_vals(y_trn, n_trn)set_rf_samples(20000)
+```
 
 `set_rf_samples`：与之前一样，我们在训练集中使用 20,000 个样本（之前是 30,000，这次是 389,125）。
 
@@ -260,13 +307,23 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 让我们为这个完整集合建立一个基准来进行比较：
 
-[PRE11]
+```py
+reset_rf_samples()m = RandomForestRegressor(n_estimators=40, n_jobs=-1, 
+                          oob_score=**True**)
+m.fit(X_train, y_train)
+print_score(m)*[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0.89816206196980131, 0.90838819297302553]*
+```
 
 这里 OOB 高于验证集。这是因为我们的验证集是不同的时间段，而 OOB 样本是随机的。预测不同时间段要困难得多。
 
 ## min_sample
 
-[PRE12]
+```py
+m = RandomForestRegressor(n_estimators=40, **min_samples_leaf**=3, 
+                          n_jobs=-1, oob_score=**True**) 
+m.fit(X_train, y_train) 
+print_score(m)*[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0.90198460308551043, 0.90843297242839738]*
+```
 
 +   `min_sample_leaf=3`：当叶节点具有 3 个或更少的样本时停止训练树（之前我们一直下降到 1）。这意味着将减少一到两个决策级别，这意味着我们需要训练的实际决策标准数量减半（即更快的训练时间）。
 
@@ -278,7 +335,11 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 
 ## max_feature [[1:24:07](https://youtu.be/blyXCk4sgEg?t=1h24m7s)]
 
-[PRE13]
+```py
+m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
+                      max_features=0.5, n_jobs=-1, oob_score=**True**) m.fit(X_train, y_train) 
+print_score(m)*[0.11926975747908228, 0.22869111042050522, 0.97026995966445684, 0.9066000722129437, 0.91144914977164715]*
+```
 
 +   `max_features=0.5`：这个想法是，树之间的相关性越小，越好。想象一下，如果有一列比其他所有列更好地预测，那么您构建的每棵树总是从那一列开始。但是可能存在一些变量之间的相互作用，其中该相互作用比单个列更重要。因此，如果每棵树总是首次在相同的内容上分裂，那么这些树的变化就不会很大。
 

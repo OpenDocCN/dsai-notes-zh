@@ -66,7 +66,14 @@ CV / bootstrap（糖尿病数据集？）
 
 [笔记本](https://github.com/fastai/fastai/blob/master/courses/ml1/lesson1-rf.ipynb) / [Kaggle](https://www.kaggle.com/c/bluebook-for-bulldozers)
 
-[PRE0]
+```py
+%load_ext autoreload
+%autoreload 2
+%matplotlib inlinefrom fastai.imports import *
+from fastai.structured import *from pandas_summary import DataFrameSummary
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from IPython.display import displayfrom sklearn import metrics
+```
 
 数据科学 ≠ 软件工程 [[08:43](https://youtu.be/CzdWqFTmn0Y?t=8m43s)]。你会看到一些不符合 PEP 8 的代码和`import *`之类的东西，但暂时跟着走一段时间。我们现在正在做的是原型模型，原型模型有一套完全不同的最佳实践，这些实践在任何地方都没有教授。关键是能够非常互动和迭代地进行操作。Jupyter 笔记本使这变得容易。如果你曾经想知道`display`是什么，你可以做以下三件事之一：
 
@@ -104,13 +111,21 @@ Jupyter 技巧[[21:39](https://youtu.be/CzdWqFTmn0Y?t=21m39s)] - 您可以打开
 
 当您处理通常作为`pd`导入的结构化数据时，`pandas`是最重要的库。
 
-[PRE1]
+```py
+df_raw = pd.read_csv(f'{PATH}Train.csv', low_memory=False, 
+                     parse_dates=["saledate"])
+```
 
 +   `parse_dates` - 包含日期的任何列的列表
 
 +   `low_memory=False` - 强制它读取更多文件以确定类型。
 
-[PRE2]
+```py
+def display_all(df):
+    with pd.option_context("display.max_rows", 1000): 
+        with pd.option_context("display.max_columns", 1000): 
+            display(df)display_all(df_raw.tail().transpose())
+```
 
 在 Jupyter Notebook 中，如果您键入一个变量名并按`ctrl+enter`，无论是 DataFrame、视频、HTML 等 - 它通常会找到一种显示方式供您使用[[32:13](https://youtu.be/CzdWqFTmn0Y?t=32m13s)]。
 
@@ -124,7 +139,9 @@ Jupyter 技巧[[21:39](https://youtu.be/CzdWqFTmn0Y?t=21m39s)] - 您可以打开
 
 均方根对数误差。我们使用对数的原因是因为通常，您更关心的不是差$10，而是差 10%。所以如果是$1000,000 的物品，您差$100,000，或者如果是$10,000 的物品，您差$1,000 - 我们会认为这些是等价的规模问题。
 
-[PRE3]
+```py
+df_raw.SalePrice = np.log(df_raw.SalePrice)
+```
 
 +   `np` - Numpy 让我们将数组、矩阵、向量、高维张量视为 Python 变量。
 
@@ -156,13 +173,17 @@ Jupyter 技巧[[21:39](https://youtu.be/CzdWqFTmn0Y?t=21m39s)] - 您可以打开
 
 Python 中最受欢迎和重要的机器学习包。它并非在所有方面都是最好的（例如，XGBoost 比梯度提升树更好），但在几乎所有方面都表现得相当不错。
 
-[PRE4]
+```py
+m = RandomForestRegressor(n_jobs=-1)
+```
 
 +   RandomForestRegressor - 回归器是一种预测连续变量（即回归）的方法
 
 +   RandomForestClassifier - 分类器是一种预测分类变量（即分类）的方法
 
-[PRE5]
+```py
+m.fit(df_raw.drop('SalePrice', axis=1), df_raw.SalePrice)
+```
 
 scikit-learn 中的所有内容都具有相同的形式。
 
@@ -190,51 +211,85 @@ scikit-learn 中的所有内容都具有相同的形式。
 
 `add_datepart`方法从完整的日期时间中提取特定的日期字段，以构建分类变量。在处理日期时间时，你应该始终考虑这个特征提取步骤。如果不将日期时间扩展到这些额外字段，你就无法捕捉到任何趋势/周期性行为，作为时间的函数在任何这些粒度上。
 
-[PRE6]
+```py
+def add_datepart(df, fldname, **drop=True**):
+    fld = df[fldname]
+    if not np.issubdtype(fld.dtype, np.datetime64):
+        df[fldname] = fld = pd.to_datetime(fld, 
+                                     infer_datetime_format=True)
+    targ_pre = re.sub('[Dd]ate$', '', fldname)
+    for n in ('Year', 'Month', 'Week', 'Day', 'Dayofweek', 
+            'Dayofyear', 'Is_month_end', 'Is_month_start', 
+            'Is_quarter_end', 'Is_quarter_start', 'Is_year_end', 
+            'Is_year_start'):
+        df[targ_pre+n] = **getattr**(fld.dt,n.lower()) df[targ_pre+'Elapsed'] = fld.astype(np.int64) // 10**9
+    if drop: df.drop(fldname, axis=1, inplace=True)
+```
 
 +   `getattr` — 查找对象内部并找到具有该名称的属性
 
 +   `drop=True` — 除非指定，它将删除日期时间字段，因为我们不能直接使用“saledate”，因为它不是一个数字。
 
-[PRE7]
+```py
+fld = df_raw.saledate
+fld.dt.year
+```
 
 +   `fld` — Pandas 系列
 
 +   `dt` — `fld`没有“year”，因为它只适用于 Pandas 系列，这些系列是日期时间对象。因此，Pandas 会将不同的方法拆分到特定于它们的属性中。因此，日期时间对象将有`dt`属性定义，那里你会找到所有日期时间特定的属性。
 
-[PRE8]
+```py
+add_datepart(df_raw, 'saledate')
+df_raw.saleYear.head()
+```
 
 **问题**：[[55:40](https://youtu.be/CzdWqFTmn0Y?t=55m40s)] `df['saleYear']` 和 `df.saleYear` 之间有什么区别？在分配值时最好使用方括号，尤其是在列不存在的情况下。
 
 运行`add_datepart`后，它添加了许多数字列并删除了`saledate`列。这还不足以解决我们之前看到的错误，因为我们仍然有其他包含字符串值的列。Pandas 有一个类别数据类型的概念，但默认情况下它不会将任何内容转换为类别。Fast.ai 提供了一个名为`train_cats`的函数，它会为所有是字符串的内容创建分类变量。在幕后，它创建了一个整数列，并将从整数到字符串的映射存储在其中。`train_cats`被称为“train”，因为它是特定于训练数据的。验证和测试集将使用相同的类别映射（换句话说，如果你在训练数据集中使用 1 表示“高”，那么在验证和测试数据集中 1 也应该表示“高”）。对于验证和测试数据集，使用`apply_cats`。
 
-[PRE9]
+```py
+train_cats(df_raw)
+df_raw.UsageBand.cat.categories*Index(['High', 'Low', 'Medium'], dtype='object)*
+```
 
 +   `df_raw.UsageBand.cat` — 类似于`fld.dt.year`，`.cat`让你可以访问假设某个东西是一个类别的内容。
 
 顺序并不太重要，但由于我们将创建一个在单个点（即`高` vs. `低` 和 `中`，`高` 和 `低` vs. `中`）分割事物的决策树，这有点奇怪。为了以合理的方式对它们进行排序，您可以执行以下操作：
 
-[PRE10]
+```py
+df_raw.UsageBand.cat.set_categories(['High', 'Medium', 'Low'],
+    ordered=True, inplace=True)
+```
 
 +   `inplace`将要求 Pandas 更改现有数据框而不是返回一个新的。
 
 有一种称为“有序”的分类变量。有序分类变量具有某种顺序（例如“低” < “中” < “高”）。随机森林对此事实并不敏感，但值得注意。
 
-[PRE11]
+```py
+display_all(df_raw.isnull().sum().sort_index()/len(df_raw))
+```
 
 上述操作将为每个系列添加一些空值，我们按索引排序它们（`[pandas.Series.sort_index](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.sort_index.html)`），并除以数据集的数量。
 
 读取 CSV 大约需要 10 秒，处理另外需要 10 秒，因此如果我们不想再等待，最好将它们保存下来。这里我们将以 feather 格式保存。这将以与 RAM 中相同基本格式保存到磁盘。这是迄今为止最快的保存和读取方式。Feather 格式不仅在 Pandas 中成为标准，而且在 Java、Apache Spark 等中也是如此。
 
-[PRE12]
+```py
+os.makedirs('tmp', exist_ok=True)
+df_raw.to_feather('tmp/bulldozers-raw')
+```
 
 我们可以这样读取它：
 
-[PRE13]
+```py
+df_raw = pd.read_feather('tmp/raw')
+```
 
 我们将用它们的数字代码替换类别，处理缺失的连续值，并将因变量拆分为一个单独的变量。
 
-[PRE14]
+```py
+df, y, nas = proc_df(df_raw, 'SalePrice')
+```
 
 ![](img/4dc727212fbd19c945c24b2a18cdc13a.png)
 
@@ -266,13 +321,19 @@ structured.py 中的 proc_df
 
 +   如果不是数字且是分类类型，我们将用其代码加 1 替换该列。默认情况下，Pandas 对缺失使用`-1`，因此现在缺失将具有 ID 为`0`。
 
-[PRE15]
+```py
+df.head()
+```
 
 ![](img/0e7cb3fd754beb09922ee1267f1ddbef.png)
 
 现在我们有所有的数值值。请注意，布尔值被视为数字。因此我们可以创建一个随机森林。
 
-[PRE16]
+```py
+m = RandomForestRegressor(n_jobs=-1)
+m.fit(df, y)
+m.score(df,y)
+```
 
 随机森林是**极易并行化**的 — 意味着如果您有多个 CPU，可以将数据分配到不同的 CPU 上并且它会线性扩展。因此，您拥有的 CPU 越多，花费的时间就会按照该数字减少（不完全准确，但大致如此）。`n_jobs=-1`告诉随机森林回归器为每个 CPU 创建一个单独的作业/进程。
 
@@ -290,13 +351,30 @@ structured.py 中的 proc_df
 
 这说明如何使用所有数据可能导致**过拟合**。验证集有助于诊断这个问题。
 
-[PRE17]
+```py
+def split_vals(a,n): return a[:n].copy(), a[n:].copy()n_valid = 12000  # same as Kaggle's test set size
+n_trn = len(df)-n_valid
+raw_train, raw_valid = split_vals(df_raw, n_trn)
+X_train, X_valid = split_vals(df, n_trn)
+y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.shape*((389125, 66), (389125,), (12000, 66))*
+```
 
 ## 基础模型
 
 通过使用验证集，您会发现验证集的 r²为 0.88。
 
-[PRE18]
+```py
+def rmse(x,y): return math.sqrt(((x-y)**2).mean())def print_score(m):
+    res = [rmse(m.predict(X_train), y_train),
+           rmse(m.predict(X_valid), y_valid),
+           m.score(X_train, y_train), m.score(X_valid, y_valid)]
+    if hasattr(m, 'oob_score_'): res.append(m.oob_score_)
+    print(res)m = RandomForestRegressor(n_jobs=-1)
+%time m.fit(X_train, y_train)
+print_score(m)*CPU times: user 1min 3s, sys: 356 ms, total: 1min 3s
+Wall time: 8.46 s
+[0.09044244804386327, 0.2508166961122146,* ***0.98290459302099709****,* ***0.88765316048270615****]*
+```
 
 **[训练集 rmse，验证集 rmse，训练集 r²，验证集 r²]*
 

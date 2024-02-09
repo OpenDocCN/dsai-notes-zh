@@ -80,7 +80,10 @@
 
 我们如何将这写成一个 if 语句？
 
-[PRE0]
+```py
+if y == 1: return -log(ŷ)
+else: return -log(1-ŷ)
+```
 
 所以关键的洞察是 y 有两种可能性：1 或 0。所以很多时候数学会隐藏关键的洞察，我认为这里发生了，直到你真正思考它可以取什么值。所以这就是它所说的。要么给我：`-log(ŷ)`，要么给我：`-log(1-ŷ)`
 
@@ -96,15 +99,34 @@
 
 然后我们进一步说，鉴于我们可以通过正则化做到这一点，让我们通过添加二元组和三元组来创建更多。例如 `by vast`、`by vengeance` 这样的二元组，以及 `by vengeance .`、`by vera miles` 这样的三元组。为了让事情运行得更快一些，我们将其限制为 800,000 个特征，但即使使用完整的 70 百万个特征，它的效果也一样好，而且速度并没有慢多少。
 
-[PRE1]
+```py
+veczr =  CountVectorizer(ngram_range=(1,3), tokenizer=tokenize, 
+                         max_features=800000)
+trn_term_doc = veczr.fit_transform(trn)
+val_term_doc = veczr.transform(val)trn_term_doc.shape*(25000, 800000)*vocab = veczr.get_feature_names()vocab[200000:200005]*['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']*
+```
 
 所以我们使用了完整的 n-grams 集合为训练集和验证集创建了一个术语文档矩阵。现在我们可以继续说我们的标签是训练集标签如前所述，我们的自变量是二值化的术语文档矩阵如前所述：
 
-[PRE2]
+```py
+y=trn_y
+x=trn_term_doc.sign()
+val_x = val_term_doc.sign()
+p = x[y==1].sum(0)+1
+q = x[y==0].sum(0)+1
+r = np.log((p/p.sum())/(q/q.sum()))
+b = np.log(len(p)/len(q))
+```
 
 然后让我们对其进行逻辑回归拟合，并进行一些预测，我们得到了 90% 的准确率：
 
-[PRE3]
+```py
+m = LogisticRegression(C=0.1, dual=**True**)
+m.fit(x, y);
+
+preds = m.predict(val_x)
+(preds.T==val_y).mean()*0.90500000000000003*
+```
 
 所以看起来很不错。
 
@@ -124,11 +146,16 @@
 
 所以你会注意到这里一些重要的特征。*r*向量是一个秩为 1 的向量，其长度等于特征的数量。当然，我们的逻辑回归系数矩阵也是秩为 1 且长度等于特征数量的。我们说它们是计算相同类型的东西的两种方式：一种基于理论，一种基于数据。所以这里是*r*中的一些数字：
 
-[PRE4]
+```py
+r.shape, r((1, 800000),
+ matrix([[-0.05468, -0.161  , -0.24784, ...,  1.09861, -0.69315, -0.69315]]))
+```
 
 记住它使用对数，所以这些小于零的数字代表更有可能是负数的东西，而大于零的数字可能是正数。所以这里是 e 的幂次方。所以这些是我们可以与 1 而不是 0 进行比较的数字：
 
-[PRE5]
+```py
+np.exp(r)matrix([[ 0.94678,  0.85129,  0.78049, ...,  3\.  ,  0.5 ,  0.5  ]])
+```
 
 我要做一些希望看起来很奇怪的事情。首先，我会说我们要做什么，然后我会尝试描述为什么这很奇怪，然后我们会讨论为什么它可能并不像我们最初想的那么奇怪。所以这就是我们要做的事情。我们将取我们的术语文档矩阵，然后将其乘以*r*。这意味着，我可以在 Excel 中做到这一点，我们将说让我们抓取我们的术语文档矩阵中的所有内容，并将其乘以向量*r*中的等值。所以这就像是一个广播的逐元素乘法，而不是矩阵乘法。
 
@@ -138,7 +165,15 @@
 
 所以在这里。`x_nb`（x 朴素贝叶斯版本）是`x`乘以`r`。现在让我们使用这些独立变量进行逻辑回归拟合。然后对验证集进行预测，结果我们得到了一个更好的数字：
 
-[PRE6]
+```py
+x_nb = x.multiply(r)
+m = LogisticRegression(dual=**True**, C=0.1)
+m.fit(x_nb, y);
+
+val_x_nb = val_x.multiply(r)
+preds = m.predict(val_x_nb)
+(preds.T==val_y).mean()*0.91768000000000005*
+```
 
 让我解释为什么这可能会令人惊讶。这是我们的独立变量（下面突出显示），然后逻辑回归得出了一些系数集（假设这些是它恰好得出的系数）。
 
@@ -194,13 +229,22 @@
 
 所以首先让我向你展示代码。一旦我弄清楚这是我能想到的最好的线性词袋模型的方法，我将其嵌入到 Fast AI 中，这样你只需写几行代码就可以了。
 
-[PRE7]
+```py
+sl=2000*# Here is how we get a model from a bag of words*
+md = TextClassifierData.from_bow(trn_term_doc, trn_y, val_term_doc,
+                                 val_y, sl)
+```
 
 所以代码基本上是，嘿，我想为文本分类创建一个数据类，我想从词袋（`from_bow`）中创建它。这是我的词袋（`trn_term_doc`），这是我们的标签（`trn_y`），这是验证集的相同内容，并且每个评论最多使用 2000 个独特的单词，这已经足够了。
 
 然后从那个模型数据中，构建一个学习器，这是 Fast AI 对基于朴素贝叶斯点积的模型的泛化，然后拟合该模型。
 
-[PRE8]
+```py
+learner = md.dotprod_nb_learner()
+learner.fit(0.02, 1, wds=1e-6, cycle_len=1)*[ 0\.       0.0251   0.12003  0.91552]*learner.fit(0.02, 2, wds=1e-6, cycle_len=1)*[ 0\.       0.02014  0.11387  0.92012]                         
+[ 1\.       0.01275  0.11149  0.92124]*learner.fit(0.02, 2, wds=1e-6, cycle_len=1)[ 0\.       0.01681  0.11089  0.92129]                           
+[ 1\.       0.00949  0.10951  0.92223]
+```
 
 经过 5 个时代，我的准确率已经达到了 92.2。所以现在已经远远超过了线性基准（在原始论文中）。所以让我给你展示一下那段代码。
 
@@ -338,21 +382,34 @@
 
 数据尽可能易于理解总是很好的。因此，在这种情况下，来自 Kaggle 的数据使用各种整数表示假期。我们可以只使用一个布尔值来表示是否是假期。所以只需清理一下：
 
-[PRE9]
+```py
+train.StateHoliday = train.StateHoliday!='0'
+test.StateHoliday = test.StateHoliday!='0'
+```
 
 我们有很多不同的表需要将它们全部合并在一起。我有一种用 Pandas 合并事物的标准方法。我只是使用了 Pandas 的合并函数，具体来说我总是进行左连接。左连接是保留左表中的所有行，你有一个关键列，将其与右侧表中的关键列匹配，然后合并那些也存在于右表中的行。
 
-[PRE10]
+```py
+**def** join_df(left, right, left_on, right_on=**None**, suffix='_y'):
+    **if** right_on **is** **None**: right_on = left_on
+    **return** left.merge(right, how='left', left_on=left_on,
+                      right_on=right_on, suffixes=("", suffix))
+```
 
 我总是进行左连接的关键原因是，在进行连接之后，我总是检查右侧是否有现在为空的内容：
 
-[PRE11]
+```py
+store = join_df(store, store_states, "Store")
+len(store[store.State.isnull()])
+```
 
 因为如果是这样，那就意味着我漏掉了一些东西。我没有在这里展示，但我也检查了行数在之前和之后是否有变化。如果有变化，那就意味着右侧表不是唯一的。所以即使我确定某件事是真的，我也总是假设我搞砸了。所以我总是检查。
 
 我可以继续将州名合并到天气中：
 
-[PRE12]
+```py
+weather = join_df(weather, state_names, "file", "StateName")
+```
 
 如果你看一下谷歌趋势表，它有这个周范围，我需要将其转换为日期以便加入它：
 
@@ -360,23 +417,45 @@
 
 在 Pandas 中这样做的好处是，Pandas 让我们可以访问所有的 Python。例如，在系列对象内部，有一个`.str`属性，可以让你访问所有的字符串处理函数。就像`.cat`让你访问分类函数一样，`.dt`让你访问日期时间函数。所以现在我可以拆分该列中的所有内容。
 
-[PRE13]
+```py
+googletrend['Date']=googletrend.week.str.split(' - ',expand=**True**)[0]
+googletrend['State']=googletrend.file.str.split('_', expand=**True**)[2]
+googletrend.loc[googletrend.State=='NI', "State"] = 'HB,NI'
+```
 
 使用这些 Pandas 函数非常重要，因为它们将被向量化，加速，通常通过 SIMD 至少通过 C 代码，以便运行得又快又顺利。
 
 和往常一样，让我们为我们的日期添加日期元数据：
 
-[PRE14]
+```py
+add_datepart(weather, "Date", drop=**False**)
+add_datepart(googletrend, "Date", drop=**False**)
+add_datepart(train, "Date", drop=**False**)
+add_datepart(test, "Date", drop=**False**)
+```
 
 最后，我们基本上是在对所有这些表进行去规范化。我们将把它们全部放入一个表中。因此，在谷歌趋势表中，它们主要是按州划分的趋势，但也有整个德国的趋势，所以我们将整个德国的趋势放入一个单独的数据框中，以便我们可以加入它：
 
-[PRE15]
+```py
+trend_de = googletrend[googletrend.file == 'Rossmann_DE']
+```
 
 因此，我们将有这个州的谷歌趋势和整个德国的谷歌趋势。
 
 现在我们可以继续为训练集和测试集同时加入。然后检查两者都没有空值。
 
-[PRE16]
+```py
+store = join_df(store, store_states, "Store")
+len(store[store.State.isnull()])*0*joined = join_df(train, store, "Store")
+joined_test = join_df(test, store, "Store")
+len(joined[joined.StoreType.isnull()]),len(joined_test[joined_test.StoreType.isnull()])(0, 0)joined = join_df(joined, googletrend, ["State","Year", "Week"])
+joined_test = join_df(joined_test, googletrend, ["State","Year", "Week"])
+len(joined[joined.trend.isnull()]),len(joined_test[joined_test.trend.isnull()])(0, 0)joined = joined.merge(trend_de, 'left', ["Year", "Week"], suffixes=('', '_DE'))
+joined_test = joined_test.merge(trend_de, 'left', ["Year", "Week"], suffixes=('', '_DE'))
+len(joined[joined.trend_DE.isnull()]),len(joined_test[joined_test.trend_DE.isnull()])(0, 0)joined = join_df(joined, weather, ["State","Date"])
+joined_test = join_df(joined_test, weather, ["State","Date"])
+len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_TemperatureC.isnull()])(0, 0)
+```
 
 我的合并函数，如果有两列是相同的，我将左侧的后缀设置为空，这样它就不会影响名称，右侧设置为`_y`。
 
@@ -384,15 +463,39 @@
 
 在这种情况下，我不想要任何重复的内容，所以我只是浏览并删除了它们：
 
-[PRE17]
+```py
+**for** df **in** (joined, joined_test):
+    **for** c **in** df.columns:
+        **if** c.endswith('_y'):
+            **if** c **in** df.columns: df.drop(c, inplace=**True**, axis=1)**for** df **in** (joined,joined_test):
+  df['CompetitionOpenSinceYear'] = 
+          df.CompetitionOpenSinceYear.fillna(1900).astype(np.int32)
+  df['CompetitionOpenSinceMonth'] = 
+          df.CompetitionOpenSinceMonth.fillna(1).astype(np.int32)
+  df['Promo2SinceYear'] = 
+          df.Promo2SinceYear.fillna(1900).astype(np.int32)
+  df['Promo2SinceWeek'] = 
+          df.Promo2SinceWeek.fillna(1).astype(np.int32)
+```
 
 这家商店的主要竞争对手自某个日期以来一直开业。因此，我们可以使用 Pandas 的`to_datetime`，我传入年、月和日。所以这将给我们一个错误，除非它们都有年和月，所以我们将缺失的部分填充为 1900 年和 1 月（见上文）。而我们真正想知道的是这家商店在这个特定记录时已经开业多久了，所以我们可以进行日期相减：
 
-[PRE18]
+```py
+**for** df **in** (joined,joined_test):
+  df["CompetitionOpenSince"] = 
+          pd.to_datetime(dict(year=df.CompetitionOpenSinceYear,
+                        month=df.CompetitionOpenSinceMonth, day=15))
+  df["CompetitionDaysOpen"] = 
+          df.Date.subtract(df.CompetitionOpenSince).dt.days
+```
 
 现在如果你考虑一下，有时竞争对手的开业时间晚于这一行，所以有时会是负数。而且可能没有意义有负数（即将在 x 天后开业）。现在话虽如此，我绝不会在没有先运行包含它和不包含它的模型的情况下放入这样的东西。因为我们对数据的假设往往是不正确的。在这种情况下，我没有发明任何这些预处理步骤。我写了所有的代码，但它都是基于第三名获奖者的 GitHub 存储库。因此，知道在 Kaggle 竞赛中获得第三名需要做什么，我相当肯定他们会检查每一个这些预处理步骤，并确保它实际上提高了他们的验证集分数。
 
-[PRE19]
+```py
+**for** df **in** (joined,joined_test):
+    df.loc[df.CompetitionDaysOpen<0, "CompetitionDaysOpen"] = 0
+    df.loc[df.CompetitionOpenSinceYear<1990,"CompetitionDaysOpen"]=0
+```
 
 [[1:30:44](https://youtu.be/XJ_waZlJU8g?t=5444)]
 
@@ -404,7 +507,12 @@
 
 这次比赛的第三名决定将比赛开放的月数作为一个他们要用作分类变量的东西。为了避免创建比需要的更多的类别，他们将其截断到 24 个月。他们说，超过 24 个月的任何东西，截断到 24 个。因此，这里是比赛开放的唯一值，从零到 24。这意味着将会有一个嵌入矩阵，基本上会有一个嵌入向量，用于尚未开放的事物（0），用于一个月开放的事物（1），依此类推。
 
-[PRE20]
+```py
+**for** df **in** (joined,joined_test):
+    df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
+    df.loc[df.CompetitionMonthsOpen>24,"CompetitionMonthsOpen"] = 24
+joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*
+```
 
 现在，他们绝对可以将其作为一个连续变量来处理[[1:33:14](https://youtu.be/XJ_waZlJU8g?t=5594)]。他们本可以只是在这里放一个数字，表示开放了多少个月，然后将其视为连续变量，直接输入到初始权重矩阵中。但我发现，显然这些竞争对手也发现了，尽可能地将事物视为分类变量是最好的。这样做的原因是，当你通过一个嵌入矩阵传递一些内容时，意味着每个级别可以被完全不同地处理。例如，在这种情况下，某物是否开放了零个月或一个月是非常不同的。因此，如果你将其作为连续变量输入，神经网络将很难找到具有这种巨大差异的功能形式。这是可能的，因为神经网络可以做任何事情。但如果你不让它变得容易。另一方面，如果你使用嵌入，将其视为分类变量，那么零和一将有完全不同的向量。因此，尤其是在你有足够的数据时，尽可能地将列视为分类变量是一个更好的主意。当我说尽可能时，基本上意味着基数不要太高。因此，如果这是每一行上唯一不同的销售 ID 号码，你不能将其视为分类变量。因为那将是一个巨大的嵌入矩阵，而且每样东西只出现一次，或者是距离最近商店的公里数到小数点后两位，你也不会将其作为分类变量。
 

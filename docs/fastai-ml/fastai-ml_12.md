@@ -10,13 +10,24 @@
 
 上次，我们谈到了这样一个想法，当我们试图构建这个 CompetitionMonthsOpen 派生变量时，实际上我们将其截断为不超过 24 个月，我们谈到了原因，因为我们实际上希望将其用作分类变量，因为分类变量，由于嵌入，具有更多的灵活性，神经网络可以如何使用它们。所以这就是我们离开的地方。
 
-[PRE0]
+```py
+**for** df **in** (joined,joined_test):
+    df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
+    df.loc[df.CompetitionMonthsOpen>24, "CompetitionMonthsOpen"]= 24
+joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*
+```
 
 让我们继续进行下去。因为这个笔记本中发生的事情可能适用于你处理的大多数时间序列数据集。正如我们所讨论的，虽然我们在这里使用了`df.apply`，但这是在每一行上运行一段 Python 代码，速度非常慢。所以只有在找不到可以一次对整列进行操作的矢量化 pandas 或 numpy 函数时才这样做。但在这种情况下，我找不到一种方法可以在不使用任意 Python 的情况下将年份和周数转换为日期。
 
 还值得记住这个 lambda 函数的概念。每当你尝试将一个函数应用到某个东西的每一行或张量的每个元素时，如果没有已经存在的矢量化版本，你将不得不调用像`DataFrame.apply`这样的东西，它将运行你传递给每个元素的函数。所以这基本上是函数式编程中的映射，因为很多时候你想要传递给它的函数是你只会使用一次然后丢弃的东西。使用这种 lambda 方法非常常见。所以这个 lambda 是为了告诉`df.apply`要使用什么而创建的函数。
 
-[PRE1]
+```py
+**for** df **in** (joined,joined_test):
+    df["Promo2Since"] = pd.to_datetime(df.apply(**lambda** x: Week(
+        x.Promo2SinceYear, x.Promo2SinceWeek).monday(), 
+            axis=1).astype(pd.datetime))
+    df["Promo2Days"] = df.Date.subtract(df["Promo2Since"]).dt.days
+```
 
 我们也可以用不同的方式来写这个 [[3:16](https://youtu.be/5_xFdhfUnvQ?t=196)]。以下两个单元格是相同的：
 
@@ -46,13 +57,34 @@
 
 换句话说，距离下一个州假期还有多久，距离上一个州假期已经多久了。所以这不是我知道存在的库或任何其他东西。所以我手工写在这里。
 
-[PRE2]
+```py
+**def** get_elapsed(fld, pre):
+    day1 = np.timedelta64(1, 'D')
+    last_date = np.datetime64()
+    last_store = 0
+    res = []
+
+    **for** s,v,d **in** zip(df.Store.values,df[fld].values, 
+                     df.Date.values):
+        **if** s != last_store:
+            last_date = np.datetime64()
+            last_store = s
+        **if** v: last_date = d
+        res.append(((d-last_date).astype('timedelta64[D]') / day1))
+    df[pre+fld] = res
+```
 
 因此，重要的是，我需要按店铺来做这个。所以我想说，对于这家店铺，上次促销是什么时候（即自上次促销以来多长时间），下次促销还有多长时间，例如。
 
 我要做的是这样的。我将创建一个小函数，它将接受一个字段名，然后我将依次传递`Promo`、`StateHoliday`和`SchoolHoliday`。让我们以学校假期为例。所以我们说字段等于学校假期，然后我们说`get_elapsed('SchoolHoliday', 'After')`。让我告诉你这将会做什么。我们首先按店铺和日期排序。现在当我们循环遍历时，我们将在店铺内循环遍历。所以店铺＃1，1 月 1 日，1 月 2 日，1 月 3 日，依此类推。
 
-[PRE3]
+```py
+fld = 'SchoolHoliday'
+df = df.sort_values(['Store', 'Date'])
+get_elapsed(fld, 'After')
+df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+get_elapsed(fld, 'Before')
+```
 
 当我们循环遍历每家店铺时，我们基本上会说这一行是学校假期还是不是[[8:56](https://youtu.be/5_xFdhfUnvQ?t=536)]。如果是学校假期，那么我们将跟踪名为`last_date`的变量，表示我们看到学校假期的最后日期。然后我们将追加到我们的结果中自上次学校假期以来的天数。
 
@@ -104,7 +136,17 @@
 
 为了国家假期，为了促销，我们来做一下：
 
-[PRE4]
+```py
+fld = 'StateHoliday'
+df = df.sort_values(['Store', 'Date'])
+get_elapsed(fld, 'After')
+df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+get_elapsed(fld, 'Before')fld = 'Promo'
+df = df.sort_values(['Store', 'Date'])
+get_elapsed(fld, 'After')
+df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+get_elapsed(fld, 'Before')
+```
 
 ## 滚动函数[[16:11](https://youtu.be/5_xFdhfUnvQ?t=971)]
 
@@ -126,7 +168,11 @@
 
 Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
-[PRE5]
+```py
+bwd = df[['Store']+columns].sort_index().groupby("Store"
+                  ).rolling(7, min_periods=1).sum()fwd = df[['Store']+columns].sort_index(ascending=**False**
+                  ).groupby("Store").rolling(7, min_periods=1).sum()
+```
 
 第一个参数表示我想将函数应用到多少个时间步。第二个参数表示如果我处于边缘，换句话说，如果我处于上图的左边缘，你应该将其设置为缺失值，因为我没有七天的平均值，或者要使用的最小时间段数是多少。所以这里，我设置为 1。然后你还可以选择设置窗口在周期的开始、结束或中间。然后在其中，你可以应用任何你喜欢的函数。所以这里，我有我的按店铺每周求和。所以有一个很简单的方法来得到移动平均值或其他内容。
 
@@ -156,23 +202,39 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 然后我们将所有的分类变量转换为 Pandas 的分类变量，方式与之前相同：
 
-[PRE6]
+```py
+**for** v **in** cat_vars: 
+    joined[v] = joined[v].astype('category').cat.as_ordered()
+```
 
 然后我们将应用相同的映射到测试集。如果在训练集中星期六是 6，`apply_cats` 确保在测试集中星期六也是 6：
 
-[PRE7]
+```py
+apply_cats(joined_test, joined)
+```
 
 对于连续变量，确保它们都是浮点数，因为 PyTorch 期望所有东西都是浮点数。
 
-[PRE8]
+```py
+**for** v **in** contin_vars:
+    joined[v] = joined[v].fillna(0).astype('float32')
+    joined_test[v] = joined_test[v].fillna(0).astype('float32')
+```
 
 然后这是我使用的另一个小技巧。
 
-[PRE9]
+```py
+idxs = get_cv_idxs(n, val_pct=150000/n)
+joined_samp = joined.iloc[idxs].set_index("Date")
+samp_size = len(joined_samp); samp_size150000
+```
 
 这两个单元格（上面和下面）都定义了一个叫做`joined_samp`的东西。其中一个将它们定义为整个训练集，另一个将它们定义为一个随机子集。所以我的想法是，我在样本上做所有的工作，确保一切都运行良好，尝试不同的超参数和架构。然后当我对此满意时，我会回过头来运行下面这行代码，说，好，现在让整个数据集成为样本，然后重新运行它。
 
-[PRE10]
+```py
+samp_size = n
+joined_samp = joined.set_index("Date")
+```
 
 这是一个很好的方法，与我之前向您展示的类似，它让您可以在笔记本中使用相同的单元格首先在样本上运行，然后稍后回来并在完整数据集上运行。
 
@@ -180,7 +242,10 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 现在我们有了`joined_samp`，我们可以像以前一样将其传递给 proc_df 来获取因变量以处理缺失值。在这种情况下，我们传递了一个额外的参数`do_scale=True`。这将减去均值并除以标准差。
 
-[PRE11]
+```py
+df, y, nas, mapper = proc_df(joined_samp, 'Sales', do_scale=**True**)
+yl = np.log(y)
+```
 
 这是因为如果我们的第一层只是一个矩阵乘法。这是我们的权重集。我们的输入大约是 0.001 和另一个是 10⁶，例如，然后我们的权重矩阵已经初始化为 0 到 1 之间的随机数。然后基本上 10⁶的梯度将比 0.001 大 9 个数量级，这对优化不利。因此，通过将所有内容标准化为均值为零标准差为 1 开始，这意味着所有的梯度将在同一种规模上。
 
@@ -196,11 +261,17 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 然后我们创建一个验证集，正如我们之前学到的，大多数情况下，如果你的问题涉及时间因素，你的验证集可能应该是最近的时间段，而不是一个随机子集。所以这就是我在这里做的：
 
-[PRE12]
+```py
+val_idx = np.flatnonzero(
+    (df.index<=datetime.datetime(2014,9,17)) & 
+    (df.index>=datetime.datetime(2014,8,1)))
+```
 
 当我完成建模并找到一个架构、一组超参数、一定数量的 epochs 以及所有能够很好工作的东西时，如果我想让我的模型尽可能好，我会重新在整个数据集上进行训练 — 包括验证集。现在，至少目前为止，Fast AI 假设你有一个验证集，所以我的一种折中方法是将我的验证集设置为只有一个索引，即第一行：
 
-[PRE13]
+```py
+val_idx=[0]
+```
 
 这样所有的代码都能继续运行，但实际上没有真正的验证集。显然，如果你这样做，你需要确保你的最终训练与之前的完全相同，包括相同的超参数、相同数量的 epochs，因为现在你实际上没有一个正确的验证集来进行检查。
 
@@ -210,17 +281,68 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 现在我们可以创建我们的模型。要创建我们的模型，我们必须像在 Fast AI 中一样创建一个模型数据对象。所以一个列模型数据对象只是一个代表训练集、验证集和可选测试集的标准列结构化数据的模型数据对象。
 
-[PRE14]
+```py
+md = ColumnarModelData.from_data_frame(PATH, val_idx, df, 
+                    yl.astype(np.float32), cat_flds=cat_vars, 
+                    bs=128, test_df=df_test)
+```
 
 我们只需要告诉它哪些变量应该被视为分类变量。然后传入我们的数据框。
 
 对于我们的每个分类变量，这里是它所拥有的类别数量。因此，对于我们的每个嵌入矩阵，这告诉我们该嵌入矩阵中的行数。然后我们定义我们想要的嵌入维度。如果你在进行自然语言处理，那么需要捕捉一个词的含义和使用方式的所有细微差别的维度数量经验性地被发现大约是 600。事实证明，当你使用小于 600 的嵌入矩阵进行自然语言处理模型时，结果不如使用大小为 600 的好。超过 600 后，似乎没有太大的改进。我会说人类语言是我们建模的最复杂的事物之一，所以我不会指望你会遇到许多或任何需要超过 600 维度的嵌入矩阵的分类变量。另一方面，有些事物可能具有相当简单的因果关系。例如，`StateHoliday` ——也许如果某事是假日，那么在城市中的商店会有一些行为，在乡村中的商店会有一些其他行为，就是这样。也许这是一个相当简单的关系。因此，理想情况下，当你决定使用什么嵌入大小时，你应该利用你对领域的知识来决定关系有多复杂，因此我需要多大的嵌入。实际上，你几乎永远不会知道这一点。你只知道这一点，因为也许别人以前已经做过这方面的研究并找到了答案，就像在自然语言处理中一样。因此，在实践中，你可能需要使用一些经验法则，并尝试一些经验法则后，你可以尝试再高一点，再低一点，看看哪种方法有帮助。所以这有点像实验。
 
-[PRE15]
+```py
+cat_sz=[(c, len(joined_samp[c].cat.categories)+1) **for** c **in** cat_vars]cat_sz*[('Store', 1116),
+ ('DayOfWeek', 8),
+ ('Year', 4),
+ ('Month', 13),
+ ('Day', 32),
+ ('StateHoliday', 3),
+ ('CompetitionMonthsOpen', 26),
+ ('Promo2Weeks', 27),
+ ('StoreType', 5),
+ ('Assortment', 4),
+ ('PromoInterval', 4),
+ ('CompetitionOpenSinceYear', 24),
+ ('Promo2SinceYear', 9),
+ ('State', 13),
+ ('Week', 53),
+ ('Events', 22),
+ ('Promo_fw', 7),
+ ('Promo_bw', 7),
+ ('StateHoliday_fw', 4),
+ ('StateHoliday_bw', 4),
+ ('SchoolHoliday_fw', 9),
+ ('SchoolHoliday_bw', 9)]*
+```
 
 这里是我的经验法则。我的经验法则是看看该类别有多少个离散值（即嵌入矩阵中的行数），并使嵌入的维度为该值的一半。所以如果是星期几，第二个，有八行和四列。这里是`(c+1)//2` ——列数除以二。但是我说不要超过 50。在这里你可以看到对于商店（第一行），有 116 家商店，只有一个维度为 50。为什么是 50？我不知道。到目前为止似乎效果还不错。你可能会发现你需要一些稍微不同的东西。实际上，对于厄瓜多尔杂货比赛，我还没有真正尝试过调整这个，但我认为我们可能需要一些更大的嵌入大小。但这是可以摆弄的东西。
 
-[PRE16]
+```py
+emb_szs = [(c, min(50, (c+1)//2)) **for** _,c **in** cat_sz]
+emb_szs*[(1116, 50),
+ (8, 4),
+ (4, 2),
+ (13, 7),
+ (32, 16),
+ (3, 2),
+ (26, 13),
+ (27, 14),
+ (5, 3),
+ (4, 2),
+ (4, 2),
+ (24, 12),
+ (9, 5),
+ (13, 7),
+ (53, 27),
+ (22, 11),
+ (7, 4),
+ (7, 4),
+ (4, 2),
+ (4, 2),
+ (9, 5),
+ (9, 5)]*
+```
 
 **问题**：随着基数大小变得越来越大，您正在创建越来越宽的嵌入矩阵。因此，您是否会因为选择了 70 个参数而极大地增加过拟合的风险，因为模型永远不可能捕捉到数据实际巨大的所有变化[[36:44](https://youtu.be/5_xFdhfUnvQ?t=2204)]？这是一个很好的问题，所以让我提醒您一下现代机器学习和旧机器学习之间的区别的黄金法则。在旧的机器学习中，我们通过减少参数数量来控制复杂性。在现代机器学习中，我们通过正则化来控制复杂性。所以简短的答案是不。我不担心过拟合，因为我避免过拟合的方式不是通过减少参数数量，而是通过增加丢弃率或增加权重衰减。现在说到这一点，对于特定的嵌入，没有必要使用比我需要的更多的参数。因为正则化是通过给模型更多的随机数据或实际上对权重进行惩罚来惩罚模型。所以我们宁愿不使用比必要更多的参数。但是在设计架构时，我的一般经验法则是在参数数量方面慷慨一些。在这种情况下，如果经过一些工作后，我们觉得商店实际上似乎并不那么重要。那么我可能会手动去修改它，使其更小。或者如果我真的发现这里的数据不够，我要么过拟合了，要么使用的正则化比我感到舒适的要多，那么您可能会回去。但我总是会从参数慷慨的角度开始。在这种情况下，这个模型表现得相当不错。
 
@@ -234,11 +356,21 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 +   `[0.001,0.01]`: 每一层使用的丢弃率是多少
 
-[PRE17]
+```py
+m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars),
+                   0.04, 1, [1000,500], [0.001,0.01], y_range=y_range)
+m.summary()
+```
 
 然后我们可以继续调用`fit`。我们训练了一段时间，得到了大约 0.1 的分数。
 
-[PRE18]
+```py
+m.fit(lr, 1, metrics=[exp_rmspe])*[ 0\.       0.01456  0.01544  0.1148 ]*m.fit(lr, 3, metrics=[exp_rmspe])*[ 0\.       0.01418  0.02066  0.12765]                           
+[ 1\.       0.01081  0.01276  0.11221]                           
+[ 2\.       0.00976  0.01233  0.10987]*m.fit(lr, 3, metrics=[exp_rmspe], cycle_len=1)*[ 0\.       0.00801  0.01081  0.09899]                            
+[ 1\.       0.00714  0.01083  0.09846]                            
+[ 2\.       0.00707  0.01088  0.09878]*
+```
 
 所以我尝试在测试集上运行这个，并且上周我把它提交到了 Kaggle，这里是结果[[39:25](https://youtu.be/5_xFdhfUnvQ?t=2365)]：
 
