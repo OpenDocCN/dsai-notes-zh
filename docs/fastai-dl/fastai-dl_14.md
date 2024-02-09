@@ -56,7 +56,8 @@ matplotlib inline
 from fastai.conv_learner import *
 from pathlib import Path
 
-torch.backends.cudnn.benchmark=TruePATH = Path('data/imagenet')
+torch.backends.cudnn.benchmark=True
+PATH = Path('data/imagenet')
 PATH_TRN = PATH/'train'
 ```
 
@@ -65,11 +66,18 @@ PATH_TRN = PATH/'train'
 ```py
 fnames_full,label_arr_full,all_labels = folder_source(PATH, 'train')
 fnames_full = ['/'.join(Path(fn).parts[-2:]) for fn in fnames_full]
-list(zip(fnames_full[:5],label_arr_full[:5]))*[('n01440764/n01440764_9627.JPEG', 0),
+list(zip(fnames_full[:5],label_arr_full[:5]))
+'''
+[('n01440764/n01440764_9627.JPEG', 0),
  ('n01440764/n01440764_9609.JPEG', 0),
  ('n01440764/n01440764_5176.JPEG', 0),
  ('n01440764/n01440764_6936.JPEG', 0),
- ('n01440764/n01440764_4005.JPEG', 0)]*all_labels[:5]*['n01440764', 'n01443537', 'n01484850', 'n01491361', 'n01494475']*
+ ('n01440764/n01440764_4005.JPEG', 0)]
+'''
+all_labels[:5]
+'''
+['n01440764', 'n01443537', 'n01484850', 'n01491361', 'n01494475']
+'''
 ```
 
 现在，因为我指向一个包含所有 ImageNet 的文件夹，我当然不想等待所有 ImageNet 完成一个周期才运行。所以在这里，我通常会将“保留百分比”（`keep_pct`）设置为 1 或 2%。然后我只生成一堆随机数，然后只保留那些小于 0.02 的数，这样让我快速地对行进行子采样。
@@ -77,7 +85,7 @@ list(zip(fnames_full[:5],label_arr_full[:5]))*[('n01440764/n01440764_9627.JPEG',
 ```py
 np.random.seed(42)
 # keep_pct = 1.
-*keep_pct = 0.02*
+keep_pct = 0.02
 keeps = np.random.rand(len(fnames_full)) < keep_pct
 fnames = np.array(fnames_full, copy=False)[keeps]
 label_arr = np.array(label_arr_full, copy=False)[keeps]
@@ -102,7 +110,7 @@ sz_lr = 72
 
 ```py
 scale,bs = 2,64
-*# scale,bs = 4,32*
+# scale,bs = 4,32
 sz_hr = sz_lr*scale
 ```
 
@@ -116,7 +124,8 @@ class MatchedFilesDataset(FilesDataset):
         super().__init__(fnames, transform, path)
     def get_y(self, i): 
         return open_image(os.path.join(self.path, self.y[i]))
-    def get_c(self): return 0
+    def get_c(self): 
+        return 0
 ```
 
 我将进行一些数据增强。显然，对于所有的 ImageNet，我们并不真正需要它，但这主要是为了任何使用较小数据集的人能够充分利用它。`RandomDihedral`指的是每个可能的 90 度旋转加上可选的左/右翻转，因此它们是八个对称的二面角群。通常我们不会对 ImageNet 图片使用这种转换，因为你通常不会把狗颠倒过来，但在这种情况下，我们并不是试图分类它是狗还是猫，我们只是试图保持它的一般结构。因此，实际上对于这个问题来说，每个可能的翻转都是一个相当明智的事情。
@@ -129,18 +138,34 @@ aug_tfms = [RandomDihedral(tfm_y=TfmType.PIXEL)]
 
 ```py
 val_idxs = get_cv_idxs(len(fnames), val_pct=min(0.01/keep_pct, 0.1))
-((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, 
-                                np.array(fnames), np.array(fnames))
-len(val_x),len(trn_x)*(12811, 1268356)*img_fn = PATH/'train'/'n01558993'/'n01558993_9684.JPEG'
+((val_x,trn_x),(val_y,trn_y)) = split_by_idx(
+    val_idxs, 
+    np.array(fnames), 
+    np.array(fnames)
+)
+len(val_x),len(trn_x)
+'''
+(12811, 1268356)
+'''
+img_fn = PATH/'train'/'n01558993'/'n01558993_9684.JPEG'
 ```
 
 接下来我们需要像往常一样创建我们的转换。我们将使用`tfm_y`参数，就像我们为边界框所做的那样，但我们不是使用`TfmType.COORD`，而是使用`TfmType.PIXEL`。这告诉我们的转换框架，你的*y*值是带有正常像素的图像，所以任何你对*x*做的事情，你也需要对*y*做同样的事情。你需要确保你使用的任何数据增强转换也具有相同的参数。
 
 ```py
-tfms = tfms_from_model(arch, sz_lr, tfm_y=TfmType.PIXEL, 
-          aug_tfms=aug_tfms, sz_y=sz_hr)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-               (val_x,val_y), tfms, path=PATH_TRN)
+tfms = tfms_from_model(
+    arch, sz_lr, 
+    tfm_y=TfmType.PIXEL, 
+    aug_tfms=aug_tfms, 
+    sz_y=sz_hr
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH_TRN
+)
 md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)
 ```
 
@@ -164,12 +189,19 @@ denorm = md.val_ds.denorm
 
 ```py
 def show_img(ims, idx, figsize=(5,5), normed=True, ax=None):
-    if ax is None: fig,ax = plt.subplots(figsize=figsize)
-    if normed: ims = denorm(ims)
-    else:      ims = np.rollaxis(to_np(ims),1,4)
+    if ax is None: 
+        fig,ax = plt.subplots(figsize=figsize)
+    if normed: 
+        ims = denorm(ims)
+    else:      
+        ims = np.rollaxis(to_np(ims),1,4)
     ax.imshow(np.clip(ims,0,1)[idx])
-    ax.axis('off')x,y = next(iter(md.val_dl))
-x.size(),y.size()*(torch.Size([32, 3, 72, 72]), torch.Size([32, 3, 288, 288]))*
+    ax.axis('off')
+x,y = next(iter(md.val_dl))
+x.size(),y.size()
+'''
+(torch.Size([32, 3, 72, 72]), torch.Size([32, 3, 288, 288]))
+'''
 ```
 
 你会看到我们传入了低分辨率大小（`sz_lr`）作为我们的转换大小，高分辨率大小（`sz_hr`）作为，这是新的东西，大小 y 参数（`sz_y`）。所以这两部分将得到不同的大小。
@@ -220,9 +252,11 @@ for i,(x,y) in enumerate(batches):
 
 ```py
 def conv(ni, nf, kernel_size=3, actn=False):
-    layers = [nn.Conv2d(ni, nf, kernel_size, 
-              padding=kernel_size//2)]
-    if actn: layers.append(nn.ReLU(True))
+    layers = [
+        nn.Conv2d(ni, nf, kernel_size, padding=kernel_size//2)
+    ]
+    if actn: 
+        layers.append(nn.ReLU(True))
     return nn.Sequential(*layers)
 ```
 
@@ -243,7 +277,8 @@ class ResSequential(nn.Module):
         self.res_scale = res_scale
         self.m = nn.Sequential(*layers)
 
-    def forward(self, x): return x + self.m(x) * self.res_scale
+    def forward(self, x): 
+        return x + self.m(x) * self.res_scale
 ```
 
 所以我们将创建一个包含两个卷积的残差块。正如你在他们的方法中看到的那样，他们甚至在第二个卷积后没有 ReLU。这就是为什么我只在第一个上有激活。
@@ -251,8 +286,8 @@ class ResSequential(nn.Module):
 ```py
 def res_block(nf):
     return ResSequential(
-        [conv(nf, nf, actn=True), conv(nf, nf)],
-        0.1)
+        [conv(nf, nf, actn=True), conv(nf, nf)], 0.1
+    )
 ```
 
 这里有几个有趣的地方[27:10]。一个是这个想法，即有一种主要的 ResNet 路径（卷积，ReLU，卷积），然后通过将其添加回到身份来将其转换为 ReLU 块——我们经常这样做，以至于我将其提取出来成为一个名为 ResSequential 的小模块。它简单地将您想要放入残差路径的一堆层转换为顺序模型，运行它，然后将其添加回输入。有了这个小模块，我们现在可以通过将其包装在 ResSequential 中，将任何东西，比如卷积激活卷积，转换为一个 ResNet 块。
@@ -278,13 +313,18 @@ class SrResnet(nn.Module):
     def __init__(self, nf, scale):
         super().__init__()
         features = [conv(3, 64)]
-        for i in range(8): features.append(res_block(64))
-        features += [conv(64,64), upsample(64, 64, scale),
-                     nn.BatchNorm2d(64),
-                     conv(64, 3)]
+        for i in range(8): 
+            features.append(res_block(64))
+        features += [
+            conv(64,64), 
+            upsample(64, 64, scale),
+            nn.BatchNorm2d(64),
+            conv(64, 3)
+        ]
         self.features = nn.Sequential(*features)
 
-    def forward(self, x): return self.features(x)
+    def forward(self, x): 
+        return self.features(x)
 ```
 
 只是提一下，就像我现在倾向于做的那样，整个过程是通过创建一个带有层的列表，然后在最后将其转换为一个顺序模型，因此我的前向函数尽可能简单。
@@ -354,13 +394,22 @@ learn.crit = F.mse_loss
 
 ```py
 learn.lr_find(start_lr=1e-5, end_lr=10000)
-learn.sched.plot()31%|███▏      | 225/720 [00:24<00:53,  9.19it/s, loss=0.0482]
+learn.sched.plot()
+'''
+31%|███▏      | 225/720 [00:24<00:53,  9.19it/s, loss=0.0482]
+'''
 ```
 
 ```py
-lr=2e-3learn.fit(lr, 1, cycle_len=1, use_clr_beta=(40,10))2%|▏         | 15/720 [00:02<01:52,  6.25it/s, loss=0.042]  
+lr=2e-3
+learn.fit(lr, 1, cycle_len=1, use_clr_beta=(40,10))
+'''
+2%|▏         | 15/720 [00:02<01:52,  6.25it/s, loss=0.042]  
 epoch      trn_loss   val_loss                                 
-    0      0.007431   0.008192*[array([0.00819])]*x,y = next(iter(md.val_dl))
+    0      0.007431   0.008192
+[array([0.00819])]
+'''
+x,y = next(iter(md.val_dl))
 preds = learn.model(VV(x))
 ```
 
@@ -385,7 +434,8 @@ show_img(x,idx,normed=True);
 
 ```py
 x,y = next(iter(md.val_dl))
-preds = learn.model(VV(x))show_img(y,idx,normed=False)
+preds = learn.model(VV(x))
+show_img(y,idx,normed=False)
 ```
 
 ```py
@@ -406,19 +456,28 @@ def icnr(x, scale=2, init=nn.init.kaiming_normal):
     subkernel = torch.zeros(new_shape)
     subkernel = init(subkernel)
     subkernel = subkernel.transpose(0, 1)
-    subkernel = subkernel.contiguous().view(subkernel.shape[0],
-                                            subkernel.shape[1], -1)
+    subkernel = subkernel.contiguous().view(
+        subkernel.shape[0],
+        subkernel.shape[1], 
+        -1
+    )
     kernel = subkernel.repeat(1, 1, scale ** 2)
-    transposed_shape = [x.shape[1]] + [x.shape[0]] + 
-                          list(x.shape[2:])
+    transposed_shape = [x.shape[1]] + \
+                       [x.shape[0]] + 
+                       list(x.shape[2:])
     kernel = kernel.contiguous().view(transposed_shape)
     kernel = kernel.transpose(0, 1)
     return kernelm_vgg = vgg16(True)
 
-blocks = [i-1 for i,o in enumerate(children(m_vgg))
-              if isinstance(o,nn.MaxPool2d)]
-blocks, [m_vgg[i] for i in blocks]*([5, 12, 22, 32, 42],
- [ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace)])*
+blocks = [
+    i-1 for i,o in enumerate(children(m_vgg))
+    if isinstance(o,nn.MaxPool2d)
+]
+blocks, [m_vgg[i] for i in blocks]
+'''
+([5, 12, 22, 32, 42],
+ [ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace)])
+'''
 ```
 
 这是每个相同网格大小块的末尾。如果我们将它们打印出来，正如我们所期望的那样，每一个都是一个 ReLU 模块，所以在这种情况下，这最后两个块对我们来说不太有趣。那里的网格大小足够小，当然足够小，对于超分辨率来说并不那么有用。所以我们只会使用前三个。为了节省不必要的计算，我们只会使用 VGG 的前 23 层，然后丢弃其余的。我们会把它放在 GPU 上。我们不会训练这个 VGG 模型——我们只是用它来比较激活。所以我们会将其设置为评估模式，并设置为不可训练。
@@ -426,7 +485,9 @@ blocks, [m_vgg[i] for i in blocks]*([5, 12, 22, 32, 42],
 ```py
 vgg_layers = children(m_vgg)[:23]
 m_vgg = nn.Sequential(*vgg_layers).cuda().eval()
-set_trainable(m_vgg, False)def flatten(x): return x.view(x.size(0), -1)
+set_trainable(m_vgg, False)
+def flatten(x): 
+    return x.view(x.size(0), -1)
 ```
 
 就像上周一样，我们将使用`SaveFeatures`类来做一个前向钩子，保存每个层的输出激活[[52:07](https://youtu.be/nG3tT31nPmQ?t=52m7s)]。
@@ -436,8 +497,10 @@ class SaveFeatures():
     features=None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
-    def hook_fn(self, module, input, output): self.features = output
-    def remove(self): self.hook.remove()
+    def hook_fn(self, module, input, output): 
+        self.features = output
+    def remove(self): 
+        self.hook.remove()
 ```
 
 现在我们已经有了创建我们的感知损失或者我在这里称之为`FeatureLoss`类所需的一切。我们将传入一个层 ID 列表，我们希望计算内容损失的层，以及每个层的权重列表。我们可以遍历每个层 ID 并创建一个具有前向钩子函数来存储激活的对象。所以在我们的前向传播中，我们可以直接调用模型的前向传播，使用目标（我们试图创建的高分辨率图像）。我们这样做的原因是因为这将调用那个钩子函数并将我们想要的激活存储在`self.sfs`（self 点保存特征）中。现在我们还需要对我们的卷积网络输出进行相同的操作。所以我们需要克隆这些，否则卷积网络输出将继续覆盖我已经有的内容。所以现在我们可以对卷积网络输出执行相同的操作，这是损失函数的输入。所以现在我们有了这两个东西，我们可以将它们与权重一起压缩在一起，所以我们有了输入、目标和权重。然后我们可以计算输入和目标之间的 L1 损失，并乘以层权重。我还做的另一件事是我也获取了像素损失，但我将其权重降低了很多。大多数人不这样做。我没有看到有论文这样做，但在我看来，这可能更好一点，因为你有感知内容损失激活的东西，但在最细微的层面上，它也关心个别像素。所以这就是我们的损失函数。
@@ -454,9 +517,10 @@ class FeatureLoss(nn.Module):
         res = [F.l1_loss(input,target)/100]
         targ_feat = [V(o.features.data.clone()) for o in self.sfs]
         self.m(input)
-        res += [F.l1_loss(flatten(inp.features),flatten(targ))*wgt
-               for inp,targ,wgt in zip(self.sfs, targ_feat, 
-                                       self.wgts)]
+        res += [
+            F.l1_loss(flatten(inp.features),flatten(targ))*wgt
+            for inp,targ,wgt in zip(self.sfs, targ_feat, self.wgts)
+        ]
         if sum_layers: res = sum(res)
         return res
 
@@ -481,9 +545,17 @@ conv_shuffle.weight.data.copy_(kernel);
 正如你所看到的，我在这个练习中费了很大的劲，真的尽力去实现所有最佳实践[[56:13](https://youtu.be/nG3tT31nPmQ?t=56m13s)]。我倾向于做事情有点极端。我向你展示了一个只能勉强工作的非常粗糙的版本，或者我会尽最大努力让它真正运行良好。所以这个版本是我声称这几乎是一个最先进的实现。这是一个获奖的竞赛，或者至少是我重新实现的一个获奖方法。我这样做的原因是因为我认为这是那些实际上把很多细节做对的罕见论文之一，我希望你能感受到把所有细节做对的感觉。记住，把细节做对是区分丑陋模糊混乱和漂亮精致结果之间的区别。
 
 ```py
-m = to_gpu(m)learn = Learner(md, SingleModel(m), opt_fn=optim.Adam)t = torch.load(learn.get_model_path('sr-samp0'), 
-         map_location=lambda storage, loc: storage)
-learn.model.load_state_dict(t, strict=False)learn.freeze_to(999)for i in range(10,13): set_trainable(m.features[i], True)conv_shuffle = m.features[10][2][0]
+m = to_gpu(m)
+learn = Learner(md, SingleModel(m), opt_fn=optim.Adam)
+t = torch.load(
+    learn.get_model_path('sr-samp0'), 
+    map_location=lambda storage, loc: storage
+)
+learn.model.load_state_dict(t, strict=False)
+learn.freeze_to(999)
+for i in range(10,13): 
+    set_trainable(m.features[i], True)
+conv_shuffle = m.features[10][2][0]
 kernel = icnr(conv_shuffle.weight, scale=scale)
 conv_shuffle.weight.data.copy_(kernel);
 ```
@@ -492,29 +564,41 @@ conv_shuffle.weight.data.copy_(kernel);
 
 ```py
 m = nn.DataParallel(m, [0,2])
-learn = Learner(md, SingleModel(m), opt_fn=optim.Adam)learn.set_data(md)
+learn = Learner(md, SingleModel(m), opt_fn=optim.Adam)
+learn.set_data(md)
 ```
 
 我们将把我们的标准设置为使用我们的 VGG 模型的 FeatureLoss，获取前几个块，这些是我发现效果非常好的一组层权重。
 
 ```py
-learn.crit = FeatureLoss(m_vgg, blocks[:3], [0.2,0.7,0.1])lr=6e-3
+learn.crit = FeatureLoss(m_vgg, blocks[:3], [0.2,0.7,0.1])
+lr=6e-3
 wd=1e-7
 ```
 
 进行学习率查找。
 
 ```py
-learn.lr_find(1e-4, 0.1, wds=wd, linear=True) 1%|          | 15/1801 [00:06<12:55,  2.30it/s, loss=0.0965]
-12%|█▏        | 220/1801 [01:16<09:08,  2.88it/s, loss=0.42]learn.sched.plot(n_skip_end=1)
+learn.lr_find(1e-4, 0.1, wds=wd, linear=True) 
+'''
+1%|          | 15/1801 [00:06<12:55,  2.30it/s, loss=0.0965]
+12%|█▏        | 220/1801 [01:16<09:08,  2.88it/s, loss=0.42]
+'''
+learn.sched.plot(n_skip_end=1)
 ```
 
 适应一段时间
 
 ```py
-learn.fit(lr, 1, cycle_len=2, wds=wd, use_clr=(20,10))epoch      trn_loss   val_loss                                  
+learn.fit(lr, 1, cycle_len=2, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                                  
     0      0.04523    0.042932  
-    1      0.043574   0.041242[array([0.04124])]learn.save('sr-samp0')learn.save('sr-samp1')
+    1      0.043574   0.041242
+[array([0.04124])]
+'''
+learn.save('sr-samp0')
+learn.save('sr-samp1')
 ```
 
 我花了一段时间来尝试弄清楚一些细节。但这里是我最喜欢的论文部分，接下来会发生什么。现在我们已经为尺度等于 2 做好了准备——渐进式调整大小。渐进式调整大小是让我们在 DAWN 基准上对 ImageNet 训练获得最佳单台计算机结果的技巧。这个想法是从小开始逐渐变大。我只知道有两篇论文使用了这个想法。一篇是 GANs 渐进式调整大小的论文，允许训练非常高分辨率的 GANs，另一篇是 EDSR 论文。渐进式调整大小的酷之处不仅在于，假设你的前几个时期是 2x2 更小，速度快了四倍。你也可以让批量大小可能增加 3 或 4 倍。但更重要的是，它们将更好地泛化，因为在训练过程中你会向模型输入不同尺寸的图像。因此，我们能够为 ImageNet 训练使用一半的时代，比大多数人快。我们的时代更快，而且数量更少。因此，渐进式调整大小是一种特别适合从头开始训练的东西（我不确定它是否对微调迁移学习有用，但如果你是从头开始训练），你可能几乎想一直这样做。
@@ -534,39 +618,72 @@ learn.fit(lr, 1, cycle_len=2, wds=wd, use_clr=(20,10))epoch      trn_loss   val_
 如果你试图复制这个过程，不要只是从头到尾运行。要意识到这需要有一些跳跃。
 
 ```py
-learn.load('sr-samp1')lr=3e-3learn.fit(lr, 1, cycle_len=1, wds=wd, use_clr=(20,10))epoch      trn_loss   val_loss                                
-    0      0.069054   0.06638[array([0.06638])]learn.save('sr-samp2')learn.unfreeze()learn.load('sr-samp2')learn.fit(lr/3, 1, cycle_len=1, wds=wd, use_clr=(20,10))epoch      trn_loss   val_loss           
-    0      0.06042    0.057613[array([0.05761])]learn.save('sr1')learn.sched.plot_loss()
+learn.load('sr-samp1')
+lr=3e-3
+learn.fit(lr, 1, cycle_len=1, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                                
+    0      0.069054   0.06638
+[array([0.06638])]
+'''
+learn.save('sr-samp2')
+learn.unfreeze()
+learn.load('sr-samp2')
+learn.fit(lr/3, 1, cycle_len=1, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss           
+    0      0.06042    0.057613
+[array([0.05761])]
+'''
+learn.save('sr1')
+learn.sched.plot_loss()
 ```
 
 ```py
 def plot_ds_img(idx, ax=None, figsize=(7,7), normed=True):
-    if ax is None: fig,ax = plt.subplots(figsize=figsize)
+    if ax is None: 
+        fig,ax = plt.subplots(figsize=figsize)
     im = md.val_ds[idx][0]
-    if normed: im = denorm(im)[0]
-    else:      im = np.rollaxis(to_np(im),0,3)
+    if normed: 
+        im = denorm(im)[0]
+    else:      
+        im = np.rollaxis(to_np(im),0,3)
     ax.imshow(im)
-    ax.axis('off')fig,axes=plt.subplots(6,6,figsize=(20,20))
+    ax.axis('off')
+fig,axes=plt.subplots(6,6,figsize=(20,20))
 for i,ax in enumerate(axes.flat): 
     plot_ds_img(i+200,ax=ax, normed=True)
 ```
 
 ```py
-x,y=md.val_ds[215]y=y[None]learn.model.eval()
+x,y=md.val_ds[215]
+y=y[None]
+learn.model.eval()
 preds = learn.model(VV(x[None]))
-x.shape,y.shape,preds.shape*((3, 72, 72), (1, 3, 288, 288), torch.Size([1, 3, 288, 288]))*learn.crit(preds, V(y), sum_layers=False)[Variable containing:
- 1.00000e-03 *
+x.shape,y.shape,preds.shape
+'''
+((3, 72, 72), (1, 3, 288, 288), torch.Size([1, 3, 288, 288]))
+'''
+learn.crit(preds, V(y), sum_layers=False)
+'''
+[Variable containing:
+ 1.00000e-03 
    1.1935
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
- 1.00000e-03 *
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
+ 1.00000e-03 
    8.5054
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
- 1.00000e-02 *
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
+ 1.00000e-02 
    3.4656
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
- 1.00000e-03 *
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
+ 1.00000e-03 
    3.8243
- [torch.cuda.FloatTensor of size 1 (GPU 0)]]learn.crit.close()
+ [torch.cuda.FloatTensor of size 1 (GPU 0)]]
+'''
+learn.crit.close()
 ```
 
 训练时间越长，效果就越好。我最终训练了大约 10 个小时，但如果你不那么耐心，仍然可以更快地获得非常好的结果。所以我们可以试一试，这里是结果。左边是我的像素化鸟，右边是放大版本。它实际上发明了着色。但它弄清楚了这是什么鸟，知道这些羽毛应该是什么样子的。因此，它想象出了一组与这些确切像素兼容的羽毛，这是天才。同样适用于头部后面。你无法告诉这些蓝点代表什么。但如果你知道这种鸟在这里有一排羽毛，你就知道它们必须是这样的。然后你可以推断出羽毛必须是这样的，以至于当它们被像素化时它们会出现在这些位置。因此，它根据对这种确切鸟类的了解，逆向工程出了它必须看起来像这样才能创建这个输出。这太神奇了。它还知道周围所有的迹象表明这里（背景）几乎肯定被模糊处理了。因此，它实际上重建了模糊的植被。如果它没有做所有这些事情，它就不会得到如此好的损失函数。因为最终，它必须匹配激活，说“哦，这里有一根羽毛，看起来有点蓬松，朝这个方向”，等等。
@@ -624,41 +741,75 @@ show_img(preds,0, normed=True, ax=axes[1])
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
+%autoreload 2
+from fastai.conv_learner import *
 from pathlib import Path
-torch.cuda.set_device(0)torch.backends.cudnn.benchmark=TruePATH = Path('data/imagenet')
-PATH_TRN = PATH/'train'fnames_full,label_arr_full,all_labels = folder_source(PATH, 'train')
+torch.cuda.set_device(0)
+torch.backends.cudnn.benchmark=True
+PATH = Path('data/imagenet')
+PATH_TRN = PATH/'train'
+fnames_full,label_arr_full,all_labels = folder_source(PATH, 'train')
 fnames_full = ['/'.join(Path(fn).parts[-2:]) for fn in fnames_full]
-list(zip(fnames_full[:5],label_arr_full[:5]))*[('n01440764/n01440764_9627.JPEG', 0),
+list(zip(fnames_full[:5],label_arr_full[:5]))
+'''
+[('n01440764/n01440764_9627.JPEG', 0),
  ('n01440764/n01440764_9609.JPEG', 0),
  ('n01440764/n01440764_5176.JPEG', 0),
  ('n01440764/n01440764_6936.JPEG', 0),
- ('n01440764/n01440764_4005.JPEG', 0)]*all_labels[:5]*['n01440764', 'n01443537', 'n01484850', 'n01491361', 'n01494475']*np.random.seed(42)
-*# keep_pct = 1.*
-*# keep_pct = 0.01*
+ ('n01440764/n01440764_4005.JPEG', 0)]
+'''
+all_labels[:5]
+'''
+['n01440764', 'n01443537', 'n01484850', 'n01491361', 'n01494475']
+'''
+np.random.seed(42)
+# keep_pct = 1.
+# keep_pct = 0.01
 keep_pct = 0.1
 keeps = np.random.rand(len(fnames_full)) < keep_pct
 fnames = np.array(fnames_full, copy=False)[keeps]
-label_arr = np.array(label_arr_full, copy=False)[keeps]arch = vgg16
-*# sz,bs = 96,32*
+label_arr = np.array(label_arr_full, copy=False)[keeps]
+arch = vgg16
+# sz,bs = 96,32
 sz,bs = 256,24
-*# sz,bs = 128,32*class MatchedFilesDataset(FilesDataset):
+# sz,bs = 128,32
+class MatchedFilesDataset(FilesDataset):
     def __init__(self, fnames, y, transform, path):
         self.y=y
         assert(len(fnames)==len(y))
         super().__init__(fnames, transform, path)
     def get_y(self, i): 
         return open_image(os.path.join(self.path, self.y[i]))
-    def get_c(self): return 0val_idxs = get_cv_idxs(len(fnames), val_pct=min(0.01/keep_pct, 0.1))
-((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, 
-                                 np.array(fnames), np.array(fnames))
-len(val_x),len(trn_x)(12800, 115206)img_fn = PATH/'train'/'n01558993'/'n01558993_9684.JPEG'tfms = tfms_from_model(arch, sz, tfm_y=TfmType.PIXEL)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-                   (val_x,val_y), tfms, path=PATH_TRN)
-md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)denorm = md.val_ds.denormdef show_img(ims, idx, figsize=(5,5), normed=True, ax=None):
-    if ax is None: fig,ax = plt.subplots(figsize=figsize)
-    if normed: ims = denorm(ims)
-    else:      ims = np.rollaxis(to_np(ims),1,4)
+    def get_c(self): 
+        return 0
+val_idxs = get_cv_idxs(len(fnames), val_pct=min(0.01/keep_pct, 0.1))
+((val_x,trn_x),(val_y,trn_y)) = split_by_idx(
+    val_idxs, 
+    np.array(fnames), 
+    np.array(fnames)
+)
+len(val_x),len(trn_x)
+'''
+(12800, 115206)
+'''
+img_fn = PATH/'train'/'n01558993'/'n01558993_9684.JPEG'
+tfms = tfms_from_model(arch, sz, tfm_y=TfmType.PIXEL)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH_TRN
+)
+md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)
+denorm = md.val_ds.denorm
+def show_img(ims, idx, figsize=(5,5), normed=True, ax=None):
+    if ax is None: 
+        fig,ax = plt.subplots(figsize=figsize)
+    if normed: 
+        ims = denorm(ims)
+    else:      
+        ims = np.rollaxis(to_np(ims),1,4)
     ax.imshow(np.clip(ims,0,1)[idx])
     ax.axis('off')
 ```
@@ -668,13 +819,23 @@ md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)denorm = md.val_
 我的模型是一样的。这里我做的一件事是我没有使用任何花哨的最佳实践。部分原因是因为似乎没有。与超分辨率的研究相比，对这种方法的跟进非常少。我们稍后会讨论原因。所以你会看到，这看起来更加正常。
 
 ```py
-def conv(ni, nf, kernel_size=3, stride=1, actn=True, pad=None, 
-         bn=True):
-    if pad is None: pad = kernel_size//2
-    layers = [nn.Conv2d(ni, nf, kernel_size, stride=stride,
-                          padding=pad, bias=not bn)]
-    if actn: layers.append(nn.ReLU(inplace=True))
-    if bn: layers.append(nn.BatchNorm2d(nf))
+def conv(
+    ni, nf, kernel_size=3, stride=1, 
+    actn=True, pad=None, bn=True
+):
+    if pad is None: 
+        pad = kernel_size//2
+    layers = [nn.Conv2d(
+        ni, nf, 
+        kernel_size, 
+        stride=stride,
+        padding=pad, 
+        bias=not bn
+    )]
+    if actn: 
+        layers.append(nn.ReLU(inplace=True))
+    if bn: 
+        layers.append(nn.BatchNorm2d(nf))
     return nn.Sequential(*layers)
 ```
 
@@ -684,9 +845,14 @@ def conv(ni, nf, kernel_size=3, stride=1, actn=True, pad=None,
 class ResSequentialCenter(nn.Module):
     def __init__(self, layers):
         super().__init__()
-        self.m = nn.Sequential(*layers) def forward(self, x): return x[:, :, 2:-2, 2:-2] + self.m(x)def res_block(nf):
-    return ResSequentialCenter([conv(nf, nf, actn=True, pad=0), 
-              conv(nf, nf, pad=0)])
+        self.m = nn.Sequential(*layers) 
+    def forward(self, x): 
+        return x[:, :, 2:-2, 2:-2] + self.m(x)
+    def res_block(nf):
+        return ResSequentialCenter([
+            conv(nf, nf, actn=True, pad=0), 
+            conv(nf, nf, pad=0)
+        ])
 ```
 
 我没有像素混洗 —— 只是使用正常的上采样，然后是 1x1 的卷积。所以这只是更正常的。
@@ -702,15 +868,23 @@ def upsample(ni, nf):
 class StyleResnet(nn.Module):
     def __init__(self):
         super().__init__()
-        features = [nn.ReflectionPad2d(40),
-                    conv(3, 32, 9),
-                    conv(32, 64, stride=2), conv(64, 128, stride=2)]
-        for i in range(5): features.append(res_block(128))
-        features += [upsample(128, 64), upsample(64, 32),
-                     conv(32, 3, 9, actn=False)]
+        features = [
+            nn.ReflectionPad2d(40),
+            conv(3, 32, 9),
+            conv(32, 64, stride=2), 
+            conv(64, 128, stride=2)
+        ]
+        for i in range(5): 
+            features.append(res_block(128))
+        features += [
+            upsample(128, 64), 
+            upsample(64, 32),
+            conv(32, 3, 9, actn=False)
+        ]
         self.features = nn.Sequential(*features)
 
-    def forward(self, x): return self.features(x)
+    def forward(self, x): 
+        return self.features(x)
 ```
 
 ## 风格图像
@@ -720,7 +894,11 @@ class StyleResnet(nn.Module):
 ```py
 style_fn = PATH/'style'/'starry_night.jpg'
 style_img = open_image(style_fn)
-style_img.shape*(1198, 1513, 3)*plt.imshow(style_img);
+style_img.shape
+'''
+(1198, 1513, 3)
+'''
+plt.imshow(style_img);
 ```
 
 ```py
@@ -753,21 +931,37 @@ style_tfm.shape(24, 3, 256, 256)
 所以就像以前一样，我们创建了一个 VGG，抓住了最后一个块。这一次我们要使用所有这些层，所以我们保留了所有直到第 43 层的内容。
 
 ```py
-m_vgg = vgg16(True)blocks = [i-1 for i,o in enumerate(children(m_vgg))
-              if isinstance(o,nn.MaxPool2d)]
-blocks, [m_vgg[i] for i in blocks[1:]]*([5, 12, 22, 32, 42],
- [ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace)])*vgg_layers = children(m_vgg)[:43]
+m_vgg = vgg16(True)
+blocks = [
+    i-1 for i,o in enumerate(children(m_vgg))
+    if isinstance(o,nn.MaxPool2d)
+]
+blocks, [m_vgg[i] for i in blocks[1:]]
+'''
+([5, 12, 22, 32, 42],
+ [ReLU(inplace), ReLU(inplace), ReLU(inplace), ReLU(inplace)])
+'''
+vgg_layers = children(m_vgg)[:43]
 m_vgg = nn.Sequential(*vgg_layers).cuda().eval()
-set_trainable(m_vgg, False)def flatten(x): return x.view(x.size(0), -1)class SaveFeatures():
+set_trainable(m_vgg, False)
+def flatten(x): 
+    return x.view(x.size(0), -1)
+class SaveFeatures():
     features=None
     def __init__(self, m): 
         self.hook = m.register_forward_hook(self.hook_fn)
-    def hook_fn(self, module, input, output): self.features = output
-    def remove(self): self.hook.remove()def ct_loss(input, target): return F.mse_loss(input,target)def gram(input):
+    def hook_fn(self, module, input, output): 
+        self.features = output
+    def remove(self): 
+        self.hook.remove()
+    def ct_loss(input, target): 
+        return F.mse_loss(input,target)
+    def gram(input):
         b,c,h,w = input.size()
         x = input.view(b, c, -1)
-        return torch.bmm(x, x.transpose(1,2))/(c*h*w)*1e6def gram_loss(input, target):
-    return F.mse_loss(gram(input), gram(target[:input.size(0)]))
+        return torch.bmm(x, x.transpose(1,2))/(c*h*w)*1e6
+    def gram_loss(input, target):
+        return F.mse_loss(gram(input), gram(target[:input.size(0)]))
 ```
 
 所以现在我们的组合损失将加上第三个块的内容损失，再加上所有块的 Gram 损失，使用不同的权重。再次回到尽可能正常的一切，我又回到了使用均方误差。基本上发生的事情是我在训练这个模型时遇到了很多困难。所以我逐渐去掉了一个又一个技巧，最终只是说“好吧，我只会让它尽可能平淡”。
@@ -781,22 +975,28 @@ class CombinedLoss(nn.Module):
         self.m,self.ct_wgt,self.style_wgts = m,ct_wgt,style_wgts
         self.sfs = [SaveFeatures(m[i]) for i in layer_ids]
         m(VV(style_im))
-        self.style_feat = [V(o.features.data.clone()) 
-                              for o in self.sfs] def forward(self, input, target, sum_layers=True):
+        self.style_feat = [
+            V(o.features.data.clone()) 
+            for o in self.sfs
+        ] 
+    def forward(self, input, target, sum_layers=True):
         self.m(VV(target.data))
         targ_feat = self.sfs[2].features.data.clone()
         self.m(input)
         inp_feat = [o.features for o in self.sfs]
 
         res = [ct_loss(inp_feat[2],V(targ_feat)) * self.ct_wgt]
-        res += [gram_loss(inp,targ)*wgt for inp,targ,wgt
-                in zip(inp_feat, self.style_feat, self.style_wgts)]
+        res += [
+            gram_loss(inp,targ)*wgt 
+            for inp,targ,wgt in zip(inp_feat, self.style_feat, self.style_wgts)
+        ]
 
         if sum_layers: res = sum(res)
         return res
 
     def close(self):
-        for o in self.sfs: o.remove()
+        for o in self.sfs: 
+            o.remove()
 ```
 
 所以我有 Gram 矩阵，我在 Gram 矩阵之间进行均方误差损失，我用风格权重对它们进行加权，所以我创建了那个 ResNet。
@@ -809,10 +1009,18 @@ m = to_gpu(m)learn = Learner(md, SingleModel(m), opt_fn=optim.Adam)
 我创建了我的组合损失，传入 VGG 网络，传入块 ID，传入变换后的星夜图像，你会看到这里的开始，我通过我的 VGG 模型进行了前向传递，以保存其特征。请注意，现在非常重要的是我不做任何数据增强，因为我保存了特定未增强版本的风格特征。所以如果我增强它，可能会出现一些小问题。但没关系，因为我有所有的 ImageNet 要处理。我实际上不需要做数据增强。
 
 ```py
-learn.crit = CombinedLoss(m_vgg, blocks[1:], style_tfm, 1e4,
-                             [0.025,0.275,5.,0.2])wd=1e-7learn.lr_find(wds=wd)
-learn.sched.plot(n_skip_end=1) 1%|▏         | 7/482 [00:04<05:32,  1.43it/s, loss=2.48e+04] 
+learn.crit = CombinedLoss(
+    m_vgg, blocks[1:], 
+    style_tfm, 1e4,
+    [0.025,0.275,5.,0.2]
+)
+wd=1e-7
+learn.lr_find(wds=wd)
+learn.sched.plot(n_skip_end=1) 
+'''
+  1%|▏         | 7/482 [00:04<05:32,  1.43it/s, loss=2.48e+04] 
  53%|█████▎    | 254/482 [02:27<02:12,  1.73it/s, loss=1.13e+12]
+'''
 ```
 
 ```py
@@ -822,26 +1030,45 @@ lr=5e-3
 所以我有我的损失函数，我可以继续拟合[[1:24:06](https://youtu.be/nG3tT31nPmQ?t=1h24m6s)]。这里一点聪明的地方都没有。
 
 ```py
-learn.fit(lr, 1, cycle_len=1, wds=wd, use_clr=(20,10))epoch      trn_loss   val_loss                               
-    0      105.351372 105.833994[array([105.83399])]learn.save('style-2')x,y=md.val_ds[201]learn.model.eval()
+learn.fit(lr, 1, cycle_len=1, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                               
+    0      105.351372 105.833994
+[array([105.83399])]
+'''
+learn.save('style-2')
+x,y=md.val_ds[201]
+learn.model.eval()
 preds = learn.model(VV(x[None]))
-x.shape,y.shape,preds.shape*((3, 256, 256), (3, 256, 256), torch.Size([1, 3, 256, 256]))*
+x.shape,y.shape,preds.shape
+'''
+((3, 256, 256), (3, 256, 256), torch.Size([1, 3, 256, 256]))
+'''
 ```
 
 最后，我有我的`sum_layers=False`，这样我就可以看到每个部分的样子，看到它们是平衡的。然后我终于可以弹出它
 
 ```py
-learn.crit(preds, VV(y[None]), sum_layers=False)*[Variable containing:
+learn.crit(preds, VV(y[None]), sum_layers=False)
+'''
+[Variable containing:
   53.2221
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
   3.8336
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
   4.0612
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
   5.0639
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
   53.0019
- [torch.cuda.FloatTensor of size 1 (GPU 0)]]*learn.crit.close()_,axes=plt.subplots(1,2,figsize=(14,7))
+ [torch.cuda.FloatTensor of size 1 (GPU 0)]]
+'''
+learn.crit.close()
+_,axes=plt.subplots(1,2,figsize=(14,7))
 show_img(x[None], 0, ax=axes[0])
 show_img(preds, 0, ax=axes[1])
 ```
@@ -865,7 +1092,8 @@ show_img(preds, 0, ax=axes[1])
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
+%autoreload 2
+from fastai.conv_learner import *
 from fastai.dataset import *
 
 from pathlib import Path
@@ -882,7 +1110,9 @@ import json
 
 ```py
 PATH = Path('data/carvana')
-list(PATH.iterdir())*[PosixPath('data/carvana/train_masks.csv'),
+list(PATH.iterdir())
+'''
+[PosixPath('data/carvana/train_masks.csv'),
  PosixPath('data/carvana/train_masks-128'),
  PosixPath('data/carvana/sample_submission.csv'),
  PosixPath('data/carvana/train_masks_png'),
@@ -892,10 +1122,13 @@ list(PATH.iterdir())*[PosixPath('data/carvana/train_masks.csv'),
  PosixPath('data/carvana/metadata.csv'),
  PosixPath('data/carvana/tmp'),
  PosixPath('data/carvana/models'),
- PosixPath('data/carvana/train_masks')]*MASKS_FN = 'train_masks.csv'
+ PosixPath('data/carvana/train_masks')]
+'''
+MASKS_FN = 'train_masks.csv'
 META_FN = 'metadata.csv'
 TRAIN_DN = 'train'
-MASKS_DN = 'train_masks'masks_csv = pd.read_csv(PATH/MASKS_FN)
+MASKS_DN = 'train_masks'
+masks_csv = pd.read_csv(PATH/MASKS_FN)
 masks_csv.head()
 ```
 
@@ -908,30 +1141,44 @@ meta_csv.head()
 
 ```py
 def show_img(im, figsize=None, ax=None, alpha=None):
-    if not ax: fig,ax = plt.subplots(figsize=figsize)
+    if not ax: 
+        fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im, alpha=alpha)
     ax.set_axis_off()
-    return axCAR_ID = '00087a6bd4dc'list((PATH/TRAIN_DN).iterdir())[:5][PosixPath('data/carvana/train/5ab34f0e3ea5_15.jpg'),
+    return axCAR_ID = '00087a6bd4dc'
+list((PATH/TRAIN_DN).iterdir())[:5]
+'''
+[PosixPath('data/carvana/train/5ab34f0e3ea5_15.jpg'),
  PosixPath('data/carvana/train/de3ca5ec1e59_07.jpg'),
  PosixPath('data/carvana/train/28d9a149cb02_13.jpg'),
  PosixPath('data/carvana/train/36a3f7f77e85_12.jpg'),
- PosixPath('data/carvana/train/843763f47895_08.jpg')]Image.open(PATH/TRAIN_DN/f'**{CAR_ID}**_01.jpg').resize((300,200))
+ PosixPath('data/carvana/train/843763f47895_08.jpg')]
+'''
+Image.open(PATH/TRAIN_DN/f'{CAR_ID}_01.jpg').resize((300,200))
 ```
 
 ```py
-list((PATH/MASKS_DN).iterdir())[:5][PosixPath('data/carvana/train_masks/6c0cd487abcd_03_mask.gif'),
+list((PATH/MASKS_DN).iterdir())[:5]
+'''
+[PosixPath('data/carvana/train_masks/6c0cd487abcd_03_mask.gif'),
  PosixPath('data/carvana/train_masks/351c583eabd6_01_mask.gif'),
  PosixPath('data/carvana/train_masks/90fdd8932877_02_mask.gif'),
  PosixPath('data/carvana/train_masks/28d9a149cb02_10_mask.gif'),
- PosixPath('data/carvana/train_masks/88bc32b9e1d9_14_mask.gif')]Image.open(PATH/MASKS_DN/f'**{CAR_ID}**_01_mask.gif').resize((300,200))
+ PosixPath('data/carvana/train_masks/88bc32b9e1d9_14_mask.gif')]
+'''
+Image.open(PATH/MASKS_DN/f'{CAR_ID}_01_mask.gif').resize((300,200))
 ```
 
 每张图片在车辆 ID 之后都有一个 01、02 等，我已经打印出其中一个车辆的所有 16 个方向，正如你所看到的，基本上这些数字是一个车辆的 16 个方向[[1:32:58](https://youtu.be/nG3tT31nPmQ?t=1h32m58s)]。我认为在这个比赛中没有人实际上使用这些方向信息。我相信他们都保留了车辆的图像，只是单独处理它们。
 
 ```py
-ims = [open_image(PATH/TRAIN_DN/f'**{CAR_ID}**_{i+1:02d}.jpg') 
-          for i in range(16)]fig, axes = plt.subplots(4, 4, figsize=(9, 6))
-for i,ax in enumerate(axes.flat): show_img(ims[i], ax=ax)
+ims = [
+    open_image(PATH/TRAIN_DN/f'{CAR_ID}_{i+1:02d}.jpg') 
+    for i in range(16)
+]
+fig, axes = plt.subplots(4, 4, figsize=(9, 6))
+for i,ax in enumerate(axes.flat): 
+    show_img(ims[i], ax=ax)
 plt.tight_layout(pad=0.1)
 ```
 
@@ -946,21 +1193,33 @@ plt.tight_layout(pad=0.1)
 这是在过程早期进行的工作，可以让你保持理智的工作。所以每当你获得新的数据集时，认真考虑创建一个较小的版本以加快速度。每当你发现自己在电脑上等待时，尝试想出一种创建较小版本的方法。
 
 ```py
-(PATH/'train_masks_png').mkdir(exist_ok=True)def convert_img(fn):
+(PATH/'train_masks_png').mkdir(exist_ok=True)
+def convert_img(fn):
     fn = fn.name
-    Image.open(PATH/'train_masks'/fn).save(PATH/'train_masks_png'/
-                     f'**{fn[:-4]}**.png')files = list((PATH/'train_masks').iterdir())
-with ThreadPoolExecutor(8) as e: e.map(convert_img, files)(PATH/'train_masks-128').mkdir(exist_ok=True)def resize_mask(fn):
-    Image.open(fn).resize((128,128)).save((fn.parent.parent)
-        /'train_masks-128'/fn.name)
+    Image.open(PATH/'train_masks'/fn).save(
+        PATH/'train_masks_png'/f'{fn[:-4]}.png'
+    )
+    files = list((PATH/'train_masks').iterdir())
+with ThreadPoolExecutor(8) as e: 
+    e.map(convert_img, files)
+    (PATH/'train_masks-128').mkdir(exist_ok=True)
+def resize_mask(fn):
+    Image.open(fn).resize((128,128)).save(
+        (fn.parent.parent)/'train_masks-128'/fn.name
+    )
 
 files = list((PATH/'train_masks_png').iterdir())
-with ThreadPoolExecutor(8) as e: e.map(resize_img, files)(PATH/'train-128').mkdir(exist_ok=True)def resize_img(fn):
-    Image.open(fn).resize((128,128)).save((fn.parent.parent)
-         /'train-128'/fn.name)
+with ThreadPoolExecutor(8) as e: 
+    e.map(resize_img, files)
+    (PATH/'train-128').mkdir(exist_ok=True)
+def resize_img(fn):
+    Image.open(fn).resize((128,128)).save(
+        (fn.parent.parent)/'train-128'/fn.name
+    )
 
 files = list((PATH/'train').iterdir())
-with ThreadPoolExecutor(8) as e: e.map(resize_img, files)
+with ThreadPoolExecutor(8) as e: 
+    e.map(resize_img, files)
 ```
 
 所以在你从 Kaggle 获取它之后，你可能想要运行这些东西，离开，吃午餐，回来时，当你完成时，你将拥有这些较小的目录，我们将从 128x128 开始使用。
@@ -971,10 +1230,15 @@ with ThreadPoolExecutor(8) as e: e.map(resize_img, files)
 TRAIN_DN = 'train-128'
 MASKS_DN = 'train_masks-128'
 sz = 128
-bs = 64ims = [open_image(PATH/TRAIN_DN
-            /f'**{CAR_ID}**_{i+1:02d}.jpg') for i in range(16)]
-im_masks = [open_image(PATH/MASKS_DN
-            /f'**{CAR_ID}**_{i+1:02d}_mask.png') for i in range(16)]
+bs = 64
+ims = [
+    open_image(PATH/TRAIN_DN/f'{CAR_ID}_{i+1:02d}.jpg') 
+    for i in range(16)
+]
+im_masks = [
+    open_image(PATH/MASKS_DN/f'{CAR_ID}_{i+1:02d}_mask.png') 
+    for i in range(16)
+]
 ```
 
 这里有一个很酷的技巧。如果你使用相同的轴对象（`ax`）两次绘制图像，第二次使用 alpha，你可能知道在计算机视觉世界中意味着透明度，那么你实际上可以在照片的顶部绘制蒙版。这是一个很好的方法，可以看到所有车辆组中所有照片顶部的所有蒙版。
@@ -997,35 +1261,63 @@ class MatchedFilesDataset(FilesDataset):
         super().__init__(fnames, transform, path)
     def get_y(self, i): 
         return open_image(os.path.join(self.path, self.y[i]))
-    def get_c(self): return 0x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
-y_names = np.array([Path(MASKS_DN)/f'**{o[:-4]}**_mask.png' 
-                       for o in masks_csv['img']])len(x_names)//16//5*16*1008*
+    def get_c(self): 
+        return 0
+x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
+y_names = np.array([
+    Path(MASKS_DN)/f'{o[:-4]}_mask.png' 
+     o in masks_csv['img']
+])
+len(x_names)//16//5*16
+'''
+1008
+'''
 ```
 
 所以我们使用一系列连续的汽车 ID，由于每个集合是一组 16 个，我们确保可以被 16 整除。因此，我们确保我们的验证集包含与训练集不同的汽车 ID。这是你必须小心的事情。在 Kaggle 上，情况并不那么糟糕 - 你会知道，因为你会提交你的结果，你的排行榜上的结果会与你的验证集有很大不同。但在现实世界中，你不会知道，直到你投入生产并让公司破产并失去工作。所以在这种情况下，你可能需要仔细考虑你的验证集。
 
 ```py
 val_idxs = list(range(1008))
-((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, 
-                                              y_names)
-len(val_x),len(trn_x)*(1008, 4080)*
+((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, y_names)
+len(val_x),len(trn_x)
+'''
+(1008, 4080)
+'''
 ```
 
 在这里，我们将使用转换类型分类（`TfmType.CLASS`）[[1:37:03](https://youtu.be/nG3tT31nPmQ?t=1h37m3s)]。这基本上与转换类型像素（`TfmType.PIXEL`）相同，但是如果你考虑一下，对于像素版本，如果我们旋转一点，那么我们可能希望在两者之间平均像素，但是分类，显然我们不需要。我们使用最近邻。所以这里有一点不同。此外，对于分类，光照不起作用，归一化不起作用于因变量。
 
 ```py
-aug_tfms = [RandomRotate(4, tfm_y=TfmType.CLASS),
-            RandomFlip(tfm_y=TfmType.CLASS),
-            RandomLighting(0.05, 0.05)]
-*# aug_tfms = []*
+aug_tfms = [
+    RandomRotate(4, tfm_y=TfmType.CLASS),
+    RandomFlip(tfm_y=TfmType.CLASS),
+    RandomLighting(0.05, 0.05)
+]
+# aug_tfms = []
 ```
 
 它们已经是方形图像，所以我们不必进行任何裁剪。
 
 ```py
-tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), (val_x,val_y), tfms, path=PATH)
-md = ImageData(PATH, datasets, bs, num_workers=8, classes=None)denorm = md.trn_ds.denorm
+tfms = tfms_from_model(
+    resnet34, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.CLASS, 
+    aug_tfms=aug_tfms
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH
+)
+md = ImageData(
+    PATH, datasets, bs, 
+    num_workers=8, 
+    classes=None
+)
+denorm = md.trn_ds.denorm
 x,y = next(iter(md.aug_dl))
 x = denorm(x)
 ```
@@ -1046,17 +1338,22 @@ plt.tight_layout(pad=0.1)
 
 ```py
 class Empty(nn.Module): 
-    def forward(self,x): return x
+    def forward(self,x): 
+        return x
 
 models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=Empty())
 learn = ConvLearner(md, models)
-learn.summary()class StdUpsample(nn.Module):
+learn.summary()
+class StdUpsample(nn.Module):
     def __init__(self, nin, nout):
         super().__init__()
         self.conv = nn.ConvTranspose2d(nin, nout, 2, stride=2)
         self.bn = nn.BatchNorm2d(nout)
 
-    def forward(self, x): return self.bn(F.relu(self.conv(x)))flatten_channel = Lambda(lambda x: x[:,0])simple_up = nn.Sequential(
+    def forward(self, x): 
+        return self.bn(F.relu(self.conv(x)))
+flatten_channel = Lambda(lambda x: x[:,0])
+simple_up = nn.Sequential(
     nn.ReLU(),
     StdUpsample(512,256),
     StdUpsample(256,256),
@@ -1080,23 +1377,38 @@ models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=simple_up)
 learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5)]learn.lr_find()
-learn.sched.plot()94%|█████████▍| 30/32 [00:05<00:00,  5.48it/s, loss=10.6]
+learn.metrics=[accuracy_thresh(0.5)
+learn.lr_find()
+learn.sched.plot()
+'''
+94%|█████████▍| 30/32 [00:05<00:00,  5.48it/s, loss=10.6]
+'''
 ```
 
 ```py
-lr=4e-2learn.fit(lr,1,cycle_len=5,use_clr=(20,5))*epoch      trn_loss   val_loss   <lambda>                  
+lr=4e-2
+learn.fit(lr,1,cycle_len=5,use_clr=(20,5))
+'''
+epoch      trn_loss   val_loss   <lambda>                  
     0      0.124078   0.133566   0.945951  
     1      0.111241   0.112318   0.954912                  
     2      0.099743   0.09817    0.957507                   
     3      0.090651   0.092375   0.958117                   
-    4      0.084031   0.086026   0.963243**[0.086025625, 0.96324310824275017]*
+    4      0.084031   0.086026   0.963243
+[0.086025625, 0.96324310824275017]
+'''
 ```
 
 经过几个时代，我们得到了 96%的准确率。这好吗[[1:40:56](https://youtu.be/nG3tT31nPmQ?t=1h40m56s)]？96%的准确率好吗？希望对这个问题的答案是取决于。这是为了什么？答案是 Carvana 想要这个，因为他们想要能够拍摄他们的汽车图像并将它们剪切并粘贴到异国情调的蒙特卡洛背景或其他地方（这是蒙特卡洛的地方，而不是模拟）。为了做到这一点，你需要一个非常好的蒙版。你不想留下后视镜，缺少一个车轮，或者包括一点背景之类的东西。那看起来很愚蠢。所以你需要一些非常好的东西。所以只有 96%的像素正确并不听起来很好。但我们真的不知道直到我们看到它。所以让我们看看。
 
 ```py
-learn.save('tmp')learn.load('tmp')py,ay = learn.predict_with_targs()ay.shape*(1008, 128, 128)*
+learn.save('tmp')
+learn.load('tmp')
+py,ay = learn.predict_with_targs()
+ay.shape
+'''
+(1008, 128, 128)
+'''
 ```
 
 所以这是我们想要剪切的正确版本[[1:41:54](https://youtu.be/nG3tT31nPmQ?t=1h41m54s)]
@@ -1114,7 +1426,12 @@ show_img(py[0]>0);
 让我们解冻，因为到目前为止我们只训练了自定义头部。让我们做更多。
 
 ```py
-learn.unfreeze()learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/4learn.fit(lrs,1,cycle_len=20,use_clr=(20,10))*epoch      trn_loss   val_loss   <lambda>                   
+learn.unfreeze()
+learn.bn_freeze(True)
+lrs = np.array([lr/100,lr/10,lr])/4
+learn.fit(lrs,1,cycle_len=20,use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss   <lambda>                   
     0      0.06577    0.053292   0.972977  
     1      0.049475   0.043025   0.982559                   
     2      0.039146   0.035927   0.98337                    
@@ -1134,13 +1451,16 @@ learn.unfreeze()learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/4learn.fi
     16     0.017597   0.02183    0.991365                   
     17     0.017192   0.021434   0.991364                   
     18     0.016768   0.021383   0.991643                   
-    19     0.016418   0.021114   0.99173**[0.021113895, 0.99172959849238396]*
+    19     0.016418   0.021114   0.99173
+[0.021113895, 0.99172959849238396]
+'''
 ```
 
 再经过一段时间，我们得到了 99.1%。这好吗？我不知道。让我们看看。
 
 ```py
-learn.save('0')x,y = next(iter(md.val_dl))
+learn.save('0')
+x,y = next(iter(md.val_dl))
 py = to_np(learn.model(V(x)))
 ```
 
@@ -1164,15 +1484,36 @@ show_img(y[0], ax=ax, alpha=0.5);
 TRAIN_DN = 'train'
 MASKS_DN = 'train_masks_png'
 sz = 512
-bs = 16x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
-y_names = np.array([Path(MASKS_DN)/f'**{o[:-4]}**_mask.png' 
-                      for o in masks_csv['img']])((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, 
-                                      y_names)
-len(val_x),len(trn_x)*(1008, 4080)*tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO,
-                         tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y),
-                      (val_x,val_y), tfms, path=PATH)
-md = ImageData(PATH, datasets, bs, num_workers=8, classes=None)denorm = md.trn_ds.denorm
+bs = 16
+x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
+y_names = np.array([
+    Path(MASKS_DN)/f'**{o[:-4]}**_mask.png' 
+    for o in masks_csv['img']
+])
+((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, y_names)
+len(val_x),len(trn_x)
+'''
+(1008, 4080)
+'''
+tfms = tfms_from_model(
+    resnet34, sz, 
+    crop_type=CropType.NO,
+    tfm_y=TfmType.CLASS, 
+    aug_tfms=aug_tfms
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y),
+    (val_x,val_y), 
+    tfms, 
+    path=PATH
+)
+md = ImageData(
+    PATH, datasets, bs, 
+    num_workers=8, 
+    classes=None
+)
+denorm = md.trn_ds.denorm
 x,y = next(iter(md.aug_dl))
 x = denorm(x)
 ```
@@ -1196,22 +1537,40 @@ simple_up = nn.Sequential(
     StdUpsample(256,256),
     nn.ConvTranspose2d(256, 1, 2, stride=2),
     flatten_channel
-)models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=simple_up)
+)
+models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=simple_up)
 learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5)]learn.load('0')learn.lr_find()
-learn.sched.plot()85%|████████▌ | 218/255 [02:12<00:22,  1.64it/s, loss=8.91]
+learn.metrics=[accuracy_thresh(0.5)]
+learn.load('0')
+learn.lr_find()
+learn.sched.plot()
+'''
+85%|████████▌ | 218/255 [02:12<00:22,  1.64it/s, loss=8.91]
+'''
 ```
 
 ```py
-lr=4e-2learn.fit(lr,1,cycle_len=5,use_clr=(20,5))epoch      trn_loss   val_loss   <lambda>                     
+lr=4e-2
+learn.fit(lr,1,cycle_len=5,use_clr=(20,5))
+'''
+epoch      trn_loss   val_loss   <lambda>                     
     0      0.02178    0.020653   0.991708  
     1      0.017927   0.020653   0.990241                     
     2      0.015958   0.016115   0.993394                     
     3      0.015172   0.015143   0.993696                     
-    4      0.014315   0.014679   0.99388[0.014679321, 0.99388032489352751]learn.save('tmp')learn.load('tmp')learn.unfreeze()
-learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/4learn.fit(lrs,1,cycle_len=8,use_clr=(20,8))epoch      trn_loss   val_loss   mask_acc                     
+    4      0.014315   0.014679   0.99388
+[0.014679321, 0.99388032489352751]
+'''
+learn.save('tmp')
+learn.load('tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+lrs = np.array([lr/100,lr/10,lr])/4
+learn.fit(lrs,1,cycle_len=8,use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss   mask_acc                     
     0      0.038687   0.018685   0.992782  
     1      0.024906   0.014355   0.994933                     
     2      0.025055   0.014737   0.995526                     
@@ -1219,8 +1578,13 @@ learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/4learn.fit(lrs,1,cycle_le
     4      0.013446   0.010564   0.996166                     
     5      0.01607    0.010555   0.996096                     
     6      0.019197   0.010883   0.99621                      
-    7      0.016157   0.00998    0.996393[0.0099797687, 0.99639255659920833]learn.save('512')x,y = next(iter(md.val_dl))
-py = to_np(learn.model(V(x)))ax = show_img(denorm(x)[0])
+    7      0.016157   0.00998    0.996393
+[0.0099797687, 0.99639255659920833]
+'''
+learn.save('512')
+x,y = next(iter(md.val_dl))
+py = to_np(learn.model(V(x)))
+ax = show_img(denorm(x)[0])
 show_img(py[0]>0, ax=ax, alpha=0.5);
 ```
 
@@ -1237,14 +1601,30 @@ show_img(y[0], ax=ax, alpha=0.5);
 
 ```py
 sz = 1024
-bs = 4tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO,
-                         tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-                            (val_x,val_y), tfms, path=PATH)
-md = ImageData(PATH, datasets, bs, num_workers=8, classes=None)denorm = md.trn_ds.denorm
+bs = 4
+tfms = tfms_from_model(
+    resnet34, sz, 
+    crop_type=CropType.NO,
+    tfm_y=TfmType.CLASS, 
+    aug_tfms=aug_tfms
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH
+)
+md = ImageData(
+    PATH, datasets, bs, 
+    num_workers=8, 
+    classes=None
+)
+denorm = md.trn_ds.denorm
 x,y = next(iter(md.aug_dl))
 x = denorm(x)
-y = to_np(y)fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+y = to_np(y)
+fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 for i,ax in enumerate(axes.flat):
     show_img(x[i], ax=ax)
     show_img(y[i], ax=ax, alpha=0.5)
@@ -1260,19 +1640,36 @@ simple_up = nn.Sequential(
     StdUpsample(256,256),
     nn.ConvTranspose2d(256, 1, 2, stride=2),
     flatten_channel,
-)models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=simple_up)
+)
+models = ConvnetBuilder(resnet34, 0, 0, 0, custom_head=simple_up)
 learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5)]learn.load('512')learn.lr_find()
-learn.sched.plot()85%|████████▌ | 218/255 [02:12<00:22,  1.64it/s, loss=8.91]
+learn.metrics=[accuracy_thresh(0.5)]
+learn.load('512')learn.lr_find()
+learn.sched.plot()
+'''
+85%|████████▌ | 218/255 [02:12<00:22,  1.64it/s, loss=8.91]
+'''
 ```
 
 ```py
-lr=4e-2learn.fit(lr,1,cycle_len=2,use_clr=(20,4))*epoch      trn_loss   val_loss   <lambda>                       
+lr=4e-2
+learn.fit(lr,1,cycle_len=2,use_clr=(20,4))
+'''
+epoch      trn_loss   val_loss   <lambda>                       
     0      0.01066    0.011119   0.996227  
-    1      0.009357   0.009696   0.996553**[0.0096957013, 0.99655332546385511]*learn.save('tmp')learn.load('tmp')learn.unfreeze()
-learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/8learn.fit(lrs,1,cycle_len=40,use_clr=(20,10))*epoch      trn_loss   val_loss   mask_acc                       
+    1      0.009357   0.009696   0.996553
+[0.0096957013, 0.99655332546385511]
+'''
+learn.save('tmp')
+learn.load('tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+lrs = np.array([lr/100,lr/10,lr])/8
+learn.fit(lrs,1,cycle_len=40,use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss   mask_acc                       
     0      0.015565   0.007449   0.997661  
     1      0.01979    0.008376   0.997542                       
     2      0.014874   0.007826   0.997736                       
@@ -1312,8 +1709,13 @@ learn.bn_freeze(True)lrs = np.array([lr/100,lr/10,lr])/8learn.fit(lrs,1,cycle_le
     36     0.015798   0.006176   0.998126                       
     37     0.021636   0.005931   0.998067                       
     38     0.012133   0.005496   0.998158                       
-    39     0.012562   0.005678   0.998172**[0.0056782686, 0.99817223208291195]*learn.save('1024')x,y = next(iter(md.val_dl))
-py = to_np(learn.model(V(x)))ax = show_img(denorm(x)[0])
+    39     0.012562   0.005678   0.998172
+[0.0056782686, 0.99817223208291195]
+'''
+learn.save('1024')
+x,y = next(iter(md.val_dl))
+py = to_np(learn.model(V(x)))
+ax = show_img(denorm(x)[0])
 show_img(py[0][0]>0, ax=ax, alpha=0.5);
 ```
 
@@ -1349,7 +1751,8 @@ U-Net 网络非常了不起。使用之前的方法，我们的预训练 ImageNe
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
+%autoreload 2
+from fastai.conv_learner import *
 from fastai.dataset import *
 from fastai.models.resnet import vgg_resnet50
 
@@ -1363,37 +1766,63 @@ PATH = Path('data/carvana')
 MASKS_FN = 'train_masks.csv'
 META_FN = 'metadata.csv'
 masks_csv = pd.read_csv(PATH/MASKS_FN)
-meta_csv = pd.read_csv(PATH/META_FN)def show_img(im, figsize=None, ax=None, alpha=None):
-    if not ax: fig,ax = plt.subplots(figsize=figsize)
+meta_csv = pd.read_csv(PATH/META_FN)
+def show_img(im, figsize=None, ax=None, alpha=None):
+    if not ax: 
+        fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im, alpha=alpha)
     ax.set_axis_off()
     return axTRAIN_DN = 'train-128'
 MASKS_DN = 'train_masks-128'
 sz = 128
 bs = 64
-nw = 16TRAIN_DN = 'train'
+nw = 16
+TRAIN_DN = 'train'
 MASKS_DN = 'train_masks_png'
 sz = 128
 bs = 64
-nw = 16class MatchedFilesDataset(FilesDataset):
+nw = 16
+class MatchedFilesDataset(FilesDataset):
     def __init__(self, fnames, y, transform, path):
         self.y=y
         assert(len(fnames)==len(y))
         super().__init__(fnames, transform, path)
     def get_y(self, i): 
         return open_image(os.path.join(self.path, self.y[i]))
-    def get_c(self): return 0x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
-y_names = np.array([Path(MASKS_DN)/f'**{o[:-4]}**_mask.png' 
-                        for o in masks_csv['img']])val_idxs = list(range(1008))
-((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, 
-                                             y_names)aug_tfms = [RandomRotate(4, tfm_y=TfmType.CLASS),
-            RandomFlip(tfm_y=TfmType.CLASS),
-            RandomLighting(0.05, 0.05, tfm_y=TfmType.CLASS)]tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, 
-                        tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-                             (val_x,val_y), tfms, path=PATH)
+    def get_c(self): 
+        return 0
+x_names = np.array([Path(TRAIN_DN)/o for o in masks_csv['img']])
+y_names = np.array([
+    Path(MASKS_DN)/f'{o[:-4]}_mask.png' 
+    for o in masks_csv['img']
+])
+val_idxs = list(range(1008))
+((val_x,trn_x),(val_y,trn_y)) = split_by_idx(val_idxs, x_names, y_names)
+aug_tfms = [
+    RandomRotate(4, tfm_y=TfmType.CLASS),
+    RandomFlip(tfm_y=TfmType.CLASS),
+    RandomLighting(0.05, 0.05, tfm_y=TfmType.CLASS)
+]
+tfms = tfms_from_model(
+    esnet34, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.CLASS, 
+    aug_tfms=aug_tfms
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    ath=PATH
+)
 md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)
-denorm = md.trn_ds.denormx,y = next(iter(md.trn_dl))x.shape,y.shape*(torch.Size([64, 3, 128, 128]), torch.Size([64, 128, 128]))*
+denorm = md.trn_ds.denorm
+x,y = next(iter(md.trn_dl))
+x.shape,y.shape
+'''
+(torch.Size([64, 3, 128, 128]), torch.Size([64, 128, 128]))
+'''
 ```
 
 # 简单的上采样
@@ -1406,9 +1835,10 @@ denorm = md.trn_ds.denormx,y = next(iter(md.trn_dl))x.shape,y.shape*(torch.Size(
 f = resnet34
 cut,lr_cut = model_meta[f]def get_base():
     layers = cut_model(f(True), cut)
-    return nn.Sequential(*layers)def dice(pred, targs):
+    return nn.Sequential(*layers)
+def dice(pred, targs):
     pred = (pred>0).float()
-    return 2\. * (pred*targs).sum() / (pred+targs).sum()
+    return 2. * (pred*targs).sum() / (pred+targs).sum()
 ```
 
 这是我们的标准上采样。
@@ -1420,7 +1850,8 @@ class StdUpsample(nn.Module):
         self.conv = nn.ConvTranspose2d(nin, nout, 2, stride=2)
         self.bn = nn.BatchNorm2d(nout)
 
-    def forward(self, x): return self.bn(F.relu(self.conv(x)))
+    def forward(self, x): 
+        return self.bn(F.relu(self.conv(x)))
 ```
 
 这一切和以前一样。
@@ -1436,43 +1867,69 @@ class Upsample34(nn.Module):
             StdUpsample(256,256),
             StdUpsample(256,256),
             StdUpsample(256,256),
-            nn.ConvTranspose2d(256, 1, 2, stride=2))
+            nn.ConvTranspose2d(256, 1, 2, stride=2)
+        )
 
-    def forward(self,x): return self.features(x)[:,0]class UpsampleModel():
+    def forward(self,x): 
+        return self.features(x)[:,0]
+class UpsampleModel():
     def __init__(self,model,name='upsample'):
         self.model,self.name = model,name
 
     def get_layer_groups(self, precompute):
         lgs = list(split_by_idxs(children(self.model.rn), [lr_cut]))
-        return lgs + [children(self.model.features)[1:]]m_base = get_base() m = to_gpu(Upsample34(m_base))
-models = UpsampleModel(m)learn = ConvLearner(md, models)
+        return lgs + [children(self.model.features)[1:]]
+m_base = get_base() 
+m = to_gpu(Upsample34(m_base))
+models = UpsampleModel(m)
+learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5),dice]learn.freeze_to(1)learn.lr_find()
-learn.sched.plot()86%|█████████████████████████████████████████████████████████████          | 55/64 [00:22<00:03,  2.46it/s, loss=3.21]
+learn.metrics=[accuracy_thresh(0.5),dice]
+learn.freeze_to(1)
+learn.lr_find()
+learn.sched.plot()
+'''
+86%|█████████████████████████████████████████████████████████████          | 55/64 [00:22<00:03,  2.46it/s, loss=3.21]
+'''
 ```
 
 ```py
 lr=4e-2
 wd=1e-7
-lrs = np.array([lr/100,lr/10,lr])/2learn.fit(lr,1, wds=wd, cycle_len=4,use_clr=(20,8))0%|          | 0/64 [00:00<?, ?it/s]
+lrs = np.array([lr/100,lr/10,lr])/2
+learn.fit(lr,1, wds=wd, cycle_len=4,use_clr=(20,8))
+'''
+0%|          | 0/64 [00:00<?, ?it/s]
 epoch      trn_loss   val_loss   <lambda>   dice           
     0      0.216882   0.133512   0.938017   0.855221  
     1      0.169544   0.115158   0.946518   0.878381       
     2      0.153114   0.099104   0.957748   0.903353       
-    3      0.144105   0.093337   0.964404   0.915084[0.09333742126112893, 0.9644036065964472, 0.9150839788573129]learn.save('tmp')learn.load('tmp')learn.unfreeze()
-learn.bn_freeze(True)learn.fit(lrs,1,cycle_len=4,use_clr=(20,8))epoch      trn_loss   val_loss   <lambda>   dice           
+    3      0.144105   0.093337   0.964404   0.915084
+[0.09333742126112893, 0.9644036065964472, 0.9150839788573129]
+'''
+learn.save('tmp')
+learn.load('tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+learn.fit(lrs,1,cycle_len=4,use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice           
     0      0.174897   0.061603   0.976321   0.94382   
     1      0.122911   0.053625   0.982206   0.957624       
     2      0.106837   0.046653   0.985577   0.965792       
-    3      0.099075   0.042291   0.986519   0.968925[0.042291240323157536, 0.986519161670927, 0.9689251193924556]
+    3      0.099075   0.042291   0.986519   0.968925
+[0.042291240323157536, 0.986519161670927, 0.9689251193924556]
+'''
 ```
 
 现在我们可以检查我们的 dice 指标[[1:48:00](https://youtu.be/nG3tT31nPmQ?t=1h48m)]。所以你可以看到在 dice 指标上，我们在 128x128 处得到了大约 96.8。所以这不太好。
 
 ```py
-learn.save('128')x,y = next(iter(md.val_dl))
-py = to_np(learn.model(V(x)))show_img(py[0]>0);
+learn.save('128')
+x,y = next(iter(md.val_dl))
+py = to_np(learn.model(V(x)))
+show_img(py[0]>0);
 ```
 
 ```py
@@ -1490,8 +1947,10 @@ class SaveFeatures():
     features=None
     def __init__(self, m):
         self.hook = m.register_forward_hook(self.hook_fn)
-    def hook_fn(self, module, input, output): self.features = output
-    def remove(self): self.hook.remove()
+    def hook_fn(self, module, input, output): 
+        self.features = output
+    def remove(self): 
+        self.hook.remove()
 ```
 
 所以我们基本上要从`get_base`开始[[1:50:37](https://youtu.be/nG3tT31nPmQ?t=1h50m37s)]。Base 是我们的基础网络，这在第一部分中已经定义过了。
@@ -1504,8 +1963,7 @@ class UnetBlock(nn.Module):
         super().__init__()
         up_out = x_out = n_out//2
         self.x_conv  = nn.Conv2d(x_in,  x_out,  1)
-        self.tr_conv = nn.ConvTranspose2d(up_in, up_out, 2, 
-                                          stride=2)
+        self.tr_conv = nn.ConvTranspose2d(up_in, up_out, 2, stride=2)
         self.bn = nn.BatchNorm2d(n_out)
 
     def forward(self, up_p, x_p):
@@ -1533,7 +1991,9 @@ class UnetBlock(nn.Module):
         return x[:,0]
 
     def close(self):
-        for sf in self.sfs: sf.remove()class UnetModel():
+        for sf in self.sfs: 
+            sf.remove()
+class UnetModel():
     def __init__(self,model,name='unet'):
         self.model,self.name = model,name
 
@@ -1563,10 +2023,14 @@ class UnetBlock(nn.Module):
 ```py
 m_base = get_base()
 m = to_gpu(Unet34(m_base))
-models = UnetModel(m)learn = ConvLearner(md, models)
+models = UnetModel(m)
+learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5),dice]learn.summary()OrderedDict([('Conv2d-1',
+learn.metrics=[accuracy_thresh(0.5),dice]
+learn.summary()
+'''
+OrderedDict([('Conv2d-1',
               OrderedDict([('input_shape', [-1, 3, 128, 128]),
                            ('output_shape', [-1, 64, 64, 64]),
                            ('trainable', False),
@@ -2206,18 +2670,29 @@ learn.metrics=[accuracy_thresh(0.5),dice]learn.summary()OrderedDict([('Conv2d-1'
               OrderedDict([('input_shape', [-1, 256, 64, 64]),
                            ('output_shape', [-1, 1, 128, 128]),
                            ('trainable', True),
-                           ('nb_params', 1025)]))])[o.features.size() for o in m.sfs]*[torch.Size([3, 64, 64, 64]),
+                           ('nb_params', 1025)]))])
+'''
+[o.features.size() for o in m.sfs]
+'''
+[torch.Size([3, 64, 64, 64]),
  torch.Size([3, 64, 32, 32]),
  torch.Size([3, 128, 16, 16]),
- torch.Size([3, 256, 8, 8])]*learn.freeze_to(1)learn.lr_find()
-learn.sched.plot() 0%|                                                                                           | 0/64 [00:00<?, ?it/s]92%|█████████████████████████████████████████████████████████████████▍     | 59/64 [00:22<00:01,  2.68it/s, loss=2.45]
+ torch.Size([3, 256, 8, 8])]
+'''
+learn.freeze_to(1)learn.lr_find()
+learn.sched.plot()
+''' 0%|                                                                                           | 0/64 [00:00<?, ?it/s]92%|█████████████████████████████████████████████████████████████████▍     | 59/64 [00:22<00:01,  2.68it/s, loss=2.45]
+'''
 ```
 
 ```py
 lr=4e-2
 wd=1e-7
 
-lrs = np.array([lr/100,lr/10,lr])learn.fit(lr,1,wds=wd,cycle_len=8,use_clr=(5,8))*epoch      trn_loss   val_loss   <lambda>   dice           
+lrs = np.array([lr/100,lr/10,lr])
+learn.fit(lr,1,wds=wd,cycle_len=8,use_clr=(5,8))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice           
     0      0.12936    0.03934    0.988571   0.971385  
     1      0.098401   0.039252   0.990438   0.974921        
     2      0.087789   0.02539    0.990961   0.978927        
@@ -2225,8 +2700,16 @@ lrs = np.array([lr/100,lr/10,lr])learn.fit(lr,1,wds=wd,cycle_len=8,use_clr=(5,8)
     4      0.079509   0.025003   0.99171    0.981221        
     5      0.076984   0.022514   0.992462   0.981881        
     6      0.076822   0.023203   0.992484   0.982321        
-    7      0.075488   0.021956   0.992327   0.982704**[0.021955982234979434, 0.9923273126284281, 0.9827044502137199]*learn.save('128urn-tmp')learn.load('128urn-tmp')learn.unfreeze()
-learn.bn_freeze(True)learn.fit(lrs/4, 1, wds=wd, cycle_len=20,use_clr=(20,10))0%|          | 0/64 [00:00<?, ?it/s]
+    7      0.075488   0.021956   0.992327   0.982704
+[0.021955982234979434, 0.9923273126284281, 0.9827044502137199]
+'''
+learn.save('128urn-tmp')
+learn.load('128urn-tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+learn.fit(lrs/4, 1, wds=wd, cycle_len=20,use_clr=(20,10))
+'''
+0%|          | 0/64 [00:00<?, ?it/s]
 epoch      trn_loss   val_loss   <lambda>   dice            
     0      0.073786   0.023418   0.99297    0.98283   
     1      0.073561   0.020853   0.992142   0.982725        
@@ -2247,13 +2730,17 @@ epoch      trn_loss   val_loss   <lambda>   dice
     16     0.071047   0.01966    0.993366   0.984952        
     17     0.072024   0.018133   0.993505   0.98497         
     18     0.071517   0.018464   0.993602   0.985192        
-    19     0.070109   0.018337   0.993614   0.9852[0.018336569653853538, 0.9936137114252362, 0.9852004420189631]
+    19     0.070109   0.018337   0.993614   0.9852
+[0.018336569653853538, 0.9936137114252362, 0.9852004420189631]
+'''
 ```
 
 0.985！这就像我们将错误减半，其他一切完全相同。而且更重要的是，你可以看一下。
 
 ```py
-learn.save('128urn-0')learn.load('128urn-0')x,y = next(iter(md.val_dl))
+learn.save('128urn-0')
+learn.load('128urn-0')
+x,y = next(iter(md.val_dl))
 py = to_np(learn.model(V(x)))
 ```
 
@@ -2279,29 +2766,52 @@ m.close()
 
 ```py
 sz=512
-bs=16tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, 
-                       tfm_y=TfmType.CLASS, aug_tfms=aug_tfms)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-                            (val_x,val_y), tfms, path=PATH)
+bs=16
+tfms = tfms_from_model(
+    resnet34, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.CLASS, 
+    aug_tfms=aug_tfms
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH
+)
 md = ImageData(PATH, datasets, bs, num_workers=4, classes=None)
 denorm = md.trn_ds.denormm_base = get_base()
 m = to_gpu(Unet34(m_base))
-models = UnetModel(m)learn = ConvLearner(md, models)
+models = UnetModel(m)
+learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
-learn.metrics=[accuracy_thresh(0.5),dice]learn.freeze_to(1)**learn.load('128urn-0')**learn.fit(lr,1,wds=wd, cycle_len=5,use_clr=(5,5))epoch      trn_loss   val_loss   <lambda>   dice              
+learn.metrics=[accuracy_thresh(0.5),dice]
+learn.freeze_to(1)
+learn.load('128urn-0')
+learn.fit(lr,1,wds=wd, cycle_len=5,use_clr=(5,5))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice              
     0      0.071421   0.02362    0.996459   0.991772  
     1      0.070373   0.014013   0.996558   0.992602          
     2      0.067895   0.011482   0.996705   0.992883          
     3      0.070653   0.014256   0.996695   0.992771          
-    4      0.068621   0.013195   0.996993   0.993359[0.013194938530288046, 0.996993034604996, 0.993358936574724]
+    4      0.068621   0.013195   0.996993   0.993359
+[0.013194938530288046, 0.996993034604996, 0.993358936574724]
+'''
 ```
 
 你可以看到 Dice 系数真的在上升[[1:56:30](https://youtu.be/nG3tT31nPmQ?t=1h56m30s)]。所以请注意，我正在加载网络的 128x128 版本。我们再次使用渐进式调整大小的技巧，这样我们得到了 0.993。
 
 ```py
-learn.save('512urn-tmp')learn.unfreeze()
-learn.bn_freeze(True)learn.load('512urn-tmp')learn.fit(lrs/4,1,wds=wd, cycle_len=8,use_clr=(20,8))epoch      trn_loss   val_loss   <lambda>   dice              
+learn.save('512urn-tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+learn.load('512urn-tmp')
+learn.fit(lrs/4,1,wds=wd, cycle_len=8,use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice              
     0      0.06605    0.013602   0.997      0.993014  
     1      0.066885   0.011252   0.997248   0.993563          
     2      0.065796   0.009802   0.997223   0.993817          
@@ -2309,13 +2819,17 @@ learn.bn_freeze(True)learn.load('512urn-tmp')learn.fit(lrs/4,1,wds=wd, cycle_len
     4      0.064552   0.011683   0.997269   0.993835          
     5      0.065089   0.010553   0.997415   0.993827          
     6      0.064303   0.009472   0.997431   0.994046          
-    7      0.062506   0.009623   0.997441   0.994118[0.009623114736602894, 0.9974409020136273, 0.9941179137381296]
+    7      0.062506   0.009623   0.997441   0.994118
+[0.009623114736602894, 0.9974409020136273, 0.9941179137381296]
+'''
 ```
 
 然后解冻以达到 0.994。
 
 ```py
-learn.save('512urn')learn.load('512urn')x,y = next(iter(md.val_dl))
+learn.save('512urn')
+learn.load('512urn')
+x,y = next(iter(md.val_dl))
 py = to_np(learn.model(V(x)))
 ```
 
@@ -2339,14 +2853,24 @@ m.close()
 
 ```py
 sz=1024
-bs=4tfms = tfms_from_model(resnet34, sz, crop_type=CropType.NO, 
-                         tfm_y=TfmType.CLASS)
-datasets = ImageData.get_ds(MatchedFilesDataset, (trn_x,trn_y), 
-                            (val_x,val_y), tfms, path=PATH)
+bs=4
+tfms = tfms_from_model(
+    resnet34, sz, 
+    crop_type=CropType.NO, 
+    tfm_y=TfmType.CLASS
+)
+datasets = ImageData.get_ds(
+    MatchedFilesDataset, 
+    (trn_x,trn_y), 
+    (val_x,val_y), 
+    tfms, 
+    path=PATH
+)
 md = ImageData(PATH, datasets, bs, num_workers=16, classes=None)
 denorm = md.trn_ds.denormm_base = get_base()
 m = to_gpu(Unet34(m_base))
-models = UnetModel(m)learn = ConvLearner(md, models)
+models = UnetModel(m)
+learn = ConvLearner(md, models)
 learn.opt_fn=optim.Adam
 learn.crit=nn.BCEWithLogitsLoss()
 learn.metrics=[accuracy_thresh(0.5),dice]
@@ -2355,24 +2879,43 @@ learn.metrics=[accuracy_thresh(0.5),dice]
 加载我们刚刚保存的 512。
 
 ```py
-learn.load('512urn')learn.freeze_to(1)learn.fit(lr,1, wds=wd, cycle_len=2,use_clr=(5,4))epoch      trn_loss   val_loss   <lambda>   dice                 
+learn.load('512urn')
+learn.freeze_to(1)
+learn.fit(lr,1, wds=wd, cycle_len=2,use_clr=(5,4))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice                 
     0      0.007656   0.008155   0.997247   0.99353   
-    1      0.004706   0.00509    0.998039   0.995437[0.005090427414942828, 0.9980387706605215, 0.995437301104031]
+    1      0.004706   0.00509    0.998039   0.995437
+[0.005090427414942828, 0.9980387706605215, 0.995437301104031]
+'''
 ```
 
 这让我们达到了 0.995。
 
 ```py
-learn.save('1024urn-tmp')learn.load('1024urn-tmp')learn.unfreeze()
-learn.bn_freeze(True)lrs = np.array([lr/200,lr/30,lr])learn.fit(lrs/10,1, wds=wd,cycle_len=4,use_clr=(20,8))epoch      trn_loss   val_loss   <lambda>   dice                 
+learn.save('1024urn-tmp')
+learn.load('1024urn-tmp')
+learn.unfreeze()
+learn.bn_freeze(True)
+lrs = np.array([lr/200,lr/30,lr])
+learn.fit(lrs/10,1, wds=wd,cycle_len=4,use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice                 
     0      0.005688   0.006135   0.997616   0.994616  
     1      0.004412   0.005223   0.997983   0.995349             
     2      0.004186   0.004975   0.99806    0.99554              
-    3      0.004016   0.004899   0.99812    0.995627[0.004898778487196458, 0.9981196409180051, 0.9956271404784823]learn.fit(lrs/10,1, wds=wd,cycle_len=4,use_clr=(20,8))epoch      trn_loss   val_loss   <lambda>   dice                 
+    3      0.004016   0.004899   0.99812    0.995627
+[0.004898778487196458, 0.9981196409180051, 0.9956271404784823]
+'''
+learn.fit(lrs/10,1, wds=wd,cycle_len=4,use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss   <lambda>   dice                 
     0      0.004169   0.004962   0.998049   0.995517  
     1      0.004022   0.004595   0.99823    0.995818             
     2      0.003772   0.004497   0.998215   0.995916             
-    3      0.003618   0.004435   0.998291   0.995991[0.004434524739663753, 0.9982911745707194, 0.9959913929776539]
+    3      0.003618   0.004435   0.998291   0.995991
+[0.004434524739663753, 0.9982911745707194, 0.9959913929776539]
+'''
 ```
 
 解冻将我们带到...我们将称之为 0.996。
@@ -2382,7 +2925,9 @@ learn.sched.plot_loss()
 ```
 
 ```py
-learn.save('1024urn')learn.load('1024urn')x,y = next(iter(md.val_dl))
+learn.save('1024urn')
+learn.load('1024urn')
+x,y = next(iter(md.val_dl))
 py = to_np(learn.model(V(x)))
 ```
 
