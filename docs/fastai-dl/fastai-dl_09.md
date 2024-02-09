@@ -969,12 +969,16 @@ gt_clas[1-pos] = len(id2cat)
 gt_bbox = bbox[gt_idx]
 loc_loss = ((a_ic[pos_idx] - gt_bbox[pos_idx]).abs()).mean()
 clas_loss  = F.cross_entropy(b_clasi, gt_clas)
-loc_loss,clas_loss*(Variable containing:
- 1.00000e-02 *
+loc_loss,clas_loss
+'''
+(Variable containing:
+ 1.00000e-02 
    6.5887
- [torch.cuda.FloatTensor of size 1 (GPU 0)], Variable containing:
+ [torch.cuda.FloatTensor of size 1 (GPU 0)], 
+ Variable containing:
   1.0331
- [torch.cuda.FloatTensor of size 1 (GPU 0)])*
+ [torch.cuda.FloatTensor of size 1 (GPU 0)])
+'''
 ```
 
 最终我们将得到 16 个预测的边界框，其中大多数将是背景。如果您想知道它在背景边界框方面的预测是什么，答案是它完全忽略了它。
@@ -987,8 +991,12 @@ for idx,ax in enumerate(axes.flat):
     ima=md.val_ds.ds.denorm(to_np(x))[idx]
     bbox,clas = get_y(bbox,clas); bbox,clas
     a_ic = actn_to_bb(b_bb[idx], anchors)
-    torch_gt(ax, ima, a_ic, b_clas[idx].max(1)[1], 
-             b_clas[idx].max(1)[0].sigmoid(), 0.01)
+    torch_gt(
+        ax, ima, a_ic, 
+        b_clas[idx].max(1)[1], 
+        b_clas[idx].max(1)[0].sigmoid(), 
+        0.01
+    )
 plt.tight_layout()
 ```
 
@@ -1019,10 +1027,13 @@ class BCE_Loss(nn.Module):
         t = V(t[:,:-1].contiguous())*#.cpu()*
         x = pred[:,:-1]
         w = self.get_weight(x,t)
-        return F.binary_cross_entropy_with_logits(x, t, w, 
-                            size_average=False)/self.num_classes
+        return F.binary_cross_entropy_with_logits(
+            x, t, w, 
+            size_average=False
+        ) / self.num_classes
 
-    def get_weight(self,x,t): return None
+    def get_weight(self,x,t): 
+        return None
 ```
 
 二元交叉熵是我们通常用于多标签分类的。就像在行星卫星竞赛中，每个卫星图像可能有多个物体。如果它有多个物体，你不能使用 softmax，因为 softmax 真的鼓励只有一个物体有高的数字。在我们的情况下，每个锚框只能与一个物体相关联，所以我们避免使用 softmax 并不是因为这个原因。还有其他原因——即一个锚框可能没有任何与之相关联的物体。处理这种“背景”的想法有两种方法；一种是说背景只是一个类，所以让我们使用 softmax，将背景视为 softmax 可以预测的类之一。很多人都是这样做的。但这是一个非常困难的事情要求神经网络做[[1:06:52](https://youtu.be/0frKXR-2PBY?t=1h5m52s)] — 基本上是在问这个网格单元是否没有我感兴趣的 20 个物体中的任何一个，Jaccard 重叠大于 0.5。这是一个非常难以放入单个计算中的事情。另一方面，如果我们只问每个类；“这是摩托车吗？”“这是公共汽车吗？”“这是一个人吗？”等等，如果所有的答案都是否定的，那就认为是背景。这就是我们在这里做的方式。并不是我们可以有多个真实标签，而是我们可以有零个。
@@ -1072,7 +1083,8 @@ def ssd_loss(pred,targ,print_it=False):
         loc_loss,clas_loss = ssd_1_loss(b_c,b_bb,bbox,clas,print_it)
         lls += loc_loss
         lcs += clas_loss
-    if print_it: print(f'loc: **{lls.data[0]}**, clas: **{lcs.data[0]}**')
+    if print_it: 
+        print(f'loc: {lls.data[0]}, clas: {lcs.data[0]}')
     return lls+lcs
 ```
 
@@ -1110,29 +1122,47 @@ def get_y(bbox,clas):
 ```py
 learn.crit = ssd_loss
 lr = 3e-3
-lrs = np.array([lr/100,lr/10,lr])learn.lr_find(lrs/1000,1.)
-learn.sched.plot(1)*epoch      trn_loss   val_loss                            
-    0      44.232681  21476.816406*
+lrs = np.array([lr/100,lr/10,lr])
+learn.lr_find(lrs/1000,1.)
+learn.sched.plot(1)
+'''
+epoch      trn_loss   val_loss                            
+    0      44.232681  21476.816406
+'''
 ```
 
 ```py
 learn.lr_find(lrs/1000,1.)
-learn.sched.plot(1)*epoch      trn_loss   val_loss                            
-    0      86.852668  32587.789062*
+learn.sched.plot(1)
+'''
+epoch      trn_loss   val_loss                            
+    0      86.852668  32587.789062
+'''
 ```
 
 ```py
-learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))*epoch      trn_loss   val_loss                            
+learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                            
     0      45.570843  37.099854 
     1      37.165911  32.165031                           
     2      33.27844   30.990122                           
     3      31.12054   29.804482                           
-    4      29.305789  28.943184**[28.943184]*learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))*epoch      trn_loss   val_loss                            
+    4      29.305789  28.943184
+[28.943184]
+'''
+learn.fit(lr, 1, cycle_len=5, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                            
     0      43.726979  33.803085 
     1      34.771754  29.012939                           
     2      30.591864  27.132868                           
     3      27.896905  26.151638                           
-    4      25.907382  25.739273**[25.739273]*learn.save('0')learn.load('0')
+    4      25.907382  25.739273
+[25.739273]
+'''
+learn.save('0')
+learn.load('0')
 ```
 
 ## 结果
@@ -1160,22 +1190,42 @@ anc_grids = [4, 2, 1]
 anc_zooms = [0.75, 1., 1.3]
 anc_ratios = [(1., 1.), (1., 0.5), (0.5, 1.)]
 
-anchor_scales = [(anz*i,anz*j) for anz in anc_zooms 
-                                    for (i,j) in anc_ratios]
+anchor_scales = [
+    (anz*i,anz*j) 
+    for anz in anc_zooms 
+    for (i,j) in anc_ratios
+]
 k = len(anchor_scales)
-anc_offsets = [1/(o*2) for o in anc_grids]anc_x = np.concatenate([np.repeat(np.linspace(ao, 1-ao, ag), ag)
-                        for ao,ag in zip(anc_offsets,anc_grids)])
-anc_y = np.concatenate([np.tile(np.linspace(ao, 1-ao, ag), ag)
-                        for ao,ag in zip(anc_offsets,anc_grids)])
-anc_ctrs = np.repeat(np.stack([anc_x,anc_y], axis=1), k, axis=0)anc_sizes = np.concatenate([np.array([[o/ag,p/ag] 
-              for i in range(ag*ag) for o,p in anchor_scales])
-                 for ag in anc_grids])
-grid_sizes = V(np.concatenate([np.array([ 1/ag 
-              for i in range(ag*ag) for o,p in anchor_scales])
-                  for ag in anc_grids]), 
-                      requires_grad=False).unsqueeze(1)
-anchors = V(np.concatenate([anc_ctrs, anc_sizes], axis=1), 
-              requires_grad=False).float()
+anc_offsets = [1/(o*2) for o in anc_grids]
+anc_x = np.concatenate([
+    np.repeat(np.linspace(ao, 1-ao, ag), ag)
+    for ao,ag in zip(anc_offsets,anc_grids)
+])
+anc_y = np.concatenate([
+    np.tile(np.linspace(ao, 1-ao, ag), ag)
+    for ao,ag in zip(anc_offsets,anc_grids)
+])
+anc_ctrs = np.repeat(np.stack([anc_x,anc_y], axis=1), k, axis=0)
+anc_sizes = np.concatenate([
+    np.array([
+        [o/ag,p/ag] 
+        for i in range(ag*ag) 
+        for o,p in anchor_scales
+    ])
+    for ag in anc_grids
+])
+grid_sizes = V(np.concatenate([
+    np.array([ 
+        1/ag 
+        for i in range(ag*ag) 
+        for o,p in anchor_scales
+    ])
+    for ag in anc_grids
+]), requires_grad=False).unsqueeze(1)
+anchors = V(
+    np.concatenate([anc_ctrs, anc_sizes], axis=1), 
+    requires_grad=False
+).float()
 anchor_cnr = hw2corners(anchors[:,:2], anchors[:,2:])
 ```
 
@@ -1235,8 +1285,10 @@ class SSD_MultiHead(nn.Module):
         o2c,o2l = self.out2(x)
         x = self.sconv3(x)
         o3c,o3l = self.out3(x)
-        return [torch.cat([o1c,o2c,o3c], dim=1),
-                torch.cat([o1l,o2l,o3l], dim=1)]
+        return [
+            torch.cat([o1c,o2c,o3c], dim=1),
+            torch.cat([o1l,o2l,o3l], dim=1)
+        ]
 
 head_reg4 = SSD_MultiHead(k, -4.)
 models = ConvnetBuilder(f_model, 0, 0, 0, custom_head=head_reg4)
@@ -1259,21 +1311,33 @@ learn.opt_fn = optim.Adam
 ```py
 learn.crit = ssd_loss
 lr = 1e-2
-lrs = np.array([lr/100,lr/10,lr])learn.lr_find(lrs/1000,1.)
+lrs = np.array([lr/100,lr/10,lr])
+learn.lr_find(lrs/1000,1.)
 learn.sched.plot(n_skip_end=2)
 ```
 
 ```py
-learn.fit(lrs, 1, cycle_len=4, use_clr=(20,8))*epoch      trn_loss   val_loss                            
+learn.fit(lrs, 1, cycle_len=4, use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss                            
     0      15.124349  15.015433 
     1      13.091956  10.39855                            
     2      11.643629  9.4289                              
-    3      10.532467  8.822998**[8.822998]*learn.save('tmp')learn.freeze_to(-2)
-learn.fit(lrs/2, 1, cycle_len=4, use_clr=(20,8))*epoch      trn_loss   val_loss                            
+    3      10.532467  8.822998
+[8.822998]
+'''
+learn.save('tmp')
+learn.freeze_to(-2)
+learn.fit(lrs/2, 1, cycle_len=4, use_clr=(20,8))
+'''
+epoch      trn_loss   val_loss                            
     0      9.821056   10.335152 
     1      9.419633   11.834093                           
     2      8.78818    7.907762                            
-    3      8.219976   7.456364**[7.4563637]*x,y = next(iter(md.val_dl))
+    3      8.219976   7.456364
+[7.4563637]
+'''
+x,y = next(iter(md.val_dl))
 y = V(y)
 batch = learn.model(V(x))
 b_clas,b_bb = batch
@@ -1284,8 +1348,12 @@ for idx,ax in enumerate(axes.flat):
     ima=md.val_ds.ds.denorm(x)[idx]
     bbox,clas = get_y(y[0][idx], y[1][idx])
     a_ic = actn_to_bb(b_bb[idx], anchors)
-    torch_gt(ax, ima, a_ic, b_clas[idx].max(1)[1], 
-             b_clas[idx].max(1)[0].sigmoid(), 0.2)
+    torch_gt(
+        ax, ima, a_ic, 
+        b_clas[idx].max(1)[1], 
+        b_clas[idx].max(1)[0].sigmoid(), 
+        0.2
+    )
 plt.tight_layout()
 ```
 
@@ -1351,11 +1419,13 @@ class BCE_Loss(nn.Module):
 
     def forward(self, pred, targ):
         t = one_hot_embedding(targ, self.num_classes+1)
-        t = V(t[:,:-1].contiguous())*#.cpu()*
+        t = V(t[:,:-1].contiguous()) #.cpu()
         x = pred[:,:-1]
         w = self.get_weight(x,t)
-        return F.binary_cross_entropy_with_logits(x, t, w, 
-                          size_average=False)/self.num_classes
+        return F.binary_cross_entropy_with_logits(
+            x, t, w, 
+            size_average=False
+        ) / self.num_classes
 
     def get_weight(self,x,t): return None
 ```
@@ -1382,7 +1452,9 @@ learn.sched.plot(n_skip_end=2)
 ```
 
 ```py
-learn.fit(lrs, 1, cycle_len=10, use_clr=(20,10))*epoch      trn_loss   val_loss                            
+learn.fit(lrs, 1, cycle_len=10, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                            
     0      24.263046  28.975235 
     1      20.459562  16.362392                           
     2      17.880827  14.884829                           
@@ -1392,9 +1464,15 @@ learn.fit(lrs, 1, cycle_len=10, use_clr=(20,10))*epoch      trn_loss   val_loss
     6      12.651842  12.069849                           
     7      11.944972  11.956457                           
     8      11.385798  11.561226                           
-    9      10.988802  11.362164**[11.362164]*learn.save('fl0')
-learn.load('fl0')learn.freeze_to(-2)
-learn.fit(lrs/4, 1, cycle_len=10, use_clr=(20,10))*epoch      trn_loss   val_loss                            
+    9      10.988802  11.362164
+[11.362164]
+'''
+learn.save('fl0')
+learn.load('fl0')
+learn.freeze_to(-2)
+learn.fit(lrs/4, 1, cycle_len=10, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                            
     0      10.871668  11.615532 
     1      10.908461  11.604334                           
     2      10.549796  11.486127                           
@@ -1404,8 +1482,12 @@ learn.fit(lrs/4, 1, cycle_len=10, use_clr=(20,10))*epoch      trn_loss   val_los
     6      8.916653   10.358334                           
     7      8.579452   10.624706                           
     8      8.274838   10.163422                           
-    9      7.994316   10.108068**[10.108068]*learn.save('drop4')
-learn.load('drop4')plot_results(0.75)
+    9      7.994316   10.108068
+[10.108068]
+'''
+learn.save('drop4')
+learn.load('drop4')
+plot_results(0.75)
 ```
 
 这次情况看起来好多了。因此，我们现在的最后一步是基本上弄清楚如何只提取感兴趣的部分。
@@ -1419,14 +1501,15 @@ learn.load('drop4')plot_results(0.75)
 ```py
 def nms(boxes, scores, overlap=0.5, top_k=100):
     keep = scores.new(scores.size(0)).zero_().long()
-    if boxes.numel() == 0: return keep
+    if boxes.numel() == 0: 
+        return keep
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     x2 = boxes[:, 2]
     y2 = boxes[:, 3]
     area = torch.mul(x2 - x1, y2 - y1)
-    v, idx = scores.sort(0)  *# sort in ascending order*
-    idx = idx[-top_k:]  *# indices of the top-k largest vals*
+    v, idx = scores.sort(0)  # sort in ascending order
+    idx = idx[-top_k:]  # indices of the top-k largest vals
     xx1 = boxes.new()
     yy1 = boxes.new()
     xx2 = boxes.new()
@@ -1436,17 +1519,17 @@ def nms(boxes, scores, overlap=0.5, top_k=100):
 
     count = 0
     while idx.numel() > 0:
-        i = idx[-1]  *# index of current largest val*
+        i = idx[-1]  # index of current largest val
         keep[count] = i
         count += 1
         if idx.size(0) == 1: break
-        idx = idx[:-1]  *# remove kept element from view*
-        *# load bboxes of next highest vals*
+        idx = idx[:-1]  # remove kept element from view
+        # load bboxes of next highest vals
         torch.index_select(x1, 0, idx, out=xx1)
         torch.index_select(y1, 0, idx, out=yy1)
         torch.index_select(x2, 0, idx, out=xx2)
         torch.index_select(y2, 0, idx, out=yy2)
-        *# store element-wise max with next highest score*
+        # store element-wise max with next highest score
         xx1 = torch.clamp(xx1, min=x1[i])
         yy1 = torch.clamp(yy1, min=y1[i])
         xx2 = torch.clamp(xx2, max=x2[i])
@@ -1455,18 +1538,19 @@ def nms(boxes, scores, overlap=0.5, top_k=100):
         h.resize_as_(yy2)
         w = xx2 - xx1
         h = yy2 - yy1
-        *# check sizes of xx1 and xx2.. after each iteration*
+        # check sizes of xx1 and xx2.. after each iteration
         w = torch.clamp(w, min=0.0)
         h = torch.clamp(h, min=0.0)
         inter = w*h
-        *# IoU = i / (area(a) + area(b) - i)*
+        # IoU = i / (area(a) + area(b) - i)
         rem_areas = torch.index_select(area, 0, idx)  
-        *# load remaining areas)*
+        # load remaining areas)
         union = (rem_areas - inter) + area[i]
-        IoU = inter/union  *# store result in iou*
-        *# keep only elements with an IoU <= overlap*
+        IoU = inter/union  # store result in iou
+        # keep only elements with an IoU <= overlap
         idx = idx[IoU.le(overlap)]
-    return keep, countdef show_nmf(idx):
+    return keep, count
+def show_nmf(idx):
     ima=md.val_ds.ds.denorm(x)[idx]
     bbox,clas = get_y(y[0][idx], y[1][idx])
     a_ic = actn_to_bb(b_bb[idx], anchors)
@@ -1478,7 +1562,8 @@ def nms(boxes, scores, overlap=0.5, top_k=100):
     out1,out2,cc = [],[],[]
     for cl in range(0, len(conf_scores)-1):
         c_mask = conf_scores[cl] > 0.25
-        if c_mask.sum() == 0: continue
+        if c_mask.sum() == 0: 
+            continue
         scores = conf_scores[cl][c_mask]
         l_mask = c_mask.unsqueeze(1).expand_as(a_ic)
         boxes = a_ic[l_mask].view(-1, 4)
@@ -1492,7 +1577,9 @@ def nms(boxes, scores, overlap=0.5, top_k=100):
     out2 = torch.cat(out2)
 
     fig, ax = plt.subplots(figsize=(8,8))
-    torch_gt(ax, ima, out2, cc, out1, 0.1)for i in range(12): show_nmf(i)
+    torch_gt(ax, ima, out2, cc, out1, 0.1)
+    for i in range(12): 
+        show_nmf(i)
 ```
 
 这里还有一些需要修复的地方[[1:53:43](https://youtu.be/0frKXR-2PBY?t=1h53m43s)]。技巧将是使用称为特征金字塔的东西。这就是我们将在第 14 课中做的事情。
