@@ -29,8 +29,10 @@ fastai 库的另一个非常酷的贡献是一个新的训练阶段 API。我将
 这就是你如何做到的：
 
 ```py
-phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),   
-          TrainingPhase(epochs=2, opt_fn=optim.SGD, lr = 1e-3)]
+phases = [
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),   
+    TrainingPhase(epochs=2, opt_fn=optim.SGD, lr = 1e-3)
+]
 ```
 
 一个阶段是一个具有特定优化器参数的训练期，`phases`由许多训练阶段对象组成。一个训练阶段对象说明要训练多少个周期，要使用什么优化函数，以及其他我们将看到的东西。在这里，你会看到你刚刚在那张图上看到的两个训练阶段。所以现在，不再调用`learn.fit`，而是说：
@@ -42,10 +44,16 @@ learn.fit_opt_sched(phases)
 换句话说，`learn.fit`与一个具有这些阶段的优化器调度器。大多数传递的参数都可以像往常一样传递给 fit 函数，所以大多数通常的参数都可以正常工作。一般来说，我们只需使用这些训练阶段，你会看到它以一种通常的方式适应。然后当你说`plot_lr`时，你会看到上面的图表。它不仅绘制学习率，还绘制动量，并且对于每个阶段，它告诉你使用了什么优化器。你可以关闭优化器的打印（`show_text=False`），你可以关闭动量的打印（`show_moms=False`），你还可以做其他一些小事情，比如一个训练阶段可以有一个`lr_decay`参数：
 
 ```py
-phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2), 
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, 
-                       lr = (1e-2,1e-3), lr_decay=DecayType.LINEAR),
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)]
+phases = [
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2), 
+    TrainingPhase(
+        epochs=1, 
+        opt_fn=optim.SGD, 
+        lr = (1e-2,1e-3), 
+        lr_decay=DecayType.LINEAR
+    ),
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)
+]
 ```
 
 这里有一个固定的学习率，然后是线性衰减的学习率，然后是放弃这个图像的固定学习率：
@@ -59,10 +67,16 @@ lr_i = start_lr + (end_lr - start_lr) * i/n
 你可以使用其他衰减类型，比如余弦：
 
 ```py
-phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),    
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, lr =(1e-2,1e-3),
-                  lr_decay=DecayType.COSINE),           
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)]
+phases = [
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2),    
+    TrainingPhase(
+        epochs=1, 
+        opt_fn=optim.SGD, 
+        lr =(1e-2,1e-3),
+        lr_decay=DecayType.COSINE
+    ),           
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)
+]
 ```
 
 这可能更有意义，作为一个真正有用的学习率退火形状。
@@ -86,10 +100,16 @@ lr_i = end_lr + (start_lr - end_lr) * (1 - i/n) ** p
 如果在 LR 衰减时不提供学习率的元组，那么它将一直衰减到零。如你所见，你可以愉快地从不同的点开始下一个周期。
 
 ```py
-phases = [TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2), 
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2, 
-                        lr_decay=DecayType.COSINE),
-          TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)]
+phases = [
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-2), 
+    TrainingPhase(
+        epochs=1, 
+        opt_fn=optim.SGD, 
+        lr = 1e-2, 
+        lr_decay=DecayType.COSINE
+    ),
+    TrainingPhase(epochs=1, opt_fn=optim.SGD, lr = 1e-3)
+]
 ```
 
 ## SGDR
