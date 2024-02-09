@@ -34,6 +34,9 @@
 
 ## 我们接下来要做什么：
 
+![](img/3-1.webp)
+
+
 # 回顾[[08:24](https://youtu.be/9C06ZPF8Uuc?t=8m24s)]：
 
 ## Kaggle CLI：如何下载数据 1：
@@ -54,7 +57,13 @@ $ kg download -u john.doe -p mypassword -c dog-breed-identification
 
 确保您已经从计算机上点击了`下载`按钮并接受了规则：
 
+![](img/3-2.webp)
+
+
 ## CurWget（Chrome 扩展程序）：如何下载数据 2：
+
+![](img/3-3.webp)
+
 
 [](https://chrome.google.com/webstore/detail/curlwget/jmocjfidanebdlinpbcdkcmgdifblncg)
 
@@ -68,7 +77,13 @@ sz=224; bs=64
 
 通常笔记本假设您的数据在`data`文件夹中。但也许您想把它们放在其他地方。在这种情况下，您可以使用符号链接（简称 symlink）：
 
+![](img/3-4.webp)
+
+
 以下是一个端到端的过程，用于获得狗与猫的最新结果：
+
+![](img/3-5.webp)
+
 
 快速狗与猫
 
@@ -255,6 +270,9 @@ ds.insert(0, 'id', [o[5:-4] for o in data.test_ds.fnames])
 ds.head()
 ```
 
+![](img/3-6.webp)
+
+
 ```py
 SUBM = f'{PATH}sub/' 
 os.makedirs(SUBM, exist_ok=True) 
@@ -280,6 +298,9 @@ fn = data.val_ds.fnames[0]; fn
 '''
 Image.open(PATH + fn)
 ```
+
+![](img/3-7.webp)
+
 
 +   我们将从验证集中选择第一个文件。
 
@@ -307,7 +328,11 @@ np.argmax(preds)
 
 **Otavio 的出色可视化（他创建了 Word Lens）：**
 
+[`youtu.be/Oqm9vsf_hvU`](https://youtu.be/Oqm9vsf_hvU)
+
 **Jeremy 的可视化：** [**电子表格**](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/conv-example.xlsx) **[**[**49:51**](https://youtu.be/9C06ZPF8Uuc?t=49m51s)**]**
+
+![](img/3-8.webp)
 
 我使用[`office.live.com/start/Excel.aspx`](https://office.live.com/start/Excel.aspx?ui=en-US&rs=US)
 
@@ -347,9 +372,15 @@ np.argmax(preds)
 
 Softmax 只会出现在最后一层。它输出介于 0 和 1 之间的数字，它们加起来为 1。理论上，这并不是绝对必要的 - 我们可以要求我们的神经网络学习一组核，这些核给出的概率尽可能接近我们想要的。一般来说，在深度学习中，如果你可以构建你的架构，使得所需的特征尽可能容易表达，你将得到更好的模型（学习更快，参数更少）。
 
+![](img/3-9.webp)
+
+
 1.  通过`e^x`去除负数，因为我们不能有负概率。它也突出了值的差异（2.85：4.08 → 17.25：59.03）
 
 所有你需要熟悉的数学来进行深度学习：
+
+![](img/3-10.webp)
+
 
 2. 然后我们将`exp`列（182.75）相加，然后将`e^x`除以总和。结果总是正的，因为我们将正数除以正数。每个数字将在 0 和 1 之间，总和为 1。
 
@@ -434,15 +465,24 @@ list(zip(data.classes, y[0]))
 
 在幕后，PyTorch 和 fast.ai 将我们的标签转换为独热编码标签。如果实际标签是狗，它看起来像：
 
+![](img/3-11.webp)
+
+
 我们取`actuals`和`softmax`之间的差异，将它们相加以表示有多少错误（即损失函数）[1:31:02]。
 
 独热编码对于存储来说非常低效，所以我们将存储一个索引值（单个整数）而不是目标值（`y`）的 0 和 1。如果您查看狗品种竞赛的`y`值，您实际上不会看到一个大的 1 和 0 的列表，而是会看到一个单个整数。在内部，PyTorch 将索引转换为独热编码向量（即使您永远不会看到它）。PyTorch 有不同的损失函数，适用于独热编码和其他不是独热编码的情况，但这些细节被 fast.ai 库隐藏，因此您不必担心。但要意识到的很酷的事情是，我们对单标签分类和多标签分类都做了完全相同的事情。
 
 **问题**：改变 softmax 的对数基数有意义吗？[[01:32:55](https://youtu.be/9C06ZPF8Uuc?t=1h32m55s)] 不，改变基数只是一个线性缩放，神经网络可以轻松学习：
 
+![](img/3-12.webp)
+
+
 ```py
 plt.imshow(data.val_ds.denorm(to_np(x))[0]*1.4);
 ```
+
+![](img/3-13.webp)
+
 
 +   `*1.4`：图像被冲洗了，所以让它更明显（“稍微提亮”）。图像只是数字矩阵，所以我们可以做这样的事情。
 
@@ -463,6 +503,9 @@ learn = ConvLearner.pretrained(f_model, data, metrics=metrics)
 lrf=learn.lr_find() 
 learn.sched.plot()
 ```
+
+![](img/3-14.webp)
+
 
 ```py
 lr = 0.2
@@ -495,6 +538,9 @@ learn.fit(lrs, 3, cycle_len=1, cycle_mult=2)
 ```py
 learn.sched.plot_loss()
 ```
+
+![](img/3-15.webp)
+
 
 ```py
 sz = 128
@@ -583,7 +629,16 @@ metrics=[f2]
 
 多标签分类的激活函数称为**sigmoid**。
 
+![](img/3-16.webp)
+
+
+![](img/3-17.webp)
+
+
 **问题**：为什么我们不从不同的学习率开始训练，而是只训练最后的层？[[01:50:30](https://youtu.be/9C06ZPF8Uuc?t=1h50m30s)]
+
+![](img/3-18.webp)
+
 
 您可以跳过训练最后一层，直接进行不同的学习率，但您可能不想这样做。卷积层都包含预训练权重，因此它们不是随机的 — 对于接近 ImageNet 的东西，它们非常好；对于不接近 ImageNet 的东西，它们比没有好。然而，我们所有的全连接层都是完全随机的。因此，您始终希望通过先训练它们使全连接权重比随机更好一些。否则，如果直接解冻，那么您实际上将在后续层仍然是随机的情况下摆弄那些早期层的权重 — 这可能不是您想要的。
 
@@ -679,6 +734,9 @@ tables = [
 ]
 for t in tables: display(t.head())
 ```
+
+![](img/3-19.webp)
+
 
 +   `StoreType` — 您经常会得到一些列包含“代码”的数据集。实际上，这个代码的含义并不重要。不要过多地了解它，先看看数据说了什么。
 
