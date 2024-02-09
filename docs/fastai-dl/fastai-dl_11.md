@@ -67,8 +67,8 @@ PATH = Path('data/translate')
 TMP_PATH = PATH/'tmp'
 TMP_PATH.mkdir(exist_ok=True)
 fname='giga-fren.release2.fixed'
-en_fname = PATH/f'**{fname}**.en'
-fr_fname = PATH/f'**{fname}**.fr'
+en_fname = PATH/f'{fname}.en'
+fr_fname = PATH/f'{fname}.fr'
 ```
 
 对于边界框，所有有趣的东西都在损失函数中，但对于神经翻译，所有有趣的东西都将在架构中[[13:01](https://youtu.be/tY0n9OT5_nA?t=13m1s)]。让我们快速浏览一下，杰里米希望你特别考虑的一件事是我们在语言建模与神经翻译之间所做任务及如何做任务的关系或相似之处。
@@ -113,9 +113,15 @@ Stephen 使用了“编码器”这个词，但我们倾向于使用“骨干”
 
 ```py
 re_eq = re.compile('^(Wh[^?.!]+\?)')
-re_fq = re.compile('^([^?.!]+\?)')lines = ((re_eq.search(eq), re_fq.search(fq)) 
-         for eq, fq in zip(open(en_fname, encoding='utf-8'), 
-                           open(fr_fname, encoding='utf-8')))qs = [(e.group(), f.group()) for e,f in lines if e and f]
+re_fq = re.compile('^([^?.!]+\?)')
+lines = (
+    (re_eq.search(eq), re_fq.search(fq)) 
+    for eq, fq in zip(
+        open(en_fname, encoding='utf-8'), 
+        open(fr_fname, encoding='utf-8')
+    )
+)
+qs = [(e.group(), f.group()) for e,f in lines if e and f]
 ```
 
 我们遍历语料库，打开两个文件中的每一个，每一行是一个平行文本，将它们压缩在一起，获取英语问题和法语问题，并检查它们是否匹配正则表达式。
@@ -128,13 +134,16 @@ qs = pickle.load((PATH/'fr-en-qs.pkl').open('rb'))
 将其转储为一个 pickle，这样我们就不必再次执行它，现在我们有 52,000 个句子对，这里有一些示例：
 
 ```py
-qs[:5], len(qs)*([('What is light ?', 'Qu’est-ce que la lumière?'),
+qs[:5], len(qs)
+'''
+([('What is light ?', 'Qu’est-ce que la lumière?'),
   ('Who are we?', 'Où sommes-nous?'),
   ('Where did we come from?', "D'où venons-nous?"),
   ('What would we do without it?', 'Que ferions-nous sans elle ?'),
   ('What is the absolute location (latitude and longitude) of Badger, Newfoundland and Labrador?',
    'Quelle sont les coordonnées (latitude et longitude) de Badger, à Terre-Neuve-etLabrador?')],
- 52331)*
+ 52331)
+'''
 ```
 
 这样做的一个好处是，关于什么/谁/在哪里类型的问题往往相当简短。但是，我们可以从零开始学习，没有对语言概念的先前理解，更不用说英语或法语，我们可以创建一个可以将一个语言翻译成另一种语言的东西，对于任何任意问题，只需要 50k 个句子，听起来像是一个难以置信的困难任务。因此，如果我们能取得任何进展，那将是令人印象深刻的。这是一个非常少的数据来进行一个非常复杂的练习。
@@ -148,7 +157,8 @@ en_qs,fr_qs = zip(*qs)
 然后我们对英语问题进行标记化，对法语问题进行标记化。所以记住，这只是将它们分剒成单独的单词或类似单词的东西。默认情况下，我们这里有的标记器（记住这是一个包装在 spaCy 标记器周围的标记器，它是一个很棒的标记器）假设是英语。所以要求法语，你只需添加一个额外的参数'fr'。第一次这样做时，你会收到一个错误，说你没有安装 spaCy 法语模型，所以你可以运行`python -m spacy download fr`来获取法语模型。
 
 ```py
-en_tok = Tokenizer.proc_all_mp(partition_by_cores(en_qs))fr_tok = Tokenizer.proc_all_mp(partition_by_cores(fr_qs), 'fr')
+en_tok = Tokenizer.proc_all_mp(partition_by_cores(en_qs))
+fr_tok = Tokenizer.proc_all_mp(partition_by_cores(fr_qs), 'fr')
 ```
 
 在这里，你们中没有人会遇到 RAM 问题，因为这不是特别大的语料库，但是有些学生在这一周尝试训练新的语言模型时遇到了 RAM 问题。如果你遇到了，了解这些函数（`proc_all_mp`）实际在做什么是值得的。`proc_all_mp`正在跨多个进程处理每个句子：
@@ -165,9 +175,16 @@ en_tok[0], fr_tok0
 
 ```py
 np.percentile([len(o) for o in en_tok], 90), 
-    np.percentile([len(o) for o in fr_tok], 90)*(23.0, 28.0)*keep = np.array([len(o)<30 for o in en_tok])en_tok = np.array(en_tok)[keep]
-fr_tok = np.array(fr_tok)[keep]pickle.dump(en_tok, (PATH/'en_tok.pkl').open('wb'))
-pickle.dump(fr_tok, (PATH/'fr_tok.pkl').open('wb'))en_tok = pickle.load((PATH/'en_tok.pkl').open('rb'))
+np.percentile([len(o) for o in fr_tok], 90)
+'''
+(23.0, 28.0)
+'''
+keep = np.array([len(o)<30 for o in en_tok])
+en_tok = np.array(en_tok)[keep]
+fr_tok = np.array(fr_tok)[keep]
+pickle.dump(en_tok, (PATH/'en_tok.pkl').open('wb'))
+pickle.dump(fr_tok, (PATH/'fr_tok.pkl').open('wb'))
+en_tok = pickle.load((PATH/'en_tok.pkl').open('rb'))
 fr_tok = pickle.load((PATH/'fr_tok.pkl').open('rb'))
 ```
 
@@ -181,11 +198,13 @@ def toks2ids(tok,pre):
     itos.insert(1, '_pad_')
     itos.insert(2, '_eos_')
     itos.insert(3, '_unk')
-    stoi = collections.defaultdict(lambda: 3, 
-                                   {v:k for k,v in enumerate(itos)})
+    stoi = collections.defaultdict(
+        lambda: 3, 
+        {v:k for k,v in enumerate(itos)}
+    )
     ids = np.array([([stoi[o] for o in p] + [2]) for p in tok])
-    np.save(TMP_PATH/f'**{pre}**_ids.npy', ids)
-    pickle.dump(itos, open(TMP_PATH/f'**{pre}**_itos.pkl', 'wb'))
+    np.save(TMP_PATH/f'{pre}_ids.npy', ids)
+    pickle.dump(itos, open(TMP_PATH/f'{pre}_itos.pkl', 'wb'))
     return ids,itos,stoi
 ```
 
@@ -204,12 +223,21 @@ fr_ids,fr_itos,fr_stoi = toks2ids(fr_tok,'fr')
 
 ```py
 def load_ids(pre):
-    ids = np.load(TMP_PATH/f'**{pre}**_ids.npy')
-    itos = pickle.load(open(TMP_PATH/f'**{pre}**_itos.pkl', 'rb'))
-    stoi = collections.defaultdict(lambda: 3, 
-                                   {v:k for k,v in enumerate(itos)})
+    ids = np.load(TMP_PATH/f'{pre}_ids.npy')
+    itos = pickle.load(open(TMP_PATH/f'{pre}_itos.pkl', 'rb'))
+    stoi = collections.defaultdict(
+        lambda: 3, 
+        {v:k for k,v in enumerate(itos)}
+    )
     return ids,itos,stoien_ids,en_itos,en_stoi = load_ids('en')
-fr_ids,fr_itos,fr_stoi = load_ids('fr')[fr_itos[o] for o in fr_ids[0]], len(en_itos), len(fr_itos)*(['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?', '_eos_'], 17573, 24793)*
+fr_ids,fr_itos,fr_stoi = (
+    load_ids('fr')[fr_itos[o] for o in fr_ids[0]], 
+    len(en_itos), 
+    len(fr_itos)
+)
+'''
+(['qu’', 'est', '-ce', 'que', 'la', 'lumière', '?', '_eos_'], 17573, 24793)
+'''
 ```
 
 ## 词向量[[32:53](https://youtu.be/tY0n9OT5_nA?t=32m53s)]
@@ -223,28 +251,36 @@ fasttext 词向量可从[`fasttext.cc/docs/en/english-vectors.html`](https://fas
 fasttext Python 库在 PyPI 中不可用，但这里有一个方便的技巧[[35:03](https://youtu.be/tY0n9OT5_nA?t=35m3s)]。如果有一个 GitHub 存储库，其中包含 setup.py 和 reqirements.txt，您只需在开头加上`git+`，然后将其放入`pip install`中，它就会起作用。几乎没有人似乎知道这一点，如果您去 fasttext 存储库，他们不会告诉您这一点 - 他们会告诉您必须下载它并`cd`进入它，等等，但您不必这样做。您只需运行以下命令：
 
 ```py
-*# ! pip install git+https://github.com/facebookresearch/fastText.git*import fastText as ft
+# !pip install git+https://github.com/facebookresearch/fastText.git
+import fastText as ft
 ```
 
 要使用 fastText 库，您需要下载[fasttext 词向量](https://github.com/facebookresearch/fastText/blob/master/pretrained-vectors.md)（下载“bin plus text”）。
 
 ```py
-en_vecs = ft.load_model(str((PATH/'wiki.en.bin')))fr_vecs = ft.load_model(str((PATH/'wiki.fr.bin')))
+en_vecs = ft.load_model(str((PATH/'wiki.en.bin')))
+fr_vecs = ft.load_model(str((PATH/'wiki.fr.bin')))
 ```
 
 以上是我们的英语和法语模型。有文本版本和二进制版本。二进制版本更快，所以我们将使用它。文本版本也有点 buggy。我们将把它转换为标准的 Python 字典，以使其更容易使用[[35:55](https://youtu.be/tY0n9OT5_nA?t=35m55s)]。这只是通过字典理解遍历每个单词，并将其保存为 pickle 字典：
 
 ```py
 def get_vecs(lang, ft_vecs):
-    vecd = {w:ft_vecs.get_word_vector(w) 
-                for w in ft_vecs.get_words()}
-    pickle.dump(vecd, open(PATH/f'wiki.**{lang}**.pkl','wb'))
+    vecd = {
+        w:ft_vecs.get_word_vector(w) 
+        for w in ft_vecs.get_words()
+    }
+    pickle.dump(vecd, open(PATH/f'wiki.{lang}.pkl','wb'))
     return vecden_vecd = get_vecs('en', en_vecs)
-fr_vecd = get_vecs('fr', fr_vecs)en_vecd = pickle.load(open(PATH/'wiki.en.pkl','rb'))
-fr_vecd = pickle.load(open(PATH/'wiki.fr.pkl','rb'))ft_words = ft_vecs.get_words(include_freq=True)
+fr_vecd = get_vecs('fr', fr_vecs)
+en_vecd = pickle.load(open(PATH/'wiki.en.pkl','rb'))
+fr_vecd = pickle.load(open(PATH/'wiki.fr.pkl','rb'))
+ft_words = ft_vecs.get_words(include_freq=True)
 ft_word_dict = {k:v for k,v in zip(*ft_words)}
-ft_words = sorted(ft_word_dict.keys(), 
-                     key=lambda x: ft_word_dict[x])
+ft_words = sorted(
+    ft_word_dict.keys(), 
+    key=lambda x: ft_word_dict[x]
+)
 ```
 
 现在我们有了我们的 pickle 字典，我们可以继续查找一个单词，例如逗号[[36:07](https://youtu.be/tY0n9OT5_nA?t=36m7s)]。这将返回一个向量。向量的长度是这组词向量的维度。在这种情况下，我们有 300 维的英语和法语词向量。
@@ -252,14 +288,20 @@ ft_words = sorted(ft_word_dict.keys(),
 ```py
 dim_en_vec = len(en_vecd[','])
 dim_fr_vec = len(fr_vecd[','])
-dim_en_vec,dim_fr_vec*(300, 300)*
+dim_en_vec,dim_fr_vec
+'''
+(300, 300)
+'''
 ```
 
 出于即将看到的原因，我们还想找出我们的向量的平均值和标准差。所以平均值约为零，标准差约为 0.3。
 
 ```py
 en_vecs = np.stack(list(en_vecd.values()))
-en_vecs.mean(),en_vecs.std()*(0.0075652334, 0.29283327)*
+en_vecs.mean(),en_vecs.std()
+'''
+(0.0075652334, 0.29283327)
+'''
 ```
 
 ## 模型数据[[36:48](https://youtu.be/tY0n9OT5_nA?t=36m48s)]
@@ -269,17 +311,24 @@ en_vecs.mean(),en_vecs.std()*(0.0075652334, 0.29283327)*
 ```py
 enlen_90 = int(np.percentile([len(o) for o in en_ids], 99))
 frlen_90 = int(np.percentile([len(o) for o in fr_ids], 97))
-enlen_90,frlen_90*(29, 33)*
+enlen_90,frlen_90
+'''
+(29, 33)
+'''
 ```
 
 我们快要完成了[[37:24](https://youtu.be/tY0n9OT5_nA?t=37m24s)]。我们已经有了我们的标记化、数字化的英语和法语数据集。我们有一些词向量。现在我们需要为 PyTorch 准备好它。PyTorch 需要一个`Dataset`对象，希望到现在为止你可以说一个 Dataset 对象需要两个东西——一个长度(`__len__`)和一个索引器(`__getitem__`)。Jeremy 开始编写`Seq2SeqDataset`，结果只是一个通用的`Dataset`[[37:52](https://youtu.be/tY0n9OT5_nA?t=37m52s)]。
 
 ```py
 en_ids_tr = np.array([o[:enlen_90] for o in en_ids])
-fr_ids_tr = np.array([o[:frlen_90] for o in fr_ids])class Seq2SeqDataset(Dataset):
-    def __init__(self, x, y): self.x,self.y = x,y
-    def __getitem__(self, idx): return A(self.x[idx], self.y[idx])
-    def __len__(self): return len(self.x)
+fr_ids_tr = np.array([o[:frlen_90] for o in fr_ids])
+class Seq2SeqDataset(Dataset):
+    def __init__(self, x, y): 
+        self.x,self.y = x,y
+    def __getitem__(self, idx): 
+        return A(self.x[idx], self.y[idx])
+    def __len__(self): 
+        return len(self.x)
 ```
 
 +   `A`：数组。它将遍历您传递的每个对象，如果它还不是一个 numpy 数组，它会将其转换为一个 numpy 数组，并返回一个元组，其中包含您传递的所有现在保证为 numpy 数组的对象[[38:32](https://youtu.be/tY0n9OT5_nA?t=38m32s)]。
@@ -303,7 +352,10 @@ np.random.seed(42)
 trn_keep = np.random.rand(len(en_ids_tr))>0.1
 en_trn,fr_trn = en_ids_tr[trn_keep],fr_ids_tr[trn_keep]
 en_val,fr_val = en_ids_tr[~trn_keep],fr_ids_tr[~trn_keep]
-len(en_trn),len(en_val)*(45219, 5041)*
+len(en_trn),len(en_val)
+'''
+(45219, 5041)
+'''
 ```
 
 现在我们可以用我们的 X 和 Y（即法语和英语）创建我们的数据集[43:12]。如果你想将英语翻译成法语，只需交换这两个，就完成了。
@@ -316,14 +368,31 @@ val_ds = Seq2SeqDataset(fr_val,en_val)
 现在我们需要创建 DataLoaders[43:22]。我们只需获取我们的数据加载器并传入我们的数据集和批量大小。我们实际上必须转置数组 - 我们不会详细讨论为什么，但如果你感兴趣，我们可以在这一周讨论，但想一想为什么我们可能需要转置它们的方向。由于我们已经完成了所有的预处理，没有必要启动多个工作人员来进行增强等工作，因为没有工作要做。因此，`使 num_workers=1`会节省一些时间。我们必须告诉它我们的填充索引是什么 - 这非常重要，因为将会发生的是，我们有不同长度的句子，fastai 将自动将它们粘在一起并填充较短的句子，使它们长度相等。记住张量必须是矩形的。
 
 ```py
-bs=125trn_samp = SortishSampler(en_trn, key=lambda x: len(en_trn[x]), 
-                          bs=bs)
-val_samp = SortSampler(en_val, key=lambda x: len(en_val[x]))trn_dl = DataLoader(trn_ds, bs, transpose=True, transpose_y=True, 
-                    num_workers=1, pad_idx=1, pre_pad=False, 
-                    sampler=trn_samp)
-val_dl = DataLoader(val_ds, int(bs*1.6), transpose=True, 
-                    transpose_y=True, num_workers=1, pad_idx=1,
-                    pre_pad=False, sampler=val_samp)
+bs=125
+trn_samp = SortishSampler(
+    en_trn, 
+    key=lambda x: len(en_trn[x]), 
+    bs=bs
+)
+val_samp = SortSampler(en_val, key=lambda x: len(en_val[x]))
+trn_dl = DataLoader(
+    trn_ds, bs, 
+    transpose=True, 
+    transpose_y=True, 
+    num_workers=1, 
+    pad_idx=1, 
+    pre_pad=False, 
+    sampler=trn_samp
+)
+val_dl = DataLoader(
+    val_ds, int(bs*1.6), 
+    transpose=True, 
+    transpose_y=True, 
+    num_workers=1, 
+    pad_idx=1,
+    pre_pad=False, 
+    sampler=val_samp
+)
 md = ModelData(PATH, trn_dl, val_dl)
 ```
 
@@ -357,10 +426,13 @@ def create_emb(vecs, itos, em_sz):
     wgts = emb.weight.data
     miss = []
     for i,w in enumerate(itos):
-        try: wgts[i] = torch.from_numpy(vecs[w]*3)
-        except: miss.append(w)
+        try: 
+            wgts[i] = torch.from_numpy(vecs[w]*3)
+        except: 
+            miss.append(w)
     print(len(miss),miss[5:10])
-    return embnh,nl = 256,2
+    return emb
+nh,nl = 256,2
 ```
 
 让我们从编码器开始[[48:15](https://youtu.be/tY0n9OT5_nA?t=48m15s)]。在这里的变量命名方面，编码器和解码器具有相同的属性。编码器版本有`enc`，解码器版本有`dec`。
@@ -384,8 +456,8 @@ def create_emb(vecs, itos, em_sz):
 现在我们有了权重张量，我们可以遍历我们的词汇表，查找我们预训练向量中的单词，如果找到，我们将用该预训练向量替换随机权重[[52:35](https://youtu.be/tY0n9OT5_nA?t=52m35s)]。随机权重的标准差为 1。我们的预训练向量的标准差约为 0.3。所以，这是 Jeremy 在原型设计时做的一种巧妙的事情，他只是将其乘以 3。当您看到这个视频时，我们可能已经能够将所有这些序列到序列的内容放入 fastai 库中，您在那里不会找到这样的可怕的黑客行为（希望如此）。但在原型设计时可以尝试各种方法。有些东西可能不在 fast.text 中，这种情况下，我们将继续跟踪[[53:22](https://youtu.be/tY0n9OT5_nA?t=53m22s)]。打印语句是为了让我们看到发生了什么（即为什么我们会丢失东西？）。记住我们大约有 30,000 个，所以我们不会丢失太多。
 
 ```py
-*3097 ['l’', "d'", 't_up', 'd’', "qu'"]
-1285 ["'s", '’s', "n't", 'n’t', ':']*
+3097 ['l’', "d'", 't_up', 'd’', "qu'"]
+1285 ["'s", '’s', "n't", 'n’t', ':']
 ```
 
 Jeremy 已经开始做一些关于将大词汇量处理整合到 fastai 中的工作 - 还没有完成，但希望到达这里时，这种工作将是可能的[[56:50](https://youtu.be/tY0n9OT5_nA?t=56m50s)]。
@@ -398,13 +470,20 @@ class Seq2SeqRNN(nn.Module):
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.emb_enc_drop = nn.Dropout(0.15)
-        self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
-                              dropout=0.25)
+        self.gru_enc = nn.GRU(
+            em_sz_enc, nh, 
+            num_layers=nl, 
+            dropout=0.25
+        )
         self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
 
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
-        self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
-                              dropout=0.1)
+        self.gru_dec = nn.GRU(
+            em_sz_dec, 
+            em_sz_dec, 
+            num_layers=nl, 
+            dropout=0.1
+        )
         self.out_drop = nn.Dropout(0.35)
         self.out = nn.Linear(em_sz_dec, len(itos_dec))
         self.out.weight.data = self.emb_dec.weight.data
@@ -424,7 +503,8 @@ class Seq2SeqRNN(nn.Module):
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            if (dec_inp==1).all(): break
+            if (dec_inp==1).all(): 
+                break
         return torch.stack(res)
 
     def initHidden(self, bs): 
@@ -479,11 +559,19 @@ opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
 `.cuda()` 和 `to_gpu()` 之间的区别：如果没有 GPU，`to_gpu` 不会将其放入 GPU。您还可以将 `fastai.core.USE_GPU` 设置为 `false`，以强制它不使用 GPU，这对调试很方便。
 
 ```py
-rnn = Seq2SeqRNN(fr_vecd, fr_itos, dim_fr_vec, en_vecd, en_itos, 
-                 dim_en_vec, nh, enlen_90)
+rnn = Seq2SeqRNN(
+    fr_vecd, fr_itos, 
+    dim_fr_vec, 
+    en_vecd, en_itos, 
+    dim_en_vec, 
+    nh, enlen_90
+)
 learn = RNN_Learner(md, SingleModel(to_gpu(rnn)), opt_fn=opt_fn)
-learn.crit = seq2seq_loss*3097 ['l’', "d'", 't_up', 'd’', "qu'"]
-1285 ["'s", '’s', "n't", 'n’t', ':']*
+learn.crit = seq2seq_loss
+'''
+3097 ['l’', "d'", 't_up', 'd’', "qu'"]
+1285 ["'s", '’s', "n't", 'n’t', ':']
+'''
 ```
 
 然后我们需要一些东西告诉它如何处理学习率组，所以有一个叫做 `SingleModel` 的东西，你可以传递给它，它将整个东西视为一个单一的学习率组。这是将 PyTorch 模块转换为 fastai 模型的最简单方法。
@@ -497,7 +585,9 @@ learn.sched.plot()
 
 ```py
 lr=3e-3
-learn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch      trn_loss   val_loss                              
+learn.fit(lr, 1, cycle_len=12, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                              
     0      5.48978    5.462648  
     1      4.616437   4.770539                              
     2      4.345884   4.37726                               
@@ -509,9 +599,10 @@ learn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch      trn_loss   val_loss
     8      3.238523   3.604765                              
     9      2.962041   3.587814                              
     10     2.96163    3.574888                              
-    11     2.866477   3.581224**[3.5812237]
+    11     2.866477   3.581224
+[3.5812237]
 '''
- learn.save('initial')
+learn.save('initial')
 learn.load('initial')
 ```
 
@@ -528,7 +619,9 @@ for i in range(180,190):
     print(' '.join([fr_itos[o] for o in x[:,i] if o != 1]))
     print(' '.join([en_itos[o] for o in y[:,i] if o != 1]))
     print(' '.join([en_itos[o] for o in preds[:,i] if o!=1]))
-    print()*quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
+    print()
+'''
+quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
 what factors influencetheir location ? _eos_
 what factors might might influence on the their ? ? _eos_
 
@@ -566,7 +659,8 @@ why are these two different ? ? _eos_
 
 pourquoi ou pourquoi pas ? _eos_
 why or why not ? _eos_
-why or why not _eos_*
+why or why not _eos_
+'''
 ```
 
 令人惊讶的是，这种可能是最简单的从头开始编写的 PyTorch 模块，仅有五万个句子，有时在验证集上能够给出完全正确的答案。有时正确答案略有不同措辞，有时句子真的不通顺，甚至有太多的问号。所以我们在正确的轨道上。我们认为您会同意，即使是可能是最简单的 seq-to-seq 模型，经过很少的迭代训练，除了使用词嵌入之外没有任何预训练，效果也出奇的好。我们以后会改进这一点，但这里的信息是，即使您认为序列到序列模型比您认为的更简单，即使使用比您认为的更少的数据进行学习，也可能会出奇地有效，在某些情况下，这可能已经足够满足您的需求。
@@ -585,18 +679,28 @@ why or why not _eos_*
 
 ```py
 class Seq2SeqRNN_Bidir(nn.Module):
-    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
-                 itos_dec, em_sz_dec, nh, out_sl, nl=2):
+    def __init__(
+        self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
+        itos_dec, em_sz_dec, nh, out_sl, nl=2
+    ):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
-        self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl,
-                              dropout=0.25, bidirectional=True)
+        self.gru_enc = nn.GRU(
+            em_sz_enc, nh, 
+            num_layers=nl,
+            dropout=0.25, 
+            bidirectional=True
+        )
         self.out_enc = nn.Linear(nh*2, em_sz_dec, bias=False)
         self.drop_enc = nn.Dropout(0.05)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
-        self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl,
-                              dropout=0.1)
+        self.gru_dec = nn.GRU(
+            em_sz_dec, 
+            em_sz_dec, 
+            num_layers=nl,
+            dropout=0.1
+        )
         self.emb_enc_drop = nn.Dropout(0.15)
         self.out_drop = nn.Dropout(0.35)
         self.out = nn.Linear(em_sz_dec, len(itos_dec))
@@ -607,9 +711,12 @@ class Seq2SeqRNN_Bidir(nn.Module):
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
         enc_out, h = self.gru_enc(emb, h)
-        h = h.view(2,2,bs,-1).permute(0,2,1,3)
-                .contiguous().view(2,bs,-1)
-        h = self.out_enc(self.drop_enc(h)) dec_inp = V(torch.zeros(bs).long())
+        h = h.view(2,2,bs,-1) \ 
+            .permute(0,2,1,3)
+            .contiguous() \
+            .view(2,bs,-1)
+        h = self.out_enc(self.drop_enc(h)) 
+        dec_inp = V(torch.zeros(bs).long())
         res = []
         for i in range(self.out_sl):
             emb = self.emb_dec(dec_inp).unsqueeze(0)
@@ -617,7 +724,8 @@ class Seq2SeqRNN_Bidir(nn.Module):
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            if (dec_inp==1).all(): break
+            if (dec_inp==1).all(): 
+                break
         return torch.stack(res)
 
     def initHidden(self, bs): 
@@ -631,10 +739,17 @@ class Seq2SeqRNN_Bidir(nn.Module):
 我们使用单向获得了 3.58 的交叉熵损失。使用双向后，我们降到了 3.51，所以稍微有所改善。这不会真正减慢速度太多。双向意味着需要进行更多的顺序处理，但通常是一个很好的胜利。在 Google 翻译模型中，8 层中只有第一层是双向的，因为它允许它更多地并行进行，所以如果你创建了非常深的模型，你可能需要考虑哪些是双向的，否则我们会有性能问题。
 
 ```py
-rnn = Seq2SeqRNN_Bidir(fr_vecd, fr_itos, dim_fr_vec, en_vecd,
-                       en_itos, dim_en_vec, nh, enlen_90)
+rnn = Seq2SeqRNN_Bidir(
+    fr_vecd, fr_itos,
+    dim_fr_vec, 
+    en_vecd, en_itos, 
+    dim_en_vec, 
+    nh, enlen_90
+)
 learn = RNN_Learner(md, SingleModel(to_gpu(rnn)), opt_fn=opt_fn)
-learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch      trn_loss   val_loss                              
+learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                              
     0      4.896942   4.761351  
     1      4.323335   4.260878                              
     2      3.962747   4.06161                               
@@ -646,7 +761,8 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10))*epoch  
     8      3.257495   3.610536                              
     9      3.033345   3.540344                              
     10     2.967694   3.516766                              
-    11     2.718945   3.513977**[3.5139771]
+    11     2.718945   3.513977
+[3.5139771]
 '''
 
 ```
@@ -663,14 +779,18 @@ class Seq2SeqStepper(Stepper):
         self.m.pr_force = (10-epoch)*0.1 if epoch<10 else 0
         xtra = []
         output = self.m(*xs, y)
-        if isinstance(output,tuple): output,*xtra = output
+        if isinstance(output,tuple): 
+            output,*xtra = output
         self.opt.zero_grad()
         loss = raw_loss = self.crit(output, y)
-        if self.reg_fn: loss = self.reg_fn(output, xtra, raw_loss)
+        if self.reg_fn: 
+            loss = self.reg_fn(output, xtra, raw_loss)
         loss.backward()
-        if self.clip:   *# Gradient clipping*
-            nn.utils.clip_grad_norm(trainable_params_(self.m), 
-                                    self.clip)
+        if self.clip:   # Gradient clipping
+            nn.utils.clip_grad_norm(
+                trainable_params_(self.m), 
+                self.clip
+            )
         self.opt.step()
         return raw_loss.data[0]
 ```
@@ -679,17 +799,26 @@ class Seq2SeqStepper(Stepper):
 
 ```py
 class Seq2SeqRNN_TeacherForcing(nn.Module):
-    def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec,
-                 itos_dec, em_sz_dec, nh, out_sl, nl=2):
+    def __init__(
+        self, vecs_enc, itos_enc, em_sz_enc, vecs_dec,
+        itos_dec, em_sz_dec, nh, out_sl, nl=2
+    ):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
-        self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
-                              dropout=0.25)
+        self.gru_enc = nn.GRU(
+            em_sz_enc, nh, 
+            num_layers=nl, 
+            dropout=0.25
+        )
         self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
-        self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
-                              dropout=0.1)
+        self.gru_dec = nn.GRU(
+            em_sz_dec, 
+            em_sz_dec, 
+            num_layers=nl, 
+            dropout=0.1
+        )
         self.emb_enc_drop = nn.Dropout(0.15)
         self.out_drop = nn.Dropout(0.35)
         self.out = nn.Linear(em_sz_dec, len(itos_dec))
@@ -711,7 +840,8 @@ class Seq2SeqRNN_TeacherForcing(nn.Module):
             dec_inp = V(outp.data.max(1)[1])
             if (dec_inp==1).all(): break
             if (y is not None) and (random.random()<self.pr_force):
-                if i>=len(y): break
+                if i>=len(y): 
+                    break
                 dec_inp = y[i]
         return torch.stack(res)
 
@@ -746,18 +876,30 @@ class Seq2SeqStepper(Stepper):
 
 ```py
  if (y is not None) and (random.random()<self.pr_force):
-                if i>=len(y): break
-                dec_inp = y[i]
+    if i>=len(y): 
+        break
+    dec_inp = y[i]
 ```
 
 唯一需要做的不同之处是当我们调用`fit`时，我们传入我们定制的 stepper 类。
 
 ```py
-rnn = Seq2SeqRNN_TeacherForcing(fr_vecd, fr_itos, dim_fr_vec, 
-                         en_vecd, en_itos, dim_en_vec, nh, enlen_90)
+rnn = Seq2SeqRNN_TeacherForcing(
+    fr_vecd, fr_itos, 
+    dim_fr_vec, 
+    en_vecd, en_itos, 
+    dim_en_vec, 
+    nh, enlen_90
+)
 learn = RNN_Learner(md, SingleModel(to_gpu(rnn)), opt_fn=opt_fn)
-learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10), 
-          stepper=Seq2SeqStepper)*epoch      trn_loss   val_loss                              
+learn.crit = seq2seq_losslearn.fit(
+    lr, 1, 
+    cycle_len=12, 
+    use_clr=(20,10), 
+    stepper=Seq2SeqStepper
+)
+'''
+epoch      trn_loss   val_loss                              
     0      4.460622   12.661013 
     1      3.468132   7.138729                              
     2      3.235244   6.202878                              
@@ -769,7 +911,8 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
     8      3.103834   3.790773                              
     9      3.121457   3.578682                              
     10     2.917534   3.532427                              
-    11     3.326946   3.490643**[3.490643]
+    11     3.326946   3.490643
+[3.490643]
 '''
 
 ```
@@ -789,26 +932,37 @@ learn.crit = seq2seq_losslearn.fit(lr, 1, cycle_len=12, use_clr=(20,10),
 让我们尝试实现注意力[[1:35:47](https://youtu.be/tY0n9OT5_nA?t=1h35m47s)]:
 
 ```py
-def rand_t(*sz): return torch.randn(sz)/math.sqrt(sz[0])
-def rand_p(*sz): return nn.Parameter(rand_t(*sz))class Seq2SeqAttnRNN(nn.Module):
+def rand_t(*sz): 
+    return torch.randn(sz)/math.sqrt(sz[0])
+def rand_p(*sz): 
+    return nn.Parameter(rand_t(*sz))
+class Seq2SeqAttnRNN(nn.Module):
     def __init__(self, vecs_enc, itos_enc, em_sz_enc, vecs_dec, 
                  itos_dec, em_sz_dec, nh, out_sl, nl=2):
         super().__init__()
         self.emb_enc = create_emb(vecs_enc, itos_enc, em_sz_enc)
         self.nl,self.nh,self.out_sl = nl,nh,out_sl
-        self.gru_enc = nn.GRU(em_sz_enc, nh, num_layers=nl, 
-                              dropout=0.25)
+        self.gru_enc = nn.GRU(
+            em_sz_enc, nh, 
+            num_layers=nl, 
+            dropout=0.25
+        )
         self.out_enc = nn.Linear(nh, em_sz_dec, bias=False)
         self.emb_dec = create_emb(vecs_dec, itos_dec, em_sz_dec)
-        self.gru_dec = nn.GRU(em_sz_dec, em_sz_dec, num_layers=nl, 
-                              dropout=0.1)
+        self.gru_dec = nn.GRU(
+            em_sz_dec, 
+            em_sz_dec, 
+            num_layers=nl, 
+            dropout=0.1
+        )
         self.emb_enc_drop = nn.Dropout(0.15)
         self.out_drop = nn.Dropout(0.35)
         self.out = nn.Linear(em_sz_dec*2, len(itos_dec))
         self.out.weight.data = self.emb_dec.weight.data self.W1 = rand_p(nh, em_sz_dec)
         self.l2 = nn.Linear(em_sz_dec, em_sz_dec)
         self.l3 = nn.Linear(em_sz_dec+nh, em_sz_dec)
-        self.V = rand_p(em_sz_dec) def forward(self, inp, y=None, ret_attn=False):
+        self.V = rand_p(em_sz_dec) 
+    def forward(self, inp, y=None, ret_attn=False):
         sl,bs = inp.size()
         h = self.initHidden(bs)
         emb = self.emb_enc_drop(self.emb_enc(inp))
@@ -829,12 +983,16 @@ def rand_p(*sz): return nn.Parameter(rand_t(*sz))class Seq2SeqAttnRNN(nn.Module)
             outp = self.out(self.out_drop(outp[0]))
             res.append(outp)
             dec_inp = V(outp.data.max(1)[1])
-            if (dec_inp==1).all(): break
+            if (dec_inp==1).all(): 
+                break
             if (y is not None) and (random.random()<self.pr_force):
-                if i>=len(y): break
+                if i>=len(y): 
+                    break
                 dec_inp = y[i] res = torch.stack(res)
-        if ret_attn: res = res,torch.stack(attns)
-        return res def initHidden(self, bs): 
+        if ret_attn: 
+            res = res,torch.stack(attns)
+        return res 
+    def initHidden(self, bs): 
         return V(torch.zeros(self.nl, bs, self.nh))
 ```
 
@@ -886,8 +1044,15 @@ RNN 输出两个东西：它在每个时间步骤之后输出一个状态列表�
 rnn = Seq2SeqAttnRNN(fr_vecd, fr_itos, dim_fr_vec, en_vecd, en_itos, dim_en_vec, nh, enlen_90)
 learn = RNN_Learner(md, SingleModel(to_gpu(rnn)), opt_fn=opt_fn)
 learn.crit = seq2seq_loss
-lr=2e-3learn.fit(lr, 1, cycle_len=15, use_clr=(20,10), 
-          stepper=Seq2SeqStepper)*epoch      trn_loss   val_loss                              
+lr=2e-3
+learn.fit(
+    lr, 1, 
+    cycle_len=15, 
+    use_clr=(20,10), 
+    stepper=Seq2SeqStepper
+)
+'''
+epoch      trn_loss   val_loss                              
     0      3.882168   11.125291 
     1      3.599992   6.667136                              
     2      3.236066   5.552943                              
@@ -902,7 +1067,9 @@ lr=2e-3learn.fit(lr, 1, cycle_len=15, use_clr=(20,10),
     11     2.778292   3.390253                              
     12     2.795427   3.388423                              
     13     2.809757   3.353334                              
-    14     2.6723     3.368584*[3.3685837]
+    14     2.6723     3.368584
+[3.3685837]
+'''
 ```
 
 教师强制为 3.49，现在几乎完全相同的东西，但我们有这个小型神经网络来找出给我们输入的权重，我们降到了 3.37。记住，这些损失是对数，所以`e³.37`是一个相当显著的变化。
@@ -916,11 +1083,14 @@ learn.save('attn')
 ```py
 x,y = next(iter(val_dl))
 probs,attns = learn.model(V(x),ret_attn=True)
-preds = to_np(probs.max(2)[1])for i in range(180,190):
+preds = to_np(probs.max(2)[1])
+for i in range(180,190):
     print(' '.join([fr_itos[o] for o in x[:,i] if o != 1]))
     print(' '.join([en_itos[o] for o in y[:,i] if o != 1]))
     print(' '.join([en_itos[o] for o in preds[:,i] if o!=1]))
-    print()*quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
+    print()
+'''
+quels facteurs pourraient influer sur le choix de leur emplacement ? _eos_
 what factors influencetheir location ? _eos_
 what factors might influence the their their their ? _eos_**qu’ est -ce qui ne peut pas changer ? _eos_
 what can not change ? _eos_
@@ -940,7 +1110,8 @@ who is people people aboriginal people ? _eos_**pourquoi ces trois points en par
 why these specific three ? _eos_
 why are these three three ? ? _eos_**pourquoi ou pourquoi pas ? _eos_
 why or why not ? _eos_
-why or why not ? _eos_*
+why or why not ? _eos_
+'''
 ```
 
 还不错。仍然不完美，但相当多的结果是正确的，考虑到我们要求它学习两种不同语言之间的语言概念，以及如何在两种语言之间进行翻译，以及语法和词汇，我们只有 50,000 个句子，很多词只出现一次，我会说这实际上是非常惊人的。
@@ -960,7 +1131,8 @@ probs,attns = learn.model(V(x),ret_attn=True)
 现在我们可以在每个时间步绘制注意力的图片。
 
 ```py
-attn = to_np(attns[...,180])fig, axes = plt.subplots(3, 3, figsize=(15, 10))
+attn = to_np(attns[...,180])
+fig, axes = plt.subplots(3, 3, figsize=(15, 10))
 for i,ax in enumerate(axes.flat):
     ax.plot(attn[i])
 ```
@@ -993,7 +1165,8 @@ for i,ax in enumerate(axes.flat):
 from fastai.conv_learner import *
 torch.backends.cudnn.benchmark=True
 
-import fastText as ftPATH = Path('data/imagenet/')
+import fastText as ft
+PATH = Path('data/imagenet/')
 TMP_PATH = PATH/'tmp'
 TRANS_PATH = Path('data/translate/')
 PATH_TRN = PATH/'train'
@@ -1002,17 +1175,26 @@ PATH_TRN = PATH/'train'
 这实在太容易了。让我们再次获取 fast text 单词向量，加载它们进来（这次我们只需要英语）。
 
 ```py
-ft_vecs = ft.load_model(str((TRANS_PATH/'wiki.en.bin')))np.corrcoef(ft_vecs.get_word_vector('jeremy'), 
-            ft_vecs.get_word_vector('Jeremy'))*array([[1\.     , 0.60866],
-       [0.60866, 1\.     ]])*
+ft_vecs = ft.load_model(str((TRANS_PATH/'wiki.en.bin')))
+np.corrcoef(
+    ft_vecs.get_word_vector('jeremy'), 
+    ft_vecs.get_word_vector('Jeremy'))
+'''
+array([[1\.     , 0.60866],
+       [0.60866, 1\.     ]])
+'''
 ```
 
 例如，“jeremy”和“Jeremy”的相关系数为 0.6。
 
 ```py
-np.corrcoef(ft_vecs.get_word_vector('banana'), 
-            ft_vecs.get_word_vector('Jeremy'))*array([[1\.     , 0.14482],
-       [0.14482, 1\.     ]])*
+np.corrcoef(
+    ft_vecs.get_word_vector('banana'), 
+    ft_vecs.get_word_vector('Jeremy'))
+'''
+array([[1\.     , 0.14482],
+       [0.14482, 1\.     ]])
+'''
 ```
 
 Jeremy 一点也不喜欢香蕉，“香蕉”和“Jeremy”相关系数为 0.14。所以你期望相关的词是相关的，而应该尽可能远离彼此的词，不幸的是，它们仍然略微相关，但不那么明显。
@@ -1024,15 +1206,22 @@ Jeremy 一点也不喜欢香蕉，“香蕉”和“Jeremy”相关系数为 0.1
 ```py
 ft_words = ft_vecs.get_words(include_freq=True)
 ft_word_dict = {k:v for k,v in zip(*ft_words)}
-ft_words = sorted(ft_word_dict.keys(), key=lambda x: ft_word_dict[x])len(ft_words)*2519370*from fastai.io import get_data
+ft_words = sorted(ft_word_dict.keys(), key=lambda x: ft_word_dict[x])
+len(ft_words)
+'''
+2519370
+'''
+from fastai.io import get_data
 ```
 
 我们在 files.fast.ai 上有一个所有这些的列表，我们可以获取它们。
 
 ```py
 CLASSES_FN = 'imagenet_class_index.json'
-get_data(f'http://files.fast.ai/models/{CLASSES_FN}', 
-         TMP_PATH/CLASSES_FN)
+get_data(
+    f'http://files.fast.ai/models/{CLASSES_FN}', 
+    TMP_PATH/CLASSES_FN
+)
 ```
 
 让我们还获取 Jeremy 提供的所有英语名词的列表：
@@ -1053,7 +1242,10 @@ nclass = len(class_dict); nclass*1000*
 这里有一个例子。一个“tench”显然是一种鱼。
 
 ```py
-class_dict['0']*['n01440764', 'tench']*
+class_dict['0']
+'''
+['n01440764', 'tench']
+'''
 ```
 
 让我们为所有这些 WordNet 名词做同样的事情。结果发现 ImageNet 正在使用 WordNet 类名，这样在两者之间进行映射就变得简单了。
@@ -1066,33 +1258,50 @@ classid_lines[:5]
  'n00001930 physical_entity\n',
  'n00002137 abstraction\n',
  'n00002452 thing\n',
- 'n00002684 object\n']*classids = dict(l.strip().split() for l in classid_lines)
-len(classids),len(classids_1k)*(82115, 1000)*
+ 'n00002684 object\n']
+'''
+classids = dict(l.strip().split() for l in classid_lines)
+len(classids),len(classids_1k)
+'''
+(82115, 1000)
+'''
 ```
 
 这是我们的两个世界 — 我们有 ImageNet 的一千个和 WordNet 中的 82,000 个。
 
 ```py
-lc_vec_d = {w.lower(): ft_vecs.get_word_vector(w) for w 
-                           in ft_words[-1000000:]}
+lc_vec_d = {
+    w.lower(): ft_vecs.get_word_vector(w) 
+    for w in ft_words[-1000000:]
+}
 ```
 
 我们想要将这两者联系起来，这只是简单地创建一些字典来基于 Synset ID 或 WordNet ID 进行映射。
 
 ```py
-syn_wv = [(k, lc_vec_d[v.lower()]) for k,v in classids.items()
-          if v.lower() in lc_vec_d]
-syn_wv_1k = [(k, lc_vec_d[v.lower()]) for k,v in classids_1k.items()
-          if v.lower() in lc_vec_d]
+syn_wv = [
+    (k, lc_vec_d[v.lower()]) 
+    for k,v in classids.items()
+    if v.lower() in lc_vec_d
+]
+syn_wv_1k = [
+    (k, lc_vec_d[v.lower()]) 
+    for k,v in classids_1k.items()
+    if v.lower() in lc_vec_d
+]
 syn2wv = dict(syn_wv)
-len(syn2wv)*49469*
+len(syn2wv)
+'''
+49469
+'''
 ```
 
 现在我们需要做的是获取 WordNet 中的 82,000 个名词，并尝试在快速文本中查找它们。我们已经在快速文本中查找到了 49,469 个名词。我们现在有一个字典，从 synset ID（即 WordNet 称之为的 ID）到单词向量。我们还为 1k 个 ImageNet 类别做了同样的事情。
 
 ```py
 pickle.dump(syn2wv, (TMP_PATH/'syn2wv.pkl').open('wb'))
-pickle.dump(syn_wv_1k, (TMP_PATH/'syn_wv_1k.pkl').open('wb'))syn2wv = pickle.load((TMP_PATH/'syn2wv.pkl').open('rb'))
+pickle.dump(syn_wv_1k, (TMP_PATH/'syn_wv_1k.pkl').open('wb'))
+syn2wv = pickle.load((TMP_PATH/'syn2wv.pkl').open('rb'))
 syn_wv_1k = pickle.load((TMP_PATH/'syn_wv_1k.pkl').open('rb'))
 ```
 
@@ -1100,19 +1309,27 @@ syn_wv_1k = pickle.load((TMP_PATH/'syn_wv_1k.pkl').open('rb'))
 
 ```py
 images = []
-img_vecs = []for d in (PATH/'train').iterdir():
-    if d.name not in syn2wv: continue
-    vec = syn2wv[d.name]
-    for f in d.iterdir():
-        images.append(str(f.relative_to(PATH)))
-        img_vecs.append(vec)n_val=0
-for d in (PATH/'valid').iterdir():
-    if d.name not in syn2wv: continue
+img_vecs = []
+for d in (PATH/'train').iterdir():
+    if d.name not in syn2wv: 
+        continue
     vec = syn2wv[d.name]
     for f in d.iterdir():
         images.append(str(f.relative_to(PATH)))
         img_vecs.append(vec)
-        n_val += 1n_val*28650*
+n_val=0
+for d in (PATH/'valid').iterdir():
+    if d.name not in syn2wv: 
+        continue
+    vec = syn2wv[d.name]
+    for f in d.iterdir():
+        images.append(str(f.relative_to(PATH)))
+        img_vecs.append(vec)
+        n_val += 1
+n_val
+'''
+28650
+'''
 ```
 
 其中有 28,650 个项目的验证集。对于 ImageNet 中的每个图像，我们可以使用 synset 到单词向量（`syn2wv`）获取其快速文本词向量，并将其放入图像向量数组（`img_vecs`），将所有这些堆叠到一个矩阵中并保存下来。
@@ -1126,17 +1343,29 @@ img_vecs.shape
 
 ```py
 pickle.dump(images, (TMP_PATH/'images.pkl').open('wb'))
-pickle.dump(img_vecs, (TMP_PATH/'img_vecs.pkl').open('wb'))images = pickle.load((TMP_PATH/'images.pkl').open('rb'))
-img_vecs = pickle.load((TMP_PATH/'img_vecs.pkl').open('rb'))arch = resnet50n = len(images); n*766876*val_idxs = list(range(n-28650, n))
+pickle.dump(img_vecs, (TMP_PATH/'img_vecs.pkl').open('wb'))
+images = pickle.load((TMP_PATH/'images.pkl').open('rb'))
+img_vecs = pickle.load((TMP_PATH/'img_vecs.pkl').open('rb'))
+arch = resnet50n = len(images); n
+'''
+766876
+'''
+val_idxs = list(range(n-28650, n))
 ```
 
 这里有一个很酷的技巧。我们现在可以创建一个模型数据对象，它专门是一个图像分类器数据对象，我们有一个叫做`from_names_and_array`的东西，我不确定我们以前是否使用过，但我们可以传递一个文件名列表（ImageNet 中的所有文件名）和一个我们的因变量数组（所有快速文本词向量）。然后我们传入验证索引，这种情况下只是所有最后的 ID — 我们需要确保它们与 ImageNet 使用的相同，否则我们会作弊。然后我们传入`continuous=True`，这意味着这个图像分类器数据现在是一个图像回归数据，连续等于 True 意味着不要对我的输出进行独热编码，而是将它们视为连续值。现在我们有一个模型数据对象，其中包含所有文件名，对于每个文件名，都有一个表示该单词向量的连续数组。所以我们有了数据，现在我们需要一个架构和损失函数。
 
 ```py
 tfms = tfms_from_model(arch, 224, transforms_side_on, max_zoom=1.1)
-md = ImageClassifierData.from_names_and_array(PATH, images,  
-        img_vecs, val_idxs=val_idxs, classes=None, tfms=tfms,
-        continuous=True, bs=256)x,y = next(iter(md.val_dl))
+md = ImageClassifierData.from_names_and_array(
+    PATH, images, img_vecs, 
+    val_idxs=val_idxs, 
+    classes=None, 
+    tfms=tfms,
+    continuous=True, 
+    bs=256
+)
+x,y = next(iter(md.val_dl))
 ```
 
 让我们创建一个架构。我们下周会对此进行修订，但我们可以使用到目前为止学到的技巧，实际上非常简单。Fastai 有一个`ConvnetBuilder`，当你说`ConvLerner.pretrained`时就会调用它，并指定：
@@ -1156,8 +1385,14 @@ md = ImageClassifierData.from_names_and_array(PATH, images,
 所以这是一个卷积神经网络，没有任何 softmax 之类的东西，因为它是回归，最后只是一个线性层，这就是我们的模型。我们可以从该模型创建一个 ConvLearner，并为其提供一个优化函数。现在我们只需要一个损失函数。
 
 ```py
-models = ConvnetBuilder(arch, md.c, is_multi=False, is_reg=True, 
-             xtra_fc=[1024], ps=[0.2,0.2])learn = ConvLearner(md, models, precompute=True)
+models = ConvnetBuilder(
+    arch, md.c, 
+    is_multi=False, 
+    is_reg=True, 
+    xtra_fc=[1024], 
+    ps=[0.2,0.2]
+)
+learn = ConvLearner(md, models, precompute=True)
 learn.opt_fn = partial(optim.Adam, betas=(0.9,0.99))
 ```
 
@@ -1166,14 +1401,19 @@ learn.opt_fn = partial(optim.Adam, betas=(0.9,0.99))
 ```py
 def cos_loss(inp,targ):
     return 1 - F.cosine_similarity(inp,targ).mean()
-learn.crit = cos_losslearn.lr_find(start_lr=1e-4, end_lr=1e15)learn.sched.plot()lr = 1e-2
+learn.crit = cos_losslearn.lr_find(start_lr=1e-4, end_lr=1e15)
+learn.sched.plot()
+lr = 1e-2
 wd = 1e-7
 ```
 
 我们正在训练所有的 ImageNet，这将需要很长时间。所以`precompute=True`是你的朋友。还记得`precompute=True`吗？那是我们很久以前学到的东西，它会缓存最终卷积层的输出，然后只训练完全连接的部分。即使使用`precompute=True`，在所有的 ImageNet 上训练一个时代大约需要 3 分钟。所以这大约是一个小时的训练时间，但很酷的是，使用 fastai，我们可以在一个小时左右的时间内在所有的 ImageNet 上训练一个新的自定义头部 40 个时代。
 
 ```py
-learn.precompute=Truelearn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
+learn.precompute=True
+learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                                  
     0      0.104692   0.125685  
     1      0.112455   0.129307                                 
     2      0.110631   0.126568                                 
@@ -1193,9 +1433,13 @@ learn.precompute=Truelearn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epo
     16     0.097226   0.119724                                  
     17     0.094666   0.118746                                  
     18     0.094137   0.118744                                  
-    19     0.090076   0.117908**[0.11790786389489033]
+    19     0.090076   0.117908
+[0.11790786389489033]
 '''
-learn.bn_freeze(True)learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epoch      trn_loss   val_loss                                  
+learn.bn_freeze(True)
+learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))
+'''
+epoch      trn_loss   val_loss                                  
     0      0.104692   0.125685  
     1      0.112455   0.129307                                 
     2      0.110631   0.126568                                 
@@ -1215,10 +1459,14 @@ learn.bn_freeze(True)learn.fit(lr, 1, cycle_len=20, wds=wd, use_clr=(20,10))*epo
     16     0.097226   0.119724                                  
     17     0.094666   0.118746                                  
     18     0.094137   0.118744                                  
-    19     0.090076   0.117908**[0.11790786389489033]
+    19     0.090076   0.117908
+[0.11790786389489033]
 '''
-lrs = np.array([lr/1000,lr/100,lr])learn.precompute=False
-learn.freeze_to(1)learn.save('pre0')learn.load('pre0')
+lrs = np.array([lr/1000,lr/100,lr])
+learn.precompute=False
+learn.freeze_to(1)
+learn.save('pre0')
+learn.load('pre0')
 ```
 
 # 图像搜索
@@ -1229,14 +1477,24 @@ learn.freeze_to(1)learn.save('pre0')learn.load('pre0')
 
 ```py
 syns, wvs = list(zip(*syn_wv_1k))
-wvs = np.array(wvs)%time pred_wv = learn.predict()*CPU times: user 18.4 s, sys: 7.91 s, total: 26.3 s
-Wall time: 7.17 s*start=300denorm = md.val_ds.denormdef show_img(im, figsize=None, ax=None):
-    if not ax: fig,ax = plt.subplots(figsize=figsize)
+wvs = np.array(wvs)
+%time pred_wv = learn.predict()
+'''
+CPU times: user 18.4 s, sys: 7.91 s, total: 26.3 s
+Wall time: 7.17 s
+'''
+start=300
+denorm = md.val_ds.denorm
+def show_img(im, figsize=None, ax=None):
+    if not ax: 
+        ig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.axis('off')
-    return axdef show_imgs(ims, cols, figsize=None):
+    return ax
+def show_imgs(ims, cols, figsize=None):
     fig,axes = plt.subplots(len(ims)//cols, cols, figsize=figsize)
-    for i,ax in enumerate(axes.flat): show_img(ims[i], ax=ax)
+    for i,ax in enumerate(axes.flat): 
+        show_img(ims[i], ax=ax)
     plt.tight_layout()
 ```
 
@@ -1253,8 +1511,12 @@ import nmslibdef create_index(a):
     index = nmslib.init(space='angulardist')
     index.addDataPointBatch(a)
     index.createIndex()
-    return indexdef get_knns(index, vecs):
-     return zip(*index.knnQueryBatch(vecs, k=10, num_threads=4))def get_knn(index, vec): return index.knnQuery(vec, k=10)nn_wvs = create_index(wvs)
+    return index
+def get_knns(index, vecs):
+    return zip(*index.knnQueryBatch(vecs, k=10, num_threads=4))
+def get_knn(index, vec): 
+    return index.knnQuery(vec, k=10)
+nn_wvs = create_index(wvs)
 ```
 
 它告诉你它们有多远以及它们的索引[[2:12:13](https://youtu.be/tY0n9OT5_nA?t=2h12m13s)].
@@ -1266,8 +1528,12 @@ idxs,dists = get_knns(nn_wvs, pred_wv)
 所以现在我们可以浏览并打印出前 3 个，结果是鸟实际上是一只鹭鸟。有趣的是第四个并没有说它是一只鹭鸟，Jeremy 查了一下。他对鸟类了解不多，但其他一切都是棕色带白色斑点，但第四个不是。所以我们不知道那是否真的是一只鹭鸟，或者是否被错误标记，但它看起来绝对不像其他鸟类。
 
 ```py
-[[classids[syns[id]] for id in ids[:3]] 
-                         for ids in idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
+[
+    [classids[syns[id]] for id in ids[:3]] 
+    for ids in idxs[start:start+10]
+]
+'''
+[['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['spoonbill', 'bustard', 'oystercatcher'],
@@ -1276,7 +1542,8 @@ idxs,dists = get_knns(nn_wvs, pred_wv)
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
- ['limpkin', 'oystercatcher', 'spoonbill']]*
+ ['limpkin', 'oystercatcher', 'spoonbill']]
+'''
 ```
 
 这并不是一件特别困难的事情，因为 ImageNet 只有一千个类别，而且并没有做任何新的事情。但是如果我们现在引入整个 WordNet，然后说它最接近那 45,000 个东西中的哪一个呢？
@@ -1285,8 +1552,15 @@ idxs,dists = get_knns(nn_wvs, pred_wv)
 
 ```py
 all_syns, all_wvs = list(zip(*syn2wv.items()))
-all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knns(nn_allwvs, pred_wv)[[classids[all_syns[id]] for id in ids[:3]] 
-                             for ids in idxs[start:start+10]]*[['limpkin', 'oystercatcher', 'spoonbill'],
+all_wvs = np.array(all_wvs)
+nn_allwvs = create_index(all_wvs)
+idxs,dists = get_knns(nn_allwvs, pred_wv)
+[
+    [classids[all_syns[id]] for id in ids[:3]] 
+    for ids in idxs[start:start+10]
+]
+'''
+[['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['spoonbill', 'bustard', 'oystercatcher'],
@@ -1295,7 +1569,8 @@ all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knn
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
  ['limpkin', 'oystercatcher', 'spoonbill'],
- ['limpkin', 'oystercatcher', 'spoonbill']]*
+ ['limpkin', 'oystercatcher', 'spoonbill']]
+'''
 ```
 
 结果完全相同。现在正在搜索所有的 WordNet。
@@ -1307,25 +1582,34 @@ all_wvs = np.array(all_wvs)nn_allwvs = create_index(all_wvs)idxs,dists = get_knn
 ```py
 nn_predwv = create_index(pred_wv)
 en_vecd = pickle.load(open(TRANS_PATH/'wiki.en.pkl','rb'))
-vec = en_vecd['boat']idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
-                      3, figsize=(9,3));
+vec = en_vecd['boat']
+idxs,dists = get_knn(nn_predwv, vec)
+show_imgs([
+    open_image(PATH/md.val_ds.fnames[i]) 
+    for i in idxs[:3]
+], 3, figsize=(9,3));
 ```
 
 如果我们现在取引擎的向量和船的向量并取它们的平均值，如果我们现在在最近的邻居中寻找那个[[2:14:04](https://youtu.be/tY0n9OT5_nA?t=2h14m4s)]呢？
 
 ```py
-vec = (en_vecd['engine'] + en_vecd['boat'])/2 idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
-                      3, figsize=(9,3));
+vec = (en_vecd['engine'] + en_vecd['boat'])/2 
+idxs,dists = get_knn(nn_predwv, vec)
+show_imgs([
+    open_image(PATH/md.val_ds.fnames[i]) 
+    for i in idxs[:3]
+], 3, figsize=(9,3));
 ```
 
 这些是带引擎的船。我的意思是，是的，中间那个实际上是一艘带引擎的船 —— 它碰巧也有翅膀。顺便说一句，帆不是 ImageNet 的东西，船也不是。这是两个不是 ImageNet 的东西的平均值，然而除了一个例外，它给我们找到了两艘帆船。
 
 ```py
-vec = (en_vecd['sail'] + en_vecd['boat'])/2idxs,dists = get_knn(nn_predwv, vec)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[:3]],
-                      3, figsize=(9,3));
+vec = (en_vecd['sail'] + en_vecd['boat'])/2
+idxs,dists = get_knn(nn_predwv, vec)
+show_imgs([
+    open_image(PATH/md.val_ds.fnames[i]) 
+    for i in idxs[:3]
+], 3, figsize=(9,3));
 ```
 
 ## 图像->图像[[2:14:35](https://youtu.be/tY0n9OT5_nA?t=2h14m35s)]
@@ -1341,8 +1625,10 @@ show_img(img);
 ```py
 t_img = md.val_ds.transform(img)
 pred = learn.predict_array(t_img[None])idxs,dists = get_knn(nn_predwv, pred)
-show_imgs([open_image(PATH/md.val_ds.fnames[i]) for i in idxs[1:4]],
-                      3, figsize=(9,3));
+show_imgs([
+    open_image(PATH/md.val_ds.fnames[i]) 
+    for i in idxs[1:4]
+], 3, figsize=(9,3));
 ```
 
 这里是所有其他任何东西的图像。所以你可以看到，这很疯狂 —— 我们在一个小时内对所有 ImageNet 进行了训练，使用了一个基本上只需要两行代码的自定义头部，这些搜索运行在 300 毫秒内。
