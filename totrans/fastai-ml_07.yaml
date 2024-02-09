@@ -610,36 +610,43 @@
   id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们现在逐个检查我们独立变量中的每个值。我会告诉你接下来会发生什么。假设我们的独立变量是YearMade，它不会按顺序排列。所以我们要去到第一行，然后说好，这里的YearMade是3。那么我要做的是尝试计算如果我们决定以数字3为分支时的得分。我需要知道哪些行大于3，哪些行小于或等于3，它们将成为我的左侧和右侧。然后我们需要一个得分。我们可以使用很多得分，所以在随机森林中，我们称之为信息增益。信息增益就像我们的得分因为我们将数据分成这两组而变得更好了多少。我们可以用很多方法来计算它：基尼系数、交叉熵、均方根误差等等。如果你考虑一下，有一个均方根误差的替代公式，数学上与一个约束尺度内相同，但稍微容易处理一些，那就是我们要找到一个分割点，使得这两组数据的标准差尽可能低。所以我想找到一个分割点，把所有的猫放在这边，所有的狗放在那边。所以如果这些都是猫，那些都是狗，那么这边的标准差为零，那边的标准差也为零。否则，这是一群完全随机混合的猫和狗，那是一群完全随机混合的猫和狗，它们的标准差会高得多。明白了吗？事实证明，如果找到一个最小化这两组标准差或者具体来说是两个标准差的加权平均的分割点，数学上与最小化均方根误差是相同的。如果你想的话，课后你可以自己证明这一点。
 - en: '![](../Images/afb018634866d7dde2b692c79f5777b2.png)'
   id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/afb018634866d7dde2b692c79f5777b2.png)'
 - en: So we are going to need to find, first of all, split this into two groups [[37:29](https://youtu.be/O5F9vR2CNYI?t=37m29s)].
     So where’s all the stuff that is greater than three? 4, 6, and 4\. So we need
     standard deviation of their price.
   id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要找到，将其分成两组[[37:29](https://youtu.be/O5F9vR2CNYI?t=37m29s)]。那么所有大于三的东西在哪里？4、6和4。所以我们需要它们价格的标准差。
 - en: '![](../Images/e2d72fdac4a0045fe378f58a5bd38fb5.png)'
   id: totrans-55
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/e2d72fdac4a0045fe378f58a5bd38fb5.png)'
 - en: The next would be the standard deviation of less than or equal to 3, and we
     just take the weighted average of those two and that’s our score. That would be
     our score if we split on 3.
   id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是标准差小于或等于3，我们只需取这两者的加权平均值，这就是我们的得分。如果我们在3上分割，那就是我们的得分。
 - en: '![](../Images/343d3cee51889b034d69db56504522c9.png)'
   id: totrans-57
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/343d3cee51889b034d69db56504522c9.png)'
 - en: 'Then the next step would be try to split on 4, try splitting on 1, try splitting
     on 6, redundantly try splitting on 4 again, then 1 again and find out which works
     the bet. So that’s our code here:'
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后下一步是尝试在4上分割，尝试在1上分割，尝试在6上分割，多余地再次尝试在4上分割，然后再次在1上分割，找出哪个效果最好。这就是我们的代码：
 - en: '[PRE8]'
   id: totrans-59
   prefs: []
@@ -664,6 +671,9 @@
   id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '`lhs` 和 `rhs` 中将包含什么数据类型？它们实际上会包含什么？它们将是布尔数组，我们可以将其视为零和一。因此，`lhs` 将是一个数组，每次它不小于或等于时为
+    false；否则为 true，而 `rhs` 将是相反的布尔数组。现在我们不能对空集合取标准差，所以如果没有任何大于这个数字 (`x[i]`) 的值，那么
+    `rhs` 将全部为 false，这意味着总和为零。在这种情况下，让我们不再继续这一步，因为没有什么可以取标准差，显然这不是一个有用的分割。'
 - en: 'So assuming we’ve got this far, we can now calculate the standard deviation
     of the left hand side and of the right hand side and take the weighted average
     or the sums are the same thing to a scaler and so there is our score. So we can
@@ -679,6 +689,7 @@
   id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们已经走到这一步，现在我们可以计算左侧和右侧的标准差，然后取加权平均值或求和，这两者对于一个标量来说是相同的，因此这就是我们的得分。然后我们可以检查这个得分是否比迄今为止的最佳得分更好，我们迄今为止的最佳得分，最初将其初始化为无穷大，因此最初这是更好的。如果更好，让我们存储所有我们需要的信息：哪个变量找到了这个更好的分割，我们找到的得分是多少，以及我们分割的值是多少。就是这样。如果我们运行这个，并且我正在使用`％timeit`，它会看这个命令运行需要多长时间，并试图给出一个统计上有效的度量，这样你就可以看到，它已经运行了10次以获得平均值，然后又运行了7次以获得运行间的平均值和标准差，所以它花了我76毫秒加减11。
 - en: '[PRE9]'
   id: totrans-63
   prefs: []
@@ -691,6 +702,7 @@
   id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以让我们来检查这是否有效。`find_better_split(tree, 0)`，0代表`YearMade`，1代表`MachineHoursCurrentMeter`，所以当我们用1时，我们得到了`MachineHoursCurrentMeter`，得分为681.0184057251435，然后我们再次用零运行，得到了更好的分数（658），并分割了1974。
 - en: '[PRE10]'
   id: totrans-65
   prefs: []
@@ -714,15 +726,18 @@
   id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '**问题**：为什么我们不在x上放一个unique？因为我还没有尝试优化性能。你可以在Excel中看到我检查了这个`1`两次，`4`两次，这是不必要的。'
 - en: Okay, so Yannet is already thinking about performance which is good. So tell
     me what is the computational complexity of this section of the code?
   id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 好的，Yannet已经在考虑性能，这是好事。那告诉我这段代码的计算复杂度是多少？
 - en: '![](../Images/553d4fdb21654aad9661ce13548e75cc.png)'
   id: totrans-70
   prefs: []
   type: TYPE_IMG
+  zh: ！[](../Images/553d4fdb21654aad9661ce13548e75cc.png)
 - en: O(n²) because there is for loop and `x<=x[i]` which we have to check every value
     to see if it’s less than `x[i]`. It’s useful to know how to quickly calculate
     computational complexity. I can guarantee most of the interviews you do are going
@@ -743,6 +758,11 @@
   id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: O(n²) 是因为有一个循环和 `x<=x[i]`，我们必须检查每个值，看它是否小于 `x[i]`。了解如何快速计算计算复杂度是很有用的。我可以保证你做的大多数面试都会要求你即兴计算计算复杂度。而且当你编码时，你希望它成为第二天性。这种技巧基本上是“有循环吗？”如果有，那么显然我们要做这个
+    `n` 次，所以涉及到一个 `n`。循环里面还有循环吗？如果有，那么你需要将它们两个相乘。在这种情况下，没有。循环里面有任何不是常数时间操作的东西吗？所以你可能会看到一个排序在里面，你只需要知道排序是
+    `nlog(n)` —— 这应该是第二天性的。如果你看到一个矩阵相乘，你需要知道那是什么。在这种情况下，有一些东西在进行逐元素数组操作，所以要留意任何地方，numpy
+    在对数组的每个值做一些操作。在这种情况下，它正在检查每个 `x` 的值是否小于一个常数，所以它将不得不这样做 `n` 次。所以要将这个扩展成一个计算复杂度，你只需要将循环中的事物数量乘以循环内部的最高计算复杂度，`n`
+    次 `n` 是 `n²`。
 - en: '**Question**: In this case, couldn’t we just presort the list and then do one
     `nlog(n)` computation [[45:10](https://youtu.be/O5F9vR2CNYI?t=45m10s)]? There’s
     lots of things we can do to speed this up, so at this stage is just what is the
@@ -752,25 +772,30 @@
   id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '**问题**：在这种情况下，我们不能只是预先对列表进行排序，然后进行一次`nlog(n)`的计算吗？有很多事情可以做来加快速度，所以在这个阶段我们只关心的是计算复杂度。但绝对可以。当然，它肯定不是最好的。所以接下来我们要做的就是这个。就像好吧，n²不太好，所以让我们试着让它变得更好。'
 - en: So here is my attempt at making it better. First of all, what is the equation
     for standard deviation?
   id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以这是我尝试改进的地方。首先，标准差的方程式是什么？
 - en: '![](../Images/6222fdd9476b78e5280763151bb4c171.png)'
   id: totrans-74
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/6222fdd9476b78e5280763151bb4c171.png)'
 - en: In practice, we don’t normally use that formulation because it requires us calculating
     `x` minus the mean lots of times. Does anybody know the formulation that just
     requires x and x²?
   id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际上，我们通常不使用那个公式，因为它要求我们多次计算`x`减去平均值。有谁知道只需要x和x²的公式吗？
 - en: '![](../Images/8ee6282a2424a05a8776b3439e7d4cc7.png)'
   id: totrans-76
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/8ee6282a2424a05a8776b3439e7d4cc7.png)'
 - en: '[http://www.wolframalpha.com/input/?i=standard+deviation](http://www.wolframalpha.com/input/?i=standard+deviation)'
   id: totrans-77
   prefs: []
@@ -794,6 +819,7 @@
   id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以这对我们有用的原因是，如果我们首先对我们的数据进行排序。然后如果你考虑一下，当我们一步一步地向下走时，每一组都与左边的前一组完全相同，只是多了一件东西，右边则少了一件东西。因此，我们只需要跟踪x的总和和x²的总和，我们只需在左边添加一个东西，x²再添加一个东西，在右边移除一个东西。因此，我们不必每次都遍历整个数据集，因此我们可以将其转化为O(n)算法。这就是我在这里所做的一切：
 - en: '[PRE11]'
   id: totrans-80
   prefs: []
@@ -808,31 +834,37 @@
   id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 我对数据进行排序，然后我会跟踪右侧的事物数量（`rhs_cnt`），右侧事物的总和（`rhs_sum`）和右侧的平方和（`rhs_sum2`）。最初所有事物都在右侧。因此最初`n`是计数，`y.sum()`是右侧的总和，y²（`y**2`）的总和是右侧的平方和。然后最初左侧没有任何事物，因此为零。然后我们只需要循环遍历每个观察值：
 - en: Add one to the left hand count, subtract one from the right hand count.
   id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 左手计数加一，右手计数减一。
 - en: Add the value to the left hand sum, subtract it from the right hand sum.
   id: totrans-83
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将值加到左手总和，从右手总和减去。
 - en: Add the value squared to the left hand, subtract it from the right hand.
   id: totrans-84
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将值的平方加到左手，从右手减去。
 - en: Now we do need to be careful though because if we are saying less than or equal
     to one, for example, we are not stopping at the first row but we have to have
     everything in that group.
   id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们需要小心，因为如果我们说小于或等于一，例如，我们不会停在第一行，而是必须将该组中的所有内容都包括在内。
 - en: '![](../Images/82d2acc02952ea7024c5adcd890d91ac.png)'
   id: totrans-86
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/82d2acc02952ea7024c5adcd890d91ac.png)'
 - en: 'So the other thing I’m going to do is I’m going to make sure that the next
     value is not the same as this value. If it is, I’m going to skip over it. So I’m
     just going to double check that this value and the next one aren’t the same (`**if**
@@ -851,6 +883,7 @@
   id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以对右侧进行同样的操作，这样我们就可以像之前一样计算加权平均分数，下面的所有行都是一样的。
 - en: So we’ve turned O(n²) algorithm to O(n) algorithm. In general, stuff like this
     is going to get you a lot more value than pushing something onto a Spark cluster
     or ordering faster RAM or using more cores in your CPU, etc. This is the way you
@@ -868,6 +901,7 @@
   id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以我们把O(n²)的算法转换成了O(n)的算法。一般来说，像这样的东西会给你带来比将某些东西推送到Spark集群或者更快的RAM或者在CPU中使用更多核心等更多价值。这是你想要改进你的代码的方式。具体来说，编写代码时不要过多考虑性能。运行它，看看它是否对你的需求足够快。如果是，那么你就完成了。如果不是，进行性能分析。在Jupyter中，你可以使用`%prun`，它会告诉你算法中时间花在哪里。然后你可以去看看实际花费时间的部分，思考它在算法上是否尽可能高效。在这种情况下，我们运行它，从76毫秒降到不到2毫秒。现在一些新手可能会认为“哦，太好了，我节省了60多毫秒”，但关键是这将被运行数千万次。所以76毫秒版本太慢了，对于实际使用的任何随机森林来说都是不切实际的。而另一方面，我找到的1毫秒版本实际上是相当可接受的。
 - en: '[PRE12]'
   id: totrans-91
   prefs: []
@@ -877,6 +911,7 @@
   id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后检查，数字应该与之前完全相同，而且确实如此。
 - en: '[PRE13]'
   id: totrans-93
   prefs: []
@@ -890,6 +925,7 @@
   id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们有了一个函数`find_better_split`，它可以做我们想要的事情，我想把它插入到我的`DecisionTree`类中。这是一个非常酷的Python技巧。Python可以动态执行所有操作，因此我们实际上可以说`DecisionTree`中名为`find_better_split`的方法就是我刚刚创建的那个函数。
 - en: '[PRE14]'
   id: totrans-95
   prefs: []
@@ -905,6 +941,7 @@
   id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 将其放在该类中。现在我告诉你这件事稍微令人困惑的地方是，左边的`find_better_split`和右边的`find_better_split`实际上并没有任何关系。它们只是恰好以相同的顺序拥有相同的字母。所以我可以将其命名为`find_better_split_foo`，然后我可以调用它。现在我的函数实际上被称为`find_better_split_foo`，但我期望调用的方法是名为DecisionTree.find_better_split的东西。所以在这里，我可以说：
 - en: '[PRE15]'
   id: totrans-97
   prefs: []
@@ -923,6 +960,7 @@
   id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 在使用的每种语言中，了解命名空间的工作原理是很重要的。其中最重要的一点是了解它是如何确定名称所指的内容的。所以这里（`DecisionTree.find_varsplit`）意味着`DecisionTree`类内部定义的`find_better_split`，而不是其他地方。右边的这个意味着全局命名空间中的`find_better_split_foo`。许多语言没有全局命名空间，但Python有。因此，即使它们恰好以相同的顺序拥有相同的字母，它们也不以任何方式指向相同的内容。就像这边的家庭可能有一个叫Jeremy的人，而我的家庭也有一个叫Jeremy的人。我们的名字恰好相同，但我们并不是同一个人。
 - en: Now that we’ve stuck the `find_better_split` method inside the `DecisionTree`
     with this new definition, when I now call the `TreeEnsemble` constructor the decision
     tree ensemble constructor, it calls `create_tree`, and `create_tree` instantiates
@@ -933,6 +971,7 @@
   id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经将`find_better_split`方法放入了具有这个新定义的`DecisionTree`中，当我现在调用`TreeEnsemble`构造函数时，决策树集合构造函数会调用`create_tree`，`create_tree`实例化`DecisionTree`，`DecisionTree`调用`find_varsplit`，它会遍历每一列以查看是否可以找到更好的分割点，我们现在已经定义了`find_better_split`，因此当我们创建`TreeEnsemble`时，它已经执行了这个分割点。
 - en: '[PRE16]'
   id: totrans-100
   prefs: []
@@ -946,11 +985,13 @@
   id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 好的。这很不错，对吧？我们一次只做一点点，测试每一步。当你们实现随机森林解释技术时，你们可能想尝试以这种方式编程，检查每一步是否与scikit-learn所做的匹配，或者与你们构建的测试匹配。
 - en: Full single tree [[55:13](https://youtu.be/O5F9vR2CNYI?t=55m13s)]
   id: totrans-102
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 完整的单棵树[[55:13](https://youtu.be/O5F9vR2CNYI?t=55m13s)]
 - en: At this point, we should try to go deeper for inception. Let’s go now max_depth
     is 2\. So here is what scikit-learn did. After breaking at YearMade 74, it then
     broke at MachineHoursCurrentMeter 2956.
@@ -976,6 +1017,7 @@
   id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以我们有一个叫做`find_varsplit`的东西，它只是遍历每一列，尝试看看是否有更好的分割点。但实际上，我们需要再进一步。我们不仅需要遍历每一列，看看这个节点是否有更好的分割点，而且还需要看看我们刚刚创建的左侧和右侧是否有更好的分割点。换句话说，左侧和右侧应该成为决策树本身。
 - en: '![](../Images/5737b670435fb406e623fbae9bef82f4.png)'
   id: totrans-107
   prefs: []
@@ -1008,6 +1050,7 @@
   id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，第一行代码与之前完全相同。然后我们检查它是否是叶节点。如果是叶节点，那么我们就没有更多的事情要做了。这意味着我们就在底部，没有进行分割，所以我们不需要做任何进一步的操作。另一方面，如果它不是叶节点，那么我们需要将其分割成左侧和右侧。现在，早些时候，我们创建了一个左侧和右侧的布尔数组。最好是有一个索引数组，因为我们不想在每个节点中都有一个完整的布尔数组。因为请记住，尽管在这个大小的树中看起来似乎没有很多节点，但当它完全展开时，底层（即如果最小叶大小为1）包含与整个数据集相同数量的节点。因此，如果每个节点都包含整个数据集大小的完整布尔数组，那么内存需求会增加。另一方面，如果我们只存储此节点中所有内容的索引，那么它将变得越来越小。
 - en: '[PRE18]'
   id: totrans-111
   prefs: []
@@ -1038,6 +1081,7 @@
   id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: np.nonzero与`x<=self.split`完全相同，它得到布尔数组，但将其转换为`true`的索引[[58:07](https://youtu.be/O5F9vR2CNYI?t=58m7s)]。因此，这个`lhs`现在是左侧和右侧的索引列表。现在我们有了左侧和右侧的索引，我们现在可以继续创建一个决策树。所以`self.lhs`是我们左侧的决策树，`self.rhs`是我们右侧的决策树。我们不需要做其他事情。我们已经写好了这些。我们已经有一个可以创建决策树的构造函数。所以当你真正思考这在做什么时，会有点让人头疼，对吧？因为`find_varsplit`被调用的原因是因为决策树构造函数调用了它。但是`find_varsplit`本身又调用了决策树构造函数。所以我们实际上有循环递归。我并不聪明到足以能够思考递归，所以我选择不去想。我只是写出我的意思，然后不再考虑。我想要什么？找到一个变量分割。我必须遍历每一列，看看是否有更好的东西，如果成功进行了分割，找出左侧和右侧，然后将它们转换为决策树。现在尝试思考这两种方法如何相互调用会让我发疯，但我不需要这样做。我知道我有一个有效的决策树构造函数，我知道我有一个有效的`find_varsplit`，所以就这样。这就是我进行递归编程的方式，就是假装我没有。我只是忽略它。这是我的建议。你们中很多人可能足够聪明，能够比我更好地思考这个问题，那就好。如果你能的话。
 - en: '[PRE19]'
   id: totrans-113
   prefs: []
