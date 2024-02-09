@@ -14,27 +14,15 @@
 
 在结构化深度学习方面的出版物还不够，但在行业中肯定正在发生：
 
-[](https://towardsdatascience.com/structured-deep-learning-b8ca4138b848?source=post_page-----dd904506bee8--------------------------------) [## 结构化深度学习
-
-### by Kerem Turgutlu
-
-towardsdatascience.com](https://towardsdatascience.com/structured-deep-learning-b8ca4138b848?source=post_page-----dd904506bee8--------------------------------)
+[结构化深度学习 by Kerem Turgutlu](https://towardsdatascience.com/structured-deep-learning-b8ca4138b848?source=post_page-----dd904506bee8--------------------------------)
 
 您可以使用[这个工具](https://github.com/hardikvasa/google-images-download)从 Google 下载图片并解决自己的问题：
 
-[](https://towardsdatascience.com/fun-with-small-image-data-sets-part-2-54d683ca8c96?source=post_page-----dd904506bee8--------------------------------) [## 小图像数据集的乐趣（第 2 部分）
-
-### by Nikhil B
-
-towardsdatascience.com](https://towardsdatascience.com/fun-with-small-image-data-sets-part-2-54d683ca8c96?source=post_page-----dd904506bee8--------------------------------)
+[小图像数据集的乐趣（第 2 部分）by Nikhil B](https://towardsdatascience.com/fun-with-small-image-data-sets-part-2-54d683ca8c96?source=post_page-----dd904506bee8--------------------------------)
 
 关于如何训练神经网络的介绍（一篇很棒的技术文章）：
 
-[](https://towardsdatascience.com/how-do-we-train-neural-networks-edd985562b73?source=post_page-----dd904506bee8--------------------------------) [## 我们如何‘训练’神经网络？
-
-### by Vitaly Bushaev
-
-towardsdatascience.com](https://towardsdatascience.com/how-do-we-train-neural-networks-edd985562b73?source=post_page-----dd904506bee8--------------------------------)
+[我们如何‘训练’神经网络？ by Vitaly Bushaev](https://towardsdatascience.com/how-do-we-train-neural-networks-edd985562b73?source=post_page-----dd904506bee8--------------------------------)
 
 学生们正在与 Jeremy 一起参加[Kaggle 幼苗分类竞赛](https://www.kaggle.com/c/plant-seedlings-classification/leaderboard)。
 
@@ -48,6 +36,8 @@ towardsdatascience.com](https://towardsdatascience.com/how-do-we-train-neural-ne
 ratings = pd.read_csv(path+'ratings.csv')
 ratings.head()
 ```
+
+![](img/5-1.webp)
 
 ## **为 Excel 创建子集**
 
@@ -63,7 +53,11 @@ top_r = top_r.join(topMovies, rsuffix='_r', how='inner', on='movieId')
 pd.crosstab(top_r.userId, top_r.movieId, top_r.rating, aggfunc=np.sum)
 ```
 
+![](img/5-2.webp)
+
 [这](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/collab_filter.xlsx)是包含上述信息的 Excel 文件。首先，我们将使用**矩阵分解**而不是构建神经网络。
+
+![](img/5-3.webp)
 
 +   蓝色单元格 — 实际评分
 
@@ -76,6 +70,8 @@ pd.crosstab(top_r.userId, top_r.movieId, top_r.rating, aggfunc=np.sum)
 +   橙色单元格 — 用户嵌入（随机初始化）
 
 每个预测是电影嵌入向量和用户嵌入向量的点积。在线性代数术语中，这相当于矩阵乘积，因为一个是行，一个是列。如果没有实际评分，我们将预测设为零（将其视为测试数据 — 而不是训练数据）。
+
+![](img/5-4.webp)
 
 然后我们使用梯度下降来最小化我们的损失。Microsoft Excel 中有一个“求解器”插件，可以通过更改选定的单元格来最小化一个变量（`GRG Nonlinear`是您要使用的方法）。
 
@@ -106,6 +102,8 @@ learn = cf.get_learner(n_factors, val_idxs, 64, opt_fn=optim.Adam)
 learn.fit(1e-2, 2, wds=wd, cycle_len=1, cycle_mult=2)
 ```
 
+![](img/5-5.webp)
+
 输出 MSE
 
 由于输出是均方误差，您可以通过以下方式获得 RMSE：
@@ -129,7 +127,13 @@ y = learn.data.val_y
 sns.jointplot(preds, y, kind='hex', stat_func=None)
 ```
 
+![](img/5-6.webp)
+
 ## **使用 Python 进行点积**
+
+![](img/5-7.webp)
+
+![](img/5-8.webp)
 
 `T`是 Torch 中的张量
 
@@ -271,6 +275,8 @@ class EmbeddingDotBias(nn.Module):
 
 我们可以压缩评分，使其在 1 和 5 之间吗？可以！通过将预测通过 sigmoid 函数，将得到 1 和 0 之间的数字。因此，在我们的情况下，我们可以将其乘以 4 并加 1 - 这将得到 1 和 5 之间的数字。
 
+![](img/5-9.webp)
+
 `F`是 PyTorch 功能（`torch.nn.functional`），包含所有张量的函数，并在大多数情况下导入为`F`。
 
 ```py
@@ -290,6 +296,8 @@ fit(model, data, 3, opt, F.mse_loss)
 ## 神经网络版本[[1:17:21](https://youtu.be/J99NV9Cr75I?t=1h17m21s)]
 
 我们回到 Excel 表格来理解直觉。请注意，我们创建了`user_idx`来查找嵌入，就像我们之前在 Python 代码中所做的那样。如果我们要对`user_idx`进行独热编码并将其乘以用户嵌入，我们将得到用户的适用行。如果只是矩阵乘法，为什么我们需要嵌入？这是为了计算性能优化的目的。
+
+![](img/5-10.webp)
 
 与计算用户嵌入向量和电影嵌入向量的点积以获得预测不同，我们将连接这两者并将其馈送到神经网络中。
 
@@ -317,6 +325,8 @@ class EmbeddingNet(nn.Module):
 ```
 
 注意到我们不再有偏差项，因为 PyTorch 中的`Linear`层已经内置了偏差。`nh`是线性层创建的激活数量（Jeremy 称之为“num hidden”）。
+
+![](img/5-11.webp)
 
 它只有一个隐藏层，所以可能不是“深度”，但这绝对是一个神经网络。
 
@@ -357,9 +367,17 @@ opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)
 
 我们将在 Excel 表格中实现梯度下降（[graddesc.xlsm](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/graddesc.xlsm)）- 从右到左查看工作表。首先我们创建一组随机的*x*和*y*，它们与*x*线性相关（例如*y*= *a*x* + *b*）。通过使用一组*x*和*y*，我们将尝试学习*a*和*b*。
 
+![](img/5-12.webp)
+
+![](img/5-13.webp)
+
 要计算误差，我们首先需要一个预测，并计算差的平方：
 
+![](img/5-14.webp)
+
 为了减少误差，我们稍微增加/减少*a*和*b*，并找出什么会使误差减少。这被称为通过有限差分找到导数。
+
+![](img/5-15.webp)
 
 在高维空间中，有限差分变得复杂[[1:41:46](https://youtu.be/J99NV9Cr75I?t=1h41m46s)]，并且变得非常占用内存且需要很长时间。因此，我们希望找到一种更快地完成这项工作的方法。值得查阅雅可比和黑塞（深度学习书籍：[第 4.3.1 节第 84 页](http://www.deeplearningbook.org/contents/numerical.html)）。
 
@@ -367,11 +385,15 @@ opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)
 
 更快的方法是通过分析进行[[1:45:27](https://youtu.be/J99NV9Cr75I?t=1h45m27s)]。为此，我们需要一个链式规则：
 
+![](img/5-16.webp)
+
 [链式规则概述](https://www.khanacademy.org/math/multivariable-calculus/multivariable-derivatives/differentiating-vector-valued-functions/a/multivariable-chain-rule-simple-version)
 
 这是 Chris Olah 关于[反向传播作为链式规则](http://colah.github.io/posts/2015-08-Backprop/)的一篇很棒的文章。
 
 现在我们用实际导数替换有限差分[WolframAlpha](https://www.wolframalpha.com/)给我们提供了（请注意，有限差分输出与实际导数非常接近，是计算自己的导数的快速检查的好方法）：
+
+![](img/5-17.webp)
 
 +   “在线”训练 - 小批量大小为 1
 
@@ -383,11 +405,15 @@ opt = optim.SGD(model.parameters(), 1e-1, weight_decay=wd, momentum=0.9)
 
 通过这种方法，我们将使用当前小批量导数和上一个小批量之后我们采取的步骤（以及方向）之间的线性插值（单元格 K9）：
 
+![](img/5-18.webp)
+
 与随机符号（+/-）的*de*/*db*相比，具有动量的方向会保持相同的方向，直到某个点为止。这将减少训练所需的周期数。
 
 ## Adam[[1:59:04](https://youtu.be/J99NV9Cr75I?t=1h59m4s)]
 
 Adam 速度更快，但问题在于最终预测不如使用动量的 SGD 那么好。似乎是由于 Adam 和权重衰减的结合使用。修复此问题的新版本称为**AdamW**。
+
+![](img/5-19.webp)
 
 +   `单元格 J8`：导数和上一个方向的线性插值（与动量中的相同）
 
