@@ -1,6 +1,6 @@
 # fast.ai 深度学习笔记
 
-> 作者：[Hiromi](https://medium.com/@hiromi_suenaga)
+> 作者：[Hiromi Suenaga](https://medium.com/@hiromi_suenaga)
 >
 > 译者：[飞龙](https://github.com/wizardforcel)
 > 
