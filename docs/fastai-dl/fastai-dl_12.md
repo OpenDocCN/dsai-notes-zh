@@ -41,7 +41,8 @@ CIFAR10 是一个相当小的数据集[[8:06](https://youtu.be/ondivPiwQho?t=8m6
 ```py
 %matplotlib inline
 %reload_ext autoreload
-%autoreload 2from fastai.conv_learner import *
+%autoreload 2
+from fastai.conv_learner import *
 PATH = Path("data/cifar10/")
 os.makedirs(PATH,exist_ok=True)
 ```
@@ -51,10 +52,15 @@ os.makedirs(PATH,exist_ok=True)
 由于这些数据相当小，我们可以使用比通常更大的批量大小，并且这些图像的大小为 32[[9:46](https://youtu.be/ondivPiwQho?t=9m46s)]。
 
 ```py
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 
-           'horse', 'ship', 'truck')
-stats = (np.array([ 0.4914 ,  0.48216,  0.44653]), 
-         np.array([ 0.24703,  0.24349,  0.26159]))
+classes = (
+    'plane', 'car', 'bird', 
+    'cat', 'deer', 'dog', 'frog', 
+    'horse', 'ship', 'truck'
+)
+stats = (
+    np.array([ 0.4914 ,  0.48216,  0.44653]), 
+    np.array([ 0.24703,  0.24349,  0.26159])
+)
 
 num_workers = num_cpus()//2
 bs=256
@@ -64,10 +70,17 @@ sz=32
 变换[[9:57](https://youtu.be/ondivPiwQho?t=9m57s)]，通常我们有这一套标准的 side_on 变换，用于普通物体的照片。我们不会在这里使用这个，因为这些图像太小了，尝试将一个 32x32 的图像稍微旋转会引入很多块状失真。人们倾向于使用的标准变换是随机水平翻转，然后我们在每一侧添加 4 个像素（尺寸除以 8）的填充。一个非常有效的方法是，默认情况下 fastai 不会添加黑色填充，而许多其他库会这样做。Fastai 会取现有照片的最后 4 个像素，翻转并反射它，我们发现使用反射填充会得到更好的结果。现在我们有了 40x40 的图像，在训练中，这组变换将随机选择 32x32 的裁剪，所以我们会有一点变化但不会太多。因此我们可以使用正常的`from_paths`来获取我们的数据。
 
 ```py
-tfms = tfms_from_stats(stats, sz, aug_tfms=[RandomFlip()], 
-                       pad=sz//8)
-data = ImageClassifierData.from_paths(PATH, val_name='test', 
-                                      tfms=tfms, bs=bs)
+tfms = tfms_from_stats(
+    stats, sz, 
+    aug_tfms=[RandomFlip()], 
+    pad=sz//8
+)
+data = ImageClassifierData.from_paths(
+    PATH, 
+    val_name='test', 
+    tfms=tfms, 
+    bs=bs
+)
 ```
 
 现在我们需要一个架构，我们将创建一个适合在一个屏幕上显示的架构[[11:07](https://youtu.be/ondivPiwQho?t=11m7s)]。这是从头开始的。我们正在使用预定义的`Conv2d`，`BatchNorm2d`，`LeakyReLU`模块，但我们没有使用任何块或其他东西。整个东西都在一个屏幕上，所以如果你曾经想知道我是否能理解一个现代的高质量架构，绝对可以！让我们来学习这个。
@@ -75,19 +88,28 @@ data = ImageClassifierData.from_paths(PATH, val_name='test',
 ```py
 def conv_layer(ni, nf, ks=3, stride=1):
     return nn.Sequential(
-        nn.Conv2d(ni, nf, kernel_size=ks, bias=False, stride=stride,
-                  padding=ks//2),
+        nn.Conv2d(
+            ni, nf, 
+            kernel_size=ks, 
+            bias=False, 
+            stride=stride,
+            padding=ks//2
+        ),
         nn.BatchNorm2d(nf, momentum=0.01),
-        nn.LeakyReLU(negative_slope=0.1, inplace=True))class ResLayer(nn.Module):
+        nn.LeakyReLU(negative_slope=0.1, inplace=True)
+    )
+class ResLayer(nn.Module):
     def __init__(self, ni):
         super().__init__()
         self.conv1=conv_layer(ni, ni//2, ks=1)
         self.conv2=conv_layer(ni//2, ni, ks=3)
 
-    def forward(self, x): return x.add_(self.conv2(self.conv1(x)))class Darknet(nn.Module):
+    def forward(self, x): 
+        return x.add_(self.conv2(self.conv1(x)))
+class Darknet(nn.Module):
     def make_group_layer(self, ch_in, num_blocks, stride=1):
-        return [conv_layer(ch_in, ch_in*2,stride=stride)
-               ] + [(ResLayer(ch_in*2)) for i in range(num_blocks)]
+        return [conv_layer(ch_in, ch_in*2,stride=stride)] + \
+               [(ResLayer(ch_in*2)) for i in range(num_blocks)]
 
     def __init__(self, num_blocks, num_classes, nf=32):
         super().__init__()
@@ -95,11 +117,15 @@ def conv_layer(ni, nf, ks=3, stride=1):
         for i,nb in enumerate(num_blocks):
             layers += self.make_group_layer(nf, nb, stride=2-(i==1))
             nf *= 2
-        layers += [nn.AdaptiveAvgPool2d(1), Flatten(), 
-                   nn.Linear(nf, num_classes)]
+        layers += [
+            nn.AdaptiveAvgPool2d(1), 
+            Flatten(), 
+            nn.Linear(nf, num_classes)
+        ]
         self.layers = nn.Sequential(*layers)
 
-    def forward(self, x): return self.layers(x)
+    def forward(self, x): 
+        return self.layers(x)
 ```
 
 架构的基本起点是说它是一堆堆叠的层，一般来说会有一种层次结构[[11:51](https://youtu.be/ondivPiwQho?t=11m51s)]。在最底层，有像卷积层和批量归一化层这样的东西，但任何时候你有一个卷积，你可能会有一些标准的顺序。通常会是：
@@ -125,13 +151,15 @@ Leaky ReLU 的梯度（其中*x* < 0）会有所变化，但通常是 0.1 或 0.
 **问题**：为什么`LeakyReLU`中要使用`inplace=True`？谢谢你的提问！很多人忘记了这一点或者不知道这一点，但这是一个非常重要的内存技巧。如果你想一下，这个`conv_layer`，它是最底层的东西，所以基本上我们的 ResNet 一旦全部组装起来，就会有很多`conv_layer`。如果你没有`inplace=True`，它会为 ReLU 的输出创建一个完全独立的内存块，这样就会分配一大堆完全不必要的内存。另一个例子是`ResLayer`中的原始`forward`看起来像这样：
 
 ```py
-def forward(self, x): return x + self.conv2(self.conv1(x))
+def forward(self, x): 
+    return x + self.conv2(self.conv1(x))
 ```
 
 希望你们中的一些人记得在 PyTorch 中几乎每个函数都有一个下划线后缀版本，告诉它在原地执行。`+`等同于`add`，`add`的原地版本是`add_`，这样可以减少内存使用量：
 
 ```py
-def forward(self, x): return x.add_(self.conv2(self.conv1(x)))
+def forward(self, x): 
+    return x.add_(self.conv2(self.conv1(x)))
 ```
 
 这些都是非常方便的小技巧。Jeremy 一开始忘记了`inplace=True`，但他不得不将批量大小降低到非常低的数量，这让他发疯了——然后他意识到那个部分缺失了。如果你使用了 dropout，你也可以这样做。以下是需要注意的事项：
@@ -184,8 +212,13 @@ lr = 1.3
 learn = ConvLearner.from_model_data(m, data)
 learn.crit = nn.CrossEntropyLoss()
 learn.metrics = [accuracy]
-wd=1e-4%time learn.fit(lr, 1, wds=wd, cycle_len=30, use_clr_beta=(20, 20, 
-                0.95, 0.85))
+wd=1e-4
+%time learn.fit(
+    lr, 1, 
+    wds=wd, 
+    cycle_len=30, 
+    use_clr_beta=(20, 20, 0.95, 0.85)
+)
 ```
 
 一旦我们有了这个，我们可以使用`ConvLearner.from_model_data`来获取我们的 PyTorch 模块和模型数据对象，并将它们转换为一个学习器。给它一个标准，如果我们喜欢，可以添加一个指标，然后我们可以拟合并开始。
@@ -255,7 +288,10 @@ import gzip
 下载 LSUN 场景分类数据集卧室类别，解压缩它，并将其转换为 jpg 文件（脚本文件夹在`dl2`文件夹中）：
 
 ```py
-curl 'http://lsun.cs.princeton.edu/htbin/download.cgi?tag=latest&category=bedroom&set=train' -o bedroom.zipunzip bedroom.zippip install lmdbpython lsun-data.py {PATH}/bedroom_train_lmdb --out_dir {PATH}/bedroom
+curl 'http://lsun.cs.princeton.edu/htbin/download.cgi?tag=latest&category=bedroom&set=train' -o bedroom.zip
+unzip bedroom.zip
+pip install lmdb
+python lsun-data.py {PATH}/bedroom_train_lmdb --out_dir {PATH}/bedroom
 ```
 
 这在 Windows 上没有经过测试 - 如果不起作用，您可以使用 Linux 框来转换文件，然后复制它们。或者，您可以从 Kaggle 数据集中下载这个 20%的样本。
@@ -274,13 +310,16 @@ TMP_PATH.mkdir(exist_ok=True)
 files = PATH.glob('bedroom/**/*.jpg')
 
 with CSV_PATH.open('w') as fo:
-    for f in files: fo.write(f'{f.relative_to(IMG_PATH)},0**\n**')*# Optional - sampling a subset of files*
-CSV_PATH = PATH/'files_sample.csv'files = PATH.glob('bedroom/**/*.jpg')
+    for f in files: 
+        fo.write(f'{f.relative_to(IMG_PATH)},0\n')
+        # Optional - sampling a subset of files
+CSV_PATH = PATH/'files_sample.csv'
+files = PATH.glob('bedroom/**/*.jpg')
 
 with CSV_PATH.open('w') as fo:
     for f in files:
         if random.random()<0.1: 
-            fo.write(f'{f.relative_to(IMG_PATH)},0**\n**')
+            fo.write(f'{f.relative_to(IMG_PATH)},0\n')
 ```
 
 这看起来非常熟悉。这是在 Jeremy 意识到顺序模型更好之前。因此，如果将这与以前的顺序模型的卷积块进行比较，这里有更多的代码行数——但它做的事情是一样的，卷积，ReLU，批量归一化。
@@ -289,9 +328,14 @@ with CSV_PATH.open('w') as fo:
 class ConvBlock(nn.Module):
     def __init__(self, ni, no, ks, stride, bn=True, pad=None):
         super().__init__()
-        if pad is None: pad = ks//2//stride
-        self.conv = nn.Conv2d(ni, no, ks, stride, padding=pad, 
-                              bias=False)
+        if pad is None: 
+            pad = ks//2//stride
+        self.conv = nn.Conv2d(
+            ni, no, 
+            ks, stride, 
+            padding=pad, 
+            bias=False
+        )
         self.bn = nn.BatchNorm2d(no) if bn else None
         self.relu = nn.LeakyReLU(0.2, inplace=True)
 
@@ -314,8 +358,10 @@ class DCGAN_D(nn.Module):
 
         self.initial = ConvBlock(nc, ndf, 4, 2, bn=False)
         csize,cndf = isize/2,ndf
-        self.extra = nn.Sequential(*[ConvBlock(cndf, cndf, 3, 1)
-                                    for t in range(n_extra_layers)])
+        self.extra = nn.Sequential(*[
+            ConvBlock(cndf, cndf, 3, 1)
+            for t in range(n_extra_layers)
+        ])
 
         pyr_layers = []
         while csize > 4:
@@ -344,20 +390,25 @@ class DCGAN_D(nn.Module):
 class DeconvBlock(nn.Module):
     def __init__(self, ni, no, ks, stride, pad, bn=True):
         super().__init__()
-        self.conv = nn.ConvTranspose2d(ni, no, ks, stride, 
-                         padding=pad, bias=False)
+        self.conv = nn.ConvTranspose2d(
+            ni, no, 
+            ks, stride, 
+            padding=pad, bias=False
+        )
         self.bn = nn.BatchNorm2d(no)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
         x = self.relu(self.conv(x))
-        return self.bn(x) if self.bn else xclass DCGAN_G(nn.Module):
+        return self.bn(x) if self.bn else x
+class DCGAN_G(nn.Module):
     def __init__(self, isize, nz, nc, ngf, n_extra_layers=0):
         super().__init__()
         assert isize % 16 == 0, "isize has to be a multiple of 16"
 
         cngf, tisize = ngf//2, 4
-        while tisize!=isize: cngf*=2; tisize*=2
+        while tisize!=isize: 
+            cngf*=2; tisize*=2
         layers = [DeconvBlock(nz, cngf, 4, 1, 0)]
 
         csize, cndf = 4, cngf
@@ -365,13 +416,15 @@ class DeconvBlock(nn.Module):
             layers.append(DeconvBlock(cngf, cngf//2, 4, 2, 1))
             cngf //= 2; csize *= 2
 
-        layers += [DeconvBlock(cngf, cngf, 3, 1, 1) 
-                       for t in range(n_extra_layers)]
-        layers.append(nn.ConvTranspose2d(cngf, nc, 4, 2, 1,
-                                            bias=False))
+        layers += [
+            DeconvBlock(cngf, cngf, 3, 1, 1) 
+            for t in range(n_extra_layers)
+        ]
+        layers.append(nn.ConvTranspose2d(cngf, nc, 4, 2, 1, bias=False))
         self.features = nn.Sequential(*layers)
 
-    def forward(self, input): return F.tanh(self.features(input))
+    def forward(self, input): 
+        return F.tanh(self.features(input))
 ```
 
 问题：在 ConvBlock 中，为什么批量归一化在 ReLU 之后（即`self.bn(self.relu(...))`）？我通常期望先进行 ReLU，然后批量归一化，这实际上是 Jeremy 认为有意义的顺序。我们在 darknet 中使用的顺序是 darknet 论文中使用的顺序，所以每个人似乎对这些事情有不同的顺序。事实上，大多数人对 CIFAR10 有一个不同的顺序，即批量归一化→ReLU→卷积，这是一种奇特的思考方式，但事实证明，对于残差块来说，这通常效果更好。这被称为“预激活 ResNet”。有一些博客文章中，人们已经尝试了不同顺序的事物，似乎这很大程度上取决于特定数据集以及您正在处理的内容，尽管性能差异很小，除非是为了比赛，否则您不会在意。
@@ -429,9 +482,19 @@ class DeconvBlock(nn.Module):
 最近有更多的进展，试图将其提高到高分辨率大小，但它们仍然倾向于要求批量大小为 1 或大量的 GPU。所以我们试图做一些可以用单个消费者 GPU 完成的事情。这是一个 64x64 卧室的例子。
 
 ```py
-bs,sz,nz = 64,64,100tfms = tfms_from_stats(inception_stats, sz)
-md = ImageClassifierData.from_csv(PATH, 'bedroom', CSV_PATH, 
-         tfms=tfms, bs=128, skip_header=False, continuous=True)md = md.resize(128)x,_ = next(iter(md.val_dl))plt.imshow(md.trn_ds.denorm(x)[0]);
+bs,sz,nz = 64,64,100
+tfms = tfms_from_stats(inception_stats, sz)
+md = ImageClassifierData.from_csv(
+    PATH, 'bedroom', 
+    CSV_PATH, 
+    tfms=tfms, 
+    bs=128, 
+    skip_header=False, 
+    continuous=True
+)
+md = md.resize(128)
+x,_ = next(iter(md.val_dl))
+plt.imshow(md.trn_ds.denorm(x)[0]);
 ```
 
 ## 将它们全部放在一起
@@ -449,11 +512,13 @@ netD = DCGAN_D(sz, 3, 64, 1).cuda()
 
 ```py
 def create_noise(b): 
-   return V(torch.zeros(b, nz, 1, 1).normal_(0, 1))preds = netG(create_noise(4))
+   return V(torch.zeros(b, nz, 1, 1).normal_(0, 1))
+preds = netG(create_noise(4))
 pred_ims = md.trn_ds.denorm(preds)
 
 fig, axes = plt.subplots(2, 2, figsize=(6, 6))
-for i,ax in enumerate(axes.flat): ax.imshow(pred_ims[i])
+for i,ax in enumerate(axes.flat): 
+    ax.imshow(pred_ims[i])
 ```
 
 这里是创建一些噪音并生成四个不同噪音片段的示例。
@@ -463,9 +528,11 @@ def gallery(x, nc=3):
     n,h,w,c = x.shape
     nr = n//nc
     assert n == nr*nc
-    return (x.reshape(nr, nc, h, w, c)
-              .swapaxes(1,2)
-              .reshape(h*nr, w*nc, c))
+    return (
+        x.reshape(nr, nc, h, w, c)
+         .swapaxes(1,2)
+         .reshape(h*nr, w*nc, c)
+    )
 ```
 
 我们需要一个优化器来更新我们的梯度。在 Wasserstein GAN 论文中，他们告诉我们使用 RMSProp：
@@ -528,8 +595,12 @@ def train(niter, first=True):
             while i < n:
                 set_trainable(netD, True)
                 set_trainable(netG, False)
-                d_iters = 100 if (first and (gen_iterations < 25) 
-                              or (gen_iterations % 500 == 0)) else 5
+                d_iters = (
+                    100 
+                    if (first and (gen_iterations < 25) 
+                              or  (gen_iterations % 500 == 0)) 
+                    else 5
+                )
                 j = 0
                 while (j < d_iters) and (i < n):
                     j += 1; i += 1
@@ -553,16 +624,21 @@ def train(niter, first=True):
                 optimizerG.step()
                 gen_iterations += 1
 
-        print(f'Loss_D {to_np(lossD)}; Loss_G {to_np(lossG)}; '
-              f'D_real {to_np(real_loss)}; Loss_D_fake
-              {to_np(fake_loss)}')
+        print(
+            f'Loss_D {to_np(lossD)}; Loss_G {to_np(lossG)}; ' + 
+            f'D_real {to_np(real_loss)}; Loss_D_fake {to_np(fake_loss)}'
+        )
 ```
 
 你会发现鉴别器被训练*ncritic*次（上面代码中的 d_iters），他们将其设置为 5，每次我们训练生成器一次。论文中谈到了这一点，但基本思想是如果鉴别器还不知道如何区分，那么让生成器变得更好是没有意义的。这就是为什么我们有第二个 while 循环。这里是 5：
 
 ```py
-d_iters = 100 if (first and (gen_iterations < 25) 
-                              or (gen_iterations % 500 == 0)) else 5
+d_iters = (
+    100 
+    if (first and (gen_iterations < 25) 
+              or  (gen_iterations % 500 == 0)) 
+    else 5
+)
 ```
 
 实际上，稍后的论文中添加的内容或者可能是补充材料是，不时地在开始时，您应该在鉴别器上执行更多步骤，以确保鉴别器是有能力的。
@@ -592,10 +668,14 @@ fixed_noise = create_noise(bs)
 set_trainable(netD, True)
 set_trainable(netG, True)
 optimizerD = optim.RMSprop(netD.parameters(), lr = 1e-5)
-optimizerG = optim.RMSprop(netG.parameters(), lr = 1e-5)train(1, False)0%|          | 0/1 [00:00<?, ?it/s]
+optimizerG = optim.RMSprop(netG.parameters(), lr = 1e-5)
+train(1, False)
+'''
+0%|          | 0/1 [00:00<?, ?it/s]
 100%|██████████| 18957/18957 [23:31<00:00, 13.43it/s]
 Loss_D [-1.01657]; Loss_G [0.51333]; D_real [-0.50913]; Loss_D_fake [0.50744]
 100%|██████████| 1/1 [23:31<00:00, 1411.84s/it]
+'''
 ```
 
 然后让我们使用噪音传递给我们的生成器，然后通过我们的反标准化将其转换回我们可以看到的东西，然后绘制它：
@@ -743,7 +823,10 @@ from cgan.models.models import create_model
 data_loader = CreateDataLoader(opt)
 dataset = data_loader.load_data()
 dataset_size = len(data_loader)
-dataset_size*1334*
+dataset_size
+'''
+1334
+'''
 ```
 
 我们有一个数据加载器，所以我们可以将我们的数据加载到其中[[2:06:17](https://youtu.be/ondivPiwQho?t=2h6m17s)]。这将告诉我们其中有多少个小批次（这是 PyTorch 数据加载器的长度）。
@@ -787,20 +870,28 @@ for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay+1):
             t = (time.time() - iter_start_time) / opt.batchSize
 
         if total_steps % opt.save_latest_freq == 0:
-            print('saving the latest model(epoch **%d**,total_steps **%d**)'
-                    % (epoch, total_steps))
+            print(
+                'saving the latest model(epoch %d,total_steps %d)'
+                % (epoch, total_steps)
+            )
             model.save('latest')
 
         iter_data_time = time.time()
     if epoch % opt.save_epoch_freq == 0:
-        print('saving the model at the end of epoch **%d**, iters **%d**' 
-               % (epoch, total_steps))
+        print(
+            'saving the model at the end of epoch %d, iters %d' 
+            % (epoch, total_steps)
+        )
         model.save('latest')
         model.save(epoch)
 
-    print('End of epoch **%d** / **%d** **\t** Time Taken: **%d** sec' %
-          (epoch, opt.niter + opt.niter_decay, time.time() 
-          - epoch_start_time))
+    print(
+        'End of epoch %d / %d \t Time Taken: %d sec' %
+        (
+            epoch, opt.niter + opt.niter_decay, 
+            time.time() - epoch_start_time
+        )
+    )
     model.update_learning_rate()
 ```
 
@@ -818,20 +909,29 @@ for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay+1):
 
 ```py
 def show_img(im, ax=None, figsize=None):
-    if not ax: fig,ax = plt.subplots(figsize=figsize)
+    if not ax: 
+        fig,ax = plt.subplots(figsize=figsize)
     ax.imshow(im)
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
-    return axdef get_one(data):
+    return ax
+def get_one(data):
     model.set_input(data)
     model.test()
-    return list(model.get_current_visuals().values())model.save(201)test_ims = []
+    return list(model.get_current_visuals().values())
+model.save(201)
+test_ims = []
 for i,o in enumerate(dataset):
-    if i>10: break
-    test_ims.append(get_one(o))def show_grid(ims):
+    if i>10: 
+        break
+    test_ims.append(get_one(o))
+def show_grid(ims):
     fig,axes = plt.subplots(2,3,figsize=(9,6))
-    for i,ax in enumerate(axes.flat): show_img(ims[i], ax);
-    fig.tight_layout()for i in range(8): show_grid(test_ims[i])
+    for i,ax in enumerate(axes.flat): 
+        show_img(ims[i], ax);
+    fig.tight_layout()
+for i in range(8): 
+    show_grid(test_ims[i])
 ```
 
 我们训练了一段时间，然后我们可以随便拿几个例子，这里有它们[2:15:29]。这里有马、斑马，然后再变回马。
@@ -839,7 +939,7 @@ for i,o in enumerate(dataset):
 我花了大约 24 小时来训练它，所以它有点慢[2:16:39]。我知道 Helena 经常在 Twitter 上抱怨这些事情花费的时间有多长。我不知道她是如何在这些事情上如此高效的。
 
 ```py
-#! wget https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/horse2zebra.zip
+# !wget https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/horse2zebra.zip
 ```
 
 我还要提到昨天刚出来的另一件事[2:16:54]：
