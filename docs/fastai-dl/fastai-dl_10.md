@@ -100,21 +100,28 @@ NLP 的基本路径是我们必须将句子转换为数字，有几种方法可�
 
 ```py
 CLAS_PATH=Path('data/imdb_clas/')
-CLAS_PATH.mkdir(exist_ok=True)LM_PATH=Path('data/imdb_lm/')
+CLAS_PATH.mkdir(exist_ok=True)
+LM_PATH=Path('data/imdb_lm/')
 LM_PATH.mkdir(exist_ok=True)
 ```
 
 正如你在这里看到的[[21:59](https://youtu.be/h5Tz7gZT9Fo?t=21m59s)]，我写了一个名为 get_texts 的东西，它遍历了`CLASSES`中的每一个东西。IMDb 中有三个类别：负面、正面，然后还有另一个文件夹“unsupervised”，其中包含他们尚未标记的样本，所以我们暂时将其称为一个类别。所以我们只是遍历每一个类别，然后找到该文件夹中的每个文件，打开它，读取它，并将其放入数组的末尾。正如你所看到的，使用 pathlib，很容易获取并导入东西，然后标签就是到目前为止的任何类别。我们将为训练集和测试集都这样做。
 
 ```py
-CLASSES = ['neg', 'pos', 'unsup']def get_texts(path):
+CLASSES = ['neg', 'pos', 'unsup']
+def get_texts(path):
     texts,labels = [],[]
     for idx,label in enumerate(CLASSES):
         for fname in (path/label).glob('*.*'):
             texts.append(fname.open('r').read())
             labels.append(idx)
-    return np.array(texts),np.array(labels)trn_texts,trn_labels = get_texts(PATH/'train')
-val_texts,val_labels = get_texts(PATH/'test')len(trn_texts),len(val_texts)*(75000, 25000)*
+    return np.array(texts),np.array(labels)
+trn_texts,trn_labels = get_texts(PATH/'train')
+val_texts,val_labels = get_texts(PATH/'test')
+len(trn_texts),len(val_texts)
+'''
+(75000, 25000)
+'''
 ```
 
 训练集中有 75,000 个样本，测试集中有 25,000 个样本。训练集中的 50,000 个样本是无监督的，当我们进行分类时，实际上我们将无法使用它们。Jeremy 发现这比 torch.text 方法更容易，后者需要很多层和包装器，因为最终，读取文本文件并不那么困难。
@@ -135,21 +142,38 @@ val_idx = np.random.permutation(len(val_texts))
 
 ```py
 trn_texts = trn_texts[trn_idx]
-val_texts = val_texts[val_idx]trn_labels = trn_labels[trn_idx]
+val_texts = val_texts[val_idx]
+trn_labels = trn_labels[trn_idx]
 val_labels = val_labels[val_idx]
 ```
 
 现在我们有了排序好的文本和标签，我们可以从中创建一个数据框[[24:07](https://youtu.be/h5Tz7gZT9Fo?t=24m7s)]。我们为什么要这样做呢？原因是因为在文本分类数据集中，开始出现了一种有点标准的方法，即将训练集作为一个 CSV 文件，其中标签在前，NLP 文档的文本在后。所以它基本上看起来像这样：
 
 ```py
-df_trn = pd.DataFrame({'text':trn_texts, 'labels':trn_labels}, 
-                      columns=col_names)
-df_val = pd.DataFrame({'text':val_texts, 'labels':val_labels},
-                      columns=col_names)df_trn[df_trn['labels']!=2].to_csv(CLAS_PATH/'train.csv',
-                                   header=False, index=False)
-df_val.to_csv(CLAS_PATH/'test.csv', header=False, index=False)(CLAS_PATH/'classes.txt').open('w')
+df_trn = pd.DataFrame({
+    'text':trn_texts, 
+    'labels':trn_labels
+}, columns=col_names)
+df_val = pd.DataFrame({
+    'text':val_texts, 
+    'labels':val_labels
+}, columns=col_names)
+df_trn[df_trn['labels']!=2].to_csv(
+    CLAS_PATH/'train.csv',
+    header=False, 
+    index=False
+)
+df_val.to_csv(
+    CLAS_PATH/'test.csv', 
+    header=False, 
+    index=False
+)
+(CLAS_PATH/'classes.txt').open('w') \
     .writelines(f'**{o}\n**' for o in CLASSES)
-(CLAS_PATH/'classes.txt').open().readlines()*['neg\n', 'pos\n', 'unsup\n']*
+(CLAS_PATH/'classes.txt').open().readlines()
+'''
+['neg\n', 'pos\n', 'unsup\n']
+'''
 ```
 
 所以你有你的标签和文本，然后有一个名为 classes.txt 的文件，其中只列出了类别。我说“有点标准”，因为在最近的一篇学术论文中，Yann LeCun 和一组研究人员查看了相当多的数据集，并且他们对所有数据集都使用了这种格式。所以这就是我最近一篇论文开始使用的格式。你会发现，如果你将你的数据放入这种格式的笔记本中，整个笔记本每次都会运行[[25:17](https://youtu.be/h5Tz7gZT9Fo?t=25m17s)]。所以，与其有一千种不同的格式，我只是说让我们选择一个标准格式，你的工作就是将你的数据放入那个格式，即 CSV 文件。CSV 文件默认没有标题。
@@ -158,7 +182,13 @@ df_val.to_csv(CLAS_PATH/'test.csv', header=False, index=False)(CLAS_PATH/'classe
 
 ```py
 trn_texts,val_texts = sklearn.model_selection.train_test_split(
-    np.concatenate([trn_texts,val_texts]), test_size=0.1)len(trn_texts), len(val_texts)*(90000, 10000)*
+    np.concatenate([trn_texts,val_texts]), 
+    test_size=0.1
+)
+len(trn_texts), len(val_texts)
+'''
+(90000, 10000)
+'''
 ```
 
 第二个不同之处是标签[[26:51](https://youtu.be/h5Tz7gZT9Fo?t=26m51s)]。对于分类路径，标签是实际标签，但对于语言模型，没有标签，所以我们只使用一堆零，这样做会更容易一些，因为我们可以使用一致的数据框/CSV 格式。
@@ -166,10 +196,15 @@ trn_texts,val_texts = sklearn.model_selection.train_test_split(
 现在语言模型，我们可以创建自己的验证集，所以你可能已经遇到了 `sklearn.model_selection.train_test_split`，这是一个非常简单的函数，根据你指定的比例随机将数据集分割成训练集和验证集。在这种情况下，我们将我们的分类训练和验证合并在一起，按 10%进行分割，现在我们有 90,000 个训练数据，10,000 个验证数据用于我们的语言模型。这样就为我们的语言模型和分类器以标准格式获取了数据。
 
 ```py
-df_trn = pd.DataFrame({'text':trn_texts, 'labels':
-                       [0]*len(trn_texts)}, columns=col_names)
-df_val = pd.DataFrame({'text':val_texts, 'labels':
-                       [0]*len(val_texts)}, columns=col_names)df_trn.to_csv(LM_PATH/'train.csv', header=False, index=False)
+df_trn = pd.DataFrame({
+    'text':trn_texts, 
+    'labels': [0]*len(trn_texts)
+}, columns=col_names)
+df_val = pd.DataFrame({
+    'text':val_texts, 
+    'labels': [0]*len(val_texts)
+}, columns=col_names)
+df_trn.to_csv(LM_PATH/'train.csv', header=False, index=False)
 df_val.to_csv(LM_PATH/'test.csv', header=False, index=False)
 ```
 
@@ -184,7 +219,8 @@ chunksize=24000
 在将其传递给 spaCy 之前，Jeremy 编写了这个简单的`fixup`函数，每次他查看不同的数据集（在构建过程中大约有十几个），每个数据集都有不同的奇怪之处需要替换。所以这是他迄今为止想出的所有内容，希望这也能帮助到你。所有实体都是 html 未转义的，还有更多我们替换的内容。看看在你输入的文本上运行这个函数的结果，并确保里面没有更多奇怪的标记。
 
 ```py
-re1 = re.compile(r'  +')def fixup(x):
+re1 = re.compile(r'  +')
+def fixup(x):
    x = x.replace('#39;', "'").replace('amp;', '&')
         .replace('#146;', "'").replace('nbsp;', ' ')
         .replace('#36;', '$').replace('**\\**n', "**\n**")
@@ -192,12 +228,14 @@ re1 = re.compile(r'  +')def fixup(x):
         .replace('**\\**"', '"').replace('<unk>','u_n')
         .replace(' @.@ ','.').replace(' @-@ ','-')
         .replace('**\\**', ' **\\** ')
-    return re1.sub(' ', html.unescape(x))def get_texts(df, n_lbls=1):
+    return re1.sub(' ', html.unescape(x))
+def get_texts(df, n_lbls=1):
     labels = df.iloc[:,range(n_lbls)].values.astype(np.int64)
     texts = f'**\n{BOS}** **{FLD}** 1 ' + df[n_lbls].astype(str)
     for i in range(n_lbls+1, len(df.columns)): 
         texts += f' **{FLD}** {i-n_lbls} ' + df[i].astype(str)
-    texts = texts.apply(fixup).values.astype(str) tok = Tokenizer().proc_all_mp(partition_by_cores(texts))
+    texts = texts.apply(fixup).values.astype(str) 
+    tok = Tokenizer().proc_all_mp(partition_by_cores(texts))
     return tok, list(labels)
 ```
 
@@ -227,15 +265,26 @@ def get_all(df, n_lbls):
 +   然后最重要的是[[33:54](https://youtu.be/h5Tz7gZT9Fo?t=33m54s)], 我们对其进行标记化 - 通过进行“process all multiprocessing” (`proc_all_mp`) 进行标记化。标记化往往会很慢，但现在我们的机器都有多个核心，AWS 上一些更好的机器可以有几十个核心。spaCy 不太适合多处理，但 Jeremy 最终找到了让它工作的方法。好消息是现在所有这些都包含在这一个函数中。所以你只需要传递给该函数一个要标记化的事物列表，该列表的每个部分将在不同的核心上进行标记化。还有一个名为`partition_by_cores`的函数，它接受一个列表并将其拆分为子列表。子列表的数量就是您计算机上的核心数量。在 Jeremy 的机器上，没有多处理，这需要大约一个半小时，而使用多处理，大约需要 2 分钟。所以这是一个非常方便的东西。随时查看并利用它来处理您自己的东西。记住，我们的笔记本电脑中都有多个核心，而且很少有 Python 中的东西能够利用它，除非您稍微努力使其工作。
 
 ```py
-df_trn = pd.read_csv(LM_PATH/'train.csv', header=None, 
-                     chunksize=chunksize)
-df_val = pd.read_csv(LM_PATH/'test.csv', header=None, 
-                     chunksize=chunksize)tok_trn, trn_labels = get_all(df_trn, 1)
-tok_val, val_labels = get_all(df_val, 1)*0
+df_trn = pd.read_csv(
+    LM_PATH/'train.csv', 
+    header=None, 
+    chunksize=chunksize
+)
+df_val = pd.read_csv(
+    LM_PATH/'test.csv', 
+    header=None, 
+    chunksize=chunksize
+)
+tok_trn, trn_labels = get_all(df_trn, 1)
+tok_val, val_labels = get_all(df_val, 1)
+'''
+0
 1
 2
 3
-0*(LM_PATH/'tmp').mkdir(exist_ok=True)
+0
+'''
+(LM_PATH/'tmp').mkdir(exist_ok=True)
 ```
 
 这是最终结果[[35:42](https://youtu.be/h5Tz7gZT9Fo?t=35m42s)]。流的开始标记（`xbos`），第 1 个字段的开始标记（`xfld 1`），以及标记化的文本。您会看到标点现在是一个单独的标记。
@@ -258,7 +307,8 @@ tok_val, val_labels = get_all(df_val, 1)*0
 
 ```py
 np.save(LM_PATH/'tmp'/'tok_trn.npy', tok_trn)
-np.save(LM_PATH/'tmp'/'tok_val.npy', tok_val)tok_trn = np.load(LM_PATH/'tmp'/'tok_trn.npy')
+np.save(LM_PATH/'tmp'/'tok_val.npy', tok_val)
+tok_trn = np.load(LM_PATH/'tmp'/'tok_trn.npy')
 tok_val = np.load(LM_PATH/'tmp'/'tok_val.npy')
 ```
 
@@ -266,7 +316,9 @@ tok_val = np.load(LM_PATH/'tmp'/'tok_val.npy')
 
 ```py
 freq = Counter(p for o in tok_trn for p in o)
-freq.most_common(25)*[('the', 1207984),
+freq.most_common(25)
+'''
+[('the', 1207984),
  ('.', 991762),
  (',', 985975),
  ('and', 587317),
@@ -290,14 +342,16 @@ freq.most_common(25)*[('the', 1207984),
  ('movie', 157676),
  ('but', 150203),
  ('film', 144108),
- ('you', 124114)]*
+ ('you', 124114)]
+'''
 ```
 
 所以我们将把我们的词汇表限制在 60,000 个词，至少出现两次的东西。这里有一个简单的方法。使用`.most_common`，传入最大词汇大小。这将按频率排序，如果出现的频率低于最小频率，则根本不要理会。这给我们了`itos` - 这是 torchtext 使用的相同名称，意思是整数到字符串。这只是词汇表中独特标记的列表。我们将插入两个额外的标记 - 一个未知的词汇项（`_unk_`）和一个填充的词汇项（`_pad_`）。
 
 ```py
 max_vocab = 60000
-min_freq = 2itos = [o for o,c in freq.most_common(max_vocab) if c>min_freq]
+min_freq = 2
+itos = [o for o,c in freq.most_common(max_vocab) if c>min_freq]
 itos.insert(0, '_pad_')
 itos.insert(0, '_unk_')
 ```
@@ -305,9 +359,14 @@ itos.insert(0, '_unk_')
 然后我们可以创建一个字典，它是相反的（从字符串到整数）。这不会覆盖所有内容，因为我们故意将它截断到 60,000 个词。如果我们遇到字典中没有的东西，我们希望用零替换它，表示未知，所以我们可以使用带有 lambda 函数的 defaultdict，它总是返回零。
 
 ```py
-stoi = collections.defaultdict(lambda:0, 
-                               {v:k for k,v in enumerate(itos)})
-len(itos)*60002*
+stoi = collections.defaultdict(
+    lambda:0, 
+    {v:k for k,v in enumerate(itos)}
+)
+len(itos)
+'''
+60002
+'''
 ```
 
 现在我们定义了我们的`stoi`字典，我们可以为每个句子的每个单词调用它。
@@ -341,7 +400,10 @@ itos = pickle.load(open(LM_PATH/'tmp'/'itos.pkl', 'rb'))
 
 ```py
 vs=len(itos)
-vs,len(trn_lm)*(60002, 90000)*
+vs,len(trn_lm)
+'''
+(60002, 90000)
+'''
 ```
 
 这就是你要做的预处理。如果我们想的话，我们可以将更多的内容包装在实用函数中，但这一切都非常简单明了，一旦你将数据集转换为 CSV 格式，这段代码就可以适用于任何数据集。
@@ -357,7 +419,7 @@ vs,len(trn_lm)*(60002, 90000)*
 这是我们如何做的。获取 wikitext 模型。如果你使用`wget -r`，它将递归地抓取整个目录，其中有一些东西。
 
 ```py
-# ! wget -nH -r -np -P {PATH} [`files.fast.ai/models/wt103/`](http://files.fast.ai/models/wt103/)
+# ! wget -nH -r -np -P {PATH} http://files.fast.ai/models/wt103/
 ```
 
 我们需要确保我们的语言模型具有与 Jeremy 的 wikitext 相同的嵌入大小、隐藏数量和层数，否则你无法加载这些权重。
@@ -369,8 +431,8 @@ em_sz,nh,nl = 400,1150,3
 这是我们的预训练路径和我们的预训练语言模型路径。
 
 ```py
-PRE_PATH = PATH**/**'models'**/**'wt103'
-PRE_LM_PATH = PRE_PATH**/**'fwd_wt103.h5'
+PRE_PATH = PATH/'models'/'wt103'
+PRE_LM_PATH = PRE_PATH/'fwd_wt103.h5'
 ```
 
 让我们继续从前向 wikitext103 模型中`torch.load`这些权重。我们通常不使用 torch.load，但这是 PyTorch 抓取文件的方式。它基本上给你一个包含层名称和这些权重的张量/数组的字典。
@@ -378,16 +440,22 @@ PRE_LM_PATH = PRE_PATH**/**'fwd_wt103.h5'
 现在的问题是，wikitext 语言模型是建立在一个特定词汇表上的，这个词汇表与我们的不同。我们的#40 不同于 wikitext103 模型的#40。所以我们需要将一个映射到另一个。这非常简单，因为幸运的是 Jeremy 保存了 wikitext 词汇表的`itos`。
 
 ```py
-wgts = torch.load(PRE_LM_PATH, map_location=lambda storage, 
-                  loc: storage)enc_wgts = to_np(wgts['0.encoder.weight'])
+wgts = torch.load(
+    PRE_LM_PATH, 
+    map_location=lambda storage, loc: storage
+)
+enc_wgts = to_np(wgts['0.encoder.weight'])
 row_m = enc_wgts.mean(0)
 ```
 
 这是 wikitext103 模型中每个单词的列表，我们可以使用相同的`defaultdict`技巧来反向映射。我们将使用-1 来表示它不在 wikitext 词典中。
 
 ```py
-itos2 = pickle.load((PRE_PATH**/**'itos_wt103.pkl').open('rb'))stoi2 = collections.defaultdict(lambda:-1, {v:k for k,v 
-                                              in enumerate(itos2)})
+itos2 = pickle.load((PRE_PATH/'itos_wt103.pkl').open('rb'))
+stoi2 = collections.defaultdict(
+    lambda:-1, 
+    {v:k for k,v in enumerate(itos2)}
+)
 ```
 
 现在我们可以说我们的新权重集只是一个由词汇大小乘以嵌入大小（即我们将创建一个嵌入矩阵）的一大堆零。然后我们遍历我们 IMDb 词汇表中的每一个单词。我们将在 wikitext103 词汇表的`stoi2`（字符串到整数）中查找它，并查看它是否是一个单词。如果那是一个单词，那么我们就不会得到`-1`。所以`r`将大于或等于零，那么在这种情况下，我们将把嵌入矩阵的那一行设置为存储在名为`‘0.encoder.weight’`的元素内的权重。你可以查看这个字典`wgts`，很明显每个名称对应什么。它看起来非常类似于你在设置模块时给它的名称，所以这里是编码器权重。
@@ -398,7 +466,7 @@ itos2 = pickle.load((PRE_PATH**/**'itos_wt103.pkl').open('rb'))stoi2 = collectio
 new_w = np.zeros((vs, em_sz), dtype=np.float32)
 for i,w in enumerate(itos):
     r = stoi2[w]
-    new_w[i] = enc_wgts[r] if r**>**=0 else row_m
+    new_w[i] = enc_wgts[r] if r >= 0 else row_m
 ```
 
 然后我们将用`new_w`替换编码器权重，变成一个张量[[49:35](https://youtu.be/h5Tz7gZT9Fo?t=49m35s)]。我们没有谈论过权重绑定，但基本上解码器（将最终预测转换回单词的部分）使用完全相同的权重，所以我们也将它放在那里。然后有一个关于我们如何进行嵌入丢弃的奇怪事情，最终导致它们有一个完全独立的副本，原因并不重要。所以我们把权重放回它们需要去的地方。所以现在这是一组 torch 状态，我们可以加载进去。
@@ -449,8 +517,12 @@ fastai 文档项目的目标是创建让读者说“哇，这是我读过的最�
 wd=1e-7
 bptt=70
 bs=52
-opt_fn = partial(optim.Adam, betas=(0.8, 0.99))t = len(np.concatenate(trn_lm))
-t, t//64*(24998320, 390598)*
+opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
+t = len(np.concatenate(trn_lm))
+t, t//64
+'''
+(24998320, 390598)
+'''
 ```
 
 这是`LanguageModelLoader`，我真的希望到现在为止，你已经学会了在你的编辑器或 IDE 中如何跳转到符号[[1:02:37](https://youtu.be/h5Tz7gZT9Fo?t=1h2m37s)]。我不希望你为了找出`LanguageModelLoader`的源代码而感到困扰。如果你的编辑器没有做到这一点，就不要再使用那个编辑器了。有很多好用的免费编辑器可以轻松实现这一点。
@@ -478,8 +550,12 @@ t, t//64*(24998320, 390598)*
 ```py
 trn_dl = LanguageModelLoader(np.concatenate(trn_lm), bs, bptt)
 val_dl = LanguageModelLoader(np.concatenate(val_lm), bs, bptt)
-md = LanguageModelData(PATH, 1, vs, trn_dl, val_dl, bs=bs, 
-                       bptt=bptt)
+md = LanguageModelData(
+    PATH, 1, vs, 
+    trn_dl, val_dl, 
+    bs=bs, 
+    bptt=bptt
+)
 ```
 
 一般来说，我们想要创建一个学习器，通常我们这样做是通过获取一个模型数据对象并调用某种方法，这个方法有各种各样的名字，但通常我们称这个方法为`get_model`。这个想法是模型数据对象有足够的信息来知道给你什么样的模型。所以我们必须创建那个模型数据对象，这意味着我们需要一个非常容易做的 LanguageModelData 类[[1:09:51](https://youtu.be/h5Tz7gZT9Fo?t=1h9m51s)]。
@@ -519,9 +595,16 @@ md = LanguageModelData(PATH, 1, vs, trn_dl, val_dl, bs=bs,
 你选择的 dropout 很重要。通过大量实验，Jeremy 发现了一些对语言模型非常有效的 dropout。但如果你的语言模型数据较少，你需要更多的 dropout。如果你有更多的数据，你可以从更少的 dropout 中受益。你不想过度正则化。Jeremy 的观点是，这些比例已经相当不错，所以只需调整这个数字（下面的`0.7`），我们只需将其乘以某个值。如果你过拟合，那么你需要增加这个数字，如果你欠拟合，你需要减少这个数字。因为除此之外，这些比例似乎相当不错。
 
 ```py
-drops = np.array([0.25, 0.1, 0.2, 0.02, 0.15])*0.7learner= md.get_model(opt_fn, em_sz, nh, nl, 
-    dropouti=drops[0], dropout=drops[1], wdrop=drops[2],
-    dropoute=drops[3], dropouth=drops[4])learner.metrics = [accuracy]
+drops = np.array([0.25, 0.1, 0.2, 0.02, 0.15]) * 0.7
+learner= md.get_model(
+    opt_fn, em_sz, nh, nl, 
+    dropouti=drops[0], 
+    dropout=drops[1], 
+    wdrop=drops[2],
+    dropoute=drops[3], 
+    dropouth=drops[4]
+)
+learner.metrics = [accuracy]
 learner.freeze_to(-1)
 ```
 
@@ -530,15 +613,27 @@ learner.freeze_to(-1)
 有一个看似不起眼但实际上非常有争议的重要观点是，当我们看语言模型时，我们应该衡量准确性。通常对于语言模型，我们看的是一个损失值，即交叉熵损失，但具体来说，我们几乎总是取 e 的幂次方，NLP 社区称之为“困惑度”。所以困惑度就是`e^(交叉熵)`。基于交叉熵损失进行比较存在很多问题。不确定现在是否有时间详细讨论，但基本问题就像我们学到的关于焦点损失的那个东西。交叉熵损失 - 如果你是对的，它希望你非常确信自己是对的。因此，它会严厉惩罚那些不说“我非常确定这是错误”的模型，而实际上是错误的。而准确性完全不关心你有多自信 - 它关心的是你是否正确。这在现实生活中更常见。准确性是我们猜测下一个词正确的频率，这是一个更稳定的数字来跟踪。这是 Jeremy 做的一个简单小事。
 
 ```py
-learner.model.load_state_dict(wgts)lr=1e-3
-lrs = lrlearner.fit(lrs/2, 1, wds=wd, use_clr=(32,2), cycle_len=1)*epoch      trn_loss   val_loss   accuracy                     
-    0      4.398856   4.175343   0.28551**[4.175343, 0.2855095456305303]*learner.save('lm_last_ft')learner.load('lm_last_ft')learner.unfreeze()learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=True)learner.sched.plot()
+learner.model.load_state_dict(wgts)
+lr=1e-3
+lrs = lrlearner.fit(lrs/2, 1, wds=wd, use_clr=(32,2), cycle_len=1)
+'''
+epoch      trn_loss   val_loss   accuracy                     
+    0      4.398856   4.175343   0.28551
+[4.175343, 0.2855095456305303]
+'''
+learner.save('lm_last_ft')
+learner.load('lm_last_ft')
+learner.unfreeze()
+learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=True)
+learner.sched.plot()
 ```
 
 我们训练一段时间，将交叉熵损失降至 3.9，相当于约 49.40 的困惑度（`e³.9`）。要让你了解语言模型的情况，如果你看一下大约 18 个月前的学术论文，你会看到他们谈论的最先进的困惑度超过一百。我们理解语言的能力以及衡量语言模型准确性或困惑度的速度并不是理解语言的一个可怕的代理。如果我能猜到你接下来要说什么，我需要很好地理解语言以及你可能会谈论的事情。困惑度数字已经下降了很多，这是令人惊讶的，而且它还会下降很多。在过去的 12-18 个月里，NLP 真的感觉像是 2011-2012 年的计算机视觉。我们开始理解迁移学习和微调，基本模型变得更好了很多。你对 NLP 能做什么和不能做什么的想法正在迅速过时。当然，NLP 仍然有很多不擅长的地方。就像在 2012 年，计算机视觉有很多不擅长的地方一样。但它的变化速度非常快，现在是非常好的时机，要么变得非常擅长 NLP，要么基于 NLP 创办初创公司，因为两年前计算机绝对擅长的一堆事情，现在还不如人类，而明年，它们将比人类好得多。
 
 ```py
-learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=15)epoch      trn_loss   val_loss   accuracy                     
+learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=15)
+'''
+epoch      trn_loss   val_loss   accuracy                     
     0      4.332359   4.120674   0.289563  
     1      4.247177   4.067932   0.294281                     
     2      4.175848   4.027153   0.298062                     
@@ -553,7 +648,9 @@ learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=15)epoch      trn_loss   
     11     3.97106    3.920667   0.30989                      
     12     3.941096   3.917029   0.310515                     
     13     3.924818   3.91302    0.311015                     
-    14     3.923296   3.908476   0.311586[3.9084756, 0.3115861900150776]
+    14     3.923296   3.908476   0.311586
+[3.9084756, 0.3115861900150776]
+'''
 ```
 
 **问题**：您一周内阅读论文与编码的比例是多少？天哪，你觉得呢，Rachel？你看到我。我的意思是，更多的是编码，对吧？“编码要多得多。我觉得每周也会有很大的变化”（Rachel）。有了那些边界框的东西，有很多论文，但没有明确的指引，所以我甚至不知道该先读哪一篇，然后我读了引用，但一个也不懂。所以有几周时间只是读论文，然后才知道从哪里开始编码。不过这种情况很少见。每次我开始读一篇论文，我总是确信自己不够聪明，无法理解，无论是哪篇论文。但最终我总能理解。但我尽量花尽可能多的时间编码。
@@ -586,16 +683,29 @@ learner.sched.plot_loss()
 现在让我们创建分类器。我们将快速浏览一下，因为它是相同的。但当你在这一周回顾代码时，确信它是相同的。
 
 ```py
-df_trn = pd.read_csv(CLAS_PATH/'train.csv', header=None, 
-                     chunksize=chunksize)
-df_val = pd.read_csv(CLAS_PATH/'test.csv', header=None, 
-                     chunksize=chunksize)tok_trn, trn_labels = get_all(df_trn, 1)
-tok_val, val_labels = get_all(df_val, 1)*0
+df_trn = pd.read_csv(
+    CLAS_PATH/'train.csv', 
+    header=None, 
+    chunksize=chunksize
+)
+df_val = pd.read_csv(
+    CLAS_PATH/'test.csv', 
+    header=None, 
+    chunksize=chunksize)
+tok_trn, trn_labels = get_all(df_trn, 1)
+tok_val, val_labels = get_all(df_val, 1)
+'''
+0
 1
 0
-1*(CLAS_PATH/'tmp').mkdir(exist_ok=True)np.save(CLAS_PATH/'tmp'/'tok_trn.npy', tok_trn)
-np.save(CLAS_PATH/'tmp'/'tok_val.npy', tok_val)np.save(CLAS_PATH/'tmp'/'trn_labels.npy', trn_labels)
-np.save(CLAS_PATH/'tmp'/'val_labels.npy', val_labels)tok_trn = np.load(CLAS_PATH/'tmp'/'tok_trn.npy')
+1
+'''
+(CLAS_PATH/'tmp').mkdir(exist_ok=True)
+np.save(CLAS_PATH/'tmp'/'tok_trn.npy', tok_trn)
+np.save(CLAS_PATH/'tmp'/'tok_val.npy', tok_val)
+np.save(CLAS_PATH/'tmp'/'trn_labels.npy', trn_labels)
+np.save(CLAS_PATH/'tmp'/'val_labels.npy', val_labels)
+tok_trn = np.load(CLAS_PATH/'tmp'/'tok_trn.npy')
 tok_val = np.load(CLAS_PATH/'tmp'/'tok_val.npy')
 ```
 
@@ -603,10 +713,17 @@ tok_val = np.load(CLAS_PATH/'tmp'/'tok_val.npy')
 
 ```py
 itos = pickle.load((LM_PATH/'tmp'/'itos.pkl').open('rb'))
-stoi = collections.defaultdict(lambda:0, {v:k for k,v in 
-                                          enumerate(itos)})
-len(itos)*60002*trn_clas = np.array([[stoi[o] for o in p] for p in tok_trn])
-val_clas = np.array([[stoi[o] for o in p] for p in tok_val])np.save(CLAS_PATH/'tmp'/'trn_ids.npy', trn_clas)
+stoi = collections.defaultdict(
+    lambda:0, 
+    {v:k for k,v in enumerate(itos)}
+)
+len(itos)
+'''
+60002
+'''
+trn_clas = np.array([[stoi[o] for o in p] for p in tok_trn])
+val_clas = np.array([[stoi[o] for o in p] for p in tok_val])
+np.save(CLAS_PATH/'tmp'/'trn_ids.npy', trn_clas)
 np.save(CLAS_PATH/'tmp'/'val_ids.npy', val_clas)
 ```
 
@@ -614,7 +731,8 @@ np.save(CLAS_PATH/'tmp'/'val_ids.npy', val_clas)
 
 ```py
 trn_clas = np.load(CLAS_PATH/'tmp'/'trn_ids.npy')
-val_clas = np.load(CLAS_PATH/'tmp'/'val_ids.npy')trn_labels = np.squeeze(np.load(CLAS_PATH/'tmp'/'trn_labels.npy'))
+val_clas = np.load(CLAS_PATH/'tmp'/'val_ids.npy')
+trn_labels = np.squeeze(np.load(CLAS_PATH/'tmp'/'trn_labels.npy'))
 val_labels = np.squeeze(np.load(CLAS_PATH/'tmp'/'val_labels.npy'))
 ```
 
@@ -624,7 +742,8 @@ val_labels = np.squeeze(np.load(CLAS_PATH/'tmp'/'val_labels.npy'))
 bptt,em_sz,nh,nl = 70,400,1150,3
 vs = len(itos)
 opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
-bs = 48min_lbl = trn_labels.min()
+bs = 48
+min_lbl = trn_labels.min()
 trn_labels -= min_lbl
 val_labels -= min_lbl
 c=int(trn_labels.max())+1
@@ -648,12 +767,26 @@ val_ds = TextDataset(val_clas, val_labels)
 ## 将其转换为 DataLoader
 
 ```py
-trn_samp = SortishSampler(trn_clas, key=lambda x: len(trn_clas[x]), 
-                          bs=bs//2)
-val_samp = SortSampler(val_clas, key=lambda x: len(val_clas[x]))trn_dl = DataLoader(trn_ds, bs//2, transpose=True, num_workers=1,
-                    pad_idx=1, sampler=trn_samp)
-val_dl = DataLoader(val_ds, bs, transpose=True, num_workers=1, 
-                    pad_idx=1, sampler=val_samp)
+trn_samp = SortishSampler(
+    trn_clas, 
+    key=lambda x: len(trn_clas[x]), 
+    bs=bs//2
+)
+val_samp = SortSampler(val_clas, key=lambda x: len(val_clas[x]))
+trn_dl = DataLoader(
+    trn_ds, bs//2, 
+    transpose=True, 
+    num_workers=1,
+    pad_idx=1, 
+    sampler=trn_samp
+)
+val_dl = DataLoader(
+    val_ds, bs, 
+    transpose=True, 
+    num_workers=1, 
+    pad_idx=1, 
+    sampler=val_samp
+)
 md = ModelData(PATH, trn_dl, val_dl)
 ```
 
@@ -678,12 +811,23 @@ PyTorch 的一个伟大之处在于，他们为数据加载器提出了一个 AP
 你可以添加任意数量的层。所以你基本上可以在最后创建一个小型多层神经网络分类器。同样，对于`drops=[dps[4], 0.1]`，这些是在每个层之后要进行的丢弃。
 
 ```py
- *# part 1*
-dps = np.array([0.4, 0.5, 0.05, 0.3, 0.1])dps = np.array([0.4,0.5,0.05,0.3,0.4])*0.5m = get_rnn_classifer(bptt, 20*70, c, vs, emb_sz=em_sz, n_hid=nh, 
-                      n_layers=nl, pad_token=1,
-                      layers=[em_sz*3, 50, c], drops=[dps[4], 0.1],
-                      dropouti=dps[0], wdrop=dps[1],        
-                      dropoute=dps[2], dropouth=dps[3])opt_fn = partial(optim.Adam, betas=(0.7, 0.99))
+# part 1
+dps = np.array([0.4, 0.5, 0.05, 0.3, 0.1])
+dps = np.array([0.4,0.5,0.05,0.3,0.4])*0.5
+m = get_rnn_classifer(
+    bptt, 20*70, c, vs, 
+    emb_sz=em_sz, 
+    n_hid=nh, 
+    n_layers=nl, 
+    pad_token=1,
+    layers=[em_sz*3, 50, c], 
+    drops=[dps[4], 0.1],
+    dropouti=dps[0], 
+    wdrop=dps[1],        
+    dropoute=dps[2], 
+    dropouth=dps[3]
+)
+opt_fn = partial(optim.Adam, betas=(0.7, 0.99))
 ```
 
 我们将像以前一样使用 RNN_Learner。
@@ -700,7 +844,8 @@ learn.metrics = [accuracy]
 ```py
 lr=3e-3
 lrm = 2.6
-lrs = np.array([lr/(lrm**4), lr/(lrm**3), lr/(lrm**2), lr/lrm, lr])lrs=np.array([1e-4,1e-4,1e-4,1e-3,1e-2])
+lrs = np.array([lr/(lrm**4), lr/(lrm**3), lr/(lrm**2), lr/lrm, lr])
+lrs=np.array([1e-4,1e-4,1e-4,1e-3,1e-2])
 ```
 
 你可以尝试使用权重衰减或不使用。Jeremy 已经在尝试一些东西。
@@ -714,18 +859,35 @@ learn.load_encoder('lm2_enc')
 我们开始只训练最后一层，得到 92.9%的准确率：
 
 ```py
-learn.freeze_to(-1)learn.lr_find(lrs/1000)
-learn.sched.plot()learn.fit(lrs, 1, wds=wd, cycle_len=1, use_clr=(8,3))*epoch      trn_loss   val_loss   accuracy                      
-    0      0.365457   0.185553   0.928719**[0.18555279, 0.9287188090884525]*learn.save('clas_0')
+learn.freeze_to(-1)
+learn.lr_find(lrs/1000)
+learn.sched.plot()
+learn.fit(lrs, 1, wds=wd, cycle_len=1, use_clr=(8,3))
+'''
+epoch      trn_loss   val_loss   accuracy                      
+    0      0.365457   0.185553   0.928719
+[0.18555279, 0.9287188090884525]
+'''
+learn.save('clas_0')
 learn.load('clas_0')
 ```
 
 然后我们再解冻一层，得到 93.3%的准确率：
 
 ```py
-learn.freeze_to(-2)learn.fit(lrs, 1, wds=wd, cycle_len=1, use_clr=(8,3))*epoch      trn_loss   val_loss   accuracy                      
-    0      0.340473   0.17319    0.933125**[0.17319041, 0.9331253991245995]*learn.save('clas_1')
-learn.load('clas_1')learn.unfreeze()learn.fit(lrs, 1, wds=wd, cycle_len=14, use_clr=(32,10))epoch      trn_loss   val_loss   accuracy                      
+learn.freeze_to(-2)
+learn.fit(lrs, 1, wds=wd, cycle_len=1, use_clr=(8,3))
+'''
+epoch      trn_loss   val_loss   accuracy                      
+    0      0.340473   0.17319    0.933125
+[0.17319041, 0.9331253991245995]
+'''
+learn.save('clas_1')
+learn.load('clas_1')
+learn.unfreeze()
+learn.fit(lrs, 1, wds=wd, cycle_len=14, use_clr=(32,10))
+'''
+epoch      trn_loss   val_loss   accuracy                      
     0      0.337347   0.186812   0.930782  
     1      0.284065   0.318038   0.932062                      
     2      0.246721   0.156018   0.941747                      
@@ -739,7 +901,11 @@ learn.load('clas_1')learn.unfreeze()learn.fit(lrs, 1, wds=wd, cycle_len=14, use_
     10     0.198024   0.146215   0.948345                      
     11     0.20324    0.189206   0.948145                      
     12     0.165159   0.151402   0.947745                      
-    13     0.165997   0.146615   0.947905[0.14661488, 0.9479046703071374]learn.sched.plot_loss()learn.save('clas_2')
+    13     0.165997   0.146615   0.947905
+[0.14661488, 0.9479046703071374]
+'''
+learn.sched.plot_loss()
+learn.save('clas_2')
 ```
 
 然后我们微调整个模型[[1:40:47](https://youtu.be/h5Tz7gZT9Fo?t=1h40m47s)]。这是在我们的论文出现之前使用预训练模型的主要尝试：
@@ -833,7 +999,8 @@ Jeremy：“嗯……是的，如果你做了所有这些事情，那我们可�
 技巧＃2 是创建 Python 脚本，这就是我们最终做的事情。所以我最终为 Sebastian 创建了一个小 Python 脚本，告诉他这是你需要做的基本步骤，现在你需要为其他所有事情创建不同的版本。我建议他尝试使用一个叫做 Google Fire 的东西。Google Fire 的作用是，你创建一个带有大量参数的函数，这些都是 Sebastian 想要尝试的不同事情 - 不同的 dropout 数量，不同的学习率，我是否使用预训练，我是否使用 CLR，我是否使用区分性学习率等等。所以你创建一个函数，然后添加一些内容说：
 
 ```py
-if __name__ == '__main__': fire.Fire(train_clas)
+if __name__ == '__main__': 
+    fire.Fire(train_clas)
 ```
 
 你什么都不做 - 你不必添加任何元数据，任何文档字符串，什么都不用添加，然后你调用那个脚本，你现在自动拥有了一个命令行界面。这是在终端中运行许多不同变体的超级简单方法。如果你想要做很多变体，这种方法比使用笔记本更容易，因为你可以编写一个 bash 脚本来尝试所有这些变体并将它们全部输出。
