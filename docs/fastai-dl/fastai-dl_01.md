@@ -79,6 +79,8 @@ img = plt.imread(f{PATH}valid/cats/{files[0]}')
 plt.imshow(img);
 ```
 
+![](img/1-1.webp)
+
 +   `f’{PATH}valid/cats/{files[0]}’` — 这是 Python 3.6\. 格式化字符串，是一种方便的格式化字符串的方法。
 
 ```py
@@ -207,6 +209,8 @@ probs = np.exp(log_preds[:,1])        # pr(dog)
 
 +   在 PyTorch 和 Fast.ai 中，大多数模型返回预测的对数而不是概率本身（我们将在课程中稍后学习原因）。现在，只需知道要获得概率，您必须执行`np.exp()`
 
+    ![](img/1-2.webp)
+
 +   确保您熟悉 numpy（`np`）
 
 ```py
@@ -221,13 +225,20 @@ plot_val_with_title(rand_by_correct(True), "Correctly classified")
 plot_val_with_title(rand_by_correct(False), "Incorrectly classified")
 ```
 
+![](img/1-3.webp)
+
+
 ```py
 plot_val_with_title(most_by_correct(0, True), "Most correct cats")
 ```
 
+![](img/1-4.webp)
+
 ```py
 plot_val_with_title(most_by_correct(1, True), "Most correct dogs")
 ```
+
+![](img/1-5.webp)
 
 更有趣的是，以下是模型认为肯定是狗的东西，但结果是猫，反之亦然：
 
@@ -235,14 +246,20 @@ plot_val_with_title(most_by_correct(1, True), "Most correct dogs")
 plot_val_with_title(most_by_correct(0, False), "Most incorrect cats")
 ```
 
+![](img/1-6.webp)
+
 ```py
 plot_val_with_title(most_by_correct(1, False), "Most incorrect dogs")
 ```
+
+![](img/1-7.webp)
 
 ```py
 most_uncertain = np.argsort(np.abs(probs -0.5))[:4]
 plot_val_with_title(most_uncertain, "Most uncertain predictions")
 ```
+
+![](img/1-8.webp)
 
 +   为什么查看这些图像很重要？Jeremy 在构建模型后的第一件事是找到一种可视化其构建内容的方法。因为如果他想让模型更好，那么他需要利用做得好的事情并修复做得不好的事情。
 
@@ -267,6 +284,9 @@ fast.ai：让学生立即使用神经网络，尽快获得结果
 +   逐渐剥开层，修改，查看内部
 
 ## 课程结构[[33:53](https://youtu.be/IPBSB1HLNLo?t=33m53s)]
+
+
+![](img/1-9.webp)
 
 1.  使用深度学习的图像分类器（代码行数最少）
 
@@ -300,9 +320,13 @@ fast.ai：让学生立即使用神经网络，尽快获得结果
 
 ## 更好的方法[[47:35](https://youtu.be/IPBSB1HLNLo?t=47m35s)]
 
+![](img/1-10.webp)
+
 +   具有这三个特性的算法类别是深度学习。
 
 ## 无限灵活的函数：神经网络[[48:43](https://youtu.be/IPBSB1HLNLo?t=48m43s)]
+
+![](img/1-11.webp)
 
 深度学习使用的基础函数称为神经网络：
 
@@ -310,11 +334,17 @@ fast.ai：让学生立即使用神经网络，尽快获得结果
 
 ## 全能参数拟合：梯度下降[[49:39](https://youtu.be/IPBSB1HLNLo?t=49m39s)]
 
+![](img/1-12.webp)
+
 ## 快速且可扩展：GPU[[51:05](https://youtu.be/IPBSB1HLNLo?t=51m5s)]
+
+![](img/1-13.webp)
 
 上面显示的神经网络示例有一个隐藏层。我们在过去几年学到的一些东西是，这种神经网络如果不添加多个隐藏层，就不会快速或可扩展，因此被称为“深度”学习。
 
 ## 将所有内容放在一起[[53:40](https://youtu.be/IPBSB1HLNLo?t=53m40s)]
+
+![](img/1-14.webp)
 
 以下是一些例子：
 
@@ -326,9 +356,15 @@ fast.ai：让学生立即使用神经网络，尽快获得结果
 
 +   [`arxiv.org/abs/1603.01768`](https://arxiv.org/abs/1603.01768)
 
+![](img/1-15.gif)
+
 ## 诊断肺癌[[56:55](https://youtu.be/IPBSB1HLNLo?t=56m55s)]
 
+![](img/1-16.webp)
+
 其他当前应用：
+
+![](img/1-17.webp)
 
 # 卷积神经网络[[59:13](https://youtu.be/IPBSB1HLNLo?t=59m13s)]
 
@@ -336,15 +372,17 @@ fast.ai：让学生立即使用神经网络，尽快获得结果
 
 [`setosa.io/ev/image-kernels/`](http://setosa.io/ev/image-kernels/)
 
+![](img/1-18.webp)
+
 ## 非线性层[[01:02:12](https://youtu.be/IPBSB1HLNLo?t=1h2m12s)]
 
-[](http://neuralnetworksanddeeplearning.com/chap4.html?source=post_page-----602f73869197--------------------------------) [## 神经网络和深度学习
+[神经网络和深度学习](http://neuralnetworksanddeeplearning.com/chap4.html?source=post_page-----602f73869197--------------------------------)
 
-### 在这一章中，我给出了普适性定理的简单且大部分是可视化的解释。我们将一步一步地进行...
-
-神经网络与深度学习.com](http://neuralnetworksanddeeplearning.com/chap4.html?source=post_page-----602f73869197--------------------------------)
+在这一章中，我给出了普适性定理的简单且大部分是可视化的解释。我们将一步一步地进行...
 
 Sigmoid 和 ReLU
+
+![](img/1-19.webp)
 
 +   线性层和逐元素非线性函数的组合使我们能够创建任意复杂的形状 — 这是普适性定理的本质。
 
@@ -352,11 +390,18 @@ Sigmoid 和 ReLU
 
 +   随机梯度下降 — 我们沿着山坡小步前进。步长被称为**学习率**
 
+![](img/1-20.gif)
+
+![](img/1-21.webp)
+
+
 +   如果学习率太大，它会发散而不是收敛
 
 +   如果学习率太小，将需要很长时间
 
 ## 可视化和理解卷积网络[[01:08:27](https://youtu.be/IPBSB1HLNLo?t=1h8m27s)]
+
+![](img/1-22.webp)
 
 我们从一些非常简单的东西开始，但如果我们将其用作足够大的规模，由于普适性定理和深度学习中多个隐藏层的使用，我们实际上获得了非常丰富的能力。这实际上是我们在训练狗和猫识别器时使用的方法。
 
@@ -383,6 +428,9 @@ learn.lr_find()
 learn.sched.plot_lr()
 ```
 
+![](img/1-23.webp)
+
+
 +   Jeremy 目前正在尝试指数增加学习率与线性增加学习率。
 
 我们可以看到损失与学习率的图表，以查看我们的损失何时停止减少：
@@ -390,6 +438,9 @@ learn.sched.plot_lr()
 ```py
 learn.sched.plot()
 ```
+
+![](img/1-24.webp)
+
 
 +   然后我们选择损失仍然明显改善的学习率 — 在这种情况下是`1e-2`（0.01）
 
@@ -413,17 +464,38 @@ learn.sched.plot()
 
 **1.**`Tab` — 当你记不住函数名时，它会自动完成
 
+![](img/1-25.webp)
+
+
 **2.** `Shift + Tab` — 它会显示函数的参数
+
+![](img/1-26.webp)
+
 
 **3.** `Shift + Tab + Tab` — 它会显示文档（即 docstring）
 
+![](img/1-27.webp)
+
+
 **4.** `Shift + Tab + Tab + Tab` — 它会打开一个带有相同信息的单独窗口。
+
+![](img/1-28.webp)
+
 
 在单元格中键入`?`后跟一个函数名并运行它将与`shift + tab（3 次）`相同
 
+![](img/1-29.webp)
+
+
 **5.** 输入两个问号将显示源代码
 
+![](img/1-30.webp)
+
+
 **6\.** 在 Jupyter Notebook 中键入`H`将打开一个带有键盘快捷键的窗口。尝试每天学习 4 或 5 个快捷键
+
+![](img/1-31.webp)
+
 
 **7\.** 停止 Paperspace、Crestle、AWS — 否则你将被收费$$
 
