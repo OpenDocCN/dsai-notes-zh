@@ -1,0 +1,1502 @@
+- en: 'Machine Learning 1: Lesson 8'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-8-fa1a87064a53](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-8-fa1a87064a53)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*machine learning class*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)*.
+    These notes will continue to be updated and improved as I continue to review the
+    course to “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural nets broadly defined
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Video](https://youtu.be/DzE0eSdy5Hk) / [Notebook](https://github.com/fastai/fastai/blob/master/courses/ml1/lesson4-mnist_sgd.ipynb)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we discussed at the end of last lesson, we’re moving from decision tree ensembles
+    to neural nets broadly defined. As you know, random forests and decision trees
+    are limited by the fact in the end that they are basically doing nearest neighbors.
+    All they can do is to return the average of a bunch of other points. So they can’t
+    extrapolate out to, if you are thinking what happens if I’ll increase my price
+    by 20% and you’ve never priced at that level before, or what’s going to happen
+    to sales next year and obviously we’ve never seen next year before and it’s very
+    hard to extrapolate. It’s also hard as it can only do around log base 2 N decisions
+    so if there is a time series it needs to fit to, that takes 4 steps to get to
+    the right time area then suddenly there’s not many decisions left for it to make
+    so it’s kind of this limited amount of computation that it can do. So there is
+    a limited complexity of relationship that it can model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Can I ask about one more drawback of random forests? If we have
+    a data as categorical variable which are not in sequential order, for random forests,
+    we encode them and treat them as numbers, let’s say we have 20 cardinality so
+    the split random forest gives is like less than 5 or less than 6\. But if the
+    categories are not sequential (i.e. not in any order), what does that mean [[2:00](https://youtu.be/DzE0eSdy5Hk?t=2m)]?
+    So if you’ve got like, let’s go back to bulldozers, EROPS, EROPS w A/C, OROPS,
+    N/A, etc, and we arbitrarily label them from 0 to 3\. Actually we know that all
+    that really mattered was if it had air conditioning. So what’s going to happen?
+    It’s basically going to say, if I group it into EROPS w A/C and OROPS together,
+    and N/A and EROPS together, that’s an interesting break just because it so happens
+    that the air conditioning ones all are going to end up in the right hand side.
+    Having done that, it’s then going to say within the group with the EROPS w A/C
+    and OROPS, it’s going to notice that it’s furthermore going to have to split it
+    into two more groups. So eventually it’s going to get there. It’s going to pull
+    out the category with AC. It’s just it’s going to take more splits than we would
+    ideally like. So it’s kind of similar to the fact that for it to model a line,
+    it can only do it with lots of splits and only approximately.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Follow up question**: So random forest is fine with categories that are not
+    sequential also [[3:58](https://youtu.be/DzE0eSdy5Hk?t=3m58s)]? Yes, it can do
+    it. It’s just in ways it’s sub-optimal because we just need to do more breakpoints
+    than we would have liked, but it gets there. It does a pretty good job. So even
+    although random forests do have some deficiencies, they are incredibly powerful,
+    particularly because they have so few assumptions that they are really hard to
+    screw up. It’s kind of hard to actually hard to win Kaggle competition with a
+    random forest, but it’s very easy to get like top 10%. So in real life where often
+    that third decimal place doesn’t really matter, random forests are often what
+    you end up doing. But for some things like this Ecuadorian groceries competition,
+    it’s very very hard to get a good result with a random forest because there’s
+    a huge time series component and nearly everything is these two massively high
+    cardinality categorical variables which is the store and the item. So there’s
+    very little layer to even throw at a random forest and the difference between
+    every pair of stores is kind of different in different ways so there are some
+    things that are just hard to get even relatively good results for the random forest.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another example is recognizing numbers. You can get okay results with a random
+    forest, but in the end, they are kind of the relationship between the spacial
+    structure turns out to be important. And you kind of want to be able to do computations
+    like finding edges or whatever that carry forward through the computation. So
+    just doing a clever nearest neighbors like a random forest turns out not to be
+    ideal. So for stuff like this, neural networks turn out that they are ideal. Neural
+    networks turn out to be something that works particularly well for both things
+    like Ecuadorian groceries competition (i.e. forecasting sales over time by store
+    and by item) and for things like recognizing digits, and for things like turning
+    voice into speech. So it’s nice between these two things, neural nets and random
+    forests, we cover the territory. I haven’t needed to use anything other than these
+    two things for a very long time. And at some point, we will learn how to combine
+    the two because you can combine the two in really cool ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MNIST [[6:37](https://youtu.be/DzE0eSdy5Hk?t=6m37s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![](../Images/6d0d56b41815a97b5971ddf6c4241d62.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here is a picture from [Adam Geitgey](/@ageitgey/machine-learning-is-fun-part-3-deep-learning-and-convolutional-neural-networks-f40359318721)
+    of an image. An image is just a bunch of numbers and each of those numbers is
+    naught to 255 and the dark ones are close to 255, light ones are close to zero.
+    Here is an example of digit from this MNIST dataset. MNIST is a really old, like
+    a hello world of neural networks. So here is an example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/337b7d6e6d7c98914ba89ff2e1f32983.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: There are 28 by 28 pixels. If it was color, there would be three of these —
+    one for red, one for green, one for blue. Our job is to look at the array of numbers
+    and figure out that this is the number 8 which is tricky. How do we do that?
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are going to use a small number of FastAI pieces and we are gradually going
+    to remove more and more until by the end, we’ll have implemented our own neural
+    network from scratch, our own training loop from scratch, and our own matrix multiplication
+    from scratch. So we are gradually going to dig in further and further.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data [[7:54](https://youtu.be/DzE0eSdy5Hk?t=7m54s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The data for MNIST, which is the name of this very famous dataset is available
+    from here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: And we have a thing in `fastai.io` called `get_data` which will grab it from
+    URL and store it on your computer unless it’s already there in which case it’ll
+    just go ahead and use it. And we’ve got a little function here called `load_mnist`
+    which simply loads it up. You’ll see that it’s zipped so we could just use Python’s
+    gzip to open it up. And then it’s also pickled, so if you have any kind of Python
+    object at all, you can use this build-in Python library called `pickle` to dump
+    it out onto your disk, share it around, load it up later, and you get back the
+    same Python object you started with. You’ve already seen something like this with
+    Pandas’ feather format. Pickle is not just for Pandas, it’s not just for anything,
+    it works for basically nearly every Python object. So which might lead to the
+    question why didn’t we use pickle for a Pandas’ DataFrame. The answer is pickle
+    works for nearly every Python object but it’s probably not optimal for nearly
+    any Python object. So because we were looking at Pandas DataFrames with over a
+    hundred million rows, we really want to save that quickly so feather is a format
+    that’s specifically designed for that purpose and so it’s going to do that really
+    fast. If we tried to pickle it, it would have taken a lot longer. Also note that
+    pickle files are only for Python so you can’t give them to somebody else where
+    else a feather file, you can hand around. So it’s worth knowing that pickle exists
+    because if you’ve got some dictionary or some kind of object floating around that
+    you want to save for later or send to somebody else, you can always just pickle
+    it. So in this particular case, the folks at deeplearning.net was kind enough
+    to provide a pickled version.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pickle has changed slightly over time so old pickle files like this one (this
+    was Python 2 one), you actually have to tell it that it was encoded using this
+    particular Python 2 character set [[10:10](https://youtu.be/DzE0eSdy5Hk?t=610)].
+    But other than that, Python 2 and 3, you can normally open each other’s pickle
+    files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once we loaded that in, we loaded in like so `((x, y), (x_valid, y_valid), _)`.
+    And so this thing which we are doing here is called destructuring. Destructuring
+    means that `load_mnist` is giving us back a tuple of tuples. If we have on the
+    left hand side of the equal sign a tuple of tuples, we can fill all these things
+    in. So we are given back a tuple of training data, a tuple of validation data,
+    and a tuple of test data. In this case, I don’t care about the test data so I
+    just put it into a variable called `_` which Python people tend to think of as
+    being a special variable which we put things we’re going to throw away into. It’s
+    actually not special but it’s really common. If you see something assigned to
+    underscore, it probably means you’re just throwing it away.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By the way, in a Jupyter notebook it does have a special meaning which is the
+    last cell that you calculate is always available in underscore [[11:24](https://youtu.be/DzE0eSdy5Hk?t=684)].
+    But that’s kind of a separate issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then the first thing in that tuple is itself a tuple and so we’re going to stick
+    that into x and y for our training data, and then the second one goes into x and
+    y for our validation data. So that’s called destructuring and it’s pretty common
+    in lots of languages. Some languages don’t support it but those that do, life
+    becomes a lot easier. As soon as I look at some new dataset, I just check out
+    what have I got. What’s its type? Numpy array. What’s its shape? 50,000 by 784\.
+    Then what about the dependent variables? That’s an array, its shape is 50,000.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The image of 8 we saw earlier is not of length 784, it’s of size 28 by 28 [[12:18](https://youtu.be/DzE0eSdy5Hk?t=740)].
+    So what happened here? It turns out that all they did was they took the second
+    row and concatenate it to the first row, and the third row and concatenate it
+    to that, and the fourth row and concatenated that. So in other words, they took
+    the whole 28 by 28 and flattened it out into a single 1D array. Does that makes
+    sense? So it’s going to be of size 28². This is not normal by any means, so don’t
+    think everything you see is going to be like this. Most of the time when people
+    share images, they share them as JPEGs or PNGs, you load them up, you get back
+    a nice 2D array. But in this particular case for whatever reason, the thing that
+    they pickled was flattened out to be 784\. And this word “flatten” is very common
+    with working with tensors so when you flatten a tensor, it just means that you’re
+    turning it into a lower rank tensor than you started with. In this case, we started
+    with a rank 2 tensor (i.e. a matrix) for each image and we turned each one into
+    a rank 1 tensor (i.e. a vector). So overall the whole thing is a rank 2 tensor
+    rather than a rank 3 . tensor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So just to remind us of the jargon here [[13:50](https://youtu.be/DzE0eSdy5Hk?t=830)],
+    this in math, we would call a vector. In computer science, we would call it a
+    1D array, but because deep learning have people who have to come across as smarter
+    than everybody else, we have to call this a rank 1 tensor. They all mean the same
+    thing more or less unless you’re a physicist — in which case, this means something
+    else and you get very angry at the deep learning people because you say “it’s
+    not a tensor”. So there you go. Don’t blame me. This is just what people say.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/6f52769b04a3f34bd5622692e7b815b6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So this is either a matrix or a 2D array or a rank 2 tensor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/7e7bcdcd094e2066d9d6ee0928ec0433.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Once we start to get into three dimensions, we start to run out of mathematical
+    names which is why we start to be nice and just say rank three tensor. So there’s
+    actually nothing special about vectors and matrices that makes them in any way
+    more important than rank 3 tensors or rank 4 tensors. So I try not to use the
+    terms vector and matrix where possible because I don’t really think they’re any
+    more special than any other rank of tensor. So it’s good to get used to thinking
+    of this `numpy.ndarray (50,000, 784)` as a rank 2 tensor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: And then the rows and columns [[15:25](https://youtu.be/DzE0eSdy5Hk?t=925)].
+    If we were computer science people, we would call this dimension zero and dimension
+    one. But if we were deep learning people, we would call this axis zero and axis
+    one. Then just to be really confusing, if you were an image person, columns are
+    the first axis and rows are the second axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/c79efecfed2414479477e970e4608da8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So if you think about TVs, 1920 by 1080 — columns by rows. Everybody else including
+    deep learning and mathematicians, rows by columns. So this is pretty confusing
+    if you use Python imaging library, you get columns by rows; pretty much everything
+    else, rows by columns. So be careful. [A student asks “why do they do that?”]
+    Because they hate us, because they’re bad people, I guess 😆
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s a lot of, particularly in deep learning, a whole lot of different areas
+    have come together like information theory, computer vision, statistics, signal
+    processing and you’ve ended up with this hodgepodge of nomenclature in deep learning
+    [[16:39](https://youtu.be/DzE0eSdy5Hk?t=999)]. Often like every version of things
+    will be used, so today, we are going to hear about something that’s called either
+    negative log likelihood or binomial or categorical cross entropy, depending on
+    where you come from. We’ve already seen something that’s called either one hot
+    encoding or dummy variables depending on where you come from. And really it’s
+    just like the same concept gets kind of somewhat independently invented in different
+    fields and eventually they find their way to machine learning and then we don’t
+    know what to call them so we call them all of the above — something like that.
+    So I think that’s what happened with computer vision rows and columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normalize [[17:38](https://youtu.be/DzE0eSdy5Hk?t=1058)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There’s this idea of normalizing data which is subtracting out the mean and
+    dividing by the standard deviation. A question for you. Often it’s important to
+    normalize the data so that we can more easily train a model. Do you think it would
+    be important to normalize the independent variables for a random forest (if we
+    are training a random forest)?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Student: To be honest, I don’t know why we don’t need to normalize, I just
+    know that we don’t.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Okay, does anybody want to think about why? So really, the key is that when
+    we are deciding where to split, all that matters is the order. Like all that matters
+    is how they are sorted, so if we subtract the mean divide by the standard deviation,
+    they are still sorted in the same order. So remember when we implemented the random
+    forest, we said sort them and then we completely ignored the values. We just said
+    now add on one thing from the dependent at a time. So random forests only care
+    about the sort order of the independent variables. They don’t care at all about
+    their size. So that’s why they’re wonderfully immune to outliers because they
+    totally ignore the fact that it’s an outlier, they only care about which one is
+    higher than what other thing. So this is an important concept. It doesn’t just
+    appear in random forests. It occurs in some metrics as well. For example, area
+    under the ROC curve, you come across a lot, area under the ROC curve completely
+    ignores scale and only cares about sort. We saw something else when we did the
+    dendrogram. Spearman’s correlation is a rank correlation — only cares about order,
+    not about scale. So random forests, one of the many wonderful things about them
+    are that we can completely ignore a lot of these statistical distribution issues.
+    But we can’t for deep learning because deep learning, we are trying to train a
+    parameterized model. So we do need to normalize our data. If we don’t then it’s
+    going to be much harder to create a network that trains effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So we grab the mean and the standard deviation of our training data and subtract
+    out the mean, divide by the standard deviation, and that gives us a mean of zero
+    and standard deviation of one [[20:53](https://youtu.be/DzE0eSdy5Hk?t=1253)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now for our validation data, we need to use the standard deviation and mean
+    from the training data. We have to normalize it the same way. Just like categorical
+    variables, we had to make sure they had the same indexes mapped to the same levels
+    for a random forest. Or missing values, we had to make sure we have the same median
+    used when we were replacing the missing values. You need to make sure anything
+    you do in the training set, you do exactly the same thing in the test and validation
+    set. So here, I’m subtracting out the training set mean and dividing by the training
+    set standard deviation, so this is not exactly zero and one, but it’s pretty close.
+    So in general, if you find you try something on a validation set or a test set
+    and it’s much much much worse, than your training set, that’s probably because
+    you normalized in an inconsistent way or encoded categories in an inconsistent
+    way or something like that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Looking at the data [[22:03](https://youtu.be/DzE0eSdy5Hk?t=1323)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s take a look at some of this data. So we’ve got 10,000 images in the validation
+    set and each one is a rank one tensor of length 784.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: In order to display it, I want to turn it into a rank 2 tensor of 28 by 28\.
+    Numpy has a reshape function that takes a tensor in and reshapes it to whatever
+    size tensor you request. Now if you think about it, you only need to tell it about
+    if there are *D* axes, you only need to tell it about *D-1* of the axes you want
+    because the last one, it can figure out for itself. So in total, there are 10,000
+    by 784 numbers here altogether. so if you way I want my last axes to be 28 by
+    28, then you can figure out that (the first axis) this must be 10,000 otherwise
+    it’s not going to fit. So if you put -1, it says make it as big or as small as
+    you have to to make it fit. So you can see here, it figured out that it has to
+    be 10,000\. You’ll see this used in neural net software pre-processing and stuff
+    like that all the time. I could have written 10,000 here, but I try to get into
+    a habit of like anytime I’m referring to how many items in my input, I tend to
+    use -1 because it means later on I could use a subsample, this code wouldn’t break.
+    I could do some kind of stratified sampling if it was unbalanced, this code wouldn’t
+    break. So by using this kind of approach of saying -1 here for the size, it just
+    makes it more resilient to changes later. It’s a good habit to get into.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This idea of being able to take tensors and reshape them and change axes around
+    and stuff like that is something you need to be able to totally do without thinking
+    [[23:56](https://youtu.be/DzE0eSdy5Hk?t=1436)]. Because it’s going to happen all
+    the time. So for example, here is one. I tried to read in some images, they were
+    flattened, I need to unflatten them into a bunch of matrices — okay, reshape.
+    bang. I read some images in with OpenCV and it turns out OpenCV orders the channels
+    blue green red, everything else expects them to be red green blue. I need to reverse
+    the last axes. How do you do that? I read in some images with Python imaging library.
+    It reads them as rows by columns by channels, PyTorch expects channels by rows
+    by columns. How do I transform that. So these are all things you need to be able
+    to do without thinking, like straightaway. Because it happens all the time and
+    you never want to be sitting there thinking about it for ages. So make sure you
+    spend a lot of time over the week just practicing with things like all the stuff
+    you are going to see today: reshaping, slicing, reordering dimensions, stuff like
+    that. So the best way is to create some small tensors yourself and start thinking
+    like okay what shall I experiment with.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Back in normalize, you said many machine learning algorithms
+    behave better when the data is normalized, but you also just said scales don’t
+    really matter [[25:26](https://youtu.be/DzE0eSdy5Hk?t=1526)]? I said it doesn’t
+    matter for random forests. So random forests are just going to spit things based
+    on order and so we love them. We love random forests for the way they are so immune
+    to worrying about distributional assumptions. But we are not doing random forests.
+    We are doing deep learning. And deep learning does care.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: If we have parametric, then we should scale. If we have non-parametric,
+    we shouldn’t have to scale [[26:06](https://youtu.be/DzE0eSdy5Hk?t=1566)]? No
+    not quite. Because like k-nearest neighbors is nonparametric and scale matters
+    heck of a lot, so I would say things involving trees generally it just going to
+    split at a point and so probably you don’t care about scale but you probably just
+    need to think like is this an algorithm that uses order or does it use specific
+    numbers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Can you give us an intuition of why it needs scale just because
+    that may clarify some of the issues [[26:38](https://youtu.be/DzE0eSdy5Hk?t=1598)]?
+    Not until we get to doing SGD, so we are going to get to that. So for now, we’re
+    just going to say take my word for it.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Can you explain a little bit more what you mean by scale? Because
+    when I think of scale, I think all the numbers should be generally the same size.
+    Is that the case with the cats and dogs that we over with the deep learning like
+    you could have a small cat and a larger cat but it would still know what those
+    are both cats [[26:54](https://youtu.be/DzE0eSdy5Hk?t=1614)]? I guess this is
+    one of those problems where language gets overloaded. So in computer vision, when
+    we scale an image, we are actually increasing the size of the cat. In this case,
+    we are scaling the actual pixel values. So in both case, scaling means to make
+    something bigger and smaller. In this case, we are taking the numbers from naught
+    to 255 and making them so that they have an average of zero and a standard deviation
+    of one.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Could you explain us is it by column? by row? In general when
+    you are scaling, just not thinking about a picture but kind of input to machine
+    learning [[27:43](https://youtu.be/DzE0eSdy5Hk?t=1663)]. Okay, sure. I mean it’s
+    a little bit subtle, but in this case, I’ve just got a single mean and a single
+    standard deviation. So it’s basically on average, how much black is there. So
+    on average, we have a mean and a standard deviation across all the pixels. In
+    computer vision, we would normally do it by channel, so we would normally have
+    one number for red, one number for green, one number for blue. In general, you
+    need a different set of normalization coefficients for each thing you would expect
+    to behave differently. So if we were doing like a structured dataset where we’ve
+    got like income, distance in kilometers, and a number of children, you need three
+    separate normalization coefficients for those as they are very different kinds
+    of things. So it’s a bit domain-specific here. In this case, all of the pixels
+    are levels of gray so we just got a single scaling number. Where else you could
+    imagine if they were red vs. green vs. blue, you would need to scale those channels
+    in different ways.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So I’m having a little bit of trouble imagining what would happen
+    if you don’t normalize in this case [[29:19](https://youtu.be/DzE0eSdy5Hk?t=1759)].
+    We’ll get there. So this is kind of what Yannet was saying like why do we normalize
+    and for now, we are normalizing because I say we have to. When we get to looking
+    at stochastic gradient descent, we’ll basically discover that if you… Basically
+    to skip ahead a little bit, we are going to be doing a matrix multiply by a bunch
+    of weights. We are going to pick those weights in such a way that when we do the
+    matrix multiply, we are going to try to keep the number at the same scale that
+    they started out as. And that’s going to basically require the initial numbers
+    we are going to have to know what their scale is. So basically it’s much easier
+    to create a single neural network architecture that works for lots of different
+    kinds of inputs if we know that they are consistently going to be mean zero standard
+    deviation one. That would be the short answer. But we’ll learn a lot more about
+    it and if in a couple of lessons you are still not quite sure why, let’s come
+    back to it because it’s a really interesting thing to talk about.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: I’m trying to visualize the axes we’re working with here. So
+    under plots, when you write `x _valid.shape`, we get 10,000 by 784\. Does that
+    mean that we brought in 10,000 pictures of that dimension [[30:27](https://youtu.be/DzE0eSdy5Hk?t=1827)]?
+    Yes, exactly. **Question continued**: In the next line, when you choose to reshape
+    it, is there a reason why you put 28, 28 as Y or Z coordinates? Or is there a
+    reason why they’re in that order?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/eea87430f7a5c1a002310787f239edea.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Yes, there is. Pretty much all neural network libraries assume that the first
+    axis is kind of equivalent of a row. It’s like a separate thing, it’s a sentence
+    or an image or example of sales or whatever. So I want each image to be as separate
+    item of the first axis. Then so that leaves two more axes for the rows and columns
+    of the images. And that’s totally standard. I don’t think I’ve ever seen a library
+    that doesn’t work that way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: While normalizing the validation data, I saw you have used mean
+    of x and standard deviation of x data (i.e. training data). Shouldn’t we use mean
+    and standard deviation of validation data [[31:37](https://youtu.be/DzE0eSdy5Hk?t=1897)]?
+    No, because you see, then you would be normalizing the validation set using different
+    numbers and so now the meaning of this pixel has a value of 3 in the validation
+    set has a different meaning to the meaning of 3 in the training set. It would
+    be like if we had days of the week encoded such that Monday was a 1 in the training
+    set and was a 0 in the validation set. We’ve got now two different sets where
+    the same number has a different meaning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let me give an example. Let’s say we were doing full color image and our training
+    set contained like green frogs, green snakes and gray elephants. We’re training
+    to figure out which was which. Now we normalized using the each channel mean.
+    Then we have a validation set and a test set which are just green frogs and green
+    snakes. If we would have normalized by the validation sets statistics, we would
+    end up saying things on average are green. So we would remove all the greenness
+    out and so we would now fail to recognize the green frogs and the green snakes
+    effectively. So we actually want to use the same normalization coefficients that
+    we were training on. For those of you doing the deep learning class, we actually
+    go further than that. When we use a pre-trained network, we have to use the same
+    normalization coefficients that the original authors trained on. So the idea is
+    that a number needs to have this consistent meaning across every dataset where
+    you use it. This means when you are looking at the test set, you normalize the
+    test set based on the training set mean and standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/28111eb58a2b5f03eab5e2878d4ea4e9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So validation y values are just rank one tensor of 10,000 [[34:03](https://youtu.be/DzE0eSdy5Hk?t=2043)].
+    Remember this is kind of weird Python thing where a tuple with this one thing
+    in it needs a trailing comma. So this is a rank 1 tensor of length 10,000.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here is an example of something from that. It’s just a number 3\. So that’s
+    our labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Slicing [[34:28](https://youtu.be/DzE0eSdy5Hk?t=2068)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So here is another thing you need to be able to do in your sleep. Slicing into
+    a tensor. In this case, we’re slicing into the first axis with 0, so that means
+    we’re grabbing the first slice. Because this is a single number, this is going
+    to reduce the rank of the tensor by one. It’s going to turn it from a 3 dimensional
+    tensor into a 2 dimensional tensor. So you can see here, this is now just a matrix.
+    And then we are going to grab 10 through 14 inclusive rows, 10 through 14 inclusive
+    columns, and here it is. So this is the kind of thing you need to be super comfortable
+    — grabbing pieces out, looking at the numbers, and looking at the picture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here is an example of a little piece of that first image. So you kind of
+    want to get used to this idea that if you are working with something like pictures
+    or audio, this is something your brain is really good at interpreting. So keep
+    showing pictures of what you’re doing whenever you can. But also remember behind
+    the scenes they are numbers, so if something is going weird, print out a few of
+    the actual numbers. You might find somehow some of them have become infinity or
+    they are all zero or whatever. So use this interactive environment to explore
+    data as you go.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Just a quick semantic question. Why when it’s a tensor of rank
+    3, is it stored as like XYZ instead of like to me, it would make more sense to
+    store it as a list of 2D tensors [[35:56](https://youtu.be/DzE0eSdy5Hk?t=2156)]?
+    It’s not stored as either. So let’s look at this as a 3D. So here is a 3D. So
+    a 3D tensor is formatted as showing a list of 2D tensors basically.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/2f820b0c17fd39d9aeb1c5da76833725.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Question**: But why isn’t it like `x_imgs[0][10:15][10:15]` ? Oh, because
+    that has a different meaning. It’s kind of the difference between tensors and
+    jagged arrays. So basically if you do something like `a[2][3]` , that says take
+    the second list item and from it, grab the third list item. So we tend to use
+    that when we have something called jagged array which is where each sub-array
+    may be of a different length. Where else, we have a single object of three dimensions.
+    So we are trying to say which little piece of it do we want. So the idea is that
+    is a single slice object to go in and grab that piece out.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/187aa61a9c4393575a69ce4f3e94be1d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/01a922ceb1cf6362c9218cb68b51c486.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/63eb52d74552a92f3556b6f7cf6aca00.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So here is an example of a few of those images along with their labels [[37:33](https://youtu.be/DzE0eSdy5Hk?t=2230)].
+    This kind of stuff, you want to be able to do pretty quickly with matplotlib.
+    It’s going to help you a lot in life so you can have a look at what Rachel wrote
+    here when she wrote `plots`. We can use add_subplot to basically create those
+    little separate plots. And you need to know that `imshow` is how we basically
+    take a numpy array and draw it as a picture. Then we’ve also added the title on
+    top. So there it is.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Neural Networks [[38:19](https://youtu.be/DzE0eSdy5Hk?t=2299)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let’s take that data and try to build a neural network with it. Sorry, this
+    is going to be a lot of review for those of you already doing deep learning. A
+    neural network is just a particular mathematical function or a class of mathematical
+    functions but it’s a really important class because it has the property, it supports
+    what’s called the universal approximation theorem. It means that a neural network
+    can approximate any other function arbitrarily closely. So in other words, it
+    can do, in theory, anything as long as we make it big enough. So this is very
+    different to a function like 3*x* + 5 which can only do one thing — it’s a specific
+    function. Or the class of functions *ax* + *b* which can only represent lines
+    of different slopes moving it up and down different amounts. Or even the function
+    *ax² + bx + c + sin d* again only can represent a very specific subset of relationships.
+    The neural network, however, is a function that can represent any other function
+    to arbitrarily close accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So what we are going to do is we are going to learn how to take a function,
+    let’s take *ax + b*, and we are going to learn how to find its parameters (in
+    this case *a* and *b*) which allows it to fit as closely as possible to a set
+    of data. So this here is showing example from a notebook that we will be looking
+    at in deep learning course which basically show what happens when we use something
+    called stochastic gradient descent to try and set *a* and *b*. Basically what
+    happens is we are going to pick a random *a* to start with, a random *b* to start
+    with, then we are going to basically figure out do I need to increase or decrease
+    *a* to make the line close to the dots? Do I need to increase or decrease *b*
+    to make the line close to the dots? And then just keep increasing and decreasing
+    *a* and *b* lots and lots of times. So that’s what we are going to do and to answer
+    the question do I need to increase or decrease *a* and *b*, we are going to take
+    the derivative. So the derivative of the function with respect *a* and *b* tells
+    us how will that function change as we change *a* and *b*. So that’s basically
+    what we’re going to do. But we are not going to start with just a line, the idea
+    is we are to build up to actually having a neural net and so it’s going to be
+    exactly the same idea but because it’s an infinitely flexible function, we are
+    going to be able to use this exact same technique to fit to arbitrarily complex
+    relationships. That’s basically the idea.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/6f22748597af5433773d5ecfed422476.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Then what you need to know is that neural net is actually a very simple thing
+    [[41:12](https://youtu.be/DzE0eSdy5Hk?t=2472)]. A neural net actually is something
+    which takes as input, let’s say a vector, does a matrix product by that vector.
+    So if the vector is size *r*, and the matrix is *r* by *c*, the matrix product
+    will spit out something of size *c*. Then we do something called non-linearity
+    which is basically we are going to throw away all the negative values (i.e. `max(0,
+    x)`). And we are going to put that through another matrix multiply and then put
+    that through another `max(0, x)`, and put that through another matrix multiply
+    and so on until eventually we end up the single vector that we want. In other
+    words, each stage of our neural network, the key thing going on is a matrix multiply,
+    in other words, a linear function. So basically deep learning, most of their calculation
+    is lots and lots of linear functions, but between each one we’re going to replace
+    the negative numbers with zeros.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/1dd457d493aafbdb7d4695f3b068049f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Question**: Why are we throwing away the negative numbers [[42:53](https://youtu.be/DzE0eSdy5Hk?t=2573)]?
+    We will see. The short answer is if you apply a linear function to a linear function
+    to a linear function, it’s still just a linear function. So it’s totally useless.
+    But if you throw away the negatives, that’s actually a nonlinear transformation.
+    So it turns out that if you apply a linear function to the thing we threw away
+    the negatives, then apply that to a linear function that creates a neural network
+    and it turns out that’s the thing that can approximate any other function arbitrarily
+    closely. So this tiny little difference actually makes all the difference. And
+    if you are interested in it, check out the deep learning video where we cover
+    this because I actually show a nice visually intuitive proof, not something that
+    I created, but something Michael Nielsen created. Or if you want to skip straight
+    to his website, you could go to [Michael Nielsen universal approximation theorem](http://neuralnetworksanddeeplearning.com/chap4.html),
+    he’s got a really nice walkthrough with lots of animations where you can see why
+    this works.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why you (yes, you) should blog [[44:17](https://youtu.be/DzE0eSdy5Hk?t=2657)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: I feel like the hardest thing with getting started with technical writing on
+    the internet is just like posting your first thing. In [this blog](/@racheltho/why-you-yes-you-should-blog-7d2544ac1045),
+    Rachel actually says the top advice she would give to her younger self would be
+    to start blogging sooner. And she has both reasons why you should do it, some
+    examples of places she’s blogged has turned out to be great for her and her career,
+    and some tips about how to get started.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I remember when I first suggested to Rachel she might think about blogging because
+    she had so much interesting to say and at first she was kind of surprised at the
+    idea that she could blog. Now people come up to us at conferences and they’re
+    like “you’re Rachel Thomas! I love your writing!!” So I’ve seen that transition
+    from “wow could I blog?” to being known as a strong technical author. So check
+    out this article if you still need convincing or if you are wondering how to get
+    started. Since the first one is the first one is the hardest, maybe your first
+    one should be something really easy for you to write. So it could be like here
+    is a summary of the first 15 minutes of lesson 3 of our machine learning course
+    — here is what’s interesting, here is what we learned. Or it could be like here
+    is a summary of how I used a random forest to solve a particular problem in my
+    practicum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I often get questions like “oh my practicum, my organization, we’ve got sensitive
+    commercial data” — that’s fine. Just find another dataset and do it on that instead
+    to show the example, or anonymize all of the values and change the names of the
+    variables or whatever. You can talk to your employer or your practicum partner
+    to make sure that they are comfortable with whatever it is you’re writing. In
+    general though, people love it when their interns blog about what they are working
+    on because it makes them look super cool. It’s like “hey I’m an intern working
+    at this company and I wrote this post about this cool analysis I did” and then
+    other people would be like wow that looks like great company to work for. So generally
+    speaking, you should find people are pretty supportive. Besides there’s lots and
+    lots of datasets out there available so even if you can’t base it on the work
+    you are doing, you can find something similar for sure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyTorch [[47:15](https://youtu.be/DzE0eSdy5Hk?t=2835)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We are going to start building our neural network. We are going to build it
+    using something called a PyTorch. PyTorch is a library that basically looks a
+    lot like numpy. But when you create some code with PyTorch, you can run it on
+    the GPU rather than the CPU. So the GPU is something which is basically going
+    to be probably at least an order of magnitude, possibly hundreds of times, faster
+    than the code that you might write for the CPU for particularly stuff involving
+    lots of linear algebra. So with deep learning, neural nets, if you don’t have
+    a GPU you can do it on the CPU but it’s going to be frustratingly slow. Mac does
+    not have a GPU that we can use for this because we need NVIDIA GPU. I would actually
+    much prefer that we could use your Mac’s because competition is great. But NVIDIA
+    was really the first one to create a GPU which did a good job of supporting General
+    Purpose Graphics Programming Units (GPGPU) — in other words that means using a
+    GPU for things other than playing computer games. They created a framework called
+    CUDA. It’s a very good framework and pretty much universally used in deep learning.
+    If you don’t have a NVIDIA GPU, you can’t use it and no current Mac has a NVIDIA
+    GPU. Most laptops of any kind don’t have a NVIDIA GPU. If you are interested in
+    doing deep learning on your laptop, the good news is that you need to buy one
+    which is really good for playing computer games on. There is a place called [XOTIC
+    PC Gaming Laptops](https://www.xoticpc.com/) where you can go and buy yourself
+    a great laptop for doing deep learning. You can tell your parents that you need
+    the money to do deep learning. You’ll generally find a whole bunch of laptops
+    with names like predator and viper with pictures of robots and stuff. Anyway,
+    having said that, I don’t know that many people that do much deep learning on
+    their laptop. Most people will log into a cloud environment. By far the easiest
+    I know of to use is called [Crestle](https://www.crestle.com/). With Crestle,
+    you can basically sign up and straight away, the first thing you get is you get
+    thrown straight into a jupyter notebook. It’s backed by a GPU, costs 60 cents
+    an hour with all of the Fast AI libraries and data already available. So that
+    makes life really easy. It’s less flexible and in some ways less fast than using
+    AWS which is the Amazon Web Services option. It costs a little bit more, 90 cents
+    an hour rather than 60 cents. But it’s very likely that your employer is already
+    using that and it’s good to get to know anyway. They’ve got more different choices
+    around GPUs and it’s a good choice. If you google for github student pack if you
+    are a student, you can get $150 of credits straight away pretty much. So it’s
+    a really good way to get started.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: I wanted to know your opinion on Intel recently published an
+    open source way of boosting regular packages that they claim as equivalent to
+    if you use the bottom tier GPU. On your CPU, if you use their boost packages,
+    you can get the same performance [[51:13](https://youtu.be/DzE0eSdy5Hk?t=3073)].
+    Actually Intel makes some great numerical programming libraries particularly this
+    one called MKL, Matrix Kernel Library. They definitely make things faster than
+    not using those libraries, but if you look at a graph of performance over time,
+    GPUs have consistently throughout the last 10 years including now are about 10
+    times more floating-point operations per second than equivalent CPU, and they
+    are generally about 1/5 of the price for that performance. Because of that, everybody
+    doing anything with deep learning basically does it on NVIDIA GPUs and therefore
+    using anything other than NVIDIA GPU is currently very annoying — so slower, more
+    expensive, more annoying. I really hope there will be more activity around AMD
+    GPUs in particular in this area, but AMD’s got literally years of catching up
+    to do, so it might take a while.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Comment**: I just wanted to point out that you can also buy a thing such
+    as a GPU extender to a laptop that may be a first step solution before new laptop
+    or AWS [[52:46](https://youtu.be/DzE0eSdy5Hk?t=3166)]. Yes, I think for like $300
+    or so, you can buy something that plugs into your Thunderbolt port if you have
+    a Mac and then for another $500 or $600, you can buy a GPU to plug into that.
+    Having said that, for about $1000, you can actually create a pretty good GPU based
+    desktop and so if you are considering that, Fast AI forums have lots of threads
+    where people help each other spec out something at a particular price point.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Anyway, to start with, I’d say use Crestle and then when you are ready to invest
+    a few extra minutes getting going, use AWS. To use AWS, when you get there, go
+    to EC2 [[53:52](https://youtu.be/DzE0eSdy5Hk?t=3232)]. There’s lots of stuff on
+    AWS, and EC2 is the bit where we get to rent computers by the hour.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/85c7e933f065d84beb55e789dcc3db87.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now, we are gonna need a GPU based instance. Unfortunately when you first sign
+    up for AWS, they don’t give you access to them. So go to Limits (up in the top
+    left).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/608a596e781dd0e4034342c986a78974.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: And the main GPU instance we’ll be using is called the p2\. So scroll down to
+    p2.xlarge, you need to make sure that number is not zero. If you’ve just got a
+    new account, it probably is zero which means you won’t be allowed to create one.
+    So you have to go “Request limit increase” and the trick there is when it asks
+    you why you want the limit increase, type “fast.ai” because AWS knows to look
+    out and they know that fast.ai people are good people so they’ll do it quite quickly.
+    That takes a day or two generally speaking to go through.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/2fb948c88cc1415fd43666d3da22c491.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'So once you get the email saying you’ve been approved for p2 instances, you
+    can then go back here and say Launch Instance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/7a2a1cecc7a4dea502a3cf9c65707620.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve basically set up one that has everything you need. So if you click on
+    Community AMIs and AMI is an Amazon Machine Image — it’s basically a completely
+    set up computer. So if you type fastai (all one word), you’ll find here fastai
+    DL part 1 v2 for p2\. So that’s all set up ready to go.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/713991f594162edc2375980526a36dd0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So if you click on Select [[55:34](https://youtu.be/DzE0eSdy5Hk?t=3334)], it’ll
+    say what kind of computer do you want. So we have to say I want a “GPU compute”
+    type and specifically I want p2.xlarge. And you can say “Review and Launch”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/ff36f38789f7c7b31e4487a3e27bfe7d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: I’m assuming you already know how to deal with SSH keys and all that kind of
+    stuff. If you don’t, check out the introductory tutorials and work shop videos
+    that we have online, or google around for SSH keys. Very important skill to know
+    anyway. So hopefully you get through all that, you have something running on a
+    GPU with the Fast AI repo. If you use Crestle, just `cd fastai2` the repo is already
+    there, `git pull`. AWS, `cd fastai`, the repo is already there, `git pull`. If
+    it’s your own computer, you’ll just have to `git clone` and then away you go.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyTorch is pre-installed, so PyTorch basically means we can write code that
+    looks a lot like numpy but it’s going to run really quickly on the GPU. Secondly,
+    since we need to know like which direction and how much to move our parameters
+    to improve our loss, we need to know the derivative of functions. PyTorch has
+    this amazing thing where any code you write using PyTorch library, it can automatically
+    take the derivative of that for you. So we are not going to look at any calculus
+    in this course. And I don’t look at any calculus in any of my courses or at any
+    of my work basically ever in terms of actually calculating derivatives myself
+    because I’ve never had to. It’s done for me by the library. So as long as you
+    write the Python code, the derivative is done. So the only calculus you really
+    need to know to be an effective practitioner is what is it mean to be a derivative.
+    And you also need to know the chain rule which we will come to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural Net for Logistic Regression in PyTorch [[57:45](https://youtu.be/DzE0eSdy5Hk?t=3465)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Alright, so we are going to start out kind of top-down, create a neural net,
+    and we’re going to assume a whole bunch of stuff. And gradually we are going to
+    dig into each piece. So to create neural nets, we need to import the PyTorch neural
+    net library. PyTorch, funnily enough, is not called PyTorch — it’s called torch.
+    So `torch.nn` is the PyTorch subsection that’s responsible for neural nets. We’ll
+    call that nn. And we are going to import a few bits out of Fast AI just to make
+    life a bit easier for us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here is how you create a neural network in PyTorch. The simplest possible
+    neural network, you say Sequential. And Sequential means I am now going to give
+    you a list of the layers that I want in my neural network. So in this case, my
+    list has two things in it. The first thing says I want a linear layer. Now a linear
+    layer is something that’s basically going to do *y = ax + b* but matrix matrix
+    multiply, not univariate obviously. So it’s going to do a matrix product basically.
+    The input of the matrix product is going to be a vector of length 28 times 28
+    because that’s how many pixels we have and the output needs to be of size 10 (we
+    will talk about why in a moment). For now this is how we define a linear layer.
+    Then again, we’re going to dig into this in detail but every linear layer just
+    about in neural nets has to have a non-linearity after it. Then we are going to
+    learn about this particular non-linearity in a moment, it’s called the softmax
+    and if you’ve done the DL course, you’ve already seen this. So that’s how we define
+    a neural net. This is a two layer neural net.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: There is also kind of an implicit additional first layer which is the input,
+    but with PyTorch, you don’t have to explicitly mention the input. But normally
+    we think conceptually like the input image is kind of also a layer. Because we
+    are doing things pretty manually, with PyTorch we are not taking advantage of
+    any of the conveniences in Fast AI for building your stuff, we have to then write
+    `.cuda()` which tells PyTorch to copy this neural network across to the GPU. So
+    from now on, that network is going to be actually running on the GPU. If we didn’t
+    say that, it would run on the CPU. So that gives us back a neural net — a very
+    simple neural net.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data [[1:00:22](https://youtu.be/DzE0eSdy5Hk?t=3622)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We are then going to try and fit the neural net to some data. So we need some
+    data. Fast AI has this concept of a ModelData object which is basically something
+    that wraps up training data, validation data, and optionally test data. So to
+    create a ModelData object, you can just say:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I want to create some image classifier data (`ImageClassifierData`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: I’m going to grab it from some arrays (`from_arrays`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This is the path that I’m going to save any temporary files (`path`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This is my training data arrays (`(x, y)`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This is my validation data arrays (`(x_valid, y_valid)`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: So that just returns an object that’s going to wrap that all up. So we are going
+    to able to fit to that data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that we have a neural net and some data, we are going to come back to this
+    in a moment but we basically say what loss function do we want to use, what optimizer
+    do we want to use, and then we say fit [[1:01:07](https://youtu.be/DzE0eSdy5Hk?t=3667)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: We say fit this network `net` to this data `md` going over every image once
+    (`n_epochs`) using this loss function `loss`, this optimizer `opt`, and print
+    out these metrics `metrics`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/683068e628e31f95304d12949a5acd1f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This says here this is 91.8% accurate. So that’s like the simplest possible
+    neural net. What that’s doing is it’s creating a matrix multiplication, followed
+    by a non-linearity, and it’s trying to find the values for this matrix (`nn.Linear(28*28,
+    10)`) which basically that fit the data *as well as possible* that end up predicting
+    this is a 1, this is a 9, this is a 3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Loss Function [[1:02:08](https://youtu.be/DzE0eSdy5Hk?t=3728)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: So we need some definition for “as well as possible”. So the general term for
+    that thing is called the loss function. So the loss function is the function that’s
+    going to be lower if this is better. Just like with random forests, we had this
+    concept of information gain, and we got to pick what function you want to use
+    to define information gain and we were mainly looking at root mean square error.
+    Most machine learning algorithms we call something very similar to that “loss”.
+    So the loss is how do we score how good we are. So in the end, we are going to
+    calculate the derivative of the loss with respect to the weight matrix that we
+    are multiplying by to figure out how to update it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We are going to use something called Negative Log Likelihood Loss (`NLLLoss`).
+    Negative log likelihood loss is also known as cross entropy — they are literally
+    the same thing. There’s two versions, one called binary cross entropy or binary
+    negative log likelihood, and another called categorical cross entropy. They are
+    the same thing, one is for when you’ve only got a zero or one dependent, the other
+    is if you’ve got like cat, dog, airplane, or horse, or 0, 1, through 9 and so
+    forth. So what we got here is the binary version of cross entropy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here `-(y * np.log(p) + (1-y)*np.log(1-p))` is the definition. I think maybe
+    the easiest way to understand this definition is to look at an example [[1:03:35](https://youtu.be/DzE0eSdy5Hk?t=3815)].
+    Let’s say we are trying to predict cat vs. dog. One is cat, zero is dog. So here,
+    we’ve got cat, dog, dog, cat (`[1, 0, 0, 1]`). And here are our predictions (`[0.9,
+    0.1, 0.2, 0.8]`). We said 90% sure it’s a cat, 90% sure it’s a dog, 80% sure it’s
+    a dog, 80% sure it’s a cat. So we can then calculate the binary cross entropy
+    by calling our function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the first one, we have *y=1*, *p=0.9* (i.e. `(1 * np.log(0.9)` since the
+    second term is skipped). For the second one, the first part is skipped (multiply
+    by 0) and the second part will be `(1-0)*np.log(0.9)`. In other words, the first
+    piece and the second piece of this are going to give exactly the same number which
+    make sense because the first one we said we were 90% confident it was a cat and
+    it was, and the second we said we were 90% confident it was a dog and it was.
+    So in each case, the loss is coming from the fact that we could have been more
+    confident. So if we said we were 100% confident, the loss would have been zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So let’s look at that in Excel [[1:05:17](https://youtu.be/DzE0eSdy5Hk?t=3917)].
+    From the top row:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: our predictions
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: actual/target values
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 1 minus actual/target values
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: log of our predictions
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: log of 1 minus our predictions
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: sum
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](../Images/4257aee51f75d1ee43b881468c925dde.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: If you think about it, and I want you to think about this during the week, you
+    could replace this (`np.mean(-(y * np.log(p) + (1-y)*np.log(1-p)))`) with an if
+    statement rather than y, because y is always 1 or 0 then it’s only ever going
+    to use either this `np.log(p)` or this `(np.log(1-p)`. So you could replace this
+    with an if statement. So I’d like you, during the week, to try to rewrite this
+    with an if statement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: And then see if you can then scale it out to be a categorical cross entropy
+    [[1:06:17](https://youtu.be/DzE0eSdy5Hk?t=3977)]. So categorical cross entropy
+    works this way. Let’s say we were trying to predict 3, 6, 7, 2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/918e173521c2e7a4679d82ca2e48c9bd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'So if we were trying to predict 3 and we actually predicted 5, or try to predict
+    3 and we accidentally predicted 9\. Being 5 instead of 3 is no better than being
+    9 instead of 3\. So we are not actually going to say how far away is the actual
+    number. We are going to express it differently. Or to put it another way, what
+    if we were trying to predict cats, dogs, horses, and airplanes. How far away is
+    cat from horse? So we are going to express these a little bit differently. Rather
+    than thinking of it as a 3, let’s think of it as a vector with a 1 in the third
+    location:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/e953942ce47f597d2a6e18eadb744c5c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Rather than thinking it as a 6, let’s think of it as a vector of zeros for the
+    one in the 6th location. So in other words, one-hot-encoding. So let’s one hot
+    encode our dependent variable. So that way now, rather than trying to predict
+    a single number, let’s predict ten numbers. Let’s predict what’s the probability
+    that it’s a 0, what’s the probability it’s a 1, and so forth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/4dce003a5190e7c35eaf848bbfeccf81.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So let’s say we are trying to predict the 2, then here is our categorical cross
+    entropy [[1:07:50](https://youtu.be/DzE0eSdy5Hk?t=4070)]. So it’s just saying
+    okay did this one predict correctly or not, how far off was it, and so forth for
+    each one, and add them all up. So categorical cross entropy is identical to binary
+    cross entropy. We just have to add it up across all of the categories.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/c66951412eb40ab3d6245168c32364ec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So try and turn the binary cross entropy function in Python into a categorical
+    cross entropy in Python. Maybe create both the version with the if statement and
+    the version with the sum and the product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So that’s why in our PyTorch, we had 10 as the output dimensionality for this
+    matrix because when we multiply a matrix with 10 columns, we are going to end
+    up with something of length 10 which is what we want [[1:08:35](https://youtu.be/DzE0eSdy5Hk?t=4115)].
+    We want to have 10 predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/248a380a51674fd3951fe989cd53e82a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So that’s the loss function that we are using. Then we can fit the model and
+    what it does is it goes through every image, this many times (`epochs`). So in
+    this case it’s just looking at every image once, and going to slightly update
+    the values in that weight matrix based on those gradients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/abdffccd094662b0136d77886cf8668e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So once we’ve trained it, we can then say `predict` using this model (`net`)on
+    the validation set (`md.val_dl`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that spits out something of 10,000 by 10\. We have 10,000 images we are
+    validating on, and we actually make 10 predictions per image. In other words,
+    each one of these row is the probabilities that it’s a 0, it’s a 1, it’s a 2,
+    and so forth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Argmax [[1:10:22](https://youtu.be/DzE0eSdy5Hk?t=4222)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In math, there’s a really common operation we do called `argmax`. When I say
+    it’s common, it’s funny like at high school, I never saw argmax. First year undergrad,
+    I never saw argmax. But somehow after university, everything’s about argmax. So
+    one of those things that’s for some reason not really taught at school but it
+    actually turns out to be super critical. So argmax is both something that you’ll
+    see in math (it’s just written out in full “argmax”), it’s in numpy, it’s in PyTorch,
+    it’s super important. What it does is it says let’s take this array of predictions,
+    and let’s figure out on a given axis (`axis=1` — remember, axis 1 is columns),
+    so as Chis said for 10 predictions for each row, let’s find which prediction has
+    the highest value and return not that (if it just said max, it would return the
+    value) argmax returns the index of the value. So by saying `argmax(axis=1)`, it’s
+    going to return the index which is actually the number itself. So let’s grab the
+    first 5:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: So that’s how we can convert our probabilities back into predictions. We save
+    that away and call it `preds`. We can then say when does `preds` equal the ground
+    truth. That’s going to return an array of booleans which we can treat as ones
+    and zeros and the mean of a bunch of ones and zeros is just the average. So that
+    gives us the accuracy of 91.8%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: So you want to be able to replicate the numbers you see and here it is. Here
+    is our 91.8%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/fe5ab63da5923878c6b70e7decad39d8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So when we train this, the last thing tells us is whatever metric we asked for,
+    and we asked for accuracy. Then before that we get the training set loss. The
+    loss is again whatever loss we asked for (`nn.NLLLoss()`), and the second thing
+    is the validation set loss. PyTorch doesn’t use the word loss, they use the word
+    criterion. So you’ll see here `crit` so that’s criterion equal loss. So this is
+    what loss function we want to use, they call that the criterion. Same thing. So
+    `np.mean(preds == y_valid)` is how we can recreate that accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/72058ea150fd0e6d88efb9914ee67e12.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So now we can go ahead and plot eight of the images along with their predictions.
+    For the ones we got wrong, you can see why they are wrong. The image of 4 is pretty
+    close to 9\. It’s just missing a little cross at the top. The 3 is pretty close
+    to 5\. It’s got a little bit of the extra on top. So we’ve made a start. And all
+    we’ve done so far is, we haven’t actually created a deep neural net. We’ve actually
+    got only one layer. So what we’ve actually done is we’ve created a logistic regression.
+    Logistic regression is literally what we just built and you could try and replicate
+    this with sklearn’s logistic regression package. When I did it, I got similar
+    accuracy, but this version ran much faster because this is running on the GPU
+    where else sklearn runs on the CPU. So even for something like logistic regression,
+    we can implement it very quickly qith PyTorch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: When we are creating our net, we ahve to do `.cuda()`. What would
+    be the consequence of not doing that? Would it just not run [[1:14:16](https://youtu.be/DzE0eSdy5Hk?t=4456)]?
+    It wouldn’t run quickly. It’ll run on the CPU.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Why do we have to do linear and followed by nonlinear [[1:14:34](https://youtu.be/DzE0eSdy5Hk?t=4474)]?
+    The short answer is because that’s what the universal approximation theorem says
+    is the structure which can give you arbitrarily accurate functions for any functional
+    form. The long answer is the details of why the universal approximation theorem
+    works. Another version of the short answer is, that’s the definition of a neural
+    network. So the definition of a neural network is a linear layer followed by an
+    activation function followed by a linear layer followed by an activation function,
+    etc. We go into a lot more detail of this in the deep learning course but for
+    this purpose it’s enough to know that it works. So far, of course, we haven’t
+    actually built a deep neural net at all. We’ve just built a logistic regression.
+    So at this point, if you think about it, all we’re doing is we are taking every
+    input pixel and multiplying it by a weight for each possible outcome. So we are
+    basically saying on average the number 1 has these pixels turned on. The number
+    two has these pixels turned on. That’s why it’s not terribly accurate. That’s
+    not how digit recognition works in real life. But that’s all we build so far.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So you keep saying this Universal approximation theorem. Did
+    you define that [[1:16:07](https://youtu.be/DzE0eSdy5Hk?t=4567)]? Yeah, but let’s
+    cover it again because it’s worth talking about. So Michael Nielsen has this great
+    website called neural networks and deep learning. And his [chapter 4](http://neuralnetworksanddeeplearning.com/chap4.html)
+    is actually famous now and in it, he does this walkthrough of basically showing
+    that a neural network can approximate any other function to arbitrarily close
+    accuracy as long as it’s big enough. And we walk through this in a lot of detail
+    in the deep learning course but the basic trick is that he shows that with a few
+    different numbers, you can basically cause these things to create little boxes,
+    you can move the boxes up and down, you can move them around, you can join them
+    together to eventually basically create like connections of towers which you can
+    use to approximate any kind of surface.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/36cc00e3507966e1b4b8a06349cac3a3.png)![](../Images/0184c296d1637cb289ecd868956402a8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So that’s basically the trick. So all we need to do, given that, is to kind
+    of find the parameters for each of the linear functions in that neural network.
+    So to find the weights in each of the matrices. So far, we’ve got just one matrix
+    and we’ve just built a simple logistic regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: I just wanted to confirm that when you showed the examples of
+    images which were misclassified, they look rectangular so it’s just that while
+    rendering, pixels are being scaled differently [[1:17:50](https://youtu.be/DzE0eSdy5Hk?t=4670)]?
+    They are 28 by 28\. I think they just look rectangular because they’ve got titles
+    on the top. Matplotlib does often fiddle around with what it considers black versus
+    while and having different size axes and stuff. So you do have to be little bit
+    careful there sometimes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining Logistic Regression Ourselves [[1:18:31](https://youtu.be/DzE0eSdy5Hk?t=4711)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Hopefully this will now make more sense because what we’re going to do is dig
+    in a layer deeper and define logistic regression without using `nn.Sequential`,
+    `nn.Linear`, or `nn.LogSoftmax`. So we are going to do nearly all of the layer
+    definition from scratch. So to do that, we’re going to have to define a PyTorch
+    module. PyTorch module is basically either a neural net or a layer in a neural
+    net which is actually a powerful concept of itself. Basically anything that can
+    behave like a neural net can itself be part of another neural net. So this is
+    how we can construct particularly powerful architectures combining lots of other
+    pieces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: So to create a PyTorch module, just create a Python class but it has to inherit
+    from `nn.Module`. So we haven’t done inheritance before, other than that, this
+    is all the same concepts we’ve seen in OO already. Basically if you put something
+    in parentheses here (after a class name), what it means is that our class gets
+    all of the functionality of this class for free. It’s called sub-classing it.
+    So we are going to get all of the capabilities of a neural network module that
+    the PyTorch authors have provided and then we are going to add additional functionality
+    to it. When you create a sub class, there is one key thing you need to remember
+    to do which is when you initialize your class, you have to first of all initialize
+    the superclass. So superclass is the `nn.Module`. So `nn.Module` has to be built
+    before you can start adding your pieces to it. So this is just like something
+    you can copy and paste into every one of your modules. You just say `super().__init__()`
+    . It just means construct the superclass first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So having done that, we can now define our weights and our bias [[1:20:29](https://youtu.be/DzE0eSdy5Hk?t=4829)].
+    Our weights is the weight matrix. It’s the actual matrix that we’re going to multiply
+    our data by. And as we discussed, it’s going to have 28 times 28 rows and 10 columns.
+    That’s because if we take an image which is we’ve flattened out into a 28 by 28
+    length vector, then we can multiply it by this weight matrix to get back out a
+    length 10 vector which we can then use to consider it as a set of predictions.
+    So that’s our weight matrix. Now the problem is that we don’t just want *y = ax*.
+    We want *y = ax + b*. So *+ b* in neural nets is called bias. So as well as defining
+    weights, we are also going to define bias. Since this thing `get_weights(28*28,
+    10)` is going to spit out for every image something of length 10\. That means
+    that we need to create a vector of length 10 to be our biases. In other words,
+    for everything naught, 1, 2, 3 up to 9, we are going to have a different plus
+    *b* that would be adding. So we’ve got our data matrix which is of length 10,000
+    by 28 ⨉ 28\. Then we’ve got our weight matrix which is 28 ⨉ 28 by 10\. So if we
+    multiply those together, we get something of size 10,000 by 10.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/c12901781ee389bcc3d8d3f8a8f59878.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Then we want to add on our bias like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/dfdd967bfab9651c9b258575e5d070e7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We are going to learn a lot more about this later, but when we add on a vector
+    like this, it basically going to get added to every row. So that bias is going
+    to get added to every rows. So we first of all define those. To define them, we’ve
+    created a tiny little function called `get_weights` which basically just creates
+    some normally distributed random numbers. `torch.randn` returns a tensor filled
+    with random numbers from a normal distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/415721b17b1cebc5d4e0965e3e69595d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We have to be a bit careful though. When we do deep learning, like when we add
+    more linear layers later. Imagine if we have a matrix which on average tends to
+    increase the size of the inputs we give to it. If we then multiply it by lots
+    of matrices of that size, it’s going to make the numbers bigger and bigger and
+    bigger, like exponentially bigger. Or what if made them a bit smaller? It’s going
+    to make them smaller and smaller and smaller exponentially smaller. Because a
+    deep network applies lots of linear layers, if on average they result in things
+    a bit bigger than they started with or a bit smaller than they started with, it’s
+    going to exponentially multiply that difference. So we need to make sure that
+    the weight matrix is of an appropriate size that the inputs to it (more specifically,
+    the mean of the inputs) is not going to change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So it turns out that if you use normally distributed random numbers and divided
+    by the number of rows in the weight matrix, this particular random initialization
+    keeps your numbers at about the right scale. So this idea that, if you’ve done
+    linear algebra, basically if the first eigenvalue is bigger than one or smaller
+    than one, it’s going to cause the gradients to get bigger and bigger or smaller
+    and smaller. That’s called gradient explosion. So we’ll talk more about this in
+    the deep learning course, but if you are interested, you can look at [Kaiming
+    He initialization](https://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/)
+    and read all about this concept, but for now, it’s probably just enough to know
+    that if you use this type of random number generation (i.e. `torch.randn(dims)/dims[0]`),
+    you’re going to get random numbers that are nicely behaved. You are going to start
+    out with an input which is mean 0 standard deviation 1\. Once you put it through
+    this set of random numbers, you’ll still have something that’s about mean 0 standard
+    deviation 1\. That’s basically the goal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One nice thing about PyTorch is that you can play with this stuff [[1:25:44](https://youtu.be/DzE0eSdy5Hk?t=5144)].
+    So try it out. Every time you see a function being used, run it and take a look.
+    So you’ll see, it looks a lot like numpy but it doesn’t return a numpy array.
+    It returns a tensor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/a2bb48e179731174df8512c4dccd6422.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: And in fact, now I’m GPU programming.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/329d688f00141a1aaa4035ef72dfbf08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Put `.cuda()` and now it’s doing it on the GPU.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/7da66ebc0fff94c8da8b6ff8c721ea4a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: I just multiplied that matrix by 3 very quickly on GPU! So that’s how we do
+    GPU programming with PyTorch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we said, we create one 28*28 by 10 weight matrix, and the other is just rank
+    1 of 10 for biases [[1:26:29](https://youtu.be/DzE0eSdy5Hk?t=5189)]. We have to
+    make them a parameter. This is basically telling PyTorch which things to update
+    when it does SGD. That’s very minor technical detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/1d7edd5f587825661a3a62a910167cfd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So having created the weight matrices, we then define a special method with
+    the name `forward`. This is a special method and the name forward has a special
+    meaning in PyTorch. A method called forward in PyTorch is the name of the method
+    that will get called when your layer is calculated. So if you create a neural
+    net or a layer, you have to define forward and it’s going to get passed the data
+    from the previous layer. Our definition is to do a matrix multiplication of our
+    input data times our weights and add on the biases. That’s it. That’s what happened
+    earlier on when we said `nn.Linear`. It created this thing for us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now unfortunately though, we are not getting a 28 by 28 long vector. We are
+    getting a 28 row by 28 column matrix, so we have to flatten it. Unfortunately,
+    in PyTorch, they tend to rename things. They spell “resize” “view”. So `view`
+    means reshape. So you can see here `x.view(x.size(0), -1)`, we end up with something
+    where the number of images (`x.size(0)`), we are going to leave the same. Then
+    we are going to replace row by column with a single axis. Again, `-1` meaning
+    as long as required. So this is how we flatten something using PyTorch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So we flatten it, do a matrix multiply, and then finally we do our softmax [[1:28:23](https://youtu.be/DzE0eSdy5Hk?t=5303)].
+    So softmax is the activation function we use. If you look in the deep learning
+    repo, you’ll find something called [entropy example](https://github.com/fastai/fastai/blob/master/courses/dl1/excel/entropy_example.xlsx)
+    where you will see an example of softmax. Softmax simply takes the outputs from
+    our final layer, so we get our outputs from our linear layer. And what we do is
+    we go *e* to the power of (*e*^) for each output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/95e41c192f16b15b0842c2ff3dfc6cc6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Then we take that number and divide by the sum of the *e* to the poser of’s.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/7cd292ddd615acc65ceb6ab7de594fe4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: That’s called softmax. Why do we do that? Well, because we are dividing this
+    (exp) with the sum, that means the sum of those itself must add to one. And that’s
+    what we want. We want the probabilities of all the possible outcomes add to one.
+    Furthermore, because we are using *e*^ , that means we know that every one of
+    these (softmax) is between zero and one. And probabilities we know would be between
+    zero and one. Then finally because we are using *e* to the power of, it tends
+    to mean that slightly bigger values in the input turn into much bigger values
+    in the output. So you’ll see, generally speaking, my softmax there are going to
+    be one big number and lots of small numbers. And that’s what we want because we
+    know that the output is one hot encoded. So in other words a softmax activation
+    function, the softmax non-linearity, is something that returns things that behave
+    like probabilities where one of those probabilities is more likely to be kind
+    of high and the other ones are more likely to be low. And we know that’s what
+    we want to map to our one hot encoding so a softmax is a great activation function
+    to use to help the neural net, make it easier for the neural net to map to the
+    output you wanted. And this is what we generally want. When we are designing neural
+    networks, we try to come up with little architectural tweaks that make it as easy
+    for it as possible to match the output that we know we want.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So that’s basically it [[1:30:45](https://youtu.be/DzE0eSdy5Hk?t=5445)]. Rather
+    than doing Sequential and using `nn.Linear` and `nn.LogSoftmax`, we’ve defined
+    it from scratch. We can now say, just like before, our `net2` is equal to `LogReg().cuda()`
+    and we can say `fit` and we get to, within a slight random deviation, exactly
+    the same output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: So what I like you to do during the week is to play around with `torch.randn`
+    to generate some random tensors, `torch.matmul` to start multiplying them together,
+    adding them up, try to make sure that you can rewrite softmax yourself from scratch.
+    Try to fiddle around a bit with reshaping, view, all that kind of stuff so by
+    the time you come back next week you feel pretty comfortable with PyTorch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: And if you google for PyTorch tutorial, you’ll see there’s a lot of great material
+    actually on the [PyTorch website](https://pytorch.org/tutorials/) to help you
+    along — showing you how to create tensors, modify them, and do operations on them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So I see that the forward is the layer that gets applied after
+    each of the linear layers[[1:31:57](https://youtu.be/DzE0eSdy5Hk?t=5517)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Jeremy**: Not quite. The forward is just the definition of the module, so
+    this is how we are implementing Linear.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Continued**: Does that mean after each linear layer, you have to apply the
+    same function? Let’s say we can’t do a LogSoftmax after layer 1 and then apply
+    some other function after layer two if we have a multi-layer neural network?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Jeremy**: So normally we define neural networks like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/361ca59ba0adecf8fe540de419fe837f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We just say here is a list of the layers we want. You don’t have to write your
+    own forward. All we did just now is to say instead of doing this, let’s not use
+    any of this at all, but write it all by hand ourselves. So you can write as many
+    layers as you like in any order you like here. The point was that here, we are
+    not using any of that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/49a74247bc6ace55da99560b4810f673.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We’ve written our own `matmul` plus bias, our own softmax, so this is just Python
+    code. You can write whatever Python code inside forward that you like to define
+    your own neural net. You won’t normally do this yourself. Normally you’ll just
+    use the layers that PyTorch provides and you’ll use `.Sequential` to put them
+    together. Or even more likely, you’ll download a predefined architecture and use
+    that. We’re just doing this to learn how it works behind the scenes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alright, great. Thanks everybody!
+  prefs: []
+  type: TYPE_NORMAL

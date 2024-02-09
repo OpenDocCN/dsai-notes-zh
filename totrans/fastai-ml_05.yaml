@@ -1,0 +1,1093 @@
+- en: 'Machine Learning 1: Lesson 5'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 原文：[https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-5-df45f0c99618](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-5-df45f0c99618)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '*My personal notes from* [*machine learning class*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)*.
+    These notes will continue to be updated and improved as I continue to review the
+    course to “really” understand it. Much appreciation to* [*Jeremy*](https://twitter.com/jeremyphoward)
+    *and* [*Rachel*](https://twitter.com/math_rachel) *who gave me this opportunity
+    to learn.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[Video](https://youtu.be/3jl2h9hSRvc)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Review
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Test sets , training sets, validation sets and OOB
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We have a dataset with bunch of rows in it and we’ve got some dependent variable.
+    What is the difference between machine learning and any other kind of work? The
+    difference is that in machine learning, the thing we care about is the generalization
+    accuracy or the generalization error where else, in pretty much in everything
+    else, all we care about is how well we could map to the observations. So this
+    thing about generalization is the key unique piece of machine learning. And if
+    we want to know whether we are doing a good job of machine learning, we need to
+    know whether we are doing a good job of generalizing. If we don’t know that, we
+    know nothing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: By generalizing, do you mean scaling? Being able to scale larger?
+    [[1:26](https://youtu.be/3jl2h9hSRvc?t=1m26s)] No, I don’t mean scaling at all.
+    Scaling is an important thing in many areas. It’s like okay we’ve got something
+    that works on my computer with 10,000 items, I now need to make it work on 10,000
+    items per second. So scaling is important but not just for machine learning but
+    for just about everything we put in production. Generalization is where I say
+    okay, here is a model that can predict cats from dogs. I’ve looked at five pictures
+    of cats and five pictures of dogs, and I’ve built a model that is perfect. Then
+    I look at a different set of five cats and dogs, and it gets them all wrong. So
+    in that case, what it learned was not the difference between a cat and a dog,
+    but it learnt what those five exact cats looked like and what those five exact
+    dogs looked like. Or I built a model of predicting grocery sales for a particular
+    product, so for toilet rolls in New Jersey last month, and then I go and put it
+    into production and it scales great (in other words, a great latency, no high
+    CPU load) but it fails to predicting anything other than toilet rolls in New Jersey.
+    It also turns out it only did it well for last month, not the next month. So these
+    are all generalization failures.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most common way that people check for the ability to generalize is to create
+    a random sample. So they will grab a few rows at random and pull it out into a
+    test set. Then they will build all of their models on the rest of the rows and
+    then when they are finished, they will check that the accuracy they got on the
+    test set (the rest of the rows are called the training set). So at the end of
+    their modeling process, on the training set, they got an accuracy of 99% of predicting
+    cats from dogs, at the very end, they check it against a test set to make sure
+    that the model really does generalize.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now the problem is, what if it doesn’t? Well, I could go back and change some
+    hyper parameters, do some data augmentation, whatever else trying to create a
+    more generalizable model. And then I’ll go back again after doing all that, and
+    check and it’s still no good. I’ll keep doing this again and again until eventually,
+    after fifty attempts, it does generalize. But does it really generalize? Because
+    maybe all I’ve done is accidentally found this one which happens to work just
+    for that test set because I’ve tried fifty different things. So if I’ve got something
+    which is right coincidentally 5% of the time, they are not very likely to accidentally
+    get a good result. So what we generally do is we put aside a second dataset (validation
+    set). Then everything that’s not in the validation or test is now training. What
+    we do is we train a model, check it against the validation to see if it generalizes,
+    do that a few times. Then when we finally got something we think will generalize
+    successfully based on the validation set (at the end of the project), we check
+    it against the test set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So basically by making this two layer test set validation set,
+    if it gets one right the other wrong, you are kind of double checking your errors?
+    [[5:19](https://youtu.be/3jl2h9hSRvc?t=5m19s)] It’s checking that we haven’t overfit
+    to the validation set. So if we are using the validation set again and again,
+    then we could end up not coming up with a generalizable sort of hyper parameters
+    but a set of hyper parameters that just so happened to work on the training set
+    and the validation set. So if we try 50 different models against the validation
+    set and then at the end of all that, we then check that against the test set and
+    it’s still generalized as well, then we are going to say okay that’s good we’ve
+    actually come up with generalizable model. If it doesn’t, then that’s going to
+    say we’ve actually now overfit to the validation set. At that point, you are kind
+    of in trouble. Because you don’t have anything left behind. So the idea is to
+    use effective techniques during the modeling so that doesn’t happen. But if it’s
+    going to happen, you want to find out about it — you need that test set to be
+    there because otherwise when you put it in production and then it turns out that
+    it doesn’t generalize, that would be a really bad outcome. You’ll end up with
+    less people clicking on your ads or selling less of your products, or providing
+    car insurance to very risky vehicles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So just to make sure, do we need to ever check if the validation
+    set and the test set are coherent or you just keep test set?[[6:43](https://youtu.be/3jl2h9hSRvc?t=6m43s)]
+    So if you’ve done what I’ve just done here which is to randomly sample, there
+    is no particular reason to check as long as they are big enough. But we will come
+    back to your question in a different context in just moment.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another trick we’ve learnt for random forest is a way of not needing a validation
+    set [[7:10](https://youtu.be/3jl2h9hSRvc?t=7m10s)]. And the way we learnt was
+    to use, instead, the OOB score. This idea was to say every time we train a tree
+    in a random forest, there is a bunch of observations that are held out anyway
+    because that’s how we get some of the randomness. So let’s calculate our score
+    for each tree based on those held out samples and therefore the forest by averaging
+    the trees that each row was not part of training. So the OOB score gives us something
+    which is pretty similar to the validation score, but on average it’s a little
+    less good. Why? Because every row is going to be using a subset of the trees to
+    make its prediction, and with less trees, we know we get a less accurate prediction.
+    So that’s a subtle one and if you didn’t get it, have a think during the week
+    until you understand why this is because it’s a really interesting test of your
+    understanding of random forests. Why is OOB score on average less good than your
+    validation score? They are both using random held-out subsets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Anyway, it’s generally close enough [[11:06](https://youtu.be/3jl2h9hSRvc?t=11m6s)].
+    So why have a validation set at all when you are using random forests? If it’s
+    a randomly chosen validation set, it’s not strictly speaking necessary but you’ve
+    got like four levels of things to test — so you could test on the OOB, when that’s
+    working well, you can test on the validation set, and hopefully by the time you
+    check against the test set, there’s going to be no surprises so that’ll be one
+    good reason.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What Kaggle do, the way they do this, is kind of clever. What Kaggle do is
+    they split the test set into two pieces: a public and a private. And they don’t
+    tell you which is which. So you submit your predictions to Kaggle and then a random
+    30% of those are used to tell you the leaderboard score. But then at the end of
+    the competition, that gets thrown away and they use the other 70% to calculate
+    your real score. So what that’s doing is that you are making sure that you are
+    not continuously using that feedback from the leaderboard to figure out some set
+    of hyper parameters that happens to do well on the public that actually doesn’t
+    generalize. So it’s a great test. This is one of the reasons why it’s good practice
+    to use Kaggle because at the end of a competition, at some point this will happen
+    to you, and you’ll drop a hundred places on the leaderboard the last day of the
+    competition when they use the private test set and say oh okay, that’s what it
+    feels like to overfit and it’s much better to practice and get that sense there
+    than it is to do it in a company where there’s hundreds of millions of dollars
+    on the line.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is like the easiest possible situation where you are able to use a random
+    sample for your validation set [[12:55](https://youtu.be/3jl2h9hSRvc?t=12m55s)].
+    Why might I not be able to use a random sample from my validation or possibly
+    fail? My claim is that by using a random validation set, we could get totally
+    the wrong idea about our model. important thing to remember is when you build
+    a model, you always have a systematic error which is that you’re going to use
+    the model at a later time than the time you built it. You’re going to put it into
+    production by which time the world is different to the world that you are in now
+    and even when you’re building the model, you’re using data which is older than
+    today anyway. So there’s some lag between the data that you are building it on
+    and the data that it’s going to actually be used on in real life. And a lot of
+    the time, if not most of the time, that matters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So if we are predicting who is going to buy toilet paper in New Jersey and
+    it takes us two weeks to put it in production and we did it using data from the
+    last couple of years and by that time, things may look very different. And particularly
+    our validation set, if we randomly sampled it, and it was from a four year period,
+    then the vast majority of the data is going to be over a year old. And it may
+    be that the toilet paper buying habits of folks in New Jersey may have dramatically
+    shifted. Maybe they’ve got a terrible recession there now and they can’t afford
+    a high-quality toilet paper anymore. Or maybe they know their paper making industry
+    has gone through the roof and suddenly they are buying a lot more toilet paper
+    because it’s so cheap. So the world changes and therefore if you use a random
+    sample for your validation set, then you are actually checking how good are you
+    at predicting things that are totally obsolete now? How good are you at predicting
+    things that happened four years ago? That’s not interesting. So what we want to
+    do in practice, anytime there is some temporal piece is to instead say assuming
+    that we’ve ordered it by time, we’ll use the latest portion as our validation
+    set. I suppose, actually do it properly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/c4f153983c2108eddb42bd5a032ebdf6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: That’s our validation set, and that’s our test set. So the rest is our training
+    set and we use that and we try and be able to model that still works on stuff
+    that’s later in time than anything the model was built on. So we are not just
+    testing generalization in some kind of abstract sense but in a very specific time
+    sense which is it generalizes to the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: As you said, there is some temporal ordering in the data, so
+    in that case, is it wise to take the entire data for training or only a few recent
+    dataset for training [[19:07](https://youtu.be/3jl2h9hSRvc?t=19m7s)]? Yeah, that
+    is a whole other question. So how do you get the validation set to be good? So
+    I build a random forest on all the training data. It looks good on the training
+    data, it looks good on OOB. And this is actually a really good reason to have
+    OOB. If it looks good on the OOB then it means you are not overfitting in a statistical
+    sense. It’s working well on a random sample. But then it looks bad on the validation
+    set. So what happened? Well, what happened was that you somehow failed to predict
+    the future. You only predicted the past so Suraj had an idea about how we could
+    fix that. Okay, well, maybe we should just train so maybe we shouldn’t use the
+    whole training set. We should try a recent period only. Now on the downside, we
+    are now using less data so we can create less rich models, on the upside, it’s
+    more up-to-date data. And this is something you have to play around with. Most
+    machine learning functions have the ability to provide a weight that is given
+    to each row. So for example, with a random forest, rather than bootstrapping at
+    random, you could have a weight on every row and randomly pick that row with some
+    probability. So we could put probability such that the most recent rows have a
+    higher probability of being selected. That can work really well. It’s something
+    that you have to try and if you don’t have a validation set that represents the
+    future compared to what you are training on, you have no way to know which of
+    your techniques are working.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do you make the compromise between amount of data vs. recency of data? What
+    I tend to do is when I have this kind of temporal issue, which is probably most
+    of the time, once I have something that’s working well on the validation set,
+    I wouldn’t then go and just use that model on the test set because the test set
+    is much farther in the future compared to the training set. So I would then replicate
+    building that model again but this time I would combine the training and validation
+    sets together and retrain the model. At that point, you’ve got no way to test
+    against a validation set, so you have to make sure you have a reproducible script
+    or notebook that does exactly the same steps in exactly the same ways because
+    if you get something wrong then you’re going to find on the test set that you’ve
+    got a problem. So what I do in practice is I need to know if my validation set
+    is a truly representative of the test set. So what I do is I build five models
+    on the training set, and I try to have them vary in how good I think they are.
+    Then I score my five models on the validation set and then I also score them on
+    the test set. So I’m not cheating since I’m not using any feedback from the test
+    set to change my hyper parameters — I’m only using it for this one thing which
+    is to check my validation set. So I get my five scores from the validation set
+    and test set and then I check that they fall in a line. If they don’t, then you’re
+    not going to get good enough feedback from the validation set. So keep doing that
+    process until you’re getting a line and that can be quite tricky . Trying to create
+    something that’s as similar to the real-world outcome as possible is difficult.
+    And in the real world, the same is true of creating the test set — the test set
+    has to be as close to production as possible. So what’s the actual mix of customers
+    that are going to be using this, how much time is there actually going to be between
+    when you build the model and when you put it in production? How often you are
+    going to be able to refresh the model? These are all the things to think about
+    when you build that test set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: So first you build five models on the training data and if you
+    didn’t get a straight-line relationship, change your validation and test set [[24:01](https://youtu.be/3jl2h9hSRvc?t=24m1s)]?
+    You can’t really change the test set generally, so this is assuming that the test
+    set is given and you change the validation set. So if you start with a random
+    sample validation set and then it’s all over the place and you realize oh I should
+    have picked the last two months. Then you pick the last two months and it’s still
+    going all over the place and you realize oh I should have picked it so that it’s
+    also from the first of the month to the fifteenth of the month, and keep changing
+    the validation set until you found a set which is indicative of your test set
+    results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: For five models, you start with maybe just random data, average,
+    etc [[24:45](https://youtu.be/3jl2h9hSRvc?t=24m45s)]? Maybe five not terrible
+    ones but you want some variety and you also particularly want some variety in
+    how well they might generalize through time. So one that was trained on the whole
+    training set, one was trained on the last two weeks, one that was trained on the
+    last six week, one which used lots and lots of columns and might over fit a bit
+    more. So you want to get a sense of if my validation set fails to generalize temporarily,
+    I’d want to see that, if it fails to generalize statistically, I’d want to see
+    that.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Can you explain a bit more in detail what you mean by change
+    your validation set so it indicates the test set? What does that look like [[25:28](https://youtu.be/3jl2h9hSRvc?t=25m28s)]?
+    Let’s take the groceries competitions where we are trying to predict the next
+    two weeks of grocery sales. The possible validation set that Terrance and I played
+    with was:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random sample (4 years)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Last month of data (July 15–August 15)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Last 2 weeks (August 1–15)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Same day range one month earlier (July 15–30)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The test set in this competition was the 15th to the 30th of the August. So
+    above were four different validation sets we tried. With random, our results were
+    all over the place. With last month, they were not bad but not great. The last
+    two weeks, there was a couple that didn’t look good but on the whole they were
+    good. The same day range a month earlier, they’ve got a basically perfect line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: What exactly are we comparing it to from the test set [[26:58](https://youtu.be/3jl2h9hSRvc?t=26m58s)]?
+    I build 5 models, so there might be 1\. just predict the average, 2\. do some
+    kind of simple group mean of the whole data set, 3\. do some group mean over the
+    last month of the data, 4\. build a random forests of the whole thing, 5, build
+    random forest from the last three weeks. On each of those, I calculate the validation
+    score. Then I retrain the model on the whole training set and calculate the same
+    thing on the test set. So each of these points now tells me how well did it go
+    on the validation set and how well did it go in the test set. If the validation
+    set is useful, we would say every time the validation score set improves, the
+    test set score should also improve.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question** : When you say “re-train” do you mean re-train the model on training
+    and validation set [[27:50](https://youtu.be/3jl2h9hSRvc?t=27m50s)]? Yes, so once
+    I’ve got the validation score based on just the training set, then retrain it
+    on the train and validation and check against the test set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: By test set, do you mean submitting it to Kaggle and check the
+    score? If it’s Kaggle, then your test set is Kaggle’s leader board. In the real
+    world, the test set is this third data set you put aside. It’s that third dataset
+    that having it reflect real world production differences is the most important
+    step in a machine learning project. Why is it the most important step? Because
+    if you screw up everything else but you don’t screw up that, you’ll know you screwed
+    up. If you’ve got a good test set, then you’ll know you screwed up because you
+    screwed up something else and you tested it and it didn’t work out, it’s okay.
+    You’re not going to destroy the company. If you screwed up creating the test set,
+    that would be awful. Because then you don’t know if you’ve made a mistake. You
+    try to build a model, you test it on the test set and it looks good. But the test
+    set was not indicative of real-world environment. So you don’t actually know if
+    you are going to destroy the company. Hopefully you’ve got ways to put things
+    into production gradually so you won’t actually destroy the company but you’ll
+    at least destroy your reputation at work. Oh, Jeremy tried to put this thing into
+    production and in the first week the cohort we tried it on, their sales halved
+    and we’re never gonna give Jeremy a machine learning job again. But if Jeremy
+    had used a proper test set then he would have known, uh-oh this is half as good
+    as my validation set said it would be, I’ll keep trying. Now I’m not going to
+    get in any trouble. I was actually like oh, Jeremy is awesome — he identifies
+    ahead of time when there’s going to be a generalization problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is something everybody talks about a little bit in machine learning classes
+    but often it stops at the point where you learned that there is a thing in sklearn
+    called make `train_test_split` and it returns these things and off you go, or
+    here is the cross-validation function [[30:10](https://youtu.be/3jl2h9hSRvc?t=30m10s)].
+    The fact that these things always give you random samples tells you that much
+    if not most of the time, you shouldn’t be using them. The fact that random forest
+    gives you an OOB for free, it’s useful but only tells you that this generalizes
+    in a statistical sense, not in a practical sense.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross validation [[30:54](https://youtu.be/3jl2h9hSRvc?t=30m54s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Outside of class, you guys have been talking about a lot which makes me feel
+    somebody’s been over emphasizing the value of this technique. So I’ll explain
+    what cross-validation is and then I explain why you probably shouldn’t be using
+    it most of the time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross validation says let’s not just pull out one validation set, but let’s
+    pull out five, for example. So let’s assume that we’re going to randomly shuffle
+    the data first of all. This is critical.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Randomly shuffle the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Split it into five groups
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For model №1, we will call the first one the validation set, and the bottom
+    four the training set.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We will train and we will check against the validation and we get some RMSE,
+    R², etc.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We will repeat that five times, and we will take the average of RMSE, R², etc,
+    and that is a cross-validation average accuracy.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What is the benefit of using cross-validation over a standard validation set
+    I talked about before? You can use all of the data. You don’t have to put anything
+    aside. And you get a little benefit as well in that you’ve now got five models
+    that you could ensemble together, each one used 80% of the data. So sometimes
+    that ensemble can be helpful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What could be some reasons that you wouldn’t use cross-validation? For large
+    dataset, it will take a long time. We have to fit five models rather than one,
+    so time is a key downside. If we are doing deep learning and it takes a day to
+    run, suddenly it takes five days or we need 5 GPUs. What about my earlier issues
+    about validation sets? Our earlier concerns about why random validation sets are
+    a problem are entirely relevant here. These validation sets are random, so if
+    a random validation set is not appropriate for your problem, most likely because,
+    for example, of temporal issues then none of these five validation sets are any
+    good. They are all random. So if you have temporal data like we did before, there’s
+    no way to do cross validation or no good way to do cross validation. You want
+    to have your validation set to be as close to the test set as possible, and you
+    can’t do that by randomly sampling different things. You may well not need to
+    do cross validation because most of the time in the real world, we don’t really
+    have that little data — unless your data is based on some very very expensive
+    labeling process or some experiments that cost a lot to run, etc. But nowadays,
+    data scientists are not very often doing that kind of work. Some are, in which
+    case this is an issue, but most of us aren’t. So we probably don’t need to. If
+    we do do it, it’s going to take a whole a lot of time, then even if we did do
+    it and we took up all that time, it might give us totally the wrong answer because
+    random validation sets are inappropriate for our probblem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I’m not going to be spending much time on cross validation because I think it’s
+    an interesting tool to have, it’s easy to use (sklearn has a cross validation
+    thing you can use), but it’s not that often that it’s going to be an important
+    part of your toolbox in my opinion. It’ll come up sometimes. So that is validation
+    sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tree interpretation [[38:02](https://youtu.be/3jl2h9hSRvc?t=38m2s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'What does tree interpreter do and how does it do it? Let’s start with the output
+    of tree interpreter [[38:51](https://youtu.be/3jl2h9hSRvc?t=38m51s)]. Here is
+    a single tree:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/765db675f664a2bce60cbc7fe6307f92.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The root of the tree is before there’s been any split at all. So 10.189 is the
+    average log price of all of the options in our training set. Then if I go `Coupler_System
+    ≤ 0.5`, then we get an average of 10.345 (the subset of 16815). Off the people
+    with `Coupler_System ≤0.5`, we then take the subset where `Enclosure ≤ 2.0` and
+    average log price there is 9.955\. Then the final step is `ModelID ≤ 4573.0` and
+    that gives us 10.226.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/f6cadf323e5c2862cd75b5bdc4b03bc0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can then calculate the change in average log price by each additional criteria.
+    We can draw that as what’s called a waterfall plot. Waterfall plots are one of
+    the most useful plots I know about and weirdly enough, there’s nothing in Python
+    to do them. This is one of these things where there’s this disconnect between
+    the world of management consulting and business where everybody uses waterfall
+    plots all the time and academia who have no idea what these things are. Every
+    time you have a starting point and a number of changes and a finishing point,
+    waterfall charts are pretty much always the best way to show it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/4ba7c2df232997d01f2f2f798998bbc7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: With Excel 2016, it’s build-in. You just click insert waterfall chart and there
+    it is. If you want to be a hero, create a waterfall chart package for matplotlib,
+    put it on pip, and everybody will love you for it. These are actually super easy
+    to build. You basically do a stacked column plot where the bottom of this is all
+    white. You can kind of do it but if you can wrap that up, put the points in the
+    right spots and color them nicely, that would be totally awesome. I think you’ve
+    all got the skills to do it, and would be a terrific thing for your portfolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, they are going from all, then going through each change, then the
+    sum of all of those is going to be equal to the final prediction [[43:38](https://youtu.be/3jl2h9hSRvc?t=43m38s)].
+    So if we were just doing a decision tree and someone asks “how come this particular
+    auction’s prediction was this particular price?”, this is how you can answer “because
+    these three things had these three impacts”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a random forest, we could do that across all of the trees. So every time
+    we see coupler, we add up that change. Every time we see enclosure, we add up
+    that change, and so on. Then we combine them all together, we get what tree interpreter
+    does. So you could go into the source code for tree interpreter and it’s not at
+    all complex logic. Or you could build it yourself and you can see how it does
+    exactly this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So when you go `treeinterpreter.predict` with a random forest model for some
+    specific auction (in this case it’s zero index row), it tells you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`prediction`: the same as the random forest prediction'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bias`: this is going to be always the same — it’s the average sale price for
+    everybody for each of the random samples in the tree'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`contributions`: the total of all the contributions for each time we see that
+    specific column appear in a tree.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The last time I made a mistake of not sorting this correctly. so this time `np.argsort`
+    is a super handy function. It doesn’t actually sort `contributions[0]`, it just
+    tells you where each item would move to if it were sorted. So now by passing `idxs`
+    to each one of the column, the level, and contribution , I can then print out
+    all those in the right order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: So small piece of industrial equipment meant that it was less expensive. If
+    it was made pretty recently meant that was more expensive, etc. So this is not
+    going to really help you much at all with Kaggle where you just need predictions.
+    But it’s going to help you a lot in a production environment or even pre production.
+    So something which any good manager should do if you say here is a machine learning
+    model I think we should use is they should go away and grab a few example of actual
+    customers or actual auctions and check whether your model looks intuitive. If
+    it says my prediction is that lots of people are going to really enjoy this crappy
+    movie, and it is like “wow, that was a really crappy movie” then they’re going
+    to come back to you and say “explain why your model is telling me that I’m going
+    to like this movie because I hate that movie”. Then you can go back and say well,
+    it’s because you like this movie and because you’re this age range and you’re
+    this gender, and on average actually people like you did like that movie.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: What’s the second element of each tuple [[47:25](https://youtu.be/3jl2h9hSRvc?t=47m25s)]?
+    This is saying for this particular row, ‘ProductSize’ was ‘Mini’, and it was 11
+    years old, etc. So it’s just feeding back and telling you. Because this is actually
+    what it was:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: It was these numbers. So I just went back to the original data to actually pull
+    out the descriptive versions of each one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So if we sum up all the contributions together, and then add them to the bias,
+    then that would give us the final prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is an almost totally unknown technique and this particular library is almost
+    totally unknown as well. So it’s a great opportunity to show something that a
+    lot of people don’t know. It’s totally critical in my opinion but rarely done.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So this is kind of the end of the random forest interpretation piece and hopefully
+    you’ve now seen enough that when somebody says we can’t use modern machine learning
+    techniques because they are black boxes that aren’t interpretable, you have enough
+    information to say you are full of crap. They are extremely interpretable and
+    the stuff that we’ve just done — trying to do that with a linear model, good luck
+    to you. Even where you can do something similar with a linear model, trying to
+    do it so that is not giving you totally the wrong answer and you had no idea it’s
+    a wrong answer is going to be a real challenge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extrapolation [[49:23](https://youtu.be/3jl2h9hSRvc?t=49m23s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The last step we are going to do before we try and build our own random forest
+    is to deal with this tricky issue of extrapolation. So in this case, if we look
+    at the accuracy of our recent trees, we still have a big difference between our
+    validation score and our training score.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/bb86638bde04fb34da0a4ac67e16e973.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Actually, in this case, the difference between the OOB (0.89420) and the validation
+    (0.89319) is actually pretty close. So if there was a big difference, I’d be very
+    worried about whether we’ve dealt with the temporal side of things correctly.
+    Here is the most recent model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/9a0ab597e234a6d7f66adce0d8ca03e3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: On Kaggle, you need that last decimal place. In real world, I probably stopped
+    here. But quite often you’ll see there’s a big difference between your validation
+    score and your OOB score, and I want to show you how you would deal with that
+    particularly because we know that the OOB score should be a little worse because
+    it’s using less trees so it gives me a sense that we should get to do a little
+    bit better. The way we should be able to do a little bit better is by handling
+    the time component a little bit better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here is the problem with random forests when it comes to extrapolation. When
+    you’ve got a dataset that got four years of sales data in it, and you create your
+    tree and it says if it’s in some particular store and some particular item and
+    it is on special, here is the average price. And it actually tells us the average
+    price over the whole training set which could be pretty old. So when you then
+    want to step forward to what is going to be the price next month, it’s never seen
+    next month. Where else with a linear model, it can find a relationship between
+    time and price where even though we only had this much data, when you then go
+    and predict something in the future, it can extrapolate that. But a random forest
+    can’t do that. If you think about it, there is no way for a tree to be able to
+    say well next month, it would be higher still. So there is a few ways to deal
+    with this and we’ll talk about it over the next couple of lessons, but one simple
+    way is just to try to avoid using time variables as predictors if there’s something
+    else we could use that’s going to give us a better or stronger relationship that’s
+    actually going to work in the future [[52:19](https://youtu.be/3jl2h9hSRvc?t=52m19s)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: So in this case, what I wanted to do was to first of all figure out what’s the
+    difference between our validation set and our training set. If I understand the
+    difference between our validation set and our training set, then that tells me
+    what are the predictors which have a strong temporal component and therefore they
+    may be irrelevant by the time I get to the future time period. So I do something
+    really interesting which is I create a random forest where my dependent variable
+    is “is it in the validation set” (`is_valid`). I’ve gone back and I’ve got my
+    whole data frame with the training and validation all together and I’ve created
+    a new column called `is_valid` which I’ve set to one and then for all of the stuff
+    in the training set, I set it to zero. So I’ve got a new column which is just
+    is this in the validation set or not and then I’m going to use that as my dependent
+    variable and build a random forest. This is a random forest not to predict price
+    but predict is this in the validation set or not. So if your variable were not
+    time dependent, then it shouldn’t be possible to figure out if something is in
+    the validation set or not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is a great trick in Kaggle because they often won’t tell you whether the
+    test set is a random sample or not. So you could put the test set and training
+    set together, create a new column called `is_test` and see if you can predict
+    it. If you can, you don’t have a random sample which means you have to figure
+    out how to create a validation set from it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, I can see I don’t have a random sample because my validation set
+    can be predicted with a .9999 R².
+  prefs: []
+  type: TYPE_NORMAL
+- en: So then if I look at feature importance, the top thing is `SalesID` [[54:36](https://youtu.be/3jl2h9hSRvc?t=54m36s)].
+    So this is really interesting. It tells us very clearly `SalesID` is not a random
+    identifier but probably it’s something that’s just set consecutively as time goes
+    on — we just increase the `SalesID`. `saleElapsed` was the number of days since
+    the first date in our dataset so not surprisingly that also is a good predictor.
+    Interestingly `MachineID` — clearly each machine is being labeled with some consecutive
+    identifier as well and then there’s a big drop in importance, so we’ll stop here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/a692ee826e44d034c4c389ddb819a6f7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Let’s next grab those top three and we can then have a look at their values
+    both from the training set and in the validation set. [[55:22](https://youtu.be/3jl2h9hSRvc?t=55m22s)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/927ade0892b7e4ac5ed43e9df0334faf.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/5550478d44046e76f333581c005dbce5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can see for example, SalesID on average is 1.8 million in the training set
+    and 5.8 million in the validation set (notice that the value is divided by 1000).
+    So you can confirm they are very different.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So let’s drop them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: So after I drop them, let’s now see if I can predict whether something is in
+    the validation set. I still can with 0.98 R².
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/9836d21c99139fb67f800888ef76da83.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Once you remove some things, then other things can come to the front, and it
+    now turns out that not surprisingly age — things that are old are more likely
+    to be in the validation set because earlier on in the training set, they can’t
+    be that old yet. YearMade for the same reason. So then we can try removing those
+    as well — `SalesID`, `saleElapsed`, `MachineID` from the first one, `age`, `YearMade`,
+    and `saleDayofyear` from the second one. They are all time dependent features.
+    I still want them in my random forest if they are important. But if they are not
+    important, then taking them out if there are some other none-time dependent variables
+    that work just as well — that would be better. Because now I am going to have
+    a model that generalizes over time better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: So here, I’m just going to go through each one of those features and drop each
+    one, one at a time, retrain a new random forest, and print out the score [[57:19](https://youtu.be/3jl2h9hSRvc?t=57m19s)].
+    Before we do any of that, our score was 0.88 for validation, 0.89 for OOB. And
+    you can see below, when I remove SalesID, my score goes up. This is what we were
+    hoping for. We’ve removed a time dependent variable, there were other variables
+    that could find similar relationships without the time dependency. So removing
+    it caused our validation to go up. Now OOB didn’t go up, because this is genuinely
+    statistically a useful predictor, but it’s a time dependent one and we have a
+    time dependent validation set. So this is really subtle but it can be really important.
+    It’s trying to find the things that gives you a generalizable-across-time prediction
+    and here is how you can see it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: We should remove `SalesID` for sure, but `saleElapsed` didn’t get better, so
+    we don’t want. `MachineID` did get better — 0.888 to 0.893 so it’s actually quite
+    a bit better. `age` got a bit better. `YearMade` got worse, `saleDayofyear` got
+    a bit better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: So now we can say, let’s get rid of the three where we know that getting rid
+    of it actually made it better. And as a result, we are now up to .915! So we got
+    rid of three time dependent things and now as expected our validation is better
+    than our OOB.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: So that was a super successful approach there, and now we can check the feature
+    importance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](../Images/474f880db65e91ac289aa57aab5deebb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let’s go ahead and say alright, that was pretty darn good. Let’s now leave it
+    for a while so give it 160 trees, let it chew on it, and see how that goes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our final model!
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, we did all of our interpretation, all of our fine-tuning basically
+    with smaller models/subsets and at the end, we run the whole thing. And it actually
+    still only took 16 seconds and so we’ve now got an RMSE of 0.21\. Now we can check
+    that against Kaggle. Unfortunately, this is an older competition and we are not
+    allowed to enter anymore to see how we would have gone. So the best we can do
+    is check whether it looks like we could have done well based on their validation
+    set so it should be in the right area. Based on that, we would have come first.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I think this is an interesting series of steps. So you can go through the same
+    series of steps in your Kaggle projects and more importantly, your real-world
+    projects. One of the challenges is once you leave this learning environment, suddenly
+    you are surrounded by people who never have enough time, they always want you
+    to be in a hurry, they’re always telling you do this and then do that. You need
+    to find the time to step away and go back because this is a genuine real-world
+    modeling process you can use. And it gives, when I said gives world-class results,
+    I mean it. The guy who won this, Leustagos, sadly he passed away but he is the
+    top Kaggle competitor of all time. He won I believe dozens of competitions so
+    if we can get a score even within cooee of him, then we are doing really well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Clarification** [[1:01:31](https://youtu.be/3jl2h9hSRvc?t=1h1m31s)]: The
+    change in R² between these two is not just due to the fact that we removed these
+    three predictors. We also went `reset_rf_samples()` . So to actually see the impact
+    of just removing, we need to compare it to the final step earlier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/bb918a228059a483c993a32b6f8c7b3e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: So it’s actually compared to 0.907 validation. So removing those three things
+    took us from 0.907 to 0.915\. In the end, of course, what matters is our final
+    model but just to clarify.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Writing Random Forest from scratch! [[1:02:31](https://youtu.be/3jl2h9hSRvc?t=1h2m31s)]
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Notebook](https://github.com/fastai/fastai/blob/master/courses/ml1/lesson3-rf_foundations.ipynb)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: My original plan here was to do it in real time and then as I started to do
+    it, I realized that would have been boring, so instead, we might do more of a
+    walk through the code together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing random forest algorithm is actually quite tricky not because the
+    code is tricky [[1:05:03](https://youtu.be/3jl2h9hSRvc?t=1h5m3s)]. Generally speaking,
+    most random forest algorithms are pretty conceptually easy. Generally speaking,
+    academic papers and books have a knack of making them look difficult, but they
+    are not difficult conceptually. What’s difficult is getting all the details right
+    and knowing when you’re right. In other words, we need a good way of doing testing.
+    So if we are going to reimplement something that already exists, like say we want
+    to create a random forest in some different framework, different language, different
+    operating system, I would always start with something that does exist. So in this
+    case, we’re just going to do it as learning exercise, writing a random forest
+    in Python, so for testing, I’m going to compare it to an existing random forest
+    implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s critical. Anytime you are doing anything involving non-trivial amounts
+    of code in machine learning, knowing whether you’ve got it right or wrong is the
+    hardest bit. I always assume that I’ve screwed everything up at every step, and
+    so I’m thinking okay assuming that I screwed it up, how do I figure out that I
+    screwed it up. Then much to my surprise from time to time, I actually get something
+    right and then I can move on. But most of the time, I get it wrong, so unfortunately
+    with machine learning, there’s a lot of ways you can get things wrong that don’t
+    give you an error. They just make your result slightly less good and so that’s
+    what you you want to pick up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: So given that I want to compare it to an existing implementation, I’m going
+    to use our existing dataset, our existing validation set, and then to simplify
+    things, I’m just going to use two columns to start with [[1:06:44](https://youtu.be/3jl2h9hSRvc?t=1h6m44s)].
+    So let’s go ahead and start writing a random forest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'My way of writing nearly all code is top-down just like my teaching. So by
+    top-down, I start by assuming that everything I want already exists. In other
+    words, the first thing I want to do, I’m going to call this a tree ensemble. To
+    create a random forest, the first question I have is what do I need to pass in.
+    What do I need to initialize my random forest. I’m going to need:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`x`: some independent variables'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`y`: some dependent variable'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`n_trees`: pick how many trees I want'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sample_sz`: I’m going to use the sample size parameter from the start here,
+    so how big you want each sample to be'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`min_leaf`: then maybe some optional parameter of what’s the smallest leaf
+    size.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For testing, it’s nice to use a constant random seed, so we’ll get the same
+    result each time. So `np.random.seed(42)` is how you set a random seed. Maybe
+    it’s worth mentioning for those of you who aren’t familiar with it, random number
+    generators on computers aren’t random at all. They are actually called pseudo
+    random number generators and what they do is given some initial starting point
+    (in this case 42), a pseudo random number generator is a mathematical function
+    that generates a deterministic (always the same) sequence of numbers such that
+    those numbers are designed to be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: as uncorrelated with the pervious number as possible
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: as unpredictable as possible
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: as uncorrelated as possible with something with a different random seed (so
+    the second number in the sequence starting with 42 should be very different to
+    the second number starting with 41)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: And generally, they involve using big prime numbers, taking mods, and stuff
+    like that. It’s an interesting area of math. If you want real random numbers,
+    the only way to do that is you can actually buy hardware called a hardware random
+    number generator that’ll have inside them like a little bit of some radioactive
+    substance and something that detects how many things it’s spitting out or there’ll
+    be some hardware thing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Question**: Is current system time a valid random number generation [[1:09:25](https://youtu.be/3jl2h9hSRvc?t=1h9m25s)]?
+    So that would be maybe for a random seed (the thing we start the function with).
+    One of the really interesting area is in your computer, if you don’t set the random
+    seed, what is it set to. Quite often, people use the current time for security
+    — obviously we use a lot of random number stuff for security, like if you are
+    generating an SSH key, it needs to be random. It turns out people can figure out
+    roughly when you created a key. They could look at oh, `id_rsa` has a timestamp
+    and they could try all the different nanoseconds starting points for a random
+    number generator around that timestamp and figure out your key. So in practice,
+    a lot of high randomness requiring applications actually have a step that say
+    “please move your mouse and type random stuff at the keyboard for a while” and
+    so it gets you to be a source of “entropy”. Other approach is they’ll look at
+    the hash of some of your log files or stuff like that. It’s a really really fun
+    area.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our case, our purpose actually is to remove randomness [[1:10:48](https://youtu.be/3jl2h9hSRvc?t=1h10m48s)].
+    So we are saying okay, generate a series of pseudo random numbers starting with
+    42, so it always should be the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you haven’t done much stuff in Python OO, this is basically standard idiom
+    at least I write it this way, most people don’t, but if you pass in five things
+    that you are going to want to keep inside this object, then you basically have
+    to say `self.x = x`, etc. We can assign to a tuple from a tuple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/b50c5cfec00ef768509952835719b1ac.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This is my way of coding. Most people thing this is horrible, but I prefer to
+    be able to see everything at once and so I know in my code anytime I see something
+    that looks like this, it’s always all of the stuff in the method being set. If
+    I did it a different way, then half of the code now come off the bottom of the
+    page and you can’t see it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So that was the first thing I thought about — to create a random forest what
+    information do you need. Then I’m going to need to store that information inside
+    my object, and then I need to create some trees. A random forest is something
+    that has some trees. So I basically figured to use list comprehension to create
+    a list of trees. How many trees do we have? We got `n_trees` trees. That’s what
+    we asked for. `range(n_trees)` gives me the numbers from 0 up to `n_trees — 1`.
+    So if I create a list comprehension that loops through that range calling `create_tree`
+    each time, I now have `n_trees` trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To write that, I didn’t have to think at all. That’s all obvious. So I’ve delayed
+    the thinking to the point where it’s like well wait, we don’t have something to
+    create a tree. Okay, no worries. But let’s pretend we did. If we did, we’ve now
+    created a random forest. we’d still need to do a few things on top of that. For
+    example, once we have it we need a predict function. Okay, let’s write a predict
+    function. How do you predict in a random forest? For a particular row (or rows),
+    go through each tree, calculate its prediction. So here is a list comprehension
+    that is calculating the prediction for every tree for `x`. I don’t know if `x`
+    is one row or multiple rows, it doesn’t matter as long as `tree.predict` works
+    on it. And once you’ve got a list of things, a cool thing to know is you can pass
+    `numpy.mean` a regular non numpy list and it will take the mean — you just need
+    to tell it `axis=0` means average across the lists. So this is going to return
+    the average of `.predict()` for each tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I find list comprehensions allow me to write the code in the way the brain works
+    [[1:14:24](https://youtu.be/3jl2h9hSRvc?t=1h14m24s)]. You could take the words
+    and translate them into this code, or you could take this code and translate them
+    into words. So when I write code, I want it to be as much like that as possible.
+    I want it to be readable and so hopefully you’ll find when you look at the fast.ai
+    code trying to understand how Jeremy did x, I try to write things in a way that
+    you can read it and turn it into English in your head.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We’ve nearly finished writing our random forest, haven’t we [[1:15:29](https://youtu.be/3jl2h9hSRvc?t=1h15m29s)]?
+    All we need to do now is write `create_tree`. We will construct a decision tree
+    (i.e. non-random tree) from a random sample of the data. So again, we’ve delayed
+    any actual thought process here. We’ve basically said ok, we could pick some random
+    IDs. This is a good trick to know. If you call `np.random.permutation` passing
+    in an `int`, it’ll give you back a randomly shuffled sequence from zero to that
+    `int`. So if you grab the first `:n` items of that, that’s now a random subsample.
+    So this is not doing bootstrapping (i.e. we are not doing sampling with replacement)
+    here which I think is fine. For my random forest, I’m deciding that it’s going
+    to be something where we do subsampling not bootstrapping.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/a14a2ce4e8535f02402de4c95e880637.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '`np.random.permutation(len(self.y))[:self.sample_sz]`'
+  prefs: []
+  type: TYPE_NORMAL
+- en: So here is a good line of code to know how to write because it comes up all
+    the time. I find in machine learning, most algorithms I use are somewhat random
+    and so often I need some kind of random sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Personally I prefer this over bootstrapping because I feel like most of the
+    time, we have more data than we want to put in a tree at once [[1:18:54](https://youtu.be/3jl2h9hSRvc?t=1h18m54s)].
+    Back when Breiman created random forest, it was 1999 and was a very different
+    world. We now have too much data. So what people tend to do is fire-up a spark
+    cluster and they will run it on hundreds of machines when it makes no sense because
+    if they had just used a subsample each time, they could have done it on one machine.
+    The overhead of spark is a huge amount of I/O overhead. If you do something on
+    a single machine, it can often be hundreds of times faster because you don’t have
+    this I/O overhead and it also tends to be easier to write the algorithms, easier
+    to visualize, cheaper and so forth. So I almost always avoid distributed computing
+    and I have my whole life. Even 25 years ago when I was starting in machine learning,
+    I still didn’t use clusters because I always feel like whatever I could do with
+    a cluster now, I could do with a single machine in five years time. So why not
+    focus on always being as good as possible with a single machine. That would be
+    more interactive and iterative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So again, we delayed thinking to the point where we have to write decision tree
+    [[1:20:26](https://youtu.be/3jl2h9hSRvc?t=1h20m26s)]. So hopefully you get an
+    idea that this top-down approach, the goal is going to be that we’re going to
+    keep delaying thinking so long that eventually we’ve somehow written the whole
+    thing without actually having to think. Notice that you never have to design anything.
+    You just say, what if somebody already gave me the exact API I needed, how would
+    I use it? Then to implement the next stage, what would be the exact API I would
+    need to implement that? You keep going down until eventually you notice oh, that
+    already exists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This assumes we’ve got a class called `DecisionTree` , so we’re going to have
+    to create that [[1:21:13](https://youtu.be/3jl2h9hSRvc?t=1h21m13s)]. We know what
+    we’re going to have to pass it because we just passed it. So we are passing in
+    random sample of `x`’s and `y`’s. We know that a decision tree is going to contain
+    decision trees which themselves contain decision trees. So as we go down the decision
+    tree, there’s going to be some subset of the original data that we’ve kind of
+    got so I’m going to pass in the indexes of the data that we’re actually going
+    to use here. So initially, it’s the entire random sample. And we also pass down
+    the `min_leaf` size. So everything that we got for constructing the random forest,
+    we’ll pass down to the decision tree except, of course, `num_tree` which is irrelevant
+    for the decision tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`self.n`: how many rows we have in this tree (the number of indexes we’ve given)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.c`: how many columns we have (how ever many columns there are in the
+    independent variables)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.val`: For this tree, what’s its prediction. Prediction of this tree is
+    the mean of our dependent variable for those indexes. When we talk about indexes,
+    we are not talking about the random sampling to create the tree. We’re assuming
+    this tree now has some random sample. Inside decision tree, the whole random sampling
+    thing is gone. That was done by the random forest. So at this point, we are building
+    something that is just a plain old decision tree. It’s not in any way a random
+    sampling anything. So indexes is literally which subset of the data have we got
+    to so far in this tree.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A quick Object Oriented Programming primer[[1:24:50](https://youtu.be/3jl2h9hSRvc?t=1h24m50s)]
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'I’ll skip this but here is the funny bit about `self`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can call it anything you like. If you call it anything other than “self”,
+    everybody will hate you and you’re a bad person. [[1:29:24](https://youtu.be/3jl2h9hSRvc?t=1h29m24s)]
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
