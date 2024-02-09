@@ -1,5 +1,5 @@
-+   [FastAI 笔记](README.md)
-+   [深度学习 2：第 1 部分 第 1 课](fastai-dl_01.md)
++   [fast.ai 深度学习笔记](README.md)
++   [深度学习 2：第 1 部分第 1 课](fastai-dl_01.md)
 +   [深度学习 2：第 1 部分第 2 课](fastai-dl_02.md)
 +   [深度学习 2：第 1 部分第 3 课](fastai-dl_03.md)
 +   [深度学习 2：第 1 部分第 4 课](fastai-dl_04.md)

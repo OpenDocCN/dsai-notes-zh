@@ -1,4 +1,4 @@
-# 深度学习 2：第 1 部分 第 1 课
+# 深度学习 2：第 1 部分第 1 课
 
 > 原文：[`medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-1-602f73869197`](https://medium.com/@hiromi_suenaga/deep-learning-2-part-1-lesson-1-602f73869197)
 > 
