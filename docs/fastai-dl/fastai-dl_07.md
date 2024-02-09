@@ -28,6 +28,8 @@
 
 提醒：RNN 在任何方面都不是不同或不寻常或神奇的 — 只是一个标准的全连接网络。
 
+![](img/7-1.webp)
+
 标准全连接网络
 
 +   箭头代表一个或多个层操作 —— 一般来说是线性后跟一个非线性函数，本例中是矩阵乘法后跟 `relu` 或 `tanh`
@@ -109,7 +111,11 @@ class CharRnn(nn.Module):
 
 +   PyTorch 版本 — `nn.RNN` 将创建循环并跟踪 `h`。
 
+    ![](img/7-2.webp)
+
 +   我们使用白色部分来预测绿色字符 —— 这似乎是浪费的，因为下一部分与当前部分大部分重叠。
+
+    ![](img/7-3.webp)
 
 +   然后我们尝试在多输出模型中将其分割为不重叠的部分：
 
@@ -168,6 +174,8 @@ def repackage_var(h):
 +   当我们第一次开始研究 TorchText 时，我们谈到了它如何创建这些小批量。
 
 +   Jeremy 说我们拿一整个由尼采的全部作品或所有 IMDB 评论连接在一起的长文档，将其分成 64 个相等大小的块（不是大小为 64 的块）。
+
+    ![](img/7-4.webp)
 
 +   对于一个长度为 6400 万字符的文档，每个“块”将是 100 万个字符。我们将它们堆叠在一起，现在按`bptt`拆分它们 - 1 个小批次由 64 个`bptt`矩阵组成。
 
@@ -331,6 +339,8 @@ class CharSeqStatefulRnn2(nn.Module):
 
 在实践中，没有人真正使用`RNNCell`，因为即使使用`tanh`，梯度爆炸仍然是一个问题，我们需要使用较低的学习率和较小的`bptt`来训练它们。因此，我们所做的是用类似`GRUCell`替换`RNNCell`。
 
+![](img/7-5.webp)
+
 [`www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/`](http://www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/)
 
 +   通常，输入会乘以一个权重矩阵以创建新的激活`h`，并立即添加到现有的激活中。这里不是这样发生的。
@@ -340,6 +350,10 @@ class CharSeqStatefulRnn2(nn.Module):
 +   `r`的计算如下 - 一些权重矩阵的矩阵乘法和我们先前隐藏状态和新输入的连接。换句话说，这是一个小型的单隐藏层神经网络。它也通过 sigmoid 函数传递。这个小型神经网络学会了确定要记住隐藏状态的多少（也许在看到句号字符时全部忘记 - 新句子的开始）。
 
 +   `z`门（更新门）确定要使用`h˜`（隐藏状态的新输入版本）的程度，以及要保持隐藏状态与之前相同的程度。
+
+![](img/7-6.webp)
+
+![](img/7-7.webp)
 
 [`colah.github.io/posts/2015-08-Understanding-LSTMs/`](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 
@@ -558,6 +572,8 @@ learn.lr_find()
 learn.sched.plot()
 ```
 
+![](img/7-8.webp)
+
 ```py
 %time learn.fit(lr, 2)
 '''
@@ -656,6 +672,8 @@ OrderedDict([('Conv2d-1',
 learn.lr_find(end_lr=100)
 learn.sched.plot()
 ```
+
+![](img/7-9.webp)
 
 +   `lr_find` 尝试的默认最终学习率是 10。如果在那一点上损失仍在变好，您可以通过指定 `end_lr` 来覆盖。
 
@@ -980,6 +998,8 @@ ResNet 块
 
 +   在每个块`x = l3(l2(l(x)))`中，其中一层不是`ResnetLayer`而是一个带有`stride=2`的标准卷积——这被称为“瓶颈层”。ResNet 不是卷积层，而是我们将在第 2 部分中介绍的不同形式的瓶颈块。
 
+![](img/7-10.webp)
+
 ## ResNet 2 [[01:59:33](https://youtu.be/H3g26EVADgY?t=1h59m33s)]
 
 在这里，我们增加了特征的大小并添加了 dropout。
@@ -1159,7 +1179,13 @@ learn.fit(0.01, 1, cycle_len=1)
 
 我们选择一个特定的图像，并使用一种称为 CAM 的技术，询问模型哪些部分的图像被证明是重要的。
 
+![](img/7-11.webp)
+
+![](img/7-12.webp)
+
 它是如何做到的？让我们逆向工作。它是通过生成这个矩阵来做到的：
+
+![](img/7-13.webp)
 
 大数字对应于猫。那么这个矩阵是什么？这个矩阵简单地等于特征矩阵`feat`乘以`py`向量的值：
 
