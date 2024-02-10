@@ -67,8 +67,10 @@ max_features 的整体效果是相同的 - 这意味着每棵单独的树可能�
 正如我所提到的，当我们进行模型解释时，我倾向于将`set_rf_samples`设置为某个子集——足够小，可以在不到 10 秒内运行一个模型，因为运行一个超级准确的模型没有意义。五万个样本已经足够了，每次运行解释时，你会得到相同的结果，只要这是真的，那么你已经在使用足够的数据了。
 
 ```py
-set_rf_samples(50000)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-        max_features=0.5, n_jobs=-1, oob_score=True)
+set_rf_samples(50000)
+m = RandomForestRegressor(
+    n_estimators=40, min_samples_leaf=3, 
+    max_features=0.5, n_jobs=-1, oob_score=True)
 m.fit(X_train, y_train)
 print_score(m)
 ```

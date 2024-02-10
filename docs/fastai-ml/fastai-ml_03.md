@@ -66,9 +66,16 @@ types = {
   'unit_sales': 'float32',
   'onpromotion': 'object'
 }
-%%time df_all = pd.read_csv(f'{PATH}train.csv', parse_dates=['date'], 
-                     dtype=types, infer_datetime_format=True)*CPU times: user 1min 41s, sys: 5.08s, total: 1min 46s
-Wall time: 1min 48s*
+%%time df_all = pd.read_csv(
+    f'{PATH}train.csv', 
+    parse_dates=['date'], 
+    dtype=types, 
+    infer_datetime_format=True
+)
+'''
+CPU times: user 1min 41s, sys: 5.08s, total: 1min 46s
+Wall time: 1min 48s
+'''
 ```
 
 +   如果设置`low_memory=False`，无论您有多少内存，它都会耗尽内存。
@@ -91,9 +98,12 @@ Wall time: 1min 48s*
 
 ```py
 df_all.onpromotion.fillna(False, inplace=True)
-df_all.onpromotion = df_all.onpromotion.map({'False': False, 
-                                             'True': True})
-df_all.onpromotion = df_all.onpromotion.astype(bool)%time df_all.to_feather('tmp/raw_groceries')
+df_all.onpromotion = df_all.onpromotion.map({
+    'False': False, 
+    'True': True
+})
+df_all.onpromotion = df_all.onpromotion.astype(bool)
+%time df_all.to_feather('tmp/raw_groceries')
 ```
 
 +   `fillna(False)`: 我们不会在没有先检查的情况下这样做，但一些探索性数据分析显示这可能是一个合适的做法（即缺失值表示 false）。
@@ -119,10 +129,17 @@ Pandas 通常很快，所以你可以在 20 秒内总结所有 1.25 亿条记录
 +   在这种情况下，训练集从 2013 年到 2017 年 8 月。
 
 ```py
-df_test = pd.read_csv(f'{PATH}test.csv', parse_dates = ['date'],
-                      dtype=types, infer_datetime_format=True)df_test.onpromotion.fillna(False, inplace=True)
-df_test.onpromotion = df_test.onpromotion.map({'False': False, 
-                                               'True': True})
+df_test = pd.read_csv(
+    f'{PATH}test.csv', 
+    parse_dates = ['date'],
+    dtype=types, 
+    infer_datetime_format=True
+)
+df_test.onpromotion.fillna(False, inplace=True)
+df_test.onpromotion = df_test.onpromotion.map({
+    'False': False, 
+    'True': True
+})
 df_test.onpromotion = df_test.onpromotion.astype(bool)
 df_test.describe(include='all')
 ```
@@ -156,8 +173,11 @@ df_all.unit_sales = np.log1p(np.clip(df_all.unit_sales, 0, None))
 +   `np.log1p`：值加 1 的对数。比赛细节告诉你他们将使用均方根对数加 1 误差，因为 log(0)没有意义。
 
 ```py
-%time add_datepart(df_all, 'date')*CPU times: user 1min 35s, sys: 16.1 s, total: 1min 51s
-Wall time: 1min 53s*
+%time add_datepart(df_all, 'date')
+'''
+CPU times: user 1min 35s, sys: 16.1 s, total: 1min 51s
+Wall time: 1min 53s
+'''
 ```
 
 我们可以像往常一样添加日期部分。这需要几分钟，所以我们应该先在样本上运行所有这些，以确保它有效。一旦你知道一切都是合理的，然后回去在整个集合上运行。
@@ -166,7 +186,10 @@ Wall time: 1min 53s*
 n_valid = len(df_test)
 n_trn = len(df_all) - n_valid
 train, valid = split_vals(df_all, n_trn)
-train.shape, valid.shape*((122126576, 18), (3370464, 18))*
+train.shape, valid.shape
+'''
+((122126576, 18), (3370464, 18))
+'''
 ```
 
 这些代码行与我们在推土机比赛中看到的代码行是相同的。我们不需要运行`train_cats`或`apply_cats`，因为所有的数据类型已经是数字的了（记住`apply_cats`将相同的分类代码应用于验证集和训练集）。
@@ -180,20 +203,34 @@ val, y_val, nas = proc_df(valid, 'unit_sales', nas)
 调用`proc_df`来检查缺失值等。
 
 ```py
-def rmse(x,y): return math.sqrt(((x-y)**2).mean())def print_score(m):
-    res = [rmse(m.predict(X_train), y_train),
-           rmse(m.predict(X_valid), y_valid),
-           m.score(X_train, y_train), m.score(X_valid, y_valid)]
-    if hasattr(m, 'oob_score_'): res.append(m.oob_score_)
+def rmse(x,y): 
+    return math.sqrt(((x-y)**2).mean())
+def print_score(m):
+    res = [
+      rmse(m.predict(X_train), y_train),
+      rmse(m.predict(X_valid), y_valid),
+      m.score(X_train, y_train), 
+      m.score(X_valid, y_valid)
+    ]
+    if hasattr(m, 'oob_score_'): 
+        res.append(m.oob_score_)
     print(res)
 ```
 
 这些代码行再次是相同的。然后有两个变化：
 
 ```py
-**set_rf_samples(1_000_000)**%time x = **np.array(trn, dtype=np.float32)***CPU times: user 1min 17s, sys: 18.9 s, total: 1min 36s
-Wall time: 1min 37s*m = RandomForestRegressor(n_estimators=20, min_samples_leaf=100, 
-                          n_jobs=8)
+set_rf_samples(1_000_000)
+%time x = np.array(trn, dtype=np.float32)
+'''
+CPU times: user 1min 17s, sys: 18.9 s, total: 1min 36s
+Wall time: 1min 37s
+'''
+m = RandomForestRegressor(
+    n_estimators=20, 
+    min_samples_leaf=100, 
+    n_jobs=8
+)
 %time m.fit(x, y)
 ```
 
@@ -220,22 +257,31 @@ Wall time: 1min 37s*m = RandomForestRegressor(n_estimators=20, min_samples_leaf=
 +   Jeremy 在分析器中注意到的另一件事是，当我们使用`set_rf_samples`时，我们不能使用 OOB 分数，因为如果这样做，它将使用其他 124 百万行来计算 OOB 分数。此外，我们希望使用最近日期的验证集，而不是随机的。
 
 ```py
-print_score(m)*[0.7726754289860,* *0.7658818632043**, 0.23234198105350, 0.2193243264]*
+print_score(m)
+'''
+[0.7726754289860, 0.7658818632043, 0.23234198105350, 0.2193243264]
+'''
 ```
 
 所以这让我们得到了 0.76 的验证均方根对数误差。
 
 ```py
-m = RandomForestRegressor(n_estimators=20, **min_samples_leaf=10**, 
-                          n_jobs=8)
+m = RandomForestRegressor(
+    n_estimators=20, 
+    min_samples_leaf=10, 
+    n_jobs=8
+)
 %time m.fit(x, y)
 ```
 
 这使我们降到了 0.71，尽管花了更长的时间。
 
 ```py
-m = RandomForestRegressor(n_estimators=20, **min_samples_leaf=3**, 
-                          n_jobs=8)
+m = RandomForestRegressor(
+    n_estimators=20, 
+    min_samples_leaf=3, 
+    n_jobs=8
+)
 %time m.fit(x, y)
 ```
 
@@ -299,7 +345,8 @@ df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')
 我们首先读取蓝色书籍对推土机比赛的 feather 文件。提醒：我们已经读取了 CSV 文件，将其处理为类别，并保存为 feather 格式。接下来我们调用`proc_df`将类别转换为整数，处理缺失值，并提取出因变量。然后创建一个像上周一样的验证集：
 
 ```py
-def split_vals(a,n): return a[:n], a[n:]n_valid = 12000
+def split_vals(a,n): 
+    return a[:n], a[n:]n_valid = 12000
 n_trn = len(df_trn)-n_valid
 X_train, X_valid = split_vals(df_trn, n_trn)
 y_train, y_valid = split_vals(y_trn, n_trn)
@@ -311,8 +358,12 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)
 上周，在`proc_df`中有一个 bug，当传入`subset`时会打乱数据框，导致验证集不是最新的 12000 条记录。这个问题已经修复。
 
 ```py
-## From lesson1-rf.ipynbdf_trn, y_trn, nas = proc_df(df_raw, 'SalePrice', subset=30000, 
-                             na_dict=nas)
+## From lesson1-rf.ipynb
+df_trn, y_trn, nas = proc_df(
+    df_raw, 'SalePrice', 
+    subset=30000, 
+    na_dict=nas
+)
 X_train, _ = split_vals(df_trn, 20000)
 y_train, _ = split_vals(y_trn, 20000)
 ```
@@ -342,8 +393,13 @@ y_train, _ = split_vals(y_trn, 20000)
 只需确保样本大小足够大，以便如果多次调用相同的解释命令，每次都不会得到不同的结果。在实践中，50,000 是一个很高的数字，如果这还不够的话会令人惊讶（而且运行时间只需几秒）。
 
 ```py
-set_rf_samples(50000)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                        max_features=0.5, n_jobs=-1, oob_score=True)
+set_rf_samples(50000)m = RandomForestRegressor(
+    n_estimators=40, 
+    min_samples_leaf=3, 
+    max_features=0.5, 
+    n_jobs=-1, 
+    oob_score=True
+)
 m.fit(X_train, y_train)
 print_score(m)
 ```
@@ -352,8 +408,11 @@ print_score(m)
 
 ```py
 %time preds = np.stack([t.predict(X_valid) for t in m.estimators_])
-np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 1.38 s, sys: 20 ms, total: 1.4 s
-Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)*
+np.mean(preds[:,0]), np.std(preds[:,0])
+'''
+CPU times: user 1.38 s, sys: 20 ms, total: 1.4 s
+Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)
+'''
 ```
 
 这是针对一个观察结果的方法。这需要相当长的时间，特别是它没有充分利用我的计算机有很多核心这一事实。列表推导本身是 Python 代码，Python 代码（除非您在做一些特殊的事情）运行在串行模式下，这意味着它在单个 CPU 上运行，不利用您的多 CPU 硬件。如果我们想在更多树和更多数据上运行此代码，执行时间会增加。墙上时间（实际花费的时间）大致等于 CPU 时间，否则如果它在许多核心上运行，CPU 时间将高于墙上时间[[1:00:05](https://youtu.be/YSFG_W8JxBo?t=1h5s)]。
@@ -361,10 +420,14 @@ Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)*
 原来 Fast.ai 库提供了一个方便的函数称为`parallel_trees`：
 
 ```py
-def get_preds(t): return t.predict(X_valid)
+def get_preds(t): 
+    return t.predict(X_valid)
 %time preds = np.stack(parallel_trees(m, get_preds))
-np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 100 ms, sys: 180 ms, total: 280 ms
-Wall time: 505 ms**(9.1960278072006023, 0.21225113407342761)*
+np.mean(preds[:,0]), np.std(preds[:,0])
+'''
+CPU times: user 100 ms, sys: 180 ms, total: 280 ms
+Wall time: 505 ms**(9.1960278072006023, 0.21225113407342761)
+'''
 ```
 
 +   `parallel_trees`接受一个随机森林模型`m`和要调用的某个函数（这里是`get_preds`）。这会并行在每棵树上调用此函数。
@@ -414,8 +477,12 @@ enc_summ.plot('Enclosure', 'SalePrice', 'barh', xlim=(0,11));
 ![](img/5341d4e30fe46779f92e2e28d24e0753.png)
 
 ```py
-enc_summ.plot('Enclosure', 'pred', 'barh', xerr='pred_std', 
-              alpha=0.6, xlim=(0,11));
+enc_summ.plot(
+    'Enclosure', 'pred', 'barh', 
+    xerr='pred_std', 
+    alpha=0.6, 
+    xlim=(0,11)
+);
 ```
 
 ![](img/308feaabedab15f69099285ec08021c1.png)
@@ -476,7 +543,8 @@ fi.plot('cols', 'imp', figsize=(10,6), legend=False);
 
 ```py
 def plot_fi(fi): 
-  return fi.plot('cols','imp','barh', figsize=(12,7), legend=False)plot_fi(fi[:30]);
+    return fi.plot('cols','imp','barh', figsize=(12,7), legend=False)
+plot_fi(fi[:30]);
 ```
 
 ![](img/7fe9dce9aba9b05771f592a1d5bb56ac.png)
@@ -492,11 +560,21 @@ def plot_fi(fi):
 为了让生活更轻松，有时候最好抛弃一些数据，看看是否会有任何不同。在这种情况下，我们有一个随机森林，r²为 0.889。在这里，我们筛选出那些重要性等于或小于 0.005 的数据（即只保留重要性大于 0.005 的数据）。
 
 ```py
-to_keep = fi[fi.imp>0.005].cols; len(to_keep)df_keep = df_trn[to_keep].copy()
-X_train, X_valid = split_vals(df_keep, n_trn)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                       max_features=0.5, n_jobs=-1, oob_score=True)
+to_keep = fi[fi.imp>0.005].cols; len(to_keep)
+df_keep = df_trn[to_keep].copy()
+X_train, X_valid = split_vals(df_keep, n_trn)
+m = RandomForestRegressor(
+    n_estimators=40, 
+    min_samples_leaf=3, 
+    max_features=0.5, 
+    n_jobs=-1, 
+    oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)*[0.20685390156773095, 0.24454842802383558, 0.91015213846294174, 0.89319840835270514, 0.8942078920004991]*
+print_score(m)
+'''
+[0.20685390156773095, 0.24454842802383558, 0.91015213846294174, 0.89319840835270514, 0.8942078920004991]
+'''
 ```
 
 r²并没有太大变化 - 实际上略微增加了一点。一般来说，删除多余的列不应该使情况变得更糟。如果情况变得更糟，那么这些列实际上并不多余。这可能会使结果略微好一点，因为当决定要分裂时，它需要考虑的事情更少，不太可能偶然发现一个糟糕的列。因此，有稍微更好的机会创建一个稍微更好的树，使用稍微更少的数据，但不会有太大变化。但这会使速度更快，让我们专注于重要的事情。让我们在这个新结果上重新运行特征重要性。
