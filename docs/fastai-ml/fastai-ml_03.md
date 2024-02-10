@@ -59,12 +59,14 @@
 ## 读取数据[[15:12](https://youtu.be/YSFG_W8JxBo?t=15m12s)]
 
 ```py
-types = {'id': 'int64',
-         'item_nbr': 'int32',
-         'store_nbr': 'int8',
-         'unit_sales': 'float32',
-         'onpromotion': 'object'}%%time
-df_all = pd.read_csv(f'{PATH}train.csv', parse_dates=['date'], 
+types = {
+  'id': 'int64',
+  'item_nbr': 'int32',
+  'store_nbr': 'int8',
+  'unit_sales': 'float32',
+  'onpromotion': 'object'
+}
+%%time df_all = pd.read_csv(f'{PATH}train.csv', parse_dates=['date'], 
                      dtype=types, infer_datetime_format=True)*CPU times: user 1min 41s, sys: 5.08s, total: 1min 46s
 Wall time: 1min 48s*
 ```

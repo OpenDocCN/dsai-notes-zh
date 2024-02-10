@@ -130,7 +130,8 @@ X_train.shape, y_train.shape, X_valid.shape
 ## PEP8[[27:09](https://youtu.be/blyXCk4sgEg?t=27m9s)]
 
 ```py
-def rmse(x,y): return math.sqrt(((x-y)**2).mean())
+def rmse(x,y): 
+    return math.sqrt(((x-y)**2).mean())
 ```
 
 这是一个代码不符合 PEP8 规范的例子。能够用眼睛一次看到某些东西，并随着时间学会立即看出发生了什么具有很大的价值。在数据科学中，始终使用特定的字母或缩写表示特定的含义是有效的。但是如果你在家里面试中测试，要遵循 PEP8 标准。
@@ -142,8 +143,11 @@ def rmse(x,y): return math.sqrt(((x-y)**2).mean())
 加快速度的一种方法是将 subset 参数传递给 proc_df，这将随机抽样数据：
 
 ```py
-df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice', **subset=30000**, 
-                     na_dict=nas)
+df_trn, y_trn, nas = proc_df(
+    df_raw, 'SalePrice', 
+    subset=30000, 
+    na_dict=nas
+)
 X_train, _ = split_vals(df_trn, 20000)
 y_train, _ = split_vals(y_trn, 20000)
 ```
@@ -161,8 +165,12 @@ y_train, _ = split_vals(y_trn, 20000)
 我们将建立由树组成的森林。让我们从树开始。在 scikit-learn 中，他们不称之为树，而是**估计器**。
 
 ```py
-m = RandomForestRegressor(**n_estimators=1**, max_depth=3,
-                          bootstrap=False, n_jobs=-1)
+m = RandomForestRegressor(
+    n_estimators=1, 
+    max_depth=3,
+    bootstrap=False, 
+    n_jobs=-1
+)
 m.fit(X_train, y_train)
 print_score(m)
 ```
@@ -214,10 +222,16 @@ print_score(m)
 现在，我们的决策树的 R²为 0.4。让我们通过去掉`max_depth=3`来使其更好。这样做后，训练 R²变为 1（因为每个叶节点只包含一个元素），验证 R²为 0.73——比浅树好，但不如我们希望的那么好。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, bootstrap=False, 
-                          n_jobs=-1)
+m = RandomForestRegressor(
+    n_estimators=1, 
+    bootstrap=False, 
+    n_jobs=-1
+)
 m.fit(X_train, y_train)
-print_score(m)*[6.5267517864504e-17, 0.3847365289469930, 1.0, 0.73565273648797624]*
+print_score(m)
+'''
+[6.5267517864504e-17, 0.3847365289469930, 1.0, 0.73565273648797624]
+'''
 ```
 
 为了让这些树更好，我们将创建一个森林。要创建一个森林，我们将使用一种称为**bagging**的统计技术。
@@ -255,10 +269,17 @@ print_score(m)
 ## 提出预测[[1:04:30](https://youtu.be/blyXCk4sgEg?t=1h4m30s)]
 
 ```py
-preds = np.stack([t.predict(X_valid) for t in m.estimators_]) preds[:,0], np.mean(preds[:,0]), y_valid[0]*(array([ 9.21034,  8.9872 ,  8.9872 ,  8.9872 ,  8.9872 ,  9.21034,  8.92266,  9.21034,  9.21034,  8.9872 ]),  
+preds = np.stack([t.predict(X_valid) for t in m.estimators_]) 
+preds[:,0], np.mean(preds[:,0]), y_valid[0]
+'''
+(array([ 9.21034,  8.9872 ,  8.9872 ,  8.9872 ,  8.9872 ,  9.21034,  8.92266,  9.21034,  9.21034,  8.9872 ]),  
 9.0700003890739005,  
-9.1049798563183568)*preds.shape
-*(10, 12000)*
+9.1049798563183568)
+'''
+preds.shape
+'''
+(10, 12000)
+'''
 ```
 
 每棵树都存储在名为`estimators_`的属性中。对于每棵树，我们将使用验证集调用`predict`。`np.stack`将它们连接在一起形成一个新轴，因此结果`preds`的形状为`(10, 12000)`（10 棵树，12000 个验证集）。对于第一个数据的 10 个预测的平均值为 9.07，实际值为 9.10。正如你所看到的，没有一个单独的预测接近 9.10，但平均值最终相当不错。
@@ -280,10 +301,16 @@ preds = np.stack([t.predict(X_valid) for t in m.estimators_]) preds[:,0], np.mea
 我们可以意识到，在我们的第一棵树中，一些行没有用于训练。我们可以通过第一棵树传递那些未使用的行，并将其视为验证集。对于第二棵树，我们可以通过未用于第二棵树的行，依此类推。实际上，我们将为每棵树创建一个不同的验证集。为了计算我们的预测，我们将对所有未用于训练的行进行平均。如果您有数百棵树，那么很可能所有行都会在这些袋外样本中多次出现。然后，您可以在这些袋外预测上计算 RMSE、R²等。
 
 ```py
-m = RandomForestRegressor(n_estimators=40, n_jobs=-1, 
-                          **oob_score=True**)
+m = RandomForestRegressor(
+    n_estimators=40, 
+    n_jobs=-1, 
+    oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)*[0.10198464613020647, 0.2714485881623037, 0.9786192457999483, 0.86840992079038759, 0.84831537630038534]*
+print_score(m)
+'''
+[0.10198464613020647, 0.2714485881623037, 0.9786192457999483, 0.86840992079038759, 0.84831537630038534]
+'''
 ```
 
 将`oob_score`设置为 true 将执行此操作，并为模型创建一个名为`oob_score_`的属性，如您在 print_score 函数中看到的，如果具有此属性，它将在最后打印出来。
@@ -299,7 +326,8 @@ print_score(m)*[0.10198464613020647, 0.2714485881623037, 0.9786192457999483, 0.8
 ```py
 df_trn, y_trn = proc_df(df_raw, 'SalePrice')
 X_train, X_valid = split_vals(df_trn, n_trn)
-y_train, y_valid = split_vals(y_trn, n_trn)set_rf_samples(20000)
+y_train, y_valid = split_vals(y_trn, n_trn)
+set_rf_samples(20000)
 ```
 
 `set_rf_samples`：与之前一样，我们在训练集中使用 20,000 个样本（之前是 30,000，这次是 389,125）。
@@ -317,10 +345,17 @@ y_train, y_valid = split_vals(y_trn, n_trn)set_rf_samples(20000)
 让我们为这个完整集合建立一个基准来进行比较：
 
 ```py
-reset_rf_samples()m = RandomForestRegressor(n_estimators=40, n_jobs=-1, 
-                          oob_score=True)
+reset_rf_samples()
+m = RandomForestRegressor(
+    n_estimators=40, 
+    n_jobs=-1, 
+    oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)*[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0.89816206196980131, 0.90838819297302553]*
+print_score(m)
+'''
+[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0.89816206196980131, 0.90838819297302553]
+'''
 ```
 
 这里 OOB 高于验证集。这是因为我们的验证集是不同的时间段，而 OOB 样本是随机的。预测不同时间段要困难得多。
@@ -328,10 +363,17 @@ print_score(m)*[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0
 ## min_sample
 
 ```py
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                          n_jobs=-1, oob_score=True) 
+m = RandomForestRegressor(
+    n_estimators=40, 
+    min_samples_leaf=3, 
+    n_jobs=-1, 
+    oob_score=True
+) 
 m.fit(X_train, y_train) 
-print_score(m)*[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0.90198460308551043, 0.90843297242839738]*
+print_score(m)
+'''
+[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0.90198460308551043, 0.90843297242839738]
+'''
 ```
 
 +   `min_sample_leaf=3`：当叶节点具有 3 个或更少的样本时停止训练树（之前我们一直下降到 1）。这意味着将减少一到两个决策级别，这意味着我们需要训练的实际决策标准数量减半（即更快的训练时间）。
@@ -345,9 +387,18 @@ print_score(m)*[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0
 ## max_feature [[1:24:07](https://youtu.be/blyXCk4sgEg?t=1h24m7s)]
 
 ```py
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                      max_features=0.5, n_jobs=-1, oob_score=True) m.fit(X_train, y_train) 
-print_score(m)*[0.11926975747908228, 0.22869111042050522, 0.97026995966445684, 0.9066000722129437, 0.91144914977164715]*
+m = RandomForestRegressor(
+    n_estimators=40, 
+    min_samples_leaf=3, 
+    max_features=0.5, 
+    n_jobs=-1, 
+    oob_score=True
+) 
+m.fit(X_train, y_train) 
+print_score(m)
+'''
+[0.11926975747908228, 0.22869111042050522, 0.97026995966445684, 0.9066000722129437, 0.91144914977164715]
+'''
 ```
 
 +   `max_features=0.5`：这个想法是，树之间的相关性越小，越好。想象一下，如果有一列比其他所有列更好地预测，那么您构建的每棵树总是从那一列开始。但是可能存在一些变量之间的相互作用，其中该相互作用比单个列更重要。因此，如果每棵树总是首次在相同的内容上分裂，那么这些树的变化就不会很大。
