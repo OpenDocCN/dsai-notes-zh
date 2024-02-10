@@ -6,7 +6,7 @@
 > 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-*来自* [*机器学习课程*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)* 的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢* [*Jeremy*](https://twitter.com/jeremyphoward) *和* [*Rachel*](https://twitter.com/math_rachel) *给了我这个学习的机会。*
+> 来自[*机器学习课程*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢 [*Jeremy*](https://twitter.com/jeremyphoward) 和 [*Rachel*](https://twitter.com/math_rachel) 给了我这个学习的机会。
 
 在开始之前有一个问题：我们能否总结随机森林的超参数与过拟合、处理共线性等之间的关系？绝对可以。回到[第 1 课笔记本](https://github.com/fastai/fastai/blob/master/courses/ml1/lesson1-rf.ipynb)。
 

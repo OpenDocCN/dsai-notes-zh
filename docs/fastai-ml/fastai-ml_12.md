@@ -1,12 +1,13 @@
 # 机器学习 1：第 12 课
 
-> 原文：[`medium.com/@hiromi_suenaga/machine-learning-1-lesson-12-6c2512e005a3`](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-12-6c2512e005a3)>
+> 原文：[`medium.com/@hiromi_suenaga/machine-learning-1-lesson-12-6c2512e005a3`](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-12-6c2512e005a3)
+>
 > 译者：[飞龙](https://github.com/wizardforcel)
 > 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 
-*我从* [*机器学习课程*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)*中的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢* [*Jeremy*](https://twitter.com/jeremyphoward) *和* [*Rachel*](https://twitter.com/math_rachel) *给了我这个学习的机会。*
+> 来自[*机器学习课程*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢 [*Jeremy*](https://twitter.com/jeremyphoward) 和 [*Rachel*](https://twitter.com/math_rachel) 给了我这个学习的机会。
 
 [视频](https://youtu.be/5_xFdhfUnvQ) / [笔记本](https://github.com/fastai/fastai/blob/master/courses/dl1/lesson3-rossman.ipynb)
 
