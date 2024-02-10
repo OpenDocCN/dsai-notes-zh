@@ -68,7 +68,7 @@ max_features 的整体效果是相同的 - 这意味着每棵单独的树可能�
 
 ```py
 set_rf_samples(50000)m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-        max_features=0.5, n_jobs=-1, oob_score=**True**)
+        max_features=0.5, n_jobs=-1, oob_score=True)
 m.fit(X_train, y_train)
 print_score(m)
 ```
@@ -143,7 +143,7 @@ to_keep = fi[fi.imp>0.005].cols; len(to_keep)
 
 ```py
 df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', max_n_cat=7) X_train, X_valid = split_vals(df_trn2, n_trn) m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-       max_features=0.6, n_jobs=-1, oob_score=**True**) 
+       max_features=0.6, n_jobs=-1, oob_score=True) 
 m.fit(X_train, y_train) 
 print_score(m)*[0.2132925755978791, 0.25212838463780185, 0.90966193351324276, 0.88647501408921581, 0.89194147155121262]*
 ```
@@ -259,7 +259,7 @@ get_oob(df_keep.drop(to_drop, axis=1))*0.88858458047200739*
 我们从 0.890 到 0.888，再次，它们之间的差距太小以至于无关紧要。听起来不错。简单就是好。所以我现在要从我的数据框中删除这些列，然后我可以尝试再次运行完整的模型。
 
 ```py
-df_keep.drop(to_drop, axis=1, inplace=**True**)
+df_keep.drop(to_drop, axis=1, inplace=True)
 X_train, X_valid = split_vals(df_keep, n_trn)np.save('tmp/keep_cols.npy', np.array(df_keep.columns))keep_cols = np.load('tmp/keep_cols.npy')
 df_keep = df_trn[keep_cols]
 ```
@@ -267,7 +267,7 @@ df_keep = df_trn[keep_cols]
 `reset_rf_samples`意味着我使用了整个自助采样。有 40 个估计器，我们得到了 0.907。
 
 ```py
-reset_rf_samples()m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=**True**)
+reset_rf_samples()m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=True)
 m.fit(X_train, y_train)
 print_score(m)*[0.12615142089579687, 0.22781819082173235, 0.96677727309424211, 0.90731173105384466, 0.9084359846323049]*
 ```
@@ -279,8 +279,8 @@ print_score(m)*[0.12615142089579687, 0.22781819082173235, 0.96677727309424211, 0
 现在我到了想要通过利用模型更好地了解我的数据的阶段。我们将使用一种称为偏依赖的技术。再次强调，这是你可以在 Kaggle 内核中使用的东西，很多人会欣赏这一点，因为几乎没有人知道偏依赖，它是一种非常强大的技术。我们要做的是找出对于重要的特征，它们如何与因变量相关。让我们来看看。
 
 ```py
-**from** **pdpbox** **import** pdp
-**from** **plotnine** **import** *
+from pdpbox import pdp
+from plotnine import *
 ```
 
 再次，由于我们正在进行解释，我们将设置`set_rf_samples`为 50,000，以便快速运行事务。
@@ -292,7 +292,7 @@ set_rf_samples(50000)
 我们将获取我们的特征重要性，并注意我们正在使用`max_n_cat`，因为我实际上对看到解释的各个级别很感兴趣。
 
 ```py
-df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', **max_n_cat**=7)
+df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', max_n_cat=7)
 X_train, X_valid = split_vals(df_trn2, n_trn)
 m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
        max_features=0.6, n_jobs=-1)
@@ -318,14 +318,14 @@ df_raw.plot('YearMade', 'saleElapsed', 'scatter', alpha=0.01, figsize=(10,8));
 当我们这样做时，我们得到了这个非常丑陋的图表。它告诉我们`YearMade`实际上有很多是一千。显然，这是我会倾向于回到客户那里并说好的，我猜这些推土机实际上不是在公元 1000 年制造的，他们可能会对我说“是的，这些是我们不知道制造地点的产品”。也许“1986 年之前，我们没有追踪”或者“在伊利诺伊州销售的产品，我们没有提供这些数据”等等——他们会告诉我们一些原因。为了更好地理解这个图，我只是要从分析的解释部分中将它们移除。我们只会获取`YearMade`大于 1930 的数据。
 
 ```py
-x_all = **get_sample**(df_raw[df_raw.YearMade>1930], 500)ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=**True**, 
+x_all = get_sample(df_raw[df_raw.YearMade>1930], 500)ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=True, 
        method='loess')
 ```
 
 现在让我们看一下`YearMade`和`SalePrice`之间的关系。有一个非常棒的包叫做`ggplot`。`ggplot`最初是一个 R 包（GG 代表图形语法）。图形语法是一种非常强大的思考方式，可以以非常灵活的方式生成图表。我在这门课上不会谈论它太多。网上有很多信息可供参考。但我绝对推荐它作为一个很棒的包来使用。`ggplot`可以通过`pip`安装，它已经是 fast.ai 环境的一部分。Python 中的`ggplot`基本上具有与 R 版本相同的参数和 API。R 版本有更好的文档，所以你应该阅读它的文档以了解如何使用它。但基本上你会说“好的，我想为这个数据框（`x_all`）创建一个图。当你创建图时，你使用的大多数数据集都太大而无法绘制。例如，如果你做一个散点图，它会创建很多点，导致一团糟，而且会花费很长时间。记住，当你绘制东西时，你是在看它，所以没有必要绘制一个有一亿个样本的东西，当你只使用十万个时，它们会完全相同。这就是为什么我首先调用`get_sample`。`get_sample`只是抓取一个随机样本。
 
 ```py
-ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=**True**, 
+ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=True, 
        method='loess')
 ```
 
@@ -354,11 +354,11 @@ x = get_sample(X_train[X_train.YearMade>1930], 500)
 ![](img/32c52873fe53ee9e45fc039141dc1eb2.png)
 
 ```py
-**def** plot_pdp(feat, clusters=**None**, feat_name=**None**):
-    feat_name = feat_name **or** feat
+def plot_pdp(feat, clusters=None, feat_name=None):
+    feat_name = feat_name or feat
     p = pdp.pdp_isolate(m, x, feat)
-    **return** pdp.pdp_plot(p, feat_name, plot_lines=**True**, 
-                        cluster=clusters **is** **not** **None**, 
+    return pdp.pdp_plot(p, feat_name, plot_lines=True, 
+                        cluster=clusters is not None, 
                         n_cluster_centers=clusters)plot_pdp('YearMade')
 ```
 
@@ -437,13 +437,13 @@ plot_fi(rf_feat_importance(m, df_keep));
 最后一件事是树解释器。这也属于大多数人不知道存在的事物类别，但它非常重要。对于 Kaggle 竞赛几乎毫无意义，但对于现实生活非常重要。这是个想法。假设你是一家保险公司，有人打电话给你，你给他们报价，他们说“哦，比去年贵了 500 美元。为什么？”总的来说，你从某个模型中做出了预测，有人问为什么。这就是我们使用的这种叫做树解释器的方法。树解释器的作用是允许我们取出特定的一行。
 
 ```py
-**from** **treeinterpreter** **import** treeinterpreter **as** tidf_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)
+from treeinterpreter import treeinterpreter as tidf_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)
 ```
 
 所以在这种情况下，我们将选择零行。
 
 ```py
-row = X_valid.values[**None**,0]; row
+row = X_valid.values[None,0]; row
 ```
 
 这是零行中的所有列。
@@ -477,7 +477,7 @@ prediction, bias, contributions = ti.predict(m, row)
 所以你可以看到，通过一棵树，你可以分解为什么我们预测了 10.2。在每一个决策点，我们都会对值进行一点点的加减。然后我们可以对所有树都这样做，然后我们可以取平均值。每次我们看到围栏，我们增加还是减少了值，以及多少？每次我们看到模型 ID，我们增加还是减少了值，以及多少？我们可以取所有这些的平均值，这就是所谓的`贡献度`。
 
 ```py
-prediction[0], bias[0]*(9.1909688098736275, 10.10606580677884)*idxs = np.argsort(contributions[0])[o **for** o **in** zip(df_keep.columns[idxs], df_valid.iloc[0][idxs], contributions[0][idxs])]
+prediction[0], bias[0]*(9.1909688098736275, 10.10606580677884)*idxs = np.argsort(contributions[0])[o for o in zip(df_keep.columns[idxs], df_valid.iloc[0][idxs], contributions[0][idxs])]
 ```
 
 这里是我们所有的预测因子和每个值[[1:37:54](https://youtu.be/0v93qHDqq_g?t=1h37m54s)]。

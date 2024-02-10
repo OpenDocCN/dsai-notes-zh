@@ -69,10 +69,13 @@ CV / bootstrap（糖尿病数据集？）
 ```py
 %load_ext autoreload
 %autoreload 2
-%matplotlib inlinefrom fastai.imports import *
-from fastai.structured import *from pandas_summary import DataFrameSummary
+%matplotlib inline
+from fastai.imports import *
+from fastai.structured import *
+from pandas_summary import DataFrameSummary
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from IPython.display import displayfrom sklearn import metrics
+from IPython.display import display
+from sklearn import metrics
 ```
 
 数据科学 ≠ 软件工程 [[08:43](https://youtu.be/CzdWqFTmn0Y?t=8m43s)]。你会看到一些不符合 PEP 8 的代码和`import *`之类的东西，但暂时跟着走一段时间。我们现在正在做的是原型模型，原型模型有一套完全不同的最佳实践，这些实践在任何地方都没有教授。关键是能够非常互动和迭代地进行操作。Jupyter 笔记本使这变得容易。如果你曾经想知道`display`是什么，你可以做以下三件事之一：
@@ -228,7 +231,8 @@ def add_datepart(df, fldname, **drop=True**):
         'Is_quarter_end', 'Is_quarter_start', 'Is_year_end', 
         'Is_year_start'
     ):
-        df[targ_pre+n] = **getattr**(fld.dt,n.lower()) df[targ_pre+'Elapsed'] = fld.astype(np.int64) // 10**9
+        df[targ_pre+n] = getattr(fld.dt,n.lower()) 
+        df[targ_pre+'Elapsed'] = fld.astype(np.int64) // 10**9
     if drop: df.drop(fldname, axis=1, inplace=True)
 ```
 
@@ -256,7 +260,10 @@ df_raw.saleYear.head()
 
 ```py
 train_cats(df_raw)
-df_raw.UsageBand.cat.categories*Index(['High', 'Low', 'Medium'], dtype='object)*
+df_raw.UsageBand.cat.categories
+'''
+Index(['High', 'Low', 'Medium'], dtype='object)
+'''
 ```
 
 +   `df_raw.UsageBand.cat` — 类似于`fld.dt.year`，`.cat`让你可以访问假设某个东西是一个类别的内容。
@@ -264,8 +271,10 @@ df_raw.UsageBand.cat.categories*Index(['High', 'Low', 'Medium'], dtype='object)*
 顺序并不太重要，但由于我们将创建一个在单个点（即`高` vs. `低` 和 `中`，`高` 和 `低` vs. `中`）分割事物的决策树，这有点奇怪。为了以合理的方式对它们进行排序，您可以执行以下操作：
 
 ```py
-df_raw.UsageBand.cat.set_categories(['High', 'Medium', 'Low'],
-    ordered=True, inplace=True)
+df_raw.UsageBand.cat.set_categories(
+    ['High', 'Medium', 'Low'],
+    ordered=True, inplace=True
+)
 ```
 
 +   `inplace`将要求 Pandas 更改现有数据框而不是返回一个新的。
@@ -358,11 +367,17 @@ m.score(df,y)
 这说明如何使用所有数据可能导致**过拟合**。验证集有助于诊断这个问题。
 
 ```py
-def split_vals(a,n): return a[:n].copy(), a[n:].copy()n_valid = 12000  # same as Kaggle's test set size
+def split_vals(a,n): 
+    return a[:n].copy(), a[n:].copy()
+n_valid = 12000  # same as Kaggle's test set size
 n_trn = len(df)-n_valid
 raw_train, raw_valid = split_vals(df_raw, n_trn)
 X_train, X_valid = split_vals(df, n_trn)
-y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.shape*((389125, 66), (389125,), (12000, 66))*
+y_train, y_valid = split_vals(y, n_trn)
+X_train.shape, y_train.shape, X_valid.shape
+'''
+((389125, 66), (389125,), (12000, 66))
+'''
 ```
 
 ## 基础模型
@@ -370,16 +385,27 @@ y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.sha
 通过使用验证集，您会发现验证集的 r²为 0.88。
 
 ```py
-def rmse(x,y): return math.sqrt(((x-y)**2).mean())def print_score(m):
-    res = [rmse(m.predict(X_train), y_train),
-           rmse(m.predict(X_valid), y_valid),
-           m.score(X_train, y_train), m.score(X_valid, y_valid)]
-    if hasattr(m, 'oob_score_'): res.append(m.oob_score_)
-    print(res)m = RandomForestRegressor(n_jobs=-1)
+def rmse(x,y): 
+    return math.sqrt(((x-y)**2).mean())
+def print_score(m):
+    res = [
+        rmse(m.predict(X_train), y_train),
+        rmse(m.predict(X_valid), y_valid),
+        m.score(X_train, y_train), 
+        m.score(X_valid, y_valid)
+    ]
+    if hasattr(m, 'oob_score_'): 
+        res.append(m.oob_score_)
+    print(res)
+m = RandomForestRegressor(n_jobs=-1)
 %time m.fit(X_train, y_train)
-print_score(m)*CPU times: user 1min 3s, sys: 356 ms, total: 1min 3s
+print_score(m)
+'''
+CPU times: user 1min 3s, sys: 356 ms, total: 1min 3s
 Wall time: 8.46 s
-[0.09044244804386327, 0.2508166961122146,* ***0.98290459302099709****,* ***0.88765316048270615****]*
+[0.09044244804386327, 0.2508166961122146, 
+ 0.98290459302099709, 0.88765316048270615]
+'''
 ```
 
 **[训练集 rmse，验证集 rmse，训练集 r²，验证集 r²]*

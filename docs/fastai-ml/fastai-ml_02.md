@@ -45,7 +45,10 @@ df_raw.SalePrice = np.log(df_raw.SalePrice)
 ```py
 m = RandomForestRegressor(n_jobs=-1)
 m.fit(df, y)
-m.score(df, y)*0.98304680998313232*
+m.score(df, y)
+'''
+0.98304680998313232
+'''
 ```
 
 ## 什么是 R²？
@@ -93,11 +96,17 @@ R²是你的模型有多好（RMSE）与天真的平均模型有多好（RMSE）
 如果您的数据集中有一个时间部分（如蓝皮书比赛中），您可能希望预测未来的价格/价值等。Kaggle 所做的是在训练集中给我们提供代表特定日期范围的数据，然后测试集呈现了训练集中没有的未来日期集。因此，我们需要创建一个具有相同属性的验证集：
 
 ```py
-**def** split_vals(a,n): **return** a[:n].copy(), a[n:].copy()n_valid = 12000  # same as Kaggle's test set size
+def split_vals(a,n): 
+    return a[:n].copy(), a[n:].copy()
+n_valid = 12000  # same as Kaggle's test set size
 n_trn = len(df)-n_valid
 raw_train, raw_valid = split_vals(df_raw, n_trn)
 X_train, X_valid = split_vals(df, n_trn)
-y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.shape*((389125, 66), (389125,), (12000, 66))*
+y_train, y_valid = split_vals(y, n_trn)
+X_train.shape, y_train.shape, X_valid.shape
+'''
+((389125, 66), (389125,), (12000, 66))
+'''
 ```
 
 现在我们有了一个希望看起来像 Kaggle 测试集的东西-足够接近，使用这个将给我们相当准确的分数。我们想要这样做的原因是因为在 Kaggle 上，您只能提交很多次，如果您提交得太频繁，最终您会适应排行榜。在现实生活中，我们希望构建一个在生产中表现良好的模型。
@@ -121,7 +130,7 @@ y_train, y_valid = split_vals(y, n_trn)X_train.shape, y_train.shape, X_valid.sha
 ## PEP8[[27:09](https://youtu.be/blyXCk4sgEg?t=27m9s)]
 
 ```py
-**def** rmse(x,y): **return** math.sqrt(((x-y)**2).mean())
+def rmse(x,y): return math.sqrt(((x-y)**2).mean())
 ```
 
 这是一个代码不符合 PEP8 规范的例子。能够用眼睛一次看到某些东西，并随着时间学会立即看出发生了什么具有很大的价值。在数据科学中，始终使用特定的字母或缩写表示特定的含义是有效的。但是如果你在家里面试中测试，要遵循 PEP8 标准。
@@ -153,7 +162,7 @@ y_train, _ = split_vals(y_trn, 20000)
 
 ```py
 m = RandomForestRegressor(**n_estimators=1**, max_depth=3,
-                          bootstrap=**False**, n_jobs=-1)
+                          bootstrap=False, n_jobs=-1)
 m.fit(X_train, y_train)
 print_score(m)
 ```
@@ -205,7 +214,7 @@ print_score(m)
 现在，我们的决策树的 R²为 0.4。让我们通过去掉`max_depth=3`来使其更好。这样做后，训练 R²变为 1（因为每个叶节点只包含一个元素），验证 R²为 0.73——比浅树好，但不如我们希望的那么好。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, bootstrap=**False**, 
+m = RandomForestRegressor(n_estimators=1, bootstrap=False, 
                           n_jobs=-1)
 m.fit(X_train, y_train)
 print_score(m)*[6.5267517864504e-17, 0.3847365289469930, 1.0, 0.73565273648797624]*
@@ -246,7 +255,7 @@ print_score(m)
 ## 提出预测[[1:04:30](https://youtu.be/blyXCk4sgEg?t=1h4m30s)]
 
 ```py
-preds = np.stack([t.predict(X_valid) **for** t **in** m.estimators_]) preds[:,0], np.mean(preds[:,0]), y_valid[0]*(array([ 9.21034,  8.9872 ,  8.9872 ,  8.9872 ,  8.9872 ,  9.21034,  8.92266,  9.21034,  9.21034,  8.9872 ]),  
+preds = np.stack([t.predict(X_valid) for t in m.estimators_]) preds[:,0], np.mean(preds[:,0]), y_valid[0]*(array([ 9.21034,  8.9872 ,  8.9872 ,  8.9872 ,  8.9872 ,  9.21034,  8.92266,  9.21034,  9.21034,  8.9872 ]),  
 9.0700003890739005,  
 9.1049798563183568)*preds.shape
 *(10, 12000)*
@@ -309,7 +318,7 @@ y_train, y_valid = split_vals(y_trn, n_trn)set_rf_samples(20000)
 
 ```py
 reset_rf_samples()m = RandomForestRegressor(n_estimators=40, n_jobs=-1, 
-                          oob_score=**True**)
+                          oob_score=True)
 m.fit(X_train, y_train)
 print_score(m)*[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0.89816206196980131, 0.90838819297302553]*
 ```
@@ -319,8 +328,8 @@ print_score(m)*[0.07843013746508616, 0.23879806957665775, 0.98490742269867626, 0
 ## min_sample
 
 ```py
-m = RandomForestRegressor(n_estimators=40, **min_samples_leaf**=3, 
-                          n_jobs=-1, oob_score=**True**) 
+m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
+                          n_jobs=-1, oob_score=True) 
 m.fit(X_train, y_train) 
 print_score(m)*[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0.90198460308551043, 0.90843297242839738]*
 ```
@@ -337,7 +346,7 @@ print_score(m)*[0.11595869956476182, 0.23427349924625201, 0.97209195463880227, 0
 
 ```py
 m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                      max_features=0.5, n_jobs=-1, oob_score=**True**) m.fit(X_train, y_train) 
+                      max_features=0.5, n_jobs=-1, oob_score=True) m.fit(X_train, y_train) 
 print_score(m)*[0.11926975747908228, 0.22869111042050522, 0.97026995966445684, 0.9066000722129437, 0.91144914977164715]*
 ```
 

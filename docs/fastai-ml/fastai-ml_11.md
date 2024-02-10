@@ -121,7 +121,7 @@ b = np.log(len(p)/len(q))
 然后让我们对其进行逻辑回归拟合，并进行一些预测，我们得到了 90% 的准确率：
 
 ```py
-m = LogisticRegression(C=0.1, dual=**True**)
+m = LogisticRegression(C=0.1, dual=True)
 m.fit(x, y);
 
 preds = m.predict(val_x)
@@ -167,7 +167,7 @@ np.exp(r)matrix([[ 0.94678,  0.85129,  0.78049, ...,  3\.  ,  0.5 ,  0.5  ]])
 
 ```py
 x_nb = x.multiply(r)
-m = LogisticRegression(dual=**True**, C=0.1)
+m = LogisticRegression(dual=True, C=0.1)
 m.fit(x_nb, y);
 
 val_x_nb = val_x.multiply(r)
@@ -390,9 +390,9 @@ test.StateHoliday = test.StateHoliday!='0'
 我们有很多不同的表需要将它们全部合并在一起。我有一种用 Pandas 合并事物的标准方法。我只是使用了 Pandas 的合并函数，具体来说我总是进行左连接。左连接是保留左表中的所有行，你有一个关键列，将其与右侧表中的关键列匹配，然后合并那些也存在于右表中的行。
 
 ```py
-**def** join_df(left, right, left_on, right_on=**None**, suffix='_y'):
-    **if** right_on **is** **None**: right_on = left_on
-    **return** left.merge(right, how='left', left_on=left_on,
+def join_df(left, right, left_on, right_on=None, suffix='_y'):
+    if right_on is None: right_on = left_on
+    return left.merge(right, how='left', left_on=left_on,
                       right_on=right_on, suffixes=("", suffix))
 ```
 
@@ -418,8 +418,8 @@ weather = join_df(weather, state_names, "file", "StateName")
 在 Pandas 中这样做的好处是，Pandas 让我们可以访问所有的 Python。例如，在系列对象内部，有一个`.str`属性，可以让你访问所有的字符串处理函数。就像`.cat`让你访问分类函数一样，`.dt`让你访问日期时间函数。所以现在我可以拆分该列中的所有内容。
 
 ```py
-googletrend['Date']=googletrend.week.str.split(' - ',expand=**True**)[0]
-googletrend['State']=googletrend.file.str.split('_', expand=**True**)[2]
+googletrend['Date']=googletrend.week.str.split(' - ',expand=True)[0]
+googletrend['State']=googletrend.file.str.split('_', expand=True)[2]
 googletrend.loc[googletrend.State=='NI', "State"] = 'HB,NI'
 ```
 
@@ -428,10 +428,10 @@ googletrend.loc[googletrend.State=='NI', "State"] = 'HB,NI'
 和往常一样，让我们为我们的日期添加日期元数据：
 
 ```py
-add_datepart(weather, "Date", drop=**False**)
-add_datepart(googletrend, "Date", drop=**False**)
-add_datepart(train, "Date", drop=**False**)
-add_datepart(test, "Date", drop=**False**)
+add_datepart(weather, "Date", drop=False)
+add_datepart(googletrend, "Date", drop=False)
+add_datepart(train, "Date", drop=False)
+add_datepart(test, "Date", drop=False)
 ```
 
 最后，我们基本上是在对所有这些表进行去规范化。我们将把它们全部放入一个表中。因此，在谷歌趋势表中，它们主要是按州划分的趋势，但也有整个德国的趋势，所以我们将整个德国的趋势放入一个单独的数据框中，以便我们可以加入它：
@@ -464,10 +464,10 @@ len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_
 在这种情况下，我不想要任何重复的内容，所以我只是浏览并删除了它们：
 
 ```py
-**for** df **in** (joined, joined_test):
-    **for** c **in** df.columns:
-        **if** c.endswith('_y'):
-            **if** c **in** df.columns: df.drop(c, inplace=**True**, axis=1)**for** df **in** (joined,joined_test):
+for df in (joined, joined_test):
+    for c in df.columns:
+        if c.endswith('_y'):
+            if c in df.columns: df.drop(c, inplace=True, axis=1)for df in (joined,joined_test):
   df['CompetitionOpenSinceYear'] = 
           df.CompetitionOpenSinceYear.fillna(1900).astype(np.int32)
   df['CompetitionOpenSinceMonth'] = 
@@ -481,7 +481,7 @@ len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_
 这家商店的主要竞争对手自某个日期以来一直开业。因此，我们可以使用 Pandas 的`to_datetime`，我传入年、月和日。所以这将给我们一个错误，除非它们都有年和月，所以我们将缺失的部分填充为 1900 年和 1 月（见上文）。而我们真正想知道的是这家商店在这个特定记录时已经开业多久了，所以我们可以进行日期相减：
 
 ```py
-**for** df **in** (joined,joined_test):
+for df in (joined,joined_test):
   df["CompetitionOpenSince"] = 
           pd.to_datetime(dict(year=df.CompetitionOpenSinceYear,
                         month=df.CompetitionOpenSinceMonth, day=15))
@@ -492,7 +492,7 @@ len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_
 现在如果你考虑一下，有时竞争对手的开业时间晚于这一行，所以有时会是负数。而且可能没有意义有负数（即将在 x 天后开业）。现在话虽如此，我绝不会在没有先运行包含它和不包含它的模型的情况下放入这样的东西。因为我们对数据的假设往往是不正确的。在这种情况下，我没有发明任何这些预处理步骤。我写了所有的代码，但它都是基于第三名获奖者的 GitHub 存储库。因此，知道在 Kaggle 竞赛中获得第三名需要做什么，我相当肯定他们会检查每一个这些预处理步骤，并确保它实际上提高了他们的验证集分数。
 
 ```py
-**for** df **in** (joined,joined_test):
+for df in (joined,joined_test):
     df.loc[df.CompetitionDaysOpen<0, "CompetitionDaysOpen"] = 0
     df.loc[df.CompetitionOpenSinceYear<1990,"CompetitionDaysOpen"]=0
 ```
@@ -508,7 +508,7 @@ len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_
 这次比赛的第三名决定将比赛开放的月数作为一个他们要用作分类变量的东西。为了避免创建比需要的更多的类别，他们将其截断到 24 个月。他们说，超过 24 个月的任何东西，截断到 24 个。因此，这里是比赛开放的唯一值，从零到 24。这意味着将会有一个嵌入矩阵，基本上会有一个嵌入向量，用于尚未开放的事物（0），用于一个月开放的事物（1），依此类推。
 
 ```py
-**for** df **in** (joined,joined_test):
+for df in (joined,joined_test):
     df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
     df.loc[df.CompetitionMonthsOpen>24,"CompetitionMonthsOpen"] = 24
 joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*

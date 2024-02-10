@@ -11,7 +11,7 @@
 上次，我们谈到了这样一个想法，当我们试图构建这个 CompetitionMonthsOpen 派生变量时，实际上我们将其截断为不超过 24 个月，我们谈到了原因，因为我们实际上希望将其用作分类变量，因为分类变量，由于嵌入，具有更多的灵活性，神经网络可以如何使用它们。所以这就是我们离开的地方。
 
 ```py
-**for** df **in** (joined,joined_test):
+for df in (joined,joined_test):
     df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
     df.loc[df.CompetitionMonthsOpen>24, "CompetitionMonthsOpen"]= 24
 joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*
@@ -22,8 +22,8 @@ joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15,
 还值得记住这个 lambda 函数的概念。每当你尝试将一个函数应用到某个东西的每一行或张量的每个元素时，如果没有已经存在的矢量化版本，你将不得不调用像`DataFrame.apply`这样的东西，它将运行你传递给每个元素的函数。所以这基本上是函数式编程中的映射，因为很多时候你想要传递给它的函数是你只会使用一次然后丢弃的东西。使用这种 lambda 方法非常常见。所以这个 lambda 是为了告诉`df.apply`要使用什么而创建的函数。
 
 ```py
-**for** df **in** (joined,joined_test):
-    df["Promo2Since"] = pd.to_datetime(df.apply(**lambda** x: Week(
+for df in (joined,joined_test):
+    df["Promo2Since"] = pd.to_datetime(df.apply(lambda x: Week(
         x.Promo2SinceYear, x.Promo2SinceWeek).monday(), 
             axis=1).astype(pd.datetime))
     df["Promo2Days"] = df.Date.subtract(df["Promo2Since"]).dt.days
@@ -58,18 +58,18 @@ joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15,
 换句话说，距离下一个州假期还有多久，距离上一个州假期已经多久了。所以这不是我知道存在的库或任何其他东西。所以我手工写在这里。
 
 ```py
-**def** get_elapsed(fld, pre):
+def get_elapsed(fld, pre):
     day1 = np.timedelta64(1, 'D')
     last_date = np.datetime64()
     last_store = 0
     res = []
 
-    **for** s,v,d **in** zip(df.Store.values,df[fld].values, 
+    for s,v,d in zip(df.Store.values,df[fld].values, 
                      df.Date.values):
-        **if** s != last_store:
+        if s != last_store:
             last_date = np.datetime64()
             last_store = s
-        **if** v: last_date = d
+        if v: last_date = d
         res.append(((d-last_date).astype('timedelta64[D]') / day1))
     df[pre+fld] = res
 ```
@@ -82,7 +82,7 @@ joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15,
 fld = 'SchoolHoliday'
 df = df.sort_values(['Store', 'Date'])
 get_elapsed(fld, 'After')
-df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+df = df.sort_values(['Store', 'Date'], ascending=[True, False])
 get_elapsed(fld, 'Before')
 ```
 
@@ -140,11 +140,11 @@ get_elapsed(fld, 'Before')
 fld = 'StateHoliday'
 df = df.sort_values(['Store', 'Date'])
 get_elapsed(fld, 'After')
-df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+df = df.sort_values(['Store', 'Date'], ascending=[True, False])
 get_elapsed(fld, 'Before')fld = 'Promo'
 df = df.sort_values(['Store', 'Date'])
 get_elapsed(fld, 'After')
-df = df.sort_values(['Store', 'Date'], ascending=[**True**, **False**])
+df = df.sort_values(['Store', 'Date'], ascending=[True, False])
 get_elapsed(fld, 'Before')
 ```
 
@@ -170,7 +170,7 @@ Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 ```py
 bwd = df[['Store']+columns].sort_index().groupby("Store"
-                  ).rolling(7, min_periods=1).sum()fwd = df[['Store']+columns].sort_index(ascending=**False**
+                  ).rolling(7, min_periods=1).sum()fwd = df[['Store']+columns].sort_index(ascending=False
                   ).groupby("Store").rolling(7, min_periods=1).sum()
 ```
 
@@ -203,7 +203,7 @@ bwd = df[['Store']+columns].sort_index().groupby("Store"
 然后我们将所有的分类变量转换为 Pandas 的分类变量，方式与之前相同：
 
 ```py
-**for** v **in** cat_vars: 
+for v in cat_vars: 
     joined[v] = joined[v].astype('category').cat.as_ordered()
 ```
 
@@ -216,7 +216,7 @@ apply_cats(joined_test, joined)
 对于连续变量，确保它们都是浮点数，因为 PyTorch 期望所有东西都是浮点数。
 
 ```py
-**for** v **in** contin_vars:
+for v in contin_vars:
     joined[v] = joined[v].fillna(0).astype('float32')
     joined_test[v] = joined_test[v].fillna(0).astype('float32')
 ```
@@ -243,7 +243,7 @@ joined_samp = joined.set_index("Date")
 现在我们有了`joined_samp`，我们可以像以前一样将其传递给 proc_df 来获取因变量以处理缺失值。在这种情况下，我们传递了一个额外的参数`do_scale=True`。这将减去均值并除以标准差。
 
 ```py
-df, y, nas, mapper = proc_df(joined_samp, 'Sales', do_scale=**True**)
+df, y, nas, mapper = proc_df(joined_samp, 'Sales', do_scale=True)
 yl = np.log(y)
 ```
 
@@ -292,7 +292,7 @@ md = ColumnarModelData.from_data_frame(PATH, val_idx, df,
 对于我们的每个分类变量，这里是它所拥有的类别数量。因此，对于我们的每个嵌入矩阵，这告诉我们该嵌入矩阵中的行数。然后我们定义我们想要的嵌入维度。如果你在进行自然语言处理，那么需要捕捉一个词的含义和使用方式的所有细微差别的维度数量经验性地被发现大约是 600。事实证明，当你使用小于 600 的嵌入矩阵进行自然语言处理模型时，结果不如使用大小为 600 的好。超过 600 后，似乎没有太大的改进。我会说人类语言是我们建模的最复杂的事物之一，所以我不会指望你会遇到许多或任何需要超过 600 维度的嵌入矩阵的分类变量。另一方面，有些事物可能具有相当简单的因果关系。例如，`StateHoliday` ——也许如果某事是假日，那么在城市中的商店会有一些行为，在乡村中的商店会有一些其他行为，就是这样。也许这是一个相当简单的关系。因此，理想情况下，当你决定使用什么嵌入大小时，你应该利用你对领域的知识来决定关系有多复杂，因此我需要多大的嵌入。实际上，你几乎永远不会知道这一点。你只知道这一点，因为也许别人以前已经做过这方面的研究并找到了答案，就像在自然语言处理中一样。因此，在实践中，你可能需要使用一些经验法则，并尝试一些经验法则后，你可以尝试再高一点，再低一点，看看哪种方法有帮助。所以这有点像实验。
 
 ```py
-cat_sz=[(c, len(joined_samp[c].cat.categories)+1) **for** c **in** cat_vars]cat_sz*[('Store', 1116),
+cat_sz=[(c, len(joined_samp[c].cat.categories)+1) for c in cat_vars]cat_sz*[('Store', 1116),
  ('DayOfWeek', 8),
  ('Year', 4),
  ('Month', 13),
@@ -319,7 +319,7 @@ cat_sz=[(c, len(joined_samp[c].cat.categories)+1) **for** c **in** cat_vars]cat_
 这里是我的经验法则。我的经验法则是看看该类别有多少个离散值（即嵌入矩阵中的行数），并使嵌入的维度为该值的一半。所以如果是星期几，第二个，有八行和四列。这里是`(c+1)//2` ——列数除以二。但是我说不要超过 50。在这里你可以看到对于商店（第一行），有 116 家商店，只有一个维度为 50。为什么是 50？我不知道。到目前为止似乎效果还不错。你可能会发现你需要一些稍微不同的东西。实际上，对于厄瓜多尔杂货比赛，我还没有真正尝试过调整这个，但我认为我们可能需要一些更大的嵌入大小。但这是可以摆弄的东西。
 
 ```py
-emb_szs = [(c, min(50, (c+1)//2)) **for** _,c **in** cat_sz]
+emb_szs = [(c, min(50, (c+1)//2)) for _,c in cat_sz]
 emb_szs*[(1116, 50),
  (8, 4),
  (4, 2),

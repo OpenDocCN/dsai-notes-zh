@@ -49,14 +49,14 @@
 让我们回到完成随机森林的工作。今天我们要做的是完成编写我们的随机森林，然后在今天之后，你的作业就是拿这节课并添加我们学到的所有随机森林解释算法。显然，为了能够做到这一点，你需要完全理解这节课的工作原理，所以在我们进行时，请尽可能多地提问。提醒一下，我们再次使用推土机 Kaggle 竞赛数据集。我们将其分为 12,000 个验证集（最后 12,000 条记录），为了更容易跟踪我们的工作，我们将从中挑选两列开始：`YearMade`和`MachineHoursCurrentMeter`。
 
 ```py
-**from** **fastai.imports** **import** *
-**from** **fastai.structured** **import** *
-**from** **sklearn.ensemble** **import** RandomForestRegressor, RandomForestClassifier
-**from** **IPython.display** **import** display
-**from** **sklearn** **import** metricsPATH = "data/bulldozers/"
+from fastai.imports import *
+from fastai.structured import *
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from IPython.display import display
+from sklearn import metricsPATH = "data/bulldozers/"
 
 df_raw = pd.read_feather('tmp/bulldozers-raw')
-df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')**def** split_vals(a,n): **return** a[:n], a[n:]
+df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')def split_vals(a,n): return a[:n], a[n:]
 n_valid = 12000
 n_trn = len(df_trn)-n_valid
 X_train, X_valid = split_vals(df_trn, n_trn)
@@ -67,25 +67,25 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'Ma
 上次我们做的是创建了一个树集合，这个树集合包含了一堆树，实际上是一个包含`n_trees`棵树的列表，每次我们只是调用`create_tree`。`create_tree`包含了一个样本大小（`sample_sz`）的随机索引（`rnd_idxs`）。这里是无重复抽样。所以记住，自助法意味着有放回抽样。通常在 scikit-learn 中，如果有 n 行数据，我们用有放回抽样抽取 n 行数据，这意味着很多行会出现多次。所以每次我们得到一个不同的样本，但它的大小总是与原始数据集相同。然后我们有一个`set_rf_samples`函数，我们可以使用它进行少于 n 行的有放回抽样。`create_tree`再次做的是无重复抽样`sample_sz`行。因为我们对从零到`self.y-1`的数字进行排列，然后抽取其中的前`self.sample_sz`个。实际上有一种更快的方法可以做到这一点。你可以直接使用`np.random.choice`（而不是`np.random.permutation`），这是一种稍微更直接的方法，但这种方法也可以。所以`rnd_idxs`是我们`n_trees`棵树中的一个的随机样本。然后我们将创建一个`DecisionTree`。我们的决策树，我们不会传递所有的`x`，而是传递这些特定的索引，记住 x 是一个 Pandas DataFrame，所以如果我们想用一堆整数对其进行索引，我们使用`iloc`（整数位置），这使得它在索引方面的行为就像 numpy 一样。现在`y`向量是 numpy，所以我们可以直接对其进行索引。然后我们将跟踪最小叶子大小（`min_leaf`）。
 
 ```py
-**class** **TreeEnsemble**():
-  **def** __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
+class TreeEnsemble():
+  def __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
     np.random.seed(42)
     self.x,self.y,self.sample_sz,self.min_leaf = 
                                            x,y,sample_sz,min_leaf
-    self.trees = [self.create_tree() **for** i **in** range(n_trees)]
+    self.trees = [self.create_tree() for i in range(n_trees)]
 
-  **def** create_tree(self):
+  def create_tree(self):
     rnd_idxs = np.random.permutation(len(self.y))[:self.sample_sz]
-    **return** DecisionTree(self.x.iloc[rnd_idxs], self.y[rnd_idxs],
+    return DecisionTree(self.x.iloc[rnd_idxs], self.y[rnd_idxs],
                             min_leaf=self.min_leaf)
 ```
 
 然后在集成中我们真正需要的另一件事情就是一个地方来进行预测。因此我们只需要对每棵树的预测取平均值。就是这样。
 
 ```py
-**def** predict(self, x):
-    **return** np.mean([t.predict(x) **for** t **in** self.trees], axis=0)**class** **DecisionTree**():
-    **def** __init__(self, x, y, idxs=**None**, min_leaf=5):
+def predict(self, x):
+    return np.mean([t.predict(x) for t in self.trees], axis=0)class DecisionTree():
+    def __init__(self, x, y, idxs=None, min_leaf=5):
         self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leafm = TreeEnsemble(X_train, y_train, n_trees=10, sample_sz=1000, 
                  min_leaf=3)
 ```
@@ -101,9 +101,9 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'Ma
 然后树中的每个叶子和每个节点都有一个值/预测。该预测只是等于因变量的平均值。因此，树中的每个节点，用`idxs`索引的`y`是在树的这一分支中的因变量的值，因此这里是平均值。树中的一些节点还有一个分数，这就像这里的分割有多有效。但只有在它不是叶子节点时才会成立。叶子节点没有进一步的分割。在创建树时，我们还没有进行任何分割，因此其分数开始时为无穷大。构建了树的根节点后，我们的下一个任务是找出应该在哪个变量上进行分割，以及应该在该变量的哪个水平上进行分割。因此，让我们假设有一个可以做到这一点的东西——`find_varsplit`。然后我们就完成了。
 
 ```py
-**class** **DecisionTree**():
-    **def** __init__(self, x, y, idxs=**None**, min_leaf=5):
-        **if** idxs **is** **None**: idxs=np.arange(len(y))
+class DecisionTree():
+    def __init__(self, x, y, idxs=None, min_leaf=5):
+        if idxs is None: idxs=np.arange(len(y))
         self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leaf
         self.n,self.c = len(idxs), x.shape[1]
         self.val = np.mean(y[idxs])
@@ -115,28 +115,28 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'Ma
 
 ```py
  *# This just does one decision; we'll make it recursive later*
-    **def** find_varsplit(self):
-        **for** i **in** range(self.c): self.find_better_split(i)
+    def find_varsplit(self):
+        for i in range(self.c): self.find_better_split(i)
 
     *# We'll write this later!*
-    **def** find_better_split(self, var_idx): **pass**
+    def find_better_split(self, var_idx): pass
 
     @property
-    **def** split_name(self): **return** self.x.columns[self.var_idx]
+    def split_name(self): return self.x.columns[self.var_idx]
 
     @property
-    **def** split_col(self): 
-        **return** self.x.values[self.idxs,self.var_idx]
+    def split_col(self): 
+        return self.x.values[self.idxs,self.var_idx]
 
     @property
-    **def** is_leaf(self): **return** self.score == float('inf')
+    def is_leaf(self): return self.score == float('inf')
 
-    **def** __repr__(self):
+    def __repr__(self):
         s = f'n: **{self.n}**; val:**{self.val}**'
-        **if** **not** self.is_leaf:
+        if not self.is_leaf:
             s += f'; score:**{self.score}**; split:**{self.split}**; var:
                    **{self.split_name}**'
-        **return** s
+        return s
 ```
 
 在开始编写一个类时，我喜欢做的另一件事是，我想要有一种方法来打印出该类中的内容。如果你输入 print，后面跟着一个对象，或者在 Jupyter Notebook 中，你只需输入对象的名称。目前，它只是打印出`<__main__.DecisionTree at 0x7f645ec22358>`，这并不是很有帮助。所以如果我们想要用有用的东西来替换它，我们必须定义一个特殊的 Python 方法，名为`__repr__`，以获得这个对象的表示。所以当我们在 Jupyter Notebook 单元格中基本上只写出名称时，在幕后，它调用那个函数，而该方法的默认实现只是打印出那些无用的东西。所以我们可以替换它，而不是说让我们创建一个格式化字符串，在这里我们将打印出`f'n: **{self.n}**; val:**{self.val}'**`，所以这个节点中有多少行，以及因变量的平均值是多少。然后，如果它不是叶节点，也就是说如果它有一个分裂，那么我们还应该能够打印出分数，我们分裂出的值，以及我们分裂的变量。现在你会注意到这里，`self.is_leaf`被定义为一个方法，但我后面没有加括号。这是一种特殊类型的方法，称为属性。属性看起来像一个普通的变量，但实际上是动态计算的。所以当我调用`is_leaf`时，实际上调用的是`**def** is_leaf(self)`函数。但我有这个特殊的装饰器`@property`。这意味着当你调用它时，你不必包括括号。所以它会说这是一个叶子还是不是。所以叶子是我们不分裂的东西。如果我们没有对它进行分裂，那么它的分数仍然设置为无穷大，这就是我的逻辑。
@@ -171,7 +171,7 @@ x_samp,y_samp = tree.x, tree.y
 
 ```py
 m = RandomForestRegressor(n_estimators=1, max_depth=1,
-                          bootstrap=**False**)
+                          bootstrap=False)
 m.fit(x_samp, y_samp)
 draw_tree(m.estimators_[0], x_samp, precision=2)
 ```
@@ -195,15 +195,15 @@ draw_tree(m.estimators_[0], x_samp, precision=2)
 然后下一步是尝试在 4 上分割，尝试在 1 上分割，尝试在 6 上分割，多余地再次尝试在 4 上分割，然后再次在 1 上分割，找出哪个效果最好。这就是我们的代码：
 
 ```py
-**def** find_better_split(self, var_idx):
-   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs] **for** i **in** range(1,self.n-1):
+def find_better_split(self, var_idx):
+   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs] for i in range(1,self.n-1):
       lhs = x<=x[i]
       rhs = x>x[i]
-      **if** rhs.sum()==0: **continue**
+      if rhs.sum()==0: continue
       lhs_std = y[lhs].std()
       rhs_std = y[rhs].std()
       curr_score = lhs_std*lhs.sum() + rhs_std*rhs.sum()
-      **if** curr_score<self.score: 
+      if curr_score<self.score: 
         self.var_idx,self.score,self.split = var_idx,curr_score,x[i]
 ```
 
@@ -253,9 +253,9 @@ O(n²) 是因为有一个循环和 `x<=x[i]`，我们必须检查每个值，看
 所以这对我们有用的原因是，如果我们首先对我们的数据进行排序。然后如果你考虑一下，当我们一步一步地向下走时，每一组都与左边的前一组完全相同，只是多了一件东西，右边则少了一件东西。因此，我们只需要跟踪 x 的总和和 x²的总和，我们只需在左边添加一个东西，x²再添加一个东西，在右边移除一个东西。因此，我们不必每次都遍历整个数据集，因此我们可以将其转化为 O(n)算法。这就是我在这里所做的一切：
 
 ```py
-tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]**def** std_agg(cnt, s1, s2): **return** math.sqrt((s2/cnt) - (s1/cnt)**2)
+tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]def std_agg(cnt, s1, s2): return math.sqrt((s2/cnt) - (s1/cnt)**2)
 
-**def** find_better_split_foo(self, var_idx):
+def find_better_split_foo(self, var_idx):
   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs]
 
   sort_idx = np.argsort(x)
@@ -263,18 +263,18 @@ tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]**def** std_agg(cnt, s1, s2
   rhs_cnt,rhs_sum,rhs_sum2 = self.n, sort_y.sum(), (sort_y**2).sum()
   lhs_cnt,lhs_sum,lhs_sum2 = 0,0.,0.
 
-  **for** i **in** range(0,self.n-self.min_leaf-1):
+  for i in range(0,self.n-self.min_leaf-1):
     xi,yi = sort_x[i],sort_y[i]
     lhs_cnt += 1; rhs_cnt -= 1
     lhs_sum += yi; rhs_sum -= yi
     lhs_sum2 += yi**2; rhs_sum2 -= yi**2
-    **if** i<self.min_leaf **or** xi==sort_x[i+1]:
-      **continue**
+    if i<self.min_leaf or xi==sort_x[i+1]:
+      continue
 
     lhs_std = std_agg(lhs_cnt, lhs_sum, lhs_sum2)
     rhs_std = std_agg(rhs_cnt, rhs_sum, rhs_sum2)
     curr_score = lhs_std*lhs_cnt + rhs_std*rhs_cnt
-    **if** curr_score<self.score: 
+    if curr_score<self.score: 
       self.var_idx,self.score,self.split = var_idx,curr_score,xi
 ```
 
@@ -337,7 +337,7 @@ tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; treen: 1000; val:10.07901
 
 ```py
 m = RandomForestRegressor(n_estimators=1, max_depth=2, 
-                          bootstrap=**False**) 
+                          bootstrap=False) 
 m.fit(x_samp, y_samp) 
 draw_tree(m.estimators_[0], x_samp, precision=2)
 ```
@@ -355,9 +355,9 @@ draw_tree(m.estimators_[0], x_samp, precision=2)
 因此，第一行代码与之前完全相同。然后我们检查它是否是叶节点。如果是叶节点，那么我们就没有更多的事情要做了。这意味着我们就在底部，没有进行分割，所以我们不需要做任何进一步的操作。另一方面，如果它不是叶节点，那么我们需要将其分割成左侧和右侧。现在，早些时候，我们创建了一个左侧和右侧的布尔数组。最好是有一个索引数组，因为我们不想在每个节点中都有一个完整的布尔数组。因为请记住，尽管在这个大小的树中看起来似乎没有很多节点，但当它完全展开时，底层（即如果最小叶大小为 1）包含与整个数据集相同数量的节点。因此，如果每个节点都包含整个数据集大小的完整布尔数组，那么内存需求会增加。另一方面，如果我们只存储此节点中所有内容的索引，那么它将变得越来越小。
 
 ```py
-**def** find_varsplit(self):
-    **for** i **in** range(self.c): self.find_better_split(i)
-    **if** self.is_leaf: **return**
+def find_varsplit(self):
+    for i in range(self.c): self.find_better_split(i)
+    if self.is_leaf: return
     x = self.split_col
     lhs = np.nonzero(x<=self.split)[0]
     rhs = np.nonzero(x>self.split)[0]
@@ -426,7 +426,7 @@ Wall time: 297 ms
 
 ```py
 m = RandomForestRegressor(n_estimators=1, max_depth=3, 
-                          bootstrap=**False**)
+                          bootstrap=False)
 m.fit(x_samp, y_samp)
 draw_tree(m.estimators_[0], x_samp, precision=2, ratio=0.9, size=7)
 ```
@@ -438,32 +438,32 @@ draw_tree(m.estimators_[0], x_samp, precision=2, ratio=0.9, size=7)
 这些概念在我们进入越来越多的神经网络时将变得非常重要，因为我们将一直在进行张量计算。因此，向量的主轴是向量本身。矩阵的主轴是行。三维张量的主轴是表示切片的矩阵等等。在这种情况下，因为 x 是一个矩阵，这将循环遍历行。如果您以这种方式编写您的张量代码，那么它将很好地推广到更高的维度。在这个 `x` 中有多少维度并不重要。这将循环遍历每个主轴。因此，我们现在可以称之为 `DecisionTree.predict`。
 
 ```py
-**def** predict(self, x): 
-    **return** np.array([self.predict_row(xi) **for** xi **in** x])
+def predict(self, x): 
+    return np.array([self.predict_row(xi) for xi in x])
 ```
 
 所以我需要做的就是编写`predict_row`。我一直在拖延思考，这很好，实际上我需要做工作的地方，现在基本上是微不足道的。如果我们在叶节点，那么预测值就等于我们在原始树构造函数中计算的那个值（即`y`的平均值）。如果不是叶节点，那么我们必须弄清楚是沿左路径还是右路径进行预测。因此，如果这一行中的变量（`xi[self.var_idx]`）小于或等于我们决定拆分的值，则我们沿左路径前进；否则我们沿右路径前进。然后，确定我们想要的路径/树之后，我们只需在其上调用`predict_row`。再次，我们无意中创建了递归的东西。如果是叶节点，则返回该值；否则根据需要返回左侧或右侧的预测值。
 
 ```py
-**def** predict_row(self, xi):
-    **if** self.is_leaf: **return** self.val
-    t = self.lhs **if** xi[self.var_idx]<=self.split **else** self.rhs
-    **return** t.predict_row(xi)DecisionTree.predict_row = predict_row
+def predict_row(self, xi):
+    if self.is_leaf: return self.val
+    t = self.lhs if xi[self.var_idx]<=self.split else self.rhs
+    return t.predict_row(xi)DecisionTree.predict_row = predict_row
 ```
 
 注意这里的`self.lhs **if** xi[self.var_idx]<=self.split **else** self.rhs`，这个 if 与上面的 if 没有任何关系：
 
 ```py
-**if** something:
+if something:
     x= do1()
-**else**:
+else:
     x= do2()
 ```
 
 上面的这个 if 是一个控制流语句，告诉 Python 沿着这条路径或那条路径进行一些计算。下面的这个 if 是一个返回值的运算符。
 
 ```py
-x = do1() **if** something **else** do2()
+x = do1() if something else do2()
 ```
 
 所以你们做过 C 或 C++的人会认出它与这个是完全相同的（即三元运算符）：
@@ -504,7 +504,7 @@ metrics.r2_score(preds, y_valid)0.50371522136882341
 那么现在让我们继续进行一个没有最大分裂次数的随机森林，我们的树集合也没有最大分裂次数，我们可以将我们的 R²与他们的 R²进行比较。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, min_samples_leaf=5, bootstrap=**False**)
+m = RandomForestRegressor(n_estimators=1, min_samples_leaf=5, bootstrap=False)
 %time m.fit(x_samp, y_samp)
 preds = m.predict(X_valid[cols].values)
 plt.scatter(preds, y_valid, alpha=0.05)
@@ -523,65 +523,65 @@ metrics.r2_score(preds, y_valid)0.47541053100694797
 让我们继续完善这个。现在我想要做的是创建一个包含这段代码的包。我通过创建一个方法，再创建一个方法，然后将它们拼接在一起来创建这个包。现在我回到笔记本中，收集了所有实现方法的单元格，然后将它们全部粘贴在一起。
 
 ```py
-**class** **TreeEnsemble**():
-  **def** __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
+class TreeEnsemble():
+  def __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
     np.random.seed(42)
     self.x,self.y,self.sample_sz,self.min_leaf = 
                                         x,y,sample_sz,min_leaf
-    self.trees = [self.create_tree() **for** i **in** range(n_trees)] **def** create_tree(self):
+    self.trees = [self.create_tree() for i in range(n_trees)] def create_tree(self):
     idxs = np.random.permutation(len(self.y))[:self.sample_sz]
-    **return** DecisionTree(self.x.iloc[idxs], self.y[idxs], 
+    return DecisionTree(self.x.iloc[idxs], self.y[idxs], 
                     idxs=np.array(range(self.sample_sz)), 
                     min_leaf=self.min_leaf)
 
-  **def** predict(self, x):
-    **return** np.mean([t.predict(x) **for** t **in** self.trees], axis=0)**def** std_agg(cnt, s1, s2): **return** math.sqrt((s2/cnt) - (s1/cnt)**2)**class** **DecisionTree**():
-  **def** __init__(self, x, y, idxs, min_leaf=5):
+  def predict(self, x):
+    return np.mean([t.predict(x) for t in self.trees], axis=0)def std_agg(cnt, s1, s2): return math.sqrt((s2/cnt) - (s1/cnt)**2)class DecisionTree():
+  def __init__(self, x, y, idxs, min_leaf=5):
     self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leaf
     self.n,self.c = len(idxs), x.shape[1]
     self.val = np.mean(y[idxs])
     self.score = float('inf')
     self.find_varsplit()
 
-  **def** find_varsplit(self):
-    **for** i **in** range(self.c): self.find_better_split(i)
-    **if** self.score == float('inf'): **return**
+  def find_varsplit(self):
+    for i in range(self.c): self.find_better_split(i)
+    if self.score == float('inf'): return
     x = self.split_col
     lhs = np.nonzero(x<=self.split)[0]
     rhs = np.nonzero(x>self.split)[0]
     self.lhs = DecisionTree(self.x, self.y, self.idxs[lhs])
-    self.rhs = DecisionTree(self.x, self.y, self.idxs[rhs]) **def** find_better_split(self, var_idx):
+    self.rhs = DecisionTree(self.x, self.y, self.idxs[rhs]) def find_better_split(self, var_idx):
     x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs]
     sort_idx = np.argsort(x)
     sort_y,sort_x = y[sort_idx], x[sort_idx]
     rhs_cnt,rhs_sum,rhs_sum2 = self.n,sort_y.sum(),(sort_y**2).sum()
-    lhs_cnt,lhs_sum,lhs_sum2 = 0,0.,0. **for** i **in** range(0,self.n-self.min_leaf-1):
+    lhs_cnt,lhs_sum,lhs_sum2 = 0,0.,0. for i in range(0,self.n-self.min_leaf-1):
       xi,yi = sort_x[i],sort_y[i]
       lhs_cnt += 1; rhs_cnt -= 1
       lhs_sum += yi; rhs_sum -= yi
       lhs_sum2 += yi**2; rhs_sum2 -= yi**2
-      **if** i<self.min_leaf **or** xi==sort_x[i+1]:
-       **continue** lhs_std = std_agg(lhs_cnt, lhs_sum, lhs_sum2)
+      if i<self.min_leaf or xi==sort_x[i+1]:
+       continue lhs_std = std_agg(lhs_cnt, lhs_sum, lhs_sum2)
       rhs_std = std_agg(rhs_cnt, rhs_sum, rhs_sum2)
       curr_score = lhs_std*lhs_cnt + rhs_std*rhs_cnt
-      **if** curr_score<self.score: 
+      if curr_score<self.score: 
        self.var_idx,self.score,self.split = var_idx,curr_score,xi @property
-  **def** split_name(self): **return** self.x.columns[self.var_idx]
+  def split_name(self): return self.x.columns[self.var_idx]
 
   @property
-  **def** split_col(self): **return** self.x.values[self.idxs,self.var_idx] @property
-  **def** is_leaf(self): **return** self.score == float('inf')
+  def split_col(self): return self.x.values[self.idxs,self.var_idx] @property
+  def is_leaf(self): return self.score == float('inf')
 
-  **def** __repr__(self):
+  def __repr__(self):
     s = f'n: **{self.n}**; val:**{self.val}**'
-    **if** **not** self.is_leaf:
+    if not self.is_leaf:
       s += f'; score:**{self.score}**; split:**{self.split}**; var:
            **{self.split_name}**'
-    **return** s **def** predict(self, x):
-    **return** np.array([self.predict_row(xi) **for** xi **in** x]) **def** predict_row(self, xi):
-    **if** self.is_leaf: **return** self.val
-    t = self.lhs **if** xi[self.var_idx]<=self.split **else** self.rhs
-    **return** t.predict_row(xi)
+    return s def predict(self, x):
+    return np.array([self.predict_row(xi) for xi in x]) def predict_row(self, xi):
+    if self.is_leaf: return self.val
+    t = self.lhs if xi[self.var_idx]<=self.split else self.rhs
+    return t.predict_row(xi)
 ```
 
 就是这样。这就是我们一起编写的代码。
@@ -613,9 +613,9 @@ scikit-learn 的开发人员为了避免这个问题所做的是，他们使用�
 这里是一个 Python 函数`fib1`：
 
 ```py
-**def** fib1(n):
+def fib1(n):
     a, b = 0, 1
-    **while** b < n:
+    while b < n:
         a, b = b, a + b
 ```
 
@@ -623,9 +623,9 @@ scikit-learn 的开发人员为了避免这个问题所做的是，他们使用�
 
 ```py
 %%cython
-**def** fib2(n):
+def fib2(n):
     a, b = 0, 1
-    **while** b < n:
+    while b < n:
         a, b = b, a + b
 ```
 
@@ -633,11 +633,11 @@ scikit-learn 的开发人员为了避免这个问题所做的是，他们使用�
 
 ```py
 %%cython
-**def** fib3(int n):
-    **cdef** int b = 1
-    **cdef** int a = 0
-    **cdef** int t = 0
-    **while** b < n:
+def fib3(int n):
+    cdef int b = 1
+    cdef int a = 0
+    cdef int t = 0
+    while b < n:
         t = a
         a = b
         b = a + b

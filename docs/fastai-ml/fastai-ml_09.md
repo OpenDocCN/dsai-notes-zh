@@ -73,11 +73,11 @@
 我们的起点不是自己做任何事情。基本上所有事情都已经为我们完成。因此，PyTorch 有一个`nn`库，其中包含神经网络的内容。您可以通过使用`Sequential`函数创建一个多层神经网络，然后传入您想要的层的列表，我们要求一个线性层，然后是一个 softmax 层，这定义了我们的逻辑回归。
 
 ```py
-**from** **fastai.metrics** **import** *
-**from** **fastai.model** **import** *
-**from** **fastai.dataset** **import** *
+from fastai.metrics import *
+from fastai.model import *
+from fastai.dataset import *
 
-**import** **torch.nn** **as** **nn**net = nn.Sequential(
+import torch.nn as nnnet = nn.Sequential(
     nn.Linear(28*28, 10),
     nn.LogSoftmax()
 ).cuda()
@@ -100,22 +100,22 @@ metrics=[accuracy]
 因此我们需要构建这个对象，这意味着我们需要定义构造函数 dunder init。重要的是，这是一个 Python 的东西，如果你继承自其他对象，那么你首先必须创建你继承的东西。因此当你说`super().__init__()`时，这意味着首先构建那个`nn.Module`部分。如果你不这样做，那么`nn.Module`的东西就永远没有机会被实际构建。因此这就像一个标准的 Python 面向对象子类构造函数。如果其中有任何地方让你感到困惑，那么你知道这就是你绝对需要抓住一个 Python 面向对象的入门，因为这是标准的方法。
 
 ```py
-**def** get_weights(*dims): 
-    **return** nn.Parameter(torch.randn(dims)/dims[0])
-**def** softmax(x): 
-    **return** torch.exp(x)/(torch.exp(x).sum(dim=1)[:,**None**])
+def get_weights(*dims): 
+    return nn.Parameter(torch.randn(dims)/dims[0])
+def softmax(x): 
+    return torch.exp(x)/(torch.exp(x).sum(dim=1)[:,None])
 
-**class** **LogReg**(nn.Module):
-    **def** __init__(self):
+class LogReg(nn.Module):
+    def __init__(self):
         super().__init__()
         self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
         self.l1_b = get_weights(10)         *# Layer 1 bias*
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = x.view(x.size(0), -1)
         x = (x @ self.l1_w) + self.l1_b  *# Linear Layer*
         x = torch.log(softmax(x)) *# Non-linear (LogSoftmax) Layer*
-        **return** x
+        return x
 ```
 
 因此，在我们的构造函数中，我们想要做的相当于`nn.Linear`。`nn.Linear`所做的是，它将我们的 28 乘以 28 的向量，即 784 个元素的向量，作为矩阵乘法的输入。因此，现在我们需要创建一个具有 784 行和 10 列的矩阵。因为这个的输入将是一个大小为 64 乘以 784 的小批量数据。因此我们将进行这个矩阵乘法运算。因此当我们在 PyTorch 中说`nn.Linear`时，它将为我们构建一个 784 乘以 10 的矩阵。因此，由于我们没有使用它，我们是从头开始做事情，我们需要自己制作它。为了自己制作它，我们可以说生成具有这种维度的正态随机数`torch.randn(dims)`，我们在这里传入了`28*28, 10`。这样我们就得到了我们随机初始化的矩阵。
@@ -429,21 +429,21 @@ m + np.expand_dims(c,1)*array([[11, 12, 13],
 现在由于单位轴的位置是如此重要，所以通过实验创建这些额外的单位轴并知道如何轻松地做到这一点是非常有帮助的。在我看来，`np.expand_dims`并不是最容易的方法。最简单的方法是使用一个特殊的索引`None`来索引张量。`None`的作用是在那个位置创建一个长度为 1 的新轴。因此，这将在开始添加一个新的长度为 1 的轴。
 
 ```py
-c[**None**]*array([[10, 20, 30]])*c[**None**].shape*(1, 3)*
+c[None]*array([[10, 20, 30]])*c[None].shape*(1, 3)*
 ```
 
 这将在末尾添加一个新的长度为 1 的轴。
 
 ```py
-c[:,**None**]*array([[10],
+c[:,None]*array([[10],
        [20],
-       [30]])*c[:,**None**].shape*(3, 1)*
+       [30]])*c[:,None].shape*(3, 1)*
 ```
 
 或者为什么不两者都做呢
 
 ```py
-c[**None**,:,**None**].shape*(1, 3, 1)*
+c[None,:,None].shape*(1, 3, 1)*
 ```
 
 所以如果你考虑一下，一个张量中有 3 个元素，可以是任何你喜欢的阶数，你可以随意添加单位轴。这样，我们可以决定我们希望广播的方式。所以在 numpy 中有一个非常方便的东西叫做`broadcast_to`，它的作用是将我们的向量广播到那个形状，并展示给我们看看那会是什么样子。
@@ -465,7 +465,7 @@ np.broadcast_to(c, m.shape)*array([[10, 20, 30],
 这就是在我们将其添加到`m`之前会发生的事情。所以如果我们说将其转换为列，那就是它的样子：
 
 ```py
-np.broadcast_to(c[:,**None**], m.shape)*array([[10, 10, 10],
+np.broadcast_to(c[:,None], m.shape)*array([[10, 10, 10],
        [20, 20, 20],
        [30, 30, 30]])*
 ```
@@ -616,16 +616,16 @@ m * c*array([[ 10,  40,  90],
 这是我们从头开始的逻辑回归类[[1:18:37](https://youtu.be/PGC0UxakTvM?t=4717)]。我只是把它复制到这里。
 
 ```py
-**class** **LogReg**(nn.Module):
-    **def** __init__(self):
+class LogReg(nn.Module):
+    def __init__(self):
         super().__init__()
         self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
         self.l1_b = get_weights(10)         *# Layer 1 bias*
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = x.view(x.size(0), -1)
         x = x @ self.l1_w + self.l1_b 
-        **return** torch.log(softmax(x))
+        return torch.log(softmax(x))
 ```
 
 这是我们实例化对象的地方，复制到 GPU。我们创建一个优化器，我们将在稍后学习。然后我们调用 fit。
@@ -718,12 +718,12 @@ print(l)Variable containing:
 +   然后进行一步优化器，使用梯度和学习率更新权重
 
 ```py
-**for** t **in** range(100):
+for t in range(100):
   xt, yt = next(dl)
   y_pred = net2(Variable(xt).cuda())
   l = loss(y_pred, Variable(yt).cuda())
 
-  **if** t % 10 == 0:
+  if t % 10 == 0:
     accuracy = np.mean(to_np(y_pred).argmax(axis=1) == to_np(yt))
     print("loss: ", l.data[0], "**\t** accuracy: ", accuracy)
 

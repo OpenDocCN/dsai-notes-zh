@@ -31,18 +31,18 @@
 ## 数据 [[7:54](https://youtu.be/DzE0eSdy5Hk?t=7m54s)]
 
 ```py
-**from** **fastai.imports** **import** *
-**from** **fastai.torch_imports** **import** *
-**from** **fastai.io** **import** *path = 'data/mnist/'**import** **os**
-os.makedirs(path, exist_ok=**True**)
+from fastai.imports import *
+from fastai.torch_imports import *
+from fastai.io import *path = 'data/mnist/'import os
+os.makedirs(path, exist_ok=True)
 ```
 
 MNIST 的数据，这个非常著名的数据集的名称，可以从这里获取：
 
 ```py
 URL='http://deeplearning.net/data/mnist/'
-FILENAME='mnist.pkl.gz'**def** load_mnist(filename):
-   **return** pickle.load(gzip.open(filename, 'rb'), encoding='latin-1')
+FILENAME='mnist.pkl.gz'def load_mnist(filename):
+   return pickle.load(gzip.open(filename, 'rb'), encoding='latin-1')
 ```
 
 我们在 `fastai.io` 中有一个叫做 `get_data` 的东西，它会从 URL 中获取数据并将其存储在你的计算机上，除非它已经存在，否则它将继续使用它。我们这里有一个叫做 `load_mnist` 的小函数，它简单地加载数据。你会看到它是压缩的，所以我们可以使用 Python 的 gzip 来打开它。然后它也被 pickled，所以如果你有任何类型的 Python 对象，你可以使用这个内置的 Python 库叫做 `pickle` 来将其转储到你的磁盘上，分享它，稍后加载它，你会得到与开始时相同的 Python 对象。你已经看到了类似于 Pandas 的 feather 格式的东西。Pickle 不仅仅适用于 Pandas，也不仅仅适用于任何东西，它基本上适用于几乎每个 Python 对象。这可能会引发一个问题，为什么我们不为 Pandas 的 DataFrame 使用 pickle。答案是 pickle 适用于几乎每个 Python 对象，但对于几乎任何 Python 对象来说，它可能不是最佳选择。因此，因为我们正在查看具有超过一亿行的 Pandas DataFrames，我们真的希望快速保存，所以 feather 是专门为此目的设计的格式，因此它会非常快速地完成。如果我们尝试 pickle 它，那将需要更长的时间。另外请注意，pickle 文件仅适用于 Python，因此你不能将它们交给其他人，而 feather 文件可以传递。所以值得知道 pickle 的存在，因为如果你有一些字典或某种对象漂浮在周围，你想要稍后保存或发送给其他人，你总是可以将其 pickle 化。所以在这种特殊情况下，deeplearning.net 的人们很友好地提供了一个 pickled 版本。
@@ -202,15 +202,15 @@ plots(x_imgs[:8], titles=y_valid[:8])
 这里有一些图像及其标签的例子。这种东西，你希望能够用 matplotlib 很快地完成。这将帮助你很多，这样你就可以看看 Rachel 在写`plots`时写的东西。我们可以使用 add_subplot 来创建这些小的独立图。你需要知道`imshow`是我们如何将一个 numpy 数组绘制成图片的。然后我们还添加了顶部的标题。所以就是这样。
 
 ```py
-**def** show(img, title=**None**):
+def show(img, title=None):
     plt.imshow(img, cmap="gray")
-    **if** title **is** **not** **None**: plt.title(title)**def** plots(ims, figsize=(12,6), rows=2, titles=**None**):
+    if title is not None: plt.title(title)def plots(ims, figsize=(12,6), rows=2, titles=None):
     f = plt.figure(figsize=figsize)
     cols = len(ims)//rows
-    **for** i **in** range(len(ims)):
+    for i in range(len(ims)):
         sp = f.add_subplot(rows, cols, i+1)
         sp.axis('Off')
-        **if** titles **is** **not** **None**: sp.set_title(titles[i], fontsize=16)
+        if titles is not None: sp.set_title(titles[i], fontsize=16)
         plt.imshow(ims[i], cmap='gray')
 ```
 
@@ -277,11 +277,11 @@ PyTorch 是预安装的，所以 PyTorch 基本上意味着我们可以编写看
 好的，所以我们将从上到下开始，创建一个神经网络，并假设很多东西。然后逐渐我们将深入研究每个部分。所以要创建神经网络，我们需要导入 PyTorch 神经网络库。有趣的是，PyTorch 并不叫 PyTorch——它叫 torch。所以`torch.nn`是负责神经网络的 PyTorch 子部分。我们将称之为 nn。我们将从 Fast AI 中导入一些部分，以使我们的生活变得更容易。
 
 ```py
-**from** **fastai.metrics** **import** *
-**from** **fastai.model** **import** *
-**from** **fastai.dataset** **import** *
+from fastai.metrics import *
+from fastai.model import *
+from fastai.dataset import *
 
-**import** **torch.nn** **as** **nn**
+import torch.nn as nn
 ```
 
 这里是如何在 PyTorch 中创建神经网络的。最简单的神经网络，你说 Sequential。Sequential 意味着我现在要给你一个我想要在我的神经网络中的层的列表。所以在这种情况下，我的列表中有两个东西。第一件事说我想要一个线性层。现在线性层基本上会执行*y = ax + b*，但是矩阵矩阵相乘，而不是单变量。所以它基本上会执行一个矩阵乘积。矩阵乘积的输入将是一个长度为 28 乘以 28 的向量，因为这是我们有多少像素，输出需要是大小为 10（我们稍后会讨论原因）。目前这就是我们如何定义一个线性层。然后，我们将详细讨论这一点，但是几乎每个神经网络中的线性层之后都必须有一个非线性。然后我们将在一会儿学习这个特定的非线性，它被称为 softmax，如果你已经学过深度学习课程，你已经见过这个。这就是我们如何定义一个神经网络。这是一个两层神经网络。
@@ -340,8 +340,8 @@ fit(net, md, n_epochs=1, crit=loss, opt=opt, metrics=metrics)
 我们将使用一种称为负对数似然损失（`NLLLoss`）的东西。负对数似然损失也被称为交叉熵，它们实际上是一样的。有两个版本，一个称为二元交叉熵或二元负对数似然，另一个称为分类交叉熵。它们是一样的，一个是当你只有一个零或一个依赖时，另一个是如果你有猫、狗、飞机或马，或者 0、1、到 9 等等。所以这里我们有交叉熵的二元版本：
 
 ```py
-**def** binary_loss(y, p):
-    **return** np.mean(-(y * np.log(p) + (1-y)*np.log(1-p)))
+def binary_loss(y, p):
+    return np.mean(-(y * np.log(p) + (1-y)*np.log(1-p)))
 ```
 
 所以这里的定义是`-(y * np.log(p) + (1-y)*np.log(1-p))`。我认为理解这个定义的最简单方法可能是看一个例子。假设我们试图预测猫和狗。1 代表猫，0 代表狗。所以这里，我们有猫、狗、狗、猫（`[1, 0, 0, 1]`）。这是我们的预测（`[0.9, 0.1, 0.2, 0.8]`）。我们说 90%确定是猫，90%确定是狗，80%确定是狗，80%确定是猫。所以我们可以通过调用我们的函数来计算二元交叉熵。
@@ -455,21 +455,21 @@ plots(x_imgs[:8], titles=preds[:8])
 希望现在这会更有意义，因为我们要深入一层，定义逻辑回归，而不使用`nn.Sequential`、`nn.Linear`或`nn.LogSoftmax`。因此，我们将几乎所有的层定义都从头开始做。为了做到这一点，我们将不得不定义一个 PyTorch 模块。PyTorch 模块基本上是一个神经网络或神经网络中的一层，这实际上是一个强大的概念。基本上，任何可以像神经网络一样行为的东西本身可以成为另一个神经网络的一部分。这就是我们如何构建特别强大的架构，结合了许多其他部分。
 
 ```py
-**def** get_weights(*dims): 
-    **return** nn.Parameter(torch.randn(dims)/dims[0])**def** softmax(x): 
-    **return** torch.exp(x)/(torch.exp(x).sum(dim=1)[:,**None**])
+def get_weights(*dims): 
+    return nn.Parameter(torch.randn(dims)/dims[0])def softmax(x): 
+    return torch.exp(x)/(torch.exp(x).sum(dim=1)[:,None])
 
-**class** **LogReg**(nn.Module):
-    **def** __init__(self):
+class LogReg(nn.Module):
+    def __init__(self):
         super().__init__()
         self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
         self.l1_b = get_weights(10)         *# Layer 1 bias*
 
-    **def** forward(self, x):
+    def forward(self, x):
         x = x.view(x.size(0), -1)
         x = (x @ self.l1_w) + self.l1_b  *# Linear Layer*
         x = torch.log(softmax(x)) *# Non-linear (LogSoftmax) Layer*
-        **return** x
+        return x
 ```
 
 因此，要创建一个 PyTorch 模块，只需创建一个 Python 类，但它必须继承自`nn.Module`。因此，除了继承之外，这是我们已经在面向对象中看到的所有概念。基本上，如果你在这里（在类名后面）放入括号中的内容，意味着我们的类会免费获得这个类的所有功能。这被称为子类化。因此，我们将获得 PyTorch 作者提供的神经网络模块的所有功能，然后我们将添加额外的功能。当你创建一个子类时，有一件重要的事情你需要记住，那就是当你初始化你的类时，你首先必须初始化超类。因此，超类是`nn.Module`。因此，在你开始添加你的部分之前，必须先构建`nn.Module`。这就像你可以复制并粘贴到你的每一个模块中的东西。你只需说`super().__init__()`。这意味着首先构造超类。

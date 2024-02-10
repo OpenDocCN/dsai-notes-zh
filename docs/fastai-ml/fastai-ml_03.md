@@ -218,7 +218,7 @@ Wall time: 1min 37s*m = RandomForestRegressor(n_estimators=20, min_samples_leaf=
 +   Jeremy 在分析器中注意到的另一件事是，当我们使用`set_rf_samples`时，我们不能使用 OOB 分数，因为如果这样做，它将使用其他 124 百万行来计算 OOB 分数。此外，我们希望使用最近日期的验证集，而不是随机的。
 
 ```py
-print_score(m)*[0.7726754289860,* ***0.7658818632043****, 0.23234198105350, 0.2193243264]*
+print_score(m)*[0.7726754289860,* *0.7658818632043**, 0.23234198105350, 0.2193243264]*
 ```
 
 所以这让我们得到了 0.76 的验证均方根对数误差。
@@ -297,7 +297,7 @@ df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')
 我们首先读取蓝色书籍对推土机比赛的 feather 文件。提醒：我们已经读取了 CSV 文件，将其处理为类别，并保存为 feather 格式。接下来我们调用`proc_df`将类别转换为整数，处理缺失值，并提取出因变量。然后创建一个像上周一样的验证集：
 
 ```py
-**def** split_vals(a,n): **return** a[:n], a[n:]n_valid = 12000
+def split_vals(a,n): return a[:n], a[n:]n_valid = 12000
 n_trn = len(df_trn)-n_valid
 X_train, X_valid = split_vals(df_trn, n_trn)
 y_train, y_valid = split_vals(y_trn, n_trn)
@@ -309,8 +309,8 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)
 上周，在`proc_df`中有一个 bug，当传入`subset`时会打乱数据框，导致验证集不是最新的 12000 条记录。这个问题已经修复。
 
 ```py
-## From lesson1-rf.ipynbdf_trn, y_trn, **nas** = proc_df(df_raw, 'SalePrice', subset=30000, 
-                             na_dict=**nas**)
+## From lesson1-rf.ipynbdf_trn, y_trn, nas = proc_df(df_raw, 'SalePrice', subset=30000, 
+                             na_dict=nas)
 X_train, _ = split_vals(df_trn, 20000)
 y_train, _ = split_vals(y_trn, 20000)
 ```
@@ -349,7 +349,7 @@ print_score(m)
 这里我们可以做与上次完全相同的列表推导[[58:35](https://youtu.be/YSFG_W8JxBo?t=58m35s)]：
 
 ```py
-%time preds = np.stack([t.predict(X_valid) **for** t **in** m.estimators_])
+%time preds = np.stack([t.predict(X_valid) for t in m.estimators_])
 np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 1.38 s, sys: 20 ms, total: 1.4 s
 Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)*
 ```
@@ -360,7 +360,7 @@ Wall time: 1.4 s**(9.1960278072006023, 0.21225113407342761)*
 
 ```py
 def get_preds(t): return t.predict(X_valid)
-%time preds = np.stack(**parallel_trees**(m, get_preds))
+%time preds = np.stack(parallel_trees(m, get_preds))
 np.mean(preds[:,0]), np.std(preds[:,0])*CPU times: user 100 ms, sys: 180 ms, total: 280 ms
 Wall time: 505 ms**(9.1960278072006023, 0.21225113407342761)*
 ```
@@ -473,7 +473,7 @@ fi.plot('cols', 'imp', figsize=(10,6), legend=False);
 我们也可以将其绘制为条形图：
 
 ```py
-**def** plot_fi(fi): 
+def plot_fi(fi): 
   return fi.plot('cols','imp','barh', figsize=(12,7), legend=False)plot_fi(fi[:30]);
 ```
 
