@@ -38,20 +38,23 @@ pypi.org](https://pypi.org/project/fastai/?source=post_page-----6ff502b2db45----
 net2 = LogReg().cuda()
 loss=nn.NLLLoss()
 learning_rate = 1e-2
-optimizer=optim.SGD(net2.parameters(), lr=learning_rate)for epoch in range(1):
+optimizer=optim.SGD(net2.parameters(), lr=learning_rate)
+for epoch in range(1):
     losses=[]
     dl = iter(md.trn_dl)
     for t in range(len(dl)):
-        *# Forward pass: compute predicted y and loss by passing x to
-        # the model.*
+        # Forward pass: compute predicted y and loss by passing x to
+        # the model.
         xt, yt = next(dl)
         y_pred = net2(V(xt))
         l = loss(y_pred, V(yt))
-        losses.append(l) *# Before the backward pass, use the optimizer object to zero
+        losses.append(l) 
+        # Before the backward pass, use the optimizer object to zero
         # all of the gradients for the variables it will update
         # (which are the learnable weights of the model)*
-        optimizer.zero_grad() *# Backward pass: compute gradient of the loss with respect
-        # to model parameters*
+        optimizer.zero_grad() 
+        # Backward pass: compute gradient of the loss with respect
+        # to model parameters
         l.backward() *# Calling the step function on an Optimizer makes an update
         # to its parameters*
         optimizer.step()
