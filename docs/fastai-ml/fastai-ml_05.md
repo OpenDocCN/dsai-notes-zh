@@ -113,7 +113,9 @@ row = X_valid.values[None,0]; row
 '''
 array([[4364751, 2300944, 665, 172, 1.0, 1999, 3726.0, 3, 3232, 1111, 0, 63, 0, 5, 17, 35, 4, 4, 0, 1, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 19, 29, 3, 2, 1, 0, 0, 0, 0, 0, 2010, 9, 37,
-        16, 3, 259, False, False, False, False, False, False, 7912, False, False]], dtype=object)*prediction, bias, contributions = ti.predict(m, row)
+        16, 3, 259, False, False, False, False, False, False, 7912, False, False]], dtype=object)
+'''
+prediction, bias, contributions = ti.predict(m, row)
 ```
 
 所以当你使用随机森林模型对某个特定拍卖进行 `treeinterpreter.predict` 时（在这种情况下是零索引行），它告诉你：
@@ -125,13 +127,25 @@ array([[4364751, 2300944, 665, 172, 1.0, 1999, 3726.0, 3, 3232, 1111, 0, 63, 0, 
 +   `contributions`: 每次我们在树中看到特定列出现时所有贡献的总和。
 
 ```py
-prediction[0], bias[0]*(9.1909688098736275, 10.10606580677884)*
+prediction[0], bias[0]
+'''
+(9.1909688098736275, 10.10606580677884)
+'''
 ```
 
 上次我犯了一个错误，没有正确排序这个。所以这次 `np.argsort` 是一个非常方便的函数。它实际上并不对 `contributions[0]` 进行排序，它只是告诉你如果对其进行排序，每个项目将移动到哪里。所以现在通过将 `idxs` 传递给每个列、级别和贡献，我可以按正确的顺序打印出所有这些。
 
 ```py
-idxs = np.argsort(contributions[0])[o for o in zip(df_keep.columns[idxs], df_valid.iloc[0][idxs], contributions[0][idxs])]*[('ProductSize', 'Mini', -0.54680742853695008),
+idxs = np.argsort(contributions[0])
+[
+   o for o in zip(
+      df_keep.columns[idxs], 
+      df_valid.iloc[0][idxs], 
+      contributions[0][idxs]
+   )
+]
+'''
+[('ProductSize', 'Mini', -0.54680742853695008),
  ('age', 11, -0.12507089451852943),
  ('fiProductClassDesc',
   'Hydraulic Excavator, Track - 3.0 to 4.0 Metric Tons',
@@ -154,7 +168,8 @@ idxs = np.argsort(contributions[0])[o for o in zip(df_keep.columns[idxs], df_val
  ('Hydraulics_Flow', nan, 0.028973749866174004),
  ('ModelID', 665, 0.038307429579276284),
  ('Coupler_System', nan, 0.052509808150765114),
- ('YearMade', 1999, 0.071829996446492878)]*
+ ('YearMade', 1999, 0.071829996446492878)]
+'''
 ```
 
 所以小型工业设备意味着它更便宜。如果它是最近制造的，那就意味着更昂贵，等等。所以这实际上对 Kaggle 不会有太大帮助，因为你只需要预测。但在生产环境甚至是预生产阶段，这将对你有很大帮助。所以任何一个好的经理应该做的事情是，如果你说这里有一个机器学习模型，我认为我们应该使用它，他们应该离开并抓取一些实际客户或实际拍卖的例子，检查你的模型是否看起来直观。如果它说我的预测是很多人会真的喜欢这部糟糕的电影，而实际上是“哇，那是一部真的糟糕的电影”，那么他们会回来问你“解释一下为什么你的模型告诉我我会喜欢这部电影，因为我讨厌那部电影”。然后你可以回答说，这是因为你喜欢这部电影，因为你是这个年龄段，你是这个性别，平均而言，实际上像你这样的人确实喜欢那部电影。
@@ -205,9 +220,18 @@ x, y, nas = proc_df(df_ext, 'is_valid')
 这是 Kaggle 中的一个很棒的技巧，因为他们通常不会告诉您测试集是否是随机样本。因此，您可以将测试集和训练集放在一起，创建一个新列叫做`is_test`，看看您是否可以预测它。如果可以，那么您就没有一个随机样本，这意味着您必须弄清楚如何从中创建一个验证集。
 
 ```py
-m = RandomForestClassifier(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=True)
+m = RandomForestClassifier(
+      n_estimators=40, 
+      min_samples_leaf=3, 
+      max_features=0.5, 
+      n_jobs=-1, 
+      oob_score=True
+)
 m.fit(x, y);
-m.oob_score_*0.99998753505765037*
+m.oob_score_
+'''
+0.99998753505765037
+'''
 ```
 
 在这种情况下，我可以看到我没有一个随机样本，因为我的验证集可以用 0.9999 的 R²来预测。
@@ -239,9 +263,19 @@ feats='SalesID', 'saleElapsed', 'MachineID'.describe()
 所以让我们把它们删除。
 
 ```py
-x.drop(feats, axis=1, inplace=True)m = RandomForestClassifier(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=True)
+x.drop(feats, axis=1, inplace=True)
+m = RandomForestClassifier(
+   n_estimators=40, 
+   min_samples_leaf=3, 
+   max_features=0.5, 
+   n_jobs=-1, 
+   oob_score=True
+)
 m.fit(x, y);
-m.oob_score_*0.9789018385789966*
+m.oob_score_
+'''
+0.9789018385789966
+'''
 ```
 
 所以在我删除它们之后，现在让我们看看我是否可以预测某样东西是否在验证集中。我仍然可以用 0.98 的 R²来预测。
@@ -255,11 +289,20 @@ fi = rf_feat_importance(m, x); fi[:10]
 一旦您删除了一些东西，其他东西就会浮现出来，现在显然老年——年龄较大的东西更有可能在验证集中，因为在训练集中的早期阶段，它们还不可能那么老。YearMade 也是同样的原因。因此，我们也可以尝试删除这些——从第一个中删除`SalesID`、`saleElapsed`、`MachineID`，从第二个中删除`age`、`YearMade`和`saleDayofyear`。它们都是与时间有关的特征。如果它们很重要，我仍然希望它们出现在我的随机森林中。但如果它们不重要，那么如果有其他一些非时间相关的变量效果一样好——那将更好。因为现在我将拥有一个更好地泛化时间的模型。
 
 ```py
-set_rf_samples(50000)feats=['SalesID', 'saleElapsed', 'MachineID', 'age', 'YearMade', 'saleDayofyear']X_train, X_valid = split_vals(df_keep, n_trn)
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                        max_features=0.5, n_jobs=-1, oob_score=True)
+set_rf_samples(50000)
+feats=['SalesID', 'saleElapsed', 'MachineID', 'age', 'YearMade', 'saleDayofyear']X_train, X_valid = split_vals(df_keep, n_trn)
+m = RandomForestRegressor(
+   n_estimators=40, 
+   min_samples_leaf=3, 
+   max_features=0.5, 
+   n_jobs=-1, 
+   oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)[0.21136509778791376, 0.2493668921196425, 0.90909393040946562, 0.88894821098056087, 0.89255408392415925]
+print_score(m)
+'''
+[0.21136509778791376, 0.2493668921196425, 0.90909393040946562, 0.88894821098056087, 0.89255408392415925]
+'''
 ```
 
 所以在这里，我将逐个查看这些特征并逐个删除，重新训练一个新的随机森林，并打印出分数。在我们做任何这些之前，我们的验证分数是 0.88，OOB 是 0.89。你可以看到，当我删除 SalesID 时，我的分数上升了。这正是我们所希望的。我们删除了一个时间相关的变量，还有其他变量可以找到类似的关系而不依赖于时间。因此，删除它导致我们的验证分数上升。现在 OOB 没有上升，因为这实际上在统计上是一个有用的预测变量，但它是一个时间相关的变量，我们有一个时间相关的验证集。这是非常微妙的，但它可能非常重要。它试图找到能够提供跨时间泛化预测的因素，这里是你可以看到的方式。
@@ -268,11 +311,40 @@ print_score(m)[0.21136509778791376, 0.2493668921196425, 0.90909393040946562, 0.8
 for f in feats:
     df_subs = df_keep.drop(f, axis=1)
     X_train, X_valid = split_vals(df_subs, n_trn)
-    m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-            max_features=0.5, n_jobs=-1, oob_score=True)
+    m = RandomForestRegressor(
+         n_estimators=40, 
+         min_samples_leaf=3, 
+         max_features=0.5, 
+         n_jobs=-1, 
+         oob_score=True
+    )
     m.fit(X_train, y_train)
     print(f)
-    print_score(m)SalesID *[0.20918653475938534, 0.2459966629213187, 0.9053273181678706, 0.89192968797265737, 0.89245205174299469]* saleElapsed *[0.2194124612957369, 0.2546442621643524, 0.90358104739129086, 0.8841980790762114, 0.88681881032219145]* MachineID *[0.206612984511148, 0.24446409479358033, 0.90312476862123559, 0.89327205732490311, 0.89501553584754967]* age *[0.21317740718919814, 0.2471719147150774, 0.90260198977488226, 0.89089460707372525, 0.89185129799503315]* YearMade *[0.21305398932040326, 0.2534570148977216, 0.90555219348567462, 0.88527538596974953, 0.89158854973045432]* saleDayofyear *[0.21320711524847227, 0.24629839782893828, 0.90881970943169987, 0.89166441133215968, 0.89272793857941679]*
+    print_score(m)
+SalesID 
+'''
+[0.20918653475938534, 0.2459966629213187, 0.9053273181678706, 0.89192968797265737, 0.89245205174299469]
+'''
+saleElapsed 
+'''
+[0.2194124612957369, 0.2546442621643524, 0.90358104739129086, 0.8841980790762114, 0.88681881032219145]
+'''
+MachineID
+'''
+[0.206612984511148, 0.24446409479358033, 0.90312476862123559, 0.89327205732490311, 0.89501553584754967]
+'''
+age
+'''
+[0.21317740718919814, 0.2471719147150774, 0.90260198977488226, 0.89089460707372525, 0.89185129799503315]
+'''
+YearMade
+'''
+[0.21305398932040326, 0.2534570148977216, 0.90555219348567462, 0.88527538596974953, 0.89158854973045432]
+'''
+saleDayofyear
+'''
+[0.21320711524847227, 0.24629839782893828, 0.90881970943169987, 0.89166441133215968, 0.89272793857941679]
+'''
 ```
 
 我们肯定应该删除`SalesID`，但`saleElapsed`没有变得更好，所以我们不想要。`MachineID`变得更好了-从 0.888 到 0.893，所以实际上好了很多。`age`有点变好了。`YearMade`变得更糟了，`saleDayofyear`有点变好了。
@@ -284,13 +356,23 @@ reset_rf_samples()
 现在我们可以说，让我们摆脱那三个我们知道摆脱它实际上使它变得更好的东西。因此，我们现在达到了 0.915！所以我们摆脱了三个时间相关的因素，现在如我们所料，我们的验证比 OOB 更好。
 
 ```py
-df_subs = df_keep.drop(['SalesID', 'MachineID', 'saleDayofyear'], 
-               axis=1)
+df_subs = df_keep.drop(
+   ['SalesID', 'MachineID', 'saleDayofyear'], 
+   axis=1
+)
 X_train, X_valid = split_vals(df_subs, n_trn)
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-               max_features=0.5, n_jobs=-1, oob_score=True)
+m = RandomForestRegressor(
+   n_estimators=40, 
+   min_samples_leaf=3, 
+   max_features=0.5, 
+   n_jobs=-1, 
+   oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)[0.1418970082803121, 0.21779153679471935, 0.96040441863389681, 0.91529091848161925, 0.90918594039522138]
+print_score(m)
+'''
+[0.1418970082803121, 0.21779153679471935, 0.96040441863389681, 0.91529091848161925, 0.90918594039522138]
+'''
 ```
 
 所以那是一个非常成功的方法，现在我们可以检查特征的重要性。
@@ -310,12 +392,19 @@ np.save('tmp/subs_cols.npy', np.array(df_subs.columns))
 ## 我们的最终模型！
 
 ```py
-m = RandomForestRegressor(n_estimators=160, max_features=0.5, 
-          n_jobs=-1, oob_score=True)
+m = RandomForestRegressor(
+   n_estimators=160, 
+   max_features=0.5, 
+   n_jobs=-1, 
+   oob_score=True
+)
 %time m.fit(X_train, y_train)
-print_score(m)CPU times: user 6min 3s, sys: 2.75 s, total: 6min 6s
+print_score(m)
+'''
+CPU times: user 6min 3s, sys: 2.75 s, total: 6min 6s
 Wall time: 16.7 s
 [0.08104912951128229, 0.2109679613161783, 0.9865755186304942, 0.92051576728916762, 0.9143700001430598]
+'''
 ```
 
 正如你所看到的，我们进行了所有的解释，所有的微调基本上都是用较小的模型/子集进行的，最后，我们运行了整个过程。实际上，这只花了 16 秒，所以我们现在的 RMSE 是 0.21。现在我们可以将其与 Kaggle 进行比较。不幸的是，这是一个较旧的比赛，我们不允许再参加，看看我们会取得怎样的成绩。所以我们能做的最好的就是检查它是否看起来我们可能会根据他们的验证集做得很好，所以应该在正确的范围内。根据这一点，我们本来会得第一名。
@@ -357,12 +446,15 @@ from sklearn import metrics
 PATH = "data/bulldozers/"
 
 df_raw = pd.read_feather('tmp/bulldozers-raw')
-df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')def split_vals(a,n): return a[:n], a[n:]
+df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')
+def split_vals(a,n): 
+   return a[:n], a[n:]
 n_valid = 12000
 n_trn = len(df_trn)-n_valid
 X_train, X_valid = split_vals(df_trn, n_trn)
 y_train, y_valid = split_vals(y_trn, n_trn)
-raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'MachineHoursCurrentMeter']]
+raw_train, raw_valid = split_vals(df_raw, n_trn)
+x_sub = X_train[['YearMade', 'MachineHoursCurrentMeter']]
 ```
 
 我写代码的方式几乎都是自顶向下的，就像我的教学一样。因此，从顶部开始，我假设我想要的一切都已经存在。换句话说，我想要做的第一件事是，我将称之为树集合。要创建一个随机森林，我首先要问的问题是我需要传入什么。我需要初始化我的随机森林。我将需要：
@@ -381,15 +473,16 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'Ma
 class TreeEnsemble():
     def __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
         np.random.seed(42)
-        self.x,self.y,self.sample_sz,self.min_leaf = 
-                  x,y,sample_sz,min_leaf
+        self.x,self.y,self.sample_sz,self.min_leaf = x,y,sample_sz,min_leaf
         self.trees = [self.create_tree() for i in range(n_trees)]
 
     def create_tree(self):
-        rnd_idxs = np.random.permutation(len(self.y))
-                    [:self.sample_sz]
-        return DecisionTree(self.x.iloc[rnd_idxs], self.y[rnd_idxs],
-                   min_leaf=self.min_leaf)
+        rnd_idxs = np.random.permutation(len(self.y))[:self.sample_sz]
+        return DecisionTree(
+            self.x.iloc[rnd_idxs], 
+            self.y[rnd_idxs],
+            min_leaf=self.min_leaf
+         )
 
     def predict(self, x):
         return np.mean([t.predict(x) for t in self.trees], axis=0)
@@ -438,33 +531,39 @@ class TreeEnsemble():
 ```py
 class DecisionTree():
    def __init__(self, x, y, idxs=None, min_leaf=5):
-      if idxs is None: idxs=np.arange(len(y))
+      if idxs is None: 
+         idxs=np.arange(len(y))
       self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leaf
       self.n,self.c = len(idxs), x.shape[1]
       self.val = np.mean(y[idxs])
       self.score = float('inf')
       self.find_varsplit()
 
-   *# This just does one decision; we'll make it recursive later*
+   # This just does one decision; we'll make it recursive later
    def find_varsplit(self):
       for i in range(self.c): self.find_better_split(i)
 
-   *# We'll write this later!*
-   def find_better_split(self, var_idx): pass
+   # We'll write this later!
+   def find_better_split(self, var_idx): 
+      pass
 
    @property
-   def split_name(self): return self.x.columns[self.var_idx]
+   def split_name(self): 
+      return self.x.columns[self.var_idx]
 
    @property
    def split_col(self): 
-      return self.x.values[self.idxs,self.var_idx] @property
-   def is_leaf(self): return self.score == float('inf')
+      return self.x.values[self.idxs,self.var_idx] 
+      
+   @property
+   def is_leaf(self): 
+      return self.score == float('inf')
 
    def __repr__(self):
-      s = f'n: **{self.n}**; val:**{self.val}**'
+      s = f'n: {self.n}; val:{self.val}'
       if not self.is_leaf:
-         s += f'; score:**{self.score}**; split:**{self.split}**; var:**{self.split_name}**'
-        return s
+         s += f'; score:{self.score}; split:{self.split}; var:{self.split_name}'
+      return s
 ```
 
 +   `self.n`: 这棵树中有多少行（我们给定的索引数量）
