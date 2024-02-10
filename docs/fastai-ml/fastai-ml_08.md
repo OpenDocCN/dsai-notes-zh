@@ -462,13 +462,13 @@ def get_weights(*dims):
 class LogReg(nn.Module):
     def __init__(self):
         super().__init__()
-        self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
-        self.l1_b = get_weights(10)         *# Layer 1 bias*
+        self.l1_w = get_weights(28*28, 10)  # Layer 1 weights
+        self.l1_b = get_weights(10)         # Layer 1 bias
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
-        x = (x @ self.l1_w) + self.l1_b  *# Linear Layer*
-        x = torch.log(softmax(x)) *# Non-linear (LogSoftmax) Layer*
+        x = (x @ self.l1_w) + self.l1_b  # Linear Layer
+        x = torch.log(softmax(x)) # Non-linear (LogSoftmax) Layer
         return x
 ```
 

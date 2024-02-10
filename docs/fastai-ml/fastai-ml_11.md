@@ -230,7 +230,7 @@ preds = m.predict(val_x_nb)
 所以首先让我向你展示代码。一旦我弄清楚这是我能想到的最好的线性词袋模型的方法，我将其嵌入到 Fast AI 中，这样你只需写几行代码就可以了。
 
 ```py
-sl=2000*# Here is how we get a model from a bag of words*
+sl=2000# Here is how we get a model from a bag of words
 md = TextClassifierData.from_bow(trn_term_doc, trn_y, val_term_doc,
                                  val_y, sl)
 ```

@@ -53,15 +53,19 @@ from fastai.imports import *
 from fastai.structured import *
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from IPython.display import display
-from sklearn import metricsPATH = "data/bulldozers/"
+from sklearn import metrics
+PATH = "data/bulldozers/"
 
 df_raw = pd.read_feather('tmp/bulldozers-raw')
-df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')def split_vals(a,n): return a[:n], a[n:]
+df_trn, y_trn, nas = proc_df(df_raw, 'SalePrice')
+def split_vals(a,n): 
+    return a[:n], a[n:]
 n_valid = 12000
 n_trn = len(df_trn)-n_valid
 X_train, X_valid = split_vals(df_trn, n_trn)
 y_train, y_valid = split_vals(y_trn, n_trn)
-raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'MachineHoursCurrentMeter']]
+raw_train, raw_valid = split_vals(df_raw, n_trn)
+x_sub = X_train[['YearMade', 'MachineHoursCurrentMeter']]
 ```
 
 上次我们做的是创建了一个树集合，这个树集合包含了一堆树，实际上是一个包含`n_trees`棵树的列表，每次我们只是调用`create_tree`。`create_tree`包含了一个样本大小（`sample_sz`）的随机索引（`rnd_idxs`）。这里是无重复抽样。所以记住，自助法意味着有放回抽样。通常在 scikit-learn 中，如果有 n 行数据，我们用有放回抽样抽取 n 行数据，这意味着很多行会出现多次。所以每次我们得到一个不同的样本，但它的大小总是与原始数据集相同。然后我们有一个`set_rf_samples`函数，我们可以使用它进行少于 n 行的有放回抽样。`create_tree`再次做的是无重复抽样`sample_sz`行。因为我们对从零到`self.y-1`的数字进行排列，然后抽取其中的前`self.sample_sz`个。实际上有一种更快的方法可以做到这一点。你可以直接使用`np.random.choice`（而不是`np.random.permutation`），这是一种稍微更直接的方法，但这种方法也可以。所以`rnd_idxs`是我们`n_trees`棵树中的一个的随机样本。然后我们将创建一个`DecisionTree`。我们的决策树，我们不会传递所有的`x`，而是传递这些特定的索引，记住 x 是一个 Pandas DataFrame，所以如果我们想用一堆整数对其进行索引，我们使用`iloc`（整数位置），这使得它在索引方面的行为就像 numpy 一样。现在`y`向量是 numpy，所以我们可以直接对其进行索引。然后我们将跟踪最小叶子大小（`min_leaf`）。
@@ -70,24 +74,32 @@ raw_train, raw_valid = split_vals(df_raw, n_trn)x_sub = X_train[['YearMade', 'Ma
 class TreeEnsemble():
   def __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
     np.random.seed(42)
-    self.x,self.y,self.sample_sz,self.min_leaf = 
-                                           x,y,sample_sz,min_leaf
+    self.x,self.y,self.sample_sz,self.min_leaf = x,y,sample_sz,min_leaf
     self.trees = [self.create_tree() for i in range(n_trees)]
 
   def create_tree(self):
     rnd_idxs = np.random.permutation(len(self.y))[:self.sample_sz]
-    return DecisionTree(self.x.iloc[rnd_idxs], self.y[rnd_idxs],
-                            min_leaf=self.min_leaf)
+    return DecisionTree(
+        self.x.iloc[rnd_idxs], 
+        self.y[rnd_idxs],
+        min_leaf=self.min_leaf
+    )
 ```
 
 然后在集成中我们真正需要的另一件事情就是一个地方来进行预测。因此我们只需要对每棵树的预测取平均值。就是这样。
 
 ```py
 def predict(self, x):
-    return np.mean([t.predict(x) for t in self.trees], axis=0)class DecisionTree():
+    return np.mean([t.predict(x) for t in self.trees], axis=0)
+class DecisionTree():
     def __init__(self, x, y, idxs=None, min_leaf=5):
-        self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leafm = TreeEnsemble(X_train, y_train, n_trees=10, sample_sz=1000, 
-                 min_leaf=3)
+        self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leaf
+        m = TreeEnsemble(
+            X_train, y_train, 
+            n_trees=10, 
+            sample_sz=1000, 
+            min_leaf=3
+        )
 ```
 
 然后为了能够运行它，我们需要一个决策树类，因为它被`create_tree`调用。所以我们开始吧。这就是起点。接下来我们需要做的是完善我们的决策树。所要记住的重要一点是我们所有的随机性都发生在`TreeEnsemble`中。我们将要创建的 DecisionTree 类中没有随机性。
@@ -103,7 +115,8 @@ def predict(self, x):
 ```py
 class DecisionTree():
     def __init__(self, x, y, idxs=None, min_leaf=5):
-        if idxs is None: idxs=np.arange(len(y))
+        if idxs is None: 
+            idxs=np.arange(len(y))
         self.x,self.y,self.idxs,self.min_leaf = x,y,idxs,min_leaf
         self.n,self.c = len(idxs), x.shape[1]
         self.val = np.mean(y[idxs])
@@ -114,28 +127,32 @@ class DecisionTree():
 那么我们如何找到一个变量来分割呢？嗯，我们可以逐个检查每个潜在的变量，所以`c`包含我们拥有的列数，逐个检查并查看是否能在该列上找到比目前更好的分割。现在请注意，这并不是完整的随机森林定义。这是假设最大特征被设置为全部的情况。请记住，我们可以将最大特征设置为 0.5，这样我们就不会检查从零到`c`的所有数字，而是会随机检查从零到`c`的一半数字。因此，如果您想将其转换为支持最大特征的随机森林，您可以轻松添加一行代码来实现。但是在我们今天的实现中，我们不打算这样做。因此，我们只需要找到更好的分割点，由于我们目前不感兴趣，所以现在我们将其留空。
 
 ```py
- *# This just does one decision; we'll make it recursive later*
+ # This just does one decision; we'll make it recursive later
     def find_varsplit(self):
-        for i in range(self.c): self.find_better_split(i)
+        for i in range(self.c): 
+            self.find_better_split(i)
 
-    *# We'll write this later!*
-    def find_better_split(self, var_idx): pass
+    # We'll write this later!
+    def find_better_split(self, var_idx): 
+        pass
 
     @property
-    def split_name(self): return self.x.columns[self.var_idx]
+    def split_name(self): 
+        return self.x.columns[self.var_idx]
 
     @property
     def split_col(self): 
         return self.x.values[self.idxs,self.var_idx]
 
     @property
-    def is_leaf(self): return self.score == float('inf')
+    def is_leaf(self): 
+        return self.score == float('inf')
 
     def __repr__(self):
-        s = f'n: **{self.n}**; val:**{self.val}**'
+        s = f'n: {self.n}; val:{self.val}'
         if not self.is_leaf:
-            s += f'; score:**{self.score}**; split:**{self.split}**; var:
-                   **{self.split_name}**'
+            s += f'; score:{self.score}; split:{self.split}; var:
+                   {self.split_name}'
         return s
 ```
 

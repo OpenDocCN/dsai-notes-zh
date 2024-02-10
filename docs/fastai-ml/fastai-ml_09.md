@@ -108,13 +108,13 @@ def softmax(x):
 class LogReg(nn.Module):
     def __init__(self):
         super().__init__()
-        self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
-        self.l1_b = get_weights(10)         *# Layer 1 bias*
+        self.l1_w = get_weights(28*28, 10)  # Layer 1 weights
+        self.l1_b = get_weights(10)         # Layer 1 bias
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
-        x = (x @ self.l1_w) + self.l1_b  *# Linear Layer*
-        x = torch.log(softmax(x)) *# Non-linear (LogSoftmax) Layer*
+        x = (x @ self.l1_w) + self.l1_b  # Linear Layer
+        x = torch.log(softmax(x)) # Non-linear (LogSoftmax) Layer
         return x
 ```
 
@@ -563,7 +563,7 @@ m, c*(array([[1, 2, 3],
 记住，我们可以使用@符号或旧方法`np.matmul`进行矩阵乘法。当我们这样做时，实际上我们基本上是在说`1*10 + 2*20 + 3*30 = 140`，所以我们对每一行都这样做，然后我们可以继续对下一行做同样的事情，依此类推以获得我们的结果。
 
 ```py
-m @ c  *# np.matmul(m, c)**array([140, 320, 500])*
+m @ c  # np.matmul(m, c)*array([140, 320, 500])*
 ```
 
 你也可以在 PyTorch 中这样做
@@ -619,8 +619,8 @@ m * c*array([[ 10,  40,  90],
 class LogReg(nn.Module):
     def __init__(self):
         super().__init__()
-        self.l1_w = get_weights(28*28, 10)  *# Layer 1 weights*
-        self.l1_b = get_weights(10)         *# Layer 1 bias*
+        self.l1_w = get_weights(28*28, 10)  # Layer 1 weights
+        self.l1_b = get_weights(10)         # Layer 1 bias
 
     def forward(self, x):
         x = x.view(x.size(0), -1)
@@ -644,7 +644,7 @@ fit(net2, md, n_epochs=1, crit=loss, opt=opt, metrics=metrics)[ 0\.       0.3110
 正如我们学到的，为了一次抓取训练集的一个小批次，我们必须向模型数据对象请求训练数据加载器。我们必须将其包装在`iter`中以创建一个迭代器或生成器。这样就给我们了我们的数据加载器。所以 PyTorch 将其称为数据加载器。我们实际上编写了自己的 Fast AI 数据加载器，但基本上是相同的思路。
 
 ```py
-dl = iter(md.trn_dl) *# Data loader*
+dl = iter(md.trn_dl) # Data loader
 ```
 
 接下来我们要做的是获取 x 和 y 张量，从我们的数据加载器中获取下一个。将其包装在`Variable`中以表明我需要能够对使用此计算的导数进行求导。因为如果我不能求导，那么我就无法得到梯度，也无法更新权重。而且我需要将其放在 GPU 上，因为我的模块在 GPU 上（`net2 = LogReg().cuda()`）。所以现在我们可以将该变量传递给我们实例化的对象（即我们的逻辑回归）。记住，我们的模块，我们可以将其用作函数，因为这就是 PyTorch 的工作原理。这给我们提供了一组预测，就像我们以前看到的那样。
