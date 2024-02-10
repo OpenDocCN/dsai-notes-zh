@@ -112,8 +112,11 @@ Jupyter 技巧[[21:39](https://youtu.be/CzdWqFTmn0Y?t=21m39s)] - 您可以打开
 当您处理通常作为`pd`导入的结构化数据时，`pandas`是最重要的库。
 
 ```py
-df_raw = pd.read_csv(f'{PATH}Train.csv', low_memory=False, 
-                     parse_dates=["saledate"])
+df_raw = pd.read_csv(
+    f'{PATH}Train.csv', 
+    low_memory=False, 
+    parse_dates=["saledate"]
+)
 ```
 
 +   `parse_dates` - 包含日期的任何列的列表
@@ -124,7 +127,8 @@ df_raw = pd.read_csv(f'{PATH}Train.csv', low_memory=False,
 def display_all(df):
     with pd.option_context("display.max_rows", 1000): 
         with pd.option_context("display.max_columns", 1000): 
-            display(df)display_all(df_raw.tail().transpose())
+            display(df)
+            display_all(df_raw.tail().transpose())
 ```
 
 在 Jupyter Notebook 中，如果您键入一个变量名并按`ctrl+enter`，无论是 DataFrame、视频、HTML 等 - 它通常会找到一种显示方式供您使用[[32:13](https://youtu.be/CzdWqFTmn0Y?t=32m13s)]。
@@ -215,13 +219,15 @@ scikit-learn 中的所有内容都具有相同的形式。
 def add_datepart(df, fldname, **drop=True**):
     fld = df[fldname]
     if not np.issubdtype(fld.dtype, np.datetime64):
-        df[fldname] = fld = pd.to_datetime(fld, 
-                                     infer_datetime_format=True)
+        df[fldname] = fld = pd.to_datetime(
+            fld, infer_datetime_format=True)
     targ_pre = re.sub('[Dd]ate$', '', fldname)
-    for n in ('Year', 'Month', 'Week', 'Day', 'Dayofweek', 
-            'Dayofyear', 'Is_month_end', 'Is_month_start', 
-            'Is_quarter_end', 'Is_quarter_start', 'Is_year_end', 
-            'Is_year_start'):
+    for n in (
+        'Year', 'Month', 'Week', 'Day', 'Dayofweek', 
+        'Dayofyear', 'Is_month_end', 'Is_month_start', 
+        'Is_quarter_end', 'Is_quarter_start', 'Is_year_end', 
+        'Is_year_start'
+    ):
         df[targ_pre+n] = **getattr**(fld.dt,n.lower()) df[targ_pre+'Elapsed'] = fld.astype(np.int64) // 10**9
     if drop: df.drop(fldname, axis=1, inplace=True)
 ```
