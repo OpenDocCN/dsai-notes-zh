@@ -1,6 +1,10 @@
 # 机器学习 1：第 10 课
 
-> 原文：[`medium.com/@hiromi_suenaga/machine-learning-1-lesson-10-6ff502b2db45`](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-10-6ff502b2db45)
+> 原文：[`medium.com/@hiromi_suenaga/machine-learning-1-lesson-10-6ff502b2db45`](https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-10-6ff502b2db45)>
+> 译者：[飞龙](https://github.com/wizardforcel)
+> 
+> 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
+
 
 *我个人从* [*机器学习课程*](http://forums.fast.ai/t/another-treat-early-access-to-intro-to-machine-learning-videos/6826/1)*中的笔记。随着我继续审查课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢* [*Jeremy*](https://twitter.com/jeremyphoward) *和* [*Rachel*](https://twitter.com/math_rachel) *给了我这个学习的机会。*
 
