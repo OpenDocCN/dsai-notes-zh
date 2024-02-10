@@ -151,8 +151,7 @@ class DecisionTree():
     def __repr__(self):
         s = f'n: {self.n}; val:{self.val}'
         if not self.is_leaf:
-            s += f'; score:{self.score}; split:{self.split}; var:
-                   {self.split_name}'
+            s += f'; score:{self.score}; split:{self.split}; var: {self.split_name}'
         return s
 ```
 
@@ -163,9 +162,16 @@ class DecisionTree():
 问题：如果分数是无穷大，为什么它是叶子？无穷大不是意味着你在根节点吗？不，无穷大意味着你不在根节点。它意味着你在叶子节点。所以根节点将会有一个分裂，假设我们找到一个。一切都会分裂，直到我们到达底部（即叶子节点），所以叶子节点的分数将是无穷大，因为它们不会分裂。
 
 ```py
-m = TreeEnsemble(X_train, y_train, n_trees=10, sample_sz=1000,
-                 min_leaf=3)
-m.trees[0]*n: 1000; val:10.079014121552744*
+m = TreeEnsemble(
+    X_train, y_train, 
+    n_trees=10, 
+    sample_sz=1000,
+    min_leaf=3
+)
+m.trees[0]
+'''
+n: 1000; val:10.079014121552744
+'''
 ```
 
 这就是我们的决策树。它并没有做太多事情，但至少我们可以创建一个集成。10 棵树，样本量为 1,000，我们可以打印出来。现在当我们输入`m.trees[0]`时，它不会显示`<__main__.DecisionTree at 0x7f645ec22358>`，而是显示我们要求它显示的内容。这是叶子节点，因为我们还没有在其上进行分割，所以我们没有更多要说的。
@@ -187,8 +193,11 @@ x_samp,y_samp = tree.x, tree.y
 所以让我们继续使用 scikit-learn 创建一个随机森林。一个树（`n_estimators`），一个决策（`max_depth`），没有自助采样，所以整个数据集。所以这应该与我们即将创建的东西完全相同。让我们试试看。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, max_depth=1,
-                          bootstrap=False)
+m = RandomForestRegressor(
+    n_estimators=1, 
+    max_depth=1,
+    bootstrap=False
+)
 m.fit(x_samp, y_samp)
 draw_tree(m.estimators_[0], x_samp, precision=2)
 ```
@@ -213,15 +222,17 @@ draw_tree(m.estimators_[0], x_samp, precision=2)
 
 ```py
 def find_better_split(self, var_idx):
-   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs] for i in range(1,self.n-1):
+   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs] 
+   for i in range(1,self.n-1):
       lhs = x<=x[i]
       rhs = x>x[i]
-      if rhs.sum()==0: continue
+      if rhs.sum()==0: 
+          continue
       lhs_std = y[lhs].std()
       rhs_std = y[rhs].std()
       curr_score = lhs_std*lhs.sum() + rhs_std*rhs.sum()
       if curr_score<self.score: 
-        self.var_idx,self.score,self.split = var_idx,curr_score,x[i]
+          self.var_idx,self.score,self.split = var_idx,curr_score,x[i]
 ```
 
 我们将逐行进行，假设左侧是`x`中小于或等于特定值的任何值。右侧是`x`中大于此特定值的每个值。
@@ -232,13 +243,20 @@ def find_better_split(self, var_idx):
 
 ```py
 %timeit find_better_split(tree,1)
-tree76.6 ms ± 11.8 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)*n: 1000; val:10.079014121552744; score:681.0184057251435; split:3744.0; var:MachineHoursCurrentMeter*
+tree
+'''
+76.6 ms ± 11.8 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+n: 1000; val:10.079014121552744; score:681.0184057251435; split:3744.0; var:MachineHoursCurrentMeter
+'''
 ```
 
 所以让我们来检查这是否有效。`find_better_split(tree, 0)`，0 代表`YearMade`，1 代表`MachineHoursCurrentMeter`，所以当我们用 1 时，我们得到了`MachineHoursCurrentMeter`，得分为 681.0184057251435，然后我们再次用零运行，得到了更好的分数（658），并分割了 1974。
 
 ```py
-find_better_split(tree,0); tree*n: 1000; val:10.079014121552744; score:658.5510186055949; split:1974.0; var:YearMade*
+find_better_split(tree,0); tree
+'''
+n: 1000; val:10.079014121552744; score:658.5510186055949; split:1974.0; var:YearMade
+'''
 ```
 
 所以 1974 年，让我们与上面的 scikit-learn 的随机森林进行比较，是的，这棵树也是这样做的。所以我们确认了这种方法给出了与 sklearn 的随机森林相同的结果。你还可以在这里看到值 10.08 与 sklearn 的根节点的值匹配。所以我们有了一个可以处理一个分割的东西。
@@ -270,7 +288,9 @@ O(n²) 是因为有一个循环和 `x<=x[i]`，我们必须检查每个值，看
 所以这对我们有用的原因是，如果我们首先对我们的数据进行排序。然后如果你考虑一下，当我们一步一步地向下走时，每一组都与左边的前一组完全相同，只是多了一件东西，右边则少了一件东西。因此，我们只需要跟踪 x 的总和和 x²的总和，我们只需在左边添加一个东西，x²再添加一个东西，在右边移除一个东西。因此，我们不必每次都遍历整个数据集，因此我们可以将其转化为 O(n)算法。这就是我在这里所做的一切：
 
 ```py
-tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]def std_agg(cnt, s1, s2): return math.sqrt((s2/cnt) - (s1/cnt)**2)
+tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]
+def std_agg(cnt, s1, s2): 
+    return math.sqrt((s2/cnt) - (s1/cnt)**2)
 
 def find_better_split_foo(self, var_idx):
   x,y = self.x.values[self.idxs,var_idx], self.y[self.idxs]
@@ -316,14 +336,21 @@ def find_better_split_foo(self, var_idx):
 所以我们把 O(n²)的算法转换成了 O(n)的算法。一般来说，像这样的东西会给你带来比将某些东西推送到 Spark 集群或者更快的 RAM 或者在 CPU 中使用更多核心等更多价值。这是你想要改进你的代码的方式。具体来说，编写代码时不要过多考虑性能。运行它，看看它是否对你的需求足够快。如果是，那么你就完成了。如果不是，进行性能分析。在 Jupyter 中，你可以使用`%prun`，它会告诉你算法中时间花在哪里。然后你可以去看看实际花费时间的部分，思考它在算法上是否尽可能高效。在这种情况下，我们运行它，从 76 毫秒降到不到 2 毫秒。现在一些新手可能会认为“哦，太好了，我节省了 60 多毫秒”，但关键是这将被运行数千万次。所以 76 毫秒版本太慢了，对于实际使用的任何随机森林来说都是不切实际的。而另一方面，我找到的 1 毫秒版本实际上是相当可接受的。
 
 ```py
- %timeit find_better_split_foo(tree,1)
-tree2.2 ms ± 148 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)n: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+%timeit find_better_split_foo(tree,1)
+tree
+'''
+2.2 ms ± 148 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+n: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+'''
 ```
 
 然后检查，数字应该与之前完全相同，而且确实如此。
 
 ```py
-find_better_split_foo(tree,0); treen: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+find_better_split_foo(tree,0); tree
+'''
+n: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+'''
 ```
 
 现在我们有了一个函数`find_better_split`，它可以做我们想要的事情，我想把它插入到我的`DecisionTree`类中。这是一个非常酷的 Python 技巧。Python 可以动态执行所有操作，因此我们实际上可以说`DecisionTree`中名为`find_better_split`的方法就是我刚刚创建的那个函数。
@@ -343,7 +370,10 @@ DecisionTree.find_better_split = find_better_split_foo
 现在我们已经将`find_better_split`方法放入了具有这个新定义的`DecisionTree`中，当我现在调用`TreeEnsemble`构造函数时，决策树集合构造函数会调用`create_tree`，`create_tree`实例化`DecisionTree`，`DecisionTree`调用`find_varsplit`，它会遍历每一列以查看是否可以找到更好的分割点，我们现在已经定义了`find_better_split`，因此当我们创建`TreeEnsemble`时，它已经执行了这个分割点。
 
 ```py
-tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; treen: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; tree
+'''
+n: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+'''
 ```
 
 好的。这很不错，对吧？我们一次只做一点点，测试每一步。当你们实现随机森林解释技术时，你们可能想尝试以这种方式编程，检查每一步是否与 scikit-learn 所做的匹配，或者与你们构建的测试匹配。
@@ -353,8 +383,11 @@ tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; treen: 1000; val:10.07901
 在这一点上，我们应该尝试更深入地探究。现在让我们将 max_depth 设置为 2。这是 scikit-learn 所做的。在 YearMade 74 处中断后，它接着在 MachineHoursCurrentMeter 2956 处中断。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, max_depth=2, 
-                          bootstrap=False) 
+m = RandomForestRegressor(
+    n_estimators=1, 
+    max_depth=2, 
+    bootstrap=False
+) 
 m.fit(x_samp, y_samp) 
 draw_tree(m.estimators_[0], x_samp, precision=2)
 ```
@@ -373,7 +406,8 @@ draw_tree(m.estimators_[0], x_samp, precision=2)
 
 ```py
 def find_varsplit(self):
-    for i in range(self.c): self.find_better_split(i)
+    for i in range(self.c): 
+        self.find_better_split(i)
     if self.is_leaf: return
     x = self.split_col
     lhs = np.nonzero(x<=self.split)[0]
@@ -391,31 +425,46 @@ DecisionTree.find_varsplit = find_varsplit
 所以现在我已经写好了，我可以将其打补丁到 DecisionTree 类中，一旦我这样做了，TreeEnsemble 构造函数将会使用它，因为 Python 是动态的。
 
 ```py
-tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; treen: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+tree = TreeEnsemble(x_sub, y_train, 1, 1000).trees[0]; tree
+'''
+n: 1000; val:10.079014121552744; score:658.5510186055565; split:1974.0; var:YearMade
+'''
 ```
 
 现在我可以检查[1:00:31](https://youtu.be/O5F9vR2CNYI?t=1h31s)。我的左手边应该有 159 个样本和值为 9.66。
 
 ```py
-tree.lhsn: 159; val:9.660892662981706; score:76.82696888346362; split:2800.0; var:MachineHoursCurrentMeter
+tree.lhs
+'''
+n: 159; val:9.660892662981706; score:76.82696888346362; split:2800.0; var:MachineHoursCurrentMeter
+'''
 ```
 
 右手边，841 个样本和 10.15。
 
 ```py
-tree.rhsn: 841; val:10.158064432982941; score:571.4803525045031; split:2005.0; var:YearMade
+tree.rhs
+'''
+n: 841; val:10.158064432982941; score:571.4803525045031; split:2005.0; var:YearMade
+'''
 ```
 
 左手边的左手边，150 个样本和 9.62。
 
 ```py
-tree.lhs.lhsn: 150; val:9.619280538108496; score:71.15906938383463; split:1000.0; var:YearMade
+tree.lhs.lhs
+'''
+n: 150; val:9.619280538108496; score:71.15906938383463; split:1000.0; var:YearMade
+'''
 ```
 
 所以你可以看到，因为我并不聪明到足以编写机器学习算法，不仅我第一次写不正确，通常每一行我写的都是错误的。所以我总是从这样的假设开始，我刚刚输入的代码几乎肯定是错误的。我只需要看看为什么以及如何。所以我只是确保。最终我会到达这样一个点，让我很惊讶的是，它不再出错了。所以在这里，我可以感觉到好吧，如果所有这些事情碰巧与 scikit-learn 完全相同，那将是令人惊讶的。所以看起来还不错。
 
 ```py
-tree.lhs.rhsn: 9; val:10.354428077535193
+tree.lhs.rhs
+'''
+n: 9; val:10.354428077535193
+'''
 ```
 
 ## 预测 [1:01:43]
@@ -427,23 +476,31 @@ tree.lhs.rhsn: 9; val:10.354428077535193
 为了让这更有趣，让我们开始增加我们使用的列数。
 
 ```py
-cols = ['MachineID', 'YearMade', 'MachineHoursCurrentMeter',
-        'ProductSize', 'Enclosure','Coupler_System', 'saleYear']
+cols = [
+    'MachineID', 'YearMade', 'MachineHoursCurrentMeter',
+    'ProductSize', 'Enclosure','Coupler_System', 'saleYear'
+]
 ```
 
 让我们再次创建我们的`TreeEnsemble`。
 
 ```py
 %time tree = TreeEnsemble(X_train[cols], y_train, 1, 1000).trees[0]
-x_samp,y_samp = tree.x, tree.yCPU times: user 288 ms, sys: 12 ms, total: 300 ms
+x_samp,y_samp = tree.x, tree.y
+'''
+CPU times: user 288 ms, sys: 12 ms, total: 300 ms
 Wall time: 297 ms
+'''
 ```
 
 这一次，让我们将最大深度设为 3。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, max_depth=3, 
-                          bootstrap=False)
+m = RandomForestRegressor(
+    n_estimators=1, 
+    max_depth=3, 
+    bootstrap=False
+)
 m.fit(x_samp, y_samp)
 draw_tree(m.estimators_[0], x_samp, precision=2, ratio=0.9, size=7)
 ```
@@ -465,7 +522,8 @@ def predict(self, x):
 def predict_row(self, xi):
     if self.is_leaf: return self.val
     t = self.lhs if xi[self.var_idx]<=self.split else self.rhs
-    return t.predict_row(xi)DecisionTree.predict_row = predict_row
+    return t.predict_row(xi)
+DecisionTree.predict_row = predict_row
 ```
 
 注意这里的`self.lhs **if** xi[self.var_idx]<=self.split **else** self.rhs`，这个 if 与上面的 if 没有任何关系：
@@ -500,8 +558,11 @@ DecisionTree.predict = predict
 现在我可以计算预测。
 
 ```py
-%time preds = tree.predict(X_valid[cols].values)*CPU times: user 156 ms, sys: 4 ms, total: 160 ms
-Wall time: 162 ms*
+%time preds = tree.predict(X_valid[cols].values)
+'''
+CPU times: user 156 ms, sys: 4 ms, total: 160 ms
+Wall time: 162 ms
+'''
 ```
 
 现在我可以将我的实际数据与我的预测数据进行对比。当你做散点图时，通常会有很多点重叠在一起，所以一个好的技巧是使用 alpha。Alpha 表示透明度，不仅在 matplotlib 中，在世界上几乎所有的图形包中都是如此。因此，如果将 alpha 设置为小于 1，那么这意味着你需要将 20 个点叠加在一起才能完全显示为蓝色。这是一个很好的方法来看看有多少点重叠在一起 - 散点图的一个好技巧。
@@ -515,13 +576,20 @@ plt.scatter(preds, y_valid, alpha=0.05)
 这是我的 R²。
 
 ```py
-metrics.r2_score(preds, y_valid)0.50371522136882341
+metrics.r2_score(preds, y_valid)
+'''
+0.50371522136882341
+'''
 ```
 
 那么现在让我们继续进行一个没有最大分裂次数的随机森林，我们的树集合也没有最大分裂次数，我们可以将我们的 R²与他们的 R²进行比较。
 
 ```py
-m = RandomForestRegressor(n_estimators=1, min_samples_leaf=5, bootstrap=False)
+m = RandomForestRegressor(
+    n_estimators=1, 
+    min_samples_leaf=5, 
+    bootstrap=False
+)
 %time m.fit(x_samp, y_samp)
 preds = m.predict(X_valid[cols].values)
 plt.scatter(preds, y_valid, alpha=0.05)
@@ -530,7 +598,10 @@ plt.scatter(preds, y_valid, alpha=0.05)
 ![](img/ce944c854612b7af633893596700c1da.png)
 
 ```py
-metrics.r2_score(preds, y_valid)0.47541053100694797
+metrics.r2_score(preds, y_valid)
+'''
+0.47541053100694797
+'''
 ```
 
 它们并不相同，但实际上我们的稍微好一点。我不知道我们做了什么不同，但我们会接受它😊 所以现在我们有了一个对于一个只有一棵树的森林，在使用一个真实的实际数据集（推土机的蓝皮书）进行验证时，与 scikit-learn 相比提供了同样好的准确性。
@@ -543,13 +614,16 @@ metrics.r2_score(preds, y_valid)0.47541053100694797
 class TreeEnsemble():
   def __init__(self, x, y, n_trees, sample_sz, min_leaf=5):
     np.random.seed(42)
-    self.x,self.y,self.sample_sz,self.min_leaf = 
-                                        x,y,sample_sz,min_leaf
-    self.trees = [self.create_tree() for i in range(n_trees)] def create_tree(self):
+    self.x,self.y,self.sample_sz,self.min_leaf = x,y,sample_sz,min_leaf
+    self.trees = [self.create_tree() for i in range(n_trees)] 
+  def create_tree(self):
     idxs = np.random.permutation(len(self.y))[:self.sample_sz]
-    return DecisionTree(self.x.iloc[idxs], self.y[idxs], 
-                    idxs=np.array(range(self.sample_sz)), 
-                    min_leaf=self.min_leaf)
+    return DecisionTree(
+        self.x.iloc[idxs], 
+        self.y[idxs], 
+        idxs=np.array(range(self.sample_sz)), 
+        min_leaf=self.min_leaf
+    )
 
   def predict(self, x):
     return np.mean([t.predict(x) for t in self.trees], axis=0)def std_agg(cnt, s1, s2): return math.sqrt((s2/cnt) - (s1/cnt)**2)class DecisionTree():
@@ -604,13 +678,18 @@ class TreeEnsemble():
 就是这样。这就是我们一起编写的代码。
 
 ```py
-ens = TreeEnsemble(X_train[cols], y_train, 5, 1000)preds = ens.predict(X_valid[cols].values)plt.scatter(y_valid, preds, alpha=0.1, s=6);
+ens = TreeEnsemble(X_train[cols], y_train, 5, 1000)
+preds = ens.predict(X_valid[cols].values)
+plt.scatter(y_valid, preds, alpha=0.1, s=6);
 ```
 
 ![](img/efebadb4e82db4232ac7b5d816264dd8.png)
 
 ```py
-metrics.r2_score(y_valid, preds)*0.71011741571071241*
+metrics.r2_score(y_valid, preds)
+'''
+0.71011741571071241
+'''
 ```
 
 这里我们有一个蓝色推土机的模型，使用了我们完全从头开始编写的随机森林，R²为 71。这很酷。
@@ -663,7 +742,18 @@ def fib3(int n):
 所以如果我们这样做，现在我们有了一个快 10 倍的东西。
 
 ```py
-%timeit fib1(50)*705 ns ± 62.5 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)*%timeit fib2(50)*362 ns ± 26.5 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)*%timeit fib3(50)*70.7 ns ± 4.07 ns per loop (mean ± std. dev. of 7 runs, 10000000 loops each)*
+%timeit fib1(50)
+'''
+705 ns ± 62.5 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+'''
+%timeit fib2(50)
+'''
+362 ns ± 26.5 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+'''
+%timeit fib3(50)
+'''
+70.7 ns ± 4.07 ns per loop (mean ± std. dev. of 7 runs, 10000000 loops each)
+'''
 ```
 
 这并不需要太多额外的工作，只是用一点 Python 和一些标记，所以知道它的存在是很好的，因为如果有一些定制的东西你想要做，实际上要去 C 语言编译并链接回来是很痛苦的。而在这里做起来相当容易。
