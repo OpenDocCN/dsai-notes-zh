@@ -51,12 +51,13 @@ for epoch in range(1):
         losses.append(l) 
         # Before the backward pass, use the optimizer object to zero
         # all of the gradients for the variables it will update
-        # (which are the learnable weights of the model)*
+        # (which are the learnable weights of the model)
         optimizer.zero_grad() 
         # Backward pass: compute gradient of the loss with respect
         # to model parameters
-        l.backward() *# Calling the step function on an Optimizer makes an update
-        # to its parameters*
+        l.backward() 
+        # Calling the step function on an Optimizer makes an update
+        # to its parameters
         optimizer.step()
 
     val_dl = iter(md.val_dl)
@@ -135,8 +136,8 @@ for epoch in range(1):
         l = loss(y_pred, Variable(yt).cuda())
         losses.append(loss)
 
-        *# Backward pass: compute gradient of the loss with respect 
-        # to model parameters*
+        # Backward pass: compute gradient of the loss with respect 
+        # to model parameters
         l.backward()
         w.data -= w.grad.data * lr
         b.data -= b.grad.data * lr
@@ -333,8 +334,19 @@ To get the dataset, in your terminal run the following commands:wget http://ai.s
 
 ```py
 PATH='data/aclImdb/'
-names = ['neg','pos']%ls {PATH}*aclImdb_v1.tar.gz  imdbEr.txt  imdb.vocab  models/  README  test/  tmp/  train/*%ls {PATH}train*aclImdb/  all_val/         neg/  tmp/    unsupBow.feat  urls_pos.txt
-all/      labeledBow.feat  pos/  unsup/  urls_neg.txt   urls_unsup.txt*%ls {PATH}train/pos | head*0_9.txt
+names = ['neg','pos']
+%ls {PATH}
+'''
+aclImdb_v1.tar.gz  imdbEr.txt  imdb.vocab  models/  README  test/  tmp/  train/
+'''
+%ls {PATH}train
+'''
+aclImdb/  all_val/         neg/  tmp/    unsupBow.feat  urls_pos.txt
+all/      labeledBow.feat  pos/  unsup/  urls_neg.txt   urls_unsup.txt
+'''
+%ls {PATH}train/pos | head
+'''
+0_9.txt
 10000_8.txt
 10001_10.txt
 10002_7.txt
@@ -344,13 +356,17 @@ all/      labeledBow.feat  pos/  unsup/  urls_neg.txt   urls_unsup.txt*%ls {PATH
 10006_7.txt
 10007_7.txt
 10008_7.txt
-...*
+...
+'''
 ```
 
 这里是一个文本文件的例子：
 
 ```py
-trn[0]*"Story of a man who has unnatural feelings for a pig. Starts out with a opening scene that is a terrific example of absurd comedy. A formal orchestra audience is turned into an insane, violent mob by the crazy chantings of it's singers. Unfortunately it stays absurd the WHOLE time with no general narrative eventually making it just too off putting. Even those from the era should be turned off. The cryptic dialogue would make Shakespeare seem easy to a third grader. On a technical level it's better than you might think with some good cinematography by future great Vilmos Zsigmond. Future stars Sally Kirkland and Frederic Forrest can be seen briefly."*
+trn[0]
+'''
+"Story of a man who has unnatural feelings for a pig. Starts out with a opening scene that is a terrific example of absurd comedy. A formal orchestra audience is turned into an insane, violent mob by the crazy chantings of it's singers. Unfortunately it stays absurd the WHOLE time with no general narrative eventually making it just too off putting. Even those from the era should be turned off. The cryptic dialogue would make Shakespeare seem easy to a third grader. On a technical level it's better than you might think with some good cinematography by future great Vilmos Zsigmond. Future stars Sally Kirkland and Frederic Forrest can be seen briefly."
+'''
 ```
 
 所以我们不知何故选出了一个男人对猪有不自然感情的故事作为我们的第一个选择。这并不是故意的，但没关系。
@@ -360,14 +376,17 @@ trn[0]*"Story of a man who has unnatural feelings for a pig. Starts out with a o
 所以在上面的例子中，我们有一个疯狂的暴力暴民，不幸的是太荒谬了，太令人反感了，那些来自那个时代的人应该被关掉。所以这个的标签是零，即负面的，所以这是一个负面的评论。
 
 ```py
-trn_y[0]*0*
+trn_y[0]
+'''
+0
+'''
 ```
 
 在 Fast AI 库中，有很多函数和类可以帮助你处理大多数机器学习的领域。对于自然语言处理，我们有一个简单的东西，就是来自文件夹的文本。
 
 ```py
-trn,trn_y = texts_labels_from_folders(f'**{PATH}**train',names)
-val,val_y = texts_labels_from_folders(f'**{PATH}**test',names)
+trn,trn_y = texts_labels_from_folders(f'{PATH}train',names)
+val,val_y = texts_labels_from_folders(f'{PATH}test',names)
 ```
 
 这将遍历并找到这里的所有文件夹（第一个参数`f'{PATH}train'`）与这些名称（第二个参数`names`）并创建一个带标签的数据集。不要让这些事情阻止你理解幕后发生的事情。我们可以获取它的源代码，你会看到它很小，就像 5 行。
@@ -422,8 +441,11 @@ val_term_doc = veczr.transform(val)
 当我们创建这个术语文档矩阵时，训练集有 25,000 行，因为有 25,000 条电影评论，有 75,132 列，这是唯一单词的数量。
 
 ```py
-trn_term_doc<25000x75132 sparse matrix of type '<class 'numpy.int64'>'
+trn_term_doc
+'''
+<25000x75132 sparse matrix of type '<class 'numpy.int64'>'
      with 3749745 stored elements in Compressed Sparse Row format>
+'''
 ```
 
 现在，大多数文档并不包含这 75,132 个单词中的大部分。所以我们不想把它实际存储为内存中的普通数组。因为这样会非常浪费。所以，我们将其存储为稀疏矩阵。稀疏矩阵的作用是将其存储为一种只指示非零值位置的东西。所以它会说，文档编号 1，单词编号 4 出现了 4 次。文档编号 1，术语编号 123 出现了一次，依此类推。
@@ -438,20 +460,28 @@ trn_term_doc<25000x75132 sparse matrix of type '<class 'numpy.int64'>'
 所以我们可以拿到第一条评论，这给了我们一个 75,000 个长稀疏的一行长矩阵，其中有 93 个存储元素。换句话说，这些单词中有 93 个实际上在第一个文档中使用。
 
 ```py
-trn_term_doc[0]<1x75132 sparse matrix of type '<class 'numpy.int64'>'
+trn_term_doc[0]
+'''
+<1x75132 sparse matrix of type '<class 'numpy.int64'>'
 	with 93 stored elements in Compressed Sparse Row format>
+'''
 ```
 
 我们可以通过说`veczr.get_feature_names`来查看词汇表，这给我们提供了词汇表。这里是一些特征名称的元素的示例：
 
 ```py
-vocab = veczr.get_feature_names(); vocab[5000:5005]['aussie', 'aussies', 'austen', 'austeniana', 'austens']
+vocab = veczr.get_feature_names(); vocab[5000:5005]
+'''
+['aussie', 'aussies', 'austen', 'austeniana', 'austens']
+'''
 ```
 
 我并没有故意选择那个有澳大利亚的，但那是重要的单词，显然😄我这里没有使用分词器。我只是按空格分割，所以这与矢量化器所做的不完全相同。但为了简化事情，让我们拿到所有小写单词的集合。通过将其设置为集合，我们使它们成为唯一的。所以这大致是可能出现的单词列表。
 
 ```py
-w0 = set([o.lower() for o in trn[0].split(' ')]); w0*{'a',
+w0 = set([o.lower() for o in trn[0].split(' ')]); w0
+'''
+{'a',
  'absurd',
  'an',
  'and',
@@ -462,25 +492,39 @@ w0 = set([o.lower() for o in trn[0].split(' ')]); w0*{'a',
  'by',
  'can',
  ...
-}*len(w0)*91*
+}
+'''
+len(w0)
+'''
+91
+'''
 ```
 
 这个长度是 91，与 93 相似，唯一的区别是我没有使用真正的分词器。所以基本上就是这样。创建了这个唯一的单词列表并将它们映射。我们可以通过调用`veczr.vocabulary_`来查找特定单词的 ID。所以这就像`veczr.get_feature_names`的反向映射，它将整数映射到单词，`veczr.vocabulary_`将单词映射到整数。
 
 ```py
-veczr.vocabulary_['absurd']*1297*
+veczr.vocabulary_['absurd']
+'''
+1297
+'''
 ```
 
 所以我们看到“荒谬”在第一个文档中出现了两次，所以让我们检查一下：
 
 ```py
-trn_term_doc[0,1297]*2*
+trn_term_doc[0,1297]
+'''
+2
+'''
 ```
 
 这就是，这是 2。否则，不幸的是，澳大利亚人没有出现在与猪有不自然关系的电影中，所以这是零：
 
 ```py
-trn_term_doc[0,5000]0
+trn_term_doc[0,5000]
+'''
+0
+'''
 ```
 
 这就是我们的术语文档矩阵。
@@ -564,7 +608,8 @@ trn_term_doc[0,5000]0
 ```py
 def pr(y_i):
     p = x[y==y_i].sum(0)
-    return (p+1) / ((y==y_i).sum()+1)x=trn_term_doc
+    return (p+1) / ((y==y_i).sum()+1)
+x=trn_term_doc
 y=trn_yp = x[y==1].sum(0)+1 
 q = x[y==0].sum(0)+1
 r = np.log((p/p.sum())/(q/q.sum()))
@@ -576,7 +621,10 @@ b = np.log(len(p)/len(q))
 ```py
 pre_preds = val_term_doc @ r.T + b
 preds = pre_preds.T>0
-(preds==val_y).mean()0.80691999999999997
+(preds==val_y).mean()
+'''
+0.80691999999999997
+'''
 ```
 
 事实证明，这个版本实际上是在看 a 出现的频率，比如“荒谬”出现了两次，至少对于这个问题来说，通常无论“荒谬”出现了两次还是一次都无关紧要[[1:29:03](https://youtu.be/37sFIak42Sc?t=5343)]。重要的是它出现了。所以人们倾向于尝试的是取术语矩阵文档并使用`.sign()`，它会将任何正数替换为`1`，将任何负数替换为`-1`（显然我们没有负计数）。这样就实现了二值化。它表示我不在乎你看到“荒谬”两次，我只在乎你看到它。所以如果我们对二值化版本做完全相同的事情，那么结果会更好。
@@ -584,7 +632,10 @@ preds = pre_preds.T>0
 ```py
 pre_preds = val_term_doc.sign() @ r.T + b
 preds = pre_preds.T>0
-(preds==val_y).mean()0.82623999999999997
+(preds==val_y).mean()
+'''
+0.82623999999999997
+'''
 ```
 
 # 逻辑回归[[1:30:01](https://youtu.be/37sFIak42Sc?t=5401)]
@@ -597,7 +648,10 @@ preds = pre_preds.T>0
 m = LogisticRegression(C=1e8, dual=True)
 m.fit(x, y)
 preds = m.predict(val_term_doc)
-(preds==val_y).mean()0.85504000000000002
+(preds==val_y).mean()
+'''
+0.85504000000000002
+'''
 ```
 
 所以这有点像是，为什么要基于某种理论模型进行某些操作呢？因为理论模型几乎永远不会像数据驱动模型那样准确。因为理论模型，除非你在处理某种物理问题或者某种你认为这实际上是世界如何运作的东西，否则没有……我不知道，我们是在真空中工作，有确切的重力等等。但是在现实世界中，事情是这样的——更好的方法是学习你的系数并计算它们。
@@ -610,7 +664,10 @@ preds = m.predict(val_term_doc)
 m = LogisticRegression(C=1e8, dual=True)
 m.fit(trn_term_doc.sign(), y)
 preds = m.predict(val_term_doc.sign())
-(preds==val_y).mean()0.85487999999999997
+(preds==val_y).mean()
+'''
+0.85487999999999997
+'''
 ```
 
 现在问题是，对于我们词汇表中大约有 75,000 个术语的每个术语都会有一个系数，考虑到我们只有 25,000 条评论，这似乎是很多系数[[1:32:38](https://youtu.be/37sFIak42Sc?t=5558)]。所以也许我们应该尝试对此进行正则化。
@@ -625,7 +682,10 @@ preds = m.predict(val_term_doc.sign())
 m = LogisticRegression(C=0.1, dual=True)
 m.fit(x, y)
 preds = m.predict(val_term_doc)
-(preds==val_y).mean()0.88275999999999999
+(preds==val_y).mean()
+'''
+0.88275999999999999
+'''
 ```
 
 这是有道理的。你会认为对于 25,000 个文档的 75,000 个参数，很可能会过拟合。事实上，它确实过拟合了。因此，这是添加 L2 正则化以避免过拟合。
@@ -642,7 +702,10 @@ preds = m.predict(val_term_doc)
 m = LogisticRegression(C=0.1, dual=True)
 m.fit(trn_term_doc.sign(), y)
 preds = m.predict(val_term_doc.sign())
-(preds==val_y).mean()0.88404000000000005
+(preds==val_y).mean()
+'''
+0.88404000000000005
+'''
 ```
 
 **问题**：在我们学习关于类似于组合 L1 和 L2 的 Elastic-net 之前。我们可以这样做吗？是的，你可以这样做，但需要更深层次的模型。我从来没有见过有人发现这有用。
@@ -650,10 +713,22 @@ preds = m.predict(val_term_doc.sign())
 最后我要提到的是，当你做 CountVectorizer 时，你也可以要求 n-gram。默认情况下，我们得到的是单字，也就是单个单词。但是如果我们说`ngram_range=(1,3)`，那也会给我们二元组和三元组。
 
 ```py
-veczr =  CountVectorizer(ngram_range=(1,3), tokenizer=tokenize,
-                         max_features=800000)
+veczr =  CountVectorizer(
+    ngram_range=(1,3), 
+    tokenizer=tokenize,
+    max_features=800000
+)
 trn_term_doc = veczr.fit_transform(trn)
-val_term_doc = veczr.transform(val)trn_term_doc.shape*(25000, 800000)*vocab = veczr.get_feature_names()vocab[200000:200005]['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']
+val_term_doc = veczr.transform(val)
+trn_term_doc.shape
+'''
+(25000, 800000)
+'''
+vocab = veczr.get_feature_names()
+vocab[200000:200005]
+'''
+['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']
+'''
 ```
 
 也就是说，如果我现在说好的，让我们继续使用 CountVectorizer，并获取特征名称，现在我的词汇表包括二元组：`'by vast'`，`'by vengeance'`和三元组：`'by vengeance .'`，`'by vera miles'`。所以现在做的事情与之前相同，但在分词之后，它不仅仅是抓取每个单词并说这是你的词汇表的一部分，而是抓取相邻的每两个单词和每三个单词。这实际上对利用词袋方法非常有帮助，因为我们现在可以看到`not good`与`not bad`与`not terrible`之间的区别。甚至像`"good"`这样的词可能是讽刺的。因此，实际上使用三元组特征将使朴素贝叶斯和逻辑回归变得更好。这确实让我们走得更远，使它们变得更有用。
