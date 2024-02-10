@@ -6,7 +6,7 @@
 > 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-*来自*[*fast.ai 课程*](http://www.fast.ai/)*的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢*[*Jeremy*](https://twitter.com/jeremyphoward) *和*[*Rachel*](https://twitter.com/math_rachel) *给了我这个学习的机会。*
+> 来自 [*fast.ai 课程*](http://www.fast.ai/)的个人笔记。随着我继续复习课程以“真正”理解它，这些笔记将继续更新和改进。非常感谢 [*Jeremy*](https://twitter.com/jeremyphoward) 和[*Rachel*](https://twitter.com/math_rachel) 给了我这个学习的机会。
 
 [论坛](http://forums.fast.ai/t/lesson-13-discussion-and-wiki/15297/1) / [视频](https://youtu.be/xXXiC4YRGrQ)
 
