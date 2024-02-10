@@ -29,7 +29,7 @@ for df in (joined,joined_test):
     df["Promo2Since"] = pd.to_datetime(df.apply(
         lambda x: Week(x.Promo2SinceYear, x.Promo2SinceWeek).monday(), 
         axis=1
-        ).astype(pd.datetime))
+    ).astype(pd.datetime))
     df["Promo2Days"] = df.Date.subtract(df["Promo2Since"]).dt.days
 ```
 
@@ -68,8 +68,11 @@ def get_elapsed(fld, pre):
     last_store = 0
     res = []
 
-    for s,v,d in zip(df.Store.values,df[fld].values, 
-                     df.Date.values):
+    for s,v,d in zip(
+        df.Store.values,
+        df[fld].values, 
+        df.Date.values
+    ):
         if s != last_store:
             last_date = np.datetime64()
             last_store = s
@@ -145,7 +148,8 @@ fld = 'StateHoliday'
 df = df.sort_values(['Store', 'Date'])
 get_elapsed(fld, 'After')
 df = df.sort_values(['Store', 'Date'], ascending=[True, False])
-get_elapsed(fld, 'Before')fld = 'Promo'
+get_elapsed(fld, 'Before')
+fld = 'Promo'
 df = df.sort_values(['Store', 'Date'])
 get_elapsed(fld, 'After')
 df = df.sort_values(['Store', 'Date'], ascending=[True, False])
@@ -173,9 +177,10 @@ get_elapsed(fld, 'Before')
 Pandas 允许你使用这里的滚动来创建任意窗口函数：
 
 ```py
-bwd = df[['Store']+columns].sort_index().groupby("Store"
-                  ).rolling(7, min_periods=1).sum()fwd = df[['Store']+columns].sort_index(ascending=False
-                  ).groupby("Store").rolling(7, min_periods=1).sum()
+bwd = df[['Store']+columns].sort_index() \
+    .groupby("Store").rolling(7, min_periods=1).sum()
+fwd = df[['Store']+columns].sort_index(ascending=False) \
+    .groupby("Store").rolling(7, min_periods=1).sum()
 ```
 
 第一个参数表示我想将函数应用到多少个时间步。第二个参数表示如果我处于边缘，换句话说，如果我处于上图的左边缘，你应该将其设置为缺失值，因为我没有七天的平均值，或者要使用的最小时间段数是多少。所以这里，我设置为 1。然后你还可以选择设置窗口在周期的开始、结束或中间。然后在其中，你可以应用任何你喜欢的函数。所以这里，我有我的按店铺每周求和。所以有一个很简单的方法来得到移动平均值或其他内容。
@@ -286,9 +291,13 @@ val_idx=[0]
 现在我们可以创建我们的模型。要创建我们的模型，我们必须像在 Fast AI 中一样创建一个模型数据对象。所以一个列模型数据对象只是一个代表训练集、验证集和可选测试集的标准列结构化数据的模型数据对象。
 
 ```py
-md = ColumnarModelData.from_data_frame(PATH, val_idx, df, 
-                    yl.astype(np.float32), cat_flds=cat_vars, 
-                    bs=128, test_df=df_test)
+md = ColumnarModelData.from_data_frame(
+    PATH, val_idx, df, 
+    yl.astype(np.float32), 
+    cat_flds=cat_vars, 
+    bs=128, 
+    test_df=df_test
+)
 ```
 
 我们只需要告诉它哪些变量应该被视为分类变量。然后传入我们的数据框。
@@ -296,7 +305,13 @@ md = ColumnarModelData.from_data_frame(PATH, val_idx, df,
 对于我们的每个分类变量，这里是它所拥有的类别数量。因此，对于我们的每个嵌入矩阵，这告诉我们该嵌入矩阵中的行数。然后我们定义我们想要的嵌入维度。如果你在进行自然语言处理，那么需要捕捉一个词的含义和使用方式的所有细微差别的维度数量经验性地被发现大约是 600。事实证明，当你使用小于 600 的嵌入矩阵进行自然语言处理模型时，结果不如使用大小为 600 的好。超过 600 后，似乎没有太大的改进。我会说人类语言是我们建模的最复杂的事物之一，所以我不会指望你会遇到许多或任何需要超过 600 维度的嵌入矩阵的分类变量。另一方面，有些事物可能具有相当简单的因果关系。例如，`StateHoliday` ——也许如果某事是假日，那么在城市中的商店会有一些行为，在乡村中的商店会有一些其他行为，就是这样。也许这是一个相当简单的关系。因此，理想情况下，当你决定使用什么嵌入大小时，你应该利用你对领域的知识来决定关系有多复杂，因此我需要多大的嵌入。实际上，你几乎永远不会知道这一点。你只知道这一点，因为也许别人以前已经做过这方面的研究并找到了答案，就像在自然语言处理中一样。因此，在实践中，你可能需要使用一些经验法则，并尝试一些经验法则后，你可以尝试再高一点，再低一点，看看哪种方法有帮助。所以这有点像实验。
 
 ```py
-cat_sz=[(c, len(joined_samp[c].cat.categories)+1) for c in cat_vars]cat_sz*[('Store', 1116),
+cat_sz=[
+    (c, len(joined_samp[c].cat.categories)+1) 
+    for c in cat_vars
+]
+cat_sz
+'''
+[('Store', 1116),
  ('DayOfWeek', 8),
  ('Year', 4),
  ('Month', 13),
@@ -317,14 +332,17 @@ cat_sz=[(c, len(joined_samp[c].cat.categories)+1) for c in cat_vars]cat_sz*[('St
  ('StateHoliday_fw', 4),
  ('StateHoliday_bw', 4),
  ('SchoolHoliday_fw', 9),
- ('SchoolHoliday_bw', 9)]*
+ ('SchoolHoliday_bw', 9)]
+'''
 ```
 
 这里是我的经验法则。我的经验法则是看看该类别有多少个离散值（即嵌入矩阵中的行数），并使嵌入的维度为该值的一半。所以如果是星期几，第二个，有八行和四列。这里是`(c+1)//2` ——列数除以二。但是我说不要超过 50。在这里你可以看到对于商店（第一行），有 116 家商店，只有一个维度为 50。为什么是 50？我不知道。到目前为止似乎效果还不错。你可能会发现你需要一些稍微不同的东西。实际上，对于厄瓜多尔杂货比赛，我还没有真正尝试过调整这个，但我认为我们可能需要一些更大的嵌入大小。但这是可以摆弄的东西。
 
 ```py
 emb_szs = [(c, min(50, (c+1)//2)) for _,c in cat_sz]
-emb_szs*[(1116, 50),
+emb_szs
+'''
+[(1116, 50),
  (8, 4),
  (4, 2),
  (13, 7),
@@ -345,7 +363,8 @@ emb_szs*[(1116, 50),
  (4, 2),
  (4, 2),
  (9, 5),
- (9, 5)]*
+ (9, 5)]
+'''
 ```
 
 **问题**：随着基数大小变得越来越大，您正在创建越来越宽的嵌入矩阵。因此，您是否会因为选择了 70 个参数而极大地增加过拟合的风险，因为模型永远不可能捕捉到数据实际巨大的所有变化[[36:44](https://youtu.be/5_xFdhfUnvQ?t=2204)]？这是一个很好的问题，所以让我提醒您一下现代机器学习和旧机器学习之间的区别的黄金法则。在旧的机器学习中，我们通过减少参数数量来控制复杂性。在现代机器学习中，我们通过正则化来控制复杂性。所以简短的答案是不。我不担心过拟合，因为我避免过拟合的方式不是通过减少参数数量，而是通过增加丢弃率或增加权重衰减。现在说到这一点，对于特定的嵌入，没有必要使用比我需要的更多的参数。因为正则化是通过给模型更多的随机数据或实际上对权重进行惩罚来惩罚模型。所以我们宁愿不使用比必要更多的参数。但是在设计架构时，我的一般经验法则是在参数数量方面慷慨一些。在这种情况下，如果经过一些工作后，我们觉得商店实际上似乎并不那么重要。那么我可能会手动去修改它，使其更小。或者如果我真的发现这里的数据不够，我要么过拟合了，要么使用的正则化比我感到舒适的要多，那么您可能会回去。但我总是会从参数慷慨的角度开始。在这种情况下，这个模型表现得相当不错。
@@ -361,19 +380,36 @@ emb_szs*[(1116, 50),
 +   `[0.001,0.01]`: 每一层使用的丢弃率是多少
 
 ```py
-m = md.get_learner(emb_szs, len(df.columns)-len(cat_vars),
-                   0.04, 1, [1000,500], [0.001,0.01], y_range=y_range)
+m = md.get_learner(
+    emb_szs, 
+    len(df.columns)-len(cat_vars),
+    0.04, 1, 
+    [1000,500], 
+    [0.001,0.01], 
+    y_range=y_range
+)
 m.summary()
 ```
 
 然后我们可以继续调用`fit`。我们训练了一段时间，得到了大约 0.1 的分数。
 
 ```py
-m.fit(lr, 1, metrics=[exp_rmspe])*[ 0\.       0.01456  0.01544  0.1148 ]*m.fit(lr, 3, metrics=[exp_rmspe])*[ 0\.       0.01418  0.02066  0.12765]                           
+m.fit(lr, 1, metrics=[exp_rmspe])
+'''
+[ 0\.       0.01456  0.01544  0.1148 ]
+'''
+m.fit(lr, 3, metrics=[exp_rmspe])
+'''
+[ 0\.       0.01418  0.02066  0.12765]                           
 [ 1\.       0.01081  0.01276  0.11221]                           
-[ 2\.       0.00976  0.01233  0.10987]*m.fit(lr, 3, metrics=[exp_rmspe], cycle_len=1)*[ 0\.       0.00801  0.01081  0.09899]                            
+[ 2\.       0.00976  0.01233  0.10987]
+'''
+m.fit(lr, 3, metrics=[exp_rmspe], cycle_len=1)
+'''
+[ 0\.       0.00801  0.01081  0.09899]                            
 [ 1\.       0.00714  0.01083  0.09846]                            
-[ 2\.       0.00707  0.01088  0.09878]*
+[ 2\.       0.00707  0.01088  0.09878]
+'''
 ```
 
 所以我尝试在测试集上运行这个，并且上周我把它提交到了 Kaggle，这里是结果[[39:25](https://youtu.be/5_xFdhfUnvQ?t=2365)]：
