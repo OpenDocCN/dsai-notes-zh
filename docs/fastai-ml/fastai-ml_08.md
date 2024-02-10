@@ -33,7 +33,9 @@
 ```py
 from fastai.imports import *
 from fastai.torch_imports import *
-from fastai.io import *path = 'data/mnist/'import os
+from fastai.io import *
+path = 'data/mnist/'
+import os
 os.makedirs(path, exist_ok=True)
 ```
 
@@ -41,7 +43,8 @@ MNIST 的数据，这个非常著名的数据集的名称，可以从这里获�
 
 ```py
 URL='http://deeplearning.net/data/mnist/'
-FILENAME='mnist.pkl.gz'def load_mnist(filename):
+FILENAME='mnist.pkl.gz'
+def load_mnist(filename):
    return pickle.load(gzip.open(filename, 'rb'), encoding='latin-1')
 ```
 
@@ -61,7 +64,10 @@ get_data(URL+FILENAME, path+FILENAME)
 然后元组中的第一件事本身就是一个元组，所以我们将把它放入 x 和 y 中作为我们的训练数据，然后第二个元组放入 x 和 y 中作为我们的验证数据。所以这就是所谓的解构，它在许多语言中都很常见。有些语言不支持它，但那些支持的语言，生活会变得更容易。一旦我看到一些新的数据集，我就会查看我得到了什么。它是什么类型？Numpy 数组。它的形状是什么？50,000 x 784。那么因变量呢？那是一个数组，它的形状是 50,000。
 
 ```py
-type(x), x.shape, type(y), y.shape(numpy.ndarray, (50000, 784), numpy.ndarray, (50000,))
+type(x), x.shape, type(y), y.shape
+'''
+(numpy.ndarray, (50000, 784), numpy.ndarray, (50000,))
+'''
 ```
 
 我们之前看到的 8 的图像不是长度为 784，而是大小为 28 乘以 28。所以这里发生了什么？事实证明，他们只是将第二行连接到第一行，将第三行连接到第二行，将第四行连接到第三行。换句话说，他们将整个 28 乘以 28 展平成一个单一的一维数组。这有意义吗？所以它的大小将是 28²。这绝对不是正常的，所以不要认为你看到的一切都会是这样。大多数时候，当人们分享图像时，他们会将它们分享为 JPEG 或 PNG 格式，你加载它们，你会得到一个漂亮的二维数组。但在这种特殊情况下，出于某种原因，他们拿出来的东西被展平成了 784。这个“展平”这个词在处理张量时非常常见，所以当你展平一个张量时，这意味着你将它转换为比你开始的更低秩的张量。在这种情况下，我们为每个图像开始时是一个秩为 2 的张量（即矩阵），然后我们将每个图像转换为一个秩为 1 的张量（即向量）。所以整体来说，整个东西是一个秩为 2 的张量，而不是一个秩为 3 的张量。
@@ -99,14 +105,20 @@ mean = x.mean()
 std = x.std()
 
 x=(x-mean)/std
-mean, std, x.mean(), x.std()*(0.13044983, 0.30728981, -3.1638146e-01, 0.99999934)*
+mean, std, x.mean(), x.std()
+'''
+(0.13044983, 0.30728981, -3.1638146e-01, 0.99999934)
+'''
 ```
 
 现在对于我们的验证数据，我们需要使用训练数据的标准差和均值。我们必须以相同的方式对其进行标准化。就像分类变量一样，我们必须确保它们的相同索引映射到随机森林中的相同级别。或者缺失值，我们必须确保在替换缺失值时使用相同的中位数。你需要确保你在训练集中做的任何事情，在测试和验证集中都要完全相同。所以在这里，我减去了训练集的均值并除以训练集的标准差，所以这不是完全是零和一，但它非常接近。总的来说，如果你发现你在验证集或测试集上尝试某些东西，而它比你的训练集差得多得多，那可能是因为你以不一致的方式进行了标准化或编码类别或其他一些不一致的方式。
 
 ```py
 x_valid = (x_valid-mean)/std
-x_valid.mean(), x_valid.std()*(-0.0058509219, 0.99243325)*
+x_valid.mean(), x_valid.std()
+'''
+(-0.0058509219, 0.99243325)
+'''
 ```
 
 ## 查看数据[[22:03](https://youtu.be/DzE0eSdy5Hk?t=1323)]
@@ -162,7 +174,10 @@ y_valid.shape(10000,)
 这里有一个例子。只是一个数字 3。这就是我们的标签。
 
 ```py
-y_valid[0]3
+y_valid[0]
+'''
+3
+'''
 ```
 
 ## 切片
@@ -170,11 +185,14 @@ y_valid[0]3
 这里是另一件你需要能够做到熟练的事情。切片成一个张量。在这种情况下，我们用 0 切片到第一个轴，这意味着我们正在获取第一个切片。因为这是一个单一数字，这将减少张量的秩一次。它将把一个 3 维张量变成一个 2 维张量。所以你可以看到，这现在只是一个矩阵。然后我们将抓取 10 到 14 行，10 到 14 列，这就是它。所以这是你需要非常熟练的事情——抓取片段，查看数字，查看图片。
 
 ```py
-x_imgs[0,10:15,10:15]array([[-0.42452, -0.42452, -0.42452, -0.42452,  0.17294],
+x_imgs[0,10:15,10:15]
+'''
+array([[-0.42452, -0.42452, -0.42452, -0.42452,  0.17294],
        [-0.42452, -0.42452, -0.42452,  0.78312,  2.43567],
        [-0.42452, -0.27197,  1.20261,  2.77889,  2.80432],
        [-0.42452,  1.76194,  2.80432,  2.80432,  1.73651],
        [-0.42452,  2.20685,  2.80432,  2.80432,  0.40176]], dtype=float32)
+'''
 ```
 
 这里是第一张图像的一小部分的例子。所以你应该习惯这样的想法，如果你在处理像图片或音频这样的东西，这是你的大脑真的很擅长解释的东西。所以尽可能经常展示你正在做的事情的图片。但也记住在幕后它们是数字，所以如果出现奇怪的情况，打印出一些实际的数字。你可能会发现其中一些变成了无穷大，或者它们全都是零，或者其他什么。所以在探索数据时利用这个交互式环境。
@@ -204,13 +222,15 @@ plots(x_imgs[:8], titles=y_valid[:8])
 ```py
 def show(img, title=None):
     plt.imshow(img, cmap="gray")
-    if title is not None: plt.title(title)def plots(ims, figsize=(12,6), rows=2, titles=None):
+    if title is not None: plt.title(title)
+def plots(ims, figsize=(12,6), rows=2, titles=None):
     f = plt.figure(figsize=figsize)
     cols = len(ims)//rows
     for i in range(len(ims)):
         sp = f.add_subplot(rows, cols, i+1)
         sp.axis('Off')
-        if titles is not None: sp.set_title(titles[i], fontsize=16)
+        if titles is not None: 
+            sp.set_title(titles[i], fontsize=16)
         plt.imshow(ims[i], cmap='gray')
 ```
 
@@ -351,7 +371,10 @@ def binary_loss(y, p):
 ```py
 acts = np.array([1, 0, 0, 1])
 preds = np.array([0.9, 0.1, 0.2, 0.8])
-binary_loss(acts, preds)*0.164252033486018*
+binary_loss(acts, preds)
+'''
+0.164252033486018
+'''
 ```
 
 所以让我们在 Excel 中看一下。从顶部行开始：
@@ -407,7 +430,10 @@ preds = predict(net, md.val_dl)
 现在这会输出一个 10,000 乘以 10 的东西。我们有 10,000 张图像进行验证，实际上每张图像进行 10 次预测。换句话说，每一行都是它是 0 的概率，它是 1 的概率，它是 2 的概率，依此类推。
 
 ```py
-preds.shape*(10000, 10)*
+preds.shape
+'''
+(10000, 10)
+'''
 ```
 
 ## Argmax [[1:10:22](https://youtu.be/DzE0eSdy5Hk?t=4222)]
@@ -415,13 +441,20 @@ preds.shape*(10000, 10)*
 在数学中，有一个我们经常做的操作叫做`argmax`。当我说它很常见时，很有趣的是在高中，我从来没有见过 argmax。大一，我也从来没有见过 argmax。但不知何故，大学毕业后，一切都与 argmax 有关。所以有些事情在学校里似乎并没有真正教，但实际上它非常关键。argmax 既是数学中的一个东西（它只是完整地写出`argmax`），它在 numpy 中，在 PyTorch 中，非常重要。它的作用是让我们拿这些预测数组，然后在给定的轴上（`axis=1` - 记住，轴 1 是列），就像 Chis 所说的，对于每一行的 10 个预测，让我们找出哪个预测值最高，然后返回不是那个值（如果只是说 max，它会返回值），argmax 返回值的索引。所以通过说`argmax(axis=1)`，它将返回实际上是数字本身的索引。所以让我们取前 5 个：
 
 ```py
-preds.argmax(axis=1)[:5]*array([3, 8, 6, 9, 6])*
+preds.argmax(axis=1)[:5]
+'''
+array([3, 8, 6, 9, 6])
+'''
 ```
 
 这就是我们如何将我们的概率转换回预测的方法。我们保存下来并称之为`preds`。然后我们可以说`preds`何时等于真实值。这将返回一个布尔数组，我们可以将其视为 1 和 0，一堆 1 和 0 的平均值就是平均值。这给了我们 91.8%的准确率。
 
 ```py
-preds = preds.argmax(1)np.mean(preds == y_valid)0.91820000000000002
+preds = preds.argmax(1)
+np.mean(preds == y_valid)
+'''
+0.91820000000000002
+'''
 ```
 
 所以你想要能够复制你看到的数字，这里就是。这里是我们的 91.8%。
@@ -456,7 +489,8 @@ plots(x_imgs[:8], titles=preds[:8])
 
 ```py
 def get_weights(*dims): 
-    return nn.Parameter(torch.randn(dims)/dims[0])def softmax(x): 
+    return nn.Parameter(torch.randn(dims)/dims[0])
+def softmax(x): 
     return torch.exp(x)/(torch.exp(x).sum(dim=1)[:,None])
 
 class LogReg(nn.Module):
@@ -526,7 +560,11 @@ PyTorch 的一个好处是你可以玩弄这些东西[[1:25:44](https://youtu.be
 
 ```py
 net2 = LogReg().cuda()
-opt=optim.Adam(net2.parameters())fit(net2, md, n_epochs=1, crit=loss, opt=opt, metrics=metrics)*[ 0\.       0.32209  0.28399  0.92088]*
+opt=optim.Adam(net2.parameters())
+fit(net2, md, n_epochs=1, crit=loss, opt=opt, metrics=metrics)
+'''
+[ 0\.       0.32209  0.28399  0.92088]
+'''
 ```
 
 所以我希望你在这一周里尝试使用`torch.randn`生成一些随机张量，使用`torch.matmul`开始将它们相乘，相加，尝试确保你可以自己从头开始重写 softmax。尝试玩弄一下重塑、view 等等，这样到下周你回来时就会感觉对 PyTorch 相当舒适。
