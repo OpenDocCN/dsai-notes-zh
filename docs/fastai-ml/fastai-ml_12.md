@@ -14,7 +14,10 @@
 for df in (joined,joined_test):
     df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
     df.loc[df.CompetitionMonthsOpen>24, "CompetitionMonthsOpen"]= 24
-joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*
+joined.CompetitionMonthsOpen.unique()
+'''
+array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])
+'''
 ```
 
 让我们继续进行下去。因为这个笔记本中发生的事情可能适用于你处理的大多数时间序列数据集。正如我们所讨论的，虽然我们在这里使用了`df.apply`，但这是在每一行上运行一段 Python 代码，速度非常慢。所以只有在找不到可以一次对整列进行操作的矢量化 pandas 或 numpy 函数时才这样做。但在这种情况下，我找不到一种方法可以在不使用任意 Python 的情况下将年份和周数转换为日期。
@@ -23,9 +26,10 @@ joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15,
 
 ```py
 for df in (joined,joined_test):
-    df["Promo2Since"] = pd.to_datetime(df.apply(lambda x: Week(
-        x.Promo2SinceYear, x.Promo2SinceWeek).monday(), 
-            axis=1).astype(pd.datetime))
+    df["Promo2Since"] = pd.to_datetime(df.apply(
+        lambda x: Week(x.Promo2SinceYear, x.Promo2SinceWeek).monday(), 
+        axis=1
+        ).astype(pd.datetime))
     df["Promo2Days"] = df.Date.subtract(df["Promo2Since"]).dt.days
 ```
 

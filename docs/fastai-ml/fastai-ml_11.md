@@ -102,10 +102,22 @@ else:
 然后我们进一步说，鉴于我们可以通过正则化做到这一点，让我们通过添加二元组和三元组来创建更多。例如 `by vast`、`by vengeance` 这样的二元组，以及 `by vengeance .`、`by vera miles` 这样的三元组。为了让事情运行得更快一些，我们将其限制为 800,000 个特征，但即使使用完整的 70 百万个特征，它的效果也一样好，而且速度并没有慢多少。
 
 ```py
-veczr =  CountVectorizer(ngram_range=(1,3), tokenizer=tokenize, 
-                         max_features=800000)
+veczr =  CountVectorizer(
+    ngram_range=(1,3), 
+    tokenizer=tokenize, 
+    max_features=800000
+)
 trn_term_doc = veczr.fit_transform(trn)
-val_term_doc = veczr.transform(val)trn_term_doc.shape*(25000, 800000)*vocab = veczr.get_feature_names()vocab[200000:200005]*['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']*
+val_term_doc = veczr.transform(val)
+trn_term_doc.shape
+'''
+(25000, 800000)
+'''
+vocab = veczr.get_feature_names()
+vocab[200000:200005]
+'''
+['by vast', 'by vengeance', 'by vengeance .', 'by vera', 'by vera miles']
+'''
 ```
 
 所以我们使用了完整的 n-grams 集合为训练集和验证集创建了一个术语文档矩阵。现在我们可以继续说我们的标签是训练集标签如前所述，我们的自变量是二值化的术语文档矩阵如前所述：
@@ -127,7 +139,10 @@ m = LogisticRegression(C=0.1, dual=True)
 m.fit(x, y);
 
 preds = m.predict(val_x)
-(preds.T==val_y).mean()*0.90500000000000003*
+(preds.T==val_y).mean()
+'''
+0.90500000000000003
+'''
 ```
 
 所以看起来很不错。
@@ -149,14 +164,20 @@ preds = m.predict(val_x)
 所以你会注意到这里一些重要的特征。*r*向量是一个秩为 1 的向量，其长度等于特征的数量。当然，我们的逻辑回归系数矩阵也是秩为 1 且长度等于特征数量的。我们说它们是计算相同类型的东西的两种方式：一种基于理论，一种基于数据。所以这里是*r*中的一些数字：
 
 ```py
-r.shape, r((1, 800000),
- matrix([[-0.05468, -0.161  , -0.24784, ...,  1.09861, -0.69315, -0.69315]]))
+r.shape, r
+'''
+((1, 800000),
+matrix([[-0.05468, -0.161  , -0.24784, ...,  1.09861, -0.69315, -0.69315]]))
+'''
 ```
 
 记住它使用对数，所以这些小于零的数字代表更有可能是负数的东西，而大于零的数字可能是正数。所以这里是 e 的幂次方。所以这些是我们可以与 1 而不是 0 进行比较的数字：
 
 ```py
-np.exp(r)matrix([[ 0.94678,  0.85129,  0.78049, ...,  3\.  ,  0.5 ,  0.5  ]])
+np.exp(r)
+'''
+matrix([[ 0.94678,  0.85129,  0.78049, ...,  3\.  ,  0.5 ,  0.5  ]])\
+'''
 ```
 
 我要做一些希望看起来很奇怪的事情。首先，我会说我们要做什么，然后我会尝试描述为什么这很奇怪，然后我们会讨论为什么它可能并不像我们最初想的那么奇怪。所以这就是我们要做的事情。我们将取我们的术语文档矩阵，然后将其乘以*r*。这意味着，我可以在 Excel 中做到这一点，我们将说让我们抓取我们的术语文档矩阵中的所有内容，并将其乘以向量*r*中的等值。所以这就像是一个广播的逐元素乘法，而不是矩阵乘法。
@@ -174,7 +195,10 @@ m.fit(x_nb, y);
 
 val_x_nb = val_x.multiply(r)
 preds = m.predict(val_x_nb)
-(preds.T==val_y).mean()*0.91768000000000005*
+(preds.T==val_y).mean()
+'''
+0.91768000000000005
+'''
 ```
 
 让我解释为什么这可能会令人惊讶。这是我们的独立变量（下面突出显示），然后逻辑回归得出了一些系数集（假设这些是它恰好得出的系数）。
@@ -232,9 +256,14 @@ preds = m.predict(val_x_nb)
 所以首先让我向你展示代码。一旦我弄清楚这是我能想到的最好的线性词袋模型的方法，我将其嵌入到 Fast AI 中，这样你只需写几行代码就可以了。
 
 ```py
-sl=2000# Here is how we get a model from a bag of words
-md = TextClassifierData.from_bow(trn_term_doc, trn_y, val_term_doc,
-                                 val_y, sl)
+sl=2000
+# Here is how we get a model from a bag of words
+md = TextClassifierData.from_bow(
+    trn_term_doc, 
+    trn_y, 
+    val_term_doc,
+    val_y, sl
+)
 ```
 
 所以代码基本上是，嘿，我想为文本分类创建一个数据类，我想从词袋（`from_bow`）中创建它。这是我的词袋（`trn_term_doc`），这是我们的标签（`trn_y`），这是验证集的相同内容，并且每个评论最多使用 2000 个独特的单词，这已经足够了。
@@ -243,9 +272,20 @@ md = TextClassifierData.from_bow(trn_term_doc, trn_y, val_term_doc,
 
 ```py
 learner = md.dotprod_nb_learner()
-learner.fit(0.02, 1, wds=1e-6, cycle_len=1)*[ 0\.       0.0251   0.12003  0.91552]*learner.fit(0.02, 2, wds=1e-6, cycle_len=1)*[ 0\.       0.02014  0.11387  0.92012]                         
-[ 1\.       0.01275  0.11149  0.92124]*learner.fit(0.02, 2, wds=1e-6, cycle_len=1)[ 0\.       0.01681  0.11089  0.92129]                           
+learner.fit(0.02, 1, wds=1e-6, cycle_len=1)
+'''
+[ 0\.       0.0251   0.12003  0.91552]
+'''
+learner.fit(0.02, 2, wds=1e-6, cycle_len=1)
+'''
+[ 0\.       0.02014  0.11387  0.92012]                         
+[ 1\.       0.01275  0.11149  0.92124]
+'''
+learner.fit(0.02, 2, wds=1e-6, cycle_len=1)
+'''
+[ 0\.       0.01681  0.11089  0.92129]                           
 [ 1\.       0.00949  0.10951  0.92223]
+'''
 ```
 
 经过 5 个时代，我的准确率已经达到了 92.2。所以现在已经远远超过了线性基准（在原始论文中）。所以让我给你展示一下那段代码。
@@ -393,9 +433,15 @@ test.StateHoliday = test.StateHoliday!='0'
 
 ```py
 def join_df(left, right, left_on, right_on=None, suffix='_y'):
-    if right_on is None: right_on = left_on
-    return left.merge(right, how='left', left_on=left_on,
-                      right_on=right_on, suffixes=("", suffix))
+    if right_on is None: 
+        right_on = left_on
+    return left.merge(
+        right, 
+        how='left', 
+        left_on=left_on,
+        right_on=right_on, 
+        suffixes=("", suffix)
+    )
 ```
 
 我总是进行左连接的关键原因是，在进行连接之后，我总是检查右侧是否有现在为空的内容：
@@ -448,15 +494,34 @@ trend_de = googletrend[googletrend.file == 'Rossmann_DE']
 
 ```py
 store = join_df(store, store_states, "Store")
-len(store[store.State.isnull()])*0*joined = join_df(train, store, "Store")
+len(store[store.State.isnull()])
+'''
+0
+'''
+joined = join_df(train, store, "Store")
 joined_test = join_df(test, store, "Store")
-len(joined[joined.StoreType.isnull()]),len(joined_test[joined_test.StoreType.isnull()])(0, 0)joined = join_df(joined, googletrend, ["State","Year", "Week"])
+len(joined[joined.StoreType.isnull()]),len(joined_test[joined_test.StoreType.isnull()])
+'''
+(0, 0)
+'''
+joined = join_df(joined, googletrend, ["State","Year", "Week"])
 joined_test = join_df(joined_test, googletrend, ["State","Year", "Week"])
-len(joined[joined.trend.isnull()]),len(joined_test[joined_test.trend.isnull()])(0, 0)joined = joined.merge(trend_de, 'left', ["Year", "Week"], suffixes=('', '_DE'))
+len(joined[joined.trend.isnull()]),len(joined_test[joined_test.trend.isnull()])
+'''
+(0, 0)
+'''
+joined = joined.merge(trend_de, 'left', ["Year", "Week"], suffixes=('', '_DE'))
 joined_test = joined_test.merge(trend_de, 'left', ["Year", "Week"], suffixes=('', '_DE'))
-len(joined[joined.trend_DE.isnull()]),len(joined_test[joined_test.trend_DE.isnull()])(0, 0)joined = join_df(joined, weather, ["State","Date"])
+len(joined[joined.trend_DE.isnull()]),len(joined_test[joined_test.trend_DE.isnull()])
+'''
+(0, 0)
+'''
+joined = join_df(joined, weather, ["State","Date"])
 joined_test = join_df(joined_test, weather, ["State","Date"])
-len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_TemperatureC.isnull()])(0, 0)
+len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_TemperatureC.isnull()])
+'''
+(0, 0)
+'''
 ```
 
 我的合并函数，如果有两列是相同的，我将左侧的后缀设置为空，这样它就不会影响名称，右侧设置为`_y`。
@@ -469,25 +534,30 @@ len(joined[joined.Mean_TemperatureC.isnull()]),len(joined_test[joined_test.Mean_
 for df in (joined, joined_test):
     for c in df.columns:
         if c.endswith('_y'):
-            if c in df.columns: df.drop(c, inplace=True, axis=1)for df in (joined,joined_test):
-  df['CompetitionOpenSinceYear'] = 
-          df.CompetitionOpenSinceYear.fillna(1900).astype(np.int32)
-  df['CompetitionOpenSinceMonth'] = 
-          df.CompetitionOpenSinceMonth.fillna(1).astype(np.int32)
-  df['Promo2SinceYear'] = 
-          df.Promo2SinceYear.fillna(1900).astype(np.int32)
-  df['Promo2SinceWeek'] = 
-          df.Promo2SinceWeek.fillna(1).astype(np.int32)
+            if c in df.columns: 
+                df.drop(c, inplace=True, axis=1)
+for df in (joined,joined_test):
+    df['CompetitionOpenSinceYear'] = \
+        df.CompetitionOpenSinceYear.fillna(1900).astype(np.int32)
+    df['CompetitionOpenSinceMonth'] = \
+        df.CompetitionOpenSinceMonth.fillna(1).astype(np.int32)
+    df['Promo2SinceYear'] = \
+        df.Promo2SinceYear.fillna(1900).astype(np.int32)
+    df['Promo2SinceWeek'] = \
+        df.Promo2SinceWeek.fillna(1).astype(np.int32)
 ```
 
 这家商店的主要竞争对手自某个日期以来一直开业。因此，我们可以使用 Pandas 的`to_datetime`，我传入年、月和日。所以这将给我们一个错误，除非它们都有年和月，所以我们将缺失的部分填充为 1900 年和 1 月（见上文）。而我们真正想知道的是这家商店在这个特定记录时已经开业多久了，所以我们可以进行日期相减：
 
 ```py
 for df in (joined,joined_test):
-  df["CompetitionOpenSince"] = 
-          pd.to_datetime(dict(year=df.CompetitionOpenSinceYear,
-                        month=df.CompetitionOpenSinceMonth, day=15))
-  df["CompetitionDaysOpen"] = 
+    df["CompetitionOpenSince"] = \
+        pd.to_datetime(dict(
+            year=df.CompetitionOpenSinceYear,
+            month=df.CompetitionOpenSinceMonth, 
+            day=15
+        ))
+    df["CompetitionDaysOpen"] = \
           df.Date.subtract(df.CompetitionOpenSince).dt.days
 ```
 
@@ -513,7 +583,10 @@ for df in (joined,joined_test):
 for df in (joined,joined_test):
     df["CompetitionMonthsOpen"] = df["CompetitionDaysOpen"]//30
     df.loc[df.CompetitionMonthsOpen>24,"CompetitionMonthsOpen"] = 24
-joined.CompetitionMonthsOpen.unique()*array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5])*
+joined.CompetitionMonthsOpen.unique()
+'''
+array([24,  3, 19,  9,  0, 16, 17,  7, 15, 22, 11, 13,  2, 23, 12,  4, 10,  1, 14, 20,  8, 18,  6, 21,  5]
+'''
 ```
 
 现在，他们绝对可以将其作为一个连续变量来处理[[1:33:14](https://youtu.be/XJ_waZlJU8g?t=5594)]。他们本可以只是在这里放一个数字，表示开放了多少个月，然后将其视为连续变量，直接输入到初始权重矩阵中。但我发现，显然这些竞争对手也发现了，尽可能地将事物视为分类变量是最好的。这样做的原因是，当你通过一个嵌入矩阵传递一些内容时，意味着每个级别可以被完全不同地处理。例如，在这种情况下，某物是否开放了零个月或一个月是非常不同的。因此，如果你将其作为连续变量输入，神经网络将很难找到具有这种巨大差异的功能形式。这是可能的，因为神经网络可以做任何事情。但如果你不让它变得容易。另一方面，如果你使用嵌入，将其视为分类变量，那么零和一将有完全不同的向量。因此，尤其是在你有足够的数据时，尽可能地将列视为分类变量是一个更好的主意。当我说尽可能时，基本上意味着基数不要太高。因此，如果这是每一行上唯一不同的销售 ID 号码，你不能将其视为分类变量。因为那将是一个巨大的嵌入矩阵，而且每样东西只出现一次，或者是距离最近商店的公里数到小数点后两位，你也不会将其作为分类变量。
