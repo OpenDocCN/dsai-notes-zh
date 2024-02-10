@@ -69,8 +69,12 @@ max_features 的整体效果是相同的 - 这意味着每棵单独的树可能�
 ```py
 set_rf_samples(50000)
 m = RandomForestRegressor(
-    n_estimators=40, min_samples_leaf=3, 
-    max_features=0.5, n_jobs=-1, oob_score=True)
+    n_estimators=40, 
+    min_samples_leaf=3, 
+    max_features=0.5, 
+    n_jobs=-1, 
+    oob_score=True
+)
 m.fit(X_train, y_train)
 print_score(m)
 ```
@@ -144,10 +148,20 @@ to_keep = fi[fi.imp>0.005].cols; len(to_keep)
 因此，我们可以很容易地进行独热编码，我们的做法是向`proc_df`传递一个额外的参数，即最大类别数（`max_n_cat`）。因此，如果我们说是七，那么任何级别少于七的东西都将被转换为一组独热编码的列。
 
 ```py
-df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', max_n_cat=7) X_train, X_valid = split_vals(df_trn2, n_trn) m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-       max_features=0.6, n_jobs=-1, oob_score=True) 
+df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', max_n_cat=7) 
+X_train, X_valid = split_vals(df_trn2, n_trn) 
+m = RandomForestRegressor(
+       n_estimators=40, 
+       min_samples_leaf=3, 
+       max_features=0.6, 
+       n_jobs=-1, 
+       oob_score=True
+) 
 m.fit(X_train, y_train) 
-print_score(m)*[0.2132925755978791, 0.25212838463780185, 0.90966193351324276, 0.88647501408921581, 0.89194147155121262]*
+print_score(m)
+'''
+[0.2132925755978791, 0.25212838463780185, 0.90966193351324276, 0.88647501408921581, 0.89194147155121262]
+'''
 ```
 
 例如邮政编码有超过六个级别，因此将保留为数字。一般来说，您显然不希望对邮政编码进行独热编码，因为这只会创建大量数据、内存问题、计算问题等。因此，这是您可以尝试的另一个参数。
@@ -173,12 +187,17 @@ print_score(m)*[0.2132925755978791, 0.25212838463780185, 0.90966193351324276, 0.
 一个真正被低估的技术（20 或 30 年前比今天更受欢迎）是层次聚类，也称为凝聚聚类。在层次或凝聚聚类中，我们查看每对对象，并说哪两个对象最接近。然后我们取最接近的一对，删除它们，并用两者的中点替换它们。然后再重复这个过程。由于我们正在删除点并用它们的平均值替换它们，您逐渐通过成对组合减少了点的数量。很酷的是，您可以绘制出来。
 
 ```py
-from scipy.cluster import hierarchy as hccorr = np.round(scipy.stats.spearmanr(df_keep).correlation, 4)
+from scipy.cluster import hierarchy as hc
+corr = np.round(scipy.stats.spearmanr(df_keep).correlation, 4)
 corr_condensed = hc.distance.squareform(1-corr)
 z = hc.linkage(corr_condensed, method='average')
 fig = plt.figure(figsize=(16,10))
-dendrogram = hc.dendrogram(z, labels=df_keep.columns, 
-      orientation='left', leaf_font_size=16)
+dendrogram = hc.dendrogram(
+      z, 
+      labels=df_keep.columns, 
+      orientation='left', 
+      leaf_font_size=16
+)
 plt.show()
 ```
 
@@ -205,8 +224,14 @@ plt.show()
 一旦我们有了一个相关矩阵，基本上有几个标准步骤可以将其转换为树状图，每次我都必须在 stackoverflow 上查找。你基本上将其转换为一个距离矩阵，然后创建一个告诉你哪些东西在层次上连接到彼此的东西的东西。所以这是你总是必须做的三个标准步骤来创建一个树状图：
 
 ```py
-**corr_condensed = hc.distance.squareform(1-corr)****z = hc.linkage(corr_condensed, method='average')****dendrogram = hc.dendrogram(z, labels=df_keep.columns, 
-      orientation='left', leaf_font_size=16)**
+corr_condensed = hc.distance.squareform(1-corr)
+z = hc.linkage(corr_condensed, method='average')
+dendrogram = hc.dendrogram(
+       z, 
+       labels=df_keep.columns, 
+       orientation='left', 
+       leaf_font_size=16
+)
 ```
 
 然后你可以绘制它[[1:01:30](https://youtu.be/0v93qHDqq_g?t=1h1m30s)]。`saleYear`和`saleElapsed`基本上在衡量相同的东西（至少在排名上），这并不奇怪，因为`saleElapsed`是自我的数据集中的第一天以来的天数，所以显然这两者几乎完全相关。`Grouser_Tracks`、`Hidraulics_Flow`和`Coupler_System`似乎在衡量相同的东西。这很有趣，因为记住，`Coupler_System`被认为非常重要。所以这更支持了我们的假设，这与是否是一个连接器系统无关，而是与它是什么类型的车辆具有这种特征。`ProductGroup`和`ProductGroupDesc`似乎在衡量相同的东西，`fiBaseModel`和`fiModelDesc`也是如此。一旦我们超过这一点，突然之间的距离更远，所以我可能不会担心那些。所以我们将研究那些非常相似的四组。
@@ -219,8 +244,13 @@ plt.show()
 
 ```py
 def get_oob(df):
-    m = RandomForestRegressor(n_estimators=30, min_samples_leaf=5, 
-           max_features=0.6, n_jobs=-1, oob_score=True)
+    m = RandomForestRegressor(
+       n_estimators=30, 
+       min_samples_leaf=5, 
+       max_features=0.6, 
+       n_jobs=-1, 
+       oob_score=True
+)
     x, _ = split_vals(df, n_trn)
     m.fit(x, y_train)
     return m.oob_score_
@@ -229,14 +259,19 @@ def get_oob(df):
 基本上我要做的是尝试逐个去掉这 9 个左右的变量中的每一个，看看哪些我可以去掉而不会使 OOB 分数变得更糟。
 
 ```py
-get_oob(df_keep)*0.89019425494301454*
+get_oob(df_keep)
+'''
+0.89019425494301454
+'''
 ```
 
 每次我运行这个，我得到稍微不同的结果，所以实际上看起来上一次我有 6 个而不是 9 个。所以你可以看到，我只是循环遍历我认为可能可以去掉的每一个东西，因为它是多余的，然后打印出模型的列名和在去掉那个列之后训练的模型的 OOB 分数。
 
 ```py
-for c in ('saleYear', 'saleElapsed', 'fiModelDesc', 'fiBaseModel', 
-          'Grouser_Tracks', 'Coupler_System'):
+for c in (
+       'saleYear', 'saleElapsed', 'fiModelDesc', 'fiBaseModel', 
+       'Grouser_Tracks', 'Coupler_System'
+):
     print(c, get_oob(df_keep.drop(c, axis=1)))
 ```
 
@@ -255,23 +290,38 @@ Coupler_System 0.889601052658
 
 ```py
 to_drop = ['saleYear', 'fiBaseModel', 'Grouser_Tracks']
-get_oob(df_keep.drop(to_drop, axis=1))*0.88858458047200739*
+get_oob(df_keep.drop(to_drop, axis=1))
+'''
+0.88858458047200739
+'''
 ```
 
 我们从 0.890 到 0.888，再次，它们之间的差距太小以至于无关紧要。听起来不错。简单就是好。所以我现在要从我的数据框中删除这些列，然后我可以尝试再次运行完整的模型。
 
 ```py
 df_keep.drop(to_drop, axis=1, inplace=True)
-X_train, X_valid = split_vals(df_keep, n_trn)np.save('tmp/keep_cols.npy', np.array(df_keep.columns))keep_cols = np.load('tmp/keep_cols.npy')
+X_train, X_valid = split_vals(df_keep, n_trn)
+np.save('tmp/keep_cols.npy', np.array(df_keep.columns))
+keep_cols = np.load('tmp/keep_cols.npy')
 df_keep = df_trn[keep_cols]
 ```
 
 `reset_rf_samples`意味着我使用了整个自助采样。有 40 个估计器，我们得到了 0.907。
 
 ```py
-reset_rf_samples()m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, max_features=0.5, n_jobs=-1, oob_score=True)
+reset_rf_samples()
+m = RandomForestRegressor(
+       n_estimators=40, 
+       min_samples_leaf=3, 
+       max_features=0.5, 
+       n_jobs=-1, 
+       oob_score=True
+)
 m.fit(X_train, y_train)
-print_score(m)*[0.12615142089579687, 0.22781819082173235, 0.96677727309424211, 0.90731173105384466, 0.9084359846323049]*
+print_score(m)
+'''
+[0.12615142089579687, 0.22781819082173235, 0.96677727309424211, 0.90731173105384466, 0.9084359846323049]
+'''
 ```
 
 现在我有了一个更小更简单的模型，并且得分很好。所以在这一点上，我已经尽可能地去掉了许多列（那些要么没有很好的特征重要性，要么与其他变量高度相关，当我去掉它们时，模型没有显著变差）。
@@ -296,8 +346,12 @@ set_rf_samples(50000)
 ```py
 df_trn2, y_trn, nas = proc_df(df_raw, 'SalePrice', max_n_cat=7)
 X_train, X_valid = split_vals(df_trn2, n_trn)
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-       max_features=0.6, n_jobs=-1)
+m = RandomForestRegressor(
+       n_estimators=40, 
+       min_samples_leaf=3, 
+       max_features=0.6, 
+       n_jobs=-1
+)
 m.fit(X_train, y_train);
 ```
 
@@ -320,15 +374,16 @@ df_raw.plot('YearMade', 'saleElapsed', 'scatter', alpha=0.01, figsize=(10,8));
 当我们这样做时，我们得到了这个非常丑陋的图表。它告诉我们`YearMade`实际上有很多是一千。显然，这是我会倾向于回到客户那里并说好的，我猜这些推土机实际上不是在公元 1000 年制造的，他们可能会对我说“是的，这些是我们不知道制造地点的产品”。也许“1986 年之前，我们没有追踪”或者“在伊利诺伊州销售的产品，我们没有提供这些数据”等等——他们会告诉我们一些原因。为了更好地理解这个图，我只是要从分析的解释部分中将它们移除。我们只会获取`YearMade`大于 1930 的数据。
 
 ```py
-x_all = get_sample(df_raw[df_raw.YearMade>1930], 500)ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=True, 
-       method='loess')
+x_all = get_sample(df_raw[df_raw.YearMade>1930], 500)
+ggplot(x_all, aes('YearMade', 'SalePrice')) + \
+       stat_smooth(se=True, method='loess')
 ```
 
 现在让我们看一下`YearMade`和`SalePrice`之间的关系。有一个非常棒的包叫做`ggplot`。`ggplot`最初是一个 R 包（GG 代表图形语法）。图形语法是一种非常强大的思考方式，可以以非常灵活的方式生成图表。我在这门课上不会谈论它太多。网上有很多信息可供参考。但我绝对推荐它作为一个很棒的包来使用。`ggplot`可以通过`pip`安装，它已经是 fast.ai 环境的一部分。Python 中的`ggplot`基本上具有与 R 版本相同的参数和 API。R 版本有更好的文档，所以你应该阅读它的文档以了解如何使用它。但基本上你会说“好的，我想为这个数据框（`x_all`）创建一个图。当你创建图时，你使用的大多数数据集都太大而无法绘制。例如，如果你做一个散点图，它会创建很多点，导致一团糟，而且会花费很长时间。记住，当你绘制东西时，你是在看它，所以没有必要绘制一个有一亿个样本的东西，当你只使用十万个时，它们会完全相同。这就是为什么我首先调用`get_sample`。`get_sample`只是抓取一个随机样本。
 
 ```py
-ggplot(x_all, aes('YearMade', 'SalePrice'))+stat_smooth(se=True, 
-       method='loess')
+ggplot(x_all, aes('YearMade', 'SalePrice')) + \
+       stat_smooth(se=True, method='loess')
 ```
 
 所以我只是从我的数据框中抓取 500 个点，然后绘制`YearMade`和`SalePrice`。`aes`代表“美学” - 这是你在`ggplot`中设置列的基本方式。然后在`ggplot`中有一个奇怪的东西，“+”表示添加图表元素。所以我要添加一个平滑线。通常你会发现散点图很难看清楚发生了什么，因为有太多的随机性。或者，平滑线基本上为图的每个小子集创建一个小线性回归。这样可以连接起来，让你看到一个漂亮的平滑曲线。这是我倾向于查看单变量关系的主要方式。通过添加`se=True`，它还会显示这个平滑线的置信区间。`loess`代表局部加权回归，这是做许多小型回归的想法。
@@ -359,9 +414,13 @@ x = get_sample(X_train[X_train.YearMade>1930], 500)
 def plot_pdp(feat, clusters=None, feat_name=None):
     feat_name = feat_name or feat
     p = pdp.pdp_isolate(m, x, feat)
-    return pdp.pdp_plot(p, feat_name, plot_lines=True, 
-                        cluster=clusters is not None, 
-                        n_cluster_centers=clusters)plot_pdp('YearMade')
+    return pdp.pdp_plot(
+       p, feat_name, 
+       plot_lines=True, 
+       cluster=clusters is not None, 
+       n_cluster_centers=clusters
+    )
+plot_pdp('YearMade')
 ```
 
 ![](img/f160732f7a5a7de5e50ef30f746d7acc.png)
@@ -409,8 +468,11 @@ pdp.pdp_interact_plot(p, feats)
 因此，在这种情况下，我将创建这三个类别的 PDP 图，并将其命名为“Enclosure”。
 
 ```py
-plot_pdp(['Enclosure_EROPS w AC', 'Enclosure_EROPS', 
-         'Enclosure_OROPS'], 5, 'Enclosure')
+plot_pdp([
+       'Enclosure_EROPS w AC', 
+       'Enclosure_EROPS', 
+       'Enclosure_OROPS'
+], 5, 'Enclosure')
 ```
 
 ![](img/fed9b9a0979008b80056330d178201c1.png)
@@ -423,9 +485,14 @@ plot_pdp(['Enclosure_EROPS w AC', 'Enclosure_EROPS',
 
 ```py
 df_raw.YearMade[df_raw.YearMade<1950] = 1950
-df_keep['age'] = df_raw['age'] = df_raw.saleYear-df_raw.YearMadeX_train, X_valid = split_vals(df_keep, n_trn)
-m = RandomForestRegressor(n_estimators=40, min_samples_leaf=3, 
-                          max_features=0.6, n_jobs=-1)
+df_keep['age'] = df_raw['age'] = df_raw.saleYear-df_raw.YearMade
+X_train, X_valid = split_vals(df_keep, n_trn)
+m = RandomForestRegressor(
+       n_estimators=40, 
+       min_samples_leaf=3, 
+       max_features=0.6, 
+       n_jobs=-1
+)
 m.fit(X_train, y_train)
 plot_fi(rf_feat_importance(m, df_keep));
 ```
@@ -439,7 +506,8 @@ plot_fi(rf_feat_importance(m, df_keep));
 最后一件事是树解释器。这也属于大多数人不知道存在的事物类别，但它非常重要。对于 Kaggle 竞赛几乎毫无意义，但对于现实生活非常重要。这是个想法。假设你是一家保险公司，有人打电话给你，你给他们报价，他们说“哦，比去年贵了 500 美元。为什么？”总的来说，你从某个模型中做出了预测，有人问为什么。这就是我们使用的这种叫做树解释器的方法。树解释器的作用是允许我们取出特定的一行。
 
 ```py
-from treeinterpreter import treeinterpreter as tidf_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)
+from treeinterpreter import treeinterpreter as ti
+df_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)
 ```
 
 所以在这种情况下，我们将选择零行。
@@ -479,7 +547,18 @@ prediction, bias, contributions = ti.predict(m, row)
 所以你可以看到，通过一棵树，你可以分解为什么我们预测了 10.2。在每一个决策点，我们都会对值进行一点点的加减。然后我们可以对所有树都这样做，然后我们可以取平均值。每次我们看到围栏，我们增加还是减少了值，以及多少？每次我们看到模型 ID，我们增加还是减少了值，以及多少？我们可以取所有这些的平均值，这就是所谓的`贡献度`。
 
 ```py
-prediction[0], bias[0]*(9.1909688098736275, 10.10606580677884)*idxs = np.argsort(contributions[0])[o for o in zip(df_keep.columns[idxs], df_valid.iloc[0][idxs], contributions[0][idxs])]
+prediction[0], bias[0]
+'''
+(9.1909688098736275, 10.10606580677884)
+'''
+idxs = np.argsort(contributions[0])
+[
+    o for o in zip(
+       df_keep.columns[idxs], 
+       df_valid.iloc[0][idxs], 
+       contributions[0][idxs]
+    )
+]
 ```
 
 这里是我们所有的预测因子和每个值[[1:37:54](https://youtu.be/0v93qHDqq_g?t=1h37m54s)]。
@@ -514,7 +593,10 @@ prediction[0], bias[0]*(9.1909688098736275, 10.10606580677884)*idxs = np.argsort
 *视频中存在排序问题，因为没有使用索引排序，但上面的示例是已更正的版本。*
 
 ```py
-contributions[0].sum()*-0.7383536391949419*
+contributions[0].sum()
+'''
+-0.7383536391949419
+'''
 ```
 
 然后有一个叫做偏差的东西，偏差只是我们在开始进行任何拆分之前的平均值[[1:39:03](https://youtu.be/0v93qHDqq_g?t=1h39m3s)]。如果你从平均对数值开始，然后我们沿着每棵树走，每次看到 YearMade 时，我们有一些影响，联接器系统有一些影响，产品尺寸有一些影响，等等。

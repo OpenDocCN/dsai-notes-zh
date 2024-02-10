@@ -107,7 +107,11 @@ Kaggle 的做法是相当聪明的。Kaggle 的做法是将测试集分成两部
 对于随机森林，我们可以在所有树中执行相同的操作。所以每次我们看到联接器时，我们累加那个变化。每次我们看到围栏时，我们累加那个变化，依此类推。然后将它们全部组合在一起，我们就得到了树解释器的功能。所以你可以查看树解释器的源代码，它并不是非常复杂的逻辑。或者你可以自己构建它，看看它是如何做到这一点的。
 
 ```py
-from treeinterpreter import treeinterpreter as tidf_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)row = X_valid.values[None,0]; row*array([[4364751, 2300944, 665, 172, 1.0, 1999, 3726.0, 3, 3232, 1111, 0, 63, 0, 5, 17, 35, 4, 4, 0, 1, 0, 0,
+from treeinterpreter import treeinterpreter as ti
+df_train, df_valid = split_vals(df_raw[df_keep.columns], n_trn)
+row = X_valid.values[None,0]; row
+'''
+array([[4364751, 2300944, 665, 172, 1.0, 1999, 3726.0, 3, 3232, 1111, 0, 63, 0, 5, 17, 35, 4, 4, 0, 1, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 19, 29, 3, 2, 1, 0, 0, 0, 0, 0, 2010, 9, 37,
         16, 3, 259, False, False, False, False, False, False, 7912, False, False]], dtype=object)*prediction, bias, contributions = ti.predict(m, row)
 ```
