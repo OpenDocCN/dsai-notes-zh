@@ -124,7 +124,7 @@ Nearest Neighbor 分类器的计算复杂度研究是一个活跃的研究领域
 2.  如果数据是高维数据，考虑使用降维方法，比如 PCA([wiki ref](https://link.zhihu.com/?target=http%3A//en.wikipedia.org/wiki/Principal_component_analysis)*, [CS229ref](https://link.zhihu.com/?target=http%3A//cs229.stanford.edu/notes/cs229-notes10.pdf)*, [blog ref](https://link.zhihu.com/?target=http%3A//www.bigdataexaminer.com/understanding-dimensionality-reduction-principal-component-analysis-and-singular-value-decomposition/)*)或[随机投影](https://link.zhihu.com/?target=http%3A//scikit-learn.org/stable/modules/random_projection.html)*。****
 ****   将数据随机分入训练集和验证集。按照一般规律，70%-90% 数据作为训练集。这个比例根据算法中有多少超参数，以及这些超参数对于算法的预期影响来决定。如果需要预测的超参数很多，那么就应该使用更大的验证集来有效地估计它们。如果担心验证集数量不够，那么就尝试交叉验证方法。如果计算资源足够，使用交叉验证总是更加安全的（份数越多，效果越好，也更耗费计算资源）。*   在验证集上调优，尝试足够多的 k 值，尝试 L1 和 L2 两种范数计算方式。*   如果分类器跑得太慢，尝试使用 Approximate Nearest Neighbor 库（比如[FLANN](https://link.zhihu.com/?target=http%3A//www.cs.ubc.ca/research/flann/)*）来加速这个过程，其代价是降低一些准确率。***   对最优的超参数做记录。记录最优参数后，是否应该让使用最优参数的算法在完整的训练集上运行并再次训练呢？因为如果把验证集重新放回到训练集中（自然训练集的数据量就又变大了），有可能最优参数又会有所变化。在实践中，**不要这样做**。千万不要在最终的分类器中使用验证集数据，这样做会破坏对于最优参数的估计。**直接使用测试集来测试用最优参数设置好的最优模型**，得到测试集数据的分类准确率，并以此作为你的 kNN 分类器在该数据上的性能表现。****
 
- ***## 拓展阅读
+## 拓展阅读
 
 下面是一些你可能感兴趣的拓展阅读链接：
 

@@ -76,7 +76,7 @@ out = np.dot(W3, h2) + b3 # 神经元输出(1x1)
 *   [Deep Learning](https://link.zhihu.com/?target=http%3A//www.deeplearningbook.org/)*的[Chapter6.4](https://link.zhihu.com/?target=http%3A//www.deeplearningbook.org/contents/mlp.html)*，作者是 Bengio 等。**
 ***   [Do Deep Nets Really Need to be Deep?](https://link.zhihu.com/?target=http%3A//arxiv.org/abs/1312.6184)**   [FitNets: Hints for Thin Deep Nets](https://link.zhihu.com/?target=http%3A//arxiv.org/abs/1412.6550)***
 
- ***## 设置层的数量和尺寸
+## 设置层的数量和尺寸
 
 在面对一个具体问题的时候该确定网络结构呢？到底是不用隐层呢？还是一个隐层？两个隐层或更多？每个层的尺寸该多大？
 
@@ -120,7 +120,7 @@ out = np.dot(W3, h2) + b3 # 神经元输出(1x1)
 *   使用 Theano 的[deeplearning.net tutorial](https://link.zhihu.com/?target=http%3A//www.deeplearning.net/tutorial/mlp.html)
 **   [ConvNetJS](https://link.zhihu.com/?target=http%3A//www.deeplearning.net/tutorial/mlp.html)**   [Michael Nielsen's tutorials](https://link.zhihu.com/?target=http%3A//neuralnetworksanddeeplearning.com/chap1.html)**
 
- ***## 译者反馈
+## 译者反馈
 
 1.  **转载须全文转载且注明原文链接**，否则保留维权权利；
 2.  请知友们通过评论和私信等方式批评指正，贡献者均会补充提及。*************

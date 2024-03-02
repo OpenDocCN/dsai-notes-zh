@@ -113,7 +113,7 @@
 
 有时候损失函数看起来很有意思：[lossfunctions.tumblr.com](https://link.zhihu.com/?target=http%3A//lossfunctions.tumblr.com)*。*
 
- *### 训练集和验证集准确率
+### 训练集和验证集准确率
 
 在训练分类器的时候，需要跟踪的第二重要的数值是验证集和训练集的准确率。这个图表能够展现知道模型过拟合的程度：
 

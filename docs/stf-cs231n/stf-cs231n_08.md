@@ -4,7 +4,7 @@
 
 译者注：本文[智能单元](https://zhuanlan.zhihu.com/intelligentunit)首发，译自斯坦福 CS231n 课程笔记[Backprop Note](https://link.zhihu.com/?target=http%3A//cs231n.github.io/optimization-2/)*，课程教师[Andrej Karpathy](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/people/karpathy/)*授权翻译。本篇教程由[杜客](https://www.zhihu.com/people/du-ke)翻译完成，[堃堃](https://www.zhihu.com/people/kun-kun-97-81)和[巩子嘉](https://www.zhihu.com/people/hmonkey)进行校对修改。译文含公式和代码，建议 PC 端阅读。**
 
- **## 原文如下：
+## 原文如下：
 
 内容列表：
 

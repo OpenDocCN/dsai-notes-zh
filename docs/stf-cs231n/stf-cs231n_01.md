@@ -160,7 +160,7 @@ distances = np.sqrt(np.sum(np.square(self.Xtr - X[i,:]), axis = 1))
 
 **L1 和 L2 比较**。比较这两个度量方式是挺有意思的。在面对两个向量之间的差异时，L2 比 L1 更加不能容忍这些差异。也就是说，相对于 1 个巨大的差异，L2 距离更倾向于接受多个中等程度的差异。L1 和 L2 都是在[p-norm](https://link.zhihu.com/?target=http%3A//planetmath.org/vectorpnorm)*常用的特殊形式。*
 
- *## k-Nearest Neighbor 分类器
+## k-Nearest Neighbor 分类器
 
 你可能注意到了，为什么只用最相似的 1 张图片的标签来作为测试图像的标签呢？这不是很奇怪吗！是的，使用**k-Nearest Neighbor 分类器**就能做得更好。它的思想很简单：与其只找最相近的那 1 个图片的标签，我们找最相似的 k 个图片的标签，然后让他们针对测试图片进行投票，最后把票数最高的标签作为对测试图片的预测。所以当 k=1 的时候，k-Nearest Neighbor 分类器就是 Nearest Neighbor 分类器。从直观感受上就可以看到，更高的 k 值可以让分类的效果更平滑，使得分类器对于异常值更有抵抗力。
 

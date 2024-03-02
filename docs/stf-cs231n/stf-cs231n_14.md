@@ -4,7 +4,7 @@
 
 **译者注**：本文翻译自斯坦福 CS231n 课程笔记[ConvNet notes](https://link.zhihu.com/?target=http%3A//cs231n.github.io/convolutional-networks/)*，由课程教师[Andrej Karpathy](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/people/karpathy/)*授权进行翻译。本篇教程由[杜客](https://www.zhihu.com/people/du-ke)和[猴子](https://www.zhihu.com/people/hmonkey)翻译完成，[堃堃](https://www.zhihu.com/people/kun-kun-97-81)和[李艺颖](https://www.zhihu.com/people/li-yi-ying-73)进行校对修改。**
 
- **## 原文如下
+## 原文如下
 
 内容列表：
 
@@ -201,7 +201,7 @@
 
  ***扩张卷积**：最近一个研究（[Fisher Yu 和 Vladlen Koltun 的论文](https://link.zhihu.com/?target=https%3A//arxiv.org/abs/1511.07122)*）给卷积层引入了一个新的叫*扩张（dilation）*的超参数。到目前为止，我们只讨论了卷积层滤波器是连续的情况。但是，让滤波器中元素之间有间隙也是可以的，这就叫做扩张。举例，在某个维度上滤波器**w**的尺寸是 3，那么计算输入**x**的方式是：**w[0]*x[0] + w[1]*x[1] + w[2]*x[2]**，此时扩张为 0。如果扩张为 1，那么计算为： **w[0]*x[0] + w[1]*x[2] + w[2]*x[4]**。换句话说，操作中存在 1 的间隙。在某些设置中，扩张卷积与正常卷积结合起来非常有用，因为在很少的层数内更快地汇集输入图片的大尺度特征。比如，如果上下重叠 2 个 3x3 的卷积层，那么第二个卷积层的神经元的接受区域是输入数据体中 5x5 的区域（可以成这些神经元的*有效接受区域*是 5x5）。如果我们对卷积进行扩张，那么这个有效接受区域就会迅速增长。* 
 
- *#### 汇聚层
+#### 汇聚层
 
 通常，在连续的卷积层之间会周期性地插入一个汇聚层。它的作用是逐渐降低数据体的空间尺寸，这样的话就能减少网络中参数的数量，使得计算资源耗费变少，也能有效控制过拟合。汇聚层使用 MAX 操作，对输入数据体的每一个深度切片独立进行操作，改变它的空间尺寸。最常见的形式是汇聚层使用尺寸 2x2 的滤波器，以步长为 2 来对每个深度切片进行降采样，将其中 75%的激活信息都丢掉。每个 MAX 操作是从 4 个数字中取最大值（也就是在深度切片中某个 2x2 的区域）。深度保持不变。汇聚层的一些公式：
 
@@ -238,11 +238,11 @@
 
 **不使用汇聚层**：很多人不喜欢汇聚操作，认为可以不使用它。比如在[Striving for Simplicity: The All Convolutional Net](https://link.zhihu.com/?target=http%3A//arxiv.org/abs/1412.6806)*一文中，提出使用一种只有重复的卷积层组成的结构，抛弃汇聚层。通过在卷积层中使用更大的步长来降低数据体的尺寸。有发现认为，在训练一个良好的生成模型时，弃用汇聚层也是很重要的。比如变化自编码器（VAEs：variational autoencoders）和生成性对抗网络（GANs：generative adversarial networks）。现在看起来，未来的卷积网络结构中，无汇聚层的结构不太可能扮演重要的角色。*
 
- *#### 归一化层
+#### 归一化层
 
 在卷积神经网络的结构中，提出了很多不同类型的归一化层，有时候是为了实现在生物大脑中观测到的抑制机制。但是这些层渐渐都不再流行，因为实践证明它们的效果即使存在，也是极其有限的。对于不同类型的归一化层，可以看看 Alex Krizhevsky 的关于[cuda-convnet library API](https://link.zhihu.com/?target=https%3A//code.google.com/p/cuda-convnet/wiki/LayerParams%23Local_response_normalization_layer_%28same_map%29)*的讨论。* 
 
- *#### 全连接层
+#### 全连接层
 
 在全连接层中，神经元对于前一层中的所有激活数据是全部连接的，这个常规神经网络中一样。它们的激活可以先用矩阵乘法，再加上偏差。更多细节请查看*神经网络*章节。
 
@@ -274,7 +274,7 @@
 
 *   [Net Surgery](https://link.zhihu.com/?target=https%3A//github.com/BVLC/caffe/blob/master/examples/net_surgery.ipynb)*上一个使用 Caffe 演示如何在进行变换的 IPython Note 教程。* 
 
- *### **卷积神经网络的结构**
+### **卷积神经网络的结构**
 
 卷积神经网络通常是由三种层构成：卷积层，汇聚层（除非特别说明，一般就是最大值汇聚）和全连接层（简称 FC）。ReLU 激活函数也应该算是是一层，它逐元素地进行激活函数操作。在本节中将讨论在卷积神经网络中这些层通常是如何组合在一起的。
 

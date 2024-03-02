@@ -142,7 +142,7 @@ print '  world '.strip()  # Strip leading and trailing whitespace; prints "world
 
 如果想详细查看字符串方法，请看[文档](https://link.zhihu.com/?target=https%3A//docs.python.org/2/library/stdtypes.html%23string-methods)*。* 
 
- *## 容器 Containers
+## 容器 Containers
 
 **译者注**：有知友建议 container 翻译为复合数据类型，供读者参考。
 
@@ -323,7 +323,7 @@ print d[(1, 2)]  # Prints "1"
 
 [文档](https://link.zhihu.com/?target=https%3A//docs.python.org/2/tutorial/datastructures.html%23tuples-and-sequences)*有更多元组的信息。*
 
- *## 函数 Functions
+## 函数 Functions
 
 Python 函数使用 def 来定义函数：
 
@@ -356,7 +356,7 @@ hello('Fred', loud=True)  # Prints "HELLO, FRED!"
 
 函数还有很多内容，可以查看[文档](https://link.zhihu.com/?target=https%3A//docs.python.org/2/tutorial/controlflow.html%23defining-functions)*。*
 
- *## 类 Classes
+## 类 Classes
 
 Python 对于类的定义是简单直接的：
 
@@ -381,7 +381,7 @@ g.greet(loud=True)   # Call an instance method; prints "HELLO, FRED!"
 
 更多类的信息请查阅[文档](https://link.zhihu.com/?target=https%3A//docs.python.org/2/tutorial/classes.html)*。* 
 
- *## Numpy
+## Numpy
 
 Numpy 是 Python 中用于科学计算的核心库。它提供了高性能的多维数组对象，以及相关工具。
 
@@ -434,7 +434,7 @@ print e                     # Might print "[[ 0.91940167  0.08143941]
 
 其他数组相关方法，请查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/numpy/user/basics.creation.html%23arrays-creation)*。* 
 
- *## 访问数组
+## 访问数组
 
 Numpy 提供了多种访问数组的方法。
 
@@ -568,7 +568,7 @@ print a[a > 2]     # Prints "[3 4 5 6]"
 
 为了教程的简介，有很多数组访问的细节我们没有详细说明，可以查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/numpy/reference/arrays.indexing.html)*。*
 
- *## 数据类型
+## 数据类型
 
 每个 Numpy 数组都是数据类型相同的元素组成的网格。Numpy 提供了很多的数据类型用于创建数组。当你创建数组的时候，Numpy 会尝试猜测数组的数据类型，你也可以通过参数直接指定数据类型，例子如下：
 
@@ -587,7 +587,7 @@ print x.dtype                         # Prints "int64"
 
 更多细节查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/numpy/reference/arrays.dtypes.html)*。*
 
- *## 数组计算
+## 数组计算
 
 基本数学计算函数会对数组中元素逐个进行计算，既可以利用操作符重载，也可以使用函数方式：
 
@@ -686,7 +686,7 @@ print v.T  # Prints "[1 2 3]"
 
 Numpy 还提供了更多操作数组的方法，请查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/numpy/reference/routines.array-manipulation.html)*。*
 
- *## 广播 Broadcasting
+## 广播 Broadcasting
 
 广播是一种强有力的机制，它让 Numpy 可以让不同大小的矩阵在一起进行数学计算。我们常常会有一个小的矩阵和一个大的矩阵，然后我们会需要用小的矩阵对大的矩阵做一些计算。
 
@@ -816,13 +816,13 @@ print x * 2
 
 这篇教程涉及了你需要了解的 numpy 中的一些重要内容，但是 numpy 远不止如此。可以查阅[numpy 文献](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/numpy/reference/)*来学习更多。*
 
- *## SciPy
+## SciPy
 
 Numpy 提供了高性能的多维数组，以及计算和操作数组的基本工具。[SciPy](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/scipy/reference/)*基于 Numpy，提供了大量的计算和操作数组的函数，这些函数对于不同类型的科学和工程计算非常有用。*
 
  *熟悉 SciPy 的最好方法就是阅读[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/scipy/reference/index.html)*。我们会强调对于本课程有用的部分。*
 
- *## 图像操作
+## 图像操作
 
 SciPy 提供了一些操作图像的基本函数。比如，它提供了将图像从硬盘读入到数组的函数，也提供了将数组中数据写入的硬盘成为图像的函数。下面是一个简单的例子：
 
@@ -862,7 +862,7 @@ imsave('assets/cat_tinted.jpg', img_tinted)
 
 函数**scipy.io.loadmat**和**scipy.io.savemat**能够让你读和写 MATLAB 文件。具体请查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/scipy/reference/io.html)*。*
 
- *## 点之间的距离
+## 点之间的距离
 
 SciPy 定义了一些有用的函数，可以计算集合中点之间的距离。
 
@@ -893,7 +893,7 @@ print d
 
  *函数**scipy.spatial.distance.cdist**可以计算不同集合中点的距离，具体请查看[文档](https://link.zhihu.com/?target=http%3A//docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.cdist.html)*。*
 
- *## Matplotlib
+## Matplotlib
 
 Matplotlib 是一个作图库。这里简要介绍**matplotlib.pyplot**模块，功能和 MATLAB 的作图功能类似。
 
@@ -947,7 +947,7 @@ plt.show()
 
 可以在[文档](https://link.zhihu.com/?target=http%3A//matplotlib.org/api/pyplot_api.html%23matplotlib.pyplot.plot)*中阅读更多关于 plot 的内容。*
 
- *## 绘制多个图像
+## 绘制多个图像
 
 可以使用**subplot**函数来在一幅图中画不同的东西：
 
@@ -983,7 +983,7 @@ plt.show()
 
 关于**subplot**的更多细节，可以阅读[文档](https://link.zhihu.com/?target=http%3A//matplotlib.org/api/pyplot_api.html%23matplotlib.pyplot.subplot)*。*
 
- *## 图像
+## 图像
 
 你可以使用**imshow**函数来显示图像，如下所示：
 

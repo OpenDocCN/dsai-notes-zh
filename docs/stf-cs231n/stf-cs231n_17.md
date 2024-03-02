@@ -20,11 +20,11 @@
 
 有两种方法来完成作业：在本地使用自己的机器，或者使用[`Terminal.com`](https://link.zhihu.com/?target=http%3A//Terminal.com)*的虚拟机。* 
 
- *### 云端作业
+### 云端作业
 
 Terminal 公司为我们的课程创建了一个单独的子域名：[www.stanfordterminalcloud.com](https://link.zhihu.com/?target=https%3A//www.stanfordterminalcloud.com/)*。在该域名下注册。作业 2 的快照可以在[这里](https://link.zhihu.com/?target=https%3A//www.stanfordterminalcloud.com/snapshot/49f5a1ea15dc424aec19155b3398784d57c55045435315ce4f8b96b62819ef65)*找到。如果你注册到了本课程，就可以联系上助教（更多信息请上 Piazza）来得到用来做作业的点数。一旦你启动了快照，所有的环境都是为你配置好的，马上就可以开始作业。我们在 Terminal 上写了一个简明[教程](https://link.zhihu.com/?target=http%3A//cs231n.github.io/terminal-tutorial/)*。*** 
 
- ***### 本地作业
+### 本地作业
 
 点击[此处](https://link.zhihu.com/?target=http%3A//cs231n.stanford.edu/winter1516_assignment3.zip)*下载代码压缩文件。初次之外还有些库间依赖的配置：*
 
@@ -61,11 +61,11 @@ python setup.py build_ext --inplace
 
  ***注意**：如果你是在 OSX 上的虚拟环境中工作，可能会遇到一个由 matplotlib 导致的错误，原因在[这里](https://link.zhihu.com/?target=http%3A//matplotlib.org/faq/virtualenv_faq.html)*。你可以通过在 assignment2 目录中运行 start_ipython_osx.sh 脚本来解决问题。*
 
- *## 提交作业
+## 提交作业
 
 无论你是在云终端还是在本地完成作业，一旦完成作业，就运行 collectSubmission.sh 脚本；这样将会产生一个 assignment3.zip 的文件，然后将这个文件上传到你的 dropbox 中这门课的[作业页面](https://link.zhihu.com/?target=https%3A//coursework.stanford.edu/portal/site/W15-CS-231N-01/)*。*
 
- *### Q1：使用普通 RNN 进行图像标注（40 分）
+### Q1：使用普通 RNN 进行图像标注（40 分）
 
 IPython Notebook 文件**RNN_Captioning.ipynb**将会带你使用普通 RNN 实现一个在微软 COCO 数据集上的图像标注系统。
 

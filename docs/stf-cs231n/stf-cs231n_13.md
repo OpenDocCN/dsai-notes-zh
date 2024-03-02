@@ -92,7 +92,7 @@ x += -mu * v_prev + (1 + mu) * v # 位置更新变了形式
 *   Yoshua Bengio 的[Advances in optimizing Recurrent Networks](https://link.zhihu.com/?target=http%3A//arxiv.org/pdf/1212.0901v2.pdf)*，Section 3.5。*
 **   [Ilya Sutskever's thesis](https://link.zhihu.com/?target=http%3A//www.cs.utoronto.ca/%257Eilya/pubs/ilya_sutskever_phd_thesis.pdf) *(pdf)在 section 7.2 对于这个主题有更详尽的阐述。**
 
- **### 学习率退火
+### 学习率退火
 
 在训练深度网络的时候，让学习率随着时间退火通常是有帮助的。可以这样理解：如果学习率很高，系统的动能就过大，参数向量就会无规律地跳动，不能够稳定到损失函数更深更窄的部分去。知道什么时候开始衰减学习率是有技巧的：慢慢减小它，可能在很长时间内只能是浪费计算资源地看着它混沌地跳动，实际进展很少。但如果快速地减少它，系统可能过快地失去能量，不能到达原本可以到达的最好位置。通常，实现学习率退火有 3 种方式：
 
@@ -123,7 +123,7 @@ x += -mu * v_prev + (1 + mu) * v # 位置更新变了形式
 
 **   [SFO](https://link.zhihu.com/?target=http%3A//arxiv.org/abs/1311.2115)*算法想要把 SGD 和 L-BFGS 的优势结合起来。**
 
- **## 逐参数适应学习率方法
+## 逐参数适应学习率方法
 
 前面讨论的所有方法都是对学习率进行全局地操作，并且对所有的参数都是一样的。学习率调参是很耗费计算资源的过程，所以很多工作投入到发明能够适应性地对学习率调参的方法，甚至是逐个参数适应学习率调参。很多这些方法依然需要其他的超参数设置，但是其观点是这些方法对于更广范围的超参数比原始的学习率方法有更良好的表现。在本小节我们会介绍一些在实践中可能会遇到的常用适应算法：
 
@@ -200,7 +200,7 @@ x += - learning_rate * m / (np.sqrt(v) + eps)
 
 **贝叶斯超参数最优化**是一整个研究领域，主要是研究在超参数空间中更高效的导航算法。其核心的思路是在不同超参数设置下查看算法性能时，要在探索和使用中进行合理的权衡。基于这些模型，发展出很多的库，比较有名的有： [Spearmint](https://link.zhihu.com/?target=https%3A//github.com/JasperSnoek/spearmint)*, [SMAC](https://link.zhihu.com/?target=http%3A//www.cs.ubc.ca/labs/beta/Projects/SMAC/)*, 和[Hyperopt](https://link.zhihu.com/?target=http%3A//jaberg.github.io/hyperopt/)*。然而，在卷积神经网络的实际使用中，比起上面介绍的先认真挑选的一个范围，然后在该范围内随机搜索的方法，这个方法还是差一些。[这里](https://link.zhihu.com/?target=http%3A//nlpers.blogspot.com/2014/10/hyperparameter-search-bayesian.html)*有更详细的讨论。****
 
- ***## 评价
+## 评价
 
 ### 模型集成
 
@@ -216,7 +216,7 @@ x += - learning_rate * m / (np.sqrt(v) + eps)
 
 模型集成的一个劣势就是在测试数据的时候会花费更多时间。最近 Geoff Hinton 在“[Dark Knowledge](https://link.zhihu.com/?target=https%3A//www.youtube.com/watch%3Fv%3DEK61htlw8hY)*”上的工作很有启发：其思路是通过将集成似然估计纳入到修改的目标函数中，从一个好的集成中抽出一个单独模型。*
 
- *## 总结
+## 总结
 
 训练一个神经网络需要：
 
@@ -242,7 +242,7 @@ x += - learning_rate * m / (np.sqrt(v) + eps)
 
     **   Yoshua Bengio 的《[Practical Recommendations for Gradient-Based Training of Deep Architectures](https://link.zhihu.com/?target=http%3A//arxiv.org/pdf/1206.5533v2.pdf)*》。***
 
- ***## 译者反馈
+## 译者反馈
 
 1.  **转载须全文转载且注明原文链接**，否则保留维权权利；
 2.  请知友们通过评论和私信等方式批评指正，贡献者均会补充提及。************************
