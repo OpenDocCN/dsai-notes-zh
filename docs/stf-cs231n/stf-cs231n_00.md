@@ -2,21 +2,21 @@
 
 > 来源：[`zhuanlan.zhihu.com/p/20870307`](https://zhuanlan.zhihu.com/p/20878530)
 
-**译者注**：本文[智能单元](https://zhuanlan.zhihu.com/intelligentunit)首发，翻译自斯坦福 CS231n 课程笔记[Python Numpy Tutorial](https://link.zhihu.com/?target=http%3A//cs231n.github.io/python-numpy-tutorial/)*，由课程教师[Andrej Karpathy](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/people/karpathy/)*授权进行翻译。本篇教程由[杜客](https://www.zhihu.com/people/du-ke)翻译完成，[Flood Sung](https://www.zhihu.com/people/flood-sung)、[SunisDown](https://www.zhihu.com/people/sunisdown)、[巩子嘉](https://www.zhihu.com/people/gong-zi-jia-57)和一位不愿透露 ID 的知友对本翻译亦有贡献。**
+**译者注**：本文[智能单元](https://zhuanlan.zhihu.com/intelligentunit)首发，翻译自斯坦福 CS231n 课程笔记[Python Numpy Tutorial](https://link.zhihu.com/?target=http%3A//cs231n.github.io/python-numpy-tutorial/)*，由课程教师[Andrej Karpathy](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/people/karpathy/)*授权进行翻译。本篇教程由[杜客](https://www.zhihu.com/people/du-ke)翻译完成，[Flood Sung](https://www.zhihu.com/people/flood-sung)、[SunisDown](https://www.zhihu.com/people/sunisdown)、[巩子嘉](https://www.zhihu.com/people/gong-zi-jia-57)和一位不愿透露 ID 的知友对本翻译亦有贡献。
 
- **## 原文如下
+## 原文如下
 
 这篇教程由[Justin Johnson](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/people/jcjohns/)*创作。*
 
- *我们将使用 Python 编程语言来完成本课程的所有作业。Python 是一门伟大的通用编程语言，在一些常用库（numpy, scipy, matplotlib）的帮助下，它又会变成一个强大的科学计算环境。
+我们将使用 Python 编程语言来完成本课程的所有作业。Python 是一门伟大的通用编程语言，在一些常用库（numpy, scipy, matplotlib）的帮助下，它又会变成一个强大的科学计算环境。
 
 我们期望你们中大多数人对于 Python 语言和 Numpy 库比较熟悉，而对于没有 Python 经验的同学，这篇教程可以帮助你们快速了解 Python 编程环境和如何使用 Python 作为科学计算工具。
 
 一部分同学对于 Matlab 有一定经验。对于这部分同学，我们推荐阅读 [numpy for Matlab users](https://link.zhihu.com/?target=http%3A//wiki.scipy.org/NumPy_for_Matlab_Users)*页面。*
 
- *你们还可以查看[本教程的 IPython notebook 版](https://link.zhihu.com/?target=https%3A//github.com/kuleshov/cs228-material/blob/master/tutorials/python/cs228-python-tutorial.ipynb)*。该教程是由[Volodymyr Kuleshov](https://link.zhihu.com/?target=http%3A//web.stanford.edu/%257Ekuleshov/)*和[Isaac Caswell](https://link.zhihu.com/?target=https%3A//symsys.stanford.edu/viewing/symsysaffiliate/21335)*为课程[CS 228](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/%257Eermon/cs228/index.html)*创建的。****
+你们还可以查看[本教程的 IPython notebook 版](https://link.zhihu.com/?target=https%3A//github.com/kuleshov/cs228-material/blob/master/tutorials/python/cs228-python-tutorial.ipynb)*。该教程是由[Volodymyr Kuleshov](https://link.zhihu.com/?target=http%3A//web.stanford.edu/%257Ekuleshov/)*和[Isaac Caswell](https://link.zhihu.com/?target=https%3A//symsys.stanford.edu/viewing/symsysaffiliate/21335)*为课程[CS 228](https://link.zhihu.com/?target=http%3A//cs.stanford.edu/%257Eermon/cs228/index.html)*创建的。
 
- ***内容列表：
+内容列表：
 
 *   Python
 
