@@ -3,7 +3,6 @@
 +   [fast.ai 数值线性代数讲义中文版 v2](docs/fastai-num-linalg-v2/README.md)
 +   [MIT 18.06 线性代数笔记](docs/mit-18.06-linalg-notes/README.md)
 +   [台湾大学林轩田机器学习笔记](docs/ntu-hsuantienlin-ml/README.md)
-+   [SciPyCon 2018 sklearn 教程](docs/scipycon-2018-sklearn-tut/README.md)
 +   [斯坦福 Stats60：21 世纪的统计思维](docs/stat21/README.md)
 +   [斯坦福 CS224d 自然语言处理讲义 2017](docs/stf-cs224d-2017/README.md)
 +   [斯坦福 CS224n 自然语言处理笔记 2017](docs/stf-cs224n-2017/README.md)
