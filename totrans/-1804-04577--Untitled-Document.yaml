@@ -2983,6 +2983,9 @@
   id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将关注于计算与聚合状态对应的聚合问题的**最优成本向量**$r^{*}$的方法。这是方程式 (4.11) 的唯一解。我们首先注意到，由于$r^{*}$与成本函数$\tilde{J}_{0}$和$\tilde{J}_{1}$一起，形成了贝尔曼方程
+    (4.8)-(4.10) 的解，因此它们可以通过经典的（精确的）策略和价值迭代方法（简称 PI 和 VI）来计算。然而，在本节中，我们将讨论 PI 和 VI
+    的专门版本，这些版本仅计算$r^{*}$（其维度相对较低），而不计算$\tilde{J}_{0}$和$\tilde{J}_{1}$（可能具有天文数字级别的维度）。这些方法基于随机模拟，因为它们涉及聚合问题，而聚合问题是随机的，因为存在分解和聚合概率，即使原始问题是确定性的。
 - en: We start with simulation-based versions of PI, where policy evaluation is done
     with lookup table versions of classical methods such as LSTD(0), LSPE(0), and
     TD(0), applied to a reduced size DP problem whose states are just the aggregate
@@ -2990,10 +2993,13 @@
   id: totrans-352
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从基于模拟的 PI 版本开始，其中策略评估是通过查找表版本的经典方法，如 LSTD(0)，LSPE(0)，和 TD(0) 完成的，这些方法应用于一个简化规模的
+    DP 问题，其状态仅为聚合状态。
 - en: Simulation-Based Policy Iteration
   id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于模拟的策略迭代
 - en: One possible way to compute $r^{*}$ is a PI-like algorithm, which generates
     sequences of policies $\{\mu^{k}\}$ for the original problem and vectors $\{r^{k}\}$,
     which converge to an optimal policy and $r^{*}$, respectively. The algorithm does
@@ -3005,43 +3011,59 @@
   id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算 $r^{*}$ 的一种可能方法是 PI 类算法，它生成原始问题的策略序列 $\{\mu^{k}\}$ 和向量 $\{r^{k}\}$，这些序列和向量分别收敛到最优策略和
+    $r^{*}$。该算法不计算任何高维向量 $\tilde{J}_{0}$ 和 $\tilde{J}_{1}$ 的中间估计值。它从原始问题的静态策略 $\mu^{0}$
+    开始，给定 $\mu^{k}$ 后，通过找到收缩映射 $H_{\mu^{k}}=DT_{\mu^{k}}\Phi$ 的唯一不动点，执行策略评估步骤，该映射将向量
+    $r$ 映射到向量 $H_{\mu^{k}}r$，其分量为
 - en: '|  | $(H_{\mu^{k}}r)(\ell)=\sum_{i=1}^{n}d_{\ell i}\sum_{j=1}^{n}p_{ij}\bigl{(}\mu^{k}(i)\bigr{)}\left(g\bigl{(}i,\mu^{k}(i),j\bigr{)}+\alpha\sum_{m=1}^{q}\phi_{jm}\,r_{m}\right),\qquad\ell=1,\ldots,q,$
     |  |'
   id: totrans-355
   prefs: []
   type: TYPE_TB
+  zh: '|  | $(H_{\mu^{k}}r)(\ell)=\sum_{i=1}^{n}d_{\ell i}\sum_{j=1}^{n}p_{ij}\bigl{(}\mu^{k}(i)\bigr{)}\left(g\bigl{(}i,\mu^{k}(i),j\bigr{)}+\alpha\sum_{m=1}^{q}\phi_{jm}\,r_{m}\right),\qquad\ell=1,\ldots,q,$
+    |  |'
 - en: cf. Eq. (4.12). Thus the policy evaluation step finds $r^{k}=\{r^{k}_{\ell}\mid\ell=1,\ldots,q\}$
     satisfying
   id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: cf. 方程式 (4.12) 生成 $\mu^{k+1}$
 - en: '|  | $r^{k}=H_{\mu^{k}}r^{k}=DT_{\mu^{k}}\Phi r^{k}=D\big{(}g_{\mu^{k}}+\alpha
     P_{\mu^{k}}\Phi r^{k}\big{)},$ |  | (4.19) |'
   id: totrans-357
   prefs: []
   type: TYPE_TB
+  zh: '|  | $r^{k}=H_{\mu^{k}}r^{k}=DT_{\mu^{k}}\Phi r^{k}=D\big{(}g_{\mu^{k}}+\alpha
+    P_{\mu^{k}}\Phi r^{k}\big{)},$ |  | (4.19) |'
 - en: where $P_{\mu^{k}}$ is the transition probability matrix corresponding to $\mu^{k}$,
     $g_{\mu^{k}}$ is the expected cost vector of $\mu^{k}$, i.e., the vector whose
     $i$th component is
   id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 $P_{\mu^{k}}$ 是对应于 $\mu^{k}$ 的转移概率矩阵，$g_{\mu^{k}}$ 是 $\mu^{k}$ 的期望成本向量，即，其第
+    $i$ 个分量为
 - en: '|  | $\sum_{j=1}^{n}p_{ij}\bigl{(}\mu^{k}(i)\bigr{)}g\bigl{(}i,\mu^{k}(i),j\bigr{)},\qquad
     i=1,\ldots,n,$ |  |'
   id: totrans-359
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\sum_{j=1}^{n}p_{ij}\bigl{(}\mu^{k}(i)\bigr{)}g\bigl{(}i,\mu^{k}(i),j\bigr{)},\qquad
+    i=1,\ldots,n,$ |  |'
 - en: and $D$ and $\Phi$ are the matrices with rows the disaggregation and aggregation
     distributions, respectively. Following the policy evaluation step, the algorithm
     generates $\mu^{k+1}$ by
   id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: $D$ 和 $\Phi$ 是矩阵，其行分别为分解和聚合分布。根据策略评估步骤，算法通过
 - en: '|  | $\mu^{k+1}(i)=\arg\min_{u\in U(i)}\sum_{j=1}^{n}p_{ij}(u)\left(g(i,u,j)+\alpha\sum_{m=1}^{q}\phi_{jm}r^{k}_{m}\right),\qquad
     i=1,\ldots,n;$ |  | (4.20) |'
   id: totrans-361
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\mu^{k+1}(i)=\arg\min_{u\in U(i)}\sum_{j=1}^{n}p_{ij}(u)\left(g(i,u,j)+\alpha\sum_{m=1}^{q}\phi_{jm}r^{k}_{m}\right),\qquad
+    i=1,\ldots,n;$ |  | (4.20) |'
 - en: this is the policy improvement step. In the preceding minimization we use one
     step lookahead, but a multistep lookahead or Monte Carlo tree search can also
     be used.
@@ -3277,57 +3299,77 @@
   id: totrans-395
   prefs: []
   type: TYPE_NORMAL
+  zh: 特别是，我们可以使用无模型模拟来近似 $C$ 和 $b$，然后近似地求解系统 $Cr=b$。为此，我们首先生成一个状态序列 $\{i_{1},i_{2},\ldots\}$，按照某些分布
+    $\{\xi_{i}\mid i=1,\ldots,n\}$（对所有 $i$，$\xi_{i}>0$），然后对于每个 $m\geq 1$，生成一个样本转移
+    $(i_{m},j_{m})$，按照分布 $\{p_{i_{m}j}\mid j=1,\ldots,n\}$。给定前 $M$ 个样本，我们形成矩阵 $\widehat{C}_{M}$
+    和向量 $\hat{b}_{M}$，由下列公式给出
 - en: '|  | $\widehat{C}_{M}=I-{\alpha\over M}\sum_{m=1}^{M}{1\over\xi_{i_{m}}}d(i_{m})\phi(j_{m})^{\prime},\qquad\hat{b}_{M}={1\over
     M}\sum_{m=1}^{M}{1\over\xi_{i_{m}}}d(i_{m})g\big{(}i_{m},\mu(i_{m}),j_{m}\big{)},$
     |  | (4.24) |'
   id: totrans-396
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\widehat{C}_{M}=I-{\alpha\over M}\sum_{m=1}^{M}{1\over\xi_{i_{m}}}d(i_{m})\phi(j_{m})^{\prime},\qquad\hat{b}_{M}={1\over
+    M}\sum_{m=1}^{M}{1\over\xi_{i_{m}}}d(i_{m})g\big{(}i_{m},\mu(i_{m}),j_{m}\big{)},$
+    |  | (4.24) |'
 - en: where $d(i)$ is the $i$th column of $D$ and $\phi(j)^{\prime}$ is the $j$th
     row of $\Phi$. We can then show that $\widehat{C}_{M}\to C$ and $\hat{b}_{M}\to
     d$ by using law of large numbers arguments, i.e., writing
   id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 $d(i)$ 是 $D$ 的第 $i$ 列，$\phi(j)^{\prime}$ 是 $\Phi$ 的第 $j$ 行。然后，我们可以使用大数法则的论证来展示
+    $\widehat{C}_{M}\to C$ 和 $\hat{b}_{M}\to d$，即写作
 - en: '|  | $C=I-\alpha\sum_{i=1}^{n}\sum_{j=1}^{n}p_{ij}\big{(}\mu(i)\big{)}d(i)\phi(j)^{\prime},\qquad
     b=\sum_{i=1}^{n}\sum_{j=1}^{n}p_{ij}\big{(}\mu(i)\big{)}d(i)g\bigl{(}i,\mu(i),j\bigr{)},$
     |  |'
   id: totrans-398
   prefs: []
   type: TYPE_TB
+  zh: '|  | $C=I-\alpha\sum_{i=1}^{n}\sum_{j=1}^{n}p_{ij}\big{(}\mu(i)\big{)}d(i)\phi(j)^{\prime},\qquad
+    b=\sum_{i=1}^{n}\sum_{j=1}^{n}p_{ij}\big{(}\mu(i)\big{)}d(i)g\bigl{(}i,\mu(i),j\bigr{)},$
+    |  |'
 - en: multiplying and dividing $p_{ij}\big{(}\mu(i)\big{)}$ by $\xi_{i}$ in order
     to properly view these expressions as expected values, and using the relation
   id: totrans-399
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将 $p_{ij}\big{(}\mu(i)\big{)}$ 乘以 $\xi_{i}$ 以适当地将这些表达式视为期望值，并使用关系
 - en: '|  | $\lim_{M\to\infty}{\hbox{Number of occurrences of the $i$ to $j$ transition
     from time $m=1$ to $m=M$}\over M}=\xi_{i}\,p_{ij}\big{(}\mu(i)\big{)}.$ |  |'
   id: totrans-400
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\lim_{M\to\infty}{\hbox{从时间 $m=1$ 到 $m=M$ 的 $i$ 到 $j$ 转移的次数}\over M}=\xi_{i}\,p_{ij}\big{(}\mu(i)\big{)}.$
+    |  |'
 - en: The corresponding estimates
   id: totrans-401
   prefs: []
   type: TYPE_NORMAL
+  zh: 相应的估计
 - en: '|  | $\hat{r}_{M}=\widehat{C}_{M}^{-1}\hat{b}_{M}$ |  |'
   id: totrans-402
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\hat{r}_{M}=\widehat{C}_{M}^{-1}\hat{b}_{M}$ |  |'
 - en: 'converge to the unique solution of the policy evaluation Eq. (4.23) as $M\to\infty$,
     and provide the estimates $\Phi\hat{r}_{M}$ of the cost vector $J_{\mu}$ of $\mu$:'
   id: totrans-403
   prefs: []
   type: TYPE_NORMAL
+  zh: 收敛到政策评估方程 (4.23) 的唯一解，且提供 $\mu$ 的成本向量 $J_{\mu}$ 的估计 $\Phi\hat{r}_{M}$：
 - en: '|  | $\tilde{J}_{\mu}=\Phi\hat{r}_{M}.$ |  |'
   id: totrans-404
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\tilde{J}_{\mu}=\Phi\hat{r}_{M}.$ |  |'
 - en: This is the aggregation counterpart of the LSTD(0) method. One may also use
     an iterative simulation-based LSPE(0)-type method or a TD(0)-type method to solve
     the equation $Cr=b$; see [Ber12].
   id: totrans-405
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是 LSTD(0) 方法的聚合对等物。也可以使用基于迭代模拟的 LSPE(0)-型方法或 TD(0)-型方法来解决方程 $Cr=b$；见 [Ber12]。
 - en: 'Note that instead of using the probabilities $\xi_{i}$ to sample directly original
     system states, we may alternatively sample the aggregate states $S_{\ell}$ according
     to some distribution $\{\zeta_{\ell}\mid\ell=1,\ldots,q\}$, generate a sequence
@@ -3337,17 +3379,24 @@
   id: totrans-406
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们可以选择不使用概率 $\xi_{i}$ 直接抽样原系统状态，而是根据某些分布 $\{\zeta_{\ell}\mid\ell=1,\ldots,q\}$
+    抽样聚合状态 $S_{\ell}$，生成一系列聚合状态 $\{S_{\ell_{1}},S_{\ell_{2}},\ldots\}$，然后使用分解概率生成状态序列
+    $\{i_{1},i_{2},\ldots\}$。在这种情况下，方程 (4.24) 应修改如下：
 - en: '|  | $\widehat{C}_{M}=I-{\alpha\over M}\sum_{m=1}^{M}{1\over\zeta_{\ell_{m}}d_{\ell_{m}i_{m}}}d(i_{m})\phi(j_{m})^{\prime},\qquad\hat{b}_{M}={1\over
     M}\sum_{m=1}^{M}{1\over\zeta_{\ell_{m}}d_{\ell_{m}i_{m}}}d(i_{m})g\big{(}i_{m},\mu(i_{m}),j_{m}\big{)}.$
     |  |'
   id: totrans-407
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\widehat{C}_{M}=I-{\alpha\over M}\sum_{m=1}^{M}{1\over\zeta_{\ell_{m}}d_{\ell_{m}i_{m}}}d(i_{m})\phi(j_{m})^{\prime},\qquad\hat{b}_{M}={1\over
+    M}\sum_{m=1}^{M}{1\over\zeta_{\ell_{m}}d_{\ell_{m}i_{m}}}d(i_{m})g\big{(}i_{m},\mu(i_{m}),j_{m}\big{)}.$
+    |  |'
 - en: The main difficulty with the policy improvement step at a given state $i$ is
     the need to compute the expected value in the $Q$-factor expression
   id: totrans-408
   prefs: []
   type: TYPE_NORMAL
+  zh: 在给定状态 $i$ 的策略改进步骤中的主要困难是需要计算 $Q$-因子表达式中的期望值
 - en: '|  | $\sum_{j=1}^{n}p_{ij}(u)\left(g(i,u,j)+\alpha\sum_{\ell=1}^{q}\phi_{j\ell}r^{k}_{\ell}\right)$
     |  |'
   id: totrans-409
@@ -5261,58 +5310,71 @@
   id: totrans-641
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BPW12] Browne, C., Powley, E., Whitehouse, D., Lucas, L., Cowling, P. I.,
+    Rohlfshagen, P., Tavener, S., Perez, D., Samothrakis, S., 和 Colton, S., 2012.
+    “蒙特卡罗树搜索方法综述，”IEEE计算智能与游戏中的AI学报，第4卷，第1-43页。'
 - en: '[BSA83] Barto, A. G., Sutton, R. S., and Anderson, C. W., 1983. “Neuronlike
     Elements that Can Solve Difficult Learning Control Problems,” IEEE Trans. on Systems,
     Man, and Cybernetics, Vol. 13, pp. 835-846.'
   id: totrans-642
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BSA83] Barto, A. G., Sutton, R. S., 和 Anderson, C. W., 1983. “可解决复杂学习控制问题的类神经元元素，”IEEE系统、人工与控制论学报，第13卷，第835-846页。'
 - en: '[BTW97] Bertsekas, D. P., Tsitsiklis, J. N., and Wu, C., 1997. “Rollout Algorithms
     for Combinatorial Optimization,” Heuristics, Vol. 3, pp. 245-262.'
   id: totrans-643
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BTW97] Bertsekas, D. P., Tsitsiklis, J. N., 和 Wu, C., 1997. “组合优化的回滚算法，”启发式，第3卷，第245-262页。'
 - en: '[BeC89] Bertsekas, D. P., and Castanon, D. A., 1989. “Adaptive Aggregation
     Methods for Infinite Horizon Dynamic Programming,” IEEE Trans. on Aut.  Control,
     Vol. AC-34, pp. 589-598.'
   id: totrans-644
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BeC89] Bertsekas, D. P., 和 Castanon, D. A., 1989. “无限时间视野动态规划的自适应聚合方法，”IEEE自动控制学报，第AC-34卷，第589-598页。'
 - en: '[BeC99] Bertsekas, D. P., and Castanon, D. A., 1999. “Rollout Algorithms for
     Stochastic Scheduling Problems,” Heuristics, Vol. 5, pp. 89-108.'
   id: totrans-645
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BeC99] Bertsekas, D. P., 和 Castanon, D. A., 1999. “用于随机调度问题的回滚算法，”启发式，第5卷，第89-108页。'
 - en: '[BeT91] Bertsekas, D. P., and Tsitsiklis, J. N., 1991. “An Analysis of Stochastic
     Shortest Path Problems,” Math. Operations Research, Vol. 16, pp. 580-595.'
   id: totrans-646
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BeT91] Bertsekas, D. P., 和 Tsitsiklis, J. N., 1991. “随机最短路径问题的分析，”数学运筹研究，第16卷，第580-595页。'
 - en: '[BeT96] Bertsekas, D. P., and Tsitsiklis, J. N., 1996. Neuro-Dynamic Programming,
     Athena Scientific, Belmont, MA.'
   id: totrans-647
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BeT96] Bertsekas, D. P., 和 Tsitsiklis, J. N., 1996. 神经动态规划，雅典娜科学出版社，贝尔蒙特，马萨诸塞州。'
 - en: '[BeT00] Bertsekas, D. P., and Tsitsiklis, J. N., 2000. “Gradient Convergence
     in Gradient Methods,” SIAM J. on Optimization, Vol. 10, pp. 627-642.'
   id: totrans-648
   prefs: []
   type: TYPE_NORMAL
+  zh: '[BeT00] Bertsekas, D. P., 和 Tsitsiklis, J. N., 2000. “梯度方法中的梯度收敛，”SIAM优化学报，第10卷，第627-642页。'
 - en: '[Ber95] Bertsekas, D. P., 1995. “A Counterexample to Temporal Differences Learning,”
     Neural Computation, Vol. 7, pp. 270-279.'
   id: totrans-649
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber95] Bertsekas, D. P., 1995. “时间差分学习的反例，”神经计算，第7卷，第270-279页。'
 - en: '[Ber11a] Bertsekas, D. P., 2011. “Approximate Policy Iteration: A Survey and
     Some New Methods,” J. of Control Theory and Applications, Vol. 9, pp. 310-335.'
   id: totrans-650
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber11a] Bertsekas, D. P., 2011. “近似策略迭代：综述与一些新方法，”控制理论与应用杂志，第9卷，第310-335页。'
 - en: '[Ber11b] Bertsekas, D. P., 2011. “Temporal Difference Methods for General Projected
     Equations,” IEEE Trans. on Aut.  Control, Vol. 56, pp. 2128-2139.'
   id: totrans-651
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber11b] Bertsekas, D. P., 2011. “通用投影方程的时间差分方法，”IEEE自动控制学报，第56卷，第2128-2139页。'
 - en: '[Ber11c] Bertsekas, D. P., 2011. “$\lambda$-Policy Iteration: A Review and
     a New Implementation,” Lab. for Information and Decision Systems Report LIDS-P-2874,
     MIT; in Reinforcement Learning and Approximate Dynamic Programming for Feedback
@@ -5321,37 +5383,46 @@
   id: totrans-652
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber11c] Bertsekas, D. P., 2011. “$\lambda$-策略迭代：综述与新实现，”信息与决策系统实验室报告 LIDS-P-2874，麻省理工学院；见《强化学习与近似动态规划用于反馈控制》，由
+    F. Lewis 和 D. Liu (编)，IEEE出版社，计算智能系列，2012年。'
 - en: '[Ber12] Bertsekas, D. P., 2012. Dynamic Programming and Optimal Control, Vol. II:
     Approximate Dynamic Programming, 4th edition, Athena Scientific, Belmont, MA.'
   id: totrans-653
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber12] Bertsekas, D. P., 2012. 动态规划与最优控制，第II卷：近似动态规划，第4版，雅典娜科学出版社，贝尔蒙特，马萨诸塞州。'
 - en: '[Ber13] Bertsekas, D. P., 2013. “Rollout Algorithms for Discrete Optimization:
     A Survey,” Handbook of Combinatorial Optimization, Springer.'
   id: totrans-654
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber13] Bertsekas, D. P., 2013. “离散优化的回滚算法：综述，”组合优化手册，Springer出版社。'
 - en: '[Ber15] Bertsekas, D. P., 2015. Convex Optimization Algorithms, Athena Scientific,
     Belmont, MA.'
   id: totrans-655
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber15] Bertsekas, D. P., 2015. 凸优化算法，雅典娜科学出版社，贝尔蒙特，马萨诸塞州。'
 - en: '[Ber16a] Bertsekas, D. P., 2016. “Proximal Algorithms and Temporal Differences
     for Large Linear Systems: Extrapolation, Approximation, and Simulation,” Report
     LIDS-P-3205, MIT; arXiv preprint arXiv:1610.05427.'
   id: totrans-656
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber16a] Bertsekas, D. P., 2016. “大规模线性系统的近端算法与时间差分：外推、近似与仿真，”报告 LIDS-P-3205，麻省理工学院；arXiv
+    预印本 arXiv:1610.05427。'
 - en: '[Ber16b] Bertsekas, D. P., 2016. Nonlinear Programming, 3rd edition, Athena
     Scientific, Belmont, MA.'
   id: totrans-657
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber16b] Bertsekas, D. P., 2016. 非线性编程，第3版，雅典娜科学出版社，贝尔蒙特，马萨诸塞州。'
 - en: '[Ber17] Bertsekas, D. P., 2017. Dynamic Programming and Optimal Control, Vol. I,
     4th edition, Athena Scientific, Belmont, MA.'
   id: totrans-658
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Ber17] Bertsekas, D. P., 2017. 动态规划与最优控制，第I卷，第4版，雅典娜科学出版社，贝尔蒙特，马萨诸塞州。'
 - en: '[Ber18a] Bertsekas, D. P., 2018. Abstract Dynamic Programming, Athena Scientific,
     Belmont, MA.'
   id: totrans-659
@@ -5606,66 +5677,79 @@
   id: totrans-694
   prefs: []
   type: TYPE_NORMAL
+  zh: '[LLP93] Leshno, M.，Lin, V. Y.，Pinkus, A. 和 Schocken, S., 1993.《具有非多项式激活函数的多层前馈网络可以逼近任何函数》，《神经网络》，第6卷，第861-867页。'
 - en: '[LWL17] Liu, W., Wang, Z., Liu, X., Zeng, N., Liu, Y., and Alsaadi, F. E.,
     2017\. “A Survey of Deep Neural Network Architectures and their Applications,”
     Neurocomputing, Vol. 234, pp. 11-26.'
   id: totrans-695
   prefs: []
   type: TYPE_NORMAL
+  zh: '[LWL17] Liu, W.，Wang, Z.，Liu, X.，Zeng, N.，Liu, Y. 和 Alsaadi, F. E., 2017.《深度神经网络架构及其应用的调查》，《神经计算》，第234卷，第11-26页。'
 - en: '[LeL12] Lewis, F. L., and Liu, D., 2012. Reinforcement Learning and Approximate
     Dynamic Programming for Feedback Control, IEEE Press Computational Intelligence
     Series, N. Y.'
   id: totrans-696
   prefs: []
   type: TYPE_NORMAL
+  zh: '[LeL12] Lewis, F. L. 和 Liu, D., 2012.《反馈控制中的强化学习与近似动态规划》，IEEE Press 计算智能系列，纽约。'
 - en: '[Li17] Li, Y., 2017. “Deep Reinforcement Learning: An Overview,” arXiv preprint
     ArXiv: 1701.07274v5.'
   id: totrans-697
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Li17] Li, Y., 2017.《深度强化学习概述》，arXiv 预印本 ArXiv:1701.07274v5。'
 - en: '[MMP15] Mann, T.A., Mannor, S. and Precup, D., 2015. “Approximate Value Iteration
     with Temporally Extended Actions,” J. of Artificial Intelligence Research, Vol. 53,
     pp. 375-438.'
   id: totrans-698
   prefs: []
   type: TYPE_NORMAL
+  zh: '[MMP15] Mann, T.A.，Mannor, S. 和 Precup, D., 2015.《带时间扩展动作的近似值迭代》，《人工智能研究杂志》，第53卷，第375-438页。'
 - en: '[MMS06] Menache, I., Mannor, S., and Shimkin, N., 2005. “Basis Function Adaptation
     in Temporal Difference Reinforcement Learning,” Ann. Oper. Res., Vol. 134, pp. 215-238.'
   id: totrans-699
   prefs: []
   type: TYPE_NORMAL
+  zh: '[MMS06] Menache, I.，Mannor, S. 和 Shimkin, N., 2005.《时间差分强化学习中的基函数适应》，《运筹学年刊》，第134卷，第215-238页。'
 - en: '[Men82] Mendelssohn, R., 1982. “An Iterative Aggregation Procedure for Markov
     Decision Processes,” Operations Research, Vol. 30, pp. 62-73.'
   id: totrans-700
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Men82] Mendelssohn, R., 1982.《Markov决策过程的迭代聚合程序》，《运筹学》，第30卷，第62-73页。'
 - en: '[PaR98] Parr, R., and Russell, S. J., 1998. “Reinforcement Learning with Hierarchies
     of Machines,” in Advances in Neural Information Processing Systems, pp. 1043-1049.'
   id: totrans-701
   prefs: []
   type: TYPE_NORMAL
+  zh: '[PaR98] Parr, R. 和 Russell, S. J., 1998.《具有机器层次的强化学习》，收录于《神经信息处理系统进展》，第1043-1049页。'
 - en: '[Pow11] Powell, W. B., 2011.  Approximate Dynamic Programming: Solving the
     Curses of Dimensionality, 2nd Edition, J. Wiley and Sons, Hoboken, N. J.'
   id: totrans-702
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Pow11] Powell, W. B., 2011.《近似动态规划：解决维度灾难》，第二版，J. Wiley and Sons，霍博肯，新泽西州。'
 - en: '[RPW91] Rogers, D. F., Plante, R. D., Wong, R. T., and Evans, J. R., 1991. “Aggregation
     and Disaggregation Techniques and Methodology in Optimization,” Operations Research,
     Vol. 39, pp. 553-582.'
   id: totrans-703
   prefs: []
   type: TYPE_NORMAL
+  zh: '[RPW91] Rogers, D. F.，Plante, R. D.，Wong, R. T. 和 Evans, J. R., 1991.《优化中的聚合与解聚技术及方法论》，《运筹学》，第39卷，第553-582页。'
 - en: '[SBP04] Si, J., Barto, A., Powell, W., and Wunsch, D., (Eds.) 2004. Learning
     and Approximate Dynamic Programming, IEEE Press, N. Y.'
   id: totrans-704
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SBP04] Si, J.，Barto, A.，Powell, W. 和 Wunsch, D. (编), 2004.《学习与近似动态规划》，IEEE
+    Press，纽约。'
 - en: '[SGG15] Scherrer, B., Ghavamzadeh, M., Gabillon, V., Lesner, B., and Geist,
     M., 2015. “Approximate Modified Policy Iteration and its Application to the Game
     of Tetris,” J. of Machine Learning Research, Vol. 16, pp. 1629-1676.'
   id: totrans-705
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SGG15] Scherrer, B.，Ghavamzadeh, M.，Gabillon, V.，Lesner, B. 和 Geist, M., 2015.《近似修改策略迭代及其在俄罗斯方块游戏中的应用》，《机器学习研究杂志》，第16卷，第1629-1676页。'
 - en: '[SHS17] Silver, D., Hubert, T., Schrittwieser, J., Antonoglou, I., Lai, M.,
     Guez, A., Lanctot, M., Sifre, L., Kumaran, D., Graepel, T. and Lillicrap, T.,
     2017. “Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning
@@ -5673,70 +5757,87 @@
   id: totrans-706
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SHS17] Silver, D.，Hubert, T.，Schrittwieser, J.，Antonoglou, I.，Lai, M.，Guez,
+    A.，Lanctot, M.，Sifre, L.，Kumaran, D.，Graepel, T. 和 Lillicrap, T., 2017.《通过自我博弈与通用强化学习算法掌握国际象棋和将棋》，arXiv
+    预印本 arXiv:1712.01815。'
 - en: '[SJJ95] Singh, S. P., Jaakkola, T., and Jordan, M. I., 1995. “Reinforcement
     Learning with Soft State Aggregation,” in Advances in Neural Information Processing
     Systems 7, MIT Press, Cambridge, MA.'
   id: totrans-707
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SJJ95] Singh, S. P.，Jaakkola, T. 和 Jordan, M. I., 1995.《带软状态聚合的强化学习》，收录于《神经信息处理系统进展第7卷》，MIT
+    Press，剑桥，马萨诸塞州。'
 - en: '[SPS99] Sutton, R., Precup, D., and Singh, S., 1999. “Between MDPs and Semi-MDPs:
     A Framework for Temporal Abstraction in Reinforcement Learning,” Artificial Intelligence,
     Vol. 112, pp. 181-211.'
   id: totrans-708
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SPS99] Sutton, R.，Precup, D. 和 Singh, S., 1999.《MDP与半MDP之间：强化学习中的时间抽象框架》，《人工智能》，第112卷，第181-211页。'
 - en: '[SSP18] Serban, I. V., Sankar, C., Pieper, M., Pineau, J., Bengio., J., 2018. “The
     Bottleneck Simulator: A Model-based Deep Reinforcement Learning Approach,” arXiv
     preprint arXiv:1807.04723.v1.'
   id: totrans-709
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SSP18] Serban, I. V.，Sankar, C.，Pieper, M.，Pineau, J.，Bengio, J., 2018.《瓶颈模拟器：一种基于模型的深度强化学习方法》，arXiv
+    预印本 arXiv:1807.04723.v1。'
 - en: '[Saa03] Saad, Y., 2003. Iterative Methods for Sparse Linear Systems, SIAM,
     Phila., Pa.'
   id: totrans-710
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Saa03] Saad, Y., 2003.《稀疏线性系统的迭代方法》，SIAM，费城，宾夕法尼亚州。'
 - en: '[Sam59] Samuel, A. L., 1959. “Some Studies in Machine Learning Using the Game
     of Checkers,” IBM J. of Research and Development, pp. 210-229.'
   id: totrans-711
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sam59] Samuel, A. L., 1959. “使用跳棋游戏的机器学习研究，”《IBM研究与开发杂志》，第210-229页。'
 - en: '[Sam67] Samuel, A. L., 1967. “Some Studies in Machine Learning Using the Game
     of Checkers. II – Recent Progress,” IBM J. of Research and Development, pp. 601-617.'
   id: totrans-712
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sam67] Samuel, A. L., 1967. “使用跳棋游戏的机器学习研究。II – 近期进展，”《IBM研究与开发杂志》，第601-617页。'
 - en: '[Sch13] Scherrer, B., 2013. “Performance Bounds for Lambda Policy Iteration
     and Application to the Game of Tetris,” J. of Machine Learning Research, Vol. 14,
     pp. 1181-1227.'
   id: totrans-713
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sch13] Scherrer, B., 2013. “Lambda策略迭代的性能界限及其在俄罗斯方块游戏中的应用，”《机器学习研究杂志》，第14卷，第1181-1227页。'
 - en: '[Sch15] Schmidhuber, J., 2015. “Deep Learning in Neural Networks: An Overview,”
     Neural Networks, Vol. 61, pp. 85-117.'
   id: totrans-714
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sch15] Schmidhuber, J., 2015. “神经网络中的深度学习：概述，”《神经网络》，第61卷，第85-117页。'
 - en: '[Sha50] Shannon, C., 1950.  “Programming a Digital Computer for Playing Chess,”
     Phil. Mag., Vol. 41, pp. 356-375.'
   id: totrans-715
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sha50] Shannon, C., 1950. “为数字计算机编程以玩国际象棋，”《哲学杂志》，第41卷，第356-375页。'
 - en: '[SuB98] Sutton, R.  S., and Barto, A. G., 1998. Reinforcement Learning, MIT
     Press, Cambridge, MA. (A draft 2nd edition is available on-line.)'
   id: totrans-716
   prefs: []
   type: TYPE_NORMAL
+  zh: '[SuB98] Sutton, R. S., 和 Barto, A. G., 1998. 《强化学习》，麻省理工学院出版社，剑桥，马萨诸塞州。（第二版草稿可在线获取。）'
 - en: '[Sut88] Sutton, R.  S., 1988. “Learning to Predict by the Methods of Temporal
     Differences,” Machine Learning, Vol. 3, pp. 9-44.'
   id: totrans-717
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sut88] Sutton, R. S., 1988. “通过时间差方法学习预测，”《机器学习》，第3卷，第9-44页。'
 - en: '[Sze10] Szepesvari, C., 2010. Algorithms for Reinforcement Learning, Morgan
     and Claypool Publishers, San Franscisco, CA.'
   id: totrans-718
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Sze10] Szepesvari, C., 2010. 《强化学习算法》，Morgan and Claypool Publishers，旧金山，加州。'
 - en: '[TeG96] Tesauro, G., and Galperin, G. R., 1996. “On-Line Policy Improvement
     Using Monte Carlo Search,” presented at the 1996 Neural Information Processing
     Systems Conference, Denver, CO; also in M. Mozer et al. (eds.), Advances in Neural
@@ -5744,58 +5845,70 @@
   id: totrans-719
   prefs: []
   type: TYPE_NORMAL
+  zh: '[TeG96] Tesauro, G., 和 Galperin, G. R., 1996. “使用蒙特卡罗搜索的在线策略改进，”在1996年神经信息处理系统会议上展示，丹佛，科罗拉多州；亦见
+    M. Mozer 等（编），《神经信息处理系统进展 9》，麻省理工学院出版社（1997年）。'
 - en: '[Tes89a] Tesauro, G. J., 1989\. “Neurogammon Wins Computer Olympiad,” Neural
     Computation, Vol. 1, pp. 321-323.'
   id: totrans-720
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes89a] Tesauro, G. J., 1989. “Neurogammon 赢得计算机奥林匹克，”《神经计算》，第1卷，第321-323页。'
 - en: '[Tes89b] Tesauro, G. J., 1989. “Connectionist Learning of Expert Preferences
     by Comparison Training,” in Advances in Neural Information Processing Systems,
     pp. 99-106.'
   id: totrans-721
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes89b] Tesauro, G. J., 1989. “通过比较训练的连接主义学习专家偏好，”见《神经信息处理系统进展》，第99-106页。'
 - en: '[Tes92] Tesauro, G. J., 1992. “Practical Issues in Temporal Difference Learning,”
     Machine Learning, Vol. 8, pp. 257-277.'
   id: totrans-722
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes92] Tesauro, G. J., 1992. “时间差学习中的实际问题，”《机器学习》，第8卷，第257-277页。'
 - en: '[Tes94] Tesauro, G. J., 1994. “TD-Gammon, a Self-Teaching Backgammon Program,
     Achieves Master-Level Play,” Neural Computation, Vol. 6, pp. 215-219.'
   id: totrans-723
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes94] Tesauro, G. J., 1994. “TD-Gammon，一种自我教学的掼蛋程序，实现了大师级游戏水平，”《神经计算》，第6卷，第215-219页。'
 - en: '[Tes95] Tesauro, G. J., 1995. “Temporal Difference Learning and TD-Gammon,”
     Communications of the ACM, Vol. 38, pp. 58-68.'
   id: totrans-724
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes95] Tesauro, G. J., 1995. “时间差学习与 TD-Gammon，”《ACM通讯》，第38卷，第58-68页。'
 - en: '[Tes01] Tesauro, G. J., 2001. “Comparison Training of Chess Evaluation Functions,”
     in Machines that Learn to Play Games, Nova Science Publishers, pp. 117-130.'
   id: totrans-725
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes01] Tesauro, G. J., 2001. “国际象棋评估函数的比较训练，”见《学习玩游戏的机器》，Nova Science Publishers，第117-130页。'
 - en: '[Tes02] Tesauro, G. J., 2002. “Programming Backgammon Using Self-Teaching Neural
     Nets,” Artificial Intelligence, Vol. 134, pp. 181-199.'
   id: totrans-726
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tes02] Tesauro, G. J., 2002. “使用自我教学神经网络编程掼蛋，”《人工智能》，第134卷，第181-199页。'
 - en: '[TsV96] Tsitsiklis, J. N., and Van Roy, B., 1996\. “Feature-Based Methods for
     Large-Scale Dynamic Programming,” Machine Learning, Vol. 22, pp. 59-94.'
   id: totrans-727
   prefs: []
   type: TYPE_NORMAL
+  zh: '[TsV96] Tsitsiklis, J. N., 和 Van Roy, B., 1996. “用于大规模动态规划的特征基础方法，”《机器学习》，第22卷，第59-94页。'
 - en: '[Tsi94] Tsitsiklis, J. N., 1994. “Asynchronous Stochastic Approximation and
     Q-Learning,” Machine Learning, Vol. 16, pp. 185-202.'
   id: totrans-728
   prefs: []
   type: TYPE_NORMAL
+  zh: '[Tsi94] Tsitsiklis, J. N., 1994. “异步随机逼近与 Q 学习，”《机器学习》，第16卷，第185-202页。'
 - en: '[VVL13] Vrabie, V., Vamvoudakis, K. G., and Lewis, F. L., 2013. Optimal Adaptive
     Control and Differential Games by Reinforcement Learning Principles, The Institution
     of Engineering and Technology, London.'
   id: totrans-729
   prefs: []
   type: TYPE_NORMAL
+  zh: '[VVL13] Vrabie, V., Vamvoudakis, K. G., 和 Lewis, F. L., 2013. 《基于强化学习原则的最优自适应控制与微分游戏》，工程与技术学会，伦敦。'
 - en: '[Van06] Van Roy, B., 2006. “Performance Loss Bounds for Approximate Value Iteration
     with State Aggregation,” Mathematics of Operations Research, Vol. 31, pp. 234-244.'
   id: totrans-730
