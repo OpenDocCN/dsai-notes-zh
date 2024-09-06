@@ -1,0 +1,1128 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:53:37'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2106.15328] Deep Learning for Multi-view Stereo via Plane Sweep: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2106.15328](https://ar5iv.labs.arxiv.org/html/2106.15328)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Deep Learning for Multi-view Stereo via Plane Sweep: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Qingtian Zhu¹, Chen Min^(1,2), Zizhuang Wei¹, Yisong Chen¹, and Guoping Wang¹
+  prefs: []
+  type: TYPE_NORMAL
+- en: ¹Peking University
+  prefs: []
+  type: TYPE_NORMAL
+- en: ²National Innovation Institute of Defense Technology
+  prefs: []
+  type: TYPE_NORMAL
+- en: zqt@stu.pku.edu.cn
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 3D reconstruction has lately attracted increasing attention due to its wide
+    application in many areas, such as autonomous driving, robotics and virtual reality.
+    As a dominant technique in artificial intelligence, deep learning has been successfully
+    adopted to solve various computer vision problems. However, deep learning for
+    3D reconstruction is still at its infancy due to its unique challenges and varying
+    pipelines. To stimulate future research, this paper presents a review of recent
+    progress in deep learning methods for Multi-view Stereo (MVS), which is considered
+    as a crucial task of image-based 3D reconstruction. It also presents comparative
+    results on several publicly available datasets, with insightful observations and
+    inspiring future research directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: With the rapid development of 3D acquisition techniques, depth sensors are becoming
+    increasingly affordable and reliable, such as LiDARs. These sensors have been
+    widely equipped for real-time tasks to obtain a rough estimation of surrounding
+    environment, e.g., in simultaneous localization and mapping (SLAM). However, depth
+    maps captured by depth sensors are usually sparse due to hardware and power limitations
+    at edge devices, so that delicate details are abandoned in exchange for computational
+    efficiency. Another pipeline is to reconstruct 3D models from a series of images.
+    In this case, depth values are computed by matching 2D images and the whole reconstruction
+    is done off-line. Provided that capturing images is more economical and available
+    than acquiring depth maps via depth sensors, image-based 3D reconstruction is
+    a better option for time-insensitive tasks. Besides, images actually contain information
+    that depth sensors cannot capture, such as texture and lighting. These clues are
+    crucial for reconstructing more delicate and detailed 3D models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-view Stereo (MVS) is a computationally expensive procedure of image-based
+    3D reconstruction. The most universal definition of the task is stated as follows.
+    Given a series of images with their respective calibrated camera parameters, MVS
+    aims to estimate a depth map for each image and then reconstruct a dense point
+    cloud of the scene. Most previous attempts [[26](#bib.bib26), [27](#bib.bib27)]
+    adopt this definition. Deep learning has shown its effectiveness in many computer
+    vision tasks. For binocular stereo, [[18](#bib.bib18)] discretizes the depth space
+    and turns the task of stereo into a classification problem. Plane sweep algorithm [[4](#bib.bib4)]
+    extends this pattern to multi-image matching, whose pattern is suitable for deep
+    CNNs to handle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To restate, this paper surveys learning-based MVS methods that build matching
+    cost volumes via plane sweep algorithm and yield per-view depth maps as intermediate
+    representation to reconstruct dense 3D point clouds. Each image within a scan
+    takes turns to be the reference image to estimate depth maps and its $N-1$ neighboring
+    images as source images. In total $N$ images are sent into the network as inputs
+    to produce one depth map and corresponding confidence map. The dense point cloud
+    is then obtained by filtering and fusing depth maps for all images, The pipeline
+    is also shown in Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ Deep Learning for
+    Multi-view Stereo via Plane Sweep: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1a1d5fb4827bc7231fae18c797a07bb0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Input, intermediate outputs and final output from a typical MVS pipeline.
+    Reference image (a), together with its $N-1$ neighboring images, are the inputs
+    of network and its depth map (b) and confidence map (c) are produced accordingly.
+    Depth maps of all images are filtered and fused into the reconstructed dense point
+    cloud (d).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'MVS plays as a key component of image-based 3D reconstruction pipeline. In
+    this section, background knowledge is presented. Sec. [2.1](#S2.SS1 "2.1 Structure
+    from Motion ‣ 2 Background ‣ Deep Learning for Multi-view Stereo via Plane Sweep:
+    A Survey") introduces preproposed Structure from Motion (SfM) as the source of
+    camera calibration. Sec. [2.2](#S2.SS2 "2.2 Plane Sweep ‣ 2 Background ‣ Deep
+    Learning for Multi-view Stereo via Plane Sweep: A Survey") explains how to build
+    cost volumes in learning-based MVS methods, which is a key step to enable CNNs
+    to predict depth. Post-processes after obtaining depth maps, including depth filter
+    and fusion, are presented in Sec. [2.3](#S2.SS3 "2.3 Depth Filtering & Fusion
+    ‣ 2 Background ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey").
+    Sec. [2.4](#S2.SS4 "2.4 Datasets ‣ 2 Background ‣ Deep Learning for Multi-view
+    Stereo via Plane Sweep: A Survey") lists several well-known open datasets for
+    MVS and Sec. [2.5](#S2.SS5 "2.5 Evaluation Metrics ‣ 2 Background ‣ Deep Learning
+    for Multi-view Stereo via Plane Sweep: A Survey") lists metrics used for evaluation.
+    Sec. [2.6](#S2.SS6 "2.6 Loss Function ‣ 2 Background ‣ Deep Learning for Multi-view
+    Stereo via Plane Sweep: A Survey") covers loss functions used for learning-based
+    MVS. For clarification, this survey only cover learning-based MVS methods taking
+    advantage of plane sweep algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Structure from Motion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: MVS requires calibrated camera parameter to obtain image-wise adjacency, which
+    is usually achieved by Structure from Motion algorithms. SfM is usually categorized
+    into incremental and global ones. Generally speaking, incremental pipelines solve
+    the optimization problem locally and merge new cameras into known tracks. Thus
+    incremental methods are slower but more robust and accurate. Global SfM is more
+    scalable and can often converge to a pretty good solution but is more susceptible
+    to outliers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specifically for MVS, camera calibration means for each image, a camera extrinsic
+    matrix $\mathbf{T}$, a camera intrinsic matrix $\mathbf{K}$, a depth range $[d_{min},d_{max}]$
+    are acquired by SfM. For most MVS methods, COLMAP [[20](#bib.bib20)] provides
+    a good enough estimation of cameras.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Plane Sweep
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ba0e0061831f211365d7c8f4ae6d21d1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Illustration of plane sweep algorithm. To estimate the depth map
+    for reference camera, neighboring source images are projected by homography to
+    fronto-parallel planes of the frustum of the reference camera.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main principle of plane sweep stereo [[4](#bib.bib4)] is that for each depth,
+    source images are projected to fronto-parallel planes of the reference camera
+    frustum and those depth hypotheses with high similarity of projected images are
+    more reliable. Most learning-based MVS methods rely on plane sweep algorithm to
+    generate cost volumes. This practice is deeply inspired by binocular stereo. In
+    learning-based binocular stereo methods, instead of regressing depth values directly,
+    disparity values, which describe the pixel-level distance between the two views,
+    are estimated. With knowledge of epipolar geometry, depth values can be computed
+    from estimated disparity values. Besides, since the unit of disparity values are
+    pixels, this task becomes a classification task where each class represents a
+    discretized disparity. This common practice has two underlying advantages. First,
+    the estimation of depth is now scale-irrelevant since the unit is pixels, not
+    meters or other measurement of actual distance. Second, CNNs are considered as
+    better at classification than regression, so this helps to yield more reliable
+    results. This discretization relies on plane sweep algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The core of plane sweep algorithm is to verify depth hypotheses. After projecting
+    pixels into space by a hypothetical depth, plane sweep algorithm says that if
+    a hypothetical point in space is captured by different cameras with a similar
+    photometry, this point is likely to be a real point, which is to say, the hypothesis
+    of depth ($z$ value) is valid. In this case, we can divide the depth interval
+    into discretized values and make hypotheses with these values. The final depth
+    is estimated by choosing the most valid depth among all hypotheses. When it comes
+    to implementation, there are two problems remaining. One is to match pixels across
+    different images or to build a homography between views; the other is to measure
+    the similarity of photometry. Note that considering individual pixel RGB color
+    is not robust enough for matching, photometry is usually replaced by a feature
+    map extracted from the original image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a pair of calibrated binocular images, since the two main optical axes are
+    always parallel, we only need to shift one view to another by disparity hypotheses.
+    Things get a little more complicated for MVS as cameras are distributed over the
+    space without epipolar constraint. At depth hypothesis $d$, we first project all
+    pixels of a source image into space with $d$ and then back-warp these points through
+    the reference camera. Thus the homography between the $i$-th source image and
+    the reference image is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $H_{i}(d)=d\mathbf{K}_{0}\mathbf{T}_{0}\mathbf{T}^{-1}_{i}\mathbf{K}^{-1}_{i},$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathbf{K}_{0}$ and $\mathbf{T}_{0}$ are camera intrinsics and extrinsics
+    of reference image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Measurement of photometric similarity varies from one method to another. For
+    binocular stereo, [[5](#bib.bib5), [17](#bib.bib17)] introduce a correlation layer
+    to compute inner product of feature vectors; GC-Net [[13](#bib.bib13)] concatenates
+    feature vectors together. For MVS where the number of cameras is larger than two,
+    there are two main options. MVSNet [[26](#bib.bib26)] applies variance for all
+    feature vectors; DPSNet [[11](#bib.bib11)] concatenates features pairwise and
+    a final cost volume is obtained by averaging all $N-1$ volumes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is worth noting that the division of depth space is a crucial problem to
+    yield good results, which will be covered later in Sec. [2.6](#S2.SS6 "2.6 Loss
+    Function ‣ 2 Background ‣ Deep Learning for Multi-view Stereo via Plane Sweep:
+    A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To restate with an example, provided that the image resolution is $H\times W$
+    and the number of total depth hypotheses is $D$, assuming the dimension of per-pixel
+    feature vectors is $F$, MVS methods build a cost volume of $H\times W\times D\times
+    F$ from image features and this cost volume is then regularized by a neural network
+    to obtain a depth map.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Depth Filtering & Fusion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Assuming that all depth maps have been obtained by MVS methods, the next step
+    is to filter and fuse depth maps into a dense point cloud. Since image-based 3D
+    reconstruction is scale-irrelevant, the estimated depth values are actually the
+    $z$ values for pixels in the local camera coordinate system. Thus the fusion of
+    depth maps are rather straightforward that all we need to do is to project all
+    pixels into 3D space through cameras. The transformation between image coordinate
+    and world coordinate is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbf{P}_{w}=d\mathbf{T}^{-1}\mathbf{K}^{-1}\mathbf{P}_{x},$ |  | (2)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathbf{P}_{x}$ and $\mathbf{P}_{w}$ denote pixel coordinates in image
+    coordinate and world coordinate respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, not all pixels are suitable to be preserved in the final point cloud,
+    e.g., those with low confidence and those at infinity, such as sky. To overcome
+    this problem, depth maps are filtered before fused. Since learning-based MVS methods
+    adopt a classification fashion, each depth map is yielded together with a confidence
+    map correspondingly. So naturally, a threshold can be set to filter depth values
+    with low confidence. Besides, depth values can be across-checked among neighboring
+    views. This strategy of filtering is based on reprojection error, which is commonly
+    used in Bundle Adjustment of SfM.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Taking the strategy in [[29](#bib.bib29)] as an example, which is also shown
+    in Fig. [3](#S2.F3 "Figure 3 ‣ 2.3 Depth Filtering & Fusion ‣ 2 Background ‣ Deep
+    Learning for Multi-view Stereo via Plane Sweep: A Survey"), by mapping a pixel
+    $\mathbf{P}$ in image $\mathbf{I}_{i}$ to its neighboring view $\mathbf{I}_{j}$
+    through estimated depth $D_{i}(\mathbf{P})$, we obtain a new pixel $\mathbf{P}^{\prime}$.
+    As $\mathbf{I}_{j}$ also has its depth map, we can get $D_{j}(\mathbf{P}^{\prime})$
+    accordingly. In turn, $\mathbf{P}^{\prime}$ can be projected to $\mathbf{I}_{i}$
+    at $\mathbf{P}^{\prime\prime}$ with depth $D_{j}(\mathbf{P}^{\prime})$. Depth
+    estimation of $\mathbf{P}^{\prime\prime}$ in $\mathbf{I}_{i}$ is denoted as $D_{i}(\mathbf{P}^{\prime\prime})$.
+    The constraints for depth filtering are'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\&#124;\mathbf{P}-\mathbf{P}^{\prime\prime}\&#124;_{2}\leq\tau_{1},$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\frac{\&#124;D_{i}(\mathbf{P}^{\prime\prime})-D_{i}(\mathbf{P})\&#124;_{1}}{D_{i}(\mathbf{P})}\leq\tau_{2},$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\tau_{1}$ and $\tau_{2}$ are threshold values. As for [[29](#bib.bib29)],
+    pixels satisfying these constraints under at least 3 neighboring views are considered
+    as valid enough to remain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8203c1b259795bba8d43facf5014920b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Illustration of checking geometric consistency among neighboring
+    views by measuring reprojection error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is worth noting that depth filtering and fusion methods are often uncovered
+    in papers though they might be of great importance to obtain good results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Tab. [1](#S2.T1 "Table 1 ‣ 2.4 Datasets ‣ 2 Background ‣ Deep Learning for
+    Multi-view Stereo via Plane Sweep: A Survey") is a brief summary of released MVS
+    datasets. Note that for MVS training, depth is required while evaluation is based
+    on point clouds. Surface reconstruction is required to render depth maps from
+    point clouds and depth fusion is required to evaluate reconstruction quality.
+    Besides, if a dataset does not consist of ground truth camera calibration or uses
+    an open-source software to obtain ground truth calibration, then it might not
+    be suitable for training since plane sweep is sensitive to noises in camera calibration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: An overview of public datasets for MVS.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Dataset | Provided Ground Truth¹ | Synthetic | Online | Evaluation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Camera | Depth | Point Cloud | Benchmark | Target |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DTU [[1](#bib.bib1)] | ✓ |  | ✓ |  |  | Point Cloud |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tanks and Temples [[14](#bib.bib14)] |  |  | ✓ |  | ✓ | Point Cloud |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ETH3D [[22](#bib.bib22)] | ✓ |  | ✓ |  | ✓ | Point Cloud |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BlendedMVS [[28](#bib.bib28)] | ✓ | ✓ |  | ✓ |  | Depth Map |'
+  prefs: []
+  type: TYPE_TB
+- en: '1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For datasets with online benchmark, ground truth of test set (excluding camera
+    parameters) is not released.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: DTU
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: DTU dataset [[1](#bib.bib1)] is an indoor MVS dataset collected under well-controlled
+    laboratory conditions with accurate camera trajectory. It contains 128 scans with
+    49 views under 7 different lighting conditions and is split into 79 training scans,
+    18 validation scans and 22 evaluation scans. By setting each image as reference,
+    there are 27097 training samples in total. DTU dataset officially provides ground
+    truth point clouds, rather than depth maps, which means surface reconstruction
+    is required to generate mesh models and render depth maps. Normally, screened
+    Poisson surface reconstruction algorithm [[12](#bib.bib12)] is adopted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tanks and Temples
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Tanks and Temples [[14](#bib.bib14)] is a large-scale online benchmark captured
+    in more complex real indoor and outdoor scenarios. It contains an intermediate
+    set and an advanced set. Different scenes have different scales, surface reflection
+    and exposure conditions. Evaluation of Tanks and Temples is done online by uploading
+    reconstructed points to its official website. Note that Tanks and Temples does
+    not provide ground truth camera parameters. A training set with ground truth point
+    clouds is available, which is usually used for local off-line validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ETH3D
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: ETH3D [[22](#bib.bib22)] is a comprehensive benchmark for both SLAM and stereo
+    tasks. Considering MVS, it contains 25 high-resolution scenes and 10 low-resolution
+    scenes. ETH3D is widely acknowledged as the most difficult MVS task since it contains
+    many low-textured regions such as white walls and reflective floor. Traditional
+    MVS methods based on broadcasting valid depth values perform better in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: BlendedMVS
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: BlendedMVS dataset [[28](#bib.bib28)] is a recently published large-scale synthetic
+    dataset for MVS training that contains a variety of scenes, such as cities, sculptures
+    and shoes. The dataset consists of over 17k high-resolution images rendered with
+    reconstructed models and is split into 106 training scenes and 7 validation scenes.
+    Since BlendedMVS is obtained through virtual cameras, its provided camera calibration
+    is reliable enough for MVS training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.5 Evaluation Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As is mentioned in Tab. [1](#S2.T1 "Table 1 ‣ 2.4 Datasets ‣ 2 Background ‣
+    Deep Learning for Multi-view Stereo via Plane Sweep: A Survey"), most datasets
+    provide point clouds as ground truth instead of depth maps and evaluation metrics
+    are usually based on quality of reconstructed dense point clouds. Since point
+    clouds are actually unordered points with permutation invariance, before comparison,
+    reconstructed point clouds should be aligned to ground truth point clouds through
+    per-view camera parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Absolute Error
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Though benchmarks adopt point-cloud-based metrics for ranking, depth-based metrics
+    can still be used for validation during network training. Absolution error is
+    commonly used to measure the quality of depth maps. A common practice is to use
+    multiple thresholds to show a more overall performance of networks, e.g., 2-px
+    absolute error, 4-px absolute error, 6-px absolute error and 8-px absolute error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Precision/Accuracy
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Precision/Accuracy is a measurement of what percentage of predicted points can
+    get matched in the ground truth point cloud. Considering a point $\mathbf{P}_{p}$
+    in the predicted point cloud, it is considered to have a good match in the ground
+    truth point cloud $\{\mathbf{P}_{g}\}$ if
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\&#124;\mathbf{P}_{p}-\mathop{\arg\min}\limits_{\mathbf{P}\in\{\mathbf{P}_{g}\}}\&#124;\mathbf{P}-\mathbf{P}_{p}\&#124;_{2}\&#124;_{2}\leq\lambda,$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\lambda$ is a scene-dependent parameter assigned by datasets. $\lambda$
+    is set to a larger value for larger scenes. The definition of distance is the
+    same as Chamfer distance. Precision/Accuracy is the number of points in the predicted
+    point cloud satisfying the requirement over the total number of points in the
+    predicted point cloud. Note that in some datasets, precision/accuracy is not measured
+    by proportion (percentage) but by mean or median absolute distance instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall/Completeness
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Recall/Completeness measures what percentage of ground truth points can get
+    matched in the predicted point cloud. The computation is simply swapping the ground
+    truth and the prediction. For a point $\mathbf{P}_{g}$ in the ground truth point
+    cloud, it is considered to have a good match in the predicted point cloud $\{\mathbf{P}_{p}\}$
+    if
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\&#124;\mathbf{P}_{g}-\mathop{\arg\min}\limits_{\mathbf{P}\in\{\mathbf{P}_{p}\}}\&#124;\mathbf{P}-\mathbf{P}_{g}\&#124;_{2}\&#124;_{2}\leq\lambda,$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: and recall/completeness is the number of points in the ground truth point cloud
+    satisfying the requirement over the total number of points in the ground truth
+    point cloud. Similar to precision/accuracy, recall/completeness is sometimes measured
+    by mean or median absolute distance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: F-Score
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The two aforementioned metrics measure the accuracy and completeness of predicted
+    point clouds. However, each of these metrics alone cannot present the overall
+    performance since different MVS methods use different a prior assumptions. A stronger
+    assumption usually leads to higher accuracy but lower completeness. Both measures
+    are needed for a fair comparison. If only precision/accuracy is reported, it would
+    favor MVS algorithms that only include estimated points of high certainty. On
+    the other hand, if only recall/completeness is reported it would favor MVS algorithms
+    that include everything, regardless of point quality. Therefore, an integrated
+    metric is introduced. F-score is the harmonic mean of precision and recall. Harmonic
+    mean is sensitive to extremely small values and tends to get more affected by
+    smaller values, which is to say, F-score does not encourage imbalanced results.
+    However, in most cases, F-score still suffers from unfairness due to limitations
+    of ground truth. Since the representation of point clouds is unstructured and
+    overall sparse, this problem remains unsolved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.6 Loss Function
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Loss functions for learning-based MVS can be categorized into regression-like
+    and classification-like ones. To briefly recap, for a cost volume of $H\times
+    W\times D\times F$, a probability volume $H\times W\times D$ is generated after
+    cost volume regularization. Different loss functions correspond to different ways
+    of determining the final prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the final ground truth prediction is determined by an argmax operation. It
+    has already been turned into a pure classification task, cross entropy loss is
+    naturally suitable to be the loss function, where the ground truth depth maps
+    are also discretized in the same way of plane sweep and one-hot encoded. The cross
+    entropy loss function is stated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L=\sum_{d}^{D}-G(d)\log[P(d)],$ |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $G(d)$ is the ground truth one-hot distribution w.r.t. depth and $P(d)$
+    is the predicted distribution. An important advantage of classification-like loss
+    functions are actually insensitive to depth division, which means the division
+    can be arbitrary and not necessarily to be uniform. [[27](#bib.bib27), [24](#bib.bib24)]
+    use cross entropy as their loss functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some methods adopt a regression-like pattern to determine the prediction that
+    the mathematical expectation of depth is calculated instead. In this case, a L1
+    loss is adopted as the loss function. This practice helps to predict smoother
+    depth maps. MVSNet [[26](#bib.bib26)], along with later coarse-to-fine methods,
+    adopts this pattern. The loss is stated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L=\&#124;d_{0}-Ex[P(d)]\&#124;_{1}$ |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $d_{0}$ denotes the ground truth depth map and $Ex[\cdot]$ denotes expectation
+    of a distribution. However, mathematical expectation is valid if and only if the
+    division of space is uniform. To boost the scalability, R-MVSNet [[27](#bib.bib27)]
+    adopts an inverse depth sampling strategy where the level of depth planes and
+    actual depth value are in inverse proportion. In this case, plane sweep is finer
+    at distant areas but the regression-like loss function is no longer valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Empirical results show that classification-like loss functions help to predict
+    accurate depth values since all candidates lower than maximum probability are
+    compressed. However, it usually leads to incontinuity of depth values. While regression-like
+    ones consider mathematical expectation is a differentiable way to do argmax, which
+    helps to predict smooth depth maps but loses sharpness on edges.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Method
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This section introduces learning-based MVS networks that yield depth maps for
+    further post-processing. A typical MVS network mainly contains three parts, namely
+    a feature extraction network (Sec. [3.1](#S3.SS1 "3.1 Feature Extraction ‣ 3 Method
+    ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey")), a cost volume
+    constructor (Sec. [3.2](#S3.SS2 "3.2 Cost Volume Construction ‣ 3 Method ‣ Deep
+    Learning for Multi-view Stereo via Plane Sweep: A Survey")) and a cost volume
+    regularization network (Sec. [3.3](#S3.SS3 "3.3 Cost Volume Regularization ‣ 3
+    Method ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey")). Tab. [2](#S3.T2
+    "Table 2 ‣ 3 Method ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey")
+    is an overview of typical learning-based MVS methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: An overview of typical learning-based MVS methods via plane sweep
+    algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Regularization Scheme¹ | Visibility | Loss Function |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3D CNN | RNN | Coarse to Fine | Classification | Regression |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MVSNet [[26](#bib.bib26)] | ✓ |  |  |  |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| R-MVSNet [[27](#bib.bib27)] |  | ✓ |  |  | ✓ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CasMVSNet [[8](#bib.bib8)] |  |  | ✓ |  |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CVP-MVSNet [[25](#bib.bib25)] |  |  | ✓ |  |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCS-Net [[3](#bib.bib3)] |  |  | ✓ |  |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vis-MVSNet [[31](#bib.bib31)] |  |  | ✓ | ✓ | ✓ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PVA-MVSNet [[29](#bib.bib29)] | ✓ |  |  | ✓ |  | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $D^{2}$HC-RMVSNet [[24](#bib.bib24)] |  | ✓ |  |  | ✓ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AA-RMVSNet [[23](#bib.bib23)] |  | ✓ |  | ✓ | ✓ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '1'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Strictly speaking, all coarse-to-fine methods are all based on 3D CNNs. Therefore,
+    the definition of using 3D CNN excludes those with a coarse-to-fine pattern.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 3.1 Feature Extraction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Feature extraction for MVS still remains unstudied and most methods apply a
+    common CNN backbone methods to extract features, e.g., ResNet [[9](#bib.bib9)]
+    and U-Net [[19](#bib.bib19)]. The main novelty of learning-basedlies at feature
+    extraction, e.g., $D^{2}$HC-RMVSNet [[24](#bib.bib24)] applies multi-scale features
+    with dilation to aggregate features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can compare feature extraction of different computer vision tasks. For image
+    classification where each image is assigned with one label, global features are
+    more important since an overall perception of the whole image is required. For
+    object detection, locality is more significant than global context. As for stereo
+    matching, which is rather similar to MVS, the best matching should be semi-global [[10](#bib.bib10)].
+    For high-frequency regions whose texture information is rich, we expect a more
+    local receptive field; while those weak-textured areas should be matched in a
+    wider range.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Cost Volume Construction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Plane sweep is done to construct the cost volume, whose details have been presented
+    in Sec. [2.2](#S2.SS2 "2.2 Plane Sweep ‣ 2 Background ‣ Deep Learning for Multi-view
+    Stereo via Plane Sweep: A Survey"). Since cost volume construction can be pairwise,
+    there occurs another procedure to aggregate all $N-1$ cost volumes into one. DPSNet [[11](#bib.bib11)]
+    simply aggregates all cost volumes by addition and the underlying principle is
+    that all views are considered equally. Practically speaking, occlusion is common
+    in a MVS system and it usually causes invalid matching. As a result, an increasing
+    number of input views will lead to even worse prediction. In this way, views that
+    are closer to the reference view should be given higher priority since it is less
+    likely to suffer from occlusion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To alleviate this problem, PVA-MVSNet [[29](#bib.bib29)] applies gated convolution [[30](#bib.bib30)]
+    to adaptively aggregate cost volumes. View aggregation tends to give occluded
+    areas smaller weights and the reweighting map is yielded according to the volume
+    itself. This practice actually follows the fashion of self-attention. Vis-MVSNet [[31](#bib.bib31)]
+    explicitly introduces a measure for cost volumes treated as visibility by examining
+    the uncertainty or confidence of probability distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Cost Volume Regularization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The main differences between different MVS networks lie in the way of doing
+    cost volume regularization, which will be categorized and introduced in the following
+    sections. Fig. [4](#S3.F4 "Figure 4 ‣ 3.3 Cost Volume Regularization ‣ 3 Method
+    ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey") illustrates
+    the three regularization schemes covered in this paper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/cff9f57037818510a75ea0a0293627ab.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Illustration of typical cost regularization schemes. (a) 3D CNN regularization
+    simply applies a 3D CNN to aggregate spatial context of all dimensions; (b) RNN
+    regularization models each depth hypothesis similarly to a time node and adopts
+    a 2D CNN with shared weights to aggregate context of $H$ and $W$; (c) in coarse-to-fine
+    regularization, finer cost volumes are built according to coarser prediction and
+    3D CNNs are used for different stages.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1 3D CNN
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 3D CNNs are a straightforward choice for cost volume regularization. Literally,
+    3D CNNs consist of 3D convolution operations, whose convolution kernels are 3
+    dimensional and move among all dimensions of cost volumes. MVSNet [[26](#bib.bib26)]
+    adopts a 3D U-Net to regularize cost volumes. Similar to 2D U-Net [[19](#bib.bib19)],
+    3D U-Net contains an encoder, which does downsampling 3D convolutions, and a decoder,
+    that recovers the original feature resolution gradually. MVSNet [[26](#bib.bib26)],
+    which is the first MVS method that leverages deep learning, uses a 3D U-Net for
+    cost volume regularization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The purpose of cost volume regularization is to aggregate features and predict
+    relatively valid depth values according to aggregated features. In this way, 3D
+    CNNs are a universal method for its capability of aggregating local and global
+    features in all dimensions. However, CNNs are operated on regular grids and a
+    underlying assumption is that the division of space is uniform. For completed
+    cases, a uniform division is not good enough to predict reliable depth values.
+    Besides, 3D CNNs are computationally expensive and consumes massive memory, which
+    limits the value of $D$. A finer (large $D$) and suitable (not uniform) division
+    is usually crucial to obtain high quality depth maps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 RNN
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A major disadvantage of using 3D CNNs for cost volume regularization is massive
+    memory consumption and in order to reduce the amount of demanded memory, some
+    attempts [[27](#bib.bib27), [24](#bib.bib24)] replace 3D CNNs by sequential 2D
+    CNNs along the dimension of $D$. In this way, there will always be one cost slice
+    being processed in the GPU memory and a RNN is used to thread all depth hypotheses,
+    passing context information on dimension $D$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A great advantage of using recurrent regularization is that it improves the
+    scalability of MVS methods since the division of space can be finer so farther
+    objects can be reconstructed. But correspondingly, this scheme trades running
+    efficiency for space since RNN’s parallelizability is poorer than CNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.3 Coarse to Fine
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Making prediction in a coarse-to-fine pattern is another solution of reducing
+    massive memory consumption. Literally, the network predicts a coarse depth map
+    and then finer results are yielded based on former ones. Coarse predictions are
+    usually based on downsampled images of lower resolution and fine predictions are
+    on higher resolution images. This practice adopts encoder-decoder architectures
+    where low-res feature maps contain more low frequency components and high frequency
+    is more found in high-res feature maps. The ways of making use of coarse prediction
+    are different. Cas-MVSNet [[8](#bib.bib8)] regenerates cost volumes by warping
+    feature maps with a smaller depth range around previous coarse prediction. Cascade
+    rewarping at stage $k+1$ is based on Eq. [1](#S2.E1 "In 2.2 Plane Sweep ‣ 2 Background
+    ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey") by setting $d=d^{(k)}+\Delta^{(k+1)}$,
+    whose homography is'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $H_{i}^{(k+1)}(d^{(k)}+\Delta^{(k+1)})=(d^{(k)}+\Delta^{(k+1)})\mathbf{K}_{0}\mathbf{T}_{0}\mathbf{T}^{-1}_{i}\mathbf{K}^{-1}_{i},$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $k$ denotes the number of stages, $d^{(k)}$ is the estimated depth value
+    at stage $k$ and $\Delta^{(k+1)}$ is the residual depth to be determined in the
+    current stage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: UCS-Net [[3](#bib.bib3)] obtains uncertainty from coarse prediction to aid finer
+    prediction. Note that both RNN and coarse-to-fine regularization methods allow
+    finer division of depth but they focus on different cases. RNN regularization
+    allows larger $D$ so there can be more hypothetical depth planes; coarse-to-fine
+    regularization enables an adaptive subdivision of depth interval for finer prediction,
+    leading to ability of constructing delicate details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Discussions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 4.1 Results & Analysis
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Tab. [3](#S4.T3 "Table 3 ‣ 4.1 Results & Analysis ‣ 4 Discussions ‣ Deep Learning
+    for Multi-view Stereo via Plane Sweep: A Survey") and Tab. [4](#S4.T4 "Table 4
+    ‣ 4.1 Results & Analysis ‣ 4 Discussions ‣ Deep Learning for Multi-view Stereo
+    via Plane Sweep: A Survey") are quantitative results of typical learning-based
+    MVS methods. Furu [[6](#bib.bib6)], Gipuma [[7](#bib.bib7)] and COLMAP [[21](#bib.bib21)]
+    are non-learning methods shown for comparison.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As for DTU dataset, it is apparent that learning-based MVS methods outperform
+    traditional methods especially in terms of completeness, while Gipuma [[7](#bib.bib7)],
+    a non-learning method, achieves best accuracy. A straightforward insight is that
+    deep learning can adopt a data-driven statistical pattern to predict complete
+    depth values, while traditional methods depend on stricter constraints so that
+    these regions are omitted due to poor geometric consistency. Among learning-based
+    methods, coarse-to-fine ones perform better than others. Considering DTU is an
+    ideal indoor dataset with delicate details, coarse-to-fine methods are able to
+    distinguish subtle depth differences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While for Tanks and Temples, whose scale is larger, methods using RNN regularization
+    scheme demonstrate their dominance, e.g., $D^{2}$HC-RMVSNet [[24](#bib.bib24)]
+    and AA-RMVSNet [[23](#bib.bib23)]. For real-world scenes, whose lighting and scale
+    can be varying, it is more important to reconstruct relatively complete point
+    clouds rather than accurate ones. Therefore, RNN regularization, which allows
+    a larger number of $D$ and inverse depth sampling, is better at predicting complete
+    scenes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This performance gap between DTU and Tanks and Temples can be explained from
+    the perspective of regularization. 3D CNN (including coarse-to-fine regularization
+    pattern) is a rather stronger regularization since it aggregates spatial context
+    information in all dimensions, while in RNNs, the constraints in the dimension
+    of $D$ are relaxed. The relaxation leads to better generalizability and robustness
+    but takes more time for prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 3: Quantitative results on DTU evaluation set [[1](#bib.bib1)] (lower
+    is better). Acc. stand for accuracy and Comp. stand for completeness. Note that
+    DTU dataset measures absolute Chamfer distance between point clouds instead of
+    percentage for evaluation. Furu [[6](#bib.bib6)], Gipuma [[7](#bib.bib7)] and
+    COLMAP [[21](#bib.bib21)] are non-learning methods listed for comparison.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Acc.(mm) | Comp.(mm) | Overall(mm) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Furu [[6](#bib.bib6)] | 0.613 | 0.941 | 0.777 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gipuma [[7](#bib.bib7)] | 0.283 | 0.873 | 0.578 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| COLMAP [[21](#bib.bib21)] | 0.400 | 0.664 | 0.532 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MVSNet [[26](#bib.bib26)] | 0.396 | 0.527 | 0.462 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| R-MVSNet [[27](#bib.bib27)] | 0.385 | 0.459 | 0.422 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $D^{2}$HC-RMVSNet [[24](#bib.bib24)] | 0.395 | 0.378 | 0.386 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vis-MVSNet [[31](#bib.bib31)] | 0.369 | 0.361 | 0.365 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CasMVSNet [[8](#bib.bib8)] | 0.325 | 0.385 | 0.355 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CVP-MVSNet [[25](#bib.bib25)] | 0.296 | 0.406 | 0.351 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCS-Net [[3](#bib.bib3)] | 0.338 | 0.349 | 0.344 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AA-RMVSNet [[23](#bib.bib23)] | 0.376 | 0.339 | 0.357 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4: Quantitative results of typical learning-based MVS methods on the
+    Tanks and Temples benchmark [[14](#bib.bib14)]. The evaluation metric is F-score
+    (higher is better). L.H. stands for Lighthouse and P.G. stands for Playground.
+    COLMAP [[21](#bib.bib21)] is a non-learning baseline for comparison.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Mean | Family | Francis | Horse | L.H. | M60 | Panther | P.G. |
+    Train |'
+  prefs: []
+  type: TYPE_TB
+- en: '| COLMAP [[21](#bib.bib21)] | 42.14 | 50.41 | 22.25 | 25.63 | 56.43 | 44.83
+    | 46.97 | 48.53 | 42.04 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MVSNet [[26](#bib.bib26)] | 43.48 | 55.99 | 28.55 | 25.07 | 50.79 | 53.96
+    | 50.86 | 47.90 | 34.69 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| R-MVSNet [[27](#bib.bib27)] | 50.55 | 73.01 | 54.46 | 43.42 | 43.88 | 46.80
+    | 46.69 | 50.87 | 45.25 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PVA-MVSNet [[29](#bib.bib29)] | 54.46 | 69.36 | 46.80 | 46.01 | 55.74 | 57.23
+    | 54.75 | 56.70 | 49.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CVP-MVSNet [[25](#bib.bib25)] | 54.03 | 76.50 | 47.74 | 36.34 | 55.12 | 57.28
+    | 54.28 | 57.43 | 47.54 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CasMVSNet [[8](#bib.bib8)] | 56.84 | 76.37 | 58.45 | 46.26 | 55.81 | 56.11
+    | 54.06 | 58.18 | 49.51 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCS-Net [[3](#bib.bib3)] | 54.83 | 76.09 | 53.16 | 43.03 | 54.00 | 55.60
+    | 51.49 | 57.38 | 47.89 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $D^{2}$HC-RMVSNet [[24](#bib.bib24)] | 59.20 | 74.69 | 56.04 | 49.42 | 60.08
+    | 59.81 | 59.61 | 60.04 | 53.92 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vis-MVSNet [[31](#bib.bib31)] | 60.03 | 77.40 | 60.23 | 47.07 | 63.44 | 62.21
+    | 57.28 | 60.54 | 52.07 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AA-RMVSNet [[23](#bib.bib23)] | 61.51 | 77.77 | 59.53 | 51.53 | 64.02 | 64.05
+    | 59.47 | 60.85 | 54.90 |'
+  prefs: []
+  type: TYPE_TB
+- en: 4.2 Topics Remaining Unstudied
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: So far, learning-based MVS is still a niche field of computer vision and many
+    well-known and widely used commercial softwares still apply traditional non-learning
+    algorithms. A very typical problem for learning-based MVS algorithms is lack of
+    valid depth values at low-textured regions and that is the reason why SOTA methods
+    of ETH3D are still non-learning ones. Some attempts use different a priori information,
+    such as surface normal [[15](#bib.bib15), [16](#bib.bib16)] to overcome planar
+    areas. But these attempts highly rely on post-process and are still far from end-to-end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One unstudied topic is what kind of feature extractors are suitable for MVS,
+    as have been mentioned in Sec. [3.1](#S3.SS1 "3.1 Feature Extraction ‣ 3 Method
+    ‣ Deep Learning for Multi-view Stereo via Plane Sweep: A Survey"). MVS relies
+    on a relatively tricky size of receptive fields.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evaluation metrics are not reasonable. Since MVS serves as a step of image-based
+    3D reconstruction, whose final purpose is to construct a mesh model and point
+    clouds are intermediate representations. If a good surface reconstruction algorithm
+    could properly estimate faces, then the lack of points during MVS reconstruction
+    is acceptable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some researchers have noticed the gap between depth maps and point clouds and
+    want to construct a unified framework for training and evaluation. For example,
+    merging depth fusion into end-to-end training so the loss is directly computed
+    from point clouds. A major problem preventing doing so is how to turn geometric
+    consistency checking differentiable. Some attempts are done, such as Point-MVSNet [[2](#bib.bib2)],
+    but the results are not satisfying enough.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another task is to encode multimodal information into MVS networks, e.g., semantics.
+    In this way, some challenging areas can be dealt individually, such as omitting
+    points with the semantic label of sky and interpolating points within the region
+    labelled as ground. A suitable dataset is also required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Last but not least, the number of available datasets and the diversity of data
+    are also quite limited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this paper, several aspects of learning-based MVS algorithms are covered,
+    including post-processes, plane sweep, relevant datasets and network modules.
+    Besides, comparative results and observations are presented. Generally speaking,
+    deep-learning-based MVS is still under development and the community is rather
+    tiny compared to other computer vision tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Henrik Aanæs, Rasmus Ramsbøl Jensen, George Vogiatzis, Engin Tola, and
+    Anders Bjorholm Dahl. Large-scale data for multiple-view stereopsis. International
+    Journal of Computer Vision, 120(2):153–168, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] Rui Chen, Songfang Han, Jing Xu, and Hao Su. Point-based multi-view stereo
+    network. In Proceedings of the IEEE/CVF International Conference on Computer Vision,
+    pages 1538–1547, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Shuo Cheng, Zexiang Xu, Shilin Zhu, Zhuwen Li, Li Erran Li, Ravi Ramamoorthi,
+    and Hao Su. Deep stereo using adaptive thin volume representation with uncertainty
+    awareness. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+    Recognition, pages 2524–2534, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Robert T Collins. A space-sweep approach to true multi-image matching.
+    In Proceedings CVPR IEEE Computer Society Conference on Computer Vision and Pattern
+    Recognition, pages 358–363\. IEEE, 1996.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Alexey Dosovitskiy, Philipp Fischer, Eddy Ilg, Philip Hausser, Caner Hazirbas,
+    Vladimir Golkov, Patrick Van Der Smagt, Daniel Cremers, and Thomas Brox. Flownet:
+    Learning optical flow with convolutional networks. In Proceedings of the IEEE
+    international conference on computer vision, pages 2758–2766, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Yasutaka Furukawa and Jean Ponce. Accurate, dense, and robust multiview
+    stereopsis. IEEE transactions on pattern analysis and machine intelligence, 32(8):1362–1376,
+    2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Silvano Galliani, Katrin Lasinger, and Konrad Schindler. Massively parallel
+    multiview stereopsis by surface normal diffusion. In Proceedings of the IEEE International
+    Conference on Computer Vision, pages 873–881, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Xiaodong Gu, Zhiwen Fan, Siyu Zhu, Zuozhuo Dai, Feitong Tan, and Ping Tan.
+    Cascade cost volume for high-resolution multi-view stereo and stereo matching.
+    In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+    pages 2495–2504, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning
+    for image recognition. In Proceedings of the IEEE conference on computer vision
+    and pattern recognition, pages 770–778, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Heiko Hirschmuller. Stereo processing by semiglobal matching and mutual
+    information. IEEE Transactions on pattern analysis and machine intelligence, 30(2):328–341,
+    2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Sunghoon Im, Hae-Gon Jeon, Stephen Lin, and In So Kweon. Dpsnet: End-to-end
+    deep plane sweep stereo. In International Conference on Learning Representations,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] Michael Kazhdan and Hugues Hoppe. Screened poisson surface reconstruction.
+    ACM Transactions on Graphics (ToG), 32(3):1–13, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Alex Kendall, Hayk Martirosyan, Saumitro Dasgupta, Peter Henry, Ryan Kennedy,
+    Abraham Bachrach, and Adam Bry. End-to-end learning of geometry and context for
+    deep stereo regression. In Proceedings of the IEEE International Conference on
+    Computer Vision, pages 66–75, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Arno Knapitsch, Jaesik Park, Qian-Yi Zhou, and Vladlen Koltun. Tanks and
+    temples: Benchmarking large-scale scene reconstruction. ACM Transactions on Graphics
+    (ToG), 36(4):1–13, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Uday Kusupati, Shuo Cheng, Rui Chen, and Hao Su. Normal assisted stereo
+    depth estimation. In Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition, pages 2189–2199, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Hongmin Liu, Xincheng Tang, and Shuhan Shen. Depth-map completion for
+    large indoor scene reconstruction. Pattern Recognition, 99:107112, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Nikolaus Mayer, Eddy Ilg, Philip Hausser, Philipp Fischer, Daniel Cremers,
+    Alexey Dosovitskiy, and Thomas Brox. A large dataset to train convolutional networks
+    for disparity, optical flow, and scene flow estimation. In Proceedings of the
+    IEEE conference on computer vision and pattern recognition, pages 4040–4048, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Masatoshi Okutomi and Takeo Kanade. A multiple-baseline stereo. IEEE Transactions
+    on pattern analysis and machine intelligence, 15(4):353–363, 1993.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Olaf Ronneberger, Philipp Fischer, and Thomas Brox. U-net: Convolutional
+    networks for biomedical image segmentation. In International Conference on Medical
+    image computing and computer-assisted intervention, pages 234–241\. Springer,
+    2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Johannes L Schönberger and Jan-Michael Frahm. Structure-from-motion revisited.
+    In Proceedings of the IEEE conference on computer vision and pattern recognition,
+    pages 4104–4113, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Johannes L Schönberger, Enliang Zheng, Jan-Michael Frahm, and Marc Pollefeys.
+    Pixelwise view selection for unstructured multi-view stereo. In European Conference
+    on Computer Vision, pages 501–518. Springer, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Thomas Schöps, Johannes L Schönberger, Silvano Galliani, Torsten Sattler,
+    Konrad Schindler, Marc Pollefeys, and Andreas Geiger. A multi-view stereo benchmark
+    with high-resolution images and multi-camera videos. In Proceedings of the IEEE
+    Conference on Computer Vision and Pattern Recognition, pages 3260–3269, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Zizhuang Wei, Qingtian Zhu, Chen Min, Yisong Chen, and Guoping Wang. Aa-rmvsnet:
+    Adaptive aggregation recurrent multi-view stereo network. In IEEE International
+    Conference on Computer Vision, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Jianfeng Yan, Zizhuang Wei, Hongwei Yi, Mingyu Ding, Runze Zhang, Yisong
+    Chen, Guoping Wang, and Yu-Wing Tai. Dense hybrid recurrent multi-view stereo
+    net with dynamic consistency checking. In European Conference on Computer Vision,
+    pages 674–689. Springer, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Jiayu Yang, Wei Mao, Jose M Alvarez, and Miaomiao Liu. Cost volume pyramid
+    based depth inference for multi-view stereo. In Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition, pages 4877–4886, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Yao Yao, Zixin Luo, Shiwei Li, Tian Fang, and Long Quan. Mvsnet: Depth
+    inference for unstructured multi-view stereo. In Proceedings of the European Conference
+    on Computer Vision (ECCV), pages 767–783, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Yao Yao, Zixin Luo, Shiwei Li, Tianwei Shen, Tian Fang, and Long Quan.
+    Recurrent mvsnet for high-resolution multi-view stereo depth inference. In Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 5525–5534,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Yao Yao, Zixin Luo, Shiwei Li, Jingyang Zhang, Yufan Ren, Lei Zhou, Tian
+    Fang, and Long Quan. Blendedmvs: A large-scale dataset for generalized multi-view
+    stereo networks. In Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition, pages 1790–1799, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Hongwei Yi, Zizhuang Wei, Mingyu Ding, Runze Zhang, Yisong Chen, Guoping
+    Wang, and Yu-Wing Tai. Pyramid multi-view stereo net with self-adaptive view aggregation.
+    In European Conference on Computer Vision, pages 766–782. Springer, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] Jiahui Yu, Zhe Lin, Jimei Yang, Xiaohui Shen, Xin Lu, and Thomas S Huang.
+    Free-form image inpainting with gated convolution. In Proceedings of the IEEE/CVF
+    International Conference on Computer Vision, pages 4471–4480, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Jingyang Zhang, Yao Yao, Shiwei Li, Zixin Luo, and Tian Fang. Visibility-aware
+    multi-view stereo network. British Machine Vision Conference (BMVC), 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

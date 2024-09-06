@@ -1,0 +1,3285 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:45:23'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2207.03820] Deep Learning for Anomaly Detection in Log Data: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2207.03820](https://ar5iv.labs.arxiv.org/html/2207.03820)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Deep Learning for Anomaly Detection in Log Data: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Max Landauer, Sebastian Onder, Florian Skopik, and Markus Wurzenberger Manuscript
+    published in the Machine Learning with Applications, vol. 12 (2023) under the
+    CC BY license.
+  prefs: []
+  type: TYPE_NORMAL
+- en: https://doi.org/10.1016/j.mlwa.2023.100470
+  prefs: []
+  type: TYPE_NORMAL
+- en: M. Landauer, S. Onder, F. Skopik, and M. Wurzenberger are with the Center for
+    Digital Safety and Security, AIT Austrian Institute of Technology, Vienna, Austria.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'E-mail: firstname.lastname@ait.ac.at'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Automatic log file analysis enables early detection of relevant incidents such
+    as system failures. In particular, self-learning anomaly detection techniques
+    capture patterns in log data and subsequently report unexpected log event occurrences
+    to system operators without the need to provide or manually model anomalous scenarios
+    in advance. Recently, an increasing number of approaches leveraging deep learning
+    neural networks for this purpose have been presented. These approaches have demonstrated
+    superior detection performance in comparison to conventional machine learning
+    techniques and simultaneously resolve issues with unstable data formats. However,
+    there exist many different architectures for deep learning and it is non-trivial
+    to encode raw and unstructured log data to be analyzed by neural networks. We
+    therefore carry out a systematic literature review that provides an overview of
+    deployed models, data pre-processing mechanisms, anomaly detection techniques,
+    and evaluations. The survey does not quantitatively compare existing approaches
+    but instead aims to help readers understand relevant aspects of different model
+    architectures and emphasizes open issues for future work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: log data, anomaly detection, neural networks, deep learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Log files provide a rich source of information when it comes to monitoring computer
+    systems. Thereby, the majority of log events are usually generated as consequences
+    of normal system operations, such as starting and stopping of processes, restarting
+    of virtual machines, users accessing resources, etc. However, applications also
+    produce logs when faulty or otherwise undesired system states occur, for example,
+    failed processes, availability issues, or security incidents. These traces of
+    unexpected and possibly unsafe system activities are important for system operators
+    that timely need to act upon them to prevent or diminish system damage and avoid
+    adverse cascading effects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main problem for this kind of log file analysis is that it is non-trivial
+    to identify these relevant log events within the much larger number of less interesting
+    traces of standard system usage. In particular, the sheer amount of logs produced
+    by modern applications renders manual analysis infeasible and necessitates automatic
+    mechanisms [[1](#bib.bib1)]. Unfortunately, manually coded signatures and rules
+    that search for specific keywords in logs only have limited applicability and
+    are not suitable for scenarios that are not known beforehand [[2](#bib.bib2)].
+    It is therefore necessary to deploy anomaly detection techniques that automatically
+    learn models representing the normal baseline of system behavior and subsequently
+    disclose any deviations from these models as possibly adverse activities that
+    require attention by human operators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Machine learning provides many viable techniques for the purpose of anomaly
+    detection in log files and many different approaches have been proposed in the
+    past, including clustering [[3](#bib.bib3)] and workflow mining [[4](#bib.bib4)],
+    statistical analysis of event parameters [[5](#bib.bib5)], time-series analysis
+    to recognize changes of event frequencies [[6](#bib.bib6)], and many more [[7](#bib.bib7),
+    [2](#bib.bib2)]. Recently, researchers started using deep neural networks for
+    log-based anomaly detection in an attempt to repeat the successes of deep learning
+    from image and speech recognition that outperform conventional machine learning
+    methods [[8](#bib.bib8)]. However, as system log events are generally unstructured
+    and involve intricate dependencies, it is non-trivial to prepare the data in a
+    way to enable ingestion by neural networks and extract features that are relevant
+    for detection. Moreover, the wide variety of existing deep learning architectures
+    such as recurrent or convolutional neural networks makes it difficult to select
+    an appropriate model for a specific use-case at hand and understand their respective
+    requirements on the format and properties of the input data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To the best of our knowledge there is currently only a limited overview of the
+    state-of-the-art of log-based anomaly detection with deep learning [[9](#bib.bib9),
+    [10](#bib.bib10), [11](#bib.bib11), [12](#bib.bib12)]. As a consequence it is
+    difficult to understand what features are suitable to be extracted from raw log
+    data, how these features could be transformed into a format that is adequate to
+    be ingested by neural networks, and which model architectures are appropriate
+    for detecting specific patterns in logs. Existing surveys only compare few anomaly
+    detection approaches and focus mainly on sequential patterns in log data [[9](#bib.bib9),
+    [10](#bib.bib10), [11](#bib.bib11)], present broad studies on system log data
+    analysis that do not sufficiently cover deep learning models and challenges [[13](#bib.bib13),
+    [14](#bib.bib14)], or focus on network traffic rather than system log data [[12](#bib.bib12)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We therefore carry out a systematic literature review on deep learning for
+    anomaly detection in log data. Our main focus is thereby to survey scientific
+    publications on the deployed model architectures, their respective requirements
+    and transformations for handling unstructured input log data, the methods used
+    to differentiate between normal and anomalous data samples, and the presented
+    evaluations. The results of this study are beneficial for researchers and industries
+    alike, because a better understanding of challenges and features of different
+    deep learning algorithms avoids pitfalls when developing anomaly detection techniques
+    and eases selection of existing detection systems for both academic and real-world
+    use-cases. Moreover, a detailed investigation of pre-processing strategies is
+    essential to utilize all information available in the logs when carrying out anomaly
+    detection and to understand the influence of data representations on the detection
+    capabilities, in particular, what types of anomalies can be detected under which
+    circumstances. Regarding scientific evaluations, we particularly pay attention
+    to relevant aspects of experiment design, including data sets, metrics, and reproducibility,
+    to point out deficiencies in prevalent evaluation strategies and suggest remedies.
+    Finally, our study also aims to create a work of reference and establish a starting
+    point for future research. We point out that this survey does not quantitatively
+    compare detection performances of the reviewed approaches as only few open-source
+    implementations are available and comparisons of these approaches are already
+    presented in other surveys [[9](#bib.bib9), [10](#bib.bib10)]. In alignment with
+    the aforementioned goals we formulate the research questions of this survey as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ1:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What are the main challenges of log-based anomaly detection with deep learning?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ2:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What state-of-the-art deep learning algorithms are typically applied?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ3:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How is log data pre-processed to be ingested by deep learning models?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ4:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What types of anomalies are detected and how are they identified as such?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ5:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How are the proposed models evaluated?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ6:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To what extent do the approaches rely on labeled data and support incremental
+    learning?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'RQ7:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To what extent are the presented results reproducible in terms of availability
+    of source code and used data?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The remainder of this paper is structured as follows. Section [II](#S2 "II
+    Background ‣ Deep Learning for Anomaly Detection in Log Data: A Survey") first
+    explains the terms deep learning, log data, and anomaly detection, and then provides
+    an overview of common challenges. We explain our methodology for selecting relevant
+    publications and carrying out the survey in Sect. [III](#S3 "III Survey Method
+    ‣ Deep Learning for Anomaly Detection in Log Data: A Survey"). Section [IV](#S4
+    "IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    presents all results of our survey in detail. We discuss these results and answer
+    our research questions in Sect. [V](#S5 "V Discussion ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey"). Finally, Sect. [VI](#S6 "VI Conclusion ‣ Deep
+    Learning for Anomaly Detection in Log Data: A Survey") concludes this paper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we first clarify some general concepts and terms relevant for
+    anomaly detection in log data based on deep learning. We then outline scientific
+    challenges that are specific to that research field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A Preliminary Definitions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The study carried out in this paper hinges on an understanding of three main
+    concepts: deep learning, log data, and anomaly detection. However, the exact characteristics
+    and consequential requirements of the respective fields may be used differently
+    across research areas and existing literature. In the following, we therefore
+    describe the basic properties of these three concepts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A1 Deep Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Artificial neural networks (ANN) have been developed in an attempt to recreate
+    biological information processing systems in the form of connected communication
+    nodes. For this purpose, varying numbers of nodes are arranged in sequences of
+    layers, in particular, an input layer that reads in the data, several hidden layers
+    connecting neighboring layers with weighted edges, and an output layer. Nodes
+    activate when receiving specific signals on their connected edges, which in turn
+    generates the input for subsequent layers. The main idea is that such networks
+    are capable of recognizing non-linear structures in the input data and subsequently
+    classifying the processed instances through training, which involves minimizing
+    the error of classifications by adjusting the weights of edges accordingly. Thereby,
+    ANN enable supervised training where labels for all classes are available (i.e.,
+    data samples are marked with labels such as normal or anomalous), semi-supervised
+    training where labels of some classes are available, as well as unsupervised learning
+    where no labels are available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, deep learning algorithms are understood as neural networks with
+    multiple hidden layers. Several different architectures of deep neural networks
+    have been proposed in the past, such as recurrent neural networks (RNN) for sequential
+    input data. Deep learning has been shown to outperform conventional machine learning
+    methods (e.g., support vector machines or decision trees) and even human experts
+    in many application areas such as image classification, speech recognition, and
+    many more [[8](#bib.bib8), [15](#bib.bib15)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A2 Log Data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Log data are a chronological sequence of single- or multi-line events generated
+    by applications to permanently capture specific system states, in particular,
+    for manual forensic analysis in case that failures or other unexpected incidents
+    occur. Log events are usually available in textual form and range from structured
+    vectors (e.g., comma-separated values) over semi-structured objects (e.g., key-value
+    pairs) to unstructured human-readable messages with heterogeneous event types.
+    Despite the fact that no unified log format exists, log events usually contain
+    their generation time stamp as one of their event parameters. Other parameters
+    that are sometimes present in different types of log data are logging levels (e.g.,
+    INFO or ERROR) or process identifiers that link sequences of related events [[3](#bib.bib3)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: While single log events describe (part of) the system state in one particular
+    point in time, groups of log events represent the dynamic workflows of the underlying
+    program logic. The reason for this is that log events are generated by print statements
+    purposefully placed by software developers throughout their code to support understanding
+    of program activities and debugging. These statements comprise of static parts,
+    i.e., hard-coded strings, and variable parts, i.e., parameters that are dynamically
+    determined during program runtime. In the past, a large amount of research was
+    directed towards automatic extraction of so-called log keys (also known as log
+    signatures, log templates, or simply log events) that represent templates for
+    the original print statements and enable parsing of logs [[16](#bib.bib16)]. These
+    parsers allow to derive values from logs that are more suitable to be used for
+    subsequent analysis than unstructured log messages, in particular, through (i)
+    assignment of event type identifiers to log events and (ii) extraction of parameters
+    from log messages [[17](#bib.bib17)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A3 Anomaly Detection
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Anomalies are those instances in a data set that exhibit rare or otherwise unexpected
+    characteristics and thus stand out from the rest of the data [[7](#bib.bib7)].
+    For the purpose of detection, the conformity of these data instances is usually
+    measured through one or more continuous or categorical attributes that are associated
+    with each instance and enable the computation of similarity metrics. For independent
+    data, it is sufficient to declare single or small groups of instances with high
+    dissimilarities to all other data points as outliers, which are also referred
+    to as point anomalies. For all data where instances are not independent from each
+    other, e.g., all kinds of ordered data including log data, two additional types
+    of anomalies occur. First, contextual anomalies are instances that are only anomalous
+    with respect to the context they occur (but not otherwise), such as the time of
+    occurrence. For example, consider the start of a daily executed data backup procedure
+    that suddenly takes place outside of the scheduled times. Second, collective anomalies
+    are groups of instances that are only anomalous due to their combined occurrence
+    (but not individually), such as a specific sequence of log events.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An implicit assumption of most anomaly detection techniques is that the analyzed
+    data holds far fewer anomalies than normal instances. This enables that detection
+    takes place in a fully unsupervised manner, i.e., no labeled data is necessary
+    to train the models. However, many scientific approaches instead pursue semi-supervised
+    detection, where training data containing only normal instances are available
+    and evaluation then takes place on a test data set comprising both normal and
+    anomalous instances. The main advantages of semi-supervised operation is that
+    anomalous instances are not learned by the models and that it is often relatively
+    simple to gather normal data, while modeling and labeling anomalies is less straightforward.
+    Accordingly, approaches for supervised anomaly detection have lower applicability
+    and are comparatively rare [[4](#bib.bib4)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Challenges
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Log-based anomaly detection has been an active field of research for decades.
+    Thereby, most of the presented approaches rely on conventional machine learning
+    techniques. However, the last few years have seen a strong increase of approaches
+    that leverage deep learning to disclose anomalous log events that relate to unexpected
+    system behavior. In the following, we summarize the main challenges that need
+    to be overcome for effective and applicable detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data representation. Deep learning systems generally consume structured and
+    numeric input data. It is non-trivial to feed log data into neural networks as
+    they frequently involve a mix of heterogeneous event types, unstructured messages,
+    and categorical parameters [[11](#bib.bib11), [18](#bib.bib18)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data instability. As applications evolve, new log event types may occur that
+    differ from the ones in the training data. In addition, the observed system behavior
+    patterns are subject to change as technological environments and their utilization
+    vary over time. Deep learning systems therefore need to incrementally update their
+    models and adapt their baseline for normal system behavior to enable real-time
+    detection [[19](#bib.bib19), [11](#bib.bib11), [18](#bib.bib18), [9](#bib.bib9),
+    [10](#bib.bib10)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Class imbalance. Anomaly detection inherently assumes that normal events outnumber
+    anomalous ones. Many approaches based on neural networks are known to perform
+    sub-optimally for imbalanced data sets [[18](#bib.bib18), [10](#bib.bib10)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Anomalous artifact diversity. Manifestations of anomalies affect log events
+    as well as parameters thereof in various ways, including changes of sequential
+    patterns, frequencies, correlations, inter-arrival times, etc. Detection techniques
+    are often designed only for properties of specific anomaly types and are therefore
+    not generally applicable.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Label availability. As anomalies represent unexpected system behavior, there
+    are generally no labeled anomaly instances available for training. This restricts
+    applications to semi- and unsupervised deep learning systems, which are known
+    to achieve lower detection performance than supervised approaches [[9](#bib.bib9),
+    [10](#bib.bib10)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stream processing. Logs are generated as a continuous stream of data. To enable
+    on-the-fly monitoring rather than forensic analysis, deep learning systems need
+    to be designed for single-pass data processing when it comes to detection and
+    model updating [[3](#bib.bib3), [10](#bib.bib10)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data volume. Log data is generated in high volumes, with some systems producing
+    millions [[20](#bib.bib20)] or even billions [[21](#bib.bib21)] of events daily.
+    Efficient algorithms are required to ensure real-time processing in practical
+    applications, in particular, when running on machines with few computational resources
+    such as edge devices.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Interleaving logs. Sequences of related log events may be interleaving each
+    other when many processes operate simultaneously or distributed logs are collected
+    centrally. It is non-trivial to retrieve the original event sequences when events
+    lack session identifiers [[10](#bib.bib10)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data quality. Low data quality may be the result of improper log collection
+    or technical issues during log generation and cause negative effects on machine
+    learning effectiveness. Common problems involve incorrect time stamp information,
+    event ordering, missing events, duplicated records, mislabeled events, etc. [[22](#bib.bib22),
+    [23](#bib.bib23)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Model explainability. Approaches based on neural networks generally suffer from
+    a lower explainability than conventional machine learning methods. Difficulties
+    to understand the reasons behind both correct and incorrect classifications are
+    especially problematic when it comes to making justified decisions in response
+    to critical system behavior or security incidents [[18](#bib.bib18), [9](#bib.bib9)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: III Survey Method
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section outlines the method that was used to carry out the systematic literature
+    review. We first describe our strategy for collecting relevant literature and
+    then present the evaluation criteria that we used to analyze the retrieved papers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Search Strategy
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this section we describe the process of gathering relevant publications to
+    be included in the survey. First, an initial collection of literature is collected
+    using a web search. Subsequently, relevant papers are selected using inclusion,
+    exclusion, and quality criteria.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A1 Initial Literature Collection with Search String
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In order to obtain an initial set of approaches from the state-of-the-art,
+    we assemble a search string to query common databases for scientific publications.
+    In particular, we design the search string so that only publications containing
+    the three main concepts relevant for this survey are retrieved: log data, anomaly
+    detection, and deep learning. Since some publications use different terminology
+    and to decrease the likelihood that relevant publications are missed, we also
+    use the terms “system log(s)”, “event log(s)”, “log file(s)”, “log event(s)” as
+    alternatives for “log data”, and “neural network(s)” as an alternative for “deep
+    learning”. We omit the term “log” without any other word as it yields many results
+    that contain logarithms but are not relevant for our study. Figure [1](#S3.F1
+    "Figure 1 ‣ III-A1 Initial Literature Collection with Search String ‣ III-A Search
+    Strategy ‣ III Survey Method ‣ Deep Learning for Anomaly Detection in Log Data:
+    A Survey") displays the final search string.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c3c1ab3ac18e1e086c3bdbc568f601a4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Composition of the search string used to retrieve relevant literature.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then use this search string to gather publications from the following databases:
+    Science Direct¹¹1https://www.sciencedirect.com/, Scopus²²2https://www.scopus.com/,
+    SpringerLink³³3https://link.springer.com/, ACM Digital Library⁴⁴4https://dl.acm.org/,
+    IEEE Xplore⁵⁵5https://ieeexplore.ieee.org/, Google Scholar⁶⁶6https://scholar.google.com/,
+    and Web of Science⁷⁷7https://www.webofscience.com/. The search was conducted in
+    January of 2022 and returned a total of 2925 publications. In the following section,
+    we describe our method for selecting relevant publications from this set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A2 Selection of Relevant Publications
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To sort out publications that are not relevant for this survey and reduce the
+    set of publications to a manageable size, we define multiple selection criteria
+    and apply them on our initial collection. Our main criterion for including the
+    publication in the survey is as follows: The model proposed in the publication
+    applies deep learning techniques (i.e., a multi-layered neural network) for anomaly
+    detection in heterogeneous and unstructured log data. Moreover, we define several
+    exclusion criteria that we use to omit publications with low relevance or otherwise
+    inappropriate format. The list of exclusion criteria is as follows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is no indication stated in the paper that the presented approach is applicable
+    or designed for application with log data. Our survey does not attempt to adopt
+    methods from other domains for log data analysis.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There exists a more recent publication that presents the same or a similar study.
+    The purpose of this criteria is to ensure that the most up-to-date versions of
+    specific approaches are analyzed.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The publication only applies an existing approach without novel modifications
+    from the original concept.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The publication is in any language other than English.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The publication is not available in electronic form.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The publication is a book, technical report, lecture note, presentation, review,
+    or thesis. In these cases, the corresponding conference or journal publications
+    were reviewed if possible.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Note that we do not constraint the publications to a specific time range in
+    order to avoid missing any older publications that are nonetheless relevant for
+    this survey. However, we aim to omit publications of generally lower quality that
+    do not meet the minimum scientific standards. We therefore only select publications
+    that meet the following quality criteria in addition to our main inclusion criterion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The purpose of the study and its findings are explicitly stated, e.g., the design
+    of a deep learning system for the purpose of anomaly detection is stated as the
+    main contribution of the paper.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The applied deep learning models and their parameters are rigorously described,
+    i.e., it is clear to the reader what type of deep learning model was selected
+    and how its layout was designed, e.g., how many layers it comprises.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The publication includes a sound evaluation of the presented approach, comprising
+    a convincing motivation for the design of the conducted experiments, a comprehensive
+    description of the evaluation process and overall setup, an explanation for choosing
+    the captured metrics, and a detailed discussion of the gathered results and their
+    implications.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The data sets used for evaluating the approach are referenced or described.
+    This criteria ensures that our survey does not include publications presenting
+    potentially misleading findings originating from data sets that are inadequate
+    for anomaly detection.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Visualizations are clear and readable. Incomprehensible presentation of results
+    are misleading and lack scientific value.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Our selection procedure is a two-stage process. First, we reduce the initial
+    collections of publications using the inclusion and exclusion criteria based on
+    the title and abstract of each paper. After this stage 331 publications remained.
+    In the second stage, we carry out the selection using all aforementioned criteria
+    based on the contents of each paper. We eventually obtained 62 papers that were
+    included in this survey. The following section outlines our method for analyzing
+    these publications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Reviewed features
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To ensure that we analyze the selected publications on a common scheme and address
+    our research questions, we formulate a list of features that we assess for each
+    paper. The following set of questions concerns the applied deep learning (DL)
+    model and mode of operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DL-1:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Which deep learning models are used?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'DL-2:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Which training loss functions are applied?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'DL-3:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Does the approach support online or incremental⁸⁸8Online or incremental processing
+    refers to single-pass procedures where the runtime grows approximately linear
+    with the number of processed lines. learning?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'DL-4:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Does training take place in un-, semi-, or supervised manner?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: We then analyze the different ways how the reviewed approaches feed raw log
+    data into deep learning models. The following questions therefore address the
+    pre-processing (PP) and transformation of logs into numeric vector or matrix representations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'PP-1:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How are raw logs pre-processed?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'PP-2:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What features are extracted from pre-processed logs?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'PP-3:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How are extracted features represented as vectors?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The next set of questions deals with the anomaly detection (AD). In particular,
+    we are interested in the different types of anomalies to understand whether they
+    are linked to the features extracted from the raw logs and their representations
+    as vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'AD-1:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What types of anomalies are detected by the approach?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'AD-2:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How is the output of the deep neural network⁹⁹9The output layer of the neural
+    network comprises one or more nodes with certain numeric values. used for anomaly
+    detection?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'AD-3:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How are anomalies differentiated from normal data samples?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Utilizing openly accessible data sets for evaluations as well as publishing
+    source code alongside papers is not only good scientific standard but also essential
+    for others to validate presented results and carry out comparisons. The last set
+    of questions therefore concerns evaluation and reproducibility (ER), in particular,
+    employed evaluation metrics as well as availability of data sets and source code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ER-1:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What log data sets are used for evaluating the approach?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'ER-2:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What evaluation metrics are employed?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'ER-3:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Does the evaluation consider runtime performance measurements?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'ER-4:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What approaches are used as benchmarks?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'ER-5:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Are the used data sets publicly available?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'ER-6:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Is the source code of the approach publicly available?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'All aforementioned questions were assessed for each publication individually.
+    The resulting feature matrix is presented in Table [II](#S4.T2 "TABLE II ‣ IV-A2
+    Citations ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey") in the following section and serves as the basis
+    for our analyses and discussions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Survey Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section provides the assessments of all reviewed publications with respect
+    to the features outlined in the previous section. We first provide some general
+    information on the meta-data of publications before going over each reviewed feature
+    in detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A Bibliometrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section provides an overview of the distribution of publications per year
+    as well as their citation counts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A1 Publications per Year
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Deep learning for anomaly detection in log data is a relatively new research
+    field that has increasingly gained traction in the last years. Accordingly, a
+    majority of the publications in this research area have only been published in
+    the last two to three years. Figure [2](#S4.F2 "Figure 2 ‣ IV-A1 Publications
+    per Year ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey") shows an overview of the publication years of
+    all publications reviewed for this survey. As expected, 58 out of the 62 considered
+    publications were published in 2019 or later. As the search for relevant literature
+    was carried out in the beginning of 2022, only two publications from that year
+    are included. However, we expect to see an even higher number of publications
+    in 2022 and beyond following the overall trend visible in the plot.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a4cc4e821c314f2502f9cd3499408478.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Distribution of the number of publications per year.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A2 Citations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Citation counts are a common indicator to assess the relevance and influence
+    of publications. We therefore state the top six publication with the highest citation
+    counts (according to Google Scholar) in Table [I](#S4.T1 "TABLE I ‣ IV-A2 Citations
+    ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection
+    in Log Data: A Survey"). As of January 2023, the paper presenting DeepLog by Du
+    et al. [[24](#bib.bib24)] that was published in 2017 has the highest citation
+    count and is arguably the most influential of all reviewed publications as they
+    were the first to propose an approach based on deep learning that enables detection
+    of anomalous event sequences in log data. Several of the subsequently published
+    papers rely on the groundwork of DeepLog and it is therefore fair to assume that
+    this paper is at least to some degree responsible for the increase of relevant
+    publications from 2019 and onward that is visible in Fig. [2](#S4.F2 "Figure 2
+    ‣ IV-A1 Publications per Year ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep
+    Learning for Anomaly Detection in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that the publication by Yang et al. [[25](#bib.bib25)] predates DeepLog
+    [[24](#bib.bib24)] but has a significantly lower citation count. The main reason
+    for this is that the paper focuses on the analysis of tokens in single log events,
+    a topic that received far less attention in subsequent research than the analysis
+    of event sequences. This differentiation as well as assessments for all other
+    features stated in Sect. [III-B](#S3.SS2 "III-B Reviewed features ‣ III Survey
+    Method ‣ Deep Learning for Anomaly Detection in Log Data: A Survey") are presented
+    in Table [II](#S4.T2 "TABLE II ‣ IV-A2 Citations ‣ IV-A Bibliometrics ‣ IV Survey
+    Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Top six most cited publications'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Citations | Approach | Year | Authors | Paper Title |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 963 | DeepLog | 2017 | [[24](#bib.bib24)] | DeepLog: Anomaly Detection and
+    Diagnosis from System Logs through Deep Learning |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 227 | LogRobust | 2019 | [[19](#bib.bib19)] | Robust Log-Based Anomaly Detection
+    on Unstable Log Data |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 209 | LogAnomaly | 2019 | [[26](#bib.bib26)] | LogAnomaly: Unsupervised Detection
+    of Sequential and Quantitative Anomalies in Unstructured Logs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 92 | - | 2018 | [[27](#bib.bib27)] | Detecting Anomaly in Big Data System
+    Logs Using Convolutional Neural Network |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 53 | Logsy | 2020 | [[28](#bib.bib28)] | Self-Attentive Classification-Based
+    Anomaly Detection in Unstructured Logs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 45 | LogBERT | 2021 | [[29](#bib.bib29)] | LogBERT: Log Anomaly Detection
+    via BERT |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE II: Survey results. DL-1: Multi-Layer Perceptron (MLP), Convolutional
+    Neural Network (CNN), Recursive Neural Network (RNN), Autoencoder (AE), Generative
+    Adversarial Network (GAN), Transformer (TF), Attention mechanism (AT), Graph Neural
+    Network (GNN), Evolving Granular Neural Network (EGNN); DL-2: Cross-Entropy (CE),
+    Hyper-Sphere (HS), Mean Squared Error (MSE), Kullback-Leibler Divergence (KL),
+    Marginal Likelihood (ML), Custom Loss Function (CF), Adversarial Training (AT),
+    Not Available (NA); DL-3: Online (ON), Offline (OFF); DL-4: Supervised (SUP),
+    Semi-supervised (SEMI), Unsupervised (UN); PP-1: Log key (KEY), Token (TOK), Combination
+    (COM); PP-2: Token Sequence (TS), Token Count (TC), Event Sequence (ES), Event
+    Count (EC), Parameter (PA), Event Interval Time (EI); PP-3: Event ID sequence
+    (ID), Count Vector (CV), Statistical Feature Vector (FV), Semantic Vector (SV),
+    Positional Embedding (PE), One-Hot Encoding (OH), Embedding Layer/Matrix (EL),
+    Deep Encoded Embedding (DE), Parameter Vector (PV), Time Embedding (TE), Graph
+    (G), Transfer Matrix (TM); AD-1: Outlier (OUT), Sequential (SEQ), Frequency (FREQ),
+    Statistical (STAT); AD-2: Binary Classification (BIN), Input Vector Transformations
+    (TRA), Reconstruction Error (RE), Multi-class Classification (MC), Probability
+    Distribution (PRD), Numeric Vector (VEC); AD-3: Label (LAB), Threshold (THR),
+    Highest Probabilities (TOP).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Approach | DL-1 | DL-2 | DL-3 | DL-4 | PP-1 | PP-2 | PP-3 | AD-1 | AD-2 |
+    AD-3 | ER-6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Baril et al. [[30](#bib.bib30)] (NoTIL) | RNN | CE | OFF | SEMI | KEY | ES,
+    EC | CV | FREQ | VEC | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bursic et al. [[31](#bib.bib31)] | RNN, AE | MSE | OFF | UN | TOK | PA, TS
+    | DE | OUT | RE | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Catillo et al. [[32](#bib.bib32)] (AutoLog) | AE | MSE | ON | SEMI | COM
+    | STAT, TC | FV | FREQ | RE | THR | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cheansunan et al. [[33](#bib.bib33)] | CNN | NA | OFF | SEMI | KEY | ES |
+    EL | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chen et al. [[34](#bib.bib34)] | RNN, CNN | NA | OFF | SEMI | KEY | ES, EC
+    | SV, CV | SEQ, FREQ | VEC, PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chen et al. [[35](#bib.bib35)] (LogTransfer) | RNN, CNN | NA | OFF | SUP
+    | KEY | ES | SV | SEQ | BIN | LAB | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Decker et al. [[36](#bib.bib36)] | EGNN | CF | OFF | SUP | KEY | EC, STAT
+    | FV | FREQ | MC | THR, LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Du et al. [[24](#bib.bib24)] (DeepLog) | RNN | CE, MSE | ON | SEMI | KEY
+    | ES, PA, EI | PV, OH | SEQ | VEC, PRD | THR, TOP | RE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Du et al. [[37](#bib.bib37)] (LogAttention) | TF, AM | NA | OFF | SUP | KEY
+    | ES | SV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Farzad et al. [[38](#bib.bib38)] | RNN, AE | CE | OFF | SUP | TOK | TS |
+    EL | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Farzad et al. [[39](#bib.bib39)] | RNN, AE, CNN, GAN | CE | OFF | SUP | TOK
+    | TS | EL | OUT | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Farzad et al. [[40](#bib.bib40)] | RNN | CE | OFF | SUP | TOK | TS | EL |
+    OUT | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gu et al. [[41](#bib.bib41)] | RNN, AM | CE | OFF | SEMI | KEY | ES | SV
+    | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Guo et al. [[42](#bib.bib42)] (FLOGCNN) | CNN | CE | OFF | SUP | COM | TS
+    | SV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Guo et al. [[29](#bib.bib29)] (LogBERT) | TF, AM | CE, HS | OFF | SEMI |
+    KEY | ES | PE, EL | SEQ | PRD | TOP | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Guo et al. [[43](#bib.bib43)] (TransLog) | TF, AM | CE | OFF | SUP | KEY
+    | ES | SV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Han et al. [[44](#bib.bib44)] (LogTAD) | RNN, GAN | HS, CF, AT | OFF | UN
+    | KEY | ES | SV | SEQ | TRA | THR | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hashemi et al. [[45](#bib.bib45)] (OneLog) | CNN | CE | OFF | SUP | TOK |
+    ES | DE | SEQ | BIN | LAB | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hirakawa et al. [[46](#bib.bib46)] | CNN, TF | CF | OFF | UN | TOK | ES |
+    SV | OUT | BIN | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huang et al. [[47](#bib.bib47)] (HitAnomaly) | TF, AM | CE | OFF | SUP |
+    KEY | ES, PA | SV, PV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Le et al. [[48](#bib.bib48)] (NeuralLog) | TF | CE | OFF | SUP | TOK | ES
+    | SV, PE | SEQ | BIN | LAB | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Li et al. [[49](#bib.bib49)] (LogSpy) | CNN, MLP, AM | CE | OFF | SUP | KEY
+    | STAT | DE, EL | STAT | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Li et al. [[50](#bib.bib50)] (SwissLog) | RNN, AM | CE | OFF | SUP | KEY
+    | ES, EI | SV, TE | STAT, SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Liu et al. [[51](#bib.bib51)] (LogNADS) | RNN | MSE | OFF | SUP | KEY | ES,
+    PA | SV, PV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lu et al. [[27](#bib.bib27)] | CNN | NA | OFF | SUP | KEY | ES | EL | SEQ
+    | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lv et al. [[52](#bib.bib52)] (ConAnomaly) | RNN | NA | OFF | SUP | KEY |
+    ES | SV | SEQ | BIN | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Meng et al. [[26](#bib.bib26)] (LogAnomaly) | RNN | NA | OFF | SEMI | KEY
+    | ES, EC | SV, CV | SEQ, FREQ | VEC, PRD | TOP | RE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nedelkoski et al. [[28](#bib.bib28)] (Logsy) | TF | HS | OFF | UN | TOK |
+    TS | PE, EL | OUT | TRA | THR | RE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Otomo et al. [[53](#bib.bib53)] | AE | KL, ML, CF | OFF | SEMI | KEY | ES,
+    EC | CV, OH | FREQ | TRA | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Ott et al. [[54](#bib.bib54)] | RNN | CE, MSE | OFF | SEMI | KEY | ES | SV
+    | SEQ | VEC, PRD | THR, TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Patil et al. [[55](#bib.bib55)] | RNN | CE | OFF | SUP | KEY | ES | OH |
+    SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Qian et al. [[56](#bib.bib56)] (VeLog) | AE | CF | ON | SEMI | KEY | ES,
+    EC | ID, CV | SEQ, FREQ | RE | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Studiawan et al. [[57](#bib.bib57)] | AE | MSE | OFF | SEMI | KEY | EC, STAT,
+    EI, TC | FV | STAT, FREQ | RE | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Studiawan et al. [[58](#bib.bib58)] (pylogsentiment) | RNN | CE | OFF | SUP
+    | TOK | TS | SV | OUT | BIN | LAB | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sun et al. [[59](#bib.bib59)] (AllContext) | RNN, AM | CE | OFF | SUP | KEY
+    | ES | SV | OUT, SEQ | BIN, MC | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sundqvist et al. [[60](#bib.bib60)] (BoostLog) | RNN | NA | ON | SEMI | KEY
+    | ES | ID | SEQ | PRD | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Syngal et al. [[61](#bib.bib61)] | RNN, AE | CE | OFF | SUP | TOK | ES, EC
+    | CV, OH | SEQ, FREQ | RE | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wadekar et al. [[62](#bib.bib62)] | AE | CE, KL, ML | OFF | UN | KEY | ES
+    | OH | SEQ | BIN | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wan et al. [[63](#bib.bib63)] (GLAD-PAW) | GNN | CE | OFF | UN | KEY | ES
+    | G | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. [[64](#bib.bib64)] | RNN | NA | OFF | SUP | TOK | TS | SV | OUT
+    | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. [[1](#bib.bib1)] (CATLog) | AE, MLP, TF | CE, CF | OFF | SUP
+    | KEY | ES, TC | SV, DE, CV | SEQ, FREQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. [[65](#bib.bib65)] (LightLog) | CNN | CE | OFF | SUP | KEY |
+    ES | SV | SEQ | BIN | LAB | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. [[66](#bib.bib66)] (OC4Seq) | RNN | HS | OFF | UN | KEY | ES
+    | EL | SEQ | TRA | THR | YES |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wibisono et al. [[67](#bib.bib67)] | TF, AM | NA | OFF | SEMI | KEY | ES
+    | OH | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wittkopp et al. [[68](#bib.bib68)] (A2Log) | TF, AM | CF | OFF | UN | TOK
+    | TS | SV | OUT | BIN, TRA | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xi et al. [[69](#bib.bib69)] | RNN, AM | CE | OFF | SEMI | KEY | ES | SV
+    | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xia et al. [[70](#bib.bib70)] (LogGAN) | RNN, GAN | AT | ON | SEMI | KEY
+    | ES | OH | SEQ | PRD | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xiao et al. [[71](#bib.bib71)] | RNN, CNN | CE | OFF | SEMI | KEY | ES |
+    EL | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xie et al. [[72](#bib.bib72)] (ATT-GRU) | RNN, AM | MSE | OFF | SEMI | KEY
+    | ES, PA, EI | PV, EL | SEQ | VEC, PRD | THR, TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yang et al. [[25](#bib.bib25)] | RNN | CE | OFF | SEMI | TOK | TS | SV |
+    OUT | VEC | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yang et al. [[73](#bib.bib73)] (nLSALog) | RNN, AM | CE | OFF | SEMI | KEY
+    | ES | EL | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yang et al. [[74](#bib.bib74)] (PLELog) | RNN | NA | OFF | SEMI | KEY | ES
+    | SV | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yen et al. [[75](#bib.bib75)] (CausalConvLSTM) | RNN, CNN | CE | ON | SEMI
+    | KEY | ES | OH | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yin et al. [[76](#bib.bib76)] (LogC) | RNN | CE | OFF | SEMI | KEY | ES,
+    PA | OH | SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yu et al. [[77](#bib.bib77)] | RNN | CE | OFF | SEMI | KEY | ES, EC | SV,
+    ID, CV | SEQ, FREQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhang et al. [[19](#bib.bib19)] (LogRobust) | RNN, AM | CE | OFF | SUP |
+    KEY | ES | SV | SEQ | BIN | LAB | RE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhang et al. [[78](#bib.bib78)] (LogAttn) | AE, CNN, AM | CE | OFF | SEMI
+    | TOK | ES, EC | SV, CV | SEQ, FREQ | RE | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhang et al. [[79](#bib.bib79)] (LSADNET) | CNN, TF | CE | ON | SEMI | KEY
+    | ES, STAT | SV, TM | STAT, SEQ | PRD | TOP | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhang et al. [[80](#bib.bib80)] (SentiLog) | RNN | NA | OFF | SUP | TOK |
+    TS | SV | OUT | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhao et al. [[81](#bib.bib81)] (Trine) | TF, GAN | NA | OFF | SEMI | TOK
+    | ES | SV, DE, PE | SEQ | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhou et al. [[82](#bib.bib82)] (LogSayer) | RNN, CNN | NA | ON | SUP | KEY
+    | EC, STAT | FV | STAT | BIN | LAB | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhu et al. [[83](#bib.bib83)] (LogNL) | RNN | NA | OFF | SEMI | KEY | ES,
+    PA, EI | SV, PV | SEQ | VEC, PRD | THR | NO |'
+  prefs: []
+  type: TYPE_TB
+- en: IV-B Deep Learning Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section provides an overview of the properties of deep learning models
+    applied in reviewed publications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B1 Deep Learning Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There are many different types of deep learning models (DL-1) that are suitable
+    to be used for anomaly detection in log data [[15](#bib.bib15), [84](#bib.bib84)].
+    The most basic form of a deep learning neural network is that of a Multi-Layer
+    Perceptron (MLP), where all layers in the network are fully connected. Due to
+    their simplicity, their classification accuracies are usually outperformed by
+    other deep learning models that are specifically designed to capture common characteristics
+    present in sequential data. Accordingly, they are rarely considered in the reviewed
+    literature and only occur in combination with other deep learning models or as
+    supplementary attention mechanisms [[1](#bib.bib1), [49](#bib.bib49)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolutional Neural Networks (CNN) extend upon the architecture of MLPs by
+    inserting convolutional and max pooling layers within the hidden layers. These
+    layers enable that the neural networks capture more abstract features of the input
+    data and at the same time reduce the input dimensions. This has proven especially
+    effective when classifying 2-dimensional input data from images, where features
+    such as lines are learned independent from their exact location in the image.
+    This functionality is transferred to log data by arranging the log keys within
+    a matrix so that the relationships between events, i.e., their temporal dependencies,
+    are captured by the network [[27](#bib.bib27)]. There also exist several approaches
+    that rely on specific types of CNNs, such as temporal convolutional networks (TCN)
+    that are specifically designed to process time-series and capture their short-
+    and long-term dependencies through dilated causal convolutions [[65](#bib.bib65),
+    [78](#bib.bib78)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As visible in Table [II](#S4.T2 "TABLE II ‣ IV-A2 Citations ‣ IV-A Bibliometrics
+    ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey"),
+    Recurrent Neural Networks (RNN) are the most commonly used neural network architectures
+    in the surveyed literature, with 36 out of 62 reviewed approaches leveraging RNNs
+    for anomaly detection. The main reason for this is that the architecture of RNNs
+    leverages feedback mechanisms that retain their states over time and thus directly
+    enable learning of sequential event execution patterns in input data, which are
+    the key identifiers for anomalies in log data sets that are commonly used in evaluations
+    (cf. Sect. [IV-E](#S4.SS5 "IV-E Evaluation & Reproducibility ‣ IV Survey Results
+    ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")). Several different
+    types of RNNs have successfully been applied for this purpose. One of the most
+    widespread architectures are Long Short-Term Memory (LSTM) RNNs that are developed
+    to enable long-time storage of states and comprise cells with input gates, output
+    gates, and forget gates. A majority of the approaches leveraging LSTM RNNs train
+    the network with sequences of event occurrences (or modified and enriched versions
+    thereof) and subsequently disclose unusual sequential patterns in test data as
+    anomalies [[24](#bib.bib24)]. Some approaches make use of Bi-LSTM RNNs, which
+    are basically two independent LSTM RNNs that work in parallel and process sequences
+    in opposite directions, i.e., while one LSTM RNN processes the input sequences
+    as usual from the first to the last element, the other LSTM RNN processes sequence
+    elements starting from the last entry and predicts elements that chronologically
+    precede them. Experiments suggest that Bi-LSTM RNNs outperform LSTM RNNs [[19](#bib.bib19),
+    [54](#bib.bib54), [50](#bib.bib50), [38](#bib.bib38), [80](#bib.bib80), [61](#bib.bib61),
+    [77](#bib.bib77), [59](#bib.bib59)]. Another popular choice for RNNs are Gated
+    Recurrent Units (GRU) that simplify the cell architecture as they only rely on
+    update and reset gates. One of the main benefits of GRUs is that they are computationally
+    more efficient than LSTM RNNs, which is a relevant aspect for use cases focusing
+    on edge devices [[72](#bib.bib72), [66](#bib.bib66), [39](#bib.bib39), [38](#bib.bib38),
+    [60](#bib.bib60), [74](#bib.bib74), [57](#bib.bib57), [41](#bib.bib41), [25](#bib.bib25)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While aforementioned deep learning models are primarily used for classification
+    problems across different research fields, there are also models that are specifically
+    designed to operate in unsupervised manner and are thus a natural choice for anomaly
+    detection. One of them are Autoencoders (AE), which first create a code from the
+    input data using an encoder and then try to approximate the input from the code
+    using a decoder, thereby avoiding the need for labeled input data. The main idea
+    is that through this process the neural network learns the main features from
+    the input but neglects the noise in the data, similar to dimension reduction techniques
+    such as principal component analysis (PCA). Any input data that is fed into an
+    already trained network and yields a high reconstruction error is then considered
+    as anomalous. Besides the standard model for Autoencoders, there are also several
+    related types, such as Variational Autoencoders (VAE) that operate on statistical
+    distributions [[62](#bib.bib62), [56](#bib.bib56), [1](#bib.bib1)], Conditional
+    Variational Autoencoders (CVAE) that add conditional information such as event
+    types to the training [[53](#bib.bib53)], and Convolutional Autoencoder (CAE)
+    that leverage the advantages of CNNs regarding learning of location-independent
+    features [[62](#bib.bib62)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Generative Adversarial Networks (GAN) are another approach for unsupervised
+    deep learning. They actually consist of two separate components that compete with
+    each other: a generator that produces new data that resembles the input data,
+    and a discriminator that estimates the probability that some data stems from the
+    input data, which is used to improve the generator. Existing approaches use different
+    models to construct GANs, including LSTM RNNs [[70](#bib.bib70), [44](#bib.bib44)],
+    CNNs in combination with GRUs [[39](#bib.bib39)], and Transformers [[81](#bib.bib81),
+    [1](#bib.bib1)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Transformers (TF) make use of so-called self-attention mechanisms to embed
+    data instances into a vector space, where similar instances should be closer to
+    each other than dissimilar ones [[28](#bib.bib28), [29](#bib.bib29), [37](#bib.bib37)].
+    The goal of Transformers is to assign weights to specific inputs according to
+    the context of their occurrence, such as words in sentences. Accordingly, Transformers
+    have been particularly successful in the area of natural language processing (NLP).
+    Attention mechanisms (AT) do not just appear in Transformers, but are also frequently
+    used to improve classification and detection in other deep neural networks such
+    as RNNs by weighting relevant inputs higher. This effect is particularly strong
+    when long sequences are ingested by RNNs [[78](#bib.bib78)]. Attention mechanisms
+    are usually realized as trainable networks such as MLPs [[49](#bib.bib49)]. In
+    order to avoid confusions with the Transformer model, we state these additional
+    attention mechanisms explicitly in Table [II](#S4.T2 "TABLE II ‣ IV-A2 Citations
+    ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection
+    in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wan et al. [[63](#bib.bib63)] are the only authors to utilize Graph Neural Networks
+    (GNN). While neural networks typically ingest ordered data, e.g., CNNs rely on
+    2-dimensional input data and RNNs require sequences of observations, GNNs are
+    designed to ingest graph inputs, i.e., sets of vertices and edges. One possibility
+    to transform log data into graphs is to generate session graphs, with vertices
+    representing events and edges their sequential executions. Another less commonly
+    applied type of deep learning model is the Evolving Granular Neural Network (EGNN),
+    a fuzzy inference system that is gradually constructed from online data streams
+    [[36](#bib.bib36)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our survey shows that many of the reviewed approaches rely on only one type
+    of deep learning model. However, some authors also use combinations of different
+    models. For example, Wang et al. [[1](#bib.bib1)] propose to use a MLP to combine
+    the output of a VAE with that of a Transformer trained with adversarial learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B2 Training loss function
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'TABLE III: Definitions of common training loss functions'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Description | Equation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-Entropy | Loss between a ground truth label $y$ and the predicted label
+    $\hat{y}$. | $H(y,\hat{y})=-\sum_{j=1}^{N}y_{j}log\left(\hat{y}_{j}\right)$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hyper-Sphere Objective Function | Distance between embedding vector $y$ and
+    hyper-sphere center $c$. | $L_{HS}=\frac{1}{N}\sum_{j=1}^{N}\left\&#124;y_{j}-c\right\&#124;^{2}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mean Squared Error | Loss between a ground truth label $y$ and the predicted
+    label $\hat{y}$. | $L_{MSE}(y,\hat{y})=\frac{1}{N}\sum_{j=1}^{N}\left(y_{j}-\hat{y}_{j}\right)^{2}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kullback-Leibler Divergence | Statistical divergence between probability
+    distributions $P$ and $Q$. | $KL(P\&#124;Q)=\sum_{x\in\mathcal{X}}P(x)log\left(\frac{P(x)}{Q(x)}\right)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adversarial Training Function | Loss for vector $y$ and prediction $\hat{y}$
+    with generator $G$ and discriminator $D$. | $\!\begin{aligned} L_{AT}=&amp;\min_{G}\max_{D}(\mathbb{E}\left(log\left(D(G(\hat{y}))\right)\right)+\\
+    &amp;\mathbb{E}\left(log\left(1-D(G(y))\right)\right))\end{aligned}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: Loss functions (DL-2) are essential for training of deep neural networks as
+    they quantify the difference between the output of the neural network and the
+    expected result [[85](#bib.bib85)]. The most common loss function in the reviewed
+    publications is the Cross-Entropy (CE), in particular, the categorical cross-entropy
+    for multi-class prediction [[24](#bib.bib24), [61](#bib.bib61)] or binary cross-entropy
+    that only differentiates between the normal and anomalous class [[65](#bib.bib65)].
+    Other common loss functions include the Hyper-Sphere Objective Function (HS) where
+    the distance to the center of a hyper-sphere represents the anomaly score [[28](#bib.bib28),
+    [66](#bib.bib66), [29](#bib.bib29), [44](#bib.bib44)], the Mean Squared Error
+    (MSE) that is used for regression [[31](#bib.bib31), [54](#bib.bib54), [32](#bib.bib32),
+    [51](#bib.bib51), [57](#bib.bib57), [72](#bib.bib72), [24](#bib.bib24)], and the
+    Kullback-Leibler Divergence (KL) and its extension Marginal Likelihood (ML) that
+    are useful to measure loss in probability distributions [[53](#bib.bib53), [62](#bib.bib62)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some of the presented approaches are trained with Custom Loss Functions (CF),
+    including combinations of CE and HS [[68](#bib.bib68)]. Some authors also define
+    objective functions specifically for Adversarial Training (AT) of GANs [[70](#bib.bib70),
+    [44](#bib.bib44)]. Table [III](#S4.T3 "TABLE III ‣ IV-B2 Training loss function
+    ‣ IV-B Deep Learning Techniques ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey") summarizes the main loss functions. Out of all
+    publications, 14 do not state the loss function and are therefore marked as Not
+    Available (NA).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B3 Operation mode
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: When applying anomaly detection in real world scenarios, not all log data is
+    available at any time; instead, events are generated as a continuous stream and
+    should be analyzed only at their time of occurrence in order to enable (close
+    to) real-time detection. Thereby, the structural integrity and statistical properties
+    of the generated logs vary over time, e.g. the overall system utilization is not
+    stationary as user interactions and the technological environment are subject
+    to change. In addition, log templates change or new log events occur when applications
+    generating these logs are modified [[19](#bib.bib19)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To keep up with these changes in an automated way, algorithms need to adopt
+    online or incremental learning (DL-3), i.e., ingest input data with linear time
+    complexity so that data sets are processed in a single pass where each data instance
+    is only handled once. While it is usually always possible to carry out detection
+    in an online fashion when trained models are considered static, it is significantly
+    more challenging to develop algorithms that support online learning and dynamically
+    update their models to adapt to new events or patterns by incorporating them into
+    the baseline for detection [[86](#bib.bib86), [87](#bib.bib87)]. As continuous
+    learning is still an open problem, we mark all approaches that enable dynamic
+    model updates at least to some degree as online (ON) and all other approaches
+    with offline training phases as offline (OFF) in Table [II](#S4.T2 "TABLE II ‣
+    IV-A2 Citations ‣ IV-A Bibliometrics ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reviewed approaches addressed dynamic model adaptation in multiple ways.
+    Du et al. [[24](#bib.bib24)] suggest to update the weights of their neural network
+    when false positives are identified during the detection to reflect the correct
+    event probability distributions without the need to re-train from scratch. Meng
+    et al. [[26](#bib.bib26)] argue that such a manual feedback loop is infeasible
+    in practice and therefore resort to re-training where new event types are mapped
+    to existing ones. Yen et al. [[75](#bib.bib75)] automatically re-train their neural
+    network on batches of new log data when false positive rates exceed a certain
+    threshold. However, calculating the false positive rates relies on labeled data
+    and thus does not remove the human from the loop. A promising solution to aforementioned
+    problems is presented by Decker et al. [[36](#bib.bib36)], who employ an evolving
+    classifier that is specifically designed to handle unstable data streams and could
+    thus enable continuous learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, both online and offline models can work in supervised (SUP) as well
+    as unsupervised (UN) fashion (DL-4). However, we noticed that almost all supervised
+    learning approaches in the reviewed publications opt for an offline training phase.
+    This is reasonable as the label information required for supervised learning relies
+    on manual analysis or validation and therefore can only be generated forensically
+    for delimited data sets, but not for data streams.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also made the observation that many reviewed approaches claim to enable unsupervised
+    learning, but are in fact operated in semi-supervised (SEMI) fashion as they usually
+    assume that training takes place only on normal data that is free of anomalies
+    [[34](#bib.bib34)]. The main problem is that anomalies that are present in training
+    data would incorrectly change the weights of the neural networks and thus deteriorate
+    their detection in the subsequent detection phase. Accordingly, only deep learning
+    models that are designed for unsupervised learning are capable of handling anomalies
+    in training data, for example, the approach based on a CVAE model presented by
+    Otomo et al. [[53](#bib.bib53)]. Note that neural network architectures that would
+    support unsupervised learning may also be applied for semi-supervised detection
+    and are therefore not necessarily marked as unsupervised.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C Log Data Preparation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This section outlines all steps necessary to prepare raw and textual log data
+    for deep learning. This includes grouping of events into windows or sessions,
+    tokenization and log parsing, extraction of features from the logs, as well as
+    transformation of these features into vector representations that are suitable
+    as input to neural networks. Figure [3](#S4.F3 "Figure 3 ‣ IV-C Log Data Preparation
+    ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    provides an overview of these data preparation methods used in the reviewed literature
+    and illustrates them on the sample log lines L1-L8\. In the following sections,
+    we discuss all stated methods in detail.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f62af9535be42b81d5f66279bdc85908.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Different stages of data preparation to transform raw log data into
+    numeric vectors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C1 Pre-processing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As log data is generally unstructured it is necessary to pre-process them in
+    some way before feeding them into deep learning systems (PP-1). Our survey shows
+    that there are two main approaches to handle unstructured data. The most common
+    approach is to leverage parsers, which are usually referred to as log keys (KEY),
+    to extract unique event identifiers for each line as well as event parameter values
+    as described in Sect. [II-A2](#S2.SS1.SSS2 "II-A2 Log Data ‣ II-A Preliminary
+    Definitions ‣ II Background ‣ Deep Learning for Anomaly Detection in Log Data:
+    A Survey"). Thereby, authors usually re-use existing log keys for well-known data
+    sets or create the keys using state-of-the-art approaches for parser generation,
+    such as Drain [[88](#bib.bib88)] or Spell [[89](#bib.bib89)]. Typically, each
+    line matches exactly one key; it is thus easy to assign a unique event type identifier
+    to each log line during event mapping. For example, in Fig. [3](#S4.F3 "Figure
+    3 ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey") line L1 is mapped to event type identifier E1
+    as it matches the corresponding log key. Moreover, the figure also shows that
+    parsing allows to extract all parameters from log events, in particular, the time
+    stamp and identifiers for packet responder and file block are extracted from L1
+    and stored in a list.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative to parsing are token-based (TOK) strategies that split log messages
+    into lists of words, for example, by splitting them at white spaces. It is then
+    common to clean the data by transforming all letters to lowercase and removing
+    special characters and stop words before obtaining the final word vectors. While
+    such approaches draw less semantic information from the single tokens, they have
+    the advantage of being more flexible as they rely on generally applicable heuristics
+    rather than pre-defined parsers and are therefore widely applicable. Some approaches
+    make use of a combination (COM) of parsing and token-based pre-processing strategies,
+    in particular, by generating token vectors from parsed events rather than raw
+    log lines [[48](#bib.bib48), [32](#bib.bib32), [42](#bib.bib42)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C2 Event grouping
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As pointed out in Sect. [II-A3](#S2.SS1.SSS3 "II-A3 Anomaly Detection ‣ II-A
+    Preliminary Definitions ‣ II Background ‣ Deep Learning for Anomaly Detection
+    in Log Data: A Survey"), simple outlier detection does not require any grouping
+    of logs since single unusual events are regarded as anomalies independent from
+    the context in which they occur in. However, deep learning is most often applied
+    to disclose unusual patterns of multiple log events, such as changes of event
+    sequences or temporal log correlations. For these cases it is necessary to logically
+    organize events into groups that are then analyzed individually or in relation
+    to each other.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We illustrate common event grouping strategies in the top right of Fig. [3](#S4.F3
+    "Figure 3 ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣ Deep Learning for
+    Anomaly Detection in Log Data: A Survey"). Grouping into time windows is almost
+    always feasible as log events are generally produced with a time stamp that documents
+    their time of generation [[3](#bib.bib3)]. Since time stamps commonly occur in
+    the beginning of log lines and are thus relatively easy to extract, it is not
+    necessary to parse the remainder of the usually more complex log messages. There
+    are two main strategies for time-based grouping [[4](#bib.bib4)]. First, sliding
+    time windows are windows of a specific duration that are shifted across the log
+    data with a fixed step size that is generally smaller and a whole number divisor
+    of the window size. For every step where the time window is moved all logs with
+    a time stamp within the current start and end time of the window are allocated
+    to the same group, where each log line may appear in multiple groups as time windows
+    overlap. For the sample logs in Fig. [3](#S4.F3 "Figure 3 ‣ IV-C Log Data Preparation
+    ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    we assume time window of 2 hours starting at 20:00:00 and a step size of 30 minutes.
+    As visible in the figure, lines L5, L6, and L7 are contained in both $Tb$ and
+    $Tc$. Second, fixed time windows are special cases of sliding time windows where
+    the step size is set to the same value as the window size. While this strategy
+    results in a less fine-grained view on the data, the advantage is that each log
+    event will only be allocated to exactly one time window, which makes subsequent
+    computations such as time-series analysis easier. The log events in Fig. [3](#S4.F3
+    "Figure 3 ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣ Deep Learning for
+    Anomaly Detection in Log Data: A Survey") are exemplarily grouped into fixed time
+    windows of 2 hours, yielding $T1$ containing the first set of four lines and $T2$
+    containing the subsequent set of four lines. It must be noted that grouping based
+    on sliding or fixed windows may also be carried out by numbers of lines rather
+    than time so that each group of lines has the same size. While this avoids the
+    need to process time stamps and ensures that the group sizes are fixed (e.g.,
+    there cannot be any empty groups), it is more difficult to consider event frequencies
+    as time-series as the resulting windows represent varying time spans.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An entirely different grouping strategy are session windows that rely on an
+    event parameter that acts as an identifier for a specific task or process where
+    the event originated from. Grouping log events by these session identifiers allows
+    to extract event sequences that correctly depict underlying program workflows
+    even when multiple sessions are carried out in parallel on the monitored system.
+    Unfortunately, not all types of log data come with such an identifier for sessions.
+    In the sample logs depicted in Fig. [3](#S4.F3 "Figure 3 ‣ IV-C Log Data Preparation
+    ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    the file block identifier (e.g., blk_388) acts as a session identifier and thus
+    allows us to exemplarily extract three event sequences.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C3 Feature extraction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The parsing- and token-based pre-processing strategies described in Sect. [IV-C1](#S4.SS3.SSS1
+    "IV-C1 Pre-processing ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣ Deep Learning
+    for Anomaly Detection in Log Data: A Survey") enable the extraction of structured
+    features from the otherwise unstructured logs (PP-2). Some of these features are
+    directly derived from pre-processing logs, e.g., the Token Sequence (TS) may be
+    used without any further modifications for analyzing each log line as a sentence
+    of words. On the other hand, Token Counts (TC) require an additional step of computation
+    where the tokens in each line are compared and counted, including advanced weighting
+    techniques for each token such as term frequency–inverse document frequency (TF-IDF)
+    that estimates token relevance based on token occurrences across all observed
+    log lines.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Considering the outcome of the event mapping step it is simple to extract Event
+    Sequences (ES), i.e., sequences of event type identifiers that are usually separated
+    by fixed, sliding, or session windows (cf. Sect. [IV-C2](#S4.SS3.SSS2 "IV-C2 Event
+    grouping ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣ Deep Learning for Anomaly
+    Detection in Log Data: A Survey")). For example, Fig. [3](#S4.F3 "Figure 3 ‣ IV-C
+    Log Data Preparation ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection
+    in Log Data: A Survey") shows that the event sequence for file block blk_388 is
+    $\left[E1,E1,E2,E1\right]$ corresponding to the event identifiers for the respective
+    log keys matching the lines L1-L4\. Event Counts (EC) are vectors of length $d$,
+    where the $i$-th element of the vector depicts the number of occurrences of the
+    $i$-th log key and $d$ is the total number of available log keys. The example
+    in Fig. [3](#S4.F3 "Figure 3 ‣ IV-C Log Data Preparation ‣ IV Survey Results ‣
+    Deep Learning for Anomaly Detection in Log Data: A Survey") shows the event count
+    vector for time window $T1$ as $\left[3,1,0,0\right]$, indicating that three log
+    lines corresponding to the first log key (E1) appeared in $T1$, in particular,
+    the lines L1, L2, and L4\. Besides frequencies, many other statistical properties
+    (STAT) may be computed from event occurrences, such as the percentage of seasonal
+    logs [[82](#bib.bib82)], the lengths of log messages [[57](#bib.bib57)], log activity
+    rates [[36](#bib.bib36)], entropy-based scores for chunks of log lines [[32](#bib.bib32)],
+    or the presence of sudden bursts in event occurrences [[82](#bib.bib82)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parameters (PA) of log events are extracted as lists of values. Since the semantic
+    meaning of each parameter is known after parsing, the values in each vector can
+    be analyzed with methods that are appropriate for the respective value types,
+    e.g., numeric or categorical. One special parameter of log events is the time
+    stamp as it allows to put event occurrences into chronological order and infer
+    dynamic dependencies. Accordingly, Event Interval Times (EI), i.e., inter-arrival
+    times of log lines that belong to the same event type, are a frequently extracted
+    feature for anomaly detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C4 Feature representation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The extracted features described in the previous section comprise numeric or
+    categorical vectors and are suitable to be consumed by neural networks. For example,
+    event sequences are represented as Event ID sequence vectors (ID), i.e., chronologically
+    ordered sequences of log key identifiers, and fed into RNNs to learn dependencies
+    of event occurrences and disclose unusual sequence patterns as anomalies [[60](#bib.bib60)].
+    Event counts are represented as ordered Count Vectors (CV) and are also similarly
+    used as input for RNNs [[30](#bib.bib30)]. Event statistics are another type of
+    input that do not require any specific processing other than representing them
+    in a Statistical Feature Vector (FV) where the position of each element in the
+    vector corresponds to one particular feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While it is possible to directly use the extracted features, most of the approaches
+    presented in the reviewed publications in fact rely on combinations or otherwise
+    transformed vector representations of the original feature vectors (PP-3). Thereby,
+    the most common representation is that of a Semantic Vector (SV). Within the field
+    of NLP it is common practice to transform words of a sentence into so called semantic
+    vectors that encode context-based semantics (e.g. Word2Vec [[90](#bib.bib90)],
+    BERT [[91](#bib.bib91)], or GloVe [[92](#bib.bib92)]) or language statistics (e.g.
+    TF-IDF [[93](#bib.bib93)]). Since each log line comprises sequences of tokens
+    analogous to words in a sentence, it stands to reason to apply methods from natural
+    language processing on the token sequences. Similarly, a sequence of multiple
+    subsequent events can be regarded as a sentence, where each unique log key represents
+    a word. Semantic encoding is typically achieved by training deep neural methods
+    on a specific log file or by relying on pre-trained models. Semantic vectors are
+    sometimes used in combination with Positional Embedding (PE), where elements (typically
+    tokens) are encoded based on their relative positions in a sequence. To add the
+    positional information to the encoded log messages authors usually use sine and
+    cosine functions for even and odd token indices respectively [[48](#bib.bib48),
+    [28](#bib.bib28), [81](#bib.bib81)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: One-Hot Encoding (OH) is one of the most common techniques to handle categorical
+    data and is therefore frequently applied on event types (as a finite number of
+    log keys is defined in the parser) or token values. Formally, the one-hot encoding
+    of a value $i$ from an ordered list of $d$ values is a vector of length $d$ where
+    the $i$-th element is $1$ and all others are $0$ [[24](#bib.bib24)]. While most
+    authors use one-hot encoded data directly as an input to neural networks, it is
+    also possible to combine it with other features such as count vectors so that
+    the applied neural network is capable of discerning the input and learn separate
+    models for different log keys [[53](#bib.bib53)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Embedding Layers/Matrices (EL) are typically used to resolve the problems with
+    respect to sparsity of high-dimensional input data such as one-hot encoded event
+    types when a large number of log keys are required to parse the logs [[66](#bib.bib66),
+    [73](#bib.bib73)]. They are usually randomly initialized parameters which are
+    trained alongside the classification models to create optimal vector encodings
+    for log messages [[27](#bib.bib27)]. The vector encodings are usually arranged
+    in a matrix so that the respective vector for a particular log key is obtained
+    by multiplying the matrix with a one-hot encoded log key vector. The main difference
+    to semantic vectors is that embedding layers/matrices are generally not trained
+    towards NLP objectives, i.e., they do not aim to learn the semantics of words
+    like Word2Vec; instead, embedding layers/matrices are only trained to minimize
+    the loss function of the classification network. Some authors also use custom
+    embedding models based on deep learning; we refer to their output as Deep Encoded
+    Embeddings (DE). This includes a combination of character-, event- and sequence-based
+    embeddings [[45](#bib.bib45)], attention mechanisms using MLPs and CNNs [[49](#bib.bib49)],
+    and token counts with label information fed into VAEs [[1](#bib.bib1)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other than aforementioned methods that operate with event types and mostly use
+    tokens only for encoding these events in vector format, approaches that rely on
+    Parameter Vectors (PV) directly use the actual values extracted from the parsed
+    log messages. Thereby, extracted parameters that are numeric may be used for multi-variate
+    time-series analysis with RNNs [[72](#bib.bib72), [83](#bib.bib83), [24](#bib.bib24)],
+    while categorical values could be one-hot encoded and vectorized with word embedding
+    methods [[47](#bib.bib47)]. Either way, as different log events have varying numbers
+    of parameters with different semantic meaning, it is usually necessary to analyze
+    the parameters of each event type on their own [[72](#bib.bib72), [83](#bib.bib83),
+    [24](#bib.bib24)]. The time stamp of log events is a special parameter as it allows
+    to put other parameters in temporal context, which is required for time-series
+    analysis. However, the time stamps themselves may be used for Time Embedding (TE)
+    and serve as input to neural networks [[31](#bib.bib31)]. For this purpose, Li
+    et al. [[50](#bib.bib50)] generate vectors for sequences of time differences between
+    event occurrences by applying soft one-hot encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While aforementioned representations are used in different variations in several
+    publications, Graphs (G) are an entirely different approach that is only employed
+    by Wan et al. [[63](#bib.bib63)]. The key idea is to transform event sequences
+    into session graphs and then apply neural networks that are specifically designed
+    for these data structures. Another less common strategy for encoding dependencies
+    between log messages is the so-called Transfer Matrix (TM). In particular, the
+    $d\times d$-dimensional matrix encodes the probabilities that any of the $d$ log
+    keys follows another [[79](#bib.bib79)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D Anomaly Detection Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The previous sections described methods to prepare the input log data for ingestion
+    by neural networks. However, in many cases it is non-trivial to retrieve the information
+    whether a data sample presented to the neural network is anomalous or not as there
+    are no dedicated output nodes for anomalies that are not known beforehand. This
+    section therefore outlines the anomaly detection techniques applied by the reviewed
+    approaches. First, we state different types of anomalies that are commonly targeted
+    by approaches. Second, we investigate how the detection or classification result
+    is retrieved from the network output. Finally, we state different decision criteria
+    that are used to differentiate normal from anomalous samples based on these resulting
+    measures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D1 Anomaly types
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The reviewed approaches address different types of anomalies as outlined in
+    Sect. [II-A3](#S2.SS1.SSS3 "II-A3 Anomaly Detection ‣ II-A Preliminary Definitions
+    ‣ II Background ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    (AD-1). Outliers (OUT) are single log events that do not fit to the overall structure
+    of the data set. Most commonly, outlier events are detected based on their unusual
+    parameter values [[46](#bib.bib46)], token sequences [[64](#bib.bib64), [68](#bib.bib68)],
+    or occurrence times [[31](#bib.bib31)]. Comparatively few approaches consider
+    outliers since the majority of reviewed approaches focus on collective anomalies,
+    in particular, involving sequences of events.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sequential (SEQ) anomalies are detected when execution paths change, i.e., the
+    applications that generate logs execute events differently than before. This could
+    result in additional, missing, or differently ordered events within otherwise
+    normal event sequences as well as completely new sequences that could even involve
+    previously unseen event types. A common method to detect these anomalies is to
+    check whether a specific event type in a sequence of events is expected to occur
+    given all the events that occur before or thereafter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While the detection of sequential anomalies inherently assumes that events occur
+    as ordered sequences, frequency (FREQ) anomalies only consider the number of event
+    occurrences. Nonetheless, event frequencies may be used to infer dependencies
+    between events, for example, the numbers of events related to opening and closing
+    files should be the same as every file will eventually be closed and needs to
+    be opened before doing so [[26](#bib.bib26)]. The main idea for detecting frequency
+    anomalies is that changes of system behavior affect the number of usual event
+    occurrences that are most often counted within time windows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some approaches also consider anomalies that base on certain quantitatively
+    expressed properties of multiple log events that go beyond event counts, such
+    as their inter-arrival times [[50](#bib.bib50)] or seasonal occurrence patterns
+    [[82](#bib.bib82)]. We refer to them as statistical (STAT) anomalies, because
+    their detection generally assumes that the event occurrences follow specific stable
+    distributions over time. The following section describes how the output of the
+    neural networks is used to determine the aforementioned types of anomalies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D2 Network output
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In general, the output of a neural network consists either of a single node
+    or multiple nodes in its final layer (AD-2). Accordingly, the resulting value
+    extracted from the network is a scalar or vector of numeric values. One possibility
+    is to consider these results as an anomaly score that expresses to what degree
+    the log events presented to the network represent an anomaly or not. As these
+    scores are generally difficult to interpret on their own, it is usually necessary
+    to compare them with some threshold. In binary classification (BIN) this idea
+    is used to estimate whether the input presented to the neural network is either
+    normal or anomalous. For supervised approaches the numeric output can be interpreted
+    as probabilities that the input corresponds to either class. On the other hand,
+    anomaly scores that are generated by semi- or unsupervised approaches are generally
+    not normalized, e.g., the distance between the input and the center of a hyper-spherical
+    cluster can become arbitrarily large, and therefore need to be compared to empirically
+    determined thresholds. Similarly, Input vector transformations (TRA) that transform
+    the input into a new vector space and generate clusters for normal data are capable
+    of detecting outliers by their large distances to cluster centers. Another related
+    method is to leverage the reconstruction error (RE) of Autoencoders that first
+    encode the input data in a lower dimensional space and then attempt to reconstruct
+    them to their original form. In this case, input samples are considered anomalous
+    if they are difficult to reconstruct, i.e., yield a large reconstruction error,
+    because they do not correspond to the normal data that the network was trained
+    on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While aforementioned approaches pursue binary classification that separates
+    normal from anomalous input, there are also concepts that are capable of differentiating
+    between more than two classes. Multi-class classification (MC) assigns distinct
+    labels to specific types of anomalies but requires supervised learning in order
+    to capture the patterns specific to these classes in the training phase. To resolve
+    this issue, it is also possible to consider event types as the target of classification.
+    The most common approach for this is to train the models to predict the next log
+    key following a sequence of observed log events. When a softmax function is used
+    as an activation for the output, this prediction yields a probability distribution
+    (PRD) with the individual probabilities for each log key. The problem of predicting
+    the next log event in a sequence can also be formulated as a regression task when
+    events are considered as numeric vectors (VEC), in particular, semantic or parameter
+    vectors. Thereby, the neural network outputs a vector representing the expected
+    event vector instead of the respective event type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D3 Detection method
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The different strategies for obtaining the network output described in the previous
+    section already give a rough idea on the methods used to differentiate normal
+    from anomalous behavior and eventually report anomalies (AD-3). When the network
+    output directly corresponds to a particular label (LAB), for example, as accomplished
+    by binary classification, it is simple to generate anomalies for all samples that
+    are labeled as anomalous. For all approaches that output some kind of numeric
+    value or anomaly score it is straightforward to use a threshold (THR) for differentiation.
+    This threshold is also useful to tune the detection performance of the approach
+    and find an acceptable tradeoff between TPR and FPR by empirical experimentation.
+    Another approach is to model the anomaly scores obtained from the network as statistical
+    distributions. In particular, Du et al. [[24](#bib.bib24)] and Xie et al. [[72](#bib.bib72)]
+    use a Gaussian distribution to detect parameter vectors with errors outside of
+    specific confidence intervals as anomalous. A different approach is proposed by
+    Otomo et al. [[53](#bib.bib53)], who apply clustering on the reconstruction errors
+    and detect all samples that are sufficiently far away from the normal clusters
+    as anomalies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d447c9404dce11b08c85ee3d58eb5c94.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Most common combinations of network output types and detection techniques.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When the output of the neural network is a multi-class probability distribution
+    for known log keys it is common to consider the top $n$ log keys with the highest
+    probabilities (TOP) as candidates for classification. Thereby, an anomaly is only
+    detected if the actual type of the log event is not within the set of candidates.
+    The number of considered candidates $n$ regulates the tradeoff between TPR and
+    FPR analogous to the aforementioned threshold. Figure [4](#S4.F4 "Figure 4 ‣ IV-D3
+    Detection method ‣ IV-D Anomaly Detection Techniques ‣ IV Survey Results ‣ Deep
+    Learning for Anomaly Detection in Log Data: A Survey") shows how the network output
+    relates to the applied detection techniques. Both BIN and MC rely on supervised
+    learning and are therefore able to directly assign labels to new input samples.
+    All other techniques enable semi- or unsupervised training. In particular, RE,
+    TRA, and VEC produce anomaly scores that are compared against thresholds, while
+    PRD is typically compared against the top log keys with highest probabilities.
+    Note that there are some exceptions to this overall pattern. For example, the
+    approach by Yang et al. [[74](#bib.bib74)] supports semi-supervised training through
+    the use of probabilistic labels, and the approaches by Zhang et al. [[19](#bib.bib19)]
+    and Syngal et al. [[61](#bib.bib61)] are supervised despite relying on reconstruction
+    errors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-E Evaluation & Reproducibility
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section provides an overview of evaluations carried out in the reviewed
+    publications. We present a list of openly available data sets that are useful
+    for evaluations and state commonly used evaluation metrics and benchmarks. We
+    also discuss reproducibility of evaluations with respect to the availability of
+    open-source implementations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-E1 Data sets
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Data sets are essential in scientific publications to validate the approach
+    and show improvements over state-of-the-art detection rates (ER-1). Our literature
+    review reveals that there are only few data sets that are commonly used when evaluating
+    log data anomaly detection approaches using deep learning. Table [IV](#S4.T4 "TABLE
+    IV ‣ IV-E1 Data sets ‣ IV-E Evaluation & Reproducibility ‣ IV Survey Results ‣
+    Deep Learning for Anomaly Detection in Log Data: A Survey") shows an overview
+    of all data sets used in the reviewed publications. As visible in the table, the
+    vast majority of evaluations rely on only four data sets (HDFS, BGL, Thunderbird,
+    and OpenStack). In the following, we briefly describe each data set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE IV: Common public log data sets'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Data set | Year | Use-case | Labels | Sessions | Anomaly sources | Used in
+    evaluation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HDFS [[20](#bib.bib20)] | 2009 | High-perf. comp. | ✓ | ✓ | Failures | [[19](#bib.bib19),
+    [78](#bib.bib78), [65](#bib.bib65), [31](#bib.bib31), [27](#bib.bib27), [82](#bib.bib82),
+    [24](#bib.bib24), [34](#bib.bib34), [26](#bib.bib26), [52](#bib.bib52), [29](#bib.bib29),
+    [73](#bib.bib73), [1](#bib.bib1), [50](#bib.bib50), [72](#bib.bib72), [66](#bib.bib66),
+    [60](#bib.bib60), [83](#bib.bib83), [74](#bib.bib74), [69](#bib.bib69), [55](#bib.bib55),
+    [33](#bib.bib33), [56](#bib.bib56), [41](#bib.bib41), [42](#bib.bib42), [77](#bib.bib77),
+    [76](#bib.bib76), [51](#bib.bib51), [43](#bib.bib43), [45](#bib.bib45), [75](#bib.bib75),
+    [62](#bib.bib62), [37](#bib.bib37), [63](#bib.bib63), [35](#bib.bib35), [79](#bib.bib79),
+    [70](#bib.bib70), [59](#bib.bib59), [47](#bib.bib47), [81](#bib.bib81), [71](#bib.bib71),
+    [48](#bib.bib48)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BlueGene/L (BGL) [[94](#bib.bib94)] | 2007 | High-perf. comp. | ✓ | - | Failures
+    | [[78](#bib.bib78), [65](#bib.bib65), [24](#bib.bib24), [34](#bib.bib34), [26](#bib.bib26),
+    [68](#bib.bib68), [52](#bib.bib52), [29](#bib.bib29), [40](#bib.bib40), [73](#bib.bib73),
+    [1](#bib.bib1), [44](#bib.bib44), [50](#bib.bib50), [66](#bib.bib66), [28](#bib.bib28),
+    [38](#bib.bib38), [39](#bib.bib39), [74](#bib.bib74), [69](#bib.bib69), [58](#bib.bib58),
+    [41](#bib.bib41), [32](#bib.bib32), [51](#bib.bib51), [43](#bib.bib43), [45](#bib.bib45),
+    [37](#bib.bib37), [63](#bib.bib63), [79](#bib.bib79), [70](#bib.bib70), [59](#bib.bib59),
+    [47](#bib.bib47), [46](#bib.bib46), [48](#bib.bib48)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Thunderbird [[94](#bib.bib94)] | 2007 | High-perf. comp. | ✓ | - | Failures
+    | [[78](#bib.bib78), [68](#bib.bib68), [29](#bib.bib29), [40](#bib.bib40), [44](#bib.bib44),
+    [28](#bib.bib28), [38](#bib.bib38), [39](#bib.bib39), [64](#bib.bib64), [42](#bib.bib42),
+    [76](#bib.bib76), [43](#bib.bib43), [59](#bib.bib59), [48](#bib.bib48)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| OpenStack [[24](#bib.bib24)] | 2017 | Virtual machines | ✓ | ✓ | Failures
+    | [[82](#bib.bib82), [24](#bib.bib24), [30](#bib.bib30), [40](#bib.bib40), [54](#bib.bib54),
+    [38](#bib.bib38), [39](#bib.bib39), [83](#bib.bib83), [56](#bib.bib56), [45](#bib.bib45),
+    [67](#bib.bib67), [47](#bib.bib47), [81](#bib.bib81)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hadoop [[95](#bib.bib95)] | 2016 | High-perf. comp. | ✓ | ✓ | Failures |
+    [[32](#bib.bib32), [45](#bib.bib45), [35](#bib.bib35), [58](#bib.bib58)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Spirit [[94](#bib.bib94)] | 2007 | High-perf. comp. | ✓ | - | Failures |
+    [[68](#bib.bib68), [28](#bib.bib28), [48](#bib.bib48)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Digital Corpora [[96](#bib.bib96)] | 2009 | OS logs | - | - | Failures |
+    [[58](#bib.bib58), [57](#bib.bib57)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DFRWS 2009 [[97](#bib.bib97)] | 2009 | OS logs | - | - | Exfiltration | [[58](#bib.bib58),
+    [57](#bib.bib57)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Honeynet 2011 [[98](#bib.bib98)] | 2011 | OS logs | - | - | Intrusions |
+    [[58](#bib.bib58), [57](#bib.bib57)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Windows [[99](#bib.bib99)] | 2020 | OS logs | - | - | - | [[58](#bib.bib58),
+    [57](#bib.bib57)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Linux Security Logs [[100](#bib.bib100)] | 2020 | OS logs | - | - | Intrusions
+    | [[57](#bib.bib57)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Honeynet 2010 [[101](#bib.bib101)] | 2010 | OS logs | - | - | Intrusions
+    | [[58](#bib.bib58)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Android [[99](#bib.bib99)] | 2020 | Mobile OS logs | - | - | - | [[50](#bib.bib50)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HPC RAS [[102](#bib.bib102)] | 2011 | High-perf. comp. | - | ✓ | Failures
+    | [[28](#bib.bib28)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Spark [[99](#bib.bib99)] | 2020 | High-perf. comp. | - | - | Failures | [[58](#bib.bib58)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zookeeper [[99](#bib.bib99)] | 2007 | High-perf. comp. | - | - | Failures
+    | [[58](#bib.bib58)] |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The HDFS log data set stems from the Hadoop Distributed File System (HDFS)
+    running on a high-performance computing cluster with 203 nodes that computes many
+    standard MapReduce jobs. More than 24 million logs are collected over a period
+    of two days. The data set comprises sequences of heterogeneous log events for
+    specific file blocks that act as identifiers for sessions. Some of the event sequences
+    correspond to anomalous execution paths that are mostly related to performance
+    issues such as write exceptions, which were manually labeled [[103](#bib.bib103)].
+    The sample logs shown in Fig. [3](#S4.F3 "Figure 3 ‣ IV-C Log Data Preparation
+    ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")
+    are simplified versions of the logs from the HDFS data set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The BGL data set comprises more than four million log events that were collected
+    over more than 200 days from a BlueGene/L (BGL) supercomputer running at the Lawrence
+    Livermore National Labs. The log events were generated with a severity field that
+    allows to separate them into classes; however, the logs were additionally labeled
+    manually by system administrators. The anomalies occurring in the logs correspond
+    to both hardware and software problems. Other log data sets from the same family
+    that are also presented in the study by Oliner et al. [[94](#bib.bib94)] are Thunderbird
+    and Spirit. These data sets comprise system logs (syslog) and similarly comprise
+    alerts related to system problems such as disk failures. The events in both data
+    sets include automatically generated alert tags that can be used as labels. The
+    HPC RAS data set [[102](#bib.bib102)] is another log data set from the same family
+    of supercomputers. Reliability, Availability, and Serviceability (RAS) logs are
+    usually used to understand the reasons for system failure. However, this log data
+    set does not include labels for anomalies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The OpenStack data set was collected from an OpenStack platform where automatic
+    scripts continuously and randomly carry out tasks related to handling of virtual
+    machines, including creation, pausing, deletion, etc. Other than aforementioned
+    data sets that mostly comprise randomly occurring failures, the authors of the
+    OpenStack data set purposefully injected anomalies at specific points in time,
+    including timeouts and errors. The events include instance identifiers that can
+    be used to identify sessions [[24](#bib.bib24)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to the HDFS data, the Hadoop data set comprises logs from a computing
+    cluster that runs the MapReduce jobs WordCount and PageRank. After an initial
+    training phase, the authors purposefully trigger failures on the nodes, in particular,
+    by shutting down a machine, disconnecting the network, and filling up the hard
+    disk of one server. The logs are separated into different files according to application
+    identifiers that act similar to session identifiers and are also used by the authors
+    to assign labels to anomalous program executions [[95](#bib.bib95)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Loghub [[99](#bib.bib99)] comprises several data sets that are used in evaluations,
+    including logs from high-performance computing systems. The Spark data set contains
+    logs from the distributed data processing engine Apache Spark running on 32 machines.
+    The logs include normal and anomalous executions, but are not labeled. ZooKeeper
+    is another Apache service used in distributed computing and configuration management.
+    Loghub also comprises logs from conventional operating systems. The Windows log
+    data set was collected on a laboratory Windows 7 machine by monitoring CBS (Component
+    Based Servicing), which operates on a package and update level. Similarly, the
+    Android data set was collected from a mobile phone in a laboratory setting. Both
+    data sets are not labeled and do not involve any purposefully injected anomalies.
+    Logs from the Linux operating system are provided in the disk images of the Digital
+    Corpora, where failures such as invalid authentications occur in the data [[96](#bib.bib96)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: When it comes to the detection of anomalous behavior, all aforementioned data
+    sets mainly provide failure events that are generated as part of legitimate system
+    usage. However, there are also data sets that instead involve events generated
+    from malicious activities and thus enable evaluation of anomaly-based intrusion
+    detection systems. For example, the DFRWS 2009 data set contains system logs from
+    Linux devices that involve data exfiltration, unauthorized accesses, as well as
+    the use of backdoor software [[97](#bib.bib97)]. The Honeynet 2010 [[101](#bib.bib101)]
+    and Honeynet 2011 [[98](#bib.bib98)] data sets comprise common log files from
+    compromised Linux machines that were illegitimately accessed. The Public Security
+    Log Sharing Site [[100](#bib.bib100)] provides Linux Security Logs from diverse
+    sources and affected by different real-world intrusions, such as brute-force attacks.
+    Unfortunately, none of these security log files come with labels for malicious
+    events and thus authors need to generate their own ground truths to evaluate their
+    approaches on these data sets [[57](#bib.bib57)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-E2 Evaluation metrics
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Quantitative evaluation (ER-2) of anomaly detection approaches typically revolves
+    around counting the numbers of correctly detected anomalous samples as true positives
+    ($TP$), incorrectly detected non-anomalous samples as false positives ($FP$),
+    incorrectly undetected anomalous samples as false negatives ($FN$), and correctly
+    undetected non-anomalous samples as true negatives ($TN$). In the most basic setting
+    where events are labeled individually and samples represent single events (e.g.,
+    as in the BGL data set), it is relatively straightforward to evaluate detected
+    events with binary classification [[38](#bib.bib38), [40](#bib.bib40)]. Some of
+    the reviewed papers additionally consider a multi-class classification problem
+    for data sets where different types of failures have distinct labels by computing
+    the averages of evaluation metrics over all classes [[59](#bib.bib59)] or plotting
+    confusion matrices [[36](#bib.bib36)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given that log events are sometimes aggregated with diverse methods prior to
+    detection, it stands to reason that there are different ways to determine whether
+    a sample is anomalous or not, and whether it counts as a correct detection or
+    not. For example, aggregation of logs in windows could require to count detected
+    events as true positives as long as they are close enough to the actual anomaly
+    in the event sequence [[30](#bib.bib30), [61](#bib.bib61)]. Since a majority of
+    the reviewed papers rely on the HDFS data set where labels are only available
+    for whole event sessions rather than single events, the most common method to
+    compute aforementioned metrics relies on counting of in-/correctly identified
+    non-/anomalous sessions [[34](#bib.bib34), [37](#bib.bib37), [47](#bib.bib47),
+    [49](#bib.bib49), [66](#bib.bib66)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regardless of how the positive and negative samples are counted, almost all
+    authors eventually evaluate their approaches using the well-known metrics precision
+    ($P=\frac{TP}{TP+FP}$), recall or true positive rate ($R=TPR=\frac{TP}{TP+FN}$),
+    false positive rate ($FPR=\frac{FP}{FP+TN}$) and F1-score ($F1=\frac{2\cdot P\cdot
+    R}{P+R}$). Less common evaluation metrics are the accuracy ($ACC=\frac{TP+TN}{TP+TN+FP+FN}$)
+    used in 15 publications as well as the area under curve which is computed for
+    precision-recall-curves [[35](#bib.bib35)] and receiver operator characteristic
+    (ROC) curves [[64](#bib.bib64), [46](#bib.bib46)]. Other metrics that are more
+    specific to deep learning applications are the number of model parameters [[42](#bib.bib42),
+    [65](#bib.bib65)] and time to train models or run the detection (ER-3) [[51](#bib.bib51),
+    [41](#bib.bib41), [56](#bib.bib56), [33](#bib.bib33), [36](#bib.bib36), [72](#bib.bib72)].
+    Some authors also assess characteristics of their approaches that go beyond standard
+    anomaly detection evaluations, for example, whether training on combinations of
+    multiple data sets improves the overall performance of classification [[45](#bib.bib45)]
+    or whether their approaches are robust against changes of log patterns over time
+    [[19](#bib.bib19), [47](#bib.bib47), [45](#bib.bib45)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-E3 Benchmark approaches
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Most publications compare the evaluation metrics stated in the previous section
+    with benchmark approaches to show their improvements over the state-of-the-art
+    (ER-4). Figure [5](#S4.F5 "Figure 5 ‣ IV-E3 Benchmark approaches ‣ IV-E Evaluation
+    & Reproducibility ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in
+    Log Data: A Survey") shows the most commonly used benchmarks in the reviewed publications.
+    Note that we only considered approaches that appear in at least two different
+    publications for this visualization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0acc8545080f3fe946e49fc980625460.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Overview of common benchmark approaches used in evaluations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As visible in the figure, DeepLog [[24](#bib.bib24)] is the most commonly used
+    benchmark with appearances in 38 out of the 62 reviewed publications. DeepLog
+    relies on LSTM RNNs to predict upcoming log events in sequences and thereby disclose
+    observed events as anomalies if they are expected to occur with low probabilities.
+    The popularity of DeepLog for comparisons can be explained by the facts that DeepLog
+    was the first to detect sequential anomalies in log data using deep learning (cf.
+    Sect. [IV-A2](#S4.SS1.SSS2 "IV-A2 Citations ‣ IV-A Bibliometrics ‣ IV Survey Results
+    ‣ Deep Learning for Anomaly Detection in Log Data: A Survey")) and that open-source
+    re-implementations are available online.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second most commonly used benchmark leverages principal component analysis
+    (PCA) and relies on event counts rather than sequences. In particular, Xu et al.
+    [[103](#bib.bib103)] create message count vectors for event type identifiers and
+    use PCA to transform them into subspaces where anomalies appear as outliers that
+    have a high distance to all other samples. Lou et al. [[104](#bib.bib104)] also
+    generate message count vectors but use Invariant Mining to discover linear relationships
+    between log events that represent execution workflows. Event sequences that violate
+    previously identified invariants are declared as anomalies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: LogCluster [[95](#bib.bib95)] generates vectors for log sequences and then clusters
+    them using a similarity metric. The approach is mainly designed for log filtering
+    but can also be applied for detection of unusual log patterns. Support vector
+    machines (SVM) [[105](#bib.bib105)] are yet another method relying on event count
+    vectors. However, other than PCA and invariant mining, SVM typically operate in
+    supervised manner. To alleviate this issue and enable application in semi- or
+    unsupervised cases, authors therefore resort to one-class SVM [[106](#bib.bib106)]
+    or Support Vector Data Description (SVDD) [[107](#bib.bib107)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to DeepLog and contrary to aforementioned conventional machine learning
+    approaches, LogAnomaly [[26](#bib.bib26)] leverages LSTM RNNs to analyze log event
+    sequences. To this end, they propose the so-called template2Vec embedding method
+    to extract semantic vectors from the tokens that make up the events. LogRobust
+    [[19](#bib.bib19)] also makes use of semantic vectors but is specifically designed
+    to handle unknown log events that appear as part of software evolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Isolation Forest [[108](#bib.bib108)] is an anomaly detection technique where
+    the analyzed data is recursively split until a single data instance is isolated
+    from all other points; thereby, anomalous points are identified as they are expected
+    to require fewer splits until their isolation. Logistic Regression [[109](#bib.bib109)]
+    is a classifier for numeric input data that works best in linear classification
+    cases [[57](#bib.bib57)]. Decision Tree [[110](#bib.bib110)] on the other hand
+    is a supervised classification method where instances traverse a binary search
+    tree. Thereby, each internal node splits the data by a specific predicate and
+    each leaf of the tree determines the class of the instances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another benchmark that relies on deep learning are CNN. In particular, the approach
+    by Lu et al. [[27](#bib.bib27)] semantically encodes sequences of event identifiers
+    and embeds them into a matrix for convolution. Finally, nLSAlog [[73](#bib.bib73)]
+    leverages LSTM RNNs and is thus similar to DeepLog. Out of all reviewed publications,
+    only eight do not involve any benchmark approach for comparison.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-E4 Reproducibility
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Authors of scientific publications should pursue to enable reproducibility of
+    their presented results for many reasons, including the possibility for others
+    to validate the correctness of the approach, to extend the algorithms with additional
+    features, to carry out their own experiments on other data sets, and to use the
+    approach as benchmarks in new publications. We consider an approach reproducible
+    when both the data used in the evaluation (ER-5) as well as the original source
+    code (ER-6) are publicly available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As outlined in Sect. [IV-E1](#S4.SS5.SSS1 "IV-E1 Data sets ‣ IV-E Evaluation
+    & Reproducibility ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in
+    Log Data: A Survey"), a majority of the reviewed publications carry out their
+    evaluations on the same few data sets that are publicly available. Some authors
+    also evaluate their approaches on private data sets that are synthetically generated
+    in testbeds [[30](#bib.bib30), [60](#bib.bib60), [80](#bib.bib80), [25](#bib.bib25),
+    [67](#bib.bib67), [49](#bib.bib49), [66](#bib.bib66)], collected from academic
+    institutions [[53](#bib.bib53), [74](#bib.bib74)], or obtained from industrial
+    real-world applications [[19](#bib.bib19), [68](#bib.bib68), [61](#bib.bib61),
+    [74](#bib.bib74), [36](#bib.bib36), [32](#bib.bib32), [35](#bib.bib35)]. Overall,
+    55 out of the 62 reviewed publications involve evaluations on at least one of
+    the publicly available data sets from Table [IV](#S4.T4 "TABLE IV ‣ IV-E1 Data
+    sets ‣ IV-E Evaluation & Reproducibility ‣ IV Survey Results ‣ Deep Learning for
+    Anomaly Detection in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While it is relatively common to evaluate approaches on public data sets, there
+    are unfortunately only few authors that publish implementations of their approaches
+    alongside the papers. During our review we were only able to find the original
+    source code of presented approaches from 8 publications. However, we also point
+    out that there exist some re-implementations of scientific approaches in the deep-loglizer
+    toolbox provided by Chen et al. [[9](#bib.bib9)]. We mark approaches where implementations
+    by the original authors exist with (YES), re-implementations by other authors
+    as (RE), and all others as (NO) in Table [IV](#S4 "IV Survey Results ‣ Deep Learning
+    for Anomaly Detection in Log Data: A Survey"). We encourage authors to publish
+    their code to improve the reproducibility of their results and hope to see more
+    open-source implementations in the future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The previous sections presented the results of our survey in detail. In the
+    following we summarize these results, discuss open issues in the research area
+    on log-based anomaly detection using deep learning, and propose ideas for future
+    research in course of answering our research questions from Sect. [I](#S1 "I Introduction
+    ‣ Deep Learning for Anomaly Detection in Log Data: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ1: What are the main challenges of log-based anomaly detection with deep
+    learning? When carrying out our systematic literature review we assessed whether
+    and to what degree the current state-of-the-art addresses the research challenges
+    enumerated in Sect. [II-B](#S2.SS2 "II-B Challenges ‣ II Background ‣ Deep Learning
+    for Anomaly Detection in Log Data: A Survey"). It turns out that data instability,
+    i.e., the appearance of previously unknown events, is one of the main issues addressed
+    by the reviewed approaches. The key idea to resolving this problem is currently
+    to represent logs as semantic vectors so that new or changed events can still
+    be compared to known events by measuring their similarities [[48](#bib.bib48),
+    [19](#bib.bib19), [52](#bib.bib52), [54](#bib.bib54), [50](#bib.bib50), [61](#bib.bib61),
+    [74](#bib.bib74), [69](#bib.bib69), [44](#bib.bib44), [78](#bib.bib78), [32](#bib.bib32)].
+    There are many techniques for generating numeric vectors to represent log events
+    (cf. Sect. [IV-C4](#S4.SS3.SSS4 "IV-C4 Feature representation ‣ IV-C Log Data
+    Preparation ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log Data:
+    A Survey")) and thus resolve the issue of feeding unstructured and textual input
+    data to neural networks. Imbalanced data sets are another challenge that is specifically
+    addressed by some approaches. In particular, authors suggest to use sampling techniques
+    as well as context-aware embedding methods as possible solutions [[66](#bib.bib66),
+    [39](#bib.bib39), [70](#bib.bib70), [59](#bib.bib59), [49](#bib.bib49)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some approaches are specifically designed to enable applicability in scenarios
+    that demand efficient and lightweight algorithms, e.g., deployment on edge devices.
+    This is achieved by leveraging low-dimensional vector representations as well
+    as convolutional neural networks that are more efficient than recurrent neural
+    networks [[65](#bib.bib65), [42](#bib.bib42), [33](#bib.bib33)]. Similarly, some
+    approaches support log stream processing and enable adaptive learning (i.e., dynamically
+    changing the baselines for anomaly detection) by incrementally re-training the
+    models with manually identified and labeled false positive samples [[75](#bib.bib75)].
+    It must be noted that there is currently no solution how to automatically determine
+    that re-training is required without label information or manual intervention.
+    The challenge of interleaving logs is generally solved by leveraging session identifiers
+    directly from parsed log data; however, there are also approaches that evade the
+    need for sequences altogether, e.g., by relying on sentiment analysis [[80](#bib.bib80)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: A way to address the challenge that only few labeled data is available is provided
+    by transfer learning, where models are trained on one system and tested on another
+    [[43](#bib.bib43), [35](#bib.bib35)]. The main idea is that the log event patterns
+    learned by the neural networks are similar across different domains and that already
+    seen anomalies can be recognized and classified. Guo et al. [[42](#bib.bib42)]
+    are the only authors to consider federated learning, where learning takes place
+    in a distributed manner across multiple systems. Hashemi et al. [[45](#bib.bib45)]
+    also go into this direction as they combine multiple data sets to evaluate whether
+    this affects the performance of their model. We believe that federated learning
+    could be an interesting topic for future publications as there exist many real-world
+    scenarios where log data is monitored in distributed machines but orchestration
+    of deployed detectors takes place centrally [[111](#bib.bib111)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The challenge of facing diverse artifacts of anomalies is only partially addressed
+    since the vast majority of approaches focus on sequences and frequencies of log
+    events, but only few consider event parameters or inter-arrival times for detection.
+    We recommend to also consider techniques that address other patterns that appear
+    in normal system behavior and may be useful to detect specific anomalies, such
+    as changes of parameter value correlations, periodic behavior, statistical distributions,
+    etc. Moreover, we observed that the explainability of the proposed deep learning
+    models is relatively low, i.e., it is non-trivial to understand the criteria for
+    classifications and thus detection of model bias as well as interpretation of
+    false positives and false negatives is generally difficult. This hinders root
+    cause analysis of detected anomalies and produces an overhead for system operators.
+    Specifically in security-critical systems (e.g., intrusion detection) it is vital
+    to understand the functioning - and thus the limits - of deployed anomaly detectors.
+    We would therefore recommend to direct future research in log-based anomaly detection
+    towards explainable artificial intelligence [[112](#bib.bib112)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ2: What state-of-the-art deep learning algorithms are typically applied?
+    Our review shows that diverse types of deep learning algorithms are used in scientific
+    publications and that it is common to combine several approaches. Thereby, RNNs
+    are clearly the most applied models, because they are a natural choice for capturing
+    sequential patterns in log data. CNNs are used as an efficient alternative to
+    RNNs as they are also able to pick up event dependencies. On the other hand, Autoencoders
+    and Transformers are frequently applied as they support unsupervised learning.
+    While GANs, MLPs, GNNs, and EGNNs are only used by few approaches, they have beneficial
+    properties (cf. Sect. [IV-B1](#S4.SS2.SSS1 "IV-B1 Deep Learning Models ‣ IV-B
+    Deep Learning Techniques ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection
+    in Log Data: A Survey")) that make these models worth considering. Similarly,
+    we are convinced that other deep learning architectures that are not explored
+    in the reviewed literature could yield interesting insights, e.g., deep belief
+    networks or deep reinforcement learning [[84](#bib.bib84), [15](#bib.bib15)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We believe that the application of specific techniques is mostly motivated
+    by the log data to be analyzed and anomalies to be detected. The fact that all
+    of the commonly used log data sets involve anomalies that manifest as sequentially
+    occurring events (cf. Sect. [IV-E1](#S4.SS5.SSS1 "IV-E1 Data sets ‣ IV-E Evaluation
+    & Reproducibility ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in
+    Log Data: A Survey")) thus explains the tendency towards RNNs. However, as anomalies
+    could also manifest as point or contextual anomalies (cf. Sect. [II-A3](#S2.SS1.SSS3
+    "II-A3 Anomaly Detection ‣ II-A Preliminary Definitions ‣ II Background ‣ Deep
+    Learning for Anomaly Detection in Log Data: A Survey")) we recommend to consider
+    alternative log data sets with different types of anomalies and to develop approaches
+    for these cases. For example, in our earlier works [[113](#bib.bib113), [114](#bib.bib114)]
+    we published log data sets where anomalies affect combinations, compositions,
+    and distributions of event parameter values in addition to frequencies and sequences
+    of log events.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ3: How is log data pre-processed to be ingested by deep learning models?
+    Our survey shows that there are three main ways to approach feature extraction
+    from raw log data. First, by tokenizing log messages, which is a simple method
+    that does not require any parsers but lacks semantic interpretation of the tokens.
+    Second, by parsing the messages and extracting information from collections of
+    log events, such as sequences, counts, or statistics. Third, by extracting parameters
+    including the time stamps from parsed log events. There are a multitude of methods
+    to represent these features as numeric vectors to be ingested by deep learning
+    models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While traditional machine learning methods such as SVM or PCA work best with
+    event count vectors, most approaches leveraging deep learning neural networks
+    use semantic vectors to yield the best results [[1](#bib.bib1)]. Thereby, the
+    tokens that make up the log messages are represented as numeric vectors and considered
+    in the context of their sequence of event occurrences. Most approaches employ
+    these sequential features, while frequencies, one-hot encoded data, and embedding
+    layers are used less often or only as a contributing feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ4: What types of anomalies are detected and how are they identified as such?
+    Almost all reviewed approaches focus on sequential anomalies that either manifest
+    in the sequences of events, the sequences of tokens within events, or a combination
+    of both. Only few approaches make use of event counts or detect single log lines
+    as outliers without their context of occurrence. The detection technique is generally
+    driven by the output of the neural networks. While binary or multi-class classifications
+    are directly used to report anomalies, all numeric outputs such as anomaly scores
+    or reconstruction errors are compared against pre-defined thresholds and probability
+    distributions of log events are used to check whether the actual events is within
+    the top candidates. Determining these thresholds is usually carried out empirically
+    for a particular log file.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ5: How are the proposed models evaluated? Our survey on commonly used log
+    data sets from Sect. [IV-E1](#S4.SS5.SSS1 "IV-E1 Data sets ‣ IV-E Evaluation &
+    Reproducibility ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log
+    Data: A Survey") shows that there are only four data sets that are used by a majority
+    of the approaches: HDFS, BGL, Thunderbird, and OpenStack. All these data sets
+    are collected from scenarios involving high-performance computing and virtual
+    machines that are affected by randomly occurring failures. It is obvious that
+    the availability of anomaly labels make these data sets particularly attractive
+    for scientific evaluations. As mentioned before, we argue that a larger and more
+    diverse set of input data sets would be beneficial to evaluate whether the proposed
+    approaches are capable of detecting anomalous artifacts other than unusual sequences.
+    In particular, the consequences of cyber attacks rather than failures could result
+    in log artifacts that are suitable for detection and an appropriate use-case for
+    anomaly detection.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We manually analyzed the HDFS data set as it is the most popular of all and
+    found that it is far from challenging to achieve competitive detection rates.
+    The reason for this is that many of the anomalous event sequences are trivial
+    to identify as they involve event types that never occur in the training data
+    or involve fewer elements than the shortest normal sequences. Using these two
+    heuristics we are able to achieve $F1=90.41$%, $ACC=99.48$%, $P=98.37$%, $R=83.65$%,
+    $FPR=0.04$% on the test data. Moreover, using these heuristics in combination
+    with the simple Stide algorithm [[115](#bib.bib115)] that moves a sliding window
+    of a given length over the data and looks for sub-sequences that have not been
+    seen before in the training data further improves the evaluation metrics to $F1=95.14$%,
+    $ACC=99.71$%, $P=95.27$%, $R=95.01$%, $FPR=0.14$% when using a window size of
+    $2$. Omitting sequential information altogether and only leveraging similarities
+    of event count vectors further pushes these evaluation metrics to $F1=98.86$%,
+    $ACC=99.93$%, $P=97.81$%, $R=99.92$%, $FPR=00.07$%. For comparison, DeepLog only
+    yields detection scores of $F1=95.72$%, $ACC=99.75$%, $P=95.12$%, $R=96.32$%,
+    $FPR=0.15$% [[24](#bib.bib24)]. We provide the code for our experiments in a reproducible
+    form as open-source implementations (in separate repositories for Stide^(10)^(10)10https://github.com/ait-aecid/stide
+    and similarity-based event count vector clustering^(11)^(11)11https://github.com/ait-aecid/count-vector-clustering).
+    It is not clear to us why such approaches were not used as benchmarks in any of
+    the reviewed publications: They only take a fraction of the time for training
+    and processing the test data in comparison to deep (and also most conventional)
+    learning models, and additionally have a much better explainability than neural
+    networks. Similar conclusions have been drawn for the case of log event prediction
+    using the HDFS data set [[116](#bib.bib116)]. We argue that the fact that such
+    simple algorithms achieve competitive detection rates to deep learning models
+    further urges authors to consider additional data sets where more diverse anomalous
+    artifacts are present and the benefits of their approaches such as robustness
+    against data instability become apparent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another issue that we noticed is that evaluations are usually carried out on
+    the basis of anomalous sequences, i.e., the whole sequence is considered normal
+    or anomalous rather than its elements [[24](#bib.bib24)]. However, parts of long
+    sequences may actually represent normal system behavior while only a few elements
+    should be considered anomalies. It would be interesting to evaluate whether detection
+    approaches are able to pinpoint exactly which parts of sequences are anomalous,
+    which would also be practical for manual investigations of reported anomalies
+    by system operators. Obviously this requires that data sets are labeled on the
+    granularity of single events rather than sessions [[116](#bib.bib116)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, we note that almost all evaluations rely on metrics such as the F-score
+    (cf. Sect. [IV-E2](#S4.SS5.SSS2 "IV-E2 Evaluation metrics ‣ IV-E Evaluation &
+    Reproducibility ‣ IV Survey Results ‣ Deep Learning for Anomaly Detection in Log
+    Data: A Survey")) that are known to not accurately depict the classification or
+    detection performance when data sets are highly imbalanced. To avoid misinterpretations
+    of evaluation results, it is recommended to also compute metrics that are more
+    robust against class imbalance, such as the specificity or true negative rate
+    [[10](#bib.bib10)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ6: To what extent do the approaches rely on labeled data and support incremental
+    learning? Log-based anomaly detection is most often applied in use-cases that
+    aim to disclose unexpected system behavior such as failures or cyber attacks.
+    Since these artifacts are not known beforehand and thus no labels can exist, un-
+    or semi-supervised approaches are generally more widely applicable and therefore
+    preferable [[7](#bib.bib7)]. Since semi-supervised learning can be achieved with
+    most neural network architectures including RNNs, but only specific deep learning
+    models support fully unsupervised operation, we find 28 semi-supervised approaches
+    in our reviewed literature as opposed to only 8 out of 62 approaches that are
+    unsupervised. We did not expect to see the relatively large amount of 26 supervised
+    approaches that require at least partially labeled anomalies for training. Moreover,
+    with 54 out of 62 a vast majority of approaches only support offline training.
+    This includes most supervised models and also all other approaches that do not
+    intend to dynamically and automatically update the trained models over time. Only
+    8 of the reviewed approaches enable continuous model adjustments through re-training
+    or EGNN model architectures [[36](#bib.bib36)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'RQ7: How reproducible are the presented results in terms of availability of
+    source code and used data? As pointed out in Sect. [IV-E4](#S4.SS5.SSS4 "IV-E4
+    Reproducibility ‣ IV-E Evaluation & Reproducibility ‣ IV Survey Results ‣ Deep
+    Learning for Anomaly Detection in Log Data: A Survey"), a majority of the reviewed
+    approaches make use of publicly available data sets to evaluate their approaches
+    and only 7 publications rely on private data sets. The reproducibility of the
+    presented results is thus relatively high, assuming that readers are willing to
+    re-implement the approaches based on the descriptions from the papers from scratch.
+    We could only find 9 publicly available source codes of approaches published by
+    the original authors as well as 4 re-implementations, indicating a low reproducibility
+    overall. We encourage authors to publish reproducible experiments in the future
+    to also enable large-scale quantitative comparisons in surveys.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Recommendations. Based on the aforementioned answers to our research questions
+    and the identified issues, we propose the following research agenda: First of
+    all, adequate and diverse log data sets with state-of-the-art benchmarks are needed
+    to ensure applicability of deep learning in generic anomaly detection use-cases
+    and demonstrate their superiority over simple or conventional detection methods.
+    Second, low explainability of detection results is a primary concern that permeates
+    the entire research field and needs to be addressed appropriately. Resolving these
+    two issues largely improves the comprehensibility and reliability of proposed
+    methods and facilitates the development of novel deep learning detection algorithms.
+    With this research agenda in mind, we summarize our recommendations for future
+    research as follows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Create or identify new log data sets that specifically involve sequential anomalies
+    and are less affected by other types of anomalies when evaluating approaches that
+    ingest log data as sequences.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Work on methods that improve the explainability of proposed approaches for anomaly
+    detection using deep learning, for example, by the extraction of specific detection
+    rules from the models or by determining the main features responsible for the
+    detection of specific instances and augmenting detection results with that information.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Consider log artifacts other than event sequences for anomaly detection or use
+    them as additional input to deep learning models.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Propose novel anomaly detection methods or deep learning architectures that
+    resolve common challenges for practical applications, specifically regarding incremental
+    and stream processing or log data, adaptive learning, as well as efficient and
+    low-resource training.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Consider pinpointing anomalies within sequences rather than detecting whole
+    sequences as anomalous.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allow researchers to reproduce and extend presented results by publishing developed
+    code as open-source and used log data sets on data sharing repositories.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: VI Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This paper presents a survey of 62 scientific approaches that pursue the detection
+    of anomalous events or processes in system log data using deep learning. The survey
+    shows that diverse model architectures are suitable for this purpose, including
+    models for sequential input data such as recurrent or convolutional neural networks,
+    language-based models such as transformers, as well as unsupervised models such
+    as Autoencoders or generative adversarial networks. Similarly, there are different
+    features used for training and subsequently for detection, such as sequences and
+    counts of events or tokens as well as parameter values or statistics derived from
+    the events. To enable processing of these features as input to neural networks
+    it is necessary to encode them as numeric vectors, for example, through semantic
+    vectorization or one-hot encoding. Anomalies are then detected either directly
+    through classification or by deriving some kind of anomaly score from the network
+    that allows to discern normal from anomalous system behavior. The survey shows
+    that there are open challenges that are not sufficiently resolved by existing
+    approaches, including detection techniques that go beyond sequential anomalies,
+    low explainability of trained models and classification results, lack of representative
+    evaluation data sets containing diverse attack artifacts, and a low reproducibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This work was partly funded by the European Defence Fund (EDF) projects AInception
+    (101103385) and PANDORA (SI2.835928), and the FFG project DECEPT (873980).
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Q. Wang, X. Zhang, X. Wang, and Z. Cao, “Log sequence anomaly detection
+    method based on contrastive adversarial training and dual feature extraction,”
+    *Entropy*, vol. 24, no. 1, p. 69, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] H.-J. Liao, C.-H. R. Lin, Y.-C. Lin, and K.-Y. Tung, “Intrusion detection
+    system: A comprehensive review,” *Journal of Network and Computer Applications*,
+    vol. 36, no. 1, pp. 16–24, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] M. Landauer, F. Skopik, M. Wurzenberger, and A. Rauber, “System log clustering
+    approaches for cyber security applications: A survey,” *Computers & Security*,
+    vol. 92, p. 101739, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] S. He, J. Zhu, P. He, and M. R. Lyu, “Experience report: System log analysis
+    for anomaly detection,” in *2016 IEEE 27th international symposium on software
+    reliability engineering (ISSRE)*.   IEEE, 2016, pp. 207–218.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] C. Kruegel and G. Vigna, “Anomaly detection of web-based attacks,” in *Proceedings
+    of the 10th ACM conference on Computer and communications security*, 2003, pp.
+    251–261.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] M. Landauer, M. Wurzenberger, F. Skopik, G. Settanni, and P. Filzmoser,
+    “Dynamic log file analysis: An unsupervised cluster evolution approach for anomaly
+    detection,” *computers & security*, vol. 79, pp. 94–116, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] V. Chandola, A. Banerjee, and V. Kumar, “Anomaly detection: A survey,”
+    *ACM computing surveys (CSUR)*, vol. 41, no. 3, pp. 1–58, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Y. LeCun, Y. Bengio, and G. Hinton, “Deep learning,” *nature*, vol. 521,
+    no. 7553, pp. 436–444, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Z. Chen, J. Liu, W. Gu, Y. Su, and M. R. Lyu, “Experience report: Deep
+    learning-based system log analysis for anomaly detection,” *arXiv preprint arXiv:2107.05908*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] V.-H. Le and H. Zhang, “Log-based anomaly detection with deep learning:
+    How far are we?” in *Proceedings of the 44th International Conference on Software
+    Engineering*, 2022, pp. 1356–1367.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] R. B. Yadav, P. S. Kumar, and S. V. Dhavale, “A survey on log anomaly
+    detection using deep learning,” in *2020 8th International Conference on Reliability,
+    Infocom Technologies and Optimization (Trends and Future Directions)(ICRITO)*.   IEEE,
+    2020, pp. 1215–1220.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] D. Kwon, H. Kim, J. Kim, S. C. Suh, I. Kim, and K. J. Kim, “A survey of
+    deep learning-based network anomaly detection,” *Cluster Computing*, vol. 22,
+    no. 1, pp. 949–961, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] D. A. Bhanage, A. V. Pawar, and K. Kotecha, “It infrastructure anomaly
+    detection and failure handling: A systematic literature review focusing on datasets,
+    log preprocessing, machine & deep learning approaches and automated tool,” *IEEE
+    Access*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] N. Zhao, H. Wang, Z. Li, X. Peng, G. Wang, Z. Pan, Y. Wu, Z. Feng, X. Wen,
+    W. Zhang *et al.*, “An empirical investigation of practical log anomaly detection
+    for online service systems,” in *Proceedings of the 29th ACM Joint Meeting on
+    European Software Engineering Conference and Symposium on the Foundations of Software
+    Engineering*, 2021, pp. 1404–1415.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] I. H. Sarker, “Deep learning: a comprehensive overview on techniques,
+    taxonomy, applications and research directions,” *SN Computer Science*, vol. 2,
+    no. 6, pp. 1–20, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] J. Zhu, S. He, J. Liu, P. He, Q. Xie, Z. Zheng, and M. R. Lyu, “Tools
+    and benchmarks for automated log parsing,” in *2019 IEEE/ACM 41st International
+    Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP)*.   IEEE,
+    2019, pp. 121–130.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] L. Bao, Q. Li, P. Lu, J. Lu, T. Ruan, and K. Zhang, “Execution anomaly
+    detection in large-scale systems through console log analysis,” *Journal of Systems
+    and Software*, vol. 143, pp. 172–186, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] R. Chalapathy and S. Chawla, “Deep learning for anomaly detection: A survey,”
+    *arXiv preprint arXiv:1901.03407*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] X. Zhang, Y. Xu, Q. Lin, B. Qiao, H. Zhang, Y. Dang, C. Xie, X. Yang,
+    Q. Cheng, Z. Li *et al.*, “Robust log-based anomaly detection on unstable log
+    data,” in *Proceedings of the 2019 27th ACM Joint Meeting on European Software
+    Engineering Conference and Symposium on the Foundations of Software Engineering*,
+    2019, pp. 807–817.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] W. Xu, L. Huang, A. Fox, D. Patterson, and M. I. Jordan, “Detecting large-scale
+    system problems by mining console logs,” in *Proceedings of the ACM SIGOPS 22nd
+    symposium on Operating systems principles*, 2009, pp. 117–132.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] H. Mi, H. Wang, Y. Zhou, M. R.-T. Lyu, and H. Cai, “Toward fine-grained,
+    unsupervised, scalable performance diagnosis for production cloud computing systems,”
+    *IEEE Transactions on Parallel and Distributed Systems*, vol. 24, no. 6, pp. 1245–1255,
+    2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] S. Suriadi, R. Andrews, A. H. ter Hofstede, and M. T. Wynn, “Event log
+    imperfection patterns for process mining: Towards a systematic approach to cleaning
+    event logs,” *Information systems*, vol. 64, pp. 132–150, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] D. A. Fischer, K. Goel, R. Andrews, C. G. J. van Dun, M. T. Wynn, and
+    M. Röglinger, “Enhancing event log quality: Detecting and quantifying timestamp
+    imperfections,” in *Business Process Management: 18th International Conference,
+    BPM 2020, Seville, Spain, September 13–18, 2020, Proceedings 18*.   Springer,
+    2020, pp. 309–326.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] M. Du, F. Li, G. Zheng, and V. Srikumar, “Deeplog: Anomaly detection and
+    diagnosis from system logs through deep learning,” in *Proceedings of the 2017
+    ACM SIGSAC conference on computer and communications security*, 2017, pp. 1285–1298.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] T. Yang and V. Agrawal, “Log file anomaly detection,” *CS224d Fall*, vol.
+    2016, 2016, online: https://cs224d.stanford.edu/reports/YangAgrawal.pdf.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] W. Meng, Y. Liu, Y. Zhu, S. Zhang, D. Pei, Y. Liu, Y. Chen, R. Zhang,
+    S. Tao, P. Sun *et al.*, “Loganomaly: Unsupervised detection of sequential and
+    quantitative anomalies in unstructured logs,” in *IJCAI*, vol. 19, no. 7, 2019,
+    pp. 4739–4745.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] S. Lu, X. Wei, Y. Li, and L. Wang, “Detecting anomaly in big data system
+    logs using convolutional neural network,” in *2018 IEEE 16th Intl Conf on Dependable,
+    Autonomic and Secure Computing, 16th Intl Conf on Pervasive Intelligence and Computing,
+    4th Intl Conf on Big Data Intelligence and Computing and Cyber Science and Technology
+    Congress (DASC/PiCom/DataCom/CyberSciTech)*.   IEEE, 2018, pp. 151–158.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] S. Nedelkoski, J. Bogatinovski, A. Acker, J. Cardoso, and O. Kao, “Self-attentive
+    classification-based anomaly detection in unstructured logs,” in *2020 IEEE International
+    Conference on Data Mining (ICDM)*.   IEEE, 2020, pp. 1196–1201.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] H. Guo, S. Yuan, and X. Wu, “Logbert: Log anomaly detection via bert,”
+    in *2021 International Joint Conference on Neural Networks (IJCNN)*.   IEEE, 2021,
+    pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] X. Baril, O. Coustié, J. Mothe, and O. Teste, “Application performance
+    anomaly detection with lstm on temporal irregularities in logs,” in *Proceedings
+    of the 29th ACM International Conference on Information & Knowledge Management*,
+    2020, pp. 1961–1964.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] S. Bursic, V. Cuculo, and A. D’Amelio, “Anomaly detection from log files
+    using unsupervised deep learning,” in *International Symposium on Formal Methods*.   Springer,
+    2019, pp. 200–207.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] M. Catillo, A. Pecchia, and U. Villano, “Autolog: Anomaly detection by
+    deep autoencoding of system logs,” *Expert Systems with Applications*, vol. 191,
+    p. 116263, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] P. Cheansunan and P. Phunchongharn, “Detecting anomalous events on distributed
+    systems using convolutional neural networks,” in *2019 IEEE 10th International
+    Conference on Awareness Science and Technology (iCAST)*.   IEEE, 2019, pp. 1–5.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] H. Chen, R. Xiao, and S. Jin, “Unsupervised anomaly detection based on
+    system logs,” in *Proceedings of the 33rd International Conference on Software
+    Engineering & Knowledge Engineering (SEKE 2021)*, 2021, pp. 92–97.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] R. Chen, S. Zhang, D. Li, Y. Zhang, F. Guo, W. Meng, D. Pei, Y. Zhang,
+    X. Chen, and Y. Liu, “Logtransfer: Cross-system log anomaly detection for software
+    systems with transfer learning,” in *2020 IEEE 31st International Symposium on
+    Software Reliability Engineering (ISSRE)*.   IEEE, 2020, pp. 37–47.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] L. Decker, D. Leite, F. Viola, and D. Bonacorsi, “Comparison of evolving
+    granular classifiers applied to anomaly detection for predictive maintenance in
+    computing centers,” in *2020 IEEE Conference on Evolving and Adaptive Intelligent
+    Systems (EAIS)*.   IEEE, 2020, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Q. Du, L. Zhao, J. Xu, Y. Han, and S. Zhang, “Log-based anomaly detection
+    with multi-head scaled dot-product attention mechanism,” in *International Conference
+    on Database and Expert Systems Applications*.   Springer, 2021, pp. 335–347.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] A. Farzad and T. A. Gulliver, “Log message anomaly detection and classification
+    using auto-b/lstm and auto-gru,” *arXiv preprint arXiv:1911.08744*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] A. Farzad, “Log message anomaly detection with oversampling,” *International
+    Journal of Artificial Intelligence and Applications (IJAIA)*, vol. 11, no. 4,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] A. Farzad and T. A. Gulliver, “Two class pruned log message anomaly detection,”
+    *SN Computer Science*, vol. 2, no. 5, pp. 1–18, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] S. Gu, Y. Chu, W. Zhang, P. Liu, Q. Yin, and Q. Li, “Research on system
+    log anomaly detection combining two-way slice gru and ga-attention mechanism,”
+    in *2021 4th International Conference on Artificial Intelligence and Big Data
+    (ICAIBD)*.   IEEE, 2021, pp. 577–583.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Y. Guo, Y. Wu, Y. Zhu, B. Yang, and C. Han, “Anomaly detection using distributed
+    log data: A lightweight federated learning approach,” in *2021 International Joint
+    Conference on Neural Networks (IJCNN)*.   IEEE, 2021, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] H. Guo, X. Lin, J. Yang, Y. Zhuang, J. Bai, B. Zhang, T. Zheng, and Z. Li,
+    “Translog: A unified transformer-based framework for log anomaly detection,” *arXiv
+    preprint arXiv:2201.00016*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] X. Han and S. Yuan, “Unsupervised cross-system log anomaly detection via
+    domain adaptation,” in *Proceedings of the 30th ACM International Conference on
+    Information & Knowledge Management*, 2021, pp. 3068–3072.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] S. Hashemi and M. Mäntylä, “Onelog: Towards end-to-end training in software
+    log anomaly detection,” *arXiv preprint arXiv:2104.07324*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] R. Hirakawa, K. Tominaga, and Y. Nakatoh, “Software log anomaly detection
+    through one class clustering of transformer encoder representation,” in *International
+    Conference on Human-Computer Interaction*.   Springer, 2020, pp. 655–661.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] S. Huang, Y. Liu, C. Fung, R. He, Y. Zhao, H. Yang, and Z. Luan, “Hitanomaly:
+    Hierarchical transformers for anomaly detection in system log,” *IEEE Transactions
+    on Network and Service Management*, vol. 17, no. 4, pp. 2064–2076, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] V.-H. Le and H. Zhang, “Log-based anomaly detection without log parsing,”
+    in *2021 36th IEEE/ACM International Conference on Automated Software Engineering
+    (ASE)*.   IEEE, 2021, pp. 492–504.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] H. Li and Y. Li, “Logspy: System log anomaly detection for distributed
+    systems,” in *2020 International Conference on Artificial Intelligence and Computer
+    Engineering (ICAICE)*.   IEEE, 2020, pp. 347–352.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] X. Li, P. Chen, L. Jing, Z. He, and G. Yu, “Swisslog: Robust and unified
+    deep learning based log anomaly detection for diverse faults,” in *2020 IEEE 31st
+    International Symposium on Software Reliability Engineering (ISSRE)*.   IEEE,
+    2020, pp. 92–103.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] X. Liu, W. Liu, X. Di, J. Li, B. Cai, W. Ren, and H. Yang, “Lognads: Network
+    anomaly detection scheme based on log semantics representation,” *Future Generation
+    Computer Systems*, vol. 124, pp. 390–405, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] D. Lv, N. Luktarhan, and Y. Chen, “Conanomaly: Content-based anomaly detection
+    for system logs,” *Sensors*, vol. 21, no. 18, p. 6125, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] K. Otomo, S. Kobayashi, K. Fukuda, and H. Esaki, “Latent variable based
+    anomaly detection in network system logs,” *IEICE TRANSACTIONS on Information
+    and Systems*, vol. 102, no. 9, pp. 1644–1652, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] H. Ott, J. Bogatinovski, A. Acker, S. Nedelkoski, and O. Kao, “Robust
+    and transferable anomaly detection in log data using pre-trained language models,”
+    in *2021 IEEE/ACM International Workshop on Cloud Intelligence (CloudIntelligence)*.   IEEE,
+    2021, pp. 19–24.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] A. Patil, A. Wadekar, T. Gupta, R. Vijan, and F. Kazi, “Explainable lstm
+    model for anomaly detection in hdfs log file using layerwise relevance propagation,”
+    in *2019 IEEE Bombay Section Signature Conference (IBSSC)*.   IEEE, 2019, pp.
+    1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] Y. Qian, S. Ying, and B. Wang, “Anomaly detection in distributed systems
+    via variational autoencoders,” in *2020 IEEE International Conference on Systems,
+    Man, and Cybernetics (SMC)*.   IEEE, 2020, pp. 2822–2829.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] H. Studiawan and F. Sohel, “Anomaly detection in a forensic timeline with
+    deep autoencoders,” *Journal of Information Security and Applications*, vol. 63,
+    p. 103002, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] H. Studiawan, F. Sohel, and C. Payne, “Anomaly detection in operating
+    system logs with deep learning-based sentiment analysis,” *IEEE Transactions on
+    Dependable and Secure Computing*, vol. 18, no. 5, pp. 2136–2148, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] P. Sun, E. Yuepeng, T. Li, Y. Wu, J. Ge, J. You, and B. Wu, “Context-aware
+    learning for anomaly detection with imbalanced log data,” in *2020 IEEE 22nd International
+    Conference on High Performance Computing and Communications; IEEE 18th International
+    Conference on Smart City; IEEE 6th International Conference on Data Science and
+    Systems (HPCC/SmartCity/DSS)*.   IEEE, 2020, pp. 449–456.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] T. Sundqvist, M. H. Bhuyan, J. Forsman, and E. Elmroth, “Boosted ensemble
+    learning for anomaly detection in 5g ran,” in *IFIP International Conference on
+    Artificial Intelligence Applications and Innovations*.   Springer, 2020, pp. 15–30.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] S. Syngal, S. Verma, K. Karthik, Y. Katyal, and S. Ghosh, “Server-language
+    processing: A semi-supervised approach to server failure detection,” in *2021
+    2nd International Conference on Computing, Networks and Internet of Things*, 2021,
+    pp. 1–7.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] A. Wadekar, T. Gupta, R. Vijan, and F. Kazi, “Hybrid cae-vae for unsupervised
+    anomaly detection in log file systems,” in *2019 10th International Conference
+    on Computing, Communication and Networking Technologies (ICCCNT)*.   IEEE, 2019,
+    pp. 1–7.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] Y. Wan, Y. Liu, D. Wang, and Y. Wen, “Glad-paw: Graph-based log anomaly
+    detection by position aware weighted graph attention network,” in *Pacific-Asia
+    Conference on Knowledge Discovery and Data Mining*.   Springer, 2021, pp. 66–77.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] M. Wang, L. Xu, and L. Guo, “Anomaly detection of system logs based on
+    natural language processing and deep learning,” in *2018 4th International Conference
+    on Frontiers of Signal Processing (ICFSP)*.   IEEE, 2018, pp. 140–144.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] Z. Wang, J. Tian, H. Fang, L. Chen, and J. Qin, “Lightlog: A lightweight
+    temporal convolutional network for log anomaly detection on the edge,” *Computer
+    Networks*, vol. 203, p. 108616, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] Z. Wang, Z. Chen, J. Ni, H. Liu, H. Chen, and J. Tang, “Multi-scale one-class
+    recurrent neural networks for discrete event sequence anomaly detection,” in *Proceedings
+    of the 27th ACM SIGKDD Conference on Knowledge Discovery & Data Mining*, 2021,
+    pp. 3726–3734.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] S. R. Wibisono and A. I. Kistijantoro, “Log anomaly detection using adaptive
+    universal transformer,” in *2019 International Conference of Advanced Informatics:
+    Concepts, Theory and Applications (ICAICTA)*.   IEEE, 2019, pp. 1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] T. Wittkopp, A. Acker, S. Nedelkoski, J. Bogatinovski, D. Scheinert, W. Fan,
+    and O. Kao, “A2log: attentive augmented log anomaly detection,” *arXiv preprint
+    arXiv:2109.09537*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] L. Xi, Y. Xin, S. Luo, Y. Shang, and Q. Tang, “Anomaly detection mechanism
+    based on hierarchical weights through large-scale log data,” in *2021 International
+    Conference on Computer Communication and Artificial Intelligence (CCAI)*.   IEEE,
+    2021, pp. 106–115.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] B. Xia, Y. Bai, J. Yin, Y. Li, and J. Xu, “Loggan: A log-level generative
+    adversarial network for anomaly detection using permutation event modeling,” *Information
+    Systems Frontiers*, vol. 23, no. 2, pp. 285–298, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] C. Xiao, J. Huang, and W. Wu, “Detecting anomalies in cluster system using
+    hybrid deep learning model,” in *International Symposium on Parallel Architectures,
+    Algorithms and Programming*.   Springer, 2019, pp. 393–404.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] Y. Xie, L. Ji, and X. Cheng, “An attention-based gru network for anomaly
+    detection from system logs,” *IEICE TRANSACTIONS on Information and Systems*,
+    vol. 103, no. 8, pp. 1916–1919, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] R. Yang, D. Qu, Y. Gao, Y. Qian, and Y. Tang, “Nlsalog: An anomaly detection
+    framework for log sequence in security management,” *IEEE Access*, vol. 7, pp.
+    181 152–181 164, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] L. Yang, J. Chen, Z. Wang, W. Wang, J. Jiang, X. Dong, and W. Zhang, “Semi-supervised
+    log-based anomaly detection via probabilistic label estimation,” in *2021 IEEE/ACM
+    43rd International Conference on Software Engineering (ICSE)*.   IEEE, 2021, pp.
+    1448–1460.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] S. Yen, M. Moh, and T.-S. Moh, “Causalconvlstm: Semi-supervised log anomaly
+    detection through sequence modeling,” in *2019 18th IEEE International Conference
+    On Machine Learning And Applications (ICMLA)*.   IEEE, 2019, pp. 1334–1341.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] K. Yin, M. Yan, L. Xu, Z. Xu, Z. Li, D. Yang, and X. Zhang, “Improving
+    log-based anomaly detection with component-aware analysis,” in *2020 IEEE International
+    Conference on Software Maintenance and Evolution (ICSME)*.   IEEE, 2020, pp. 667–671.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] D. Yu, X. Hou, C. Li, Q. Lv, Y. Wang, and N. Li, “Anomaly detection in
+    unstructured logs using attention-based bi-lstm network,” in *2021 7th IEEE International
+    Conference on Network Intelligence and Digital Content (IC-NIDC)*.   IEEE, 2021,
+    pp. 403–407.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] L. Zhang, W. Li, Z. Zhang, Q. Lu, C. Hou, P. Hu, T. Gui, and S. Lu, “Logattn:
+    Unsupervised log anomaly detection with an autoencoder based attention mechanism,”
+    in *International Conference on Knowledge Science, Engineering and Management*.   Springer,
+    2021, pp. 222–235.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] C. Zhang, X. Wang, H. Zhang, H. Zhang, and P. Han, “Log sequence anomaly
+    detection based on local information extraction and globally sparse transformer
+    model,” *IEEE Transactions on Network and Service Management*, vol. 18, no. 4,
+    pp. 4119–4133, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] D. Zhang, D. Dai, R. Han, and M. Zheng, “Sentilog: Anomaly detecting on
+    parallel file systems via log-based sentiment analysis,” in *Proceedings of the
+    13th ACM Workshop on Hot Topics in Storage and File Systems*, 2021, pp. 86–93.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] Z. Zhao, W. Niu, X. Zhang, R. Zhang, Z. Yu, and C. Huang, “Trine: Syslog
+    anomaly detection with three transformer encoders in one generative adversarial
+    network,” *Applied Intelligence*, pp. 1–10, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] P. Zhou, Y. Wang, Z. Li, X. Wang, G. Tyson, and G. Xie, “Logsayer: Log
+    pattern-driven cloud component anomaly diagnosis with machine learning,” in *2020
+    IEEE/ACM 28th International Symposium on Quality of Service (IWQoS)*.   IEEE,
+    2020, pp. 1–10.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] B. Zhu, J. Li, R. Gu, and L. Wang, “An approach to cloud platform log
+    anomaly detection based on natural language processing and lstm,” in *2020 3rd
+    International Conference on Algorithms, Computing and Artificial Intelligence*,
+    2020, pp. 1–7.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] I. H. Sarker, “Deep cybersecurity: a comprehensive overview from neural
+    network and deep learning perspective,” *SN Computer Science*, vol. 2, no. 3,
+    pp. 1–16, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] Z. Zhang and M. Sabuncu, “Generalized cross entropy loss for training
+    deep neural networks with noisy labels,” *Advances in neural information processing
+    systems*, vol. 31, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] Y. Cui, S. Ahmad, and J. Hawkins, “Continuous online sequence learning
+    with an unsupervised neural network model,” *Neural computation*, vol. 28, no. 11,
+    pp. 2474–2504, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] R. Hadsell, D. Rao, A. A. Rusu, and R. Pascanu, “Embracing change: Continual
+    learning in deep neural networks,” *Trends in cognitive sciences*, vol. 24, no. 12,
+    pp. 1028–1040, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] P. He, J. Zhu, Z. Zheng, and M. R. Lyu, “Drain: An online log parsing
+    approach with fixed depth tree,” in *2017 IEEE international conference on web
+    services (ICWS)*.   IEEE, 2017, pp. 33–40.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] M. Du and F. Li, “Spell: Streaming parsing of system event logs,” in *2016
+    IEEE 16th International Conference on Data Mining (ICDM)*.   IEEE, 2016, pp. 859–864.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] T. Mikolov, K. Chen, G. Corrado, and J. Dean, “Efficient estimation of
+    word representations in vector space,” *arXiv preprint arXiv:1301.3781*, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “Bert: Pre-training
+    of deep bidirectional transformers for language understanding,” *arXiv preprint
+    arXiv:1810.04805*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] J. Pennington, R. Socher, and C. D. Manning, “Glove: Global vectors for
+    word representation,” in *Proceedings of the 2014 conference on empirical methods
+    in natural language processing (EMNLP)*, 2014, pp. 1532–1543.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] C. Manning, P. Raghavan, and H. Schütze, “Introduction to information
+    retrieval,” *Natural Language Engineering*, vol. 16, no. 1, pp. 100–103, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] A. Oliner and J. Stearley, “What supercomputers say: A study of five system
+    logs,” in *37th annual IEEE/IFIP international conference on dependable systems
+    and networks (DSN’07)*.   IEEE, 2007, pp. 575–584.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] Q. Lin, H. Zhang, J.-G. Lou, Y. Zhang, and X. Chen, “Log clustering based
+    problem identification for online service systems,” in *Proceedings of the 38th
+    International Conference on Software Engineering Companion*, 2016, pp. 102–111.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] S. Garfinkel, P. Farrell, V. Roussev, and G. Dinolt, “Bringing science
+    to digital forensics with standardized forensic corpora,” *digital investigation*,
+    vol. 6, pp. S2–S11, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] C. Eoghan and G. R. I. Golden, “Dfrws 2009 forensics challenge,” http://old.dfrws.org/2009/challenge/index.shtml,
+    accessed: 2022-05-13.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] G. Arcas, H. Gonzales, and J. Cheng, “The honeynet project 2011 challenge
+    7 – forensic analysis of a compromised server,” https://www.honeynet.org/challenges/forensic-challenge-7-analysis-of-a-compromised-server/,
+    accessed: 2022-05-13.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] S. He, J. Zhu, P. He, and M. R. Lyu, “Loghub: a large collection of system
+    log datasets towards automated log analytics,” *arXiv preprint arXiv:2008.06448*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] A. Chuvakin, “Public security log sharing site,” https://log-sharing.dreamhosters.com/,
+    Nov. 2010, accessed: 2021-10-18.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] R. Marty, A. Chuvakin, and S. Tricaud, “The honeynet project 2010 challenge
+    5 – log mysteries,” https://www.honeynet.org/challenges/forensic-challenge-7-analysis-of-a-compromised-server/,
+    accessed: 2022-05-13.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] Z. Zheng, L. Yu, W. Tang, Z. Lan, R. Gupta, N. Desai, S. Coghlan, and
+    D. Buettner, “Co-analysis of ras log and job log on blue gene/p,” in *2011 IEEE
+    International Parallel & Distributed Processing Symposium*.   IEEE, 2011, pp.
+    840–851.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] W. Xu, L. Huang, A. Fox, D. Patterson, and M. Jordan, “Largescale system
+    problem detection by mining console logs,” *Proceedings of SOSP’09*, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] J.-G. Lou, Q. Fu, S. Yang, Y. Xu, and J. Li, “Mining invariants from
+    console logs for system problem detection,” in *2010 USENIX Annual Technical Conference
+    (USENIX ATC 10)*, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] Y. Liang, Y. Zhang, H. Xiong, and R. Sahoo, “Failure prediction in ibm
+    bluegene/l event logs,” in *Seventh IEEE International Conference on Data Mining
+    (ICDM 2007)*.   IEEE, 2007, pp. 583–588.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] B. Schölkopf, J. C. Platt, J. Shawe-Taylor, A. J. Smola, and R. C. Williamson,
+    “Estimating the support of a high-dimensional distribution,” *Neural computation*,
+    vol. 13, no. 7, pp. 1443–1471, 2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] D. M. Tax and R. P. Duin, “Support vector data description,” *Machine
+    learning*, vol. 54, no. 1, pp. 45–66, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] F. T. Liu, K. M. Ting, and Z.-H. Zhou, “Isolation forest,” in *2008 eighth
+    ieee international conference on data mining*.   IEEE, 2008, pp. 413–422.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] P. Bodik, M. Goldszmidt, A. Fox, D. B. Woodard, and H. Andersen, “Fingerprinting
+    the datacenter: automated classification of performance crises,” in *Proceedings
+    of the 5th European conference on Computer systems*, 2010, pp. 111–124.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] M. Chen, A. X. Zheng, J. Lloyd, M. I. Jordan, and E. Brewer, “Failure
+    diagnosis using decision trees,” in *International Conference on Autonomic Computing,
+    2004\. Proceedings.*   IEEE, 2004, pp. 36–43.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] D. Preuveneers, V. Rimmer, I. Tsingenopoulos, J. Spooren, W. Joosen,
+    and E. Ilie-Zudor, “Chained anomaly detection models for federated learning: An
+    intrusion detection case study,” *Applied Sciences*, vol. 8, no. 12, p. 2663,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] A. B. Arrieta, N. Díaz-Rodríguez, J. Del Ser, A. Bennetot, S. Tabik,
+    A. Barbado, S. García, S. Gil-López, D. Molina, R. Benjamins *et al.*, “Explainable
+    artificial intelligence (xai): Concepts, taxonomies, opportunities and challenges
+    toward responsible ai,” *Information fusion*, vol. 58, pp. 82–115, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] M. Landauer, F. Skopik, M. Wurzenberger, W. Hotwagner, and A. Rauber,
+    “Have it your way: generating customized log datasets with a model-driven simulation
+    testbed,” *IEEE Transactions on Reliability*, vol. 70, no. 1, pp. 402–415, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] M. Landauer, F. Skopik, M. Frank, W. Hotwagner, M. Wurzenberger, and
+    A. Rauber, “Maintainable log datasets for evaluation of intrusion detection systems,”
+    *arXiv preprint arXiv:2203.08580*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] S. Forrest, S. A. Hofmeyr, A. Somayaji, and T. A. Longstaff, “A sense
+    of self for unix processes,” in *Proceedings 1996 IEEE Symposium on Security and
+    Privacy*.   IEEE, 1996, pp. 120–128.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] M. Mäntylä, M. Varela, and S. Hashemi, “Pinpointing anomaly events in
+    logs from stability testing–n-grams vs. deep-learning,” in *2022 IEEE International
+    Conference on Software Testing, Verification and Validation Workshops (ICSTW)*.   IEEE,
+    2022, pp. 285–292.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

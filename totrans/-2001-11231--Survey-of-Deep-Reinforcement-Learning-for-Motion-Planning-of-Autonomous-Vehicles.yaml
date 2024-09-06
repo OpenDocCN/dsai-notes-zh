@@ -1,0 +1,1873 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:02:47'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2001.11231] Survey of Deep Reinforcement Learning for Motion Planning of Autonomous
+    Vehicles'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2001.11231](https://ar5iv.labs.arxiv.org/html/2001.11231)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Survey of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Szilárd Aradi¹ ¹ Department of Control for Transportation and Vehicle Systems,
+    Budapest University of Technology and Economics, Hungary
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'e-mail: aradi.szilard@mail.bme.hu'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Academic research in the field of autonomous vehicles has reached high popularity
+    in recent years related to several topics as sensor technologies, V2X communications,
+    safety, security, decision making, control, and even legal and standardization
+    rules. Besides classic control design approaches, Artificial Intelligence and
+    Machine Learning methods are present in almost all of these fields. Another part
+    of research focuses on different layers of Motion Planning, such as strategic
+    decisions, trajectory planning, and control. A wide range of techniques in Machine
+    Learning itself have been developed, and this article describes one of these fields,
+    Deep Reinforcement Learning (DRL). The paper provides insight into the hierarchical
+    motion planning problem and describes the basics of DRL. The main elements of
+    designing such a system are the modeling of the environment, the modeling abstractions,
+    the description of the state and the perception models, the appropriate rewarding,
+    and the realization of the underlying neural network. The paper describes vehicle
+    models, simulation possibilities and computational requirements. Strategic decisions
+    on different layers and the observation models, e.g., continuous and discrete
+    state representations, grid-based, and camera-based solutions are presented. The
+    paper surveys the state-of-art solutions systematized by the different tasks and
+    levels of autonomous driving, such as car-following, lane-keeping, trajectory
+    following, merging, or driving in dense traffic. Finally, open questions and future
+    challenges are discussed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Machine Learning, Motion Planning, Autonomous Vehicles, Artificial intelligence,
+    Reinforcement Learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Motion planning for autonomous vehicle functions is a vast and long-researched
+    area using a wide variety of approaches such as different optimization techniques,
+    modern control methods, artificial intelligence, and machine learning. This article
+    presents the achievements of the field from recent years focused on Deep Reinforcement
+    Learning (DRL) approach. DRL combines the classic reinforcement learning with
+    deep neural networks, and gained popularity after the breakthrough article from
+    Deepmind [[1](#bib.bib1), [2](#bib.bib2)]. In the number of research papers about
+    autonomous vehicles and the DRL has been increased in the last few years (see
+    Fig. [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ Survey of Deep Reinforcement Learning
+    for Motion Planning of Autonomous Vehicles").), and because of the complexity
+    of the different motion planning problems, it is a convenient choice to evaluate
+    the applicability of DRL for these problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8964a6b4d55cc056b3df2738f7601436.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Web of Science topic search for ”Deep Reinforcement Learning” and
+    ”Autonomous Vehicles (2020.01.17.)”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-A The Hierarchical Classification of Motion Planning for Autonomous Driving
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Using deep neural networks for self-driving cars gives the possibility to develop
+    ”end-to-end” solutions where the system operates like a human driver: its inputs
+    are the travel destination, the knowledge about the road network and various sensor
+    information, and the output is the direct vehicle control commands, e.g., steering,
+    torque, and brake. However, on the one hand, realizing such a scheme is quite
+    complicated, since it needs to handle all layers of the driving task, on the other
+    hand, the system itself behaves like a black box, which raises design and validation
+    problems. By examining the recent advantages in the field, it can be said that
+    most researches focus on solving some sub-tasks of the hierarchical motion planning
+    problem. This decision-making system of autonomous driving can be decomposed into
+    at least four layers, as stated in [[3](#bib.bib3)] (see Fig.[2](#S1.F2 "Figure
+    2 ‣ I-A The Hierarchical Classification of Motion Planning for Autonomous Driving
+    ‣ I Introduction ‣ Survey of Deep Reinforcement Learning for Motion Planning of
+    Autonomous Vehicles").). Route planning, as the highest level, defines the way-points
+    of the journey based on the map of the road network, with the possibility of using
+    real-time traffic data. Though optimal route choice has a high interest among
+    the research community, papers dealing with this level do not employ reinforcement
+    learning. A comprehensive study on the subject can be found in [[4](#bib.bib4)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6326e6d3ac5bcf3d469e88b5f5024168.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Layers of motion planning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Behavioral layer is the strategic level of autonomous driving. With the
+    given way-points, the agent decides on the short term policy, by taking into consideration
+    the local road topology, the traffic rules, and the perceived state of other traffic
+    participants. Having a finite set of available actions for the driving context,
+    the realization of this layer is usually a finite state-machine having basic strategies
+    in its states (i.e., car following, lane changing, etc.) with well-defined transitions
+    between them based on the change of the environment. However, even with the full
+    knowledge of the current state of the traffic, the future intentions of the surrounding
+    drivers are unknown, making the problem partially observable [[5](#bib.bib5)].
+    Hence the future state not only depends on the behavior of the ego vehicle but
+    also relies on unknown processes; this problem forms a Partially Observable Markov
+    Decision Process (POMDP). Different techniques exist to mitigate these effects
+    by predicting the possible trajectories of other road users, like in [[6](#bib.bib6)],
+    where the authors used gaussian mixture models, or in [[7](#bib.bib7)], where
+    support vector machines and artificial neural networks were trained based on recorded
+    traffic data. Since finite action POMDPs are the natural way of modeling reinforcement
+    learning problems, a high amount of research papers deal with this level, as can
+    be seen in the sections of the paper. To carry out the strategy defined by the
+    behavioral layer, the motion planning layer needs to design a feasible trajectory
+    consisting of the expected speed, yaw, and position states of the vehicle on a
+    short horizon. Naturally, on this level, the vehicle dynamics has to be considered,
+    hence classic exact solutions of motion planning are impractical since they usually
+    assume holonomic dynamics. It has long been known that the numerical complexity
+    of solving the motion planning problem with nonholonomic dynamics is Polynomial-Space
+    Algorithm (PSPACE) [[8](#bib.bib8)], meaning it is hard to elaborate an overall
+    solution by solving the nonlinear programming problem in real-time [[9](#bib.bib9)].
+    On the other hand, the output representation of the layer makes it hard to directly
+    handle it with ”pure” reinforcement learning, only a few papers deal solely with
+    this layer, and they usually use DRL to define splines as a result of the training
+    [[10](#bib.bib10), [11](#bib.bib11)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the lowest level, the local feedback control is responsible for minimizing
+    the deviation from the prescribed path or trajectory. A significant amount of
+    papers reviewed in this article deals with the aspects of this task, where lane-keeping,
+    trajectory following, or car following is the higher-level strategy. Though at
+    this level, the action space becomes continuous, and classical approaches of RL
+    can not handle this. Hence discretization of the control outputs is needed, or
+    - as in some papers - continuous variants of DRL are used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-B Reinforcement Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As an area of Artificial Intelligence and Machine Learning, Reinforcement learning
+    (RL) deals with the problem of a learning agent placed in an environment to achieve
+    a goal. Contrary to supervised learning, where the learner structure gets examples
+    of good and bad behavior, the RL agent must discover by trial and error how to
+    behave to get the most reward [[12](#bib.bib12)]. For this task, the agent must
+    percept the state of the environment at some level and based on this information,
+    and it needs to take actions that result in a new state. As a result of its action,
+    the agent receives a reward, which aids in the development of future behavior.
+    To ultimately formulate the problem, modeling the state transitions of the environment,
+    based on the actions of the agent is also a necessity. This leads to the formulation
+    of a POMDP defined by the functions of $(\mathcal{S},\mathcal{A},T,R,\Omega,O)$,
+    where $\mathcal{S}$ is the set of environment states, $\mathcal{A}$ is the set
+    of possible actions in that particular state, $T$ is the transition function between
+    the states based on the actions, $R$ is the reward for the given $(\mathcal{S},\mathcal{A})$
+    pair, while $\Omega$ is the set of observations, and $O$ is the sensor model.
+    The agent in this context can be formulated by any inference model whose parameters
+    can be modified in response to the experience gained. In the context of Deep Reinforcement
+    Learning, this model is implemented by neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8b423a2c15a1ab8801ac5083c9837b14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: The POMDP model for Deep Reinforcement Learning based autonomous
+    driving'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The problem in the POMDP scenario is that the current actions affect the future
+    states, therefore the future rewards, meaning that for optimizing the behavior
+    for the cumulative reward throughout the entire episode, the agent needs to have
+    information about the future consequences of its actions. RL has two main approaches
+    for determining the optimal behavior: value-based and policy-based methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The original concept using a value-based method is the Deep-Q Learning Network
+    (DQN) introduced in [[1](#bib.bib1)]. Described briefly, the agent predicts a
+    so-called Q value for each state-action pair, which formulate the expected immediate
+    and future reward. From this set, the agent can choose the action with the highest
+    value as an optimal policy or can use the values for exploration during the training
+    process. The main goal is to learn the optimal Q function, represented by a neural
+    network in this case. This can be done by conducting experiments, calculating
+    the discounted rewards of the future states for each action, and updating the
+    network by using the Bellman-equation [[13](#bib.bib13)] as a target. Using the
+    same network for value evaluation and action selection results in unstable behavior
+    and slow learning in noisy environments. Meta-heuristics, such as experience replay,
+    can handle this problem, while other variants of the original DQN exist, such
+    as Double DQN [[14](#bib.bib14)] or Dueling DQN [[15](#bib.bib15)], separating
+    the action and the value prediction streams, leading to faster and more stable
+    learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Policy-based methods target at choosing the optimal behavior directly, where
+    the policy $\pi_{\Theta}$ is a function of $(\mathcal{S},\mathcal{A})$. Represented
+    by a neural network, with a softmax head, the agent generally predicts a normalized
+    probability of the expected goodness of the actions. In the most natural implementation,
+    this output integrates the exploration property of the RL process. In advanced
+    variants, such as the actor-critic, the agent uses different predictions for the
+    value and the action [[16](#bib.bib16)]. Initially, RL algorithms use finite action
+    space, though, for many control problems, they are not suitable. To overcome this
+    issue in [[17](#bib.bib17)] introduced the Deep Deterministic Policy Gradients
+    (DDPG) agent, where the actor directly maps states to continuous actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For complex problems, the learning process can still be long or even unsuccessful.
+    It can be soluted in many ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Curriculum learning describes a type of learning in which the training starts
+    with only easy examples of a task and then gradually increase difficulty. This
+    approach is used in [[18](#bib.bib18), [19](#bib.bib19), [20](#bib.bib20)].
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Adversarial learning aims to fool models through malicious input. Papers using
+    variants of this technique are: [[21](#bib.bib21), [22](#bib.bib22)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Model-based action choice, such as the MCTS based solution of Alpha-Go, can
+    reduce the effect of the problem of distant rewarding.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Since reinforcement learning models the problem as a POMDP, a discrete-time
+    stochastic control process, the solutions need to provide a mathematical framework
+    for this decision making in situations where outcomes are partly random and partly
+    under the control of a decision-maker, while the states are also partly observable
+    [[23](#bib.bib23)]. In the case of motion planning for autonomous or highly automated
+    vehicles, the tuple $(\mathcal{S},\mathcal{A},T,R,\Omega,O)$ of the POMDP is illustrated
+    in Fig. [3](#S1.F3 "Figure 3 ‣ I-B Reinforcement Learning ‣ I Introduction ‣ Survey
+    of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles") and
+    can be interpreted as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\mathcal{S},\mathcal{A},T,$ and $R$ describe the MDP, the modeling environment
+    of the learning process. It can vary depending on the goals, though in our case
+    it needs to model the dynamics of the vehicle, the surrounding static and dynamic
+    objects, such as other participants of the traffic, the road topology, lane markings,
+    signs, traffic rules, etc. $\mathcal{S}$ holds the current actual state of the
+    simulation. $A$ is the possible set of actions of the agent driving the ego-car,
+    while $T$, the so-called state-transition function updates the vehicle state and
+    also the states of the traffic participants depending on the action of the vehicle.
+    The different levels of abstraction are described in section [II-A](#S2.SS1 "II-A
+    Vehicle modeling ‣ II Modeling for Reinforcement Learning ‣ Survey of Deep Reinforcement
+    Learning for Motion Planning of Autonomous Vehicles"). Many research papers use
+    different software platforms for modeling the environment. A brief collection
+    of the used frameworks are presented in section [II-B](#S2.SS2 "II-B Simulators
+    ‣ II Modeling for Reinforcement Learning ‣ Survey of Deep Reinforcement Learning
+    for Motion Planning of Autonomous Vehicles"). $R$ is the reward function of the
+    MDP, section [II-D](#S2.SS4 "II-D Rewarding ‣ II Modeling for Reinforcement Learning
+    ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles")
+    gives a summary on this topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\Omega$ is the set of observations the agent can experience in the world, while
+    $O$ is the observation function giving a possibility distribution over the possible
+    observations. In more uncomplicated cases, the studies assume full observability
+    and formulate the problem as an MDP, though in many cases, the vehicle does not
+    possess all information. Another interesting topic is the representation of the
+    state observation, which is a crucial factor for the architecture choice and performance
+    of Deep RL agents. The observation models used in the literature are summarized
+    in section [II-E](#S2.SS5 "II-E Observation Space ‣ II Modeling for Reinforcement
+    Learning ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous
+    Vehicles").
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Modeling for Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: II-A Vehicle modeling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Modeling the movement of the ego-vehicle is a crucial part of the training process
+    since it raises the trade-off problem between model accuracy and computational
+    resource. Since RL techniques use a massive number of episodes for determining
+    optimal policy, the step time of the environment, which highly depends on the
+    evaluation time of the vehicle dynamics model, profoundly affects training time.
+    Therefore during environment design, one needs to choose from the simplest kinematic
+    model to more sophisticated dynamics models ranging from 2 Degree of Freedom (2DoF)
+    lateral model to the more and more complex models with a higher number of parameters
+    and complicated tire models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At rigid kinematic single-track vehicle models, which neglect tire slip and
+    skip, lateral motion is only affected by the geometric parameters. Therefore,
+    they are usually limited to low-speed applications. More details about the model
+    can be found in [[24](#bib.bib24)]. The simplest dynamic models with longitudinal
+    and lateral movements are based on the 3 Degrees of Freedom (3DoF) dynamic bicycle
+    model, usually with a linear tire model. They consider $(V_{x},V_{y},\dot{\Psi})$
+    as independent variables, namely longitudinal and lateral speed, and yaw rate.
+    A more complex model is the four-tire 9 Degrees of Freedom (9DoF) vehicle model,
+    where amongst the parameters of the 3DoF, body roll and pitch $(\dot{\Theta},\dot{\Phi})$
+    and the angular velocities of the four wheels $({\omega_{fl},\omega_{fr},\omega_{rl},\omega_{rr}})$
+    are also considered, to calculate tire forces more precisely. Hence the model
+    takes into account both the coupling of longitudinal and lateral slips and the
+    load transfer between tires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though the kinematic model seems quite simplified, and as stated in [[25](#bib.bib25)],
+    such a model can behave significantly different from an actual vehicle, though
+    for the many control situations, the accuracy is suitable [[24](#bib.bib24)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to [[25](#bib.bib25)], using a kinematic bicycle model with a limitation
+    on the lateral acceleration at around $0.5g$ or less provides appropriate results,
+    but only with the assumption of dry road. Above this limit, the model is unable
+    to handle dynamics. Hence a more accurate vehicle model should be used when dealing
+    with higher accelerations to push the vehicle’s dynamics near its handling limits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regarding calculation time, based on the kinematic model, the calculation of
+    the 3DoF model can be $10\dots 50$ times higher, and the precise calculation of
+    a 9DoF model with nonlinear tire model can be $100\dots 300$ times higher, which
+    is the main reason for the RL community to use a low level of abstraction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling traffic and surrounding vehicles is often performed by using unique
+    simulators, as described in section [II-B](#S2.SS2 "II-B Simulators ‣ II Modeling
+    for Reinforcement Learning ‣ Survey of Deep Reinforcement Learning for Motion
+    Planning of Autonomous Vehicles"). Some authors develop their environments, using
+    cellular automata models [[26](#bib.bib26)]. Some use MOBIL, which is a general
+    model (minimizing overall braking induced by lane change) to derive lane-changing
+    rules for discretionary and mandatory lane changes for a broad class of car-following
+    models [[27](#bib.bib27)]; the Intelligent Driving Model (IDM), a continuous microscopic
+    single-lane model [[28](#bib.bib28)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Simulators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some authors create self-made environments to achieve full control over the
+    model, though there are commercial and Open-source environments that can provide
+    this feature. This section briefly identifies some of them used in recent researches
+    in motion planning with RL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In modeling the traffic environment, the most popular choice is SUMO (Simulation
+    of Urban MObility), which is a microscopic, inter- and multi-modal, space-continuous
+    and time-discrete traffic flow simulation platform [[29](#bib.bib29)]. It can
+    convert networks from other traffic simulators such as VISUM, Vissim, or MATSim
+    and also reads other standard digital road network formats, such as OpenStreetMap
+    or OpenDRIVE. It also provides interfaces to several environments, such as python,
+    Matlab, .Net, C++, etc. Though the abstraction level, in this case, is microscopic,
+    and vehicle behavior is limited, its ease of use and high speed makes it an excellent
+    choice for training agents to handle traffic, though it does not provide any sensor
+    model besides the ground truth state of the vehicles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another popular microscopic simulator that has been used commercially and for
+    research also is VISSIM [[30](#bib.bib30)]. In [[31](#bib.bib31)] it is used for
+    developing car-following behavior and lane changing decisions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Considering only vehicle dynamics, the most popular choice is TORCS (The Open
+    Racing Car Simulator), which is a modern, modular, highly portable multi-player,
+    multi-agent car simulator. Its high degree of modularity and portability render
+    it ideal for artificial intelligence research [[32](#bib.bib32)]. Interfacing
+    with python, the most popular AI research environment is comfortable and runs
+    at an acceptable speed. TORCS also comes with different tracks, competing robots,
+    and several sensor models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is assumed that for vehicle dynamics, the best choices would be the professional
+    tools, such as CarSIM [[33](#bib.bib33)] or CarMaker [[34](#bib.bib34)], though
+    the utilization of these softwares can not be found in the reinforcement learning
+    literature. This may be caused by the fact that these are expensive commercial
+    platforms, though more importantly, their lack of python interfaces and high precision,
+    but resource-intensive models prevent them from running several episodes within
+    a reasonable time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For more detailed sensor models or traffic, the authors usually use Airsim,
+    Udacity Gazebo/ROS, and CARLA:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AirSim, used by a recent research in [[35](#bib.bib35)], is a simulator initially
+    developed for drones built on Unreal Engine now has a vehicle extension with different
+    weather conditions and scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Udacity, used in [[36](#bib.bib36)], is a simulator that was built for Udacity’s
+    Self-Driving Car Nanodegree [[37](#bib.bib37)] provides various sensors, such
+    as high quality rendered camera image LIDAR and Infrared information, and also
+    has capabilities to model other traffic participants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another notable mention is CARLA, an open-source simulator for autonomous driving
+    research. CARLA has been developed from the ground up to support the development,
+    training, and validation of autonomous urban driving systems. In addition to open-source
+    code and protocols, CARLA provides open digital assets (urban layouts, buildings,
+    vehicles) that were created for this purpose and can be used freely. The simulation
+    platform supports flexible specification of sensor suites and environmental conditions
+    [[38](#bib.bib38)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though this section provides only a brief description of the simulators, a more
+    systematic review of the topic can be found in [[39](#bib.bib39)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-C Action Space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The choice of action space highly depends on the vehicle model and task designed
+    for the reinforcement learning problem in each previous research. Though two main
+    levels of control can be found: one is the direct control of the vehicle by steering
+    braking and accelerating commands, and the other acts on the behavioral layer
+    and defines choices on strategic levels, such as lane change, lane keeping, setting
+    ACC reference point, etc. At this level, the agent gives a command to low-level
+    controllers, which calculate the actual trajectory. Only a few papers deal with
+    the motion planning layer, where the task defines the endpoints $(x,y,\theta)$,
+    and the agent defines the knots of the trajectory to follow represented as a spline,
+    as can be seen in [[11](#bib.bib11)]. Also, few papers deviate from vehicle motion
+    restrictions and generate actions by stepping in a grid, like in classic cellular
+    automata microscopic models [[40](#bib.bib40)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some papers combine the control and behavioral layers by separating longitudinal
+    and lateral tasks, where longitudinal acceleration is a direct command, while
+    lane changing is a strategic decision like in [[41](#bib.bib41)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The behavioral layer usually holds a few distinct choices, from which the underlying
+    neural network needs to choose, making it a classic reinforcement learning task
+    with finite actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though on the level of control, the actuation of vehicles, i.e., steering, throttle,
+    and braking, are continuous parameters and many reinforcement learning techniques
+    like DQN and PG can not handle this since they need finite action set, while some,
+    like DDPG, works with continuous action space. To adapt to the finite action requirements
+    of the RL technique used, most papers discretizes the steering and acceleration
+    commands to 3 to 9 possibilities per channel. The low number of possible choices
+    pushes the solution farther from reality, which could raise vehicle dynamics issues
+    with uncontrollable slips, massive jerk, and yaw-rate, though the utilization
+    of kinematic models sometimes covers this in the papers. A large number of discrete
+    choices, however, ends up in an exponential growth in the possible outcomes in
+    the POMDP approach, which slows down the learning process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-D Rewarding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'During training, the agent tries to fulfill a task, generally consisting of
+    more than one step. This task is called an episode. An episode ends if one of
+    the following conditions are met:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The agent successfully fulfills the task;
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The episode reaches a previously defined steps
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A terminating condition rises.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The first two cases are trivial and depend on the design of the actual problem.
+    Terminal conditions are typically situations where the agent reaches a state from
+    which the actual task is impossible to fulfill, or the agent makes a mistake that
+    is not acceptable. Vehicle motion planning agents usually use terminating conditions,
+    such as: collision with other participants or obstacles or leaving the track or
+    lane, since these two inevitably end the episode. There are lighter approaches,
+    where the episode terminates with failure before the accident occurred, with examples
+    of having a too high tangent angle to the track or reaching too close to other
+    participants. These ”before accident” terminations speed up the training by bringing
+    the information of failure forward in time, though their design needs caution
+    [[42](#bib.bib42)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rewarding plays the role of evaluating the goodness of the choices the agent
+    made during the episode giving feedback to improve the policy. The first important
+    aspect is the timing of the reward, where the designer of the reinforcement learning
+    solution needs to choose a mixture of the following strategies all having their
+    pros and cons:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Giving reward only at the end of the episode and discounting it back to the
+    previous $(\mathcal{S},\mathcal{A})$ pairs, which could result in a slower learning
+    process, though minimizes the human-driven shaping of the policy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Giving immediate reward at each step by evaluating the current state, naturally
+    discount also appears in this solution, which results in significantly faster
+    learning, though the choice of the immediate reward highly affects the established
+    strategy, which sometimes prevents the agent from developing better overall solutions
+    than the one that gave the intention of the designed reward.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An intermediate solution can be to give a reward in predefined periods or travel
+    distance [[43](#bib.bib43)], or when a good or bad decision occurs.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'In the area of motion planning, the end episode rewards are calculated from
+    the fulfillment or failure of the driving task. The overall performance factors
+    are generally: time of finishing the task, keeping the desired speed or achieving
+    as high average speed as possible, yaw or distance from lane middle or the desired
+    trajectory, overtaking more vehicles, achieve as few lane changes as possible
+    [[44](#bib.bib44)], keeping right [[45](#bib.bib45), [46](#bib.bib46)] etc. Rewarding
+    systems also can represent passenger comfort, where the smoothness of the vehicle
+    dynamics is enforced. The most used quantitative measures are the longitudinal
+    acceleration [[47](#bib.bib47)], lateral acceleration [[48](#bib.bib48), [49](#bib.bib49)]
+    and jerk [[50](#bib.bib50), [10](#bib.bib10)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some researches, the reward is based on the deviation from a dataset [[51](#bib.bib51)],
+    or calculated as a deviation from a reference model like in [[52](#bib.bib52)].
+    These approaches can provide favorable results, though a bit tends from the original
+    philosophy of reinforcement learning since a previously known strategy could guide
+    the learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-E Observation Space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The observation space describes the world to the agent. It needs to give sufficient
+    information for choosing the appropriate action, hence - depending on the task
+    - it contains the following knowledge:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The state of the vehicle in the world, e.g., position, speed, yaw, etc.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Topological information like lanes, signs, rules, etc.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Other participants: surrounding vehicles, obstacles, etc.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The reference frame of the observation can be absolute and fixed to the coordinate
+    system of the world, though as the decision process focuses on the ego-vehicle,
+    it is more straightforward to choose an ego-centric reference frame pinned to
+    the vehicle’s coordinate system, or the vehicle’s position in the world, and the
+    orientation of the road. It allows concentrating the distribution of visited states
+    around the origin in both position, heading, and velocity space, as other vehicles
+    are often close to the ego-vehicle and with similar speed and heading, reducing
+    the region of state-space in which the policy must perform. [[53](#bib.bib53)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-E1 Vehicle state observation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For lane keeping, navigation, simple racing, overtaking, or maneuvering tasks,
+    the most commonly used and also the simplest observation for the ego vehicle consists
+    of the continuous variables of $(|e|,v,\theta_{e})$ describing the lateral position
+    from the center-line of the lane, vehicle speed, and yaw angle respectively. (see
+    Fig. [4](#S2.F4 "Figure 4 ‣ II-E1 Vehicle state observation ‣ II-E Observation
+    Space ‣ II Modeling for Reinforcement Learning ‣ Survey of Deep Reinforcement
+    Learning for Motion Planning of Autonomous Vehicles")). This information is the
+    absolute minimum for guiding car-like vehicles, and only eligible for the control
+    of the classical kinematic car-like models, where the system implies the motion
+    without skidding assumption. Though in many cases in the literature, this can
+    be sufficient, since the vehicles remain deep in the dynamically stable region.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a24094f1f2f8ccf90d4c7ed677de4391.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Observation for basic vehicle state (source: [[3](#bib.bib3)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For tasks, where more complex vehicle dynamics is inevitable, such as racing
+    situations, or where the stability of the vehicle is essential, this set of observable
+    state would not be enough, and it should be extended with yaw, pitch, roll, tire
+    dynamics, and slip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-E2 Environment observation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Getting information about the surroundings of the vehicle and representing
+    it to the learning agent shows high diversity in the literature. Different levels
+    of sensor abstractions can be observed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: sensor level, where camera images, lidar or radar information is passed to the
+    agent;
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: intermediate level, where idealized sensor information is provided;
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ground truth level, where all detectable and non-detectable information is given.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The structure of the sensor model also affects the neural network structure
+    of the Deep RL agent since image like, or array-like inputs infer 2D or 1D CNN
+    structures, while the simple set of scalar information results in a simple dense
+    network. There are cases where these two kinds of inputs are mixed. Hence the
+    network needs to have two different types of input layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Image-based solutions usually use front-facing camera images extracted from
+    3D simulators to represent the observation space. The data is structured in a
+    ($C$ x $W$ x $H$) sized matrix, where $C$ is the number of channels, usually one
+    for intensity images and three for RGB, while $W$ and $H$ are the width and height
+    resolution of the image. In some cases, for the detection of movement, multiple
+    images are fed to the network in parallel. Sometimes it is convenient to down-sample
+    the images - like ($1$x$48$x$27$) in [[54](#bib.bib54)] or ($3$x$84$x$84$) in
+    [[55](#bib.bib55), [56](#bib.bib56)] - for data and network compression purposes.
+    Since images hold the information in an unstructured manner, i.e., the state information,
+    such as object positions, or lane information are deeply encoded in the data,
+    deep neural networks, such as CNN, usually need large samples and time to converge
+    [[57](#bib.bib57)]. This problem escalates, with the high number of steps that
+    the RL process requires, resulting in a lengthy learning process, like $1.5M$
+    steps in [[54](#bib.bib54)] or $100M$ steps in [[55](#bib.bib55)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many image-based solutions propose some kind of preprocessing of the data to
+    overcome this issue. In [[57](#bib.bib57)], the authors propose a framework for
+    vision-based lateral control, which combines DL and RL methods. To improve the
+    perception accuracy, an MTL (Multitask learning) CNN model is proposed to learn
+    the critical track features, which are used to locate the vehicle in the track
+    coordinate, and trains a policy gradient RL controller to solve the continuous
+    sequential decision-making problem. Naturally, this approach can also be viewed
+    as an RL solution with structured features, though the combined approach has its
+    place in the image-based solutions also.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another approach could be the simplification of the unstructured data. In [[58](#bib.bib58)]
+    Kotyan et al. uses the difference image as the background subtraction between
+    the two consecutive frames as an input, assuming this image contains the motion
+    of the foreground and the underlying neural network would focus more on the features
+    of the foreground than the background. By using the same training algorithm, their
+    results showed that the including difference image instead of the original unprocessed
+    input needs approximately 10 times less training steps to achieve the same performance.
+    The second possibility is, instead of using the original image as an input, it
+    can be driven through an image semantic segmentation network as proposed in [[59](#bib.bib59)].
+    As the authors state: ”Semantic image contains less information compared to the
+    original image, but includes most information needed by the agent to take actions.
+    In other words, semantic image neglects useless information in the original image.”
+    Another advantage of this approach is that the trained agent can use the segmented
+    output of images obtained from real-world scenarios, since on this level, the
+    difference is much smaller between the simulated and real-world data than in the
+    case of the simulated and real-world images. Fig. [5](#S2.F5 "Figure 5 ‣ II-E2
+    Environment observation ‣ II-E Observation Space ‣ II Modeling for Reinforcement
+    Learning ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous
+    Vehicles") shows the $640x400$ resolution inputs used in this research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/409ea263894f1b31442880c9b81edd1c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Real images from the driving data and their semantic segmentations
+    (source:[[59](#bib.bib59)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2D or 3D Lidar like sensor models are not common among the recent studies, though
+    they could provide excellent depth-map like information about the environment.
+    Though the same problem arises as with the camera images, that the provided data
+    - let them be a vector for 2D, and a matrix for 3D Lidars - is unstructured. The
+    usage of this type of input only can be found in [[60](#bib.bib60)], where the
+    observation emulates a 2D Lidar that provides the distance from obstacles in $31$
+    directions within the field-of-view of $150^{\circ}$, and agent uses sensor data
+    as its state. A similar input structure, though not modeling a Lidar, since there
+    is no reflection, which is provided by TORCS and used in [[20](#bib.bib20)], is
+    to represent the lane markings with imagined beam sensors. The agent in the cited
+    example uses readings from 19 sensors with a 200m range, presenting at every $10^{\circ}$
+    on the front half of the car returning distance to the track edge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Grid-based path planning methods, like the A* or various SLAM (Simultaneous
+    Localization and Mapping) algorithms exist and are used widespread in the area
+    of mobile robot navigation, where the environment is represented as a spatial
+    map [[61](#bib.bib61)], usually formulated as a 2D matrix assigning to each 2D
+    location in a surface grid one of three possible values: Occupied, free, and unknown
+    [[62](#bib.bib62)]. This approach can also be used representing probabilistic
+    maneuvers of surrounding vehicles [[63](#bib.bib63)], or by generating spatiotemporal
+    map from a predicted sequence of movements, motion planning in a dynamic environment
+    can also be achieved [[64](#bib.bib64)]. Though the previously cited examples
+    didn’t use RL techniques, they prove that grid representation holds high potential
+    in this field. Navigation in a static environment by using a grid map as the observation,
+    together with position and yaw of the vehicle with an RL agent, is presented in
+    [[65](#bib.bib65)] (See Fig.[6](#S2.F6 "Figure 6 ‣ II-E2 Environment observation
+    ‣ II-E Observation Space ‣ II Modeling for Reinforcement Learning ‣ Survey of
+    Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles")). Grid
+    maps are also unstructured data, and their complexity is similar to the semantically
+    segmented images, since the cells store class information in both cases, and hence
+    their optimal handling is using the CNN architecture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8d81b8a981d60ffe1e6329633f9deb35.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Sensors
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ce2f2e19c8cd3a8c7e7385a8e9048811.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Target state $z^{t}$
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b18aa432c411ca891396f706c74ad83a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (c) Perception Ø
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 6: The surrounding from the perspective of the vehicle can be described
+    by a coarse perception map where the target is represented by a red dot (c) (source:
+    [[65](#bib.bib65)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representing moving objects, i.e. surrounding vehicles in a grid needs not only
+    occupancy, but other information hence the spatial grid’s cell need to hold additional
+    information. In [[44](#bib.bib44)] the authors used equidistant grid, where the
+    ego-vehicle is placed in the center, and the cells occupied by other vehicles
+    represented the longitudinal velocity of the corresponding car (See Fig. [7](#S2.F7
+    "Figure 7 ‣ II-E2 Environment observation ‣ II-E Observation Space ‣ II Modeling
+    for Reinforcement Learning ‣ Survey of Deep Reinforcement Learning for Motion
+    Planning of Autonomous Vehicles")). The same approach can also be found in [[49](#bib.bib49)].
+    Naturally this simple representation can not provide information about the lateral
+    movement of the other traffic participants, though they give significantly more
+    than the simple occupancy based ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/04a0c189530181f944bde9d2628a21f4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Mathematical model for the traffic
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/2cb54680021a0df4abe8756d0a847860.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Visualization of the Hyper Grid Matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 7: The visualization of the HDM mapping process (source:[[44](#bib.bib44)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equidistant grids are a logical choice for generic environments, where the moving
+    directions of the mobile robot are free, though, in the case of road vehicles,
+    the vehicle mainly follows the direction of the traffic flow. In this case, the
+    spatial representation could be chosen fixed to the road topology, namely the
+    lanes of the road, regardless of its curvature or width. In these lane-based grid
+    solutions, the grid representing the highway has as many rows as the actual lane
+    count, and the lanes are discretized longitudinally. The simplest utilization
+    of this approach can be found in [[26](#bib.bib26)], where the length of the cells
+    is equivalent to the unit vehicle length, and also, the behavior of the traffic
+    acts similar to the classic cellular automata-based microscopic models [[66](#bib.bib66)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: This representation, similarly to the equidistant ones, can be used for occupancy,
+    though they still do not hold any information on vehicle dynamics. [[67](#bib.bib67)]
+    is to fed multiple consecutive traffic snapshots into the underlying CNN structure,
+    which inherently extracts the velocity of the moving objects. Representing speed
+    in grid cells is also possible in this setup, for that example can be found in
+    [[36](#bib.bib36)], where the authors converted the traffic extracted from the
+    Udacity simulator to the lane-based grid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides the position and the longitudinal speed of the surrounding vehicles
+    are essential from the aspect of the decision making, other features (such as
+    heading, acceleration, lateral speed) should be considered. Multi-layer grid maps
+    could be used for each vital parameter to overcome this issue. In [[10](#bib.bib10)]
+    the authors processed the simulator state to calculate an observation tensor of
+    size 4 x 3 x (2 x FoV + 1), where Fov stands for Field of View and represents
+    the maximum distance of the observation in cell count. There is one channel (first
+    dimension) each for on-road occupancy, relative velocities of vehicles, relative
+    lateral displacements, and relative headings to the ego-vehicle. Fig.[8](#S2.F8
+    "Figure 8 ‣ II-E2 Environment observation ‣ II-E Observation Space ‣ II Modeling
+    for Reinforcement Learning ‣ Survey of Deep Reinforcement Learning for Motion
+    Planning of Autonomous Vehicles") shows an example of the simulator state and
+    corresponding input observation used for their network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/20a70183bb097cc979845e5fd80d4d2f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: The simulator state (top, zoomed in) gets converted to a 4 x 3 x
+    (2 x FoV + 1) input observation tensor (bottom) (source:[[10](#bib.bib10)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The previous observation models (image, lidar, or grid-based) all have some
+    common properties: All of them are unstructured datasets, need a CNN architecture
+    to process, which hardens the learning process since the agent simultaneously
+    needs to extract the exciting features and form the policy for action. It would
+    be obvious to pre-process the unstructured data and feed structured information
+    to the agents’ network. Structured data refers to any data that resides in a fixed
+    field within a record or file. As an example, for navigating in traffic, based
+    on the task, the parameters of the surrounding vehicles are represented on the
+    same element of the input. In the simplest scenario of car following, the agent
+    only focuses on the leading vehicle, and the input beside the state of the ego
+    vehicle consists of $(d,v)$ as in [[51](#bib.bib51)] or $(d,v,a)$ as in [[68](#bib.bib68)],
+    where these parameters are the headway distance, speed, and acceleration of the
+    leading vehicle. Contrary to the unstructured data, these approaches significantly
+    reduce the amount of the input and can be handled with simple DNN structures,
+    which profoundly affects the convergence of the agent’s performance. For navigating
+    in traffic, i.e., performing merging or lane changing maneuvers, not only the
+    leading vehicle’s, but the other surrounding vehicles’ states also need to be
+    considered. In a merging scenario, the most crucial information is the relative
+    longitudinal position and speed $2$x$(dx,dv)$ of the two vehicles bounding the
+    target gap, as used by [[69](#bib.bib69)]. Naturally, this is the absolute minimal
+    representation of such a problem, but in the future, more sophisticated representations
+    would be developed. In highway maneuvering situations, both ego-lane, and neighboring
+    lane vehicles need to be considered, in [[41](#bib.bib41)] the authors used the
+    above mentioned $6$x$(dx,dv)$ scalar vector is used for the front and rear vehicles
+    in the three interesting lanes. While in [[70](#bib.bib70)] the authors extended
+    this information with the occupancy of the neighboring lanes right at the side
+    of the ego-vehicle (See Fig. [9](#S2.F9 "Figure 9 ‣ II-E2 Environment observation
+    ‣ II-E Observation Space ‣ II Modeling for Reinforcement Learning ‣ Survey of
+    Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles")). The
+    same approach can be seen in [[42](#bib.bib42)], though extending the number of
+    traced objects to nine. These researches lack lateral information, though, in
+    [[41](#bib.bib41)], the lateral positions and speeds are also involved in the
+    input vector resulting in a $6$x$(dx,dy,dvx,dvy)$ structure, logically representing
+    longitudinal and lateral distance, and speed differences to the ego, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/238c105f162792b94278d33271d39757.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Environment state on the highway [[70](#bib.bib70)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a special case of handling unsignalized intersection [[71](#bib.bib71)] the
+    authors also used this formulation scheme where the other vehicle’s Cartesian
+    coordinates, speed and heading were considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Scenario-based Classification of the Approaches
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Though this survey focuses on Deep Reinforcement Learning based motion planning
+    research, it is essential to mention that some papers try to solve some subtasks
+    of automated driving through classic reinforcement techniques. One problem of
+    these classic methods, that they can not handle unstructured data, such as images,
+    mid-level radar, or lidar sensing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other problem comes from the need of maintaining the Q-table for all $(\mathcal{S},\mathcal{A})$
+    state-action pairs. This results in space complexity explosion, since the size
+    of the table equals the product of the size of all classes both in state and action.
+    As an example, the Q-learning made in [[72](#bib.bib72)] is presented. The authors
+    trained an agent in TORCS, which tries to achieve a policy for the best overtaking
+    maneuver, by taking advantage of the aerodynamic drag. There are only two participants
+    in the scenario, the overtaking vehicle, and the vehicle in front on a long straight
+    track. The state representation contains the longitudinal and lateral distance
+    of the two vehicles and also the the lateral position of the ego-vehicle and the
+    speed difference of the two.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: State representation discretization in [[72](#bib.bib72)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Size | Class bounds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $dist_{y}[m]$ | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; {0, 10, 20 ,30, 50, 100, 200} &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $dist_{x}[m]$ | 10 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; {-25, -15, -5, -3 , -1, 0, 1, 3, 5, 15, 25} &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $pos[m]$ | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; {-10, -5, -2, -1, 0, 1, 2, 5, 10} &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\Delta speed[km/h]$ | 9 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; {-300, 0, 30, 60, 90, 120, &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 150, 200, 250, 300} &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The authors discretized this state space to classes of size $(6,10,8,9)$ respectfully
+    (see table [I](#S3.T1 "TABLE I ‣ III Scenario-based Classification of the Approaches
+    ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles"));
+    and used the minimal lateral action set size of 3, where the actions are sweeping
+    $1m$ to the left or right and maintaining lateral position. Together, this problem
+    generates a Q-table with $6*10*8*9*3=12960$ elements. Though a table of this size
+    can be easily handled nowadays, it is easy to imagine that with more complex problems
+    with more vehicles, more sensors, complex dynamics, denser state and action representation,
+    the table can grow to enormous size. A possible reduction is the utilization of
+    the Multiple-Goal Reinforcement Learning Method and dividing the overall problem
+    to sub-tasks, as can be seen in [[73](#bib.bib73)] for overtaking maneuver. In
+    a latter research, the authors widened the problem and separated the driving problem
+    to the tasks of collision avoidance, target seeking, lane following, Lane choice,
+    speed keeping, and steady steering [[74](#bib.bib74)]. To reduce problem size,
+    the authors of [[75](#bib.bib75)] used strategic-level decisions to set movement
+    targets for the vehicles concerning the surrounding ones, and left the low-level
+    control to classic solutions, which significantly reduced the action space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An other interesting example of classic Q-learning is described in [[76](#bib.bib76)]
+    where the authors designed an agent for the path planning problem of a ground
+    vehicle considering obstacles with Ackermann steering by using $(v,x,y,\theta)$
+    (speed, positions and heading) as state representation, and used reinforcement
+    learning as an optimizer (See Fig. [10](#S3.F10 "Figure 10 ‣ III Scenario-based
+    Classification of the Approaches ‣ Survey of Deep Reinforcement Learning for Motion
+    Planning of Autonomous Vehicles")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e317ddc5a5c485c8a4a06c1a3538fa6b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Path planning results from [[76](#bib.bib76)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though one would expect that machine learning could give an overall end-to-end
+    solution to automated driving, the study of the recent literature shows that Reinforcement
+    Learning research can give answers to certain sub-tasks of this problem. The papers
+    in recent years can be organized around these problems, where a well-dedicated
+    situation or scenario is chosen and examined whether a self-learning agent can
+    solve it. These problem statements vary in complexity. As mentioned earlier, the
+    complexity of reinforcement learning, and thus training time, is greatly influenced
+    by the complexity of the problem chosen, the nature of the action space, and the
+    timeliness and proper formulation of rewards. The simplest problems, such as lane-keeping
+    or vehicle following, can generally be traced back to simple convex optimization
+    or control problems. However, in these cases, the formulation of secondary control
+    goals, such as passenger comfort, is more comfortable to articulate. At the other
+    end of the imagined complexity scale, there are problems, like in the case of
+    maneuvering in dense traffic, the efficient fulfillment of the task is hard to
+    formulate, and the agent needs predictive ”thinking” to achieve its goals. In
+    the following, these approaches are presented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Car following
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Car following is the simplest task in this survey, where the problem is formulated
+    as follows: There are two participants of the simulation, a leading and the following
+    vehicle, both keeping their lateral positions in a lane, and the following vehicle
+    adjusts its longitudinal speed to keep a safe following distance. The observation
+    space consists of the $(v,dv,ds)$ tuple, representing agent speed, speed difference
+    to the lead, and headway distance. The action is the acceleration command. Reward
+    systems use the collision of the two vehicles as a failure naturally, while the
+    performance of the agent is based on the jerk, TTC (time to collision) [[50](#bib.bib50)],
+    or passenger comfort [[77](#bib.bib77)]. Another approach is shown in [[51](#bib.bib51)],
+    where the performance of the car following agent is evaluated against real-world
+    measurement to achieve human-like behavior.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Lane keeping
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Lane-keeping or trajectory following is still a simple control task, but contrary
+    to car following, this problem focuses on lateral control. The observation space
+    in these studies us two different approaches: One is the ”ground truth” lateral
+    position and angle of the vehicle in lane [[78](#bib.bib78), [60](#bib.bib60),
+    [22](#bib.bib22)], while the second is the image of a front-facing camera [[54](#bib.bib54),
+    [59](#bib.bib59), [57](#bib.bib57)]. Naturally, for image-based control, the agents
+    use external simulators, TORCS, and GAZEBO/ROS in these cases. Reward systems
+    almost always consider the distance from the center-line of the lane as an immediate
+    reward. It is important to mention that these agents hardly consider vehicle dynamics,
+    and surprisingly does not focus on joined longitudinal control.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Merging
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The ramp merge problem deals with the on-ramp highway scenario (see Fig. [11](#S3.F11
+    "Figure 11 ‣ III-C Merging ‣ III Scenario-based Classification of the Approaches
+    ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles")),
+    where the ego vehicle needs to find the acceptable gap between two vehicles to
+    get on the highway. In the simplest approach, it is eligible to learn the longitudinal
+    control, where the agent reaches this position, as can be seen in [[79](#bib.bib79),
+    [45](#bib.bib45), [19](#bib.bib19)]. Other papers, like [[69](#bib.bib69)] use
+    full steering and acceleration control. In [[45](#bib.bib45)], the actions control
+    the longitudinal movement of the vehicle accelerate and decelerate, and while
+    executing these actions, the ego vehicle keeps its lane. Actions ”lane change
+    left” as well as ”lane change right” imply lateral movement. Only a single action
+    is executed at a time, and actions are executed in their entirety, the vehicle
+    is not able to prematurely abort an action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ad322f8a0143825bdf8e55e3ee894c95.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: Ramp merge: (a) simulated scenario and (b) real-world location (source:
+    [[69](#bib.bib69)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An exciting addition can be examined in [[19](#bib.bib19)], where the surrounding
+    vehicles act differently, as there are cooperative and non-cooperative drivers
+    among them. They trained their agents with the knowledge about cooperative behavior,
+    and also compared the results with three differently built MTCS planners. Full
+    information MCTS naturally outperforms RL, though they are computationally expensive.
+    The authors used a curriculum learning approach to train the agent by gradually
+    increasing traffic density. As they stated: ”When training an RL agent in dense
+    traffic directly, the policy converged to a suboptimal solution which is to stay
+    still in the merge lane and does not leverage the cooperativeness of other drivers.
+    Such a policy avoids collisions but fails at achieving the maneuver.”'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most detailed description for this problem is given by [[69](#bib.bib69)],
+    where ”the driving environment is trained as an LSTM architecture to incorporate
+    the influence of historical and interactive driving behaviors on the action selection.
+    The Deep Q-learning process takes the internal state from LSTM as the input to
+    the Q-function approximator, using it for the action selection based on more past
+    information. The Q-network parameters are updated with an experience replay, and
+    a second target Q-network is used to relieve the problems of local optima and
+    instability.” With this approach, the researchers try to mix the possibilities
+    from behavior prediction and learning, simultaneously achieving better performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Driving in traffic
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The most complicated scenario examined in the recent papers are those where
+    the autonomous agent drives in traffic. Naturally, this task is also scalable
+    by the topology of the network, the amount and behavior of the surrounding vehicles,
+    the application of traffic rules, and many other properties. Therefore almost
+    all of the current solutions deal with highway driving, where the scenario lacks
+    intersections, pedestrians, and the traffic flow in one direction in all lanes.
+    Sub-tasks of this scenario were examined in the previous sections, such as lane-keeping,
+    or car following. In the following, two types of highway driving will be presented.
+    First, the hierarchical approaches are outlined, where the agents act on the behavioral
+    layer, making decisions about lane changing or overtaking and performs these actions
+    with an underlying controller using classic control approaches. Secondly, end-to-end
+    solutions are presented, where the agents directly control the vehicle by steering
+    and acceleration. As the problem gets more complicated, it is important to mention
+    that the agents trained this would only be able to solve the type of situations
+    that it is exposed to in the simulations. It is, therefore, crucial that the design
+    of the simulated traffic environment covers the intended case [[52](#bib.bib52)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Making decisions on the behavioral layer consists of at least three discrete
+    actions: Keeping current lane, Change to the left, and Change to the right, as
+    can be seen in [[42](#bib.bib42)]. In this paper, the authors used the ground
+    truth information about the ego vehicle’s speed and lane position, and the relative
+    position and speed of the eight surrounding vehicles as the observation space.
+    They trained and tested the agents in three categories of observation noises:
+    noise-free, mid-level noise (%5), and high-level noise (%15), and showed that
+    the training environments with higher noises resulted in more robust and reliable
+    performance, also outperforming the rule-based MOBIL model, by using DQN with
+    a DNN of ${64,128,128,64}$ hidden layers with $tanh$ activation. In a quite similar
+    environment and observation space, [[52](#bib.bib52)] used a widened set of actions
+    to perform the lane changing with previous accelerations or target gap approaching,
+    resulting in six different actions as can be seen in table [II](#S3.T2 "TABLE
+    II ‣ III-D Driving in traffic ‣ III Scenario-based Classification of the Approaches
+    ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous Vehicles").
+    They also achieved the result that the DQN agent - using two convolutional and
+    one dense layer - performed on par with, or better than, a reference model based
+    on the IDM [[28](#bib.bib28)]. and MOBIL [[27](#bib.bib27)] model. In the other
+    publication from the same author [[80](#bib.bib80)], the action space is changed
+    slightly by changing the acceleration commands to increasing and decreasing the
+    ACC set-points and let the underlying controller perform these actions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE II: Action space in [[52](#bib.bib52)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $a_{1}$ | Stay in current lane, keep current speed |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a_{2}$ | Stay in current lane, accelerate with $-2m/s^{2}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a_{3}$ | Stay in current lane, accelerate with $-9m/s^{2}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a_{4}$ | Stay in current lane, accelerate with $2m/s^{2}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a_{5}$ | Change lanes to the left, keep current speed |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a_{6}$ | Change lanes to the right, keep current speed |'
+  prefs: []
+  type: TYPE_TB
+- en: In [[68](#bib.bib68)], a two-lane scenario is considered to distribute the hierarchical
+    decisions further. First, a DQN makes a binary decision about ”to or not to change
+    lane”, and afterward, the other Q network is responsible for the longitudinal
+    acceleration, based on the previous decision. Hence the second layer, integrated
+    with classic control modules (e.g., Pure Pursuit Control), outputs appropriate
+    control actions for adjusting its position. In [[47](#bib.bib47)], the above mentioned
+    two-lane scenario is considered, though the authors used an actor-critic like
+    learning agent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An interesting question in automated driving is the cooperative behavior of
+    the trained agent. In [[67](#bib.bib67)] the authors considered a three-lane highway
+    with a lane-based grid representation as observation space and a simple tuple
+    of four for action space left, right, speedup, none, and used the reward function
+    to achieve cooperative and non-cooperative behaviors. Not only the classic performance
+    indicators of the ego vehicle is considered in the reward function, but also the
+    speed of the surrounding traffic, which is naturally affected by the behavior
+    of the agent. The underlying network uses two convolutional layers with 16 filters
+    of patch size (2,2) and RELU activation, and two dense layers with 500 neurons
+    each. To evaluate the effects of the cooperative behavior, the authors collected
+    traffic data by virtual loops in the simulation and visualized the performance
+    of the resulting traffic in the classic flow-density diagram (see Fig. [12](#S3.F12
+    "Figure 12 ‣ III-D Driving in traffic ‣ III Scenario-based Classification of the
+    Approaches ‣ Survey of Deep Reinforcement Learning for Motion Planning of Autonomous
+    Vehicles").) It is shown that the cooperative behavior results in higher traffic
+    flow, hence better highway capacity and lower overall travel time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5b50596e55506704b851c69303f5f7d1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: Flow-density relations detected by the virtual loops under different
+    strategies (source:[[67](#bib.bib67)])'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The realism of the models could still differentiate end-to-end solutions. For
+    example, in [[44](#bib.bib44)], instead of using the nonholonomic Ackermann steering
+    geometry, the authors use a holonomic robot model for the action space, which
+    highly reduces the complexity of the control problem. Their actions are Acceleration,
+    Deceleration, Change lane to the left, Change lane to the right, and Take no action,
+    where the first two apply maximal acceleration and deceleration, while the two
+    lane-changing actions simply use constant speed lateral movements. They use Dueling
+    DQN and prioritized experience replay with a grid-based observation model. A similar
+    control method and nonholonomic kinematics is used in [[41](#bib.bib41)]. The
+    importance of this research is that it considers safety aspects during the learning
+    process. By using an MPC like safety check, the agent avoids actions that lead
+    to a collision, which makes the training faster and more robust.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using nonholonomic kinematics needs acceleration and steering commands. In [[70](#bib.bib70),
+    [46](#bib.bib46)], the authors used a continuous observation space of the structured
+    information of the surrounding vehicles and Policy-gradient RL structure to achieve
+    end-to-end driving. Since the utilized method has discrete action-space, the steering
+    and acceleration command needed to be quantized. The complexity of driving in
+    traffic with an end-to-end solution can be well examined by the number of training
+    episodes needed by the agent. While in simple lane-keeping scenarios, the agents
+    finished the task in few hundreds of episodes, the agent used for these problems
+    needed 300’000.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Future Challenges
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The recent achievements on the field showed that different deep reinforcement
+    learning techniques could be effectively used for different levels of autonomous
+    vehicles’ motion planning problems, though many questions remain unanswered. The
+    main advantage of these methods is that they can handle unstructured data such
+    as raw or slightly pre-processed radar or camera-based image information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though using neural networks and deep learning techniques as universal function-approximators
+    in automotive systems poses several questions. As stated in [[81](#bib.bib81)],
+    function development for automotive applications realized in electronic control
+    units (ECUs) is subject to proprietary OEM norms and several international standards,
+    such as Automotive SPICE (Software Process Improvement and Capability Determination)
+    [[82](#bib.bib82)] and ISO 26262 [[83](#bib.bib83)]. However, these standards
+    are still far from addressing deep learning with dedicated statements, since verification
+    and validation is not a solved issue in this domain. Some papers deal with these
+    issues by using an underlying safety layer, which verifies the safety of a planned
+    trajectory before the vehicle control system executes it. However, full functional
+    safety coverage can not be guaranteed in complex scenarios this way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One of the main benefits of using deep neural networks trained by a reinforcement
+    learning agent in motion planning is the relatively low computational requirements
+    of the trained network. Though this property needs a vast amount of trials in
+    the learning phase to gain enough experience, as mentioned before, for simple
+    convex optimization problems, the convergence of the process is fast. However,
+    for complex scenarios, the training can quickly reach millions of steps, meaning
+    that one setup of hyper-parameters or reward hypothesis can last hours or even
+    days. Since complicated reinforcement learning tasks need continuous iteration
+    on the environment design, network structure, reward scheme, or even the used
+    algorithm itself, designing such a system is a time-consuming project. Besides
+    the appropriate result analysis and inference, the evaluation time highly depends
+    on the computational capacities assigned. On this basis, it is not a surprise
+    that most papers nowadays deal with minor subtasks of the motion planning problem,
+    and the most complex scenarios, such as navigating in urban traffic, can not be
+    found in the literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By examining the observation element of the recent articles, it can be stated
+    that most researches ignore complex sensor models. Some papers use ”ground truth”
+    environment representations or ”ideal” sensor models, and only a few articles
+    utilize sensor noise. On the one hand, transferring the knowledge acquired from
+    ideal observations to real-world application poses several feasibility questions
+    [[84](#bib.bib84)], on the other hand, using noisy or erroneous models could lead
+    to actually more robust agents, as stated in [[42](#bib.bib42)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The same applies to the environment, which can be examined best amongst the
+    group of highway learners, where the road topology is almost always fixed, and
+    the surrounding vehicles’ behavior is limited. Validation of these agents is usually
+    made in the same environment setup, which contradicts the basic techniques of
+    machine learning, where the training and validation scenarios should differ in
+    some aspects. As a reinforcement learning agent can generally act well in the
+    situations that are close to those it has experience with, it is crucial to focus
+    on developing more realistic and diverse environments, including the modeling
+    level of any interacting traffic participant to achieve such agents that are easily
+    transferable to real-world applications. This applies to vehicle dynamics, where
+    more diverse and more realistic modeling would be needed. Naturally, these improvements
+    increase the numerical complexity of the environment model, which is one of the
+    main issues in these applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tending towards mixed or hierarchical system design would be a solution to this
+    problem in the future, by mixing classic control approaches and deep RL. Also,
+    the use of extended learning techniques, such as curriculum learning, transfer
+    learning, or Alpha-Go like planning agents, would profoundly affect the efficiency
+    of these projects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overall it can be said that many problems need to be solved in this field, such
+    as the detail of the environment and sensor modeling, the computational requirements,
+    the transferability to real applications, robustness, and validation of the agents.
+    Because of these issues, it is hard to predict whether reinforcement learning
+    is an appropriate tool for automotive applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgment
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The research reported in this paper was supported by the Higher Education Excellence
+    Program of the Ministry of Human Capacities in the frame of Artificial Intelligence
+    research area of Budapest University of Technology and Economics (BME FIKPMI/FM).
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] V. Mnih, K. Kavukcuoglu, D. Silver, A. Graves, I. Antonoglou, D. Wierstra,
+    and M. Riedmiller, “Playing Atari with Deep Reinforcement Learning,” 12 2013.
+    [Online]. Available: http://arxiv.org/abs/1312.5602'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare,
+    A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski, S. Petersen, C. Beattie,
+    A. Sadik, I. Antonoglou, H. King, D. Kumaran, D. Wierstra, S. Legg, and D. Hassabis,
+    “Human-level control through deep reinforcement learning,” *Nature*, vol. 518,
+    no. 7540, pp. 529–533, 2 2015. [Online]. Available: http://www.nature.com/articles/nature14236'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] B. Paden, M. Cap, S. Z. Yong, D. Yershov, and E. Frazzoli, “A Survey of
+    Motion Planning and Control Techniques for Self-driving Urban Vehicles,” *CoRR*,
+    pp. 1–27, 2016\. [Online]. Available: https://ieeexplore.ieee.org/abstract/document/7490340'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] H. Bast, D. Delling, A. Goldberg, M. Müller-Hannemann, T. Pajor, P. Sanders,
+    D. Wagner, and R. F. Werneck, “Route Planning in Transportation Networks,” in
+    *Lecture Notes in Computer Science*.   Springer, Cham, 2016, pp. 19–80.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] S. Brechtel, T. Gindele, and R. Dillmann, “Probabilistic decision-making
+    under uncertainty for autonomous driving using continuous POMDPs,” in *17th International
+    IEEE Conference on Intelligent Transportation Systems (ITSC)*.   IEEE, 10 2014,
+    pp. 392–399\. [Online]. Available: http://ieeexplore.ieee.org/document/6957722/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] J. Wiest, M. Hoffken, U. Kresel, and K. Dietmayer, “Probabilistic trajectory
+    prediction with Gaussian mixture models,” in *2012 IEEE Intelligent Vehicles Symposium*.   IEEE,
+    6 2012, pp. 141–146\. [Online]. Available: http://ieeexplore.ieee.org/document/6232277/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Y. Dou, F. Yan, and D. Feng, “Lane changing prediction at highway lane
+    drops using support vector machine and artificial neural network classifiers,”
+    in *2016 IEEE International Conference on Advanced Intelligent Mechatronics (AIM)*.   IEEE,
+    7 2016, pp. 901–906. [Online]. Available: http://ieeexplore.ieee.org/document/7576883/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] J. H. Reif, “Complexity of the mover’s problem and generalizations,” in
+    *20th Annual Symposium on Foundations of Computer Science (sfcs 1979)*.   IEEE,
+    10 1979, pp. 421–427. [Online]. Available: http://ieeexplore.ieee.org/document/4568037/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] F. Hegedus, T. Becsi, S. Aradi, and G. Galdi, “Hybrid Trajectory Planning
+    for Autonomous Vehicles using Neural Networks,” in *2018 IEEE 18th International
+    Symposium on Computational Intelligence and Informatics (CINTI)*.   IEEE, 11 2018,
+    pp. 000 025–000 030\. [Online]. Available: https://ieeexplore.ieee.org/document/8928220/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] D. M. Saxena, S. Bae, A. Nakhaei, K. Fujimura, and M. Likhachev, “Driving
+    in Dense Traffic with Model-Free Reinforcement Learning,” 9 2019\. [Online]. Available:
+    http://arxiv.org/abs/1909.06710'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] r. Fehér, S. Aradi, F. Hegedűs, T. Bécsi, and P. Gáspár, “Hybrid DDPG
+    Approach for Vehicle Motion Planning,” in *Proceedings of the 16th International
+    Conference on Informatics in Control, Automation and Robotics*.   SCITEPRESS -
+    Science and Technology Publications, 2019, pp. 422–429.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] R. S. Sutton and A. G. Barto, *Reinforcement Learning: An Introduction*,
+    second edi ed.   The MIT Press, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] R. Bellman, *Dynamic Programming*.   Princeton University Press, Princeton,
+    NJ, 1957.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] H. Van Hasselt, A. Guez, and D. Silver, “Deep reinforcement learning with
+    double q-learning,” in *Thirtieth AAAI conference on artificial intelligence*,
+    2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Z. Wang, T. Schaul, M. Hessel, H. van Hasselt, M. Lanctot, and N. de Freitas,
+    “Dueling Network Architectures for Deep Reinforcement Learning,” 11 2015. [Online].
+    Available: http://arxiv.org/abs/1511.06581'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] D. Silver, G. Lever, N. Heess, T. Degris, D. Wierstra, and M. Riedmiller,
+    “Deterministic policy gradient algorithms,” in *Proceedings of the 31st International
+    Conference on Machine Learning (ICML 2014)*, 2014, pp. 387–395.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] T. P. Lillicrap, J. J. Hunt, A. Pritzel, N. Heess, T. Erez, Y. Tassa,
+    D. Silver, and D. Wierstra, “Continuous control with deep reinforcement learning,”
+    9 2015\. [Online]. Available: http://arxiv.org/abs/1509.02971'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Z. Qiao, K. Muelling, J. M. Dolan, P. Palanisamy, and P. Mudalige, “Automatically
+    Generated Curriculum based Reinforcement Learning for Autonomous Vehicles in Urban
+    Environment,” in *2018 IEEE Intelligent Vehicles Symposium (IV)*.   IEEE, 6 2018,
+    pp. 1233–1238\. [Online]. Available: https://ieeexplore.ieee.org/document/8500603/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] M. Bouton, A. Nakhaei, K. Fujimura, and M. J. Kochenderfer, “Cooperation-Aware
+    Reinforcement Learning for Merging in Dense Traffic,” 6 2019\. [Online]. Available:
+    http://arxiv.org/abs/1906.11021'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] M. Kaushik, V. Prasad, K. M. Krishna, and B. Ravindran, “Overtaking Maneuvers
+    in Simulated Highway Driving using Deep Reinforcement Learning,” in *2018 IEEE
+    Intelligent Vehicles Symposium (IV)*.   IEEE, 6 2018, pp. 1885–1890\. [Online].
+    Available: https://ieeexplore.ieee.org/document/8500718/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] A. Ferdowsi, U. Challita, W. Saad, and N. B. Mandayam, “Robust Deep Reinforcement
+    Learning for Security and Safety in Autonomous Vehicle Systems,” in *IEEE Conference
+    on Intelligent Transportation Systems, Proceedings, ITSC*, vol. 2018-Novem.   Institute
+    of Electrical and Electronics Engineers Inc., 12 2018, pp. 307–312.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] X. Ma, K. Driggs-Campbell, and M. J. Kochenderfer, “Improved Robustness
+    and Safety for Autonomous Vehicle Control with Adversarial Reinforcement Learning,”
+    in *IEEE Intelligent Vehicles Symposium, Proceedings*, vol. 2018-June.   Institute
+    of Electrical and Electronics Engineers Inc., 10 2018, pp. 1665–1671.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] L. P. Kaelbling, M. L. Littman, and A. R. Cassandra, “Planning and acting
+    in partially observable stochastic domains,” *Artificial Intelligence*, vol. 101,
+    no. 1-2, pp. 99–134, 5 1998\. [Online]. Available: https://linkinghub.elsevier.com/retrieve/pii/S000437029800023X'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] J. Kong, M. Pfeiffer, G. Schildbach, and F. Borrelli, “Kinematic and dynamic
+    vehicle models for autonomous driving control design,” in *2015 IEEE Intelligent
+    Vehicles Symposium (IV)*.   IEEE, 6 2015, pp. 1094–1099\. [Online]. Available:
+    http://ieeexplore.ieee.org/document/7225830/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] P. Polack, F. Altche, B. D’Andrea-Novel, and A. de La Fortelle, “The kinematic
+    bicycle model: A consistent model for planning feasible trajectories for autonomous
+    vehicles?” in *2017 IEEE Intelligent Vehicles Symposium (IV)*.   IEEE, 6 2017,
+    pp. 812–818\. [Online]. Available: http://ieeexplore.ieee.org/document/7995816/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] C. You, J. Lu, D. Filev, and P. Tsiotras, “Advanced planning for autonomous
+    vehicles using reinforcement learning and deep inverse reinforcement learning,”
+    *Robotics and Autonomous Systems*, vol. 114, pp. 1–18, 4 2019\. [Online]. Available:
+    https://linkinghub.elsevier.com/retrieve/pii/S0921889018302021'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] A. Kesting, M. Treiber, and D. Helbing, “General Lane-Changing Model MOBIL
+    for Car-Following Models,” *Transportation Research Record: Journal of the Transportation
+    Research Board*, vol. 1999, no. 1, pp. 86–94, 1 2007. [Online]. Available: http://journals.sagepub.com/doi/10.3141/1999-10'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] M. Treiber, A. Hennecke, and D. Helbing, “Congested traffic states in
+    empirical observations and microscopic simulations,” *Physical Review E*, vol. 62,
+    no. 2, pp. 1805–1824, 8 2000\. [Online]. Available: https://link.aps.org/doi/10.1103/PhysRevE.62.1805'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] D. Krajzewicz, J. Erdmann, M. Behrisch, and L. Bieker, “Recent Development
+    and Applications of SUMO - Simulation of Urban MObility,” *International Journal
+    On Advances in Systems and Measurements*, vol. 5, no. 3, pp. 128–138, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] M. Fellendorf and P. Vortisch, “Microscopic Traffic Flow Simulator VISSIM,”
+    in *Fundamentals of Traffic Simulation. International Series in Operations Research
+    & Management Science*, J. Barceló, Ed.   Springer, 2010, pp. 63–93.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Y. Ye, X. Zhang, and J. Sun, “Automated Vehicle’s behavior decision making
+    using deep reinforcement learning and high-fidelity simulation environment,” *Transportation
+    Research Part C*, vol. 107, no. May, pp. 155–170, 2019\. [Online]. Available:
+    https://doi.org/10.1016/j.trc.2019.08.011'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] B. Wymann, E. Espié, C. Guionneau, C. Dimitrakakis, R. Coulom, and A. Sumner,
+    “TORCS: The Open Racing Car Simulator,” 2014\. [Online]. Available: http://www.torcs.org'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] “CarSIM, Mechanical Simulation Corporation.” [Online]. Available: https://www.carsim.com/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] “CarMaker, IPG Automotive.” [Online]. Available: https://ipg-automotive.com/products-services/simulation-software/carmaker/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] H. An and J.-i. Jung, “Decision-Making System for Lane Change Using Deep
+    Reinforcement Learning in Connected and Automated Driving,” *Electronics*, vol. 8,
+    no. 5, p. 543, 5 2019\. [Online]. Available: https://www.mdpi.com/2079-9292/8/5/543'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] J. Wang, Q. Zhang, D. Zhao, and Y. Chen, “Lane Change Decision-making
+    through Deep Reinforcement Learning with Rule-based Constraints,” in *2019 International
+    Joint Conference on Neural Networks (IJCNN)*.   IEEE, 7 2019, pp. 1–6\. [Online].
+    Available: http://arxiv.org/abs/1904.00231 https://ieeexplore.ieee.org/document/8852110/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] “Welcome to Udacity’s Self-Driving Car Simulator.” [Online]. Available:
+    https://github.com/udacity/self-driving-car-sim'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] A. Dosovitskiy, G. Ros, F. Codevilla, A. Lopez, and V. Koltun, “CARLA:
+    An Open Urban Driving Simulator,” in *Proceedings of the 1st Annual Conference
+    on Robot Learning*, 2017, pp. 1–17.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] F. Rosique, P. J. Navarro, C. Fernández, and A. Padilla, “A Systematic
+    Review of Perception System and Simulators for Autonomous Vehicles Research,”
+    *Sensors*, vol. 19, no. 3, p. 648, 2 2019\. [Online]. Available: http://www.mdpi.com/1424-8220/19/3/648'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] K. Kashihara, “Deep Q learning for traffic simulation in autonomous driving
+    at a highway junction,” in *2017 IEEE International Conference on Systems, Man,
+    and Cybernetics (SMC)*.   IEEE, 10 2017, pp. 984–988\. [Online]. Available: http://ieeexplore.ieee.org/document/8122738/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] S. Nageshrao, H. E. Tseng, and D. Filev, “Autonomous Highway Driving using
+    Deep Reinforcement Learning,” in *2019 IEEE International Conference on Systems,
+    Man and Cybernetics (SMC)*.   IEEE, 10 2019, pp. 2326–2331\. [Online]. Available:
+    http://arxiv.org/abs/1904.00035 https://ieeexplore.ieee.org/document/8914621/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] A. Alizadeh, M. Moghadam, Y. Bicer, N. K. Ure, U. Yavas, and C. Kurtulus,
+    “Automated Lane Change Decision Making using Deep Reinforcement Learning in Dynamic
+    and Uncertain Highway Environment,” in *2019 IEEE Intelligent Transportation Systems
+    Conference (ITSC)*, no. August.   IEEE, 10 2019, pp. 1399–1404\. [Online]. Available:
+    https://ieeexplore.ieee.org/document/8917192/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] A. Feher, S. Aradi, and T. Becsi, “Q-learning based Reinforcement Learning
+    Approach for Lane Keeping,” in *2018 IEEE 18th International Symposium on Computational
+    Intelligence and Informatics (CINTI)*.   Budapest: IEEE, 11 2018, pp. 000 031–000 036\.
+    [Online]. Available: https://ieeexplore.ieee.org/document/8928230/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] Z. Bai, W. Shangguan, B. Cai, and L. Chai, “Deep Reinforcement Learning
+    Based High-level Driving Behavior Decision-making Model in Heterogeneous Traffic,”
+    in *2019 Chinese Control Conference (CCC)*, no. February.   IEEE, 7 2019, pp.
+    8600–8605\. [Online]. Available: http://arxiv.org/abs/1902.05772 https://ieeexplore.ieee.org/document/8866005/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] P. Wolf, K. Kurzer, T. Wingert, F. Kuhnt, and J. M. Zollner, “Adaptive
+    Behavior Generation for Autonomous Driving using Deep Reinforcement Learning with
+    Compact Semantic States,” in *2018 IEEE Intelligent Vehicles Symposium (IV)*.   IEEE,
+    6 2018, pp. 993–1000\. [Online]. Available: https://ieeexplore.ieee.org/document/8500427/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] S. Aradi, T. Becsi, and P. Gaspar, “Policy Gradient Based Reinforcement
+    Learning Approach for Autonomous Highway Driving,” in *2018 IEEE Conference on
+    Control Technology and Applications (CCTA)*.   IEEE, 8 2018, pp. 670–675\. [Online].
+    Available: https://ieeexplore.ieee.org/document/8511514/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] X. Xu, L. Zuo, X. Li, L. Qian, J. Ren, and Z. Sun, “A Reinforcement Learning
+    Approach to Autonomous Decision Making of Intelligent Vehicles on Highways,” *IEEE
+    Transactions on Systems, Man, and Cybernetics: Systems*, no. December, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] P. Wang, C. Y. Chan, and A. De La Fortelle, “A Reinforcement Learning
+    Based Approach for Automated Lane Change Maneuvers,” in *IEEE Intelligent Vehicles
+    Symposium, Proceedings*, vol. 2018-June.   Institute of Electrical and Electronics
+    Engineers Inc., 10 2018, pp. 1379–1384.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] M. P. Ronecker and Y. Zhu, “Deep Q-Network Based Decision Making for Autonomous
+    Driving,” in *2019 3rd International Conference on Robotics and Automation Sciences
+    (ICRAS)*.   IEEE, 6 2019, pp. 154–160\. [Online]. Available: https://ieeexplore.ieee.org/document/8808950/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] M. Zhu, Y. Wang, J. Hu, X. Wang, and R. Ke, “Safe, Efficient, and Comfortable
+    Velocity Control based on Reinforcement Learning for Autonomous Driving,” 1 2019\.
+    [Online]. Available: http://arxiv.org/abs/1902.00089'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] M. Zhu, X. Wang, and Y. Wang, “Human-like autonomous car-following model
+    with deep reinforcement learning,” *Transportation Research Part C: Emerging Technologies*,
+    vol. 97, pp. 348–368, 12 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] C. J. Hoel, K. Wolff, and L. Laine, “Automated Speed and Lane Change Decision
+    Making using Deep Reinforcement Learning,” in *IEEE Conference on Intelligent
+    Transportation Systems, Proceedings, ITSC*, vol. 2018-Novem.   Institute of Electrical
+    and Electronics Engineers Inc., 12 2018, pp. 2148–2155.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] E. Leurent, E. Leurent, A. Survey, S.-a. Representations, and A. Driving,
+    “A Survey of State-Action Representations for Autonomous Driving To cite this
+    version : HAL Id : hal-01908175,” 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] P. Wolf, C. Hubschneider, M. Weber, A. Bauer, J. Hartl, F. Durr, and J. M.
+    Zollner, “Learning how to drive in a real world simulation with deep Q-Networks,”
+    in *2017 IEEE Intelligent Vehicles Symposium (IV)*.   IEEE, 6 2017, pp. 244–250\.
+    [Online]. Available: http://ieeexplore.ieee.org/document/7995727/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] M. Jaritz, R. De Charette, M. Toromanoff, E. Perot, and F. Nashashibi,
+    “End-to-End Race Driving with Deep Reinforcement Learning,” in *Proceedings -
+    IEEE International Conference on Robotics and Automation*.   Institute of Electrical
+    and Electronics Engineers Inc., 9 2018, pp. 2070–2075.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] E. Perot, M. Jaritz, M. Toromanoff, and R. d. Charette, “End-to-End Driving
+    in a Realistic Racing Game with Deep Reinforcement Learning,” in *2017 IEEE Conference
+    on Computer Vision and Pattern Recognition Workshops (CVPRW)*.   IEEE, 7 2017,
+    pp. 474–475. [Online]. Available: http://ieeexplore.ieee.org/document/8014798/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] D. Li, D. Zhao, Q. Zhang, and Y. Chen, “Reinforcement Learning and Deep
+    Learning Based Lateral Control for Autonomous Driving [Application Notes],” *IEEE
+    Computational Intelligence Magazine*, vol. 14, no. 2, pp. 83–98, 5 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] S. Kotyan, D. V. Vargas, and U. Venkanna, “Self Training Autonomous Driving
+    Agent,” in *2019 58th Annual Conference of the Society of Instrument and Control
+    Engineers of Japan (SICE)*.   IEEE, 9 2019, pp. 1456–1461\. [Online]. Available:
+    http://arxiv.org/abs/1904.12738 https://ieeexplore.ieee.org/document/8859883/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] N. Xu, B. Tan, and B. Kong, “Autonomous Driving in Reality with Reinforcement
+    Learning and Image Translation,” 1 2018\. [Online]. Available: http://arxiv.org/abs/1801.05299'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] J. Lee, T. Kim, and H. J. Kim, “Autonomous lane keeping based on approximate
+    Q-learning,” in *2017 14th International Conference on Ubiquitous Robots and Ambient
+    Intelligence (URAI)*.   IEEE, 6 2017, pp. 402–405\. [Online]. Available: http://ieeexplore.ieee.org/document/7992762/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] A. Elfes, “Using occupancy grids for mobile robot perception and navigation,”
+    *Computer*, vol. 22, no. 6, pp. 46–57, 6 1989\. [Online]. Available: http://ieeexplore.ieee.org/document/30720/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] S. Thrun, M. Montemerlo, H. Dahlkamp, D. Stavens, A. Aron, J. Diebel,
+    P. Fong, J. Gale, M. Halpenny, G. Hoffmann, K. Lau, C. Oakley, M. Palatucci, V. Pratt,
+    P. Stang, S. Strohband, C. Dupont, L.-E. Jendrossek, C. Koelen, C. Markey, C. Rummel,
+    J. van Niekerk, E. Jensen, P. Alessandrini, G. Bradski, B. Davies, S. Ettinger,
+    A. Kaehler, A. Nefian, and P. Mahoney, “Stanley: The robot that won the DARPA
+    Grand Challenge,” *Journal of Field Robotics*, vol. 23, no. 9, pp. 661–692, 9
+    2006\. [Online]. Available: http://doi.wiley.com/10.1002/rob.20147'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] N. Deo and M. M. Trivedi, “Multi-Modal Trajectory Prediction of Surrounding
+    Vehicles with Maneuver based LSTMs,” in *2018 IEEE Intelligent Vehicles Symposium
+    (IV)*.   IEEE, 6 2018, pp. 1179–1184\. [Online]. Available: https://ieeexplore.ieee.org/document/8500493/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] T. Hegedűs, B. Németh, and P. Gáspár, “Graph-based Multi-Vehicle Overtaking
+    Strategy for Autonomous Vehicles,” *IFAC-PapersOnLine*, vol. 52, no. 5, pp. 372–377,
+    2019\. [Online]. Available: https://linkinghub.elsevier.com/retrieve/pii/S2405896319306822'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] A. Folkers, M. Rick, and C. Buskens, “Controlling an Autonomous Vehicle
+    with Deep Reinforcement Learning,” in *2019 IEEE Intelligent Vehicles Symposium
+    (IV)*.   IEEE, 6 2019, pp. 2025–2031\. [Online]. Available: https://ieeexplore.ieee.org/document/8814124/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] J. Esser and M. Schreckenberg, “Microscopic Simulation of Urban Traffic
+    Based on Cellular Automata,” *International Journal of Modern Physics C*, vol. 08,
+    no. 05, pp. 1025–1036, 10 1997\. [Online]. Available: https://www.worldscientific.com/doi/abs/10.1142/S0129183197000904'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] G. Wang, J. Hu, Z. Li, and L. Li, “Cooperative Lane Changing via Deep
+    Reinforcement Learning,” 2019\. [Online]. Available: http://arxiv.org/abs/1906.08662'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] T. Shi, P. Wang, X. Cheng, and C.-Y. Chan, “Driving Decision and Control
+    for Autonomous Lane Change based on Deep Reinforcement Learning,” in *2019 IEEE
+    Intelligent Transportation Systems Conference (ITSC)*.   Auckland, New Zealand:
+    IEEE, 2019\. [Online]. Available: http://arxiv.org/abs/1904.10171'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] P. Wang and C.-Y. Chan, “Formulation of deep reinforcement learning architecture
+    toward autonomous driving for on-ramp merge,” in *2017 IEEE 20th International
+    Conference on Intelligent Transportation Systems (ITSC)*.   IEEE, 10 2017, pp.
+    1–6. [Online]. Available: http://ieeexplore.ieee.org/document/8317735/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] T. Bécsi, S. Aradi, r. Fehér, J. Szalay, and P. Gáspár, “Highway Environment
+    Model for Reinforcement Learning,” *IFAC-PapersOnLine*, vol. 51, no. 22, pp. 429–434,
+    2018\. [Online]. Available: https://linkinghub.elsevier.com/retrieve/pii/S2405896318333032'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] M. Bouton, J. Karlsson, A. Nakhaei, K. Fujimura, M. J. Kochenderfer, and
+    J. Tumova, “Reinforcement Learning with Probabilistic Guarantees for Autonomous
+    Driving,” 2019\. [Online]. Available: http://arxiv.org/abs/1904.07189'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] D. Loiacono, A. Prete, P. L. Lanzi, and L. Cardamone, “Learning to overtake
+    in TORCS using simple reinforcement learning,” in *2010 IEEE World Congress on
+    Computational Intelligence, WCCI 2010 - 2010 IEEE Congress on Evolutionary Computation,
+    CEC 2010*, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] D. C. K. Ngai and N. H. C. Yung, “Automated Vehicle Overtaking based on
+    a Multiple-Goal Reinforcement Learning Framework,” in *2007 IEEE Intelligent Transportation
+    Systems Conference*.   IEEE, 9 2007, pp. 818–823\. [Online]. Available: http://ieeexplore.ieee.org/document/4357682/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] ——, “A multiple-goal reinforcement learning method for complex vehicle
+    overtaking maneuvers,” *IEEE Transactions on Intelligent Transportation Systems*,
+    vol. 12, no. 2, pp. 509–522, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] C. Desjardins and B. Chaib-draa, “Cooperative Adaptive Cruise Control:
+    A Reinforcement Learning Approach,” *IEEE Transactions on Intelligent Transportation
+    Systems*, vol. 12, no. 4, pp. 1248–1260, 12 2011\. [Online]. Available: http://ieeexplore.ieee.org/document/5876320/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] M. Gómez, R. V. González, T. Martínez-Marín, D. Meziat, and S. Sánchez,
+    “Optimal motion planning by reinforcement learning in autonomous mobile vehicles,”
+    *Robotica*, vol. 30, no. 2, pp. 159–170, 3 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Y. Ye, X. Zhang, and J. Sun, “Automated Vehicle’s behavior decision making
+    using deep reinforcement learning and high-fidelity simulation environment,” Tech.
+    Rep.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] A. E. Sallab, M. Abdou, E. Perot, and S. Yogamani, “End-to-End Deep Reinforcement
+    Learning for Lane Keeping Assist,” 12 2016\. [Online]. Available: http://arxiv.org/abs/1612.04340'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] P. Wang and C.-Y. Chan, “Autonomous Ramp Merge Maneuver Based on Reinforcement
+    Learning with Continuous Action Space,” 3 2018\. [Online]. Available: http://arxiv.org/abs/1803.09203'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] C.-J. Hoel, K. Driggs-Campbell, K. Wolff, L. Laine, and M. J. Kochenderfer,
+    “Combining Planning and Deep Reinforcement Learning in Tactical Decision Making
+    for Autonomous Driving,” pp. 1–12, 5 2019\. [Online]. Available: http://arxiv.org/abs/1905.02680'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] F. Falcini, G. Lami, and A. M. Costanza, “Deep Learning in Automotive
+    Software,” *IEEE Software*, vol. 34, no. 3, pp. 56–63, 5 2017. [Online]. Available:
+    https://ieeexplore.ieee.org/document/7927925/'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] “Automotive SPICE process assessment/reference model,” 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] “ISO 26262, ”Road Vehicles—Functional Safety—Part 1: Vocabulary”,” 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] Z. Szalay, T. Tettamanti, D. Esztergár-Kiss, I. Varga, and C. Bartolini,
+    “Development of a Test Track for Driverless Cars: Vehicle Design, Track Configuration,
+    and Liability Considerations,” *Periodica Polytechnica Transportation Engineering*,
+    vol. 46, no. 1, p. 29, 3 2018\. [Online]. Available: https://pp.bme.hu/tr/article/view/10753'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

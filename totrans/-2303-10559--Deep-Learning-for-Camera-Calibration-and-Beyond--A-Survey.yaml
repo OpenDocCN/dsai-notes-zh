@@ -1,0 +1,3389 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:40:36'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2303.10559] Deep Learning for Camera Calibration and Beyond: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2303.10559](https://ar5iv.labs.arxiv.org/html/2303.10559)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \WarningFilter
+  prefs: []
+  type: TYPE_NORMAL
+- en: latexFont shape \WarningFilterlatexfontFont shape
+  prefs: []
+  type: TYPE_NORMAL
+- en: \justify
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deep Learning for Camera Calibration and Beyond: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Kang Liao, Lang Nie, Shujuan Huang, Chunyu Lin, Jing Zhang, Yao Zhao, , Moncef
+    Gabbouj, , Dacheng Tao Kang Liao, Lang Nie, Shujuan Huang, Chunyu Lin (corresponding
+    author), and Yao Zhao are with the Institute of Information Science, Beijing Jiaotong
+    University (BJTU), Beijing 100044, China, and also with the Beijing Key Laboratory
+    of Advanced Information Science and Network Technology, Beijing 100044, China
+    (email: kang_liao@bjtu.edu.cn, nielang@bjtu.edu.cn, shujuanhuang@bjtu.edu.cn,
+    cylin@bjtu.edu.cn, yzhao@bjtu.edu.cn)Moncef Gabbouj is with the Department of
+    Computing Sciences, Tampere University, 33101 Tampere, Finland (e-mail: moncef.gabbouj@tuni.fi)Jing
+    Zhang and Dacheng Tao are with the School of Computer Science, Faculty of Engineering,
+    The University of Sydney, Australia (e-mail: jing.zhang1@sydney.edu.au; dacheng.tao@gmail.com)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Camera calibration involves estimating camera parameters to infer geometric
+    features from captured sequences, which is crucial for computer vision and robotics.
+    However, conventional calibration is laborious and requires dedicated collection.
+    Recent efforts show that learning-based solutions have the potential to be used
+    in place of the repeatability works of manual calibrations. Among these solutions,
+    various learning strategies, networks, geometric priors, and datasets have been
+    investigated. In this paper, we provide a comprehensive survey of learning-based
+    camera calibration techniques, by analyzing their strengths and limitations. Our
+    main calibration categories include the standard pinhole camera model, distortion
+    camera model, cross-view model, and cross-sensor model, following the research
+    trend and extended applications. As there is no benchmark in this community, we
+    collect a holistic calibration dataset that can serve as a public platform to
+    evaluate the generalization of existing methods. It comprises both synthetic and
+    real-world data, with images and videos captured by different cameras in diverse
+    scenes. Toward the end of this paper, we discuss the challenges and provide further
+    research directions. To our knowledge, this is the first survey for the learning-based
+    camera calibration (spanned 8 years). The summarized methods, datasets, and benchmarks
+    are available and will be regularly updated at [https://github.com/KangLiao929/Awesome-Deep-Camera-Calibration](https://github.com/KangLiao929/Awesome-Deep-Camera-Calibration).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Camera calibration, Deep learning, Computational photography, Multiple view
+    geometry, Robotics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Camera calibration is a fundamental and indispensable field in computer vision
+    and it has a long research history [[1](#bib.bib1), [2](#bib.bib2), [3](#bib.bib3),
+    [4](#bib.bib4)], tracing back to around 60 years ago[[5](#bib.bib5)]. The first
+    step for many vision and robotics tasks is to calibrate the intrinsic (image sensor
+    and distortion parameters) and/or extrinsic (rotation and translation) camera
+    parameters, ranging from computational photography, and multi-view geometry, to
+    3D reconstruction. In terms of the task type, there are different techniques to
+    calibrate the standard pinhole camera, fisheye lens camera, stereo camera, light
+    field camera, event camera, and LiDAR-camera system, etc. Figure [1](#S1.F1 "Figure
+    1 ‣ 1 Introduction ‣ Deep Learning for Camera Calibration and Beyond: A Survey")
+    shows the popular calibration objectives, models, and extended applications in
+    camera calibration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/89107972aa7c290e9728f8bfa9e98cbb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Popular calibration objectives, models, and extended applications
+    in camera calibration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditional methods for camera calibration generally depend on hand-crafted
+    features and model assumptions. These methods can be broadly divided into three
+    categories. The most prevalent one involves using a known calibration target (e.g.,
+    a checkerboard) as it is deliberately moved in the 3D scene [[6](#bib.bib6), [7](#bib.bib7),
+    [8](#bib.bib8)]. Then, the camera captures the target from different viewpoints
+    and the checkerboard corners are detected for calculating the camera parameters.
+    However, such a procedure requires cumbersome manual interactions and it cannot
+    achieve automatic calibration “in the wild”. To pursue better flexibility, the
+    second category of camera calibration, i.e., the geometric-prior-based calibration
+    has been largely studied [[9](#bib.bib9), [10](#bib.bib10), [11](#bib.bib11),
+    [12](#bib.bib12)]. To be specific, the geometric structures are leveraged to model
+    the 3D-2D correspondence in the scene, such as lines and vanishing points. However,
+    this type of method heavily relies on structured man-made scenes containing rich
+    geometric priors, leading to poor performance when applied to general environments.
+    The third category is self-calibration[[13](#bib.bib13), [14](#bib.bib14), [15](#bib.bib15)].
+    Such a solution takes a sequence of images as inputs and estimates the camera
+    parameters using multi-view geometry. The accuracy of self-calibration, however,
+    is constrained by the limits of the feature detectors, which can be influenced
+    by diverse lighting conditions and textures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since there are many standard techniques for calibrating cameras in an industry/laboratory
+    implementation[[16](#bib.bib16), [17](#bib.bib17)], this process is usually ignored
+    in recent development. However, calibrating single and wild images remains challenging,
+    especially when images are collected from websites and unknown camera models.
+    This challenge motivates the researchers to investigate a new paradigm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recently, deep learning has brought new inspirations to camera calibration and
+    its applications. Learning-based methods achieve state-of-the-art performances
+    on various tasks with higher efficiency. In particular, diverse deep neural networks
+    (DNNs) have been developed, such as convolutional neural networks (CNNs), generative
+    adversarial networks (GANs), PointNet, and vision transformers (ViTs), of which
+    the high-level semantic features show more powerful representation capability
+    compared with the hand-crafted features. Moreover, diverse learning strategies
+    have been exploited to boost the geometric perception of neural networks. Learning-based
+    methods offer a fully automatic camera calibration solution, without manual interventions
+    or calibration targets, which sets them apart from traditional methods. Furthermore,
+    some of these methods achieve camera model-free and label-free calibration, showing
+    promising and meaningful applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the rapid increase in the number of learning-based camera calibration methods,
+    it has become increasingly challenging to keep up with new advances. Consequently,
+    there is an urgent need to analyze existing works and foster a community dedicated
+    to this field. Previously, some surveys, e.g., [[18](#bib.bib18), [19](#bib.bib19),
+    [20](#bib.bib20)] only focused on a specific task/camera in camera calibration
+    or one type of approach. For instance, Salvi et al. [[18](#bib.bib18)] reviewed
+    the traditional camera calibration methods in terms of the algorithms. Hughes
+    et al. [[19](#bib.bib19)] provided a detailed review for calibrating fisheye cameras
+    with traditional solutions. While Fan et al. [[20](#bib.bib20)] discussed both
+    the traditional methods and deep learning methods, their survey only considers
+    calibrating the wide-angle cameras. In addition, due to the few amount of reviewed
+    learning-based methods (around 10 papers), the readers are difficult to picture
+    the development trend of general camera calibration in Fan et al. [[20](#bib.bib20)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this paper, we provide a comprehensive and in-depth overview of recent advances
+    in learning-based camera calibration, covering over 100 papers. We also discuss
+    potential directions for further improvements and examine various types of cameras
+    and targets. To facilitate future research on different topics, we categorize
+    the current solutions according to calibration objectives and applications. In
+    addition to fundamental parameters such as focal length, rotation, and translation,
+    we also provide detailed reviews for correcting image distortion (radial distortion
+    and rolling shutter distortion), estimating cross-view mapping, calibrating camera-LiDAR
+    systems, and other applications. Such a trend follows the development of cameras
+    and market demands for virtual reality, autonomous driving, neural rendering,
+    etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To our best knowledge, this is the first survey of the learning-based camera
+    calibration and its extended applications, it has the following unique contributions.
+    (1) Our work mainly follows recent advances in deep learning-based camera calibration.
+    In-depth analysis and discussion in various aspects are offered, including publications,
+    network architecture, loss functions, datasets, evaluation metrics, learning strategies,
+    implementation platforms, etc. The detailed information of each literature is
+    listed in Table [I](#S2.T1 "TABLE I ‣ 2.2 Learning Strategies ‣ 2 Preliminaries
+    ‣ Deep Learning for Camera Calibration and Beyond: A Survey"). (2) Despite the
+    calibration algorithm, we comprehensively review the classical camera models and
+    their extended models. In particular, we summarize the redesigned calibration
+    objectives in deep learning since some traditional calibration objectives are
+    verified to be hard to learn by neural networks. (3) We collect a dataset containing
+    images and videos captured by different cameras in different environments, which
+    can serve as a platform to evaluate the generalization of existing methods. (4)
+    We discuss the open challenges of learning-based camera calibration and propose
+    some future directions to provide guidance for further research in this field.
+    (5) An open-source repository is created that provides a taxonomy of all reviewed
+    works and benchmarks. The repository will be updated regularly in [https://github.com/KangLiao929/Awesome-Deep-Camera-Calibration](https://github.com/KangLiao929/Awesome-Deep-Camera-Calibration).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following sections, we discuss and analyze various aspects of learning-based
+    camera calibration. The remainder of this paper is organized as follows. In Section [2](#S2
+    "2 Preliminaries ‣ Deep Learning for Camera Calibration and Beyond: A Survey"),
+    we provide the concrete learning paradigms and learning strategies of the learning-based
+    camera calibration. Subsequently, we introduce and discuss the specific methods
+    based on the standard camera model, distortion model, cross-view model, and cross-sensor
+    model in Section [3](#S3 "3 Standard Model ‣ Deep Learning for Camera Calibration
+    and Beyond: A Survey"), Section [4](#S4 "4 Distortion Model ‣ Deep Learning for
+    Camera Calibration and Beyond: A Survey"), Section [5](#S5 "5 Cross-View Model
+    ‣ Deep Learning for Camera Calibration and Beyond: A Survey"), and Section [6](#S6
+    "6 Cross-Sensor Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey"),
+    respectively (see Figure [2](#S2.F2 "Figure 2 ‣ 2.2 Learning Strategies ‣ 2 Preliminaries
+    ‣ Deep Learning for Camera Calibration and Beyond: A Survey")). The collected
+    benchmark for calibration methods is depicted in Section [7](#S7 "7 Benchmark
+    ‣ Deep Learning for Camera Calibration and Beyond: A Survey"). Finally, we conclude
+    the learning-based camera calibration and suggest the future directions of this
+    community in Section [8](#S8 "8 Future Research Directions ‣ Deep Learning for
+    Camera Calibration and Beyond: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Preliminaries
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Deep learning has brought new inspirations to camera calibration, enabling
+    a fully automatic calibration procedure without manual intervention. Here, we
+    first summarize two prevalent paradigms in learning-based camera calibration:
+    regression-based calibration and reconstruction-based calibration. Then, the widely-used
+    learning strategies are reviewed in this research field. The detailed definitions
+    for classical camera models and their corresponding calibration objectives are
+    exhibited in the supplementary material.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Learning Paradigm
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Driven by different architectures of the neural network, the researchers have
+    developed two main paradigms for learning-based camera calibration and its applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regression-based Calibration Given an uncalibrated input, the regression-based
+    calibration first extracts the high-level semantic features using stacked convolutional
+    layers. Then, the fully connected layers aggregate the semantic features and form
+    a vector of the estimated calibration objective. The regressed parameters are
+    used to conduct subsequent tasks such as distortion rectification, image warping,
+    camera localization, etc. This paradigm is the earliest and has a dominant role
+    in learning-based camera calibration and its applications. All the first works
+    in various objectives, e.g., intrinsics: Deepfocal [[21](#bib.bib21)], extrinsic:
+    PoseNet [[22](#bib.bib22)], radial distortion: Rong et al. [[23](#bib.bib23)],
+    rolling shutter distortion: URS-CNN [[24](#bib.bib24)], homography matrix: DHN
+    [[25](#bib.bib25)], hybrid parameters: Hold-Geoffroy et al. [[26](#bib.bib26)],
+    camera-LiDAR parameters: RegNet [[27](#bib.bib27)] have been achieved with this
+    paradigm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reconstruction-based Calibration On the other hand, the reconstruction-based
+    calibration paradigm discards the parameter regression and directly learns the
+    pixel-level mapping function between the uncalibrated input and target, inspired
+    by the conditional image-to-image translation [[28](#bib.bib28)] and dense visual
+    perception[[29](#bib.bib29), [30](#bib.bib30)]. The reconstructed results are
+    then calculated for the pixel-wise loss with the ground truth. In this regard,
+    most reconstruction-based calibration methods [[31](#bib.bib31), [32](#bib.bib32),
+    [33](#bib.bib33), [34](#bib.bib34)] design their network architecture based on
+    the fully convolutional network such as U-Net[[35](#bib.bib35)]. Specifically,
+    an encoder-decoder network, with skip connections between the encoder and decoder
+    features at the same spatial resolution, progressively extracts the features from
+    low-level to high-level and effectively integrates multi-scale features. At the
+    last convolutional layer, the learned features are aggregated into the target
+    channel, reconstructing the calibrated result at the pixel level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to the regression-based paradigm, the reconstruction-based paradigm
+    does not require the label of diverse camera parameters. Besides, the imbalance
+    loss problem can be eliminated since it only optimizes the photometric loss of
+    calibrated results. Therefore, the reconstruction-based paradigm enables a blind
+    camera calibration without a strong camera model assumption.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Learning Strategies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the following, we review the learning-based camera calibration literature
+    regarding different learning strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Supervised Learning Most learning-based camera calibration methods train their
+    networks with the supervised learning strategy, from the classical methods [[21](#bib.bib21),
+    [22](#bib.bib22), [25](#bib.bib25), [36](#bib.bib36), [23](#bib.bib23), [37](#bib.bib37)]
+    to the state-of-the-art methods [[38](#bib.bib38), [39](#bib.bib39), [40](#bib.bib40),
+    [41](#bib.bib41), [42](#bib.bib42)]. In terms of the learning paradigm, this strategy
+    supervises the network with the ground truth of the camera parameters (regression-based
+    paradigm) or paired data (reconstruction-based paradigm). In general, they synthesize
+    the training dataset from other large-scale datasets, under the random parameter/transformation
+    sampling and camera model simulation. Some recent works [[43](#bib.bib43), [44](#bib.bib44),
+    [45](#bib.bib45), [46](#bib.bib46)] establish their training dataset using a real-world
+    setup and label the captured images with manual annotations, thereby fostering
+    advancements in this research domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Semi-Supervised Learning Training the network using an annotated dataset under
+    diverse scenarios is an effective learning strategy. However, human annotation
+    can be prone to errors, leading to inconsistent annotation quality or the inclusion
+    of contaminated data. Consequently, increasing the training dataset to improve
+    performance can be challenging due to the complexity and cost of constructing
+    the dataset. To address this challenge, SS-WPC[[47](#bib.bib47)] proposes a semi-supervised
+    method for correcting portraits captured by a wide-angle camera. It employs a
+    surrogate task (segmentation) and a semi-supervised method that utilizes direction
+    and range consistency and regression consistency to leverage both labeled and
+    unlabeled data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Weakly-Supervised Learning Although significant progress has been made, data
+    labeling for camera calibration is a notorious costly process, and obtaining perfect
+    ground-truth labels is challenging. As a result, it is often preferable to use
+    weak supervision with machine learning methods. Weakly supervised learning refers
+    to the process of building prediction models through learning with inadequate
+    supervision. Zhu et al. [[48](#bib.bib48)] present a weakly supervised camera
+    calibration method for single-view metrology in unconstrained environments, where
+    there is only one accessible image of a scene composed of objects of uncertain
+    sizes. This work leverages 2D object annotations from large-scale datasets, where
+    people and buildings are frequently present and serve as useful “reference objects”
+    for determining 3D size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d762933b75996fc110925e413bde4b4b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: The structural and hierarchical taxonomy of camera calibration with
+    deep learning. Some classical methods are listed under each category.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unsupervised Learning Unsupervised learning, commonly referred to as unsupervised
+    machine learning, analyzes and groups unlabeled datasets using machine learning
+    algorithms. UDHN [[49](#bib.bib49)] is the first work for a cross-view camera
+    model using unsupervised learning, which estimates the homography matrix of a
+    paired image without the projection labels. By reducing a pixel-wise intensity
+    error that does not require ground truth data, UDHN [[49](#bib.bib49)] outperforms
+    previous supervised learning techniques. While preserving superior accuracy and
+    robustness to fluctuation in light, the proposed unsupervised algorithm can also
+    achieve faster inference time. Inspired by this work, increasing more methods
+    leverage the unsupervised learning strategy to estimate the homography such as
+    CA-UDHN [[50](#bib.bib50)], BaseHomo [[51](#bib.bib51)], HomoGAN[[52](#bib.bib52)],
+    and Liu et al. [[53](#bib.bib53)]. Besides, UnFishCor [[54](#bib.bib54)] frees
+    the demands for distortion parameters and designs an unsupervised framework for
+    the wide-angle camera.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Self-supervised Learning Robotics is where the phrase “self-supervised learning”
+    first appears, as training data is automatically categorized by utilizing relationships
+    between various input sensor signals. Compared to supervised learning, self-supervised
+    learning leverages input data itself as the supervision. Many self-supervised
+    techniques are presented to learn visual characteristics from massive amounts
+    of unlabeled photos or videos without the need for time-consuming and expensive
+    human annotations. SSR-Net [[55](#bib.bib55)] presents a self-supervised deep
+    homography estimation network, which relaxes the need for ground truth annotations
+    and leverages the invertibility constraints of homography. To be specific, SSR-Net
+    [[55](#bib.bib55)] utilizes the homography matrix representation in place of other
+    approaches’ typically-used 4-point parameterization, to apply the invertibility
+    constraints. SIR [[56](#bib.bib56)] devises a brand-new self-supervised camera
+    calibration pipeline for wide-angle image rectification, based on the principle
+    that the corrected results of distorted images of the same scene taken with various
+    lenses need to be the same. With self-supervised depth and pose learning as a
+    proxy aim, Fang et al. [[57](#bib.bib57)] present to self-calibrate a range of
+    generic camera models from raw video, offering for the first time a calibration
+    evaluation of camera model parameters learned solely via self-supervision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reinforcement Learning Instead of aiming to minimize at each stage, reinforcement
+    learning can maximize the cumulative benefits of a learning process as a whole.
+    To date, DQN-RecNet [[58](#bib.bib58)] is the first and only work in camera calibration
+    using reinforcement learning. It applies a deep reinforcement learning technique
+    to tackle the fisheye image rectification by a single Markov Decision Process,
+    which is a multi-step gradual calibration scheme. In this situation, the current
+    fisheye image represents the state of the environment. The agent, Deep Q-Network
+    [[59](#bib.bib59)], generates an action that should be executed to correct the
+    distorted image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following, we will review the specific methods and literature for learning-based
+    camera calibration. The structural and hierarchical taxonomy is shown in Figure [2](#S2.F2
+    "Figure 2 ‣ 2.2 Learning Strategies ‣ 2 Preliminaries ‣ Deep Learning for Camera
+    Calibration and Beyond: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Details of the learning-based camera calibration and its extended
+    applications from 2015 to 2022, including the method abbreviation, publication,
+    calibration objective, network architecture, loss function, dataset, evaluation
+    metrics, learning strategy, platform, and simulation or not (training data). For
+    the learning strategies, SL, USL, WSL, Semi-SL, SSL, and RL denote supervised
+    learning, unsupervised learning, weakly-supervised learning, semi-supervised learning,
+    self-supervised learning, and reinforcement learning, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Method | Publication | Objective | Network | Loss Function | Dataset |
+    Evaluation | Learning | Platform | Simulation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2015 | DeepFocal [[21](#bib.bib21)] | ICIP | Standard | AlexNet | $\mathcal{L}_{2}$
+    loss | 1DSfM[[60](#bib.bib60)] | Accuracy | SL | Caffe |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | PoseNet [[22](#bib.bib22)] | ICCV | Standard | GoogLeNet | $\mathcal{L}_{2}$
+    loss | Cambridge Landmarks[[61](#bib.bib61)] | Accuracy | SL | Caffe |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2016 | DeepHorizon [[62](#bib.bib62)] | BMVC | Standard | GoogLeNet | Huber
+    loss | HLW[[63](#bib.bib63)] | Accuracy | SL | Caffe |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepVP [[36](#bib.bib36)] | CVPR | Standard | AlexNet | Logistic loss
+    | YUD[[64](#bib.bib64)], ECD[[65](#bib.bib65)], HLW[[63](#bib.bib63)] | Accuracy
+    | SL | Caffe |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Rong et al. [[23](#bib.bib23)] | ACCV | Distortion | AlexNet | Softmax
+    loss | ImageNet[[66](#bib.bib66)] | Line length | SL | Caffe | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DHN[[25](#bib.bib25)] | RSSW | Cross-View | VGG | $\mathcal{L}_{2}$ loss
+    | MS-COCO[[67](#bib.bib67)] | MSE | SL | Caffe | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2017 | CLKN [[68](#bib.bib68)] | CVPR | Cross-View | CNNs | Hinge loss |
+    MS-COCO[[67](#bib.bib67)] | MSE | SL | Torch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | HierarchicalNet [[69](#bib.bib69)] | ICCVW | Cross-View | VGG | $\mathcal{L}_{2}$
+    loss | MS-COCO[[67](#bib.bib67)] | MSE | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | URS-CNN [[24](#bib.bib24)] | CVPR | Distortion | CNNs | $\mathcal{L}_{2}$
+    loss | Sun[[70](#bib.bib70)], Oxford[[71](#bib.bib71)], Zubud[[72](#bib.bib72)],
+    LFW[[73](#bib.bib73)] | PSNR, RMSE | SL | Torch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RegNet [[27](#bib.bib27)] | IV | Cross-Sensor | CNNs | $\mathcal{L}_{2}$
+    loss | KITTI[[74](#bib.bib74)] | MAE | SL | Caffe | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2018 | Hold-Geoffroy et al. [[26](#bib.bib26)] | CVPR | Standard | DenseNet
+    | Entropy loss | SUN360[[75](#bib.bib75)] | Human sensitivity | SL | - |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepCalib [[37](#bib.bib37)] | CVMP | Distortion | Inception-V3 | Logcosh
+    loss | SUN360[[75](#bib.bib75)] | Mean error | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | FishEyeRecNet [[76](#bib.bib76)] | ECCV | Distortion | VGG | $\mathcal{L}_{2}$
+    loss | ADE20K[[77](#bib.bib77)] | PSNR, SSIM | SL | Caffe | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Shi et al.[[78](#bib.bib78)] | ICPR | Distortion | ResNet | $\mathcal{L}_{2}$
+    loss | ImageNet[[66](#bib.bib66)] | MSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepFM[[79](#bib.bib79)] | ECCV | Cross-View | ResNet | $\mathcal{L}_{2}$
+    loss | T&T[[80](#bib.bib80)], KITTI[[74](#bib.bib74)], 1DSfM[[60](#bib.bib60)]
+    | F-score, Mean | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Poursaeed et al.[[81](#bib.bib81)] | ECCVW | Cross-View | CNNs | $\mathcal{L}_{1}$,
+    $\mathcal{L}_{2}$ loss | KITTI[[74](#bib.bib74)] | EPI-ABS, EPI-SQR | SL | - |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | UDHN[[49](#bib.bib49)] | RAL | Cross-View | VGG | $\mathcal{L}_{1}$ loss
+    | MS-COCO[[67](#bib.bib67)] | RMSE | USL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | PFNet[[82](#bib.bib82)] | ACCV | Cross-View | FCN | Smooth $\mathcal{L}_{1}$
+    loss | MS-COCO[[67](#bib.bib67)] | MAE | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CalibNet[[83](#bib.bib83)] | IROS | Cross-Sensor | ResNet | Point cloud
+    distance, $\mathcal{L}_{2}$ loss | KITTI[[74](#bib.bib74)] | Geodesic distance,
+    MAE | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Chang et al.[[84](#bib.bib84)] | ICRA | Standard | AlexNet | Cross-entropy
+    loss | DeepVP-1M [[84](#bib.bib84)] | MSE, Accuracy | SL | Matconvnet |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2019 | Lopez et al. [[85](#bib.bib85)] | CVPR | Distortion | DenseNet | Bearing
+    loss | SUN360[[75](#bib.bib75)] | MSE | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | UprightNet [[86](#bib.bib86)] | ICCV | Standard | U-Net | Geometry loss
+    | InteriorNet[[87](#bib.bib87)], ScanNet[[88](#bib.bib88)], SUN360[[75](#bib.bib75)]
+    | Mean error | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Zhuang et al. [[89](#bib.bib89)] | IROS | Distortion | ResNet | $\mathcal{L}_{1}$
+    loss | KITTI[[74](#bib.bib74)] | Mean error, RMSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SSR-Net [[55](#bib.bib55)] | PRL | Cross-View | ResNet | $\mathcal{L}_{2}$
+    loss | MS-COCO[[67](#bib.bib67)] | MAE | SSL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Abbas et al. [[90](#bib.bib90)] | ICCVW | Cross-View | CNNs | Softmax
+    loss | CARLA[[91](#bib.bib91)] | AUC[[92](#bib.bib92)], Mean error | SL | TensorFlow
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DR-GAN [[31](#bib.bib31)] | TCSVT | Distortion | GANs | Perceptual loss
+    | MS-COCO[[67](#bib.bib67)] | PSNR, SSIM | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | STD [[93](#bib.bib93)] | TCSVT | Distortion | GANs+CNNs | Perceptual loss
+    | MS-COCO[[67](#bib.bib67)] | PSNR, SSIM | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Deep360Up [[94](#bib.bib94)] | VR | Standard | DenseNet | Log-cosh loss[[95](#bib.bib95)]
+    | SUN360[[75](#bib.bib75)] | Mean error | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | UnFishCor [[54](#bib.bib54)] | JVCIR | Distortion | VGG | $\mathcal{L}_{1}$
+    loss | Places2[[96](#bib.bib96)] | PSNR, SSIM | USL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | BlindCor [[34](#bib.bib34)] | CVPR | Distortion | U-Net | $\mathcal{L}_{2}$
+    loss | Places2[[96](#bib.bib96)] | MSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RSC-Net [[97](#bib.bib97)] | CVPR | Distortion | ResNet | $\mathcal{L}_{1}$
+    loss | KITTI[[74](#bib.bib74)] | Mean error | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Xue et al. [[98](#bib.bib98)] | CVPR | Distortion | ResNet | $\mathcal{L}_{2}$
+    loss | Wireframes[[99](#bib.bib99)], SUNCG[[100](#bib.bib100)] | PSNR, SSIM, RPE
+    | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Zhao et al. [[43](#bib.bib43)] | ICCV | Distortion | VGG+U-Net | $\mathcal{L}_{1}$
+    loss | Self-constructed+BU-4DFE[[101](#bib.bib101)] | Mean error | SL | - | ✓
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | NeurVPS [[102](#bib.bib102)] | NeurIPS | Standard | CNNs | Binary cross
+    entropy, chamfer-$\mathcal{L}_{2}$ loss | ScanNet [[88](#bib.bib88)], SU3 [[103](#bib.bib103)]
+    | Angle accuracy | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2020 | Sha et al. [[104](#bib.bib104)] | CVPR | Cross-View | U-Net | Cross-entropy
+    loss | World Cup 2014[[105](#bib.bib105)] | IoU | SL | TensorFlow |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Lee et al. [[106](#bib.bib106)] | ECCV | Standard | PointNet + CNNs |
+    Cross-entropy loss | Google Street View[[107](#bib.bib107)], HLW[[63](#bib.bib63)]
+    | Mean error, AUC[[92](#bib.bib92)] | SL | - |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | MisCaliDet [[108](#bib.bib108)] | ICRA | Distortion | CNNs | $\mathcal{L}_{2}$
+    loss | KITTI[[74](#bib.bib74)] | MSE | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepPTZ [[109](#bib.bib109)] | WACV | Distortion | Inception-V3 | $\mathcal{L}_{1}$
+    loss | SUN360[[75](#bib.bib75)] | Mean error | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | MHN [[110](#bib.bib110)] | CVPR | Cross-View | VGG | Cross-entropy loss
+    | MS-COCO[[67](#bib.bib67)], Self-constructed | MAE | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Davidson et al. [[111](#bib.bib111)] | ECCV | Standard | FCN | Dice loss
+    | SUN360[[75](#bib.bib75)] | Accuracy | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CA-UDHN [[50](#bib.bib50)] | ECCV | Cross-View | FCN + ResNet | Triplet
+    loss | Self-constructed | MSE | USL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepFEPE [[112](#bib.bib112)] | IROS | Standard | VGG + PointNet | $\mathcal{L}_{2}$
+    loss | KITTI[[74](#bib.bib74)], ApolloScape[[113](#bib.bib113)] | Mean error |
+    SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DDM [[32](#bib.bib32)] | TIP | Distortion | GANs | $\mathcal{L}_{1}$ loss
+    | MS-COCO[[67](#bib.bib67)] | PSNR, SSIM | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Li et al. [[114](#bib.bib114)] | TIP | Distortion | CNNs | Cross-entropy,
+    $\mathcal{L}_{1}$ loss | CelebA[[115](#bib.bib115)] | Cosine distance | SL | -
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | PSE-GAN [[116](#bib.bib116)] | ICPR | Distortion | GANs | $\mathcal{L}_{1}$,
+    WGAN loss | Place2[[96](#bib.bib96)] | MSE | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RDC-Net [[117](#bib.bib117)] | ICIP | Distortion | ResNet | $\mathcal{L}_{1}$,
+    $\mathcal{L}_{2}$ loss | ImageNet[[66](#bib.bib66)] | PSNR, SSIM | SL | PyTorch
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | FE-GAN [[118](#bib.bib118)] | ICASSP | Distortion | GANs | $\mathcal{L}_{1}$,
+    GAN loss | Wireframe[[99](#bib.bib99)], LSUN[[119](#bib.bib119)] | PSNR, SSIM,
+    RMSE | SSL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RDCFace [[120](#bib.bib120)] | CVPR | Distortion | ResNet | Cross-entropy,
+    $\mathcal{L}_{2}$ loss | IMDB-Face[[121](#bib.bib121)] | Accuracy | SL | - | ✓
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | LaRecNet [[122](#bib.bib122)] | arXiv | Distortion | ResNet | $\mathcal{L}_{2}$
+    loss | Wireframes[[99](#bib.bib99)], SUNCG[[100](#bib.bib100)] | PSNR, SSIM, RPE
+    | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Baradad et al. [[123](#bib.bib123)] | CVPR | Standard | CNNs | $\mathcal{L}_{2}$
+    loss | ScanNet[[88](#bib.bib88)], NYU[[124](#bib.bib124)], SUN360[[75](#bib.bib75)]
+    | Mean error, RMS | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Zheng et al. [[125](#bib.bib125)] | CVPR | Standard | CNNs | $\mathcal{L}_{1}$
+    loss | FocaLens[[126](#bib.bib126)] | Mean error, PSNR, SSIM | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Zhu et al. [[48](#bib.bib48)] | ECCV | Standard | CNNs + PointNet | $\mathcal{L}_{1}$
+    loss | SUN360[[75](#bib.bib75)], MS-COCO[[67](#bib.bib67)] | Mean error, Accuracy
+    | WSL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DeepUnrollNet [[46](#bib.bib46)] | CVPR | Distortion | FCN | $\mathcal{L}_{1}$,
+    perceptual, total variation loss | Carla-RS[[46](#bib.bib46)], Fastec-RS[[46](#bib.bib46)]
+    | PSNR, SSIM | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RGGNet [[127](#bib.bib127)] | RAL | Cross-Sensor | ResNet | Geodesic distance
+    loss | KITTI[[74](#bib.bib74)] | MSE, MSEE, MRR | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CalibRCNN [[128](#bib.bib128)] | IROS | Cross-Sensor | RNNs | $\mathcal{L}_{2}$,
+    Epipolar geometry loss | KITTI [[74](#bib.bib74)] | MAE | SL | TensorFlow | ✓
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SSI-Calib [[129](#bib.bib129)] | ICRA | Cross-Sensor | CNNs | $\mathcal{L}_{2}$
+    loss | Pascal VOC 2012 [[130](#bib.bib130)] | Mean/standard deviation | SL | TensorFlow
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SOIC [[131](#bib.bib131)] | arXiv | Cross-Sensor | ResNet + PointRCNN
+    | Cost function | KITTI [[74](#bib.bib74)] | Mean error | SL | - |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | NetCalib [[132](#bib.bib132)] | ICPR | Cross-Sensor | CNNs | $\mathcal{L}_{1}$
+    loss | KITTI [[74](#bib.bib74)] | MAE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SRHEN [[133](#bib.bib133)] | ACM-MM | Cross-View | CNNs | $\mathcal{L}_{2}$
+    loss | MS-COCO [[67](#bib.bib67)], SUN397 [[75](#bib.bib75)] | MACE | SL | - |
+    ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2021 | StereoCaliNet [[134](#bib.bib134)] | TCI | Standard | U-Net | $\mathcal{L}_{1}$
+    loss | TAUAgent[[135](#bib.bib135)], KITTI[[74](#bib.bib74)] | Mean error | SL
+    | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CTRL-C [[136](#bib.bib136)] | ICCV | Standard | Transformer | Cross-entropy,
+    $\mathcal{L}_{1}$ loss | Google Street View[[107](#bib.bib107)], SUN360[[75](#bib.bib75)]
+    | Mean error, AUC[[92](#bib.bib92)] | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Wakai et al. [[137](#bib.bib137)] | ICCVW | Distortion | DenseNet | Smooth
+    $\mathcal{L}_{1}$ loss | StreetLearn[[138](#bib.bib138)] | Mean error, PSNR, SSIM
+    | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | OrdianlDistortion [[139](#bib.bib139)] | TIP | Distortion | CNNs | Smooth
+    $\mathcal{L}_{1}$ loss | MS-COCO[[67](#bib.bib67)] | PSNR, SSIM, MDLD | SL | TensorFlow
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | PolarRecNet [[140](#bib.bib140)] | TCSVT | Distortion | VGG + U-Net |
+    $\mathcal{L}_{1}$, $\mathcal{L}_{2}$ loss | MS-COCO[[67](#bib.bib67)], LMS[[141](#bib.bib141)]
+    | PSNR, SSIM, MSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DQN-RecNet [[58](#bib.bib58)] | PRL | Distortion | VGG | $\mathcal{L}_{2}$
+    loss | Wireframes[[99](#bib.bib99)] | PSNR, SSIM, MSE | RL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Tan et al. [[44](#bib.bib44)] | CVPR | Distortion | U-Net | $\mathcal{L}_{2}$
+    loss | Self-constructed | Accuracy | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | PCN [[142](#bib.bib142)] | CVPR | Distortion | U-Net | $\mathcal{L}_{1}$,
+    $\mathcal{L}_{2}$, GAN loss | Place2[[96](#bib.bib96)] | PSNR, SSIM, FID, CW-SSIM
+    | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DaRecNet [[33](#bib.bib33)] | ICCV | Distortion | U-Net | Smooth $\mathcal{L}_{1}$,
+    $\mathcal{L}_{2}$ loss | ADE20K[[77](#bib.bib77)] | PSNR, SSIM | SL | PyTorch
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DLKFM [[143](#bib.bib143)] | CVPR | Cross-View | Siamese-Net | $\mathcal{L}_{2}$
+    loss | MS-COCO[[67](#bib.bib67)], Google Earth, Google Map | MSE | SL | TensorFlow
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | LocalTrans [[144](#bib.bib144)] | ICCV | Cross-View | Transformer | $\mathcal{L}_{1}$
+    loss | MS-COCO[[67](#bib.bib67)] | MSE, PSNR, SSIM | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | BasesHomo [[51](#bib.bib51)] | ICCV | Cross-View | ResNet | Triplet loss
+    | CA-UDHN[[50](#bib.bib50)] | MSE | USL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ShuffleHomoNet [[145](#bib.bib145)] | ICIP | Cross-View | ShuffleNet |
+    $\mathcal{L}_{2}$ loss | MS-COCO[[67](#bib.bib67)] | RMSE | SL | TensorFlow |
+    ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DAMG-Homo [[41](#bib.bib41)] | TCSVT | Cross-View | CNNs | $\mathcal{L}_{1}$
+    loss | MS-COCO[[67](#bib.bib67)], UDIS[[146](#bib.bib146)] | RMSE, PSNR, SSIM
+    | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SA-MobileNet [[147](#bib.bib147)] | BMVC | Standard | MobileNet | Cross-entropy
+    loss | SUN360[[75](#bib.bib75)], ADE20K[[77](#bib.bib77)], NYU[[124](#bib.bib124)]
+    | MAE, Accuracy | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SPEC [[45](#bib.bib45)] | ICCV | Standard | ResNet | Softargmax-$\mathcal{L}_{2}$
+    loss | Self-constructed | W-MPJPE, PA-MPJPE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DirectionNet [[148](#bib.bib148)] | CVPR | Standard | U-Net | Cosine similarity
+    loss | InteriorNet[[87](#bib.bib87)], Matterport3D[[149](#bib.bib149)] | Mean
+    and median error | SL | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | JCD [[150](#bib.bib150)] | CVPR | Distortion | FCN | Charbonnier[[151](#bib.bib151)],
+    perceptual loss | BS-RSCD [[150](#bib.bib150)], Fastec-RS [[46](#bib.bib46)] |
+    PSNR, SSIM, LPIPS | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | LCCNet [[152](#bib.bib152)] | CVPRW | Cross-Sensor | CNNs | Smooth $\mathcal{L}_{1}$,
+    $\mathcal{L}_{2}$ loss | KITTI[[74](#bib.bib74)] | MSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CFNet [[153](#bib.bib153)] | Sensors | Cross-Sensor | FCN | $\mathcal{L}_{1}$,
+    Charbonnier[[151](#bib.bib151)] loss | KITTI[[74](#bib.bib74)], KITTI-360[[154](#bib.bib154)]
+    | MAE, MSEE, MRR | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Fan et al.  [[155](#bib.bib155)] | ICCV | Distortion | U-Net | $\mathcal{L}_{1}$,
+    perceptual loss | Carla-RS [[46](#bib.bib46)], Fastec-RS [[46](#bib.bib46)] |
+    PSNR, SSIM, LPIPS | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SUNet [[156](#bib.bib156)] | ICCV | Distortion | DenseNet + ResNet | $\mathcal{L}_{1}$,
+    perceptual loss | Carla-RS [[46](#bib.bib46)], Fastec-RS [[46](#bib.bib46)] |
+    PSNR, SSIM | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SemAlign [[157](#bib.bib157)] | IROS | Cross-Sensor | CNNs | Semantic
+    alignment loss | KITTI [[74](#bib.bib74)] | Mean/median rotation errors | SL |
+    PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2022 | DVPD [[38](#bib.bib38)] | CVPR | Standard | CNNs | Cross-entropy loss
+    | SU3[[103](#bib.bib103)], ScanNet[[88](#bib.bib88)], YUD[[64](#bib.bib64)], NYU[[124](#bib.bib124)]
+    | Accuracy, AUC[[92](#bib.bib92)] | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Fang et al. [[57](#bib.bib57)] | ICRA | Standard | CNNs | $\mathcal{L}_{2}$
+    loss | KITTI[[74](#bib.bib74)], EuRoC[[158](#bib.bib158)], OmniCam[[159](#bib.bib159)]
+    | MRE, RMSE | SSL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CPL [[160](#bib.bib160)] | ICASSP | Standard | Inception-V3 | $\mathcal{L}_{1}$
+    loss | CARLA[[91](#bib.bib91)], CyclistDetection[[161](#bib.bib161)] | MAE | SL
+    | TensorFlow | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | IHN [[162](#bib.bib162)] | CVPR | Cross-View | Siamese-Net | $\mathcal{L}_{1}$
+    loss | MS-COCO[[67](#bib.bib67)], Google Earth, Google Map | MACE | SL | PyTorch
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | HomoGAN [[52](#bib.bib52)] | CVPR | Cross-View | GANs | Cross-entropy,
+    WGAN loss | CA-UDHN[[50](#bib.bib50)] | Mean error | USL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SS-WPC [[47](#bib.bib47)] | CVPR | Distortion | Transformer | Cross-entropy,
+    $\mathcal{L}_{1}$ loss | Tan et al.[[44](#bib.bib44)] | Accuracy | Semi-SL | PyTorch
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | AW-RSC [[163](#bib.bib163)] | CVPR | Distortion | CNNs | Charbonnier[[151](#bib.bib151)],
+    perceptual loss | Self-constructed, FastecRS[[46](#bib.bib46)] | PSNR, SSIM |
+    SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | EvUnroll [[39](#bib.bib39)] | CVPR | Distortion | U-Net | Charbonnier,
+    perceptual, TV loss | Self-constructed, FastecRS[[46](#bib.bib46)] | PSNR, SSIM,
+    LPIPS | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Do et al. [[164](#bib.bib164)] | CVPR | Standard | ResNet | $\mathcal{L}_{2}$,
+    Robust angular [[165](#bib.bib165)] loss | Self-constructed, 7-SCENES[[166](#bib.bib166)]
+    | Median error, Recall | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DiffPoseNet [[167](#bib.bib167)] | CVPR | Standard | CNNs + LSTM | $\mathcal{L}_{2}$
+    loss | TartanAir[[168](#bib.bib168)], KITTI[[74](#bib.bib74)], TUM-RGBD[[169](#bib.bib169)]
+    | PEE, AEE[[170](#bib.bib170)] | SSL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SceneSqueezer [[171](#bib.bib171)] | CVPR | Standard | Transformer | $\mathcal{L}_{1}$
+    loss | RobotCar Seasons[[172](#bib.bib172)], Cambridge Landmarks[[61](#bib.bib61)]
+    | Mean error, Recall[[170](#bib.bib170)] | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | FocalPose [[173](#bib.bib173)] | CVPR | Standard | CNNs | $\mathcal{L}_{1}$,
+    Huber loss | Pix3D[[174](#bib.bib174)], CompCars[[175](#bib.bib175)], StanfordCars[[175](#bib.bib175)]
+    | Median error, Accuracy | SL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DXQ-Net [[176](#bib.bib176)] | arXiv | Cross-Sensor | CNNs + RNNs | $\mathcal{L}_{1}$,
+    geodesic loss | KITTI[[74](#bib.bib74)], KITTI-360[[154](#bib.bib154)] | MSE |
+    SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SST-Calib [[42](#bib.bib42)] | ITSC | Cross-Sensor | CNNs | $\mathcal{L}_{2}$
+    loss | KITTI[[74](#bib.bib74)] | QAD, AEAD | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CCS-Net [[177](#bib.bib177)] | IROS | Distortion | U-Net | $\mathcal{L}_{1}$
+    loss | TUM-RGBD[[169](#bib.bib169)] | MAE, RPE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | FishFormer [[40](#bib.bib40)] | arXiv | Distortion | Transformer | $\mathcal{L}_{2}$
+    loss | Place2[[96](#bib.bib96)], CelebA[[115](#bib.bib115)] | PSNR, SSIM, FID
+    | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SIR [[56](#bib.bib56)] | TIP | Distortion | ResNet | $\mathcal{L}_{1}$
+    loss | ADE20K[[77](#bib.bib77)], WireFrames[[99](#bib.bib99)], MS-COCO[[67](#bib.bib67)]
+    | PSNR, SSIM | SSL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ATOP [[178](#bib.bib178)] | TIV | Cross-Sensor | CNNs | Cross entropy
+    loss | Self-constructed + KITTI[[74](#bib.bib74)] | RRE, RTE | SL | - |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | FusionNet [[179](#bib.bib179)] | ICRA | Cross-Sensor | CNNs+PointNet |
+    $\mathcal{L}_{2}$ loss | KITTI[[74](#bib.bib74)] | MAE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RKGCNet [[180](#bib.bib180)] | TIM | Cross-Sensor | CNNs+PointNet | $\mathcal{L}_{1}$
+    loss | KITTI[[74](#bib.bib74)] | MSE | SL | PyTorch | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | GenCaliNet [[181](#bib.bib181)] | ECCV | Distortion | DenseNet | $\mathcal{L}_{2}$
+    loss | StreetLearn[[138](#bib.bib138)], SP360[[182](#bib.bib182)] | MAE, PSNR,
+    SSIM | SL | - | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Liu et al. [[53](#bib.bib53)] | TPAMI | Cross-View | ResNet | Triplet
+    loss | Self-constructed | MSE, Accuracy | USL | PyTorch |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 3 Standard Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Generally, for learning-based calibration works, the objectives of the intrinsics
+    calibration contain focal length and optical center, and the objectives of the
+    extrinsic calibration contain the rotation matrix and translation vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Intrinsics Calibration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Deepfocal [[21](#bib.bib21)] is a pioneer work in learning-based camera calibration,
+    it aims to estimate the focal length of any image “in the wild”. In detail, Deepfocal
+    considered a simple pinhole camera model and regressed the horizontal field of
+    view using a deep convolutional neural network. Given the width $w$ of an image,
+    the relationship between the horizontal field of view $H_{\theta}$ and focal length
+    $f$ can be described by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $H_{\theta}=2\arctan(\frac{w}{2f}).$ |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: Due to component wear, temperature fluctuations, or outside disturbances like
+    collisions, the calibrated parameters of a camera are susceptible to change over
+    time. To this end, MisCaliDet [[108](#bib.bib108)] proposed to identify if a camera
+    needs to be recalibrated intrinsically. Compared to the conventional intrinsic
+    parameters such as the focal length and image center, MisCaliDet presented a new
+    scalar metric, i.e., the average pixel position difference (APPD) to measure the
+    degree of camera miscalibration, which describes the mean value of the pixel position
+    differences over the entire image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Extrinsics Calibration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In contrast to intrinsic calibration, extrinsic calibration infers the spatial
+    correspondence of the camera and its located 3D scene. PoseNet[[22](#bib.bib22)]
+    first proposed deep convolutional neural networks to regress 6-DoF camera pose
+    in real-time. A pose vector p was predicted by PoseNet, given by the 3D position
+    x and orientation represented by quaternion q of a camera, namely, $\textbf{p}=[\textbf{x},\textbf{q}]$.
+    For constructing the training dataset, the labels are automatically calculated
+    from a video of the scenario using a structure from motion method [[183](#bib.bib183)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Inspired by PoseNet[[22](#bib.bib22)], the following works improved the extrinsic
+    calibration in terms of the intermediate representation, interpretability, data
+    format, learning objective, etc. For example, to optimize the geometric pose objective,
+    DeepFEPE [[112](#bib.bib112)] designed an end-to-end keypoint-based framework
+    with learnable modules for detection, feature extraction, matching, and outlier
+    rejection. Such a pipeline imitated the traditional baseline, in which the final
+    performance can be analyzed and improved by the intermediate differentiable module.
+    To bridge the domain gap between the extrinsic objective and image features, recent
+    works proposed to first learn an intermediate representation from the input, such
+    as surface geometry [[86](#bib.bib86)], depth map [[134](#bib.bib134)], directional
+    probability distribution [[148](#bib.bib148)], and normal flow [[167](#bib.bib167)],
+    etc. Then, the extrinsic are reasoned by geometric constraints and learned representation.
+    Therefore, the neural networks are gradually guided to perceive the geometry-related
+    features, which are crucial for extrinsic estimation. Considering the privacy
+    concerns and limited storage problem, some recent works compressed the scene and
+    exploited the point-like feature to estimate the extrinsic. For example, Do et
+    al. [[164](#bib.bib164)] trained a network to recognize sparse but significant
+    3D points, dubbed scene landmarks, by encoding their appearance as implicit features.
+    And the camera pose can be calculated using a robust minimal solver followed by
+    a Levenberg-Marquardt-based nonlinear refinement. SceneSqueezer [[171](#bib.bib171)]
+    compressed the scene information from three levels: the database frames are clustered
+    using pairwise co-visibility information, a point selection module prunes each
+    cluster based on estimation performance, and learned quantization further compresses
+    the selected points.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Joint Intrinsic and Extrinsic Calibration
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 3.3.1 Geometric Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Vanishing Points The intersection of projections of a set of parallel lines
+    in the world leads to a vanishing point. The detection of vanishing points is
+    a fundamental and crucial challenge in 3D vision. In general, vanishing points
+    reveal the direction of 3D lines, allowing the agent to deduce 3D scene information
+    from a single 2D image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DeepVP [[36](#bib.bib36)] is the first learning-based work for detecting the
+    vanishing points given a single image. It reversed the conventional process by
+    scoring the horizon line candidates according to the vanishing points they contain.
+    Chang et al. [[84](#bib.bib84)] redesigned this task as a CNN classification problem
+    using an output layer with 225 discrete possible vanishing point locations. For
+    constructing the dataset, the camera view is panned and tilted with step 5° from
+    -35° to 35° in the panorama scene (total 225 images) from a single GPS location.
+    To directly leverage the geometric properties of vanishing points, NeurVPS [[102](#bib.bib102)]
+    proposed a canonical conic space and a conic convolution operator that can be
+    implemented as regular convolutions in this space, where the learning model is
+    capable of calculating the global geometric information of vanishing points locally.
+    To overcome the need for a large amount of training data in previous methods,
+    DVPD [[38](#bib.bib38)] incorporated the neural network with two geometric priors:
+    Hough transformation and Gaussian sphere. First, the convolutional features are
+    transformed into a Hough domain, mapping lines to distinct bins. The projection
+    of the Hough bins is then extended to the Gaussian sphere, where lines are transformed
+    into great circles and vanishing points are located at the intersection of these
+    circles. Geometric priors are data-efficient because they eliminate the necessity
+    for learning this information from data, which enables an interpretable learning
+    framework and generalizes better to domains with slightly different data distributions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Horizon Lines The horizon line is a crucial contextual attribute for various
+    computer vision tasks especially image metrology, computational photography, and
+    3D scene understanding. The projection of the line at infinity onto any plane
+    that is perpendicular to the local gravity vector determines the location of the
+    horizon line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given the FoV, pitch, and roll of a camera, it is straightforward to locate
+    the horizon line in its captured image space. DeepHorizon [[62](#bib.bib62)] proposed
+    the first learning-based solution for estimating the horizon line from an image,
+    without requiring any explicit geometric constraints or other cues. To train the
+    network, a new benchmark dataset, Horizon Lines in the Wild (HLW), was constructed,
+    which consists of real-world images with labeled horizon lines. SA-MobileNet [[147](#bib.bib147)]
+    proposed an image tilt detection and correction with self-attention MobileNet
+    [[184](#bib.bib184)] for smartphones. A spatial self-attention module was devised
+    to learn long-range dependencies and global context within the input images. To
+    address the difficulty of the regression task, they trained the network to estimate
+    multiple angles within a narrow interval of the ground truth tilt, penalizing
+    only those values that locate outside this narrow range.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/09ce0b9bcbaab70843bab45aa7f868a3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Overview of CTRL-C. The figure is from  [[136](#bib.bib136)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 Composite Parameters
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Calibrating the composite parameters aims to estimate the intrinsic parameters
+    and extrinsic parameters simultaneously. By jointly estimating composite parameters
+    and training using data from a large-scale panorama dataset [[75](#bib.bib75)],
+    Hold-Geoffroy et al. [[26](#bib.bib26)] largely outperformed previous independent
+    calibration tasks. Moreover, Hold-Geoffroy et al. [[26](#bib.bib26)] performed
+    human perception research in which the participants were asked to evaluate the
+    realism of 3D objects composited with and without accurate calibration. This data
+    was further designed to a new perceptual measure for the calibration errors. In
+    terms of the feature category, Lee et al. [[106](#bib.bib106)] and CTRL-C [[136](#bib.bib136)]
+    considered both semantic features and geometric cues for camera calibration. They
+    showed how taking use of geometric features, is capable of facilitating the network
+    to comprehend the underlying perspective structure of an image. The pipeline of
+    CTRL-C is illustrated in Figure [3](#S3.F3 "Figure 3 ‣ 3.3.1 Geometric Representations
+    ‣ 3.3 Joint Intrinsic and Extrinsic Calibration ‣ 3 Standard Model ‣ Deep Learning
+    for Camera Calibration and Beyond: A Survey"). In recent literature, more applications
+    are jointly studied with camera calibration, for example, single view metrology
+    [[48](#bib.bib48)], 3D human pose and shape estimation [[45](#bib.bib45)], depth
+    estimation [[123](#bib.bib123), [57](#bib.bib57)], object pose estimation [[173](#bib.bib173)],
+    and image reflection removal [[125](#bib.bib125)], etc.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Considering the heterogeneousness and visual implicitness of different camera
+    parameters, CPL [[160](#bib.bib160)] estimated the parameters using a novel camera
+    projection loss, exploiting the camera model neural network to reconstruct the
+    3D point cloud. The proposed loss addressed the training imbalance problem by
+    representing different errors of camera parameters in terms of a unified metric.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4 Discussion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 3.4.1 Technique Summary
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The above methods target automatic calibration without manual intervention and
+    scene assumption. Early literature [[21](#bib.bib21), [22](#bib.bib22)] separately
+    studied the intrinsic calibration or extrinsic calibration. Driven by large-scale
+    datasets and powerful networks, subsequent works [[36](#bib.bib36), [62](#bib.bib62),
+    [26](#bib.bib26), [136](#bib.bib136)] considered a comprehensive camera calibration,
+    inferring various parameters and geometric representations. To relieve the difficulty
+    of learning the camera parameters, some works [[86](#bib.bib86), [134](#bib.bib134),
+    [148](#bib.bib148), [167](#bib.bib167)] proposed to learn an intermediate representation.
+    In recent literature, more applications are jointly studied with camera calibration [[48](#bib.bib48),
+    [45](#bib.bib45), [123](#bib.bib123), [57](#bib.bib57), [125](#bib.bib125)]. This
+    suggests solving the downstream vision tasks, especially in 3D tasks may require
+    prior knowledge of the image formation model. Moreover, some geometric priors [[38](#bib.bib38)]
+    can alleviate the data-starved requirement of deep learning, showing the potential
+    to bridge the gap between the calibration target and semantic features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is interesting to find that increasing more extrinsic calibration methods [[112](#bib.bib112),
+    [164](#bib.bib164), [171](#bib.bib171)] revisited and restored the traditional
+    feature point-based solutions. The standard extrinsics that describe the camera
+    motion contain limited degrees of freedom, and thus some local features can well
+    represent the spatial correspondence. Besides, the network designed for point
+    learning significantly improves the efficiency of calibration models, such as
+    PointNet [[185](#bib.bib185)] and PointCNN [[186](#bib.bib186)]. Such a pipeline
+    also enables clear interpretability of learning-based camera calibration, which
+    promotes understanding of how the network calibrates and magnifies the influences
+    of intermediate modules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4.2 Future Effort
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (1) Explore more vision/geometric priors. Due to the scarce real-world dataset
+    in the learning-based camera calibration field, digging more priors that ease
+    the demand of learning from data is promising. For example, the prior of the image
+    formation model could allow us to associate the relationship between 3D camera
+    parameters and 2D image layout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Decouple different stages in an end-to-end calibration learning model. Most
+    learning-based camera calibration methods include a feature extraction stage and
+    an objective estimation stage. However, how the networks learn the features related
+    to calibration is ambiguous. Therefore, decoupling the learning process by different
+    traditional calibration stages can guide the way of feature extraction. It would
+    be meaningful to extend the idea in extrinsic calibration [[112](#bib.bib112),
+    [164](#bib.bib164), [171](#bib.bib171)] to more general calibration problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) Transfer the measurement space from the parameter error to the geometric
+    difference. When it comes to jointly calibrating various camera parameters, the
+    training process will suffer from an imbalance loss optimization problem. The
+    main reason is different camera parameters correspond to different sample distributions.
+    The simple normalization strategy cannot unify their error spaces. Therefore,
+    we can formulate a straightforward measurement space in terms of the geometric
+    property of different camera parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Distortion Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the learning-based camera calibration, calibrating the radial distortion
+    and roll shutter distortion gains increasing attention due to their widely used
+    applications for the wide-angle lens and CMOS sensor. In this part, we mainly
+    review the calibration/rectification of these two distortions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Radial Distortion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The literature on learning-based radial distortion calibration can be classified
+    into two main categories: regression-based solutions and reconstruction-based
+    solutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/cb175ac717c8bb151b0bc8dd28be8b89.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Three common learning solutions of the regression-based wide-angle
+    camera calibration: (a) SingleNet, (b) DualNet, (c) SeqNet, where $\mathbf{I}$
+    is the distortion image and $f$ and $\xi$ denote the focal length and distortion
+    parameters, respectively. The figure is from  [[37](#bib.bib37)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1.1 Regression-based Solution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Rong  et al.  [[23](#bib.bib23)] and DeepCalib [[37](#bib.bib37)] are pioneer
+    works for the learning-based wide-angle camera calibration. They treated the camera
+    calibration as a supervised classification [[23](#bib.bib23)] or regression [[37](#bib.bib37)]
+    problem, and then the networks with the convolutional layers and fully connected
+    layers were used to learn the distortion features of inputs and predict the camera
+    parameters. In particular, DeepCalib [[37](#bib.bib37)] explored three learning
+    solutions for wide-angle camera calibration as illustrated in Figure [4](#S4.F4
+    "Figure 4 ‣ 4.1 Radial Distortion ‣ 4 Distortion Model ‣ Deep Learning for Camera
+    Calibration and Beyond: A Survey"). Their experiments showed the simplest architecture
+    SingleNet achieves the best performance on both accuracy and efficiency. To enhance
+    the distortion perception of networks, the following works investigated introducing
+    more diverse features such as the semantic features [[76](#bib.bib76)] and geometry
+    features [[98](#bib.bib98), [122](#bib.bib122), [120](#bib.bib120)]. Additionally,
+    some works improved the generalization by designing learning strategies such as
+    unsupervised learning [[54](#bib.bib54)], self-supervised learning [[56](#bib.bib56)],
+    and reinforcement learning [[43](#bib.bib43)]. By randomly chosen coefficients
+    throughout each mini-batch of the training process, RDC-Net [[117](#bib.bib117)]
+    was able to dynamically generate distortion images on-the-fly. It enhanced the
+    rectification performance and prevents the learning model from overfitting. Instead
+    of contributing to the techniques of deep learning, other works leaned to explore
+    the vision prior to interpretable calibration. For example, having observed the
+    radial distortion image owns the center symmetry characteristics, in which the
+    texture far from the image center has stronger distortion, Shi et al.  [[78](#bib.bib78)]
+    and PSE-GAN [[116](#bib.bib116)] developed a position-aware weight layer (fixed [[78](#bib.bib78)]
+    and learnable [[116](#bib.bib116)]) of this property and enabled the network to
+    explicitly perceive the distortion. Lopez et al.  [[85](#bib.bib85)] proposed
+    a novel parameterization for radial distortion that is better suited for networks
+    than directly learning the distortion parameters. Furthermore, OrdinalDistortion [[139](#bib.bib139)]
+    presented a learning-friendly representation, i.e., ordinal distortion. Compared
+    to the implicit and heterogeneous camera parameters, such a representation can
+    facilitate the distortion perception of the neural network due to its clear relation
+    to the image features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1.2 Reconstruction-based Solution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Inspired by the conditional image-to-image translation and dense visual perception,
+    the reconstruction-based solution starts to evolve from the conventional regression-based
+    paradigm. DR-GAN [[31](#bib.bib31)] is the first reconstruction-based solution
+    for calibrating the radial distortion, which directly models the pixel-wise mapping
+    between the distorted image and rectified image. It achieved the camera parameter-free
+    training and one-stage rectification. Thanks to the liberation of the assumption
+    of camera models, the reconstruction-based solution showed the potential to calibrate
+    various types of cameras in one learning network. For example, DDM [[32](#bib.bib32)]
+    unified different camera models into a domain by presenting the distortion distribution
+    map, which explicitly describes the distortion level of each pixel in a distorted
+    image. Then, the network learned to reconstruct the rectified image using this
+    geometric prior map. To make the mapping function interpretable, the subsequent
+    works [[93](#bib.bib93), [34](#bib.bib34), [43](#bib.bib43), [118](#bib.bib118),
+    [142](#bib.bib142), [44](#bib.bib44), [47](#bib.bib47), [140](#bib.bib140)] developed
+    the displacement filed between the distorted image and rectified image. Such a
+    manner is able to eliminate the generated artifacts in the pixel-level reconstruction.
+    In particular, FE-GAN [[118](#bib.bib118)] integrated the geometry prior like
+    Shi et al.  [[78](#bib.bib78)] and PSE-GAN [[116](#bib.bib116)] into their reconstruction-based
+    solution and presented a self-supervised strategy to learn the distortion flow
+    for wide-angle camera calibration in Figure [5](#S4.F5 "Figure 5 ‣ 4.1.2 Reconstruction-based
+    Solution ‣ 4.1 Radial Distortion ‣ 4 Distortion Model ‣ Deep Learning for Camera
+    Calibration and Beyond: A Survey"). Most reconstruction-based solutions exploit
+    a U-Net-like architecture to learn pixel-level mapping. However, the distortion
+    feature can be transferred from encoder to decoder by the skip-connection operation,
+    leading to a blurring appearance and incomplete correction in reconstruction results.
+    To address this issue, Li et al.  [[114](#bib.bib114)] abandoned the skip-connection
+    in their rectification network. To keep the feature fusion and restrain the geometric
+    difference simultaneously, PCN [[142](#bib.bib142)] designed a correction layer
+    in skip-connection and applied the appearance flows to revise the convolved features
+    in different encoder layers. Having noticed that the previous sampling strategy
+    of the convolution kernel neglected the radial symmetry of distortion, PolarRecNet [[140](#bib.bib140)]
+    transformed the distorted image from the Cartesian coordinates domain into the
+    polar coordinates domain.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/352b93dabb96c8762a7cc2a737bf8093.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Architecture of FE-GAN. The figure is from  [[118](#bib.bib118)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Roll Shutter Distortion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The existing deep learning calibration works on roll shutter (RS) distortion
+    can be classified into two categories: single-frame-based [[24](#bib.bib24), [97](#bib.bib97),
+    [39](#bib.bib39)] and multi-frame-based [[46](#bib.bib46), [150](#bib.bib150),
+    [156](#bib.bib156), [155](#bib.bib155), [163](#bib.bib163)]. The single-frame-based
+    solution studies the case of a single roll shutter image as input and directly
+    learns to correct the distortion using neural networks. The ideal corrected result
+    can be regarded as the global shutter (GS) image. It is an ill-posed problem and
+    requires some additional prior assumptions to be defined. On the contrary, the
+    multi-frame-based solution considers the consecutive frames (two or more) of a
+    video taken by a roll shutter camera, in which the strong temporal correlation
+    can be investigated for more reasonable correction.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.1 Single-frame-based Solution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'URS-CNN [[24](#bib.bib24)] is the first learning work for calibrating the rolling
+    shutter camera. In this work, a neural network with long kernel characteristics
+    was used to understand how the scene structure and row-wise camera motion interact.
+    To specifically address the nature of the RS effect produced by the row-wise exposure,
+    the row-kernel and column-kernel convolutions were leveraged to extract attributes
+    along horizontal and vertical axes. RSC-Net [[97](#bib.bib97)] improved URS-CNN [[24](#bib.bib24)]
+    from 2 degrees of freedom (DoF) to 6-DoF and presents a structure-and-motion-aware
+    RS correction model, where the camera scanline velocity and depth were estimated.
+    Compared to URS-CNN [[24](#bib.bib24)], RSC-Net [[97](#bib.bib97)] further reasoned
+    about the concealed motion between the scanlines as well as the scene structure
+    as shown in Figure [6](#S4.F6 "Figure 6 ‣ 4.2.1 Single-frame-based Solution ‣
+    4.2 Roll Shutter Distortion ‣ 4 Distortion Model ‣ Deep Learning for Camera Calibration
+    and Beyond: A Survey"). To bridge the spatiotemporal connection between RS and
+    GS, EvUnroll [[39](#bib.bib39)] exploited the neuromorphic events to correct the
+    RS effect. Event cameras can overcome a number of drawbacks of conventional frame-based
+    activities for dynamic situations with quick motion due to their high temporal
+    resolution property with microsecond-level sensitivity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/760c6570f499d7c58713efbfeb3dca15.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Architecture of RSC-Net. The figure is from  [[97](#bib.bib97)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/09a3d3b780cfcc93d39c6cae384b5222.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Architecture of AW-RSC. The figure is from  [[163](#bib.bib163)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.2 Multi-frame-based Solution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Most multi-frame-based solutions are based on the reconstruction paradigm,
+    they mainly devote to contributing how to represent the dense displacement field
+    between RS and global GS images and accurately warp the RS domain to the GS domain.
+    For the first time, DeepUnrollNet [[46](#bib.bib46)] proposed an end-to-end network
+    for two consecutive rolling shutter images using a differentiable forward warping
+    module. In this method, a motion estimation network is used to estimate the dense
+    displacement field from a rolling shutter image to its matching global shutter
+    image. The second contribution of DeepUnrollNet [[46](#bib.bib46)] is to construct
+    two novel datasets: the Fastec-RS dataset and the Carla-RS dataset. Furthermore,
+    JCD [[150](#bib.bib150)] jointly considered the rolling shutter correction and
+    deblurring (RSCD) techniques, which largely exist in the medium and long exposure
+    cases of rolling shutter cameras. It applied bi-directional warping streams to
+    compensate for the displacement while keeping the non-warped deblurring stream
+    to restore details. The authors also contributed a real-world dataset using a
+    well-designed beam-splitter acquisition system, BS-RSCD, which includes both ego-motion
+    and object motion in dynamic scenes. SUNet [[156](#bib.bib156)] extended DeepUnrollNet [[46](#bib.bib46)]
+    from the middle time of the second frame ($\frac{3\tau}{2}$) into the intermediate
+    time of two frames ($\tau$). By using PWC-Net [[187](#bib.bib187)], SUNet [[156](#bib.bib156)]
+    estimated the symmetric undistortion fields and reconstructed the potential GS
+    frames by a time-centered GS image decoder network. To effectively reduce the
+    misalignment between the contexts warped from two consecutive RS images, the context-aware
+    undistortion flow estimator and the symmetric consistency enforcement were designed.
+    To achieve a higher frame rate, Fan et al.  [[155](#bib.bib155)] generated a GS
+    video from two consecutive RS images based on the scanline-dependent nature of
+    the RS camera. In particular, they first analyzed the inherent connection between
+    bidirectional RS undistortion flow and optical flow, demonstrating the RS undistortion
+    flow map has a more pronounced scanline dependency than the isotropically smooth
+    optical flow map. Then, they developed the bidirectional undistortion flows to
+    describe the pixel-wise RS-aware displacement, and further devised a computation
+    technique for the mutual conversion between different RS undistortion flows corresponding
+    to various scanlines. To eliminate the inaccurate displacement field estimation
+    and error-prone warping problems in previous methods, AW-RSC  [[163](#bib.bib163)]
+    proposed to predict multiple fields and adaptively warped the learned RS features
+    into global shutter counterparts. Using a coarse-to-fine approach, these warped
+    features were combined and generated to precise global shutter frames as shown
+    in Figure [7](#S4.F7 "Figure 7 ‣ 4.2.1 Single-frame-based Solution ‣ 4.2 Roll
+    Shutter Distortion ‣ 4 Distortion Model ‣ Deep Learning for Camera Calibration
+    and Beyond: A Survey"). Compared to previous works [[46](#bib.bib46), [150](#bib.bib150),
+    [156](#bib.bib156), [155](#bib.bib155)], the warping operation consisting of adaptive
+    multi-head attention and a convolutional block in AW-RSC  [[163](#bib.bib163)]
+    is learnable and effective. In addition, AW-RSC  [[163](#bib.bib163)] contributed
+    a real-world rolling shutter correction dataset: BS-RSC, where the RS videos with
+    corresponding GS ground truth are captured simultaneously with a beam-splitter-based
+    acquisition system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Discussion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 4.3.1 Technique Summary
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The deep learning works on wide-angle camera and roll shutter calibration share
+    a similar technique pipeline. Along this research trend, most early literature
+    begins with the regression-based solution [[23](#bib.bib23), [37](#bib.bib37),
+    [24](#bib.bib24)]. The subsequent works innovated the traditional calibration
+    with a reconstruction perspective [[31](#bib.bib31), [32](#bib.bib32), [118](#bib.bib118),
+    [46](#bib.bib46)], which directly learns the displacement field to rectify the
+    uncalibrated input. For higher accuracy of calibration, a more intuitive displacement
+    field, and more effective warping strategy have been developed [[142](#bib.bib142),
+    [163](#bib.bib163), [150](#bib.bib150), [155](#bib.bib155)]. To fit the distribution
+    of different distortions, some works designed different shapes of the convolutional
+    kernel [[24](#bib.bib24)] or transformed the convolved coordinates [[140](#bib.bib140)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Existing works devoted themselves to designing more powerful networks and introducing
+    more diverse features to facilitate calibration performance. Increasingly more
+    methods focused on the geometry priors of the distortion [[118](#bib.bib118),
+    [116](#bib.bib116), [78](#bib.bib78)]. These priors can be directly weighted into
+    the convolutional layers or used to supervise network training, promoting the
+    learning model to converge faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.2 Future Effort
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (1) The development of wide-angle camera calibration and roll shutter camera
+    calibration can promote each other. For instance, the well-studied multi-frame-based
+    solution in roll shutter calibration is able to inspire wide-angle calibration.
+    The same object located at different sequences could provide useful priors regarding
+    to radial distortion. Additionally, the elaborate studies of the displacement
+    field and warping layer [[163](#bib.bib163), [150](#bib.bib150), [155](#bib.bib155)]
+    have the potential to motivate the development of wide-angle camera calibration
+    and other fields. Furthermore, the investigation of geometric priors in wide-angle
+    calibration could also improve the interpretability of the network in roll shutter
+    calibration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Most methods synthesize their training dataset based on random samples from
+    all camera parameters. However, for the images captured by real lenses, the distribution
+    of camera parameters probably locates at a potential manifold [[85](#bib.bib85)].
+    Learning on a label-redundant calibration dataset makes the training process inefficient.
+    Thus, exploring a practical sampling strategy for the synthesized dataset could
+    be a meaningful task in the future direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) To overcome the ill-posed problem of single-frame calibration, introducing
+    other high-precision sensors can compensate for the current calibration performance,
+    such as event cameras [[39](#bib.bib39)]. With the rapid development of vision
+    sensors, joint calibration using multiple sensors is valuable. Consequently, more
+    cross-modal and multi-modal fusion techniques will be investigated along this
+    research way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Cross-View Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The existing deep calibration methods can estimate the specific camera parameters
+    from a single camera. In fact, there can be more complicated parameter representations
+    in multi-camera circumstances. For example, in the multi-view model, the fundamental
+    matrix and essential matrix describe the epipolar geometry and they are intricately
+    tangled with intrinsics and extrinsics. The homography depicts the pixel-level
+    correspondences between different views. In addition to intrinsics and extrinsics,
+    it is also intertwined with depth. Among these complex parameter representations,
+    homography is the most widely leveraged in practical applications and its related
+    learning-based methods are the most investigated. To this end, we mainly focus
+    on the review of deep homography estimation solutions for the cross-view model
+    and they can be divided into three categories: direct, cascaded, and iterative
+    solution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/2458c1ff5f0297e6bcce9367812a56a1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Architectures of DHN [[25](#bib.bib25)] and UDHN [[49](#bib.bib49)].
+    The figure is from  [[49](#bib.bib49)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Direct Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We review the direct deep homography solutions from the perspective of different
+    parameterizations, including the classical 4-pt parameterization and other parameterizations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1.1 4-pt Parameterization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Deep homography estimation is first proposed in DHN[[25](#bib.bib25)], where
+    a VGG-style network is adopted to predict the 4-pt parameterization $H_{4pt}$.
+    To train and evaluate the network, a synthetic dataset named Warped MS-COCO is
+    created to provide ground truth 4-pt parameterization $\hat{H}_{4pt}$. The pipeline
+    is illustrated in Fig. [8](#S5.F8 "Figure 8 ‣ 5 Cross-View Model ‣ Deep Learning
+    for Camera Calibration and Beyond: A Survey")(a), and the objective function is
+    formulated as $L_{H}$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L_{H}=\frac{1}{2}\parallel H_{4pt}-\hat{H}_{4pt}\parallel_{2}^{2}.$ |  |
+    (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Then the 4-pt parameterization can be solved as a $3\times 3$ homography matrix
+    using normalized DLT[[188](#bib.bib188)]. However, DHN is limited to synthetic
+    datasets where the ground truth can be generated for free or requires costly labeling
+    of real-world datasets. Subsequently, the first unsupervised solution named UDHN[[49](#bib.bib49)]
+    is proposed to address this problem. As shown in Fig. [8](#S5.F8 "Figure 8 ‣ 5
+    Cross-View Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey")(c),
+    it used the same network architecture as DHN and defined an unsupervised loss
+    function by minimizing the average photometric error motivated by traditional
+    methods[[189](#bib.bib189)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L_{PW}=\parallel\mathcal{P}(I_{A}(x))-\mathcal{P}(I_{B}(\mathcal{W}(x;p)))\parallel_{1},$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathcal{W}(\cdot;\cdot)$ and $\mathcal{P}(\cdot)$ denote the operations
+    of warping via homography parameters $p$ and extracting an image patch, respectively.
+    $I_{A}$ and $I_{B}$ are the original images with overlapping regions. The input
+    of UDHN is a pair of image patches, but it warps the original images when calculating
+    the loss. In this manner, it avoids the adverse effects of invalid pixels after
+    warping and lifts the magnitude of pixel supervision. To gain accuracy and speed
+    with a tiny model, Chen et al. proposed ShuffleHomoNet [[145](#bib.bib145)], which
+    integrates ShuffleNet compressed units[[190](#bib.bib190)] and location-aware
+    pooling[[81](#bib.bib81)] into a lightweight model. To further handle large displacement,
+    a multi-scale weight-sharing version is exploited by extracting multi-scale feature
+    representations and adaptively fusing multi-scale predictions. However, the homography
+    cannot perfectly align images with parallax caused by non-planar structures with
+    non-overlapping camera centers. To deal with parallax, CA-UDHN[[50](#bib.bib50)]
+    designs learnable attention masks to overlook the parallax regions, contributing
+    to better background plane alignment. Besides, the 4-pt homography can be extended
+    to meshflow[[53](#bib.bib53)] to realize non-planar accurate alignment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1.2 Other Parameterizations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In addition to 4-pt parameterization, the homography can be parameterized as
+    other formulations. To better utilize homography invertibility, Wang et al. proposed
+    SSR-Net [[55](#bib.bib55)]. They established the invertibility constraint through
+    a conventional matrix representation in a cyclic manner. Zeng et al. [[82](#bib.bib82)]
+    argued that the 4-point parameterization regressed by a fully-connected layer
+    can harm the spatial order of the corners and be susceptible to perturbations,
+    since four points are the minimum requirement to solve the homography. To address
+    these issues, they formulated the parameterization as a perspective field (PF)
+    that models pixel-to-pixel bijection and designed a PFNet. This extends the displacements
+    of the four vertices to as many dense pixel points as possible. The homography
+    can then be solved using RANSAC [[191](#bib.bib191)] with outlier filtering, enabling
+    robust estimation by utilizing dense correspondences. Nevertheless, dense correspondences
+    lead to a significant increase in the computational complexity of RANSAC. Furthermore,
+    Ye et al.[[51](#bib.bib51)] proposed an 8-DOF flow representation without extra
+    post-processing, which has a size of $H\times W\times 2$ in an 8D subspace constrained
+    by the homography. To represent arbitrary homography flows in this subspace, 8
+    flow bases are defined, and the proposed BasesHomo is to predict the coefficients
+    for the flow bases. To obtain desirable bases, BasesHomo first generates 8 homography
+    flows by modifying every single entry of an identity homography matrix except
+    for the last entry. Then, these flows are normalized by their largest flow magnitude
+    followed by a QR decomposition, enforcing all the bases normalized and orthogonal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/dfe328b331978cdd2f8b50023ef3c9b8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Architecture of HomoGAN. The figure is from  [[52](#bib.bib52)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Cascaded Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Direct solutions explore various homography parameterizations with simple network
+    structures, while the cascaded ones focus on complex designs of network architectures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In HierarchicalNet[[69](#bib.bib69)], Nowruzi et al. hold that the warped images
+    can be regarded as the input of another network. Therefore they stacked the networks
+    sequentially to reduce the error bounds of the estimate. Based on HierarchicalNet,
+    SRHEN [[133](#bib.bib133)] introduced the cost volume[[187](#bib.bib187)] to the
+    cascaded network, measuring the feature correlation by cosine distance and formulating
+    it as a volume. The stacked networks and cost volume increase the performance,
+    but they cannot handle the dynamic scenes. MHN [[110](#bib.bib110)] developed
+    a multi-scale neural network and proposed to learn homography estimation and dynamic
+    content detection simultaneously. Moreover, to tackle the cross-resolution problem,
+    LocalTrans [[144](#bib.bib144)] formulated it as a multimodal problem and proposed
+    a local transformer network embedded within a multiscale structure to explicitly
+    learn correspondences between the multimodal inputs. These inputs include images
+    with different resolutions, and LocalTrans achieved superior performance on cross-resolution
+    cases with a resolution gap of up to 10x. All the solutions mentioned above leverage
+    image pyramids to progressively enhance the ability to address large displacements.
+    However, every image pair at each level requires a unique feature extraction network,
+    resulting in the redundancy of feature maps. To alleviate this problem, some researchers[[192](#bib.bib192),
+    [146](#bib.bib146), [41](#bib.bib41), [52](#bib.bib52)] replaced image pyramids
+    with feature pyramids. Specifically, they warped the feature maps directly instead
+    of images to avoid excessive feature extraction networks. To address the low-overlap
+    homography estimation problem in real-world images[[146](#bib.bib146)], Nie et
+    al.[[146](#bib.bib146)] modified the unsupervised constraint (Eq. [3](#S5.E3 "In
+    5.1.1 4-pt Parameterization ‣ 5.1 Direct Solution ‣ 5 Cross-View Model ‣ Deep
+    Learning for Camera Calibration and Beyond: A Survey")) to adapt to low-overlap
+    scenes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L^{\prime}_{PW}=\parallel I_{A}(x)\cdot\mathbbm{1}(\mathcal{W}(x;p))-I_{B}(\mathcal{W}(x;p))\parallel_{1},$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\mathbbm{1}$ is an all-one matrix with the same size as $I_{A}$ or $I_{B}$.
+    It solved the low-overlap problem by taking the original images as network input
+    and ablating the corresponding pixels of $I_{A}$ to the invalid pixels of warped
+    $I_{B}$. To solve the non-planar homography estimation problem, DAMG-Homo[[41](#bib.bib41)]
+    proposed backward multi-gird deformation with contextual correlation to align
+    parallax images. Compared with traditional cost volume, the proposed contextual
+    correlation helped to reach better accuracy with lower computational complexity.
+    Another way to address the non-planar problem is to focus on the dominant plane.
+    In HomoGAN [[52](#bib.bib52)], an unsupervised GAN is proposed to impose a coplanarity
+    constraint on the predicted homography, as shown in Figure [9](#S5.F9 "Figure
+    9 ‣ 5.1.2 Other Parameterizations ‣ 5.1 Direct Solution ‣ 5 Cross-View Model ‣
+    Deep Learning for Camera Calibration and Beyond: A Survey"). To implement this
+    approach, a generator is used to predict masks of aligned regions, while a discriminator
+    is used to determine whether two masked feature maps were produced by a single
+    homography.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Iterative Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Compared with cascaded methods, iterative solutions achieve higher accuracy
+    by iteratively optimizing the last estimation. Lucas-Kanade (LK) algorithm[[189](#bib.bib189)]
+    is usually used in image registration to estimate the parameterized warps iteratively,
+    such as affine transformation, optical flow, etc. It aims at the incremental update
+    of warp parameters $\varDelta p$ every iteration by minimizing the sum of squared
+    error between a template image $T$ and an input image $I$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E(\varDelta p)=\parallel T(x)-I(\mathcal{W}(x;p+\varDelta p))\parallel_{2}^{2}.$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'However, when optimizing Eq. [5](#S5.E5 "In 5.3 Iterative Solution ‣ 5 Cross-View
+    Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey") using first-order
+    Taylor expansion, $\partial I(\mathcal{W}(x;p))/\partial p$ should be recomputed
+    every iteration because $I(\mathcal{W}(x;p))$ varies with $p$. To avoid this problem,
+    the inverse compositional (IC) LK algorithm[[193](#bib.bib193)], an equivalence
+    to LK algorithm, can be used to reformulate the optimization goal as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E^{\prime}(\varDelta p)=\parallel T(\mathcal{W}(x;\varDelta p))-I(\mathcal{W}(x;p))\parallel_{2}^{2}.$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'After linearizing Eq. [6](#S5.E6 "In 5.3 Iterative Solution ‣ 5 Cross-View
+    Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey") with first-order
+    Taylor expansion, we compute $\partial T(\mathcal{W}(x;0))/\partial p$ instead
+    of $\partial I(\mathcal{W}(x;p))/\partial p$, which would not vary every iteration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To combine the advantages of deep learning with IC-LK iterator, CLKN [[68](#bib.bib68)]
+    conducted LK iterative optimization on semantic feature maps extracted by CNNs
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E^{f}(\varDelta p)=\parallel F_{T}(\mathcal{W}(x;\varDelta p))-F_{I}(\mathcal{W}(x;p))\parallel_{2}^{2},$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $F_{T}$ and $F_{I}$ are the feature maps of the template and input images.
+    Then, they enforced the network to run a single iteration with a hinge loss, while
+    the network runs multiple iterations until the stopping condition is met in the
+    testing stage. Besides, CLKN stacked three similar LK networks to further boost
+    the performance by treating the output of the last LK network as the initial warp
+    parameters of the next LK network. From Eq. [7](#S5.E7 "In 5.3 Iterative Solution
+    ‣ 5 Cross-View Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey"),
+    the IC-LK algorithm heavily relied on feature maps, which tend to fail in multimodal
+    images. Instead, DLKFM [[143](#bib.bib143)] constructed a single-channel feature
+    map by using the eigenvalues of the local covariance matrix on the output tensor.
+    To learn DLKFM, it designed two special constraint terms to align multimodal feature
+    maps and contribute to convergence.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, LK-based algorithms can fail if the Jacobian matrix is rank-deficient
+    [[194](#bib.bib194)]. Additionally, the IC-LK iterator is untrainable, which means
+    this drawback is theoretically unavoidable. To address this issue, a completely
+    trainable iterative homography network (IHN) [[162](#bib.bib162)] was proposed.
+    Inspired by RAFT [[195](#bib.bib195)], IHN updates the cost volume to refine the
+    estimated homography using the same estimator repeatedly every iteration. Furthermore,
+    IHN can handle dynamic scenes by producing an inlier mask in the estimator without
+    requiring extra supervision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Discussion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 5.4.1 Technique Summary
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The above works are devoted to exploring different homography parameterizations
+    such as 4-pt parameterization[[25](#bib.bib25)], perspective field[[82](#bib.bib82)],
+    and motion bases representation[[51](#bib.bib51)], which contributes to better
+    convergence and performance. Other works tend to design various network architectures.
+    In particular, cascaded and iterative solutions are proposed to refine the performance
+    progressively, which can be further combined together to reach higher accuracy.
+    To make the methods more practical, various challenging problems are preliminarily
+    addressed, such as cross resolutions[[144](#bib.bib144)], multiple modalities[[143](#bib.bib143),
+    [162](#bib.bib162)], dynamic objects[[110](#bib.bib110), [162](#bib.bib162)],
+    and non-planar scenes[[50](#bib.bib50), [52](#bib.bib52), [41](#bib.bib41)], etc.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4.2 Challenge and Future Effort
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We summarize the existing challenges as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) Many homography estimation solutions are designed for fixed resolutions,
+    while real-world applications often involve much more flexible resolutions. When
+    pre-trained models are applied to images with different resolutions, performance
+    can dramatically drop due to the need for input resizing to satisfy the regulated
+    resolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Unlike optical flow estimation, which assumes small motions between images,
+    homography estimation often deals with images that have significantly low-overlap
+    rates. In such cases, existing methods may exhibit inferior performance due to
+    limited receptive fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) Existing methods address the parallax or dynamic objects by learning to
+    reject outliers in the feature extractor[[50](#bib.bib50)], cost volume[[196](#bib.bib196)],
+    or estimator[[162](#bib.bib162)]. However, it is still unclear which stage is
+    more appropriate for outlier rejection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Based on the challenges we have discussed, some potential research directions
+    for future efforts can be identified:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) To overcome the first challenge, we can design various strategies to enhance
+    resolution robustness, such as resolution-related data augmentation, and continual
+    learning on multiple datasets with different resolutions. Besides, we can also
+    formulate a resolution-free parameterization form. The perspective field [[82](#bib.bib82)]
+    is a typical case, which represents the homography as dense correspondences with
+    the same resolution as input images. But it requires RANSAC as the post-processing
+    approach, introducing extra computational complexity, especially in the case of
+    extensive correspondences. Therefore, a resolution-free and efficient parameterization
+    form should be explored.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) To enhance the performance in low-overlap rate, the main insight is to increase
+    the receptive fields of a network. To this end, the cross-attention module of
+    the transformer explicitly leverages the long-range correlation to eliminate short-range
+    inductive bias[[197](#bib.bib197)]. On the other hand, we can exploit beneficial
+    varieties of cost volume to integrate feature correlation [[41](#bib.bib41), [162](#bib.bib162)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) As there is no interaction between different image features in the feature
+    extractor, it is reasonable to assume that outlier rejection should occur after
+    feature extraction. It is not possible to identify outliers within a single image
+    as the depth alone cannot be used as an outlier cue. For example, images captured
+    by purely rotated cameras do not contain parallax outliers. Additionally, it seems
+    intuitive to learn the capability of outlier rejection by combining global and
+    local correlation, similar to the insight of RANSAC.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Cross-Sensor Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Multi-sensor calibration estimates intrinsic and extrinsic parameters of multiple
+    sensors like cameras, LiDARs, and IMUs. This ensures that data from different
+    sensors are synchronized and registered in a common coordinate system, allowing
+    them to be fused together for a more accurate representation of the environment.
+    Accurate multi-sensor calibration is crucial for applications like autonomous
+    driving and robotics, where reliable sensor fusion is necessary for safe and efficient
+    operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this part, we mainly review the literature on learning-based camera-LiDAR
+    calibration, i.e., predicting the 6-DoF rigid body transformation between a camera
+    and a 3D LiDAR, without requiring any presence of specific features or landmarks
+    in the implementation. Like calibration works on other types of cameras/systems,
+    this research field can also be classified into regression-based solutions and
+    flow/reconstruction-based solutions. But we are prone to follow the special matching
+    principle in camera-LiDAR calibration and divide the existing learning-based literature
+    into three categories: pixel-level solution, semantics-level solution, and object/keypoint-level
+    solution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.1 Pixel-level Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The first deep learning technique in camera-LiDAR calibration, RegNet [[27](#bib.bib27)],
+    used CNNs to combine feature extraction, feature matching, and global regression
+    to infer the 6-DoF extrinsic parameters. It processed the RGB and LiDAR depth
+    map separately and branched two parallel data network streams. Then, a specific
+    correlation layer was proposed to convolve the stacked LiDAR and RGB features
+    as a joint representation. After this feature matching, the global information
+    fusion and parameter regression were achieved by two fully connected layers with
+    a Euclidean loss function. Motivated by this work, the subsequent works made a
+    further step into more accurate camera-LiDAR calibration in terms of the geometric
+    constraint [[83](#bib.bib83), [128](#bib.bib128)], temporal correlation [[128](#bib.bib128)],
+    loss design [[127](#bib.bib127)], feature extraction [[179](#bib.bib179)], feature
+    matching [[152](#bib.bib152), [132](#bib.bib132)], feature fusion [[179](#bib.bib179)],
+    and calibration representation [[153](#bib.bib153), [176](#bib.bib176)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c2bd4ee2752bd504d5757c8f4deded8e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Network architecture of CalibNet. The figure is from  [[83](#bib.bib83)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, as shown in Figure [10](#S6.F10 "Figure 10 ‣ 6.1 Pixel-level Solution
+    ‣ 6 Cross-Sensor Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey"),
+    CalibNet [[83](#bib.bib83)] designed a network to predict calibration parameters
+    that maximize the geometric and photometric consistency of images and point clouds,
+    solving the underlying physical problem by 3D Spatial Transformers [[198](#bib.bib198)].
+    To refine the calibration model, CalibRCNN [[128](#bib.bib128)] presented a synthetic
+    view and an epipolar geometry constraint to measure the photometric and geometric
+    inaccuracies between consecutive frames, of which the temporal information learned
+    by the LSTM network has been investigated in the learning-based camera-LiDAR calibration
+    for the first time. Since the output space of the LiDAR-camera calibration is
+    on the 3D Special Euclidean Group ($SE(3)$) rather than the normal Euclidean space,
+    RGGNet [[127](#bib.bib127)] considered Riemannian geometry constraints in the
+    loss function, namely, used a $SE(3)$ geodesic distance equipped with left-invariant
+    Riemannian metrics to optimize the calibration network. LCCNet [[152](#bib.bib152)]
+    exploited the cost volume layer to learn the correlation between the image and
+    the depth transformed by the point cloud. Because the depth map ignores the 3D
+    geometric structure of the point cloud, FusionNet [[179](#bib.bib179)] leveraged
+    PointNet++ [[199](#bib.bib199)] to directly learn the features from the 3D point
+    cloud. Subsequently, a feature fusion with Ball Query [[199](#bib.bib199)] and
+    attention strategy was proposed to effectively fuse the features of images and
+    point clouds.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: CFNet [[153](#bib.bib153)] first proposed the calibration flow for camera-LiDAR
+    calibration, which represents the deviation between the positions of initial projected
+    2D points and ground truth. Compared to directly predicting extrinsic parameters,
+    learning the calibration flow helped the network to understand the underlying
+    geometric constraint. To build precise 2D-3D correspondences, CFNet [[153](#bib.bib153)]
+    corrected the originally projected points using the estimated calibration flow.
+    Then the efficient Perspective-n-Point (EPnP) algorithm was applied to calculate
+    the final extrinsic parameters by RANSAC. Because RANSAC is nondifferentiable,
+    DXQ-Net [[176](#bib.bib176)] further presented a probabilistic model for LiDAR-camera
+    calibration flow, which estimates the uncertainty to measure the quality of LiDAR-camera
+    data association. Then, the differentiable pose estimation module was designed
+    for solving extrinsic parameters, back-propagating the extrinsic error to the
+    flow prediction network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.2 Semantics-level Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Semantic features can be well learned and represented by deep neural networks.
+    A perfect calibration enables to accurately align the same instance in different
+    sensors. To this end, some works [[131](#bib.bib131), [129](#bib.bib129), [157](#bib.bib157),
+    [42](#bib.bib42)] explored to guide the camera-LiDAR calibration with the semantic
+    information. SOIC [[131](#bib.bib131)] calibrated and transforms the initialization
+    issue into the semantic centroids’ PnP problem using semantic information. Since
+    the 3D semantic centroids of the point cloud and the 2D semantic centroids of
+    the picture cannot match precisely, a matching constraint cost function based
+    on the semantic components was presented. SSI-Calib [[129](#bib.bib129)] reformulated
+    the calibration as an optimization problem with a novel calibration quality metric
+    based on semantic features. Then, a non-monotonic subgradient ascent algorithm
+    was proposed to calculate the calibration parameters. Other works utilized the
+    off-the-shelf segmentation networks for point cloud and image, and optimized the
+    calibration parameters by minimizing semantic alignment loss in single-direction [[157](#bib.bib157)]
+    and bi-direction [[42](#bib.bib42)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.3 Object/Keypoint-level Solution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: ATOP [[178](#bib.bib178)] designed an attention-based object-level matching
+    network, i.e., Cross-Modal Matching Network to explore the overlapped FoV between
+    camera and LiDAR, which facilitated generating the 2D-3D object-level correspondences.
+    2D and 3D object proposals were detected by YOLOv4 [[200](#bib.bib200)] and PointPillar [[201](#bib.bib201)].
+    Then, two cascaded PSO-based algorithms [[202](#bib.bib202)] were devised to estimate
+    the calibration extrinsic parameters in the optimization stage. Using the deep
+    declarative network (DDN) [[203](#bib.bib203)], RKGCNet [[180](#bib.bib180)] combined
+    the standard neural layer and a PnP solver in the same network, formulating the
+    2D–3D data association and pose estimation as a bilevel optimization problem.
+    Therefore, both the feature extraction capability of the convolutional layer and
+    the conventional geometric solver can be employed. Microsoft’s human keypoint
+    extraction network [[204](#bib.bib204)] was applied to detect the 2D–3D matching
+    keypoints. Additionally, RKGCNet [[180](#bib.bib180)] presented a learnable weight
+    layer that determines the keypoints involved in the solver, enabling the whole
+    pipeline to be trained end-to-end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.4 Discussion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 6.4.1 Technique Summary
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The current method can be briefly classified based on the principle of building
+    2D and 3D matching, namely, the calibration target. In summary, most pixel-level
+    solutions utilized the end-to-end framework to address this task. While these
+    solutions delivered satisfactory performances on specific datasets, their generalization
+    abilities are limited. Semantics-level and object/keypoint-level methods derived
+    from traditional calibration offered both acceptable performances and generalization
+    abilities. However, they heavily relied on the quality of fore-end feature extraction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.4.2 Research Trend
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (1) Network architecture is becoming more complex with the use of different
+    structures for feature extraction, matching, and fusion. Current methods employ
+    strategies like multi-scale feature extraction, cross-modal interaction, cost-volume
+    establishment, and confidence-guided fusion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Directly regressing 6-DoF parameters yields weak generalization ability.
+    To overcome this, intermediate representations like calibration flow have been
+    introduced. Additionally, calibration flow can handle non-rigid transformations
+    that are common in real-world applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) Traditional methods require specific environments but have well-designed
+    strategies. To balance accuracy and generalization, a combination of geometric
+    solving algorithms and learning methods has been investigated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.4.3 Future Effort
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (1) Camera-LiDAR calibration methods typically rely on datasets like KITTI,
+    which provide only initial extrinsic parameters. To create a decalibration dataset,
+    researchers add noise transformations to the initial extrinsics, but this approach
+    assumes a fixed position camera-LiDAR system with miscalibration. In real-world
+    applications, the camera-LiDAR relative pose varies, making it challenging to
+    collect large-scale real data with ground truth extrinsics. To address this challenge,
+    generating synthetic camera-LiDAR data using simulation systems could be a valuable
+    solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) To optimize the combination of networks and traditional solutions, a more
+    compact approach is needed. Current methods mainly use networks as feature extractors,
+    resulting in non-end-to-end pipelines with inadequate feature extraction adjustments
+    for calibration. A deep declarative network (DDN) is a promising framework for
+    making the entire pipeline differentiable. The aggregation of learning and traditional
+    methods can be optimized using DDN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) The most important aspect of camera-LiDAR calibration is 2D-3D matching.
+    To achieve this, the point cloud is commonly transformed into a depth image. However,
+    large deviations in extrinsic simulation can result in detail loss. With the great
+    development of Transformer and cross-modal techniques, we believe leveraging Transformer
+    to directly learn the features of image and point cloud in the same pipeline could
+    facilitate better 2D-3D matching.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Benchmark
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5ebf9e9d1099911cb3c3b7a52de0b30f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: Overview of our collected benchmark, which covers all models reviewed
+    in this paper. In this dataset, the image and video derive from diverse cameras
+    under different environments. The accurate ground truth and label are provided
+    for each sample.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As there is no public and unified benchmark in learning-based camera calibration,
+    we contribute a dataset that can serve as a platform for generalization evaluations.
+    In this dataset, the images and videos are captured by different cameras under
+    diverse scenes, including simulation environments and real-world settings. Additionally,
+    we provide the calibration ground truth, parameter label, and visual clues in
+    this dataset based on different conditions. Figure [11](#S7.F11 "Figure 11 ‣ 7
+    Benchmark ‣ Deep Learning for Camera Calibration and Beyond: A Survey") shows
+    some samples of our collected dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Standard Model. We collected 300 high-resolution images on the Internet, captured
+    by popular digital cameras such as Canon, Fujifilm, Nikon, Olympus, Sigma, Sony,
+    etc. For each image, we provide the specific focal length of its lens. We have
+    included a diverse range of subjects, including landscapes, portraits, wildlife,
+    architecture, etc. The range of focal length is from 4.5mm to 600mm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distortion Model. We created a comprehensive dataset for the distortion camera
+    model, with a focus on wide-angle cameras. The dataset is comprised of three subcategories.
+    The first is a synthetic dataset, which was generated using the widely-used 4^(th)
+    order polynomial model. It contains both circular and rectangular structures,
+    with 1,000 distortion-rectification image pairs. The second subcategory consists
+    of data captured under real-world settings, derived from the raw calibration data
+    for around 40 types of wide-angle cameras. For each calibration data, the intrinsics,
+    extrinsics, and distortion coefficients are available. Finally, we exploit a car
+    equipped with different cameras to capture video sequences. The scenes cover both
+    indoor and outdoor environments, including daytime and nighttime footage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Cross-View Model. We selected 500 testing samples at random from each of four
+    representative datasets (MS-COCO [[25](#bib.bib25)], GoogleEarch [[143](#bib.bib143)],
+    GoogleMap [[143](#bib.bib143)], CAHomo [[50](#bib.bib50)]) to create a dataset
+    for the cross-view model. It covers a range of scenarios: MS-COCO provides natural
+    synthetic data, GoogleEarch contains aerial synthetic data, and GoogleMap offers
+    multi-modal synthetic data. Parallax is not a factor in these three datasets,
+    while CAHomo provides real-world data with non-planar scenes. To standardize the
+    dataset, we converted all images to a unified format and recorded the matched
+    points between two views. In MS-COCO, GoogleEarch, and GoogleMap, we used four
+    vertices of the images as the matched points. In CAHomo, we identified six matched
+    key points within the same plane.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-Sensor Model. We collected RGB and point cloud data from Apollo [[205](#bib.bib205)],
+    DAIR-V2X [[206](#bib.bib206)], KITTI [[74](#bib.bib74)], KUCL [[207](#bib.bib207)],
+    NuScenes [[208](#bib.bib208)], and ONCE [[209](#bib.bib209)]. Around 300 data
+    pairs with calibration parameters are included in each category. The datasets
+    are captured in different countries to provide enough variety. Each dataset has
+    a different sensor setup, obtaining camera-LiDAR data with varying image resolution,
+    LiDAR scan pattern, and camera-LiDAR relative location. The image resolution ranges
+    from 2448$\times$2048 to 1242$\times$375, while the LiDAR sensors are from Velodyne
+    and Hesai, with 16, 32, 40, 64, and 128 beams. They include not only normal surrounding
+    multi-view images but also small baseline multi-view data. Additionally, we also
+    added random disturbance of around 20 degrees rotation and 1.5 meters translation
+    based on classical settings [[27](#bib.bib27)] to simulate vibration and collision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Future Research Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Camera calibration is a fundamental and challenging research topic. From the
+    above technical reviews and limitation analysis, we can conclude there is still
+    room for improvement with deep learning. From Section [3](#S3 "3 Standard Model
+    ‣ Deep Learning for Camera Calibration and Beyond: A Survey") to Section [6](#S6
+    "6 Cross-Sensor Model ‣ Deep Learning for Camera Calibration and Beyond: A Survey"),
+    specific future efforts are discussed for each model. In this section, we suggest
+    more general future research directions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.1 Sequences
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most studies focus on calibrating a single image. However, the rich spatiotemporal
+    correlation among sequences that offers useful information on calibration has
+    been overlooked. Learning the spatiotemporal correlation can provide the network
+    with knowledge of structure from motion, which aligns with the principles of traditional
+    calibrations. Directly applying existing calibration methods to the first frame
+    and then propagating the calibrated objectives to subsequent frames is a straightforward
+    approach. However, there are no methods that can perfectly calibrate every uncalibrated
+    input, and the calibration error will persist throughout the entire sequence.
+    Another solution is to calibrate all frames simultaneously. However, the calibration
+    results of learning-based methods heavily rely on the semantic features of the
+    image. As a result, unstable jitter effects may occur in calibrated sequences
+    when the scenes change slightly. To this end, exploring video stabilization for
+    sequence calibration is an interesting future direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.2 Learning Target
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Due to the implicit relationship to image features, conventional calibration
+    objectives can be challenging for neural networks to learn. To this end, some
+    works have developed novel learning targets that replace conventional calibration
+    objectives, providing learning-friendly representations for neural networks. Additionally,
+    intermediate geometric representations have been presented to bridge the gap between
+    image features and calibration objectives, such as reflective amplitude coefficient
+    maps [[125](#bib.bib125)], rectification flow [[34](#bib.bib34)], surface geometry [[86](#bib.bib86)],
+    and normal flow [[167](#bib.bib167)], etc. Looking ahead to the future development
+    of this community, we believe there is still great potential for designing more
+    explicit and reasonable learning targets for calibration objectives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.3 Pre-training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Pre-training on ImageNet [[66](#bib.bib66)] has become a widely used strategy
+    in deep learning. However, recent studies [[93](#bib.bib93)] have shown that this
+    approach provides less benefit for specific camera calibration tasks, such as
+    wide-angle camera calibration. This is due to two main reasons: the data gap and
+    the task gap. The ImageNet dataset only contains perspective images without distortions,
+    making the initialized weights of neural networks irrelevant to distortion models.
+    Furthermore, He et al. [[210](#bib.bib210)] demonstrated that the task of ImageNet
+    pre-training has limited benefits when the final task is more sensitive to localization.
+    As a result, the performance of extrinsics estimation may be impacted by this
+    task gap. Moreover, pre-training beyond a single image and a single modality,
+    to our knowledge, has not been thoroughly investigated in the related field. We
+    suggest that designing a customized pre-training strategy for learning-based camera
+    calibration is an interesting area of research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.4 Implicit Unified Model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Deep learning-based camera calibration methods use traditional parametric camera
+    models, which lack the flexibility to fit complex situations. Non-parametric camera
+    models relate each pixel to its corresponding 3D observation ray, overcoming parametric
+    model limitations. However, they require strict calibration targets and are more
+    complex for undistortion, projection, and unprojection. Deep learning methods
+    show potential for calibration tasks, making non-parametric models worth revisiting
+    and potentially replacing parametric models in the future. Moreover, they allow
+    for implicit and unified calibration, fitting all camera types through pixel-level
+    regression and avoiding explicit feature extraction and geometry solving. Researchers
+    combined the advantages of implicit and unified representation with the Neural
+    Radiance Field (NeRF) for reconstructing 3D structures and synthesizing novel
+    views. Self-calibration NeRF [[211](#bib.bib211)] has been proposed for generic
+    cameras with arbitrary non-linear distortions, and end-to-end pipelines have been
+    explored to learn depth and ego-motion without calibration targets. We believe
+    the implicit and unified camera models could be used to optimize learning-based
+    algorithms or integrated into downstream 3D vision tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this paper, we present a comprehensive survey of the recent efforts in the
+    area of deep learning-based camera calibration. Our survey covers conventional
+    camera models, classified learning paradigms and learning strategies, detailed
+    reviews of the state-of-the-art approach, a public benchmark, and future research
+    directions. To exhibit the development process and link the connections between
+    existing works, we provide a fine-grained taxonomy that categorizes literature
+    by jointly considering camera models and applications. Moreover, the relationships,
+    strengths, distinctions, and limitations are thoroughly discussed in each category.
+    An open-source repository will keep updating regularly with new works and datasets.
+    We hope that this survey could promote future research in this field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgment
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We thank Leidong Qin and Shangrong Yang at Beijing Jiaotong University for the
+    partial dataset collection. We thank Jinlong Fan at the University of Sydney for
+    the insightful discussion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] C. B. Duane, “Close-range camera calibration,” *Photogramm. Eng*, vol. 37,
+    no. 8, pp. 855–866, 1971.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] S. J. Maybank and O. D. Faugeras, “A theory of self-calibration of a moving
+    camera,” *International journal of computer vision*, vol. 8, no. 2, pp. 123–151,
+    1992.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] J. Weng, P. Cohen, M. Herniou *et al.*, “Camera calibration with distortion
+    models and accuracy evaluation,” *IEEE Transactions on pattern analysis and machine
+    intelligence*, vol. 14, no. 10, pp. 965–980, 1992.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Z. Zhang, “A flexible new technique for camera calibration,” *IEEE Transactions
+    on pattern analysis and machine intelligence*, vol. 22, no. 11, pp. 1330–1334,
+    2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] D. C. Brown, “Decentering distortion of lenses,” *Photogrammetric Engineering
+    and Remote Sensing*, 1966.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Z. Zhang, “Flexible camera calibration by viewing a plane from unknown
+    orientations,” in *Proceedings of the seventh ieee international conference on
+    computer vision*, vol. 1.   IEEE, 1999, pp. 666–673.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] S. Gasparini, P. Sturm, and J. P. Barreto, “Plane-based calibration of
+    central catadioptric cameras,” in *2009 IEEE 12th International Conference on
+    Computer Vision*.   IEEE, 2009, pp. 1195–1202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] S. Shah and J. Aggarwal, “A simple calibration procedure for fish-eye (high
+    distortion) lens camera,” in *Proceedings of the 1994 IEEE international Conference
+    on Robotics and Automation*.   IEEE, 1994, pp. 3422–3427.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] J. P. Barreto and H. Araujo, “Geometric properties of central catadioptric
+    line images and their application in calibration,” *IEEE Transactions on Pattern
+    Analysis and Machine Intelligence*, vol. 27, no. 8, pp. 1327–1333, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] R. Carroll, M. Agrawal, and A. Agarwala, “Optimizing content-preserving
+    projections for wide-angle images,” in *ACM Transactions on Graphics (TOG)*, vol. 28,
+    no. 3.   ACM, 2009, p. 43.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] F. Bukhari and M. N. Dailey, “Automatic radial distortion estimation from
+    a single image,” *Journal of Mathematical Imaging and Vision*, vol. 45, no. 1,
+    pp. 31–45, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] M. Alemán-Flores, L. Alvarez, L. Gomez, and D. Santana-Cedrés, “Automatic
+    lens distortion correction using one-parameter division models,” *Image Processing
+    On Line*, vol. 4, pp. 327–343, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] O. D. Faugeras, Q.-T. Luong, and S. J. Maybank, “Camera self-calibration:
+    Theory and experiments,” in *European conference on computer vision*.   Springer,
+    1992, pp. 321–334.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] C. S. Fraser, “Digital camera self-calibration,” *ISPRS Journal of Photogrammetry
+    and Remote sensing*, vol. 52, no. 4, pp. 149–159, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] R. I. Hartley, “Self-calibration from multiple views with a rotating camera,”
+    in *European Conference on Computer Vision*.   Springer, 1994, pp. 471–478.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] [Online]. Available: [https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] [Online]. Available: [https://www.mathworks.com/help/vision/camera-calibration.html](https://www.mathworks.com/help/vision/camera-calibration.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] J. Salvi, X. Armangué, and J. Batlle, “A comparative review of camera
+    calibrating methods with accuracy evaluation,” *Pattern recognition*, vol. 35,
+    no. 7, pp. 1617–1635, 2002.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] C. Hughes, M. Glavin, E. Jones, and P. Denny, “Review of geometric distortion
+    compensation in fish-eye cameras,” 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] J. Fan, J. Zhang, S. J. Maybank, and D. Tao, “Wide-angle image rectification:
+    a survey,” *International Journal of Computer Vision*, vol. 130, no. 3, pp. 747–776,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] S. Workman, C. Greenwell, M. Zhai, R. Baltenberger, and N. Jacobs, “Deepfocal:
+    A method for direct focal length estimation,” in *2015 IEEE International Conference
+    on Image Processing (ICIP)*, 2015, pp. 1369–1373.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] A. Kendall, M. Grimes, and R. Cipolla, “Posenet: A convolutional network
+    for real-time 6-dof camera relocalization,” in *Proceedings of the IEEE International
+    Conference on Computer Vision (ICCV)*, December 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] J. Rong, S. Huang, Z. Shang, and X. Ying, “Radial lens distortion correction
+    using convolutional neural networks trained with synthesized images,” in *Asian
+    Conference on Computer Vision*.   Springer, 2016, pp. 35–49.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] V. Rengarajan, Y. Balaji, and A. Rajagopalan, “Unrolling the shutter:
+    Cnn to correct motion distortions,” in *Proceedings of the IEEE Conference on
+    computer Vision and Pattern Recognition*, 2017, pp. 2291–2299.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] D. DeTone, T. Malisiewicz, and A. Rabinovich, “Deep image homography estimation,”
+    *arXiv preprint arXiv:1606.03798*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Y. Hold-Geoffroy, K. Sunkavalli, J. Eisenmann, M. Fisher, E. Gambaretto,
+    S. Hadap, and J.-F. Lalonde, “A perceptual measure for deep single image camera
+    calibration,” in *Proceedings of the IEEE Conference on Computer Vision and Pattern
+    Recognition (CVPR)*, June 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] N. Schneider, F. Piewak, C. Stiller, and U. Franke, “Regnet: Multimodal
+    sensor registration using deep neural networks,” in *2017 IEEE intelligent vehicles
+    symposium (IV)*.   IEEE, 2017, pp. 1803–1810.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] P. Isola, J.-Y. Zhu, T. Zhou, and A. A. Efros, “Image-to-image translation
+    with conditional adversarial networks,” in *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, 2017, pp. 1125–1134.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] J. Long, E. Shelhamer, and T. Darrell, “Fully convolutional networks for
+    semantic segmentation,” in *Proceedings of the IEEE conference on computer vision
+    and pattern recognition*, 2015, pp. 3431–3440.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] D. Eigen, C. Puhrsch, and R. Fergus, “Depth map prediction from a single
+    image using a multi-scale deep network,” *Advances in neural information processing
+    systems*, vol. 27, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] K. Liao, C. Lin, Y. Zhao, and M. Gabbouj, “Dr-gan: Automatic radial distortion
+    rectification using conditional gan in real-time,” *IEEE Transactions on Circuits
+    and Systems for Video Technology*, vol. 30, no. 3, pp. 725–733, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] K. Liao, C. Lin, Y. Zhao, and M. Xu, “Model-free distortion rectification
+    framework bridged by distortion distribution map,” *IEEE Transactions on Image
+    Processing*, vol. 29, pp. 3707–3718, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] K. Liao, C. Lin, L. Liao, Y. Zhao, and W. Lin, “Multi-level curriculum
+    for training a distortion-aware barrel distortion rectification model,” in *Proceedings
+    of the IEEE/CVF International Conference on Computer Vision (ICCV)*, October 2021,
+    pp. 4389–4398.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] X. Li, B. Zhang, P. V. Sander, and J. Liao, “Blind geometric distortion
+    correction on images through deep learning,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks
+    for biomedical image segmentation,” in *International Conference on Medical image
+    computing and computer-assisted intervention*.   Springer, 2015, pp. 234–241.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] M. Zhai, S. Workman, and N. Jacobs, “Detecting vanishing points using
+    global image context in a non-manhattan world,” in *Proceedings of the IEEE Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] O. Bogdan, V. Eckstein, F. Rameau, and J.-C. Bazin, “Deepcalib: a deep
+    learning approach for automatic intrinsic calibration of wide field-of-view cameras,”
+    in *Proceedings of the 15th ACM SIGGRAPH European Conference on Visual Media Production*,
+    2018, pp. 1–10.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Y. Lin, R. Wiersma, S. L. Pintea, K. Hildebrandt, E. Eisemann, and J. C.
+    van Gemert, “Deep vanishing point detection: Geometric priors make dataset variations
+    vanish,” *arXiv preprint arXiv:2203.08586*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] X. Zhou, P. Duan, Y. Ma, and B. Shi, “Evunroll: Neuromorphic events based
+    rolling shutter image correction,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2022, pp. 17 775–17 784.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Y. Shangrong, L. Chunyu, L. Kang, and Z. Yao, “Fishformer: Annulus slicing-based
+    transformer for fisheye rectification with efficacy domain exploration,” *arXiv
+    preprint arXiv:2207.01925*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] L. Nie, C. Lin, K. Liao, S. Liu, and Y. Zhao, “Depth-aware multi-grid
+    deep homography estimation with contextual correlation,” *IEEE Transactions on
+    Circuits and Systems for Video Technology*, pp. 1–1, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] K. Akio, Z. Yiyang, Z. Pengwei, Z. Wei, and T. Masayoshi, “Sst-calib:
+    Simultaneous spatial-temporal parameter calibration between lidar and camera,”
+    *arXiv preprint arXiv:2207.03704*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Y. Zhao, Z. Huang, T. Li, W. Chen, C. LeGendre, X. Ren, A. Shapiro, and
+    H. Li, “Learning perspective undistortion of portraits,” in *Proceedings of the
+    IEEE/CVF International Conference on Computer Vision (ICCV)*, October 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] J. Tan, S. Zhao, P. Xiong, J. Liu, H. Fan, and S. Liu, “Practical wide-angle
+    portraits correction with deep structured models,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition (CVPR)*, June 2021, pp.
+    3498–3506.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] M. Kocabas, C.-H. P. Huang, J. Tesch, L. Müller, O. Hilliges, and M. J.
+    Black, “Spec: Seeing people in the wild with an estimated camera,” in *Proceedings
+    of the IEEE/CVF International Conference on Computer Vision (ICCV)*, October 2021,
+    pp. 11 035–11 045.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] P. Liu, Z. Cui, V. Larsson, and M. Pollefeys, “Deep shutter unrolling
+    network,” in *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+    Recognition*, 2020, pp. 5941–5949.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] F. Zhu, S. Zhao, P. Wang, H. Wang, H. Yan, and S. Liu, “Semi-supervised
+    wide-angle portraits correction by multi-scale transformer,” in *Proceedings of
+    the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022, pp.
+    19 689–19 698.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] R. Zhu, X. Yang, Y. Hold-Geoffroy, F. Perazzi, J. Eisenmann, K. Sunkavalli,
+    and M. Chandraker, “Single view metrology in the wild,” in *European Conference
+    on Computer Vision*.   Springer, 2020, pp. 316–333.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] T. Nguyen, S. W. Chen, S. S. Shivakumar, C. J. Taylor, and V. Kumar, “Unsupervised
+    deep homography: A fast and robust homography estimation model,” *IEEE Robotics
+    and Automation Letters*, vol. 3, no. 3, pp. 2346–2353, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] J. Zhang, C. Wang, S. Liu, L. Jia, N. Ye, J. Wang, J. Zhou, and J. Sun,
+    “Content-aware unsupervised deep homography estimation,” in *European Conference
+    on Computer Vision*.   Springer, 2020, pp. 653–669.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] N. Ye, C. Wang, H. Fan, and S. Liu, “Motion basis learning for unsupervised
+    deep homography estimation with subspace projection,” in *Proceedings of the IEEE/CVF
+    International Conference on Computer Vision (ICCV)*, October 2021, pp. 13 117–13 125.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] M. Hong, Y. Lu, N. Ye, C. Lin, Q. Zhao, and S. Liu, “Unsupervised homography
+    estimation with coplanarity-aware gan,” *arXiv preprint arXiv:2205.03821*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] S. Liu, N. Ye, C. Wang, K. Luo, J. Wang, and J. Sun, “Content-aware unsupervised
+    deep homography estimation and beyond,” *IEEE Transactions on Pattern Analysis
+    and Machine Intelligence*, pp. 1–1, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] S. Yang, C. Lin, K. Liao, Y. Zhao, and M. Liu, “Unsupervised fisheye image
+    correction through bidirectional loss with geometric prior,” *Journal of Visual
+    Communication and Image Representation*, vol. 66, p. 102692, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] X. Wang, C. Wang, B. Liu, X. Zhou, L. Zhang, J. Zheng, and X. Bai, “Multi-view
+    stereo in the deep learning era: A comprehensive revfiew,” *Displays*, vol. 70,
+    p. 102102, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] J. Fan, J. Zhang, and D. Tao, “Sir: Self-supervised image rectification
+    via seeing the same scene from multiple different lenses,” *IEEE Transactions
+    on Image Processing*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] J. Fang, I. Vasiljevic, V. Guizilini, R. Ambrus, G. Shakhnarovich, A. Gaidon,
+    and M. R. Walter, “Self-supervised camera self-calibration from video,” *arXiv
+    preprint arXiv:2112.03325*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] J. Zhao, S. Wei, L. Liao, and Y. Zhao, “Dqn-based gradual fisheye image
+    rectification,” *Pattern Recognition Letters*, vol. 152, pp. 129–134, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare,
+    A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski *et al.*, “Human-level
+    control through deep reinforcement learning,” *nature*, vol. 518, no. 7540, pp.
+    529–533, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] K. Wilson and N. Snavely, “Robust global translations with 1dsfm,” in
+    *European Conference on Computer Vision*.   Springer, 2014, pp. 61–75.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] [Online]. Available: [https://www.repository.cam.ac.uk/handle/1810/251342;jsessionid=90AB1617B8707CD387CBF67437683F77](https://www.repository.cam.ac.uk/handle/1810/251342;jsessionid=90AB1617B8707CD387CBF67437683F77)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] S. Workman, M. Zhai, and N. Jacobs, “Horizon lines in the wild,” *arXiv
+    preprint arXiv:1604.02129*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] [Online]. Available: [https://mvrl.cse.wustl.edu/datasets/hlw/](https://mvrl.cse.wustl.edu/datasets/hlw/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] P. Denis, J. H. Elder, and F. J. Estrada, “Efficient edge-based methods
+    for estimating manhattan frames in urban imagery,” in *European conference on
+    computer vision*.   Springer, 2008, pp. 197–210.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] O. Barinova, V. Lempitsky, E. Tretiak, and P. Kohli, “Geometric image
+    parsing in man-made environments,” in *European conference on computer vision*.   Springer,
+    2010, pp. 57–70.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “Imagenet:
+    A large-scale hierarchical image database,” in *IEEE Conference on Computer Vision
+    and Pattern Recognition*, 2009, pp. 248–255.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár,
+    and C. L. Zitnick, “Microsoft coco: Common objects in context,” in *European conference
+    on computer vision*.   Springer, 2014, pp. 740–755.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] C.-H. Chang, C.-N. Chou, and E. Y. Chang, “Clkn: Cascaded lucas-kanade
+    networks for image alignment,” in *Proceedings of the IEEE Conference on Computer
+    Vision and Pattern Recognition (CVPR)*, July 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] F. Erlik Nowruzi, R. Laganiere, and N. Japkowicz, “Homography estimation
+    from image pairs with hierarchical convolutional networks,” in *Proceedings of
+    the IEEE International Conference on Computer Vision (ICCV) Workshops*, Oct 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] J. Xiao, J. Hays, K. A. Ehinger, A. Oliva, and A. Torralba, “Sun database:
+    Large-scale scene recognition from abbey to zoo,” in *2010 IEEE computer society
+    conference on computer vision and pattern recognition*.   IEEE, 2010, pp. 3485–3492.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] J. Philbin, O. Chum, M. Isard, J. Sivic, and A. Zisserman, “Object retrieval
+    with large vocabularies and fast spatial matching,” in *2007 IEEE conference on
+    computer vision and pattern recognition*.   IEEE, 2007, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] H. Shao, T. Svoboda, and L. Van Gool, “Zubud-zurich buildings database
+    for image based recognition,” *Computer Vision Lab, Swiss Federal Institute of
+    Technology, Switzerland, Tech. Rep*, vol. 260, no. 20, p. 6, 2003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] G. B. Huang, M. Mattar, T. Berg, and E. Learned-Miller, “Labeled faces
+    in the wild: A database forstudying face recognition in unconstrained environments,”
+    in *Workshop on faces in’Real-Life’Images: detection, alignment, and recognition*,
+    2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] A. Geiger, P. Lenz, and R. Urtasun, “Are we ready for autonomous driving?
+    the kitti vision benchmark suite,” in *2012 IEEE conference on computer vision
+    and pattern recognition*.   IEEE, 2012, pp. 3354–3361.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] J. Xiao, K. A. Ehinger, A. Oliva, and A. Torralba, “Recognizing scene
+    viewpoint using panoramic place representation,” in *2012 IEEE Conference on Computer
+    Vision and Pattern Recognition*.   IEEE, 2012, pp. 2695–2702.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] X. Yin, X. Wang, J. Yu, M. Zhang, P. Fua, and D. Tao, “Fisheyerecnet:
+    A multi-context collaborative deep network for fisheye image rectification,” in
+    *Proceedings of the European Conference on Computer Vision (ECCV)*, September
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] B. Zhou, H. Zhao, X. Puig, S. Fidler, A. Barriuso, and A. Torralba, “Scene
+    parsing through ade20k dataset,” in *Proceedings of the IEEE conference on computer
+    vision and pattern recognition*, 2017, pp. 633–641.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] Y. Shi, D. Zhang, J. Wen, X. Tong, X. Ying, and H. Zha, “Radial lens distortion
+    correction by adding a weight layer with inverted foveal models to convolutional
+    neural networks,” in *2018 24th International Conference on Pattern Recognition
+    (ICPR)*, 2018, pp. 1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] R. Ranftl and V. Koltun, “Deep fundamental matrix estimation,” in *Proceedings
+    of the European Conference on Computer Vision (ECCV)*, September 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] A. Knapitsch, J. Park, Q.-Y. Zhou, and V. Koltun, “Tanks and temples:
+    Benchmarking large-scale scene reconstruction,” *ACM Transactions on Graphics
+    (ToG)*, vol. 36, no. 4, pp. 1–13, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] O. Poursaeed, G. Yang, A. Prakash, Q. Fang, H. Jiang, B. Hariharan, and
+    S. Belongie, “Deep fundamental matrix estimation without correspondences,” in
+    *Proceedings of the European Conference on Computer Vision (ECCV) Workshops*,
+    September 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] R. Zeng, S. Denman, S. Sridharan, and C. Fookes, “Rethinking planar homography
+    estimation using perspective fields,” in *Asian Conference on Computer Vision*.   Springer,
+    2018, pp. 571–586.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] G. Iyer, R. K. Ram, J. K. Murthy, and K. M. Krishna, “Calibnet: Geometrically
+    supervised extrinsic calibration using 3d spatial transformer networks,” in *2018
+    IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2018, pp. 1110–1117.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] C.-K. Chang, J. Zhao, and L. Itti, “Deepvp: Deep learning for vanishing
+    point detection on 1 million street view images,” in *2018 IEEE International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2018, pp. 4496–4503.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] M. Lopez, R. Mari, P. Gargallo, Y. Kuang, J. Gonzalez-Jimenez, and G. Haro,
+    “Deep single image camera calibration with radial distortion,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*,
+    June 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] W. Xian, Z. Li, M. Fisher, J. Eisenmann, E. Shechtman, and N. Snavely,
+    “Uprightnet: Geometry-aware camera orientation estimation from single images,”
+    in *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*,
+    October 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] W. Li, S. Saeedi, J. McCormac, R. Clark, D. Tzoumanikas, Q. Ye, Y. Huang,
+    R. Tang, and S. Leutenegger, “Interiornet: Mega-scale multi-sensor photo-realistic
+    indoor scenes dataset,” *arXiv preprint arXiv:1809.00716*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] A. Dai, A. X. Chang, M. Savva, M. Halber, T. Funkhouser, and M. Nießner,
+    “Scannet: Richly-annotated 3d reconstructions of indoor scenes,” in *Proceedings
+    of the IEEE conference on computer vision and pattern recognition*, 2017, pp.
+    5828–5839.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] B. Zhuang, Q.-H. Tran, G. H. Lee, L. F. Cheong, and M. Chandraker, “Degeneracy
+    in self-calibration revisited and a deep learning solution for uncalibrated slam,”
+    in *2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*,
+    2019, pp. 3766–3773.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] S. Ammar Abbas and A. Zisserman, “A geometric approach to obtain a bird’s
+    eye view from an image,” in *Proceedings of the IEEE/CVF International Conference
+    on Computer Vision (ICCV) Workshops*, Oct 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] A. Dosovitskiy, G. Ros, F. Codevilla, A. Lopez, and V. Koltun, “Carla:
+    An open urban driving simulator,” in *Conference on robot learning*.   PMLR, 2017,
+    pp. 1–16.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] O. Barinova, V. Lempitsky, E. Tretiak, and P. Kohli, “Geometric image
+    parsing in man-made environments,” in *European conference on computer vision*.   Springer,
+    2010, pp. 57–70.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] K. Liao, C. Lin, Y. Zhao, and M. Gabbouj, “Distortion rectification from
+    static to dynamic: A distortion sequence construction perspective,” *IEEE Transactions
+    on Circuits and Systems for Video Technology*, vol. 30, no. 11, pp. 3870–3882,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] R. Jung, A. S. J. Lee, A. Ashtari, and J.-C. Bazin, “Deep360up: A deep
+    learning-based approach for automatic vr image upright adjustment,” in *2019 IEEE
+    Conference on Virtual Reality and 3D User Interfaces (VR)*, 2019, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] V. Belagiannis, C. Rupprecht, G. Carneiro, and N. Navab, “Robust optimization
+    for deep regression,” in *Proceedings of the IEEE international conference on
+    computer vision*, 2015, pp. 2830–2838.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] B. Zhou, A. Lapedriza, A. Khosla, A. Oliva, and A. Torralba, “Places:
+    A 10 million image database for scene recognition,” *IEEE Transactions on Pattern
+    Analysis and Machine Intelligence*, vol. 40, no. 6, pp. 1452–1464, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] B. Zhuang, Q.-H. Tran, P. Ji, L.-F. Cheong, and M. Chandraker, “Learning
+    structure-and-motion-aware rolling shutter correction,” in *Proceedings of the
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, June 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] Z. Xue, N. Xue, G.-S. Xia, and W. Shen, “Learning to calibrate straight
+    lines for fisheye image rectification,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] K. Huang, Y. Wang, Z. Zhou, T. Ding, S. Gao, and Y. Ma, “Learning to parse
+    wireframes in images of man-made environments,” in *Proceedings of the IEEE Conference
+    on Computer Vision and Pattern Recognition*, 2018, pp. 626–635.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] S. Song, F. Yu, A. Zeng, A. X. Chang, M. Savva, and T. Funkhouser, “Semantic
+    scene completion from a single depth image,” in *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, 2017, pp. 1746–1754.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] L. Yin, X. Sun, T. Worm, and M. Reale, “A high-resolution 3d dynamic
+    facial expression database, 2008,” in *IEEE International Conference on Automatic
+    Face and Gesture Recognition, Amsterdam, The Netherlands*, vol. 126.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] Y. Zhou, H. Qi, J. Huang, and Y. Ma, “Neurvps: Neural vanishing point
+    scanning via conic convolution,” *Advances in Neural Information Processing Systems*,
+    vol. 32, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] Y. Zhou, H. Qi, Y. Zhai, Q. Sun, Z. Chen, L.-Y. Wei, and Y. Ma, “Learning
+    to reconstruct 3d manhattan wireframes from a single image,” in *Proceedings of
+    the IEEE/CVF International Conference on Computer Vision*, 2019, pp. 7698–7707.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] L. Sha, J. Hobbs, P. Felsen, X. Wei, P. Lucey, and S. Ganguly, “End-to-end
+    camera calibration for broadcast videos,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] N. Homayounfar, S. Fidler, and R. Urtasun, “Sports field localization
+    via deep structured models,” in *Proceedings of the IEEE Conference on Computer
+    Vision and Pattern Recognition*, 2017, pp. 5212–5220.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] J. Lee, M. Sung, H. Lee, and J. Kim, “Neural geometric parser for single
+    image camera calibration,” in *European Conference on Computer Vision*.   Springer,
+    2020, pp. 541–557.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] [Online]. Available: [https://developers.google.com/maps/](https://developers.google.com/maps/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] A. Cramariuc, A. Petrov, R. Suri, M. Mittal, R. Siegwart, and C. Cadena,
+    “Learning camera miscalibration detection,” in *2020 IEEE International Conference
+    on Robotics and Automation (ICRA)*, 2020, pp. 4997–5003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] C. Zhang, F. Rameau, J. Kim, D. M. Argaw, J.-C. Bazin, and I. S. Kweon,
+    “Deepptz: Deep self-calibration for ptz cameras,” in *Proceedings of the IEEE/CVF
+    Winter Conference on Applications of Computer Vision (WACV)*, March 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] H. Le, F. Liu, S. Zhang, and A. Agarwala, “Deep homography estimation
+    for dynamic scenes,” in *Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition (CVPR)*, June 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] B. Davidson, M. S. Alvi, and J. F. Henriques, “360° camera alignment
+    via segmentation,” in *European Conference on Computer Vision*.   Springer, 2020,
+    pp. 579–595.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] Y.-Y. Jau, R. Zhu, H. Su, and M. Chandraker, “Deep keypoint-based camera
+    pose estimation with geometric constraints,” in *2020 IEEE/RSJ International Conference
+    on Intelligent Robots and Systems (IROS)*, 2020, pp. 4950–4957.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] X. Huang, P. Wang, X. Cheng, D. Zhou, Q. Geng, and R. Yang, “The apolloscape
+    open dataset for autonomous driving and its application,” *IEEE transactions on
+    pattern analysis and machine intelligence*, vol. 42, no. 10, pp. 2702–2719, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] Y.-H. Li, I.-C. Lo, and H. H. Chen, “Deep face rectification for 360°
+    dual-fisheye cameras,” *IEEE Transactions on Image Processing*, vol. 30, pp. 264–276,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] Y. Guo, L. Zhang, Y. Hu, X. He, and J. Gao, “Ms-celeb-1m: A dataset and
+    benchmark for large-scale face recognition,” in *European conference on computer
+    vision*.   Springer, 2016, pp. 87–102.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] Y. Shi, X. Tong, J. Wen, H. Zhao, X. Ying, and H. Zha, “Position-aware
+    and symmetry enhanced gan for radial distortion correction,” in *2020 25th International
+    Conference on Pattern Recognition (ICPR)*, 2021, pp. 1701–1708.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] H. Zhao, Y. Shi, X. Tong, X. Ying, and H. Zha, “A simple yet effective
+    pipeline for radial distortion correction,” in *2020 IEEE International Conference
+    on Image Processing (ICIP)*, 2020, pp. 878–882.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] C.-H. Chao, P.-L. Hsu, H.-Y. Lee, and Y.-C. F. Wang, “Self-supervised
+    deep learning for fisheye image rectification,” in *ICASSP 2020 - 2020 IEEE International
+    Conference on Acoustics, Speech and Signal Processing (ICASSP)*, 2020, pp. 2248–2252.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] F. Yu, A. Seff, Y. Zhang, S. Song, T. Funkhouser, and J. Xiao, “Lsun:
+    Construction of a large-scale image dataset using deep learning with humans in
+    the loop,” *arXiv preprint arXiv:1506.03365*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] H. Zhao, X. Ying, Y. Shi, X. Tong, J. Wen, and H. Zha, “Rdcface: Radial
+    distortion correction for face recognition,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] F. Wang, L. Chen, C. Li, S. Huang, Y. Chen, C. Qian, and C. C. Loy, “The
+    devil of face recognition is in the noise,” in *Proceedings of the European Conference
+    on Computer Vision (ECCV)*, 2018, pp. 765–780.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] Z.-C. Xue, N. Xue, and G.-S. Xia, “Fisheye distortion rectification from
+    deep straight lines,” *arXiv preprint arXiv:2003.11386*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] M. Baradad and A. Torralba, “Height and uprightness invariance for 3d
+    prediction from a single view,” in *Proceedings of the IEEE/CVF Conference on
+    Computer Vision and Pattern Recognition (CVPR)*, June 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] N. Silberman, D. Hoiem, P. Kohli, and R. Fergus, “Indoor segmentation
+    and support inference from rgbd images,” in *European conference on computer vision*.   Springer,
+    2012, pp. 746–760.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] Q. Zheng, J. Chen, Z. Lu, B. Shi, X. Jiang, K.-H. Yap, L.-Y. Duan, and
+    A. C. Kot, “What does plate glass reveal about camera calibration?” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*,
+    June 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] [Online]. Available: [https://figshare.com/articles/dataset/FocaLens/3399169/2](https://figshare.com/articles/dataset/FocaLens/3399169/2)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] K. Yuan, Z. Guo, and Z. J. Wang, “Rggnet: Tolerance aware lidar-camera
+    online calibration with geometric deep learning and generative model,” *IEEE Robotics
+    and Automation Letters*, vol. 5, no. 4, pp. 6956–6963, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] J. Shi, Z. Zhu, J. Zhang, R. Liu, Z. Wang, S. Chen, and H. Liu, “Calibrcnn:
+    Calibrating camera and lidar by recurrent convolutional neural network and geometric
+    constraints,” in *2020 IEEE/RSJ International Conference on Intelligent Robots
+    and Systems (IROS)*.   IEEE, 2020, pp. 10 197–10 202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] Y. Zhu, C. Li, and Y. Zhang, “Online camera-lidar calibration with sensor
+    semantic information,” in *2020 IEEE International Conference on Robotics and
+    Automation (ICRA)*.   IEEE, 2020, pp. 4970–4976.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] M. Everingham, L. Van Gool, C. K. I. Williams, J. Winn, and A. Zisserman,
+    “The PASCAL Visual Object Classes Challenge 2012 (VOC2012) Results,” http://www.pascal-network.org/challenges/VOC/voc2012/workshop/index.html.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] W. Wang, S. Nobuhara, R. Nakamura, and K. Sakurada, “Soic: Semantic online
+    initialization and calibration for lidar and camera,” *arXiv preprint arXiv:2003.04260*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] S. Wu, A. Hadachi, D. Vivet, and Y. Prabhakar, “Netcalib: A novel approach
+    for lidar-camera auto-calibration based on deep learning,” in *2020 25th International
+    Conference on Pattern Recognition (ICPR)*.   IEEE, 2021, pp. 6648–6655.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] Y. Li, W. Pei, and Z. He, “Srhen: stepwise-refining homography estimation
+    network via parsing geometric correspondences in deep latent space,” in *Proceedings
+    of the 28th ACM International Conference on Multimedia*, 2020, pp. 3063–3071.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] Y. Gil, S. Elmalem, H. Haim, E. Marom, and R. Giryes, “Online training
+    of stereo self-calibration using monocular depth estimation,” *IEEE Transactions
+    on Computational Imaging*, vol. 7, pp. 812–823, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] [Online]. Available: [http://www.cs.toronto.edu/~harel/TAUAgent/download.html](http://www.cs.toronto.edu/~harel/TAUAgent/download.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] J. Lee, H. Go, H. Lee, S. Cho, M. Sung, and J. Kim, “Ctrl-c: Camera calibration
+    transformer with line-classification,” in *Proceedings of the IEEE/CVF International
+    Conference on Computer Vision (ICCV)*, October 2021, pp. 16 228–16 237.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] N. Wakai and T. Yamashita, “Deep single fisheye image camera calibration
+    for over 180-degree projection of field of view,” in *Proceedings of the IEEE/CVF
+    International Conference on Computer Vision (ICCV) Workshops*, October 2021, pp.
+    1174–1183.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] P. Mirowski, A. Banki-Horvath, K. Anderson, D. Teplyashin, K. M. Hermann,
+    M. Malinowski, M. K. Grimes, K. Simonyan, K. Kavukcuoglu, A. Zisserman *et al.*,
+    “The streetlearn environment and dataset,” *arXiv preprint arXiv:1903.01292*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] K. Liao, C. Lin, and Y. Zhao, “A deep ordinal distortion estimation approach
+    for distortion rectification,” *IEEE Transactions on Image Processing*, vol. 30,
+    pp. 3362–3375, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] K. Zhao, C. Lin, K. Liao, S. Yang, and Y. Zhao, “Revisiting radial distortion
+    rectification in polar-coordinates: A new and efficient learning perspective,”
+    *IEEE Transactions on Circuits and Systems for Video Technology*, pp. 1–1, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] A. Eichenseer and A. Kaup, “A data set providing synthetic and real-world
+    fisheye video sequences,” in *2016 IEEE International Conference on Acoustics,
+    Speech and Signal Processing (ICASSP)*.   IEEE, 2016, pp. 1541–1545.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] S. Yang, C. Lin, K. Liao, C. Zhang, and Y. Zhao, “Progressively complementary
+    network for fisheye image rectification using appearance flow,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*,
+    June 2021, pp. 6348–6357.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] Y. Zhao, X. Huang, and Z. Zhang, “Deep lucas-kanade homography for multimodal
+    image alignment,” in *Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition (CVPR)*, June 2021, pp. 15 950–15 959.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] R. Shao, G. Wu, Y. Zhou, Y. Fu, L. Fang, and Y. Liu, “Localtrans: A multiscale
+    local transformer network for cross-resolution homography estimation,” in *Proceedings
+    of the IEEE/CVF International Conference on Computer Vision (ICCV)*, October 2021,
+    pp. 14 890–14 899.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] Y. Chen, G. Wang, P. An, Z. You, and X. Huang, “Fast and accurate homography
+    estimation using extendable compression network,” in *2021 IEEE International
+    Conference on Image Processing (ICIP)*, 2021, pp. 1024–1028.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] L. Nie, C. Lin, K. Liao, S. Liu, and Y. Zhao, “Unsupervised deep image
+    stitching: Reconstructing stitched features to images,” *IEEE Transactions on
+    Image Processing*, vol. 30, pp. 6184–6197, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] S. Garg, D. P. Mohanty, S. P. Thota, and S. Moharana, “A simple approach
+    to image tilt correction with self-attention mobilenet for smartphones,” *arXiv
+    preprint arXiv:2111.00398*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] K. Chen, N. Snavely, and A. Makadia, “Wide-baseline relative camera pose
+    estimation with directional learning,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2021, pp. 3258–3268.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] A. Chang, A. Dai, T. Funkhouser, M. Halber, M. Niessner, M. Savva, S. Song,
+    A. Zeng, and Y. Zhang, “Matterport3d: Learning from rgb-d data in indoor environments,”
+    *arXiv preprint arXiv:1709.06158*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] Z. Zhong, Y. Zheng, and I. Sato, “Towards rolling shutter correction
+    and deblurring in dynamic scenes,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2021, pp. 9219–9228.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] W.-S. Lai, J.-B. Huang, N. Ahuja, and M.-H. Yang, “Fast and accurate
+    image super-resolution with deep laplacian pyramid networks,” *IEEE transactions
+    on pattern analysis and machine intelligence*, vol. 41, no. 11, pp. 2599–2613,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] X. Lv, B. Wang, Z. Dou, D. Ye, and S. Wang, “Lccnet: Lidar and camera
+    self-calibration using cost volume network,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2021, pp. 2894–2901.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[153] X. Lv, S. Wang, and D. Ye, “Cfnet: Lidar-camera registration using calibration
+    flow network,” *Sensors*, vol. 21, no. 23, p. 8112, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[154] Y. Liao, J. Xie, and A. Geiger, “Kitti-360: A novel dataset and benchmarks
+    for urban scene understanding in 2d and 3d,” *IEEE Transactions on Pattern Analysis
+    and Machine Intelligence*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[155] B. Fan and Y. Dai, “Inverting a rolling shutter camera: bring rolling
+    shutter images to high framerate global shutter video,” in *Proceedings of the
+    IEEE/CVF International Conference on Computer Vision*, 2021, pp. 4228–4237.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] B. Fan, Y. Dai, and M. He, “Sunet: symmetric undistortion network for
+    rolling shutter correction,” in *Proceedings of the IEEE/CVF International Conference
+    on Computer Vision*, 2021, pp. 4541–4550.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[157] Z. Liu, H. Tang, S. Zhu, and S. Han, “Semalign: Annotation-free camera-lidar
+    calibration with semantic alignment loss,” in *2021 IEEE/RSJ International Conference
+    on Intelligent Robots and Systems (IROS)*.   IEEE, 2021, pp. 8845–8851.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[158] M. Burri, J. Nikolic, P. Gohl, T. Schneider, J. Rehder, S. Omari, M. W.
+    Achtelik, and R. Siegwart, “The euroc micro aerial vehicle datasets,” *The International
+    Journal of Robotics Research*, vol. 35, no. 10, pp. 1157–1163, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[159] M. Schönbein, T. Strauß, and A. Geiger, “Calibrating and centering quasi-central
+    catadioptric cameras,” in *2014 IEEE International Conference on Robotics and
+    Automation (ICRA)*.   IEEE, 2014, pp. 4443–4450.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[160] T. H. Butt and M. Taj, “Camera calibration through camera projection
+    loss,” in *ICASSP 2022 - 2022 IEEE International Conference on Acoustics, Speech
+    and Signal Processing (ICASSP)*, 2022, pp. 2649–2653.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[161] X. Li, F. Flohr, Y. Yang, H. Xiong, M. Braun, S. Pan, K. Li, and D. M.
+    Gavrila, “A new benchmark for vision-based cyclist detection,” in *2016 IEEE Intelligent
+    Vehicles Symposium (IV)*.   IEEE, 2016, pp. 1028–1033.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[162] S.-Y. Cao, J. Hu, Z. Sheng, and H.-L. Shen, “Iterative deep homography
+    estimation,” *arXiv preprint arXiv:2203.15982*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[163] M. Cao, Z. Zhong, J. Wang, Y. Zheng, and Y. Yang, “Learning adaptive
+    warping for real-world rolling shutter correction,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2022, pp. 17 785–17 793.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[164] T. Do, O. Miksik, J. DeGol, H. S. Park, and S. N. Sinha, “Learning to
+    detect scene landmarks for camera localization,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2022, pp. 11 132–11 142.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[165] T. Do, K. Vuong, S. I. Roumeliotis, and H. S. Park, “Surface normal estimation
+    of tilted images via spatial rectifier,” in *European Conference on Computer Vision*.   Springer,
+    2020, pp. 265–280.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[166] J. Shotton, B. Glocker, C. Zach, S. Izadi, A. Criminisi, and A. Fitzgibbon,
+    “Scene coordinate regression forests for camera relocalization in rgb-d images,”
+    in *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*,
+    2013, pp. 2930–2937.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[167] C. M. Parameshwara, G. Hari, C. Fermüller, N. J. Sanket, and Y. Aloimonos,
+    “Diffposenet: Direct differentiable camera pose estimation,” in *Proceedings of
+    the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022, pp.
+    6845–6854.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[168] W. Wang, D. Zhu, X. Wang, Y. Hu, Y. Qiu, C. Wang, Y. Hu, A. Kapoor, and
+    S. Scherer, “Tartanair: A dataset to push the limits of visual slam,” in *2020
+    IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2020, pp. 4909–4916.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[169] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A benchmark
+    for the evaluation of rgb-d slam systems,” in *2012 IEEE/RSJ international conference
+    on intelligent robots and systems*.   IEEE, 2012, pp. 573–580.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[170] B. J. Pijnacker Hordijk, K. Y. Scheper, and G. C. De Croon, “Vertical
+    landing for micro air vehicles using event-based optical flow,” *Journal of Field
+    Robotics*, vol. 35, no. 1, pp. 69–90, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[171] L. Yang, R. Shrestha, W. Li, S. Liu, G. Zhang, Z. Cui, and P. Tan, “Scenesqueezer:
+    Learning to compress scene for camera relocalization,” in *Proceedings of the
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022, pp. 8259–8268.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[172] W. Maddern, G. Pascoe, C. Linegar, and P. Newman, “1 year, 1000 km: The
+    oxford robotcar dataset,” *The International Journal of Robotics Research*, vol. 36,
+    no. 1, pp. 3–15, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[173] G. Ponimatkin, Y. Labbé, B. Russell, M. Aubry, and J. Sivic, “Focal length
+    and object pose estimation via render and compare,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2022, pp. 3825–3834.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[174] X. Sun, J. Wu, X. Zhang, Z. Zhang, C. Zhang, T. Xue, J. B. Tenenbaum,
+    and W. T. Freeman, “Pix3d: Dataset and methods for single-image 3d shape modeling,”
+    in *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*,
+    2018, pp. 2974–2983.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[175] Y. Wang, X. Tan, Y. Yang, X. Liu, E. Ding, F. Zhou, and L. S. Davis,
+    “3d pose estimation for fine-grained object categories,” in *Proceedings of the
+    European Conference on Computer Vision (ECCV) Workshops*, 2018, pp. 0–0.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[176] X. Jing, X. Ding, R. Xiong, H. Deng, and Y. Wang, “Dxq-net: Differentiable
+    lidar-camera extrinsic calibration using quality-aware flow,” *arXiv preprint
+    arXiv:2203.09385*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[177] Y. Zhang, X. Zhao, and D. Qian, “Learning-based framework for camera
+    calibration with distortion correction and high precision feature detection,”
+    *arXiv preprint arXiv:2202.00158*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[178] Y. Sun, J. Li, Y. Wang, X. Xu, X. Yang, and Z. Sun, “Atop: An attention-to-optimization
+    approach for automatic lidar-camera calibration via cross-modal object matching,”
+    *IEEE Transactions on Intelligent Vehicles*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[179] G. Wang, J. Qiu, Y. Guo, and H. Wang, “Fusionnet: Coarse-to-fine extrinsic
+    calibration network of lidar and camera with hierarchical point-pixel fusion,”
+    in *2022 International Conference on Robotics and Automation (ICRA)*.   IEEE,
+    2022, pp. 8964–8970.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[180] C. Ye, H. Pan, and H. Gao, “Keypoint-based lidar-camera online calibration
+    with robust geometric network,” *IEEE Transactions on Instrumentation and Measurement*,
+    vol. 71, pp. 1–11, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[181] N. Wakai, S. Sato, Y. Ishii, and T. Yamashita, “Rethinking generic camera
+    models for deep single image camera calibration to recover rotation and fisheye
+    distortion,” in *Proceedings of European Conference on Computer Vision (ECCV)*,
+    vol. 13678, 2022, pp. 679–698.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[182] S.-H. Chang, C.-Y. Chiu, C.-S. Chang, K.-W. Chen, C.-Y. Yao, R.-R. Lee,
+    and H.-K. Chu, “Generating 360 outdoor panorama dataset with reliable sun position
+    estimation,” in *SIGGRAPH Asia 2018 Posters*, 2018, pp. 1–2.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[183] C. Wu, “Towards linear-time incremental structure from motion,” in *2013
+    International Conference on 3D Vision-3DV 2013*.   IEEE, 2013, pp. 127–134.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[184] A. Howard, M. Sandler, G. Chu, L.-C. Chen, B. Chen, M. Tan, W. Wang,
+    Y. Zhu, R. Pang, V. Vasudevan *et al.*, “Searching for mobilenetv3,” in *Proceedings
+    of the IEEE/CVF international conference on computer vision*, 2019, pp. 1314–1324.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[185] C. R. Qi, H. Su, K. Mo, and L. J. Guibas, “Pointnet: Deep learning on
+    point sets for 3d classification and segmentation,” in *Proceedings of the IEEE
+    conference on computer vision and pattern recognition*, 2017, pp. 652–660.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[186] Y. Li, R. Bu, M. Sun, W. Wu, X. Di, and B. Chen, “Pointcnn: Convolution
+    on x-transformed points,” *Advances in neural information processing systems*,
+    vol. 31, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[187] D. Sun, X. Yang, M.-Y. Liu, and J. Kautz, “Pwc-net: Cnns for optical
+    flow using pyramid, warping, and cost volume,” in *Proceedings of the IEEE Conference
+    on Computer Vision and Pattern Recognition (CVPR)*, June 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[188] R. Hartley and A. Zisserman, *Multiple view geometry in computer vision*.   Cambridge
+    university press, 2003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[189] B. D. Lucas, T. Kanade *et al.*, *An iterative image registration technique
+    with an application to stereo vision*.   Vancouver, 1981, vol. 81.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[190] N. Ma, X. Zhang, H.-T. Zheng, and J. Sun, “Shufflenet v2: Practical guidelines
+    for efficient cnn architecture design,” in *Proceedings of the European conference
+    on computer vision (ECCV)*, 2018, pp. 116–131.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[191] M. A. Fischler and R. C. Bolles, “Random sample consensus: a paradigm
+    for model fitting with applications to image analysis and automated cartography,”
+    *Communications of the ACM*, vol. 24, no. 6, pp. 381–395, 1981.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[192] L. Nie, C. Lin, K. Liao, and Y. Zhao, “Learning edge-preserved image
+    stitching from multi-scale deep homography,” *Neurocomputing*, vol. 491, pp. 533–543,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[193] S. Baker and I. Matthews, “Lucas-kanade 20 years on: A unifying framework,”
+    *International journal of computer vision*, vol. 56, no. 3, pp. 221–255, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[194] J. Nocedal and S. J. Wright, *Numerical optimization*.   Springer, 1999.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[195] Z. Teed and J. Deng, “Raft: Recurrent all-pairs field transforms for
+    optical flow,” in *European conference on computer vision*.   Springer, 2020,
+    pp. 402–419.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[196] Y. Li, W. Pei, and Z. He, “Ssorn: Self-supervised outlier removal network
+    for robust homography estimation,” *arXiv preprint arXiv:2208.14093*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[197] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+    Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” *Advances in neural
+    information processing systems*, vol. 30, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[198] A. Handa, M. Bloesch, V. Pătrăucean, S. Stent, J. McCormac, and A. Davison,
+    “gvnn: Neural network library for geometric computer vision,” in *European Conference
+    on Computer Vision*.   Springer, 2016, pp. 67–82.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[199] C. R. Qi, L. Yi, H. Su, and L. J. Guibas, “Pointnet++: Deep hierarchical
+    feature learning on point sets in a metric space,” *Advances in neural information
+    processing systems*, vol. 30, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[200] A. Bochkovskiy, C.-Y. Wang, and H.-Y. M. Liao, “Yolov4: Optimal speed
+    and accuracy of object detection,” *arXiv preprint arXiv:2004.10934*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[201] A. H. Lang, S. Vora, H. Caesar, L. Zhou, J. Yang, and O. Beijbom, “Pointpillars:
+    Fast encoders for object detection from point clouds,” in *Proceedings of the
+    IEEE/CVF conference on computer vision and pattern recognition*, 2019, pp. 12 697–12 705.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[202] R. Poli, J. Kennedy, and T. Blackwell, “Particle swarm optimization,”
+    *Swarm intelligence*, vol. 1, no. 1, pp. 33–57, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[203] S. Gould, R. Hartley, and D. Campbell, “Deep declarative networks,” *IEEE
+    Transactions on Pattern Analysis and Machine Intelligence*, vol. 44, no. 8, pp.
+    3988–4004, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[204] B. Xiao, H. Wu, and Y. Wei, “Simple baselines for human pose estimation
+    and tracking,” in *Proceedings of the European conference on computer vision (ECCV)*,
+    2018, pp. 466–481.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[205] X. Huang, P. Wang, X. Cheng, D. Zhou, Q. Geng, and R. Yang, “The apolloscape
+    open dataset for autonomous driving and its application,” *IEEE transactions on
+    pattern analysis and machine intelligence*, vol. 42, no. 10, pp. 2702–2719, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[206] H. Yu, Y. Luo, M. Shu, Y. Huo, Z. Yang, Y. Shi, Z. Guo, H. Li, X. Hu,
+    J. Yuan *et al.*, “Dair-v2x: A large-scale dataset for vehicle-infrastructure
+    cooperative 3d object detection,” in *Proceedings of the IEEE/CVF Conference on
+    Computer Vision and Pattern Recognition*, 2022, pp. 21 361–21 370.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[207] J. Kang and N. L. Doh, “Automatic targetless camera–LIDAR calibration
+    by aligning edge with Gaussian mixture model,” *Journal of Field Robotics*, vol. 37,
+    no. 1, pp. 158–179, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[208] H. Caesar, V. Bankiti, A. H. Lang, S. Vora, V. E. Liong, Q. Xu, A. Krishnan,
+    Y. Pan, G. Baldan, and O. Beijbom, “nuscenes: A multimodal dataset for autonomous
+    driving,” in *Proceedings of the IEEE/CVF conference on computer vision and pattern
+    recognition*, 2020, pp. 11 621–11 631.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[209] J. Mao, M. Niu, C. Jiang, X. Liang, Y. Li, C. Ye, W. Zhang, Z. Li, J. Yu,
+    C. Xu *et al.*, “One million scenes for autonomous driving: Once dataset,” 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[210] K. He, R. Girshick, and P. Dollár, “Rethinking imagenet pre-training,”
+    in *Proceedings of the IEEE International Conference on Computer Vision*, 2019,
+    pp. 4918–4927.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[211] Y. Jeong, S. Ahn, C. Choy, A. Anandkumar, M. Cho, and J. Park, “Self-calibrating
+    neural radiance fields,” in *Proceedings of the IEEE/CVF International Conference
+    on Computer Vision*, 2021, pp. 5846–5854.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| Kang Liao received his Ph.D. degree from Beijing Jiaotong University in 2023\.
+    From 2021 to 2022, he was a Visiting Researcher at Max Planck Institute for Informatics
+    in Germany. His current research interests include camera calibration, 3D vision,
+    and panoramic vision. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lang Nie is currently pursuing his Ph.D. degree at Beijing Jiaotong University.
+    His current research interests include multi-view geometry, image stitching, and
+    computer vision. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shujuan Huang is currently pursuing his Ph.D. degree at Beijing Jiaotong
+    University. His current research interests include camera-LiDAR calibration, depth
+    completion, and computer vision. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chunyu Lin is a Professor at Beijing Jiaotong University. From 2011 to 2012,
+    he was a Post-Doctoral Researcher at the Multimedia Laboratory, Ghent University,
+    Belgium. His research interests include multi-view geometry, camera calibration,
+    and virtual reality video processing. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Jing Zhang is currently a Research Fellow at the School of Computer Science,
+    The University of Sydney. His research interests include computer vision and deep
+    learning. He has published more than 60 papers on prestigious conferences and
+    journals, such as CVPR, ICCV, ECCV, IJCV and IEEE T-PAMI. He is a SPC of the AAAI
+    and IJCAI. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yao Zhao (Fellow, IEEE) is the Director of the Institute of Information Science,
+    Beijing Jiaotong University. His current research interests include image/video
+    coding and video analysis and understanding. He was named a Distinguished Young
+    Scholar by the National Science Foundation of China in 2010 and was elected as
+    a Chang Jiang Scholar of Ministry of Education of China in 2013. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Moncef Gabbouj (Fellow, IEEE) is a Professor at the Department of Computing
+    Sciences, Tampere University, Finland. He was an Academy of Finland Professor.
+    His research interests include Big Data analytics, multimedia analysis, artificial
+    intelligence, machine learning, pattern recognition, video processing, and coding.
+    Dr. Gabbouj is a Fellow of the IEEE and Asia-Pacific Artificial Intelligence Association.
+    He is member of the Academia Europaea, the Finnish Academy of Science and Letters,
+    and the Finnish Academy of Engineering Sciences. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Dacheng Tao (Fellow, IEEE) is currently the Inaugural Director of the JD
+    Explore Academy and a Senior Vice President of JD.com, Inc. He mainly applies
+    statistics and mathematics to artificial intelligence and data science. His research
+    is detailed in one monograph and over 200 publications in prestigious journals
+    and proceedings at leading conferences. He is a fellow of the Australian Academy
+    of Science, AAAS, and ACM. He received the 2015 Australian Scopus-Eureka Prize,
+    the 2018 IEEE ICDM Research Contributions Award, and the 2021 IEEE Computer Society
+    McCluskey Technical Achievement Award. |'
+  prefs: []
+  type: TYPE_TB
+- en: See pages - of [supp.pdf](supp.pdf)
+  prefs: []
+  type: TYPE_NORMAL

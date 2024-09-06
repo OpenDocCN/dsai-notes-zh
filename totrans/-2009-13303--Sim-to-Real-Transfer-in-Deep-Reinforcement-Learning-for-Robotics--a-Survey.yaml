@@ -1,0 +1,1220 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:59:07'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2009.13303] Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics:
+    a Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2009.13303](https://ar5iv.labs.arxiv.org/html/2009.13303)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Wenshuai Zhao¹, Jorge Peña Queralta¹, Tomi Westerlund¹ ¹Turku Intelligent Embedded
+    and Robotic Systems Lab, University of Turku, Finland
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Emails: ¹{wezhao, jopequ, tovewe}@utu.fi'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Deep reinforcement learning has recently seen huge success across multiple
+    areas in the robotics domain. Owing to the limitations of gathering real-world
+    data, i.e., sample inefficiency and the cost of collecting it, simulation environments
+    are utilized for training the different agents. This not only aids in providing
+    a potentially infinite data source, but also alleviates safety concerns with real
+    robots. Nonetheless, the gap between the simulated and real worlds degrades the
+    performance of the policies once the models are transferred into real robots.
+    Multiple research efforts are therefore now being directed towards closing this
+    sim-to-real gap and accomplish more efficient policy transfer. Recent years have
+    seen the emergence of multiple methods applicable to different domains, but there
+    is a lack, to the best of our knowledge, of a comprehensive review summarizing
+    and putting into context the different methods. In this survey paper, we cover
+    the fundamental background behind sim-to-real transfer in deep reinforcement learning
+    and overview the main methods being utilized at the moment: domain randomization,
+    domain adaptation, imitation learning, meta-learning and knowledge distillation.
+    We categorize some of the most relevant recent works, and outline the main application
+    scenarios. Finally, we discuss the main opportunities and challenges of the different
+    approaches and point to the most promising directions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Deep Reinforcement Learning; Robotics; Sim-to-Real; Transfer Learning; Meta
+    Learning; Domain Randomization; Knowledge Distillation; Imitation Learning;
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Reinforcement learning (RL) algorithms have been increasingly adopted by the
+    robotics community over the past years to control complex robots or multi-robot
+    systems [[1](#bib.bib1), [2](#bib.bib2)], or provide end-to-end policies from
+    perception to control [[3](#bib.bib3)]. Inspired by the way we learn through trial-and-error
+    processes, RL algorithms base their knowledge acquisition in the rewards that
+    agents obtain when they act in certain manners given different experiences. This
+    naturally requires a large number of episodes, and therefore the learning limitations
+    in terms of time and experience variability in real-world scenarios is evident.
+    Moreover, learning with real robots requires the consideration of potentially
+    dangerous or unexpected behaviors in safety-critical applications [[4](#bib.bib4)].
+    Deep reinforcement learning (DRL) algorithms have been successfully deployed in
+    various types of simulation environments, yet their success beyond simulated worlds
+    has been limited. An exception to this is, however, robotic tasks involving object
+    manipulation [[5](#bib.bib5), [6](#bib.bib6)]. In this survey, we review the most
+    relevant works that try to answer a key research question in this direction: how
+    to exploit simulation-based training in real-world settings by transferring the
+    knowledge and adapting the policies accordingly (Fig. [1](#S1.F1 "Figure 1 ‣ I
+    Introduction ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics:
+    a Survey")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/27bf217b42294f29d5a1102402bf6c56.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Conceptual view of a simulation-to-reality transfer process. One
+    of the most common methods is domain randomization, through which different parameters
+    of the simulator (e..g, colors, textures, dynamics) are randomized to produce
+    more robust policies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simulation-based training provides data at low-cost, but involves inherent mismatches
+    with real-world settings. Bridging the gap between simulation and reality requires,
+    first of all, methods that are able to account for mismatches in both sensing
+    and actuation. The former aspect has been widely studied in recent years within
+    the deep learning field, for instance with adversarial attacks on computer vision
+    algorithms [[7](#bib.bib7)]. The latter risk can be minimized through more realistic
+    simulation. In both of these cases, some of the current approaches include works
+    that introduce perturbances in the environment [[8](#bib.bib8)] or focus on domain
+    randomization [[9](#bib.bib9)]. Another key aspect to take into account is that
+    an agent deployed in the real world will potentially be exposed to novel experiences
+    that were not present in the simulations [[10](#bib.bib10)], as well as the potential
+    need to adapt their policies to encompass wider sets of tasks. Some of the approaches
+    to bridge the gap in this direction rely on meta learning [[11](#bib.bib11)] or
+    continual learning [[12](#bib.bib12)], among others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The methods described above focus on extracting knowledge from simulation-trained
+    agents in order to deploy them in real-life scenarios. However, other approaches
+    exist to the same end. In recent years, simulators have been progressing towards
+    more realistic scenarios and physics engines: Airsim [[13](#bib.bib13)], CARLA [[14](#bib.bib14)],
+    RotorS [[15](#bib.bib15), [16](#bib.bib16)], and others [[17](#bib.bib17)]. With
+    some of these simulators, part of the aim is to be able to deploy the robotic
+    agents directly into the real world by providing training data and experiences
+    with minimal mismatches between real and simulated settings. Other research efforts
+    have been directed towards increasing safety during training in real-settings.
+    Safety is one of the main challenges towards achieving online training of complex
+    agents in the real-world, from robot arms to self-driving cars [[4](#bib.bib4)].
+    In this direction, recent works have shown promising results towards safe DRL
+    that is able to ensure convergence even while reducing the exploration space [[3](#bib.bib3)].
+    In this survey, we do not cover specific simulators or techniques for direct learning
+    in real-world settings, but instead focus on describing the main methods for transferring
+    knowledge learned in simulation towards their deployment in real robotic platforms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is, to the best of our knowledge, the first survey that describes the different
+    methods being utilized towards closing the simulation-to-reality gap in DRL for
+    robotics. We also concentrate on describing the main application fields of current
+    research efforts. We discuss recent works from a wider point of view by including
+    related research directions in the areas of transfer learning and domain adaptation,
+    knowledge distillation, and meta reinforcement learning. While other surveys have
+    focused on transfer learning techniques [[18](#bib.bib18)] or safe reinforcement
+    learning [[4](#bib.bib4)], we provide a different point of view with an emphasis
+    on DRL policy transfer in the robotics domain. Finally, there is also a significant
+    amount of publications deploying DRL policies on real robots. In this survey,
+    nonetheless, we focus on those works that specifically tackle issues in sim-to-real
+    transfer. The focus is mostly in end-to-end approaches, but we also describe relevant
+    research where sim-to-real transfer techniques are applied to the sensing aspects
+    of robotic operation, primarily the transfer of DL vision algorithms to real robots.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rest of this paper is organized as follows. In Section [II](#S2 "II Background
+    ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey"),
+    we briefly introduce the main approaches to DRL, together with related research
+    directions in knowledge distillation, transfer, adaptation and meta learning.
+    Section [III](#S3 "III Methodologies for Sim-to-Real Transfer ‣ Sim-to-Real Transfer
+    in Deep Reinforcement Learning for Robotics: a Survey") then delves into the different
+    approaches being taken towards closing the simulation-to-reality gap, with Section [IV](#S4
+    "IV Application Scenarios ‣ Sim-to-Real Transfer in Deep Reinforcement Learning
+    for Robotics: a Survey") focusing on the most relevant application areas. Then,
+    we discuss open challenges and promising research directions in Section [V](#S5
+    "V Main Challenges and Future Directions ‣ Sim-to-Real Transfer in Deep Reinforcement
+    Learning for Robotics: a Survey"). Finally, Section [VI](#S6 "VI Conclusion ‣
+    Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey") concludes
+    this survey.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Sim-to-real is a very comprehensive concept and applied in many fields including
+    robotics and classic machine vision tasks. Thereby quite a few methods and concepts
+    intersect with this aim including transfer learning, robust RL, and meta learning.
+    In this section, we briefly introduce the concepts of deep reinforcement learning,
+    knowledge distillation, transfer learning and domain adaption, before going into
+    more details about sim-to-real transfer methods for DRL. The relationship between
+    there concepts is illustrated in Fig. [2](#S2.F2 "Figure 2 ‣ II Background ‣ Sim-to-Real
+    Transfer in Deep Reinforcement Learning for Robotics: a Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/970cc5f7d347a424f183a0d302686b99.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Illustration of the different methods related to sim-to-real transfer
+    in deep reinforcement learning and their relationships.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A Deep Reinforcement Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A standard reinforcement learning (RL) task can be regarded as a sequential
+    decision making setup which consists of an agent interacting with an environment
+    in discrete steps. The agent takes an action $a_{t}$ at each timestep t, causing
+    the environment to change its state from $s_{t}$ to $s_{t+1}$ with a transition
+    probability $p(s_{t+1}|s_{t},a_{t})$. This setup can be regarded as a Markov decision
+    process (MDP) with a set of states $s\in\mathcal{S}$, actions $a\in\mathcal{A}$,
+    transitions $p\in\mathcal{P}$ and rewards $r\in\mathcal{R}$. Therefore we can
+    define this MDP as a tuple ([1](#S2.E1 "In II-A Deep Reinforcement Learning ‣
+    II Background ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics:
+    a Survey")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $D\equiv(\mathcal{S},\mathcal{A},\mathcal{P},\mathcal{R})$ |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: The objective of reinforcement learning is to maximize the expected reward by
+    choosing an optimal policy which will be represented via a deep neural network
+    in DRL. Accelerated by modern computation capacity, DRL has shown significant
+    success on various applications [[1](#bib.bib1), [19](#bib.bib19)], but particular
+    in the simulated environment [[20](#bib.bib20)]. Therefore, how to transfer this
+    success from simulation to reality is drawing more and more attention, which is
+    also the motivation of this paper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Sim-to-Real Transfer
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Transferring DRL policies form simulation environments to reality is a necessary
+    step towards more complex robotic systems that have DL-defined controllers. This,
+    however, is not a problem specific to DRL algorithms, but ML in general. While
+    most DRL algorithms provide end-to-end policies, i.e., control mechanisms that
+    take raw sensor data as inputs and produce direct actuation commands as outputs,
+    these two dimensions of robotics can be separated. Closing the gap between simulation
+    and reality gap in terms of actuation requires simulators to be more accurate,
+    and to account for variability in agent dynamics. On the sensing part, however,
+    the problem can be considered wider, as it also involves the more general ML problem
+    of facing situations in the real world that have not appeared in simulation [[10](#bib.bib10)].
+    In this paper, we focus mostly on end-to-end models, and overview both research
+    directed towards system modeling and dynamics randomization, as well as research
+    introducing randomization from the sensing point of view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-C Transfer Learning and Domain Adaptation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Transfer learning aims at improving the performance of target learners on target
+    domains by transferring the knowledge contained in different but related source
+    domains [[18](#bib.bib18)]. In this way, transfer learning can reduce the dependence
+    of target domain data when constructing target learners.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Domain adaptation is a subset of transfer learning methods. It specifies the
+    situation when we have sufficient source domain labeled data and the same single
+    task as the target task, but without or very few target domain data. In sim-to-real
+    robotics, researchers tend to employ a simulator to train the RL model and then
+    deploy it in the realistic environment, where we should take advantage of the
+    domain adaptation techniques in order to transfer the simulation based model well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-D Knowledge Distillation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Large networks are typical in DRL with high-dimensional input data (e.g, complex
+    visual tasks). Policy distillation is the process of extracting knowledge to train
+    a new network that is able to maintain a similarly expert level while being significantly
+    smaller and more efficient [[21](#bib.bib21)]. In these set-ups, the two networks
+    are typically called teacher and student. The student is trained in a supervised
+    manner with data generated by the teacher network. In [[12](#bib.bib12)], the
+    authors presented DisCoRL, a modular, effective and scalable pipeline for continual
+    DRL. DisCoRL has been succesfully applied to multiple tasks learned by different
+    teachers, with their knowledge being distilled to a single student network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-E Meta Reinforcement Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Meta Learning, namely learning to learn, aims to learn the adaptation ability
+    to unseen test tasks from multiple training tasks. A good meta learning model
+    should be trained across a variety of learning tasks and optimized for the best
+    performance over a distribution of tasks, including potentially unseen tasks when
+    tested. This spirit can be applied on both supervised learning and reinforcement
+    learning, and in the latter case it is called meta reinforcement learning (MetaRL) [[22](#bib.bib22)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The overall configuration of MetaRL is similar to an ordinary RL algorithm,
+    except that MetaRL usually implements an LSTM policy and incorporates the last
+    reward $r_{t-1}$ and last action $a_{t-1}$ into the current policy observation.
+    In this case, the LSTM’s hidden states serve as a memory for tracking characteristics
+    of the trajectories. Therefore, MetaRL draws knowledge from past training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-F Robust RL and Imitation Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Robust RL [[23](#bib.bib23)] was proposed quite early as a new RL paradigm that
+    explicitly takes into account input disturbances as well as modeling errors. It
+    considers a bad, or even adversarial model and tries to maximize the reward as
+    a optimization problem [[24](#bib.bib24), [25](#bib.bib25)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Imitation learning proposes to employ expert demonstration or trajectories instead
+    of manually constructing a fixed reward function to train RL agents. The methods
+    of imitation learning can be broadly classified into two key areas: behaviour
+    cloning where an agent learns a mapping from observations to actions given demonstrations [[26](#bib.bib26),
+    [27](#bib.bib27)] and  inverse reinforcement learning where an agent attempts
+    to estimate a reward function that describes the given demonstrations [[28](#bib.bib28)].
+    Because it aims to give a robust reward for RL agents, sometimes imitation learning
+    can be utilized to obtain robust RL or sim-to-real transfer [[29](#bib.bib29)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Classification of the most relevant publications in Sim2Real Transfer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Description | Sim-to-real transfer | Multi-agent | Simulator | Knowledge
+    | Learning | Real | Application |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | and learning details | learning | / Engine | Transfer | Algorithm | Robot/Platform
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Balaji et al. [[30](#bib.bib30)] | DeepRacer: an educational autonomous racing
+    platform. | Random colors and parallel domain randomization | ✓(sim only) Distr.
+    rollout | Gazebo RoboMaker | ✗ | PPO | DeepRacer 4WD 1:18 Car | Autonomous racing
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Traore et al. [[12](#bib.bib12)] | Continual RL with policy distillation
+    and sim-to-real transfer. | Continual learning with policy distillation. | ✗ |
+    PyBullet | ✓Multi-task Distillation | PPO2 | Small mobile platform | Robotic navigation
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kaspar et al. [[31](#bib.bib31)] | Sim-to-real transfer for RL without Dynamics
+    Randomization. | System identification and a high-quality robot model. | ✗ | PyBullet
+    | ✗ | SAC | KUKA LBR iiwa +WSG50 gripper | Peg-in-Hole manipulation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Matas et al. [[6](#bib.bib6)] | Sim-to-real RL for deformable object manipulation.
+    | Stochastic grasping and domain radomization. | ✓(sim) | PyBullet | ✗ | DDPGfD
+    | 7DOF Kinova Mico Arm | Dexterous manipulation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Witman et al. [[32](#bib.bib32)] | Sim-to-real RL for thermal effects of
+    an atmospheric pressure plasma jet. | Custom physics model and dynamics randomization
+    | ✗ | Custom | ✗ | A3C | kHz-excited APPJ in He | Plasma jet control |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Jeong et al. [[33](#bib.bib33)] | Modeling Generalized Forces with RL for
+    Sim2Real Transfer | Modeling and learning state dependent generalized forces.
+    | ✗ | MuJoCo | ✗ | MPO | Rethink Robotics Sawyer | Nonprehensile manipulation
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Arndt et al. [[11](#bib.bib11)] | Meta Reinforcement Learning for Sim2Real
+    Domain Adaptation | Domain random. and model-agnostic meta-learning. | ✗ | MuJoCo
+    | ✓Meta- training | PPO | Kuka LBR 4+ arm | Manipulation (hockey puck) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Breyer et al. [[34](#bib.bib34)] | Flexible robotic grasping with Sim2Real
+    RL | Direct transfer. Elliptic mask to RGB-D images. | ✗ | PyBullet | ✗ | TRPO
+    | ABB YuMi with parallel-jaw gripper | Robotic Grasping |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Van Baar et al. [[35](#bib.bib35)] | Sim-to-real transfer with robustified
+    policies for robot tasks. | Variation of appearance and/ or physics parameters.
+    | ✓(sim) | MuJoCo +Ogre 3D | ✓ | A3C (sim) +Off-policy | Mitsubishi Melfa RV-6SL
+    | Marble Maze Manipulation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bassani et al. [[36](#bib.bib36)] | Sim2Real RL for robotic soccer competitions.
+    | Domain adaptation and custom simulator for transfer. | ✗ | VSSS-RL | ✓ | DDPG
+    /DQN | VSSS Robot | Robotic Navigation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Qin et al. [[37](#bib.bib37)] | Sim2Real for six-legged robots with DRL and
+    curriculum learning. | Curriculum learning with inverse kinematics. | ✗ | V-Rep
+    | ✓ | PPO | Six-legged robot | Navigation and obstacle avoid. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vacaro et al. [[38](#bib.bib38)] | Sim-to-real in reinforcement learning
+    for everyone | Domain randomization (light + color + textures). | ✓(sim) | Unity3D
+    | ✗ | IMPALA | Sainsmart robot arm | Low-cost robot arm |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chaffre et al. [[39](#bib.bib39)] | Sim-to-Real Transfer with Incremental
+    Environment Complexity | SAC training using incremental environment complexity.
+    | ✗ | Gazebo | ✗ | DDPG /SAC | Wifibot Lab V4 | Mapless navigation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kaspar et al. [[40](#bib.bib40)] | Rl with Cartesian Commands for Peg in
+    Hole Tasks. | Dynamics (CMA-ES) and environment randomization. | ✗ | PyBullet
+    | ✗ | SAC | Kuka LBR iiwa | Peg-in-hole tasks |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hundt et al. [[41](#bib.bib41)] | Efficient RL for Multi-Step Visual Tasks
+    via Reward Shaping. | Direct transfer with custom simulation framework. | ✗ |
+    SPOT Framework | ✗ | SPOT-Q +PER | Universal Robot UR5 | Long-term multi-step
+    tasks |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Pedersen et al. [[42](#bib.bib42)] | Sim-to-Real Transfer for Gripper Pose
+    Estimation with GAN | CycleGANs for domain adaption and transfer. | ✗ | Unity
+    | ✗ | PPO | Panda robot | Robotic Grippers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Ding et al. [[43](#bib.bib43)] | Sim-to-Real Transfer for Optical Tactile
+    Sensing | Analysis of different amounts of randomization. | ✗ | PyBullet | ✗ |
+    CNN | Sawyer robot +TacTip sensor | Tactile sensing |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Muratore et al. [[9](#bib.bib9)] | Data-efficient Bayesian Domain Randomization
+    for sim-to-real | Proposed bayesian randomization (BAYR). | ✗ | Custom/ BoTorch
+    | ✗ | PPO / RF Classifier | Quanser Qube | swing-up/ balancing |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhao et al. [[8](#bib.bib8)] | Towards closing the sim-to-real gap in collaborative
+    DRL with perturbances | Domain randomization (custom perturbations) | ✓(sim) |
+    Pybullet | ✗ | PPO | Kuka (sim-only) | Robot arm reacher |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nachum et al. [[44](#bib.bib44)] | Multi-agent manipulation via locomotion
+    | Hierarchichal sim-to-real, model-free, zero-shot transfer. | ✓ | MuJoCo | ✗
+    | Custom | D’Kitty robo (2x) | Multi-agent manipulation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rajeswaran et al. [[5](#bib.bib5)] | Dexterous manipulation with DRL and
+    demonstrators. | Imitation learning via demonstrators with VR. | ✗ | MuJoCo |
+    ✗ | DAPG | ADROIT 24-DoF Hand | Multi-fingered robot hands |'
+  prefs: []
+  type: TYPE_TB
+- en: III Methodologies for Sim-to-Real Transfer
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Research in sim-to-real transfer has resulted in an increase of several orders
+    of magnitude in the number of publications over the past few years. Multiple research
+    directions have been followed, and we summarize in this section the most representative
+    methods for sim-to-real transfer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table [I](#S2.T1 "TABLE I ‣ II-F Robust RL and Imitation Learning ‣ II Background
+    ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey")
+    lists some of the most relevant and recent works in this field. The most widely
+    used method for learning transfer is domain randomization, with other relevant
+    examples including policy distillation, system identification, or meta-RL. The
+    variability in terms of learning algorithms is higher, with DRL using proximal
+    policy optimization (PPO) [[45](#bib.bib45)], trust region policy optimization
+    (TRPO) [[46](#bib.bib46)], maximum a-posteriori policy optimization (MPO) [[47](#bib.bib47)],
+    asynchronous actor critic (A3C) methods [[48](#bib.bib48)], soft actor critic
+    (SAC) [[49](#bib.bib49)], or deep deterministic policy gradient (DDPG) [[50](#bib.bib50)],
+    among others.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Zero-shot Transfer
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The most straightforward way of transferring knowledge from simulation to reality
+    is to build a realistic simulator, or to have enough simulated experience, so
+    that the model can be directly applied in real-world settings. This strategy is
+    commonly referred to as zero-shot or direct transfer. System identification to
+    build precise models of the real world and domain randomization are techniques
+    that can be seen as one-shot transfer. We discuss both of these separately in
+    Sections [III-B](#S3.SS2 "III-B System Identification ‣ III Methodologies for
+    Sim-to-Real Transfer ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for
+    Robotics: a Survey") and [III-C](#S3.SS3 "III-C Domain Randomization Methods ‣
+    III Methodologies for Sim-to-Real Transfer ‣ Sim-to-Real Transfer in Deep Reinforcement
+    Learning for Robotics: a Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B System Identification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is of note that simulators are not faithful representation of the real world.
+    System identification [[51](#bib.bib51)] is exactly to build a precise mathematical
+    model for a physical system and to make the simulator more realistic careful calibration
+    is necessary. Nonetheless, challenges for obtaining a realistic enough simulator
+    are still existing. For example, it is hard to build high-quality rendered image
+    to simulate the real vision. Furthermore, many physical parameters of the same
+    robot might vary significantly due to temperature, humidity, positioning or its
+    wear-and-tear in time, which brings more difficulty for system identification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Domain Randomization Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Domain randomization is the idea that [[52](#bib.bib52)], instead of carefully
+    modeling all the parameters of the real world, we could highly randomize the simulation
+    in order to cover the real distribution of the real-world data despite the bias
+    between the model and real world. Fig. [3(a)](#S3.F3.sf1 "In Figure 3 ‣ III-C
+    Domain Randomization Methods ‣ III Methodologies for Sim-to-Real Transfer ‣ Sim-to-Real
+    Transfer in Deep Reinforcement Learning for Robotics: a Survey") shows the paradigm
+    of domain randomization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ec1ea52f8af6b461980e7f9d1a95035c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Intuition behind the domain randomization paradigm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/2b534a177ffa1d9684213cd17693cbdf.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Intuition behind the domain adaptation paradigm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 3: Illustration of two of the most widely used methods for sim-to-real
+    transfer in DRL. Domain randomization and domain adaptation are often applied
+    as separate techniques, but they can also be applied together.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'According to the components of the simulator randomized, we divide the methods
+    of domain randomization into two kinds: visual randomization and dynamics randomization.
+    In robotic vision tasks including object localization [[53](#bib.bib53)], object
+    detection [[54](#bib.bib54)], pose estimation [[55](#bib.bib55)], and semantic
+    segmentation [[56](#bib.bib56)], the training data from simulator always have
+    different textures, lighting, and camera positions from the realistic environments.
+    Therefore, visual domain randomization aims to provide enough simulated variability
+    of the visual parameters at training time such that at test time the model is
+    able to generalize to real-world data. In addition to adding randomization to
+    the visual input, dynamics randomization could also help acquire a robust policy
+    particularly where the controlling policy is needed. To learn dexterous in-hand
+    manipulation policies for a physical five-fingered hand, [[57](#bib.bib57)] randomizes
+    various physical parameters in the simulator, such as object dimensions, objects
+    and robot link masses, surface friction coefficients, robot joint damping coefficients
+    and actuator force gains. Their successful sim-to-real transfer experiments show
+    the powerful effect of domain randomization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides usually making the simulated data randomized to cover the real-world
+    data distribution, [[58](#bib.bib58)] provides another interesting angle to apply
+    domain randomization. They proposes to translate the randomized simulated image
+    and real-world into the canonical sim images and demonstrate the effectiveness
+    of this sim-to-real approach by training a vision-based closed-loop grasping RL
+    agent in simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Domain Adaptation Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Domain adaptation methods use data from source domain to improve the performance
+    of a learned model on a different target domain where data is always less available.
+    Since usually there are different feature spaces between the source domain and
+    target domain, in order to better transfer the knowledge from source data, we
+    should attempt to make these two feature space unified. This is the main spirit
+    of domain adaptation, and can be described by the diagram in Fig. [3(b)](#S3.F3.sf2
+    "In Figure 3 ‣ III-C Domain Randomization Methods ‣ III Methodologies for Sim-to-Real
+    Transfer ‣ Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a
+    Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The research of domain adaptation is broadly conducted recently in vision-based
+    tasks, such as image classification and semantic segmentation [[59](#bib.bib59),
+    [60](#bib.bib60)]. However, in this paper we focus on the tasks related with reinforcement
+    learning and the ones applied to robotics. In these scenarios, the pure vision
+    related tasks employing domain adaptation play as priors to the succeeding building
+    reinforcement learning agents or other controlling tasks [[58](#bib.bib58), [61](#bib.bib61),
+    [29](#bib.bib29)]. There is also some image-to-policy work using domain adaptation
+    to generalize the policy learned by synthetic data or speed up the learning on
+    real-world robots [[61](#bib.bib61)]. Sometimes domain adaptation is used to directly
+    transfer the policy between agents [[62](#bib.bib62)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Specifically, we now formalize the domain adaptation scenarios in a reinforcement
+    learning setting [[63](#bib.bib63)]. Based on the definition of MDP in equation ([1](#S2.E1
+    "In II-A Deep Reinforcement Learning ‣ II Background ‣ Sim-to-Real Transfer in
+    Deep Reinforcement Learning for Robotics: a Survey")), we denote the source domain
+    as $D_{S}\equiv(\mathcal{S}_{S},\mathcal{A}_{S},\mathcal{P}_{S},\mathcal{R}_{S})$
+    and target domain as $D_{T}\equiv(\mathcal{S}_{T},\mathcal{A}_{T},\mathcal{P}_{T},\mathcal{R}_{T})$,
+    respectively. In reinforcement learning scenarios, the states $\mathcal{S}$ of
+    the source and target domain can be quite different $(\mathcal{S}_{S}\neq\mathcal{S}_{T})$
+    due to the perceptual-reality gap [[64](#bib.bib64)], while both domains share
+    the action spaces and the transitions $\mathcal{P}$ $(\mathcal{A}_{S}\approx{\mathcal{A}_{T}},\mathcal{P}_{S}\approx{\mathcal{P}_{T}})$and
+    their reward functions $\mathcal{R}$ have structural similarity $(\mathcal{R}_{S}\approx{\mathcal{R}_{T}})$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the literature, we summarize three common methods for domain adaptation
+    regardless of their tasks. They are discrepancy-based, adversarial-based, and
+    reconstruction-based methods, which can be also used crossly. Discrepancy-based
+    methods measure the feature distance between source and target domain by calculating
+    pre-defined statistical metrics, in order to align their feature spaces [[65](#bib.bib65),
+    [66](#bib.bib66), [67](#bib.bib67)]. Adversarial-based methods build a domain
+    classifier to distinguish whether the features come from source domain or target
+    domain. After being trained, the extractor could produce invariant feature from
+    both source domain and target domain [[68](#bib.bib68), [69](#bib.bib69), [70](#bib.bib70)].
+    Reconstruction-based methods also aim to find the invariant or shared features
+    between domains. However, they realize this goal by constructing one auxiliary
+    reconstruction task and employ the shared feature to recover the original input [[71](#bib.bib71)].
+    In this way, the shared feature should be invariant and independent with the domains.
+    These three methods provide different angles to make the features from different
+    domains unified, and can be utilized in both vision tasks and RL-based control
+    tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E Learning with Disturbances
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Domain randomization and dynamics randomization methods focus on introducing
+    perturbations in the simulation environments with the aim of making the agents
+    less susceptible to the mismatches between simulation and reality [[30](#bib.bib30),
+    [38](#bib.bib38), [40](#bib.bib40)]. The same conceptual idea has been extended
+    in other works, where perturbances has been introduced to obtain more robust agents.
+    For example, in [[72](#bib.bib72)], the authors consider noisy rewards. While
+    not directly related to sim-to-real transfer, noisy rewards can better emulate
+    real-world training of agents. Also, in some of our recent works [[8](#bib.bib8),
+    [73](#bib.bib73)], we have considered environmental perturbations that affect
+    differently different agents that are learning in parallel. This is an aspect
+    that needs to be considered when multiple real agents are to be deployed or trained
+    with a common policy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-F Simulation Environments
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A key aspect in sim-to-real transfer is the choice of simulation. Independently
+    of the techniques utilized for efficiently transferring knowledge to real robots,
+    the more realistic a simulation is the better results that can be expected. The
+    most widely used simulators in the literature are Gazebo [[74](#bib.bib74)], Unity3D,
+    and PyBullet [[75](#bib.bib75)] or MuJoCo [[17](#bib.bib17)]. Gazebo has the advantage
+    of being widely integrated with the Robot Operating System (ROS) middleware, and
+    therefore can be used together with part of the robotics stack that is present
+    in real robots. PyBullet and MuJoCo, on the other hand, present wider integration
+    with DL and RL libraries and gym environments. In general, Gazebo suits more complex
+    scenarios while PyBullet and MuJoCo provide faster training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In those cases where system identification for one-shot transfer is the objective,
+    researchers have often built or customized specific simulations that meet problem-specific
+    requirements and constraints [[32](#bib.bib32), [36](#bib.bib36), [41](#bib.bib41)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Application Scenarios
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Some of the most common applications for DRL in robotics are navigation and
+    dexterous manipulation [[1](#bib.bib1), [76](#bib.bib76)]. Owing to the limited
+    operational space in which most robotic arms operate, simulation environments
+    for dexterous manipulation are relatively easier to generate than those for more
+    complex robotic systems. For instance, the Open AI Gym [[77](#bib.bib77)], one
+    of the most widely used frameworks for reinforcement learning, provides multiple
+    environments for dexterous manipulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A Dexterous Robotic Manipulation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Robotic manipulation tasks that have been possible with DRL ranging from learning
+    peg-in-hole tasks [[40](#bib.bib40)] to deformable object manipulation [[6](#bib.bib6)],
+    and including more dexterous manipulation with multi-fingered hands [[5](#bib.bib5)],
+    or learning force control policies [[78](#bib.bib78)]. The latter is particularly
+    relevant for sim-to-real: applying excessive force to real objects might cause
+    damage, while grasping can fail with a lack of force.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [[6](#bib.bib6)], Matas et al. utilize domain randomization for learning
+    manipulation of deformable objects. The authors identify as one of the main drawbacks
+    of the simulation environment the inability to properly simulate the degree of
+    deformability of the objects, with the real robot being unable to grasp stiffer
+    objects. Moreover, a relevant conclusion from this work is that excessive domain
+    randomization can be detrimental. Specifically, when the number of different colors
+    that were being used for each texture was too large, the performance of the real
+    robot was significantly worse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B Robotic Navigation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While learning navigation with reinforcement learning has been a topic of increasing
+    research interest over the past years [[79](#bib.bib79), [80](#bib.bib80)], the
+    literature focusing on sim-to-real transfer methods is sparse. The first difference
+    with respect to more-established research in learning manipulation is perhaps
+    the lack of standard simulation environments. Owing to the more specific environment
+    and sensor suites that are required for different navigation tasks, custom simulators
+    have often been used [[36](#bib.bib36), [37](#bib.bib37)], or simulation worlds
+    have been created using Unity, Unreal Engine, or Gazebo [[39](#bib.bib39), [42](#bib.bib42)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sim-to-real transfer for DRL policies can be applied to complex navigation
+    tasks: from six-legged robots [[37](#bib.bib37)] to depth-based mapless navigation [[39](#bib.bib39)],
+    including robots for soccer competitions [[36](#bib.bib36)]. In order to achieve
+    a successful transfer to the real world, different methods have been applied in
+    the literature. Of particular interest due to their potential and novelty are
+    the following methods: curriculum learning [[37](#bib.bib37)], incremental environment
+    complexity [[39](#bib.bib39)], and continual learning and policy distillation
+    for multiple tasks [[12](#bib.bib12)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C Other Applications
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some other applications of DRL and sim-to-real transfer in robotics that have
+    emerged over the past years are the control of a plasma jet [[32](#bib.bib32)],
+    tactile sensing [[43](#bib.bib43)], or multi-agent manipulation [[44](#bib.bib44)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Main Challenges and Future Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Albeit the progress presented in the papers we reviewed, sim-to-real remains
+    challenging based on existing methods. For domain randomization, researchers tend
+    to study empirically examining which randomization to add, but it is hard to explain
+    formally how and why it works, which thereby brings the difficulty of designing
+    efficiently simulations and randomization distributions. For domain adaptation,
+    most existing algorithms focus on homogeneous deep domain adaptation, which assumes
+    that the feature spaces between the source and target domains are the same. However,
+    this assumption may not be true in many applications. Thus we expect more exploration
+    to transfer knowledge without this limitation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Two of the most promising research directions are: (i) integration of different
+    existing methods for more efficient transfer (e.g., domain randomization and domain
+    adaptation); and (ii) incremental complexity learning, continual learning, and
+    reward shaping for complex or multi-step tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Reinforcement learning algorithms often rely on simulated data to meet their
+    need for vast amounts of labeled experiences. The mismatch between the simulation
+    environments and real-world scenarios, however, requires further attention to
+    be put to methods for sim-to-real transfer of the knowledge acquired in simulation.
+    This is, to the best of our knowledge, the first survey that focuses on the different
+    approaches being taken for sim-to-real transfer in DRL for robotics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Domain randomization has been identified as the most widely adopted method for
+    increasing the realism of simulation and better prepare for the real world. However,
+    we have discussed alternative research directions showing promising results. For
+    instance, policy distillation is enabling multi-task learning and more efficient
+    and smaller networks, while meta-learning methods allow for wider variability
+    of tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multiple challenges remain in this field. While practical implementations show
+    the efficiency of the different methods, wider theoretical and empirical studies
+    are required to better understand the effect of these techniques in the learning
+    process. Moreover, generalization of existing results with a more comprehensive
+    analysis is also lacking in the literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This work was supported by the Academy of Finland’s AutoSOS project with grant
+    number 328755.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Kai Arulkumaran, Marc Peter Deisenroth, Miles Brundage, and Anil Anthony
+    Bharath. A brief survey of deep reinforcement learning. arXiv:1708.05866, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] Thanh Thi Nguyen, Ngoc Duy Nguyen, and Saeid Nahavandi. Deep reinforcement
+    learning for multiagent systems: A review of challenges, solutions, and applications.
+    IEEE transactions on cybernetics, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Richard Cheng, Gábor Orosz, Richard M Murray, and Joel W Burdick. End-to-end
+    safe reinforcement learning through barrier functions for safety-critical continuous
+    control tasks. In AAAI Artificial Intelligence, volume 33, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Javier Garcıa and Fernando Fernández. A comprehensive survey on safe reinforcement
+    learning. Journal of Machine Learning Research, 16(1), 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Aravind Rajeswaran, Vikash Kumar, Abhishek Gupta, Giulia Vezzani, John
+    Schulman, Emanuel Todorov, and Sergey Levine. Learning complex dexterous manipulation
+    with deep reinforcement learning and demonstrations. arXiv:1709.10087, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Jan Matas, Stephen James, and Andrew J Davison. Sim-to-real reinforcement
+    learning for deformable object manipulation. arXiv:1806.07851, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Naveed Akhtar and Ajmal Mian. Threat of adversarial attacks on deep learning
+    in computer vision: A survey. IEEE Access, 6, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Wenshuai Zhao, Jorge Peña Queralta, Li Qingqing, and Tomi Westerlund. Towards
+    closing the sim-to-real gap in collaborative multi-robot deep reinforcement learning.
+    In 5th ICRAE, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Fabio Muratore, Christian Eilers, Michael Gienger, and Jan Peters. Bayesian
+    domain randomization for sim-to-real transfer. arXiv:2003.02471, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Ramya Ramakrishnan, Ece Kamar, Debadeepta Dey, Eric Horvitz, and Julie
+    Shah. Blind spot detection for safe sim-to-real transfer. Journal of Artificial
+    Intelligence Research, 67, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Karol Arndt, Murtaza Hazara, Ali Ghadirzadeh, and Ville Kyrki. Meta reinforcement
+    learning for sim-to-real domain adaptation. arXiv:1909.12906, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] René Traoré, Hugo Caselles-Dupré, Timothée Lesort, Te Sun, Natalia Díaz-Rodríguez,
+    and David Filliat. Continual reinforcement learning deployed in real-life using
+    policy distillation and sim2real transfer. arXiv:1906.04452, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Shital Shah, Debadeepta Dey, Chris Lovett, and Ashish Kapoor. Airsim:
+    High-fidelity visual and physical simulation for autonomous vehicles. In Field
+    and service robotics, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Alexey Dosovitskiy, German Ros, Felipe Codevilla, Antonio Lopez, and Vladlen
+    Koltun. Carla: An open urban driving simulator. arXiv:1711.03938, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Fadri Furrer, Michael Burri, Markus Achtelik, and Roland Siegwart. Rotors—a
+    modular gazebo mav simulator framework. In Robot Operating System (ROS). 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Cassandra McCord, Jorge Peña Queralta, Tuan Nguyen Gia, and Tomi Westerlund.
+    Distributed progressive formation control for multi-agent systems: 2d and 3d deployment
+    of uavs in ros/gazebo with rotors. In ECMR, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Emanuel Todorov, Tom Erez, and Yuval Tassa. Mujoco: A physics engine for
+    model-based control. In IROS, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Fuzhen Zhuang, Zhiyuan Qi, Keyu Duan, Dongbo Xi, Yongchun Zhu, Hengshu
+    Zhu, Hui Xiong, and Qing He. A comprehensive survey on transfer learning. Proceedings
+    of the IEEE, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Jorge Peña Queralta, Jussi Taipalmaa, Bilge Can Pullinen, Victor Kathan
+    Sarker, Tuan Nguyen Gia, Hannu Tenhunen, Moncef Gabbouj, Jenni Raitoharju, and
+    Tomi Westerlund. Collaborative multi-robot systems for search and rescue: Coordination
+    and perception. arXiv preprint arXiv:2008.12610, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Christopher Berner, Greg Brockman, Brooke Chan, Vicki Cheung, Przemysław
+    D ebiak, Christy Dennison, David Farhi, Quirin Fischer, Shariq Hashme, Chris Hesse,
+    et al. Dota 2 with large scale deep reinforcement learning. arXiv:1912.06680,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Andrei A Rusu, Sergio Gomez Colmenarejo, Caglar Gulcehre, Guillaume Desjardins,
+    James Kirkpatrick, Razvan Pascanu, Volodymyr Mnih, Koray Kavukcuoglu, and Raia
+    Hadsell. Policy distillation. arXiv:1511.06295, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Jane X Wang, Zeb Kurth-Nelson, Dhruva Tirumala, Hubert Soyer, Joel Z Leibo,
+    Remi Munos, Charles Blundell, Dharshan Kumaran, and Matt Botvinick. Learning to
+    reinforcement learn. arXiv:1611.05763, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Jun Morimoto and Kenji Doya. Robust reinforcement learning. Neural computation,
+    17(2), 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Chen Tessler, Yonathan Efroni, and Shie Mannor. Action robust reinforcement
+    learning and applications in continuous control. arXiv:1901.09184, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Daniel J Mankowitz, Nir Levine, Rae Jeong, Yuanyuan Shi, Jackie Kay, Abbas
+    Abdolmaleki, Jost Tobias Springenberg, Timothy Mann, Todd Hester, and Martin Riedmiller.
+    Robust reinforcement learning for continuous control with model misspecification.
+    arXiv:1906.07516, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Dean A Pomerleau. Alvinn: An autonomous land vehicle in a neural network.
+    In Advances in neural information processing systems, 1989.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Stéphane Ross, Geoffrey Gordon, and Drew Bagnell. A reduction of imitation
+    learning and structured prediction to no-regret online learning. In AISTATS, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Andrew Y Ng, Stuart J Russell, et al. Algorithms for inverse reinforcement
+    learning. In Icml, volume 1, 2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Mengyuan Yan, Iuri Frosio, Stephen Tyree, and Jan Kautz. Sim-to-real transfer
+    of accurate grasping with eye-in-hand observations and continuous control. arXiv:1712.03303,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] Bharathan Balaji, Sunil Mallya, Sahika Genc, Saurabh Gupta, Leo Dirac,
+    Vineet Khare, Gourav Roy, Tao Sun, Yunzhe Tao, Brian Townsend, et al. Deepracer:
+    Educational autonomous racing platform for experimentation with sim2real reinforcement
+    learning. arXiv:1911.01562, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Manuel Kaspar, Juan David Munoz Osorio, and Jürgen Bock. Sim2real transfer
+    for reinforcement learning without dynamics randomization. arXiv:2002.11635, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Matthew Witman, Dogan Gidon, David B Graves, Berend Smit, and Ali Mesbah.
+    Sim-to-real transfer reinforcement learning for control of thermal effects of
+    an atmospheric pressure plasma jet. Plasma Sources Science and Technology, 28(9),
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Rae Jeong, Jackie Kay, Francesco Romano, Thomas Lampe, Tom Rothorl, Abbas
+    Abdolmaleki, Tom Erez, Yuval Tassa, and Francesco Nori. Modelling generalized
+    forces with reinforcement learning for sim-to-real transfer. arXiv:1910.09471,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Michel Breyer, Fadri Furrer, Tonci Novkovic, Roland Siegwart, and Juan
+    Nieto. Flexible robotic grasping with sim-to-real transfer based reinforcement
+    learning. ArXiv e-prints, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] J van Baar, R Corcodel, A Sullivan, D Jha, D Romeres, and D Nikovski.
+    Simulation to real transfer learning with robustified policies for robot tasks.
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Hansenclever F Bassani, Renie A Delgado, Jose Nilton de O Lima Junior,
+    Heitor R Medeiros, Pedro HM Braga, and Alain Tapp. Learning to play soccer by
+    reinforcement and applying sim-to-real to compete in the real world. arXiv:2003.11102,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Bangyu Qin, Yue Gao, and Yi Bai. Sim-to-real: Six-legged robot control
+    with deep reinforcement learning and curriculum learning. In ICRAE, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Juliano Vacaro, Guilherme Marques, Bruna Oliveira, Gabriel Paz, Thomas
+    Paula, Wagston Staehler, and David Murphy. Sim-to-real in reinforcement learning
+    for everyone. In LARS-SBR-WRE, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] Thomas Chaffre, Julien Moras, Adrien Chan-Hon-Tong, and Julien Marzat.
+    Sim-to-real transfer with incremental environment complexity for reinforcement
+    learning of depth-based robot navigation. arXiv:2004.14684, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Manuel Kaspar and Jürgen Bock. Reinforcement learning with cartesian commands
+    and sim to real transfer for peg in hole tasks.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] Andrew Hundt, Benjamin Killeen, Heeyeon Kwon, Chris Paxton, and Gregory D
+    Hager. ” good robot!”: Efficient reinforcement learning for multi-step visual
+    tasks via reward shaping. arXiv:1909.11730, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Ole-Magnus Pedersen. Sim-to-real transfer of robotic gripper pose estimation-using
+    deep reinforcement learning, generative adversarial networks, and visual servoing.
+    Master’s thesis, NTNU, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Zihan Ding, Nathan F Lepora, and Edward Johns. Sim-to-real transfer for
+    optical tactile sensing. arXiv:2004.00136, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] Ofir Nachum, Michael Ahn, Hugo Ponte, Shixiang Gu, and Vikash Kumar. Multi-agent
+    manipulation via locomotion using hierarchical sim2real. arXiv:1908.05224, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg
+    Klimov. Proximal policy optimization algorithms. arXiv:1707.06347, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] John Schulman, Sergey Levine, Pieter Abbeel, Michael Jordan, and Philipp
+    Moritz. Trust region policy optimization. In ICML, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] Abbas Abdolmaleki, Jost Tobias Springenberg, Yuval Tassa, Remi Munos,
+    Nicolas Heess, and Martin Riedmiller. Maximum a posteriori policy optimisation.
+    arXiv:1806.06920, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] Volodymyr Mnih, Adria Puigdomenech Badia, Mehdi Mirza, Alex Graves, Timothy
+    Lillicrap, Tim Harley, David Silver, and Koray Kavukcuoglu. Asynchronous methods
+    for deep reinforcement learning. In ICML, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. Soft actor-critic:
+    Off-policy maximum entropy deep reinforcement learning with a stochastic actor.
+    arXiv:1801.01290, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] Timothy P Lillicrap, Jonathan J Hunt, Alexander Pritzel, Nicolas Heess,
+    Tom Erez, Yuval Tassa, David Silver, and Daan Wierstra. Continuous control with
+    deep reinforcement learning. arXiv:1509.02971, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] Kristinn Kristinsson and Guy Albert Dumont. System identification and
+    control using genetic algorithms. IEEE Transactions on Systems, Man, and Cybernetics,
+    22(5), 1992.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Joshua P Tobin. Real-World Robotic Perception and Control Using Synthetic
+    Data. PhD thesis, UC Berkeley, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] Josh Tobin, Rachel Fong, Alex Ray, Jonas Schneider, Wojciech Zaremba,
+    and Pieter Abbeel. Domain randomization for transferring deep neural networks
+    from simulation to the real world. In IROS, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] Jonathan Tremblay, Aayush Prakash, David Acuna, Mark Brophy, Varun Jampani,
+    Cem Anil, Thang To, Eric Cameracci, Shaad Boochoon, and Stan Birchfield. Training
+    deep networks with synthetic data: Bridging the reality gap by domain randomization.
+    In CVPR Workshops, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] Martin Sundermeyer, Zoltan-Csaba Marton, Maximilian Durner, Manuel Brucker,
+    and Rudolph Triebel. Implicit 3d orientation learning for 6d object detection
+    from rgb images. In ECCV, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] Xiangyu Yue, Yang Zhang, Sicheng Zhao, Alberto Sangiovanni-Vincentelli,
+    Kurt Keutzer, and Boqing Gong. Domain randomization and pyramid consistency: Simulation-to-real
+    generalization without accessing target domain data. In ICCV, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] OpenAI: Marcin Andrychowicz, Bowen Baker, Maciek Chociej, Rafal Jozefowicz,
+    Bob McGrew, Jakub Pachocki, Arthur Petron, Matthias Plappert, Glenn Powell, Alex
+    Ray, et al. Learning dexterous in-hand manipulation. The International Journal
+    of Robotics Research, 39(1), 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] Stephen James, Paul Wohlhart, Mrinal Kalakrishnan, Dmitry Kalashnikov,
+    Alex Irpan, Julian Ibarz, Sergey Levine, Raia Hadsell, and Konstantinos Bousmalis.
+    Sim-to-real via sim-to-sim: Data-efficient robotic grasping via randomized-to-canonical
+    adaptation networks. In CVPR, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] Mei Wang and Weihong Deng. Deep visual domain adaptation: A survey. Neurocomputing,
+    312, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] Judy Hoffman, Eric Tzeng, Taesung Park, Jun-Yan Zhu, Phillip Isola, Kate
+    Saenko, Alexei Efros, and Trevor Darrell. Cycada: Cycle-consistent adversarial
+    domain adaptation. In ICML, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] Konstantinos Bousmalis, Alex Irpan, Paul Wohlhart, Yunfei Bai, Matthew
+    Kelcey, Mrinal Kalakrishnan, Laura Downs, Julian Ibarz, Peter Pastor, Kurt Konolige,
+    et al. Using simulation and domain adaptation to improve efficiency of deep robotic
+    grasping. In ICRA, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] Abhishek Gupta, Coline Devin, YuXuan Liu, Pieter Abbeel, and Sergey Levine.
+    Learning invariant feature spaces to transfer skills with reinforcement learning.
+    arXiv:1703.02949, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] Irina Higgins, Arka Pal, Andrei A Rusu, Loic Matthey, Christopher P Burgess,
+    Alexander Pritzel, Matthew Botvinick, Charles Blundell, and Alexander Lerchner.
+    Darla: Improving zero-shot transfer in reinforcement learning. arXiv:1707.08475,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] Andrei A Rusu, Matej Večerík, Thomas Rothörl, Nicolas Heess, Razvan Pascanu,
+    and Raia Hadsell. Sim-to-real robot learning from pixels with progressive nets.
+    In Conference on Robot Learning, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] Eric Tzeng, Judy Hoffman, Ning Zhang, Kate Saenko, and Trevor Darrell.
+    Deep domain confusion: Maximizing for domain invariance. arXiv:1412.3474, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael Jordan. Learning transferable
+    features with deep adaptation networks. In ICML, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] Baochen Sun, Jiashi Feng, and Kate Saenko. Return of frustratingly easy
+    domain adaptation. arXiv:1511.05547, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain, Hugo Larochelle,
+    François Laviolette, Mario Marchand, and Victor Lempitsky. Domain-adversarial
+    training of neural networks. The Journal of Machine Learning Research, 17(1),
+    2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] Eric Tzeng, Judy Hoffman, Trevor Darrell, and Kate Saenko. Simultaneous
+    deep transfer across domains and tasks. In ICCV, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] Konstantinos Bousmalis, Nathan Silberman, David Dohan, Dumitru Erhan,
+    and Dilip Krishnan. Unsupervised pixel-level domain adaptation with generative
+    adversarial networks. In CVPR, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] Konstantinos Bousmalis, George Trigeorgis, Nathan Silberman, Dilip Krishnan,
+    and Dumitru Erhan. Domain separation networks. In Advances in neural information
+    processing systems, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] Jingkang Wang, Yang Liu, and Bo Li. Reinforcement learning with perturbed
+    rewards. In AAAI, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] Wenshuai Zhao, Jorge Peña Queralta, Li Qingqing, and Tomi Westerlund.
+    Ubiquitous distributed deep reinforcement learning at the edge: Analyzing byzantine
+    agents in discrete action spaces. In The 11th International Conference on Emerging
+    Ubiquitous Systems and Pervasive Networks (EUSPN 2020), 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] Nathan Koenig and Andrew Howard. Design and use paradigms for gazebo,
+    an open-source multi-robot simulator. In IROS, volume 3, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] Erwin Coumans and Yunfei Bai. Pybullet, a python module for physics simulation
+    for games, robotics and machine learning. 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] J. Kober et al. Reinforcement learning in robotics: A survey. The International
+    Journal of Robotics Research, 32(11), 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John
+    Schulman, Jie Tang, and Wojciech Zaremba. Openai gym. arXiv:1606.01540, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] M. Kalakrishnan et al. Learning force control policies for compliant manipulation.
+    In IROS, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] Yuke Zhu, Roozbeh Mottaghi, Eric Kolve, Joseph J Lim, Abhinav Gupta, Li Fei-Fei,
+    and Ali Farhadi. Target-driven visual navigation in indoor scenes using deep reinforcement
+    learning. In ICRA, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] Fanyu Zeng, Chen Wang, and Shuzhi Sam Ge. A survey on visual navigation
+    for artificial agents with deep reinforcement learning. IEEE Access, 8, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,1217 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:50:30'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2110.08180] Deep Transfer Learning for Blended Source Identification in Galaxy
+    Survey Data'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2110.08180](https://ar5iv.labs.arxiv.org/html/2110.08180)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '¹¹institutetext: AIM, CEA, CNRS, Université Paris-Saclay, Université Paris
+    Diderot, Sorbonne Paris Cité, F-91191 Gif-sur-Yvette, France ²²institutetext:
+    Université Paris-Saclay, CNRS, CEA, Astrophysique, Instrumentation et Modélisation
+    de Paris-Saclay, 91191, Gif-sur-Yvette, France'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Transfer Learning for Blended Source Identification in Galaxy Survey Data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'S. Farrens email: samuel.farrens@cea.frDeep Transfer Learning for Blended Source
+    Identification in Galaxy Survey DataDeep Transfer Learning for Blended Source
+    Identification in Galaxy Survey Data    A. Lacan Deep Transfer Learning for Blended
+    Source Identification in Galaxy Survey DataDeep Transfer Learning for Blended
+    Source Identification in Galaxy Survey Data    A. Guinot Deep Transfer Learning
+    for Blended Source Identification in Galaxy Survey DataDeep Transfer Learning
+    for Blended Source Identification in Galaxy Survey Data    A. Z. Vitorelli Deep
+    Transfer Learning for Blended Source Identification in Galaxy Survey DataDeep
+    Transfer Learning for Blended Source Identification in Galaxy Survey Data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We present BlendHunter, a proof-of-concept for a deep transfer learning based
+    approach for the automated and robust identification of blended sources in galaxy
+    survey data. We take the VGG-16 network with pre-trained convolutional layers
+    and train the fully connected layers on parametric models of COSMOS images. We
+    test the efficacy of the transfer learning by taking the weights learned on the
+    parametric models and using them to identify blends in more realistic CFIS-like
+    images. We compare the performance of this method to SEP (a Python implementation
+    of SExtractor) as function of noise level and the separation between sources.
+    We find that BlendHunter outperforms SEP by $\sim 15\%$ in terms of classification
+    accuracy for close blends ($<10$ pixel separation between sources) regardless
+    of the noise level used for training. Additionally, the method provides consistent
+    results to SEP for distant blends ($\geq 10$ pixel separation between sources)
+    provided the network is trained on data with a relatively close noise standard
+    deviation to the target images. The code and data have been made publicly available
+    to ensure the reproducibility of the results. [\faGithub](https://github.com/CosmoStat/BlendHunter)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Key Words.:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Techniques: image processing, Methods: numerical, Methods: data analysis, Gravitational
+    lensing: weak'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The blending of sources (i.e. the apparent overlapping of extended objects in
+    2D images) has a significant impact on the measurement of the morphological and
+    structural properties of galaxies, in particular for ground-based surveys. Nearby
+    objects can easily be mistaken for a single source, which can lead to significant
+    detection and/or measurement biases depending on the depth of the survey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For weak gravitational lensing analysis, it is essential to understand how and
+    to what degree blending impacts shear and photometric redshift measurements (Mandelbaum,
+    [2018](#bib.bib22)). This problem becomes even more critical in the current epoch
+    of high precision cosmology, where systematic effects need to be carefully accounted
+    for. This is particularly important for reliable comparisons between late-time
+    probes, like weak lensing, and early-time probes, such as the CMB.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Blended sources make up a significant fraction of the observed sources in survey
+    images: $>30\%$ for the Dark Energy Survey (DES, Samuroff et al., [2018](#bib.bib29)),
+    $>50\%$ (up to $>60\%$ and $>70\%$ for the Deep and UltraDeep layers, respectively)
+    for Hyper Suprime-Cam (HSC, Bosch et al., [2018](#bib.bib6)) and $>60\%$ for Vera
+    C. Rubin Observatory Legacy Survey of Space and Time (LSST, Sanchez et al., [2021](#bib.bib30)).
+    Simply removing all the blends that have been identified would significantly reduce
+    the sample size and could potentially lead to entangled biases in the shear correlation
+    function (Hartlap et al., [2011](#bib.bib15)). Additional biases can be introduced
+    by unidentified blends coming from sources below the detection threshold (Hoekstra
+    et al., [2017](#bib.bib16); Euclid Collaboration et al., [2019](#bib.bib12)).
+    It is therefore necessary to develop an appropriate procedure for dealing with
+    blends in survey data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The process of handling blended sources in astrophysical images can be broadly
+    divided into several problems: a) the detection of objects in the image, b) the
+    classification of those objects as either single sources or blended sources, c)
+    the segmentation of pixels from blended sources (often referred to as ‘deblending’),
+    and d) the rejection of those objects that cannot be easily included in the scientific
+    analysis. This paper focuses on the problem of classifying objects, already detected
+    with standard source extraction software, as either blends or not. Unlike the
+    problem of segmentation, which has been abundantly addressed in the literature
+    (Joseph et al., [2016](#bib.bib17); Melchior et al., [2018](#bib.bib25); Reiman
+    & Göhre, [2019](#bib.bib26)), little effort has been made to find reliable and
+    automated methods for identifying blended sources in survey data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditional methods for identifying blended sources, such as SExtractor (Bertin
+    & Arnouts, [1996](#bib.bib5)), rely on fixed thresholds to detect multiple peaks
+    in the light intensity profiles of the objects. While this approach may work for
+    a reasonable fraction of the sources, it lacks the flexibility to handle blends
+    with a bigger discrepancy in the brightness and/or size of the individual objects.
+    This means that a large number of blended sources, which may have a non-negligible
+    impact on the scientific analysis, could be missed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Machine learning techniques, in particular deep learning architectures, have
+    been shown to be incredibly successful when applied to complicated classification
+    problems (see e.g. Kotsiantis ([2007](#bib.bib19)), Lecun et al. ([2015](#bib.bib20)),
+    and Srinivas et al. ([2016](#bib.bib34))). The effectiveness of these tools, however,
+    can be difficult to gauge without reliable labelled data. In real astrophysical
+    images it is not known a priori if the underlying signal for a given detection
+    comes from a single object or indeed from the combination of several. This necessitates
+    the use of simulated data in order to generate a reliable training set, where
+    the number and diversity of overlapping sources are perfectly known. This, however,
+    introduces the possibility of over-fitting the network to properties specific
+    to the simulation, *e.g.* overly simplified galaxy models. This in turn can cause
+    the network to be very sensitive to artefacts and more complex structures seen
+    in real observations. It is extremely challenging and time consuming to attempt
+    to develop simulated galaxy images that contain all of the properties expected
+    in real data. Therefore, the application of networks well suited to transfer learning
+    presents an interesting approach to mitigate this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Transfer learning, in particular deep transfer learning, is a machine learning
+    approach whereby network weights obtained by training on a given data set are
+    applied to another distinct but similar data set. This can help prevent over-fitting
+    to the training data as well as significantly reducing the time required to apply
+    the method to new data sets. Deep transfer learning has been applied to a variety
+    of astrophysical applications in recent years including: the classification of
+    compact star clusters (Wei et al., [2020](#bib.bib40)), the separation of low
+    surface brightness galaxies from artefacts (Tanoglidis et al., [2021](#bib.bib36)),
+    the classification of planetary nebulae (Awang Iskandar et al., [2020](#bib.bib3))
+    and the deblending of galaxy images (Arcelin et al., [2021](#bib.bib2)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This work introduces a proof-of-concept deep transfer learning approach for
+    the automated and robust identification of blended sources in single-band galaxy
+    survey data, hereafter referred to as BlendHunter (BH)¹¹1In the spirit of reproducible
+    research, all code and data needed to reproduce the results in this paper have
+    been made publicly available on GitHub ([https://github.com/CosmoStat/BlendHunter](https://github.com/CosmoStat/BlendHunter))
+    without any restrictions.. This method incorporates a Convolutional Neural Network
+    (CNN) trained on a large database of natural images and a fully connected layer
+    for classification. Simple parametric models are used to train the fully connected
+    layers and the learned weights are in turn used to identify blended sources in
+    more realistic images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This paper is organised as follows. The following section introduces the properties
+    of the training and testing data. Sect. [3](#S3 "3 Deep transfer learning framework
+    for blend identification ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data") presents the transfer learning approach used and how it
+    was trained to identify blended galaxy images. Sect. [4](#S4 "4 Results ‣ Deep
+    Transfer Learning for Blended Source Identification in Galaxy Survey Data") provides
+    results on how this approach compares to the state of the art. Finally, conclusions
+    are presented in Sect. [5](#S5 "5 Conclusions ‣ Deep Transfer Learning for Blended
+    Source Identification in Galaxy Survey Data").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Supervised machine learning approaches, such as that presented in this work,
+    require accurately labelled and representative training data. These labels often
+    correspond to properties that cannot be directly and/or reliably measured from
+    observed data. Simulations, on the other hand, provide a controlled environment
+    where these properties are known a priori.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To train our network we opted to produce a set of simulated single-band (*i.e.*
+    monochromatic) galaxy images from a parametric model. This allowed us to control
+    the fraction of blended images in the whole sample and the separation of sources
+    in the blended images. The choice of single-band images was made to restrict the
+    learning to pixel features (*i.e.* no colour information), which could potentially
+    be of interest for the $r$-band of the Canada-France Imaging Survey (CFIS)²²2[https://www.cfht.hawaii.edu/Science/CFIS/](https://www.cfht.hawaii.edu/Science/CFIS/),
+    part of the Ultraviolet Near-Infrared Optical Northern Survey (UNIONS), or eventually
+    the Euclid visible band (Cropper et al., [2012](#bib.bib8)). We additionally prepared
+    a sample of realistic CFIS-like galaxy images to test the efficacy of transferring
+    the learned weights to a similar but unseen data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This section details how the training and testing data sets were generated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Blend definition
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In order to label our training data, we first needed to make a clear definition
+    of a blend. Typically this would be some measure of amount of overlap between
+    the light profiles of the individual sources that constitute the blend. For the
+    purposes of this work, we assume a simple scenario in which isolated (*i.e.* un-blended)
+    sources are composed of a single galaxy centred within a postage stamp of size
+    $51\times 51$ pixels ($9.5\mathrm{arcsec}\times 9.5\mathrm{arcsec}$). We then
+    define a blend as a postage stamp (of the same size) containing two galaxies,
+    one at the centre and a secondary source at a random position. This definition
+    is fairly agnostic in that we do not require any specific overlap between the
+    light profiles. This choice was made in order to gauge classification accuracy
+    as a function of distance between the two sources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given the size of the postage stamps, we expect that standard source extraction
+    software, such as SExtractor, will be easily able to identify and separate sources
+    near the borders but may struggle as the sources get closer together. To better
+    highlight this point we additionally separate blends into two categories: ‘close
+    blends’ and ‘distant blends’. We define close blends as postage stamps in which
+    the two sources are separated by less than ten pixels and distant blends as those
+    in which they are separated by ten or more pixels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To avoid any spurious correlations, blended images are produced by simulating
+    the galaxies individually and then artificially combining them. For simplicity,
+    we only consider blends consisting of two sources. Real images may well contain
+    cases involving more than two sources as well as various artefacts that would
+    make classification more complicated. We leave these issues to be addressed in
+    future work and here focus on testing the applicability of transfer learning to
+    our simple test case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 The COSMOS catalogue
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We use the Cosmological Evolution Survey (COSMOS, Scoville et al., [2007](#bib.bib31))
+    catalogue as basis from which to derive our simplistic training data and more
+    realistic testing data. COSMOS was chosen as it provides a representative sample
+    of galaxies in terms of size, ellipticity, luminosity and morphology. COSMOS is
+    a catalogue of Hubble Space Telescope observations of 1.64 $\mathrm{deg}^{2}$
+    on the the sky with very accurate photometry and morphology. This catalogue contains
+    high resolution images (0.05 arcsec/pixel) with a very small Point Spread Function
+    (PSF) of 0.01 arcsec.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In particular, we use a subset of this catalogue selected and processed for
+    weak lensing purposes (Mandelbaum et al., [2012](#bib.bib23)). This subset of
+    images have a negligible amount of noise and the PSF has been deconvolved. This
+    makes it possible to re-sample the images on a larger pixel scale and to convolve
+    them with a different PSF in order to mimic observations from another instrument.
+    Finally, the galaxies have been fitted by either a Sérsic profile or a bulge +
+    disc profile for which the bulge is represented by a De Vaucouleurs profile (de
+    Vaucouleurs, [1948](#bib.bib9)) and the disc by an exponential profile (see Mandelbaum
+    et al., [2012](#bib.bib23), for details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The subset of processed COSMOS data has been made available through the Galsim
+    software package (Rowe et al., [2015](#bib.bib27)). GalSim is widely used in the
+    astrophysics community to simulate and manipulate galaxy images and was used extensively
+    in several weak lensing challenges, such as GREAT3 (Mandelbaum et al., [2014](#bib.bib24)).
+    The package provides all the tools necessary to work with COSMOS data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Point spread function
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The impulse response or PSF of an instrument encompasses all of the aberrations
+    induced by the optical system along with other distortions arising from the atmosphere
+    *etc.* The PSF induces blurring in observed images, which artificially increase
+    the size of sources and can cause their light profiles to overlap creating blends.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We model the optical PSF as a Moffat profile with $\beta=4.765$ (Trujillo et al.,
+    [2001](#bib.bib39)) and the PSF ellipticity is drawn from real optical variations
+    of the Canada-France-Hawaii Telescope (CFHT) derived from real CFIS data (Guinot
+    et al., [2021](#bib.bib14)). Atmospheric turbulence is modelled by a Kolmogorov
+    profile (Tatarski, [2016](#bib.bib37)) with random ellipticity drawn from a Gaussian
+    distribution with average $\mu=0$ and standard deviation $\sigma=0.01$. The final
+    PSF is obtained by convolving the two models and has an average size of 0.65 arcsec.
+    Given the relatively small size of the postage stamps, spatial variations of the
+    PSF are neglected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This CFIS-like PSF model is simple but sufficiently realistic for the purposes
+    of this work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Parametric model training data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In order to keep our training samples as simple and generic as possible, we
+    use a series of parametric models derived from fits to the COSMOS sample described
+    in Sect. [2.2](#S2.SS2 "2.2 The COSMOS catalogue ‣ 2 Data ‣ Deep Transfer Learning
+    for Blended Source Identification in Galaxy Survey Data"). This constitutes a
+    range of simulated galaxies with different sizes, shapes and ellipticities. The
+    parametric models are then convolved with the CFIS-like PSF described in Sect. [2.3](#S2.SS3
+    "2.3 Point spread function ‣ 2 Data ‣ Deep Transfer Learning for Blended Source
+    Identification in Galaxy Survey Data"). Each image corresponds to a $51\times
+    51$ pixel postage stamp with a convolved galaxy model at the centre.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For half of the sample a second galaxy model is placed at a random position
+    within the postage stamp to produce blends according to the definition provided
+    in Sect. [2.1](#S2.SS1 "2.1 Blend definition ‣ 2 Data ‣ Deep Transfer Learning
+    for Blended Source Identification in Galaxy Survey Data"). We pad all of the images
+    with zeros (7 pixels in every direction) to avoid issues when the secondary source
+    is close to the border of the postage stamp.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The complete sample is comprised of 80 000 noiseless, padded postage stamps,
+    half of which are isolated galaxies and the other half are blends.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The final step in producing our simulated training sets is to add Gaussian random
+    noise. In order to test how sensitive blend identification is to noise, we generate
+    7 different noise standard deviations ($\sigma_{\mathrm{noise}}=5,10,15,20,25,30,35$).
+    We additionally created 10 realisations of the noise for each value of $\sigma_{\mathrm{noise}}$
+    in order to test the stability of the training. Each realisation of each noise
+    level is treated as an independent training set. In other words, we train the
+    network 70 times and obtain 70 sets of weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.5 Realistic testing data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We generate a sample of realistic CFIS-like images to test our transfer learning
+    approach. To do so, we take the real denoised and deconvolved COSMOS images described
+    in Sect. [2.2](#S2.SS2 "2.2 The COSMOS catalogue ‣ 2 Data ‣ Deep Transfer Learning
+    for Blended Source Identification in Galaxy Survey Data"), crop them to $51\times
+    51$ pixel postage stamps and convolve them with the CFIS-like PSF described in
+    Sect. [2.3](#S2.SS3 "2.3 Point spread function ‣ 2 Data ‣ Deep Transfer Learning
+    for Blended Source Identification in Galaxy Survey Data"). The flux is rescaled
+    in order to reproduce a 300s exposure at the 3.6m CFHT telescope. The images are
+    re-sampled at the resolution of the CFIS survey (0.187 arcsec). Similarly to the
+    training images, blends are created for half of the sample by adding a secondary
+    source at a random position in the postage stamp and then all the postage stamps
+    are zero padded in the same way. Finally, Gaussian noise with $\sigma_{\mathrm{noise}}=14.5$
+    was added to the images to replicate the SNR of CFIS data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The final sample of $80\leavevmode\nobreak\ 000$ realistic postage stamps is
+    considerably more complex than the parametric models described in Sect. [2.4](#S2.SS4
+    "2.4 Parametric model training data ‣ 2 Data ‣ Deep Transfer Learning for Blended
+    Source Identification in Galaxy Survey Data") and more closely approximate the
+    conditions expected in real images. For example, the light profiles do not necessarily
+    have central symmetry due to star forming regions or because of complex morphology.
+    Out of the $80\leavevmode\nobreak\ 000$ postage stamps $4\leavevmode\nobreak\
+    838$ correspond to close blends (*i.e.* the sources are less than ten pixels apart)
+    and the remaining $35\leavevmode\nobreak\ 162$ correspond to distant blends.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [1](#S2.T1 "Table 1 ‣ 2.5 Realistic testing data ‣ 2 Data ‣ Deep Transfer
+    Learning for Blended Source Identification in Galaxy Survey Data") summarises
+    all of the data sets used for training and testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Summary of the data used for training and testing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Data set | Parametric Training Set | Realistic Testing Set |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathrm{N}_{\mathrm{isolated}}$ | 40 000 | 40 000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathrm{N}_{\mathrm{blended}}$ | 40 000 | 40 000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\sigma_{\mathrm{noise}}$ | 5, 10, 15, 20, 25, 30, 35 | $14.5$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathrm{N}_{\mathrm{\sigma\ real}}$ | 10 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: $\mathrm{N}_{\mathrm{isolated}}$ is the number postage stamps containing isolated
+    sources, $\mathrm{N}_{\mathrm{blended}}$ is the number of postage stamps containing
+    blended sources, $\sigma_{\mathrm{noise}}$ is the amount of noise added to the
+    postage stamps and $\mathrm{N}_{\mathrm{\sigma\ real}}$ is the number of realisations
+    for each noise level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Deep transfer learning framework for blend identification
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The objective of transfer learning is to learn a set of weights from a given
+    training set and then transfer these to a related but independent problem. This
+    is interesting from the perspective of blend identification given that we do not
+    have a large sample of labelled data and training with a small sample of known
+    blends may significantly bias the learned weights. Additionally, the use of pre-trained
+    weights considerably reduces the time required to train a network, thereby making
+    the application of a deep learning approach to galaxy survey data more feasible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the purposes of this work we test the applicability of transfer learning
+    to the problem of blend identification in a two-step process. In the first step,
+    CNN weights learned from natural images are used to extract generic features from
+    the galaxy images. The fully connected layers are then trained on galaxy image
+    features derived from simple parametric models. The objective being to capture
+    the general properties of blended images and not specific features of the individual
+    galaxies. In the second step, the weights learned from simple parametric models
+    are applied to more realistic CFIS-like images to test the classification accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The architecture we choose to implement our deep transfer problem was that of
+    VGG-16\. For simplicity we refer to our specific VGG-16 set up for the problem
+    of blend identification as BlendHunter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 The VGG-16 network
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: VGG-16 is a deep convolutional network with 16 weight layers developed by the
+    Visual Geometry Group (VGG) at the University of Oxford (Simonyan & Zisserman,
+    [2014](#bib.bib33)). The network was ranked first in the ImageNet Large-Scale
+    Visual Recognition Challenge (ILSVRC) in 2014 (Russakovsky et al., [2015](#bib.bib28)).
+    The main feature of this architecture was the increased depth of the network compared
+    to the state of the art at the time. In VGG-16, three-channel images (RGB) are
+    passed through 5 blocks of convolutional layers, where each block is composed
+    of increasing numbers of $3\times 3$ filters. The stride (i.e. the amount by which
+    the filter is shifted) is fixed to 1, while the convolutional layer inputs are
+    padded such that the spatial resolution is preserved after convolution (i.e. the
+    padding is 1 pixel for $3\times 3$ filters). The blocks are separated by max-pooling
+    (i.e. down-sampling) layers. Max-pooling is performed over $2\times 2$ windows
+    with stride 2\. The 5 blocks of convolutional layers are followed by three fully-connected
+    layers. The final layer is a soft-max layer that outputs class probabilities.
+    The full network architecture used is shown in Fig. [1](#S3.F1 "Figure 1 ‣ 3.1
+    The VGG-16 network ‣ 3 Deep transfer learning framework for blend identification
+    ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey Data").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/059204b9192d5b3b6a59dfe3d687d80b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Visual representation of the VGG-16 network. Convolutional layers
+    with ReLU activation are shown in solid blue, max pooling layers are shown in
+    brick-pattern red, fully connected layers are shown as green bars and the output
+    softmax layer is shown as the last box in pink.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The VGG-16 network was chosen for purposes of the work presented here for several
+    reasons. Firstly, the network can be implemented with weights pre-trained on the
+    ImageNet database (Deng et al., [2009](#bib.bib10)) in order to save computation
+    time and resources. The diversity of this data set has allowed the network to
+    learn a variety of generic image features, which are applicable to most image
+    classification tasks. Finally, VGG-16 has already been applied to a variety of
+    astrophysical applications, including galaxy morphology classification (Wu et al.,
+    [2019](#bib.bib41); Zhu et al., [2019](#bib.bib42)), glitch classification in
+    gravitational wave data (George et al., [2018](#bib.bib13)) and coronagraph image
+    classification (Shan et al., [2020](#bib.bib32)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The VGG-16 network was implemented in Python via the TensorFlow-Keras neural
+    network API (Chollet et al., [2015](#bib.bib7); Abadi et al., [2015](#bib.bib1)),
+    which includes ImageNet pre-trained weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Training and validation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We trained BlendHunter in two phases using the 70 sets of 80 000 simulated
+    images described in Sect. [2.4](#S2.SS4 "2.4 Parametric model training data ‣
+    2 Data ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey
+    Data"). We divided each data set in the follow way: 36 000 images were used for
+    training, 36 000 for validation and the remaining 8 000 for testing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Convolutional layers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the first phase, the we simply initialise the convolutional layers (*i.e.*
+    the first 13 weight layers) with the pre-trained ImageNet weights. As mentioned
+    in the previous section, the purpose of using pre-trained weights is to save processing
+    time. Therefore, this part of the network is not actually trained with our data
+    and can be seen as a simple feature extractor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As ImageNet weights are used, the VGG-16 network expects RGB images as inputs.
+    Therefore, we rescaled the simulated images to the range $i\in\mathbb{Z}:0\leq
+    i\leq 255$ and the monochromatic pixel values were repeated across the 3 RGB channels.
+    The final images are saved as Portable Network Graphics (PNG) files which are
+    fed into the network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given the relatively small amount of training data, we additionally implemented
+    data augmentation in order to obtain more diversified features from the convolutional
+    layers of the network. Augmenting our simulated images simply means creating additional
+    images with minor changes such as flips, translations or rotations. Specifically,
+    we used the Keras image pre-processing modules to include a shear range and zoom
+    range of $0.2$, as well as horizontal flipping. Note that data augmentation was
+    not used on the test images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fig. [2](#S3.F2 "Figure 2 ‣ 3.2.1 Convolutional layers ‣ 3.2 Training and validation
+    ‣ 3 Deep transfer learning framework for blend identification ‣ Deep Transfer
+    Learning for Blended Source Identification in Galaxy Survey Data") shows some
+    examples of features extracted from on of the simulated images with the convolutional
+    layers. The earlier convolutional blocks provide more general features while the
+    later blocks provide more specific features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8feb99d813596d03a61d4f70eba27a86.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Examples of features extracted from the VGG-16 convolutional layers
+    pre-trained with ImageNet weights. The leftmost panel shows an input postage stamp
+    containing blended sources. The following panels show example features extracted
+    from various convolution blocks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Fully connected layers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the second phase, we train the fully connected layers (*i.e.* the last 3
+    weight layers) on top of the previously stored features. These layers consist
+    of a layer with linear transformation, followed by a layer with dropout and finally
+    a layer with Rectified Linear Unit (ReLu) activation. We chose this non-linear
+    activation function, widely used with deep neural networks, because it allows
+    for faster convergence. We used dropout alongside data augmentation to avoid over-fitting
+    (Srivastava et al., [2014](#bib.bib35)). This is a way of cancelling some activations
+    to prevent the network from learning random correlations in the images. We employed
+    a dropout rate of $0.1$ for our experiments. For the training, we proceeded with
+    batches of 250 images at a time over 500 epochs. An epoch corresponds to passing
+    the entire training sample through the network and a batch size of 250 proved
+    to be the most computationally efficient for the gradient descent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use the binary cross entropy loss function in Eq. [1](#S3.E1 "In 3.2.2 Fully
+    connected layers ‣ 3.2 Training and validation ‣ 3 Deep transfer learning framework
+    for blend identification ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data")
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{ceqn}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathrm{BCE}=-\frac{1}{N}\sum_{i=1}^{N}y_{i}\cdot\log(p(y_{i}))+(1-y_{i})\cdot\log(1-p(y_{i}))$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $y_{i}$ is the true label (1 for blended, 0 otherwise) for the $i^{th}$
+    image and $p(y_{i})$ is the probability of the image being blended or not returned
+    by the network. We selected this loss function to optimise as it is typically
+    used in this type of binary classification problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Adam algorithm (Kingma & Ba, [2014](#bib.bib18)) was used to minimise our
+    loss function. In contrast to a classic Stochastic Gradient Descent (SGD) algorithm,
+    it computes individual learning rates for each weight and is quite efficient in
+    the optimisation of deep neural networks. In order to adapt the learning rate,
+    Adam requires the estimations of the first (the mean) and second (the uncentred
+    variance) moments of the gradient using exponentially moving averages (Eqs. [2](#S3.E2
+    "In 3.2.2 Fully connected layers ‣ 3.2 Training and validation ‣ 3 Deep transfer
+    learning framework for blend identification ‣ Deep Transfer Learning for Blended
+    Source Identification in Galaxy Survey Data") and [3](#S3.E3 "In 3.2.2 Fully connected
+    layers ‣ 3.2 Training and validation ‣ 3 Deep transfer learning framework for
+    blend identification ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data"), respectively), with $g_{t}$ the objective function gradient
+    at time step $t$, and $\beta_{1}$ and $\beta_{2}$ the exponential decay rates
+    for the moment estimates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{ceqn}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle m_{t}=\beta_{1}\cdot m_{t-1}+(1-\beta_{1})\cdot g_{t}$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '{ceqn}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle v_{t}=\beta_{2}\cdot v_{t-1}+(1-\beta_{2})\cdot g_{t}^{2}$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: It takes advantage of both RMSprop (Tieleman & Hinton, [2012](#bib.bib38)) and
+    AdaGrad (Duchi et al., [2011](#bib.bib11)) methods. In addition to being robust
+    and less time-consuming, Adam can thus be applied to a wider selection of optimisation
+    problems. It also requires almost no tuning of its parameters. We set $\beta_{1}$
+    and $\beta_{2}$ to their default values, respectively 0.9 and 0.999\. Finally,
+    the weights are updated according to Eq. [4](#S3.E4 "In 3.2.2 Fully connected
+    layers ‣ 3.2 Training and validation ‣ 3 Deep transfer learning framework for
+    blend identification ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data"), where $w_{t}$ are the fully-connected network weights
+    at time step $t$, $\eta$ is the step size, $\hat{m_{t}}$ and $\hat{v_{t}}$ are
+    the bias corrected estimators of the first and second moments, and $\epsilon$
+    a value set to $10^{-8}$ to prevent division by 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{ceqn}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle w_{t}=w_{t-1}-\eta\cdot\frac{\hat{m_{t}}}{\sqrt{\hat{v_{t}}}+\epsilon}$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: At the end of each epoch, both training and validation losses were computed,
+    and the weights were updated every time the validation loss decreased. Training
+    was stopped when the validation loss had not decreased after 10 epochs. The network
+    converged after around 70 epochs on average.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We began training with a learning rate of $1.10^{-3}$. Since choosing the right
+    learning rate can be challenging, we decided to reduce the learning rate by a
+    factor of 0.5 every time the validation loss did not decrease after 5 epochs.
+    A small learning rate would make it possible to avoid big jumps in gradient descent.
+    Otherwise, in this case, it could fail to converge and settle around a local minimum.
+    No weight decay was implemented in this phase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tuning deep neural networks hyperparameters with a considerable amount of parameters
+    to learn can prove to be very time-consuming. This is why we focused on the hyperparameters
+    that would have the most impact on the results. Several tests were made such as
+    changes to the regularisation, weight initialisation, dropout rate, learning rate
+    and optimiser. However, no significant improvement in accuracy was observed. Switching
+    to the SGD optimiser or increasing the dropout rate led to worse performance overall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The network takes approximately 630s to train on a sample of 80 000 images using
+    a standard Intel(R) Core(TM) i7-6900K CPU (3.20GHz, 32GB).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 4.1 SExtractor benchmark
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We compare the performance of BlendHunter with SExtractor, as this is the most
+    widely used tool in the community for identifying and handling blended sources
+    in astronomical images. The objective being to test the reliability of our approach
+    versus the state of the art. Specifically, We make use of the SExtractor Python
+    wrapper SEP (Barbary, [2016](#bib.bib4)) for our tests. Note that SEP does many
+    things beyond blend identification and many of these steps can not easily be isolated,
+    however we tried to make the comparison as fair and consistent as possible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'SEP implements a multi-thresholding technique to decompose detected sources
+    into sub-sources (when possible). This method takes two input parameters: the
+    number of bins to decompose the light profile and the minimum contrast value between
+    the main peak and a given sub-peak. The contrast is evaluated based on the flux
+    of each peak (see Fig. 2 in Bertin & Arnouts ([1996](#bib.bib5))). The set of
+    parameters we used for SEP is shown in Table [2](#S4.T2 "Table 2 ‣ 4.1 SExtractor
+    benchmark ‣ 4 Results ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data") (all the other parameters are kept to their default values).
+    The value of $0.005$ for DEBLEND_MINCONT (the minimum contrast parameter for deblending)
+    may be considered a little high compared to that commonly used in the literature,
+    but here we chose to favour reliable identification over increasing the number
+    of blends found at the cost of also increasing the number of spurious detections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: SEP parameter settings.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Parameter | Value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| THRESH_TYPE | RELATIVE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DETECT_THRESH | 1.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DETECT_MINAREA | 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FILTER | Y |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FILTER_NAME | kernel_3x3.conv (default) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DEBLEND_NTHRESH | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DEBLEND_MINCONT | 0.005 |'
+  prefs: []
+  type: TYPE_TB
+- en: Given our loose definition of blended sources (see Sect. [2.1](#S2.SS1 "2.1
+    Blend definition ‣ 2 Data ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data")), we chose not to rely exclusively on the deblending flags
+    provided by SEP. Instead, we also check that the sources are found at the right
+    positions (within a two pixel radius) to make sure we do not extract noise features.
+    Additionally, since some of the sources in the postage stamp do not technically
+    overlap, when SEP correctly identifies the number of sources (*i.e.* 1 or 2) we
+    take this as a correctly labelled postage stamp.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The process for labelling postage stamps as either isolated or blended sources
+    using SEP can be summarised as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If a single source is detected:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the source is flagged as a blend and is at the expected position, the image
+    is labelled as a blend.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Otherwise, the image is labelled as an isolated source.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'If two sources are detected:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If both sources are detected at the right positions, the image is labelled as
+    a blend (this stands even if one of the two sources is itself detected as a blend).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the sources are incorrectly identified, the image is labelled as an isolated
+    source.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'If more than two sources are detected:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If at least the right number of sources are detected at their expected positions,
+    the image is labelled as a blend.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the number of detected sources is larger than the number of true sources,
+    the image is flagged as a SEP failure and is not included in the analysis. Note
+    that this occurred for less than $1\%$ of the images.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/44d528a6784553608bedd699020a03eb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Classification accuracy of BlendHunter (black solid line) versus
+    SEP (blue dashed line) as a function of separation between sources. Results are
+    from the blended samples of the COSMOS parametric model testing sets. Each panel
+    shows one realisation of a given noise standard deviation, $\sigma_{\mathrm{noise}}$.
+    The blue shaded area shows the gain in accuracy of BlendHunter with respect to
+    SEP.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Results from parametric models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the following, we define classification accuracy as the percentage of postage
+    stamps correctly labelled as either isolated or blended sources. Here we take
+    the weights obtained via the training procedure described in [3.2](#S3.SS2 "3.2
+    Training and validation ‣ 3 Deep transfer learning framework for blend identification
+    ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey Data")
+    and apply them to the test sample of $8\leavevmode\nobreak\ 000$ parametric model
+    postage stamps (see Sect. [2.4](#S2.SS4 "2.4 Parametric model training data ‣
+    2 Data ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey
+    Data")) to obtain classification labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fig. [3](#S4.F3 "Figure 3 ‣ 4.1 SExtractor benchmark ‣ 4 Results ‣ Deep Transfer
+    Learning for Blended Source Identification in Galaxy Survey Data") shows the classification
+    accuracy of BlendHunter (black solid line) versus SEP (blue dashed line) as a
+    function of separation between sources. Results are from the blended samples of
+    the COSMOS parametric model testing sets (*i.e.* sets of $4\leavevmode\nobreak\
+    000$ postage stamps). Each panel shows one realisation of a given noise standard
+    deviation, $\sigma_{\mathrm{noise}}$. The blue shaded area shows the gain in accuracy
+    of BlendHunter with respect to SEP. For close blends (*i.e.* where the two sources
+    are less than 10 pixels apart), BlendHunter significantly outperforms SEP showing
+    gains as high as $\sim 80\%$ in classification accuracy. For distant blends, the
+    two techniques appear to be consistent to within a few percent and correctly label
+    the majority of the postage stamps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Fig. [4](#S4.F4 "Figure 4 ‣ 4.2 Results from parametric models ‣ 4 Results
+    ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey Data")
+    we display the overall accuracy as function of noise standard deviation for BlendHunter
+    and SEP on the full parametric model testing set (*i.e.* sets of $8\leavevmode\nobreak\
+    000$ postage stamps). The points are taken from the average classification accuracy
+    from the ten noise realisations and the error bars from the standard deviation.
+    As expected, both approaches perform almost perfectly for low noise levels and
+    drop off as the noise increases. Overall the two approaches appear fairly consistent,
+    however BlendHunter drops off less rapidly for higher noise levels indicating
+    it may be slightly more robust in higher noise regimes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d854ea22d39ca828bd2422430501fd9f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Overall classification accuracy of BlendHunter (black solid line)
+    versus SEP (blue dashed line) with respect to $\sigma_{\mathrm{noise}}$ on the
+    COSMOS parametric model testing set. The points are taken from the average accuracy
+    from ten realisations of each noise level and the error bars from the standard
+    deviation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Results from realistic CFIS-like images
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/74bc0db9a6693206db8c159c454a6269.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Relative classification accuracy for BlendHunter with respect to
+    SEP on the realistic CFIS-like postage stamps, with $\sigma_{\mathrm{noise}}=14.5$.
+    The points are taken from the average relative classification accuracy from the
+    ten training noise realisations and the error bars from the standard deviation.
+    For close blends (red dot-dashed line), BlendHunter outperforms SEP for any level
+    of noise in the training data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we test the weights obtained from the parametric models with various noise
+    levels and apply them to the test sample of $80\leavevmode\nobreak\ 000$ realistic
+    CFIS-like postage stamps (see Sect. [2.5](#S2.SS5 "2.5 Realistic testing data
+    ‣ 2 Data ‣ Deep Transfer Learning for Blended Source Identification in Galaxy
+    Survey Data")) to obtain classification labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Fig. [5](#S4.F5 "Figure 5 ‣ 4.3 Results from realistic CFIS-like images ‣ 4
+    Results ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey
+    Data") shows the relative classification accuracy as function of the training
+    noise standard deviation (*i.e.* the noise level of the sample used for training)
+    for BlendHunter with respect to SEP on the realistic CFIS-like postage stamps.
+    Points show the average relative classification accuracy corresponding to the
+    ten noise realisations for each training noise level and the error bars are the
+    standard deviation. SEP is simply run once on the full data set. For the whole
+    set of images (*i.e.* all $80\leavevmode\nobreak\ 000$ postage stamps), we can
+    see that BlendHunter is able to slightly outperform SEP (only by a few percent)
+    around $\sigma_{\mathrm{noise}}=14.5$, which is the true noise standard deviation
+    of the CFIS-like sample. The classification accuracy then degrades if the network
+    is trained on noise levels that differ significantly. In the subset of close blends
+    ($4\leavevmode\nobreak\ 838$ postage stamps), BlendHunter significantly outperforms
+    SEP regardless of the training conditions. This is consistent with the results
+    from the parametric model data. Finally, for distant blends ($35\leavevmode\nobreak\
+    162$ postage stamps), BlendHunter matches the performance of SEP when trained
+    on the same noise level as the target images and under-performs by a maximum of
+    $5\%$ when trained on a noise level that differs. The overall accuracy of SEP
+    in each case is: $91\%$ over the whole data set, $69\%$ for close blends, and
+    $94\%$ for distant blends.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: These results indicate that BlendHunter is not overly sensitive to the training
+    without perfect knowledge of the noise in the target sample. This is a strong
+    indication that the transfer learning has been successful and promising for the
+    prospect of applying this approach to real survey data. Additionally, the performance
+    of BlendHunter is noticeably more robust for close blends, where galaxy profiles
+    significantly overlap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It should be stressed that these results are based on the relatively simple
+    blend definition provided in section [2.1](#S2.SS1 "2.1 Blend definition ‣ 2 Data
+    ‣ Deep Transfer Learning for Blended Source Identification in Galaxy Survey Data"),
+    which does not take into account all of the complexities that could be encountered
+    for real extended sources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We additionally examined the confusion matrices for the predictions from the
+    realistic CFIS-like test set. Fig. [6](#S4.F6 "Figure 6 ‣ 4.3 Results from realistic
+    CFIS-like images ‣ 4 Results ‣ Deep Transfer Learning for Blended Source Identification
+    in Galaxy Survey Data") shows the fraction of blends correctly classified as blends
+    (*i.e.* true positives) or isolated sources correctly classified as isolated sources
+    (*i.e.* true negatives) as a function of the the training noise standard deviation.
+    The first panel shows the performance of BlendHunter compared to SEP for the sample
+    of close blends (green lines) along with an equivalent number (4 838) of isolated
+    sources (red lines). The second panel shows the equivalent plot for distant blends
+    with the remaining sample of isolated sources. The third panel shows the results
+    for all 80 000 postage stamps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The results show that BlendHunter is significantly better at identifying true
+    blends than SEP regardless of the noise level used for training. This is particularly
+    noticeable for the sample of close blends. BlendHunter, however, also produces
+    more incorrect labels for isolated sources and this worsens as the training noise
+    level increases beyond the that of the target sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/939a8ddd3498b7d8f1131aa4a9806595.png)![Refer to caption](img/fe0987328460d9e6484dd718a281d4fc.png)![Refer
+    to caption](img/17bdb50779d16650ba03f474ab8c09b2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Classification confusion matrices of BlendHunter (solid lines) compared
+    to SEP (dot-dashed lines) for the realistic CFIS-like test data. Each panel shows
+    the fraction of blends correctly classified as blends (*i.e.* true positives,
+    green lines) or isolated sources correctly classified as isolated sources (*i.e.*
+    true negatives, red lines) as a function of the the training noise standard deviation.
+    The left panel shows the sample of close blends along with an equivalent number
+    of isolated sources. The middle panel shows the sample of distant blends along
+    with the remaining isolated sources. The right panel shows the results for the
+    full set of postage stamps.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have presented a proof-of-concept deep transfer learning approach for the
+    automated and robust identification of blended sources in galaxy survey data called
+    BlendHunter. This technique uses convolution layers pre-trained on natural images
+    from ImageNet, thus significantly reducing the time required for training. The
+    fully connected layers are then trained on simple parametric models derived from
+    COSMOS data for various levels and realisations of Gaussian random noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparison with the community standard SEP (a Python implementation of SExtractor)
+    on 70 sets of $8\leavevmode\nobreak\ 000$ parametric models demonstrate that BlendHunter
+    is significantly more sensitive to blends when the images are very noisy or when
+    galaxy pairs are very close ($<10$ pixels). In the low noise, distant blend regime,
+    BlendHunter appears to be consistent with SEP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We additionally produced a sample of $80\leavevmode\nobreak\ 000$ more realistic
+    CFIS-like images derived from real COSMOS data. Results demonstrate that the BlendHunter
+    weights, learned on the parametric models, can successfully be transferred to
+    this more complex data set and achieve $>90\%$ classification accuracy, outperforming
+    SEP by a few percent on the full sample when the appropriate weights are used.
+    The results also indicate that BlendHunter is capable of achieving results roughly
+    consistent with SEP even when weights are used that have been trained with a significantly
+    different noise standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: BlendHunter notably outperforms SEP by $5-15\%$ for blends in which the galaxies
+    are separated by less than ten pixels. This is a interesting result as these are
+    precisely the cases that generate biases in galaxy shape measurements (MacCrann
+    et al., [2020](#bib.bib21)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overall the results are promising and indicate that it may be possible to adapt
+    this approach to more accurately identify blended sources in real survey data.
+    The next steps for moving in this direction would entail generating more realistic
+    testing data that contain some artefacts and images with more than two sources.
+    Further work is also required to reduce the number of false negatives, *i.e.*
+    incorrect labels for isolated sources. Finally, additional tests should be performed
+    to determine if and to what degree the use of pre-trained weights in the CNN layers
+    can help prevent over-fitting the network to the training sets. We leave the investigation
+    and implementation of these steps for future work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: The authors wish to acknowledge the COSMIC project funded by the CEA DRF-Impulsion
+    call in 2016, the CrossDisciplinary Program on Numerical Simulation (SILICOSMIC
+    project in 2018) of CEA, the French Alternative Energies and Atomic Energy Commission.
+    The Euclid Collaboration, the European Space Agency and the support of the Centre
+    National d’Etudes Spatiales. This work was also supported by the ANR AstroDeep
+    project - grant 19-CE23-0024-01\. This work has made use of the CANDIDE Cluster
+    at the Institut d’Astrophysique de Paris and made possible by grants from the
+    PNCG and the DIM-ACAV. This work is based on data obtained as part of the Canada-France
+    Imaging Survey, a CFHT large program of the National Research Council of Canada
+    and the French Centre National de la Recherche Scientifique. Based on observations
+    obtained with MegaPrime/MegaCam, a joint project of CFHT and CEA Saclay, at the
+    Canada-France-Hawaii Telescope (CFHT) which is operated by the National Research
+    Council (NRC) of Canada, the Institut National des Science de l’Univers (INSU)
+    of the Centre National de la Recherche Scientifique (CNRS) of France, and the
+    University of Hawaii. This research used the facilities of the Canadian Astronomy
+    Data Centre operated by the National Research Council of Canada with the support
+    of the Canadian Space Agency. AZV would like to thank LSC/PMR/EP at University
+    of São Paulo for providing additional computing power. The authors also wish to
+    thank Xinyu Wang and Alexandre Bruckert for initial efforts that were expanded
+    upon in this work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Abadi et al. (2015) Abadi, M., Agarwal, A., Barham, P., et al. 2015, TensorFlow:
+    Large-Scale Machine Learning on Heterogeneous Systems, software available from
+    tensorflow.org'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Arcelin et al. (2021) Arcelin, B., Doux, C., Aubourg, E., Roucelle, C., & LSST
+    Dark Energy Science Collaboration. 2021, MNRAS, 500, 531
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Awang Iskandar et al. (2020) Awang Iskandar, D. N. F., Zijlstra, A. A., McDonald,
+    I., et al. 2020, Galaxies, 8, 88
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Barbary (2016) Barbary, K. 2016, Journal of Open Source Software, 1, 58
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bertin & Arnouts (1996) Bertin, E. & Arnouts, S. 1996, A&AS, 117, 393
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bosch et al. (2018) Bosch, J., Armstrong, R., Bickerton, S., et al. 2018, PASJ,
+    70, S5
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chollet et al. (2015) Chollet, F. et al. 2015, Keras, [https://keras.io](https://keras.io)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cropper et al. (2012) Cropper, M., Cole, R., James, A., et al. 2012, in Society
+    of Photo-Optical Instrumentation Engineers (SPIE) Conference Series, Vol. 8442,
+    Space Telescopes and Instrumentation 2012: Optical, Infrared, and Millimeter Wave,
+    ed. M. C. Clampin, G. G. Fazio, H. A. MacEwen, & J. Oschmann, Jacobus M., 84420V'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: de Vaucouleurs (1948) de Vaucouleurs, G. 1948, Annales d’Astrophysique, 11,
+    247
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deng et al. (2009) Deng, J., Dong, W., Socher, R., et al. 2009, Proc. CVPR
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Duchi et al. (2011) Duchi, J., Hazan, E., & Singer, Y. 2011, Journal of Machine
+    Learning Research, 12, 2121
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Euclid Collaboration et al. (2019) Euclid Collaboration, Martinet, N., Schrabback,
+    T., et al. 2019, A&A, 627, A59
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: George et al. (2018) George, D., Shen, H., & Huerta, E. A. 2018, Phys. Rev. D,
+    97, 101501
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guinot et al. (2021) Guinot, A., Kilbinger, M., Farrens, S., et al. 2021, A&A,
+    submitted
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hartlap et al. (2011) Hartlap, J., Hilbert, S., Schneider, P., & Hildebrandt,
+    H. 2011, A&A, 528, A51
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hoekstra et al. (2017) Hoekstra, H., Viola, M., & Herbonnet, R. 2017, MNRAS,
+    468, 3295
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Joseph et al. (2016) Joseph, R., Courbin, F., & Starck, J.-L. 2016, A&A, 589,
+    A2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kingma & Ba (2014) Kingma, D. P. & Ba, J. 2014, Adam: A Method for Stochastic
+    Optimization, cite arxiv:1412.6980Comment: Published as a conference paper at
+    the 3rd International Conference for Learning Representations, San Diego, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kotsiantis (2007) Kotsiantis, S. 2007, 31, 249
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lecun et al. (2015) Lecun, Y., Bengio, Y., & Hinton, G. 2015, Nature, 521, 436
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MacCrann et al. (2020) MacCrann, N., Becker, M. R., McCullough, J., et al. 2020,
+    arXiv e-prints, arXiv:2012.08567
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mandelbaum (2018) Mandelbaum, R. 2018, ARA&A, 56, 393
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mandelbaum et al. (2012) Mandelbaum, R., Hirata, C. M., Leauthaud, A., Massey,
+    R. J., & Rhodes, J. 2012, Monthly Notices of the Royal Astronomical Society, 420,
+    1518
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mandelbaum et al. (2014) Mandelbaum, R., Rowe, B., Bosch, J., et al. 2014, The
+    Astrophysical Journal Supplement Series, 212, 5
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Melchior et al. (2018) Melchior, P., Moolekamp, F., Jerdee, M., et al. 2018,
+    Astronomy and Computing, 24, 129
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reiman & Göhre (2019) Reiman, D. M. & Göhre, B. E. 2019, MNRAS, 485, 2617
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rowe et al. (2015) Rowe, B. T. P., Jarvis, M., Mandelbaum, R., et al. 2015,
+    Astronomy and Computing, 10, 121
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Russakovsky et al. (2015) Russakovsky, O., Deng, J., Su, H., et al. 2015, International
+    Journal of Computer Vision, 115, 211
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Samuroff et al. (2018) Samuroff, S., Bridle, S. L., Zuntz, J., et al. 2018,
+    MNRAS, 475, 4524
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sanchez et al. (2021) Sanchez, J., Mendoza, I., Kirkby, D. P., Burchat, P. R.,
+    & LSST Dark Energy Science Collaboration. 2021, J. Cosmology Astropart. Phys.,
+    2021, 043
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Scoville et al. (2007) Scoville, N., Aussel, H., Brusa, M., et al. 2007, ApJS,
+    172, 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shan et al. (2020) Shan, J.-h., Feng, L., Yuan, H.-q., et al. 2020, Chinese
+    Astron. Astrophys., 44, 507
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simonyan & Zisserman (2014) Simonyan, K. & Zisserman, A. 2014, CoRR [arXiv:1409.1556]
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Srinivas et al. (2016) Srinivas, S., Sarvadevabhatla, R. K., Mopuri, K. R.,
+    et al. 2016, Frontiers in Robotics and AI, 2, 36
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Srivastava et al. (2014) Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever,
+    I., & Salakhutdinov, R. 2014, Journal of Machine Learning Research, 15, 1929
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tanoglidis et al. (2021) Tanoglidis, D., Ćiprijanović, A., & Drlica-Wagner,
+    A. 2021, Astronomy and Computing, 35, 100469
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tatarski (2016) Tatarski, V. I. 2016, Wave propagation in a turbulent medium
+    (Courier Dover Publications)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tieleman & Hinton (2012) Tieleman, T. & Hinton, G. 2012, Lecture 6.5—RmsProp:
+    Divide the gradient by a running average of its recent magnitude, COURSERA: Neural
+    Networks for Machine Learning'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Trujillo et al. (2001) Trujillo, I., Aguerri, J., Cepa, J., & Gutiérrez, C.
+    2001, Monthly Notices of the Royal Astronomical Society, 328, 977–985
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wei et al. (2020) Wei, W., Huerta, E. A., Whitmore, B. C., et al. 2020, MNRAS,
+    493, 3178
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wu et al. (2019) Wu, C., Wong, O. I., Rudnick, L., et al. 2019, MNRAS, 482,
+    1211
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhu et al. (2019) Zhu, X.-P., Dai, J.-M., Bian, C.-J., et al. 2019, Ap&SS, 364,
+    55
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

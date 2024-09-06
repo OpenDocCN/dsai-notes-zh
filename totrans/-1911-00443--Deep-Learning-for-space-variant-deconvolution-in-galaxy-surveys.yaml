@@ -1,0 +1,1928 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:04:17'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1911.00443] Deep Learning for space-variant deconvolution in galaxy surveys'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/1911.00443](https://ar5iv.labs.arxiv.org/html/1911.00443)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '¹¹institutetext: Laboratoire AIM, CEA, CNRS, Université Paris-Saclay, Université
+    Paris Diderot, Sorbonne Paris Cité, F-91191 Gif-sur-Yvette, France ²²institutetext:
+    ONERA - The French Aerospace Lab, 6 chemin de la Vauve aux Granges, BP 80100,
+    FR-91123 PALAISEAU cedex, France'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Learning for space-variant deconvolution in galaxy surveys
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: F. Sureau 11    A. Lechat 1122    J.-L. Starck 11
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deconvolution of large survey images with millions of galaxies requires to develop
+    a new generation of methods which can take into account a space variant Point
+    Spread Function (PSF) and have to be at the same time accurate and fast. We investigate
+    in this paper how Deep Learning (DL) could be used to perform this task. We employ
+    a U-Net Deep Neural Network (DNN) architecture to learn in a supervised setting
+    parameters adapted for galaxy image processing and study two strategies for deconvolution.
+    The first approach is a post-processing of a mere Tikhonov deconvolution with
+    closed form solution and the second one is an iterative deconvolution framework
+    based on the Alternating Direction Method of Multipliers (ADMM). Our numerical
+    results based on GREAT3 simulations with realistic galaxy images and PSFs show
+    that our two approaches outperforms standard techniques based on convex optimization,
+    whether assessed in galaxy image reconstruction or shape recovery. The approach
+    based on Tikhonov deconvolution leads to the most accurate results except for
+    ellipticity errors at high signal to noise ratio where the ADMM approach performs
+    slightly better, is also more computation-time efficient to process a large number
+    of galaxies, and is therefore recommended in this scenario.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Key Words.:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Methods:statistical, Methods:data analysis, Methods:numerical
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Deconvolution of large galaxy survey images requires to take into account spatial-variation
+    of the Point Spread Function (PSF) across the field of view. The PSF field is
+    usually estimated beforehand, via parametric models and simulations as in Krist
+    et al. ([2011](#bib.bib45)) or directly estimated from the (noisy) observations
+    of stars in the field of view (Bertin [2011](#bib.bib7); Kuijken et al. [2015](#bib.bib46);
+    Zuntz et al. [2018](#bib.bib94); Mboula et al. [2016](#bib.bib57); Schmitz et al.
+    [2019](#bib.bib73)). Even with the ”perfect” knowledge of the PSF, this ill-posed
+    deconvolution problem is challenging, in particular due to the size of the image
+    to process. Starck et al. ([2000](#bib.bib77)) proposed an Object-Oriented Deconvolution,
+    consisting in first detecting galaxies and then deconvolving each object independently
+    taking into account the PSF at the position of the center of the galaxy (but not
+    taking into account the variation of the PSF field at the galaxy scale). Following
+    this idea, Farrens et al. ([2017](#bib.bib26)) introduced a space-variant deconvolution
+    approach for galaxy images, based on two regularization strategies: using either
+    a sparse prior in a transformed domain (Starck et al. [2015a](#bib.bib78)) or
+    trying to learn unsupervisedly a low-dimensional subspace for galaxy representation
+    using a low-rank prior on the recovered galaxy images. Provided a sufficient number
+    of galaxies are jointly processed (more than 1000) they found that the low-rank
+    approach provided significantly lower ellipticity errors than sparsity, which
+    illustrates the importance of learning adequate representations for galaxies.
+    To go one step further in learning, supervised deep learning techniques taking
+    profit of databases of galaxy images could be employed to learn complex mappings
+    that could regularize our deconvolution problem. Deep convolutional architectures
+    have also proved to be computationally efficient to process large number of images
+    once the model has been learned, and are therefore promising in the context of
+    modern galaxy surveys.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deep Learning and Deconvolution: In the recent years, deep learning approaches
+    have been proposed in a large number of inverse problems with high empirical success.
+    Some potential explanations could lie on the expressivity of the deep architectures
+    (e.g. the theoretical works for simple architecture in (Eldan & Shamir [2015](#bib.bib23);
+    Safran & Shamir [2017](#bib.bib71); Petersen & Voigtlaender [2018](#bib.bib65)))
+    as well as new architectures or new optimization strategies that increased the
+    learning performance (for instance Kingma & Ba ([2014](#bib.bib43)); Ioffe & Szegedy
+    ([2015](#bib.bib38)); He et al. ([2016](#bib.bib35)); Szegedy et al. ([2016](#bib.bib82))).
+    Their success also depend on the huge datasets collected in the different applications
+    for training the networks, as well as the increased computing power available
+    to process them. With the progress made on simulating realistic galaxies (based
+    for instance on real Hubble Space Telescope (HST) images as in Rowe et al. ([2015](#bib.bib70));
+    Mandelbaum et al. ([2015](#bib.bib53))), deep learning techniques have therefore
+    the potential to show the same success for deconvolution of galaxy images as in
+    the other applications. Preliminary work have indeed shown that deep neural networks
+    (DNN) can perform well for classical deconvolution of galaxy images (Flamary [2017](#bib.bib27);
+    Schawinski et al. [2017](#bib.bib72)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This paper: we investigates two different strategies to interface deep learning
+    techniques with space variant deconvolution approaches inspired from convex optimization.
+    In section [2](#S2 "2 Image Deconvolution in the Deep Learning Era ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys"), we review deconvolution techniques
+    based on convex optimization and deep learning schemes. The space variant deconvolution
+    is presented in section [3](#S3 "3 Image Deconvolution with Space Variant PSF
+    ‣ Deep Learning for space-variant deconvolution in galaxy surveys") where the
+    two proposed methods are described, the first one using a deep neural network
+    (DNN) for post-processing of a Tikhonov deconvolution and the second one including
+    a DNN trained for denoising in an iterative algorithm derived from convex optimization.
+    The neural network architecture proposed for deconvolution is also presented in
+    this section. The experiment settings are described in section [4](#S4 "4 Experiments
+    ‣ Deep Learning for space-variant deconvolution in galaxy surveys") and the results
+    presented in section [5](#S5 "5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys"). We conclude in section [6](#S6 "6 Conclusions ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Image Deconvolution in the Deep Learning Era
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 2.1 Deconvolution before Deep Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The standard deconvolution problem consists in solving the linear inverse problem
+    $\mathbf{Y}=\mathbf{H}\mathbf{X}+\mathbf{N}$, where $\mathbf{Y}$ is the observed
+    noisy data, $\mathbf{X}$ the unknown solution, $\mathbf{H}$ the matrix related
+    to the PSF and $\mathbf{N}$ is the noise. Images $\mathbf{Y}$, $\mathbf{X}$ and
+    $\mathbf{N}$ are represented by a column vector of $n_{p}$ pixels arranged in
+    lexicographic order, with $n_{p}$ being the total number of pixels, and $\mathbf{H}$
+    is a $n_{p}\times n_{p}$ matrix. State of the art deconvolution techniques typically
+    solve this ill-posed inverse problem (i.e. with no unique and stable solution)
+    through a modeling of the forward problem motivated from physics, and adding regularization
+    penalty term $\mathcal{R}\left(\mathbf{X}\right)$ which can be interpreted as
+    enforcing some constraints on the solution. It leads to minimize:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\operatorname*{arg\,min}\limits_{\mathbf{X}}\frac{1}{2}&#124;&#124;\mathbf{Y}-\mathbf{H}\mathbf{X}&#124;&#124;^{2}_{F}+\mathcal{R}\left(\mathbf{X}\right),$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $||\cdot||_{F}$ is the Frobenius norm. The most simple (and historic)
+    regularization corresponding is the Tikhonov regularization (Tikhonov & Arsenin
+    [1977](#bib.bib84); Hunt [1972](#bib.bib37); Twomey [1963](#bib.bib85)), where
+    $\mathcal{R}\left(\mathbf{X}\right)$ is a quadratic term, $\mathcal{R}\left(\mathbf{X}\right)=\frac{\lambda}{2}||\mathbf{L}\mathbf{X}||^{2}_{F}$.
+    The closed-form solution of this inverse problem is given by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\tilde{\mathbf{X}}=\left(\mathbf{H}^{T}\mathbf{H}+\lambda\mathbf{L}^{T}\mathbf{L}\right)^{-1}\mathbf{H}^{T}\mathbf{Y}$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: which involves the Tikhonov linear filter $\left(\mathbf{H}^{T}\mathbf{H}+\lambda\mathbf{L}^{T}\mathbf{L}\right)^{-1}\mathbf{H}^{T}$.
+    The simplest version is when $\mathbf{L}=\boldsymbol{\operatorname*{Id}}$, which
+    penalizes solutions with high energy. When the PSF is space invariant, the matrix
+    $\mathbf{H}$ is block circulant and the inverse problem can then be written as
+    a simple convolution product. It is also easy to see that the Wiener deconvolution
+    corresponds to a specific case of the Tikhonov filter. See Bertero & Boccacci
+    ([1998](#bib.bib6)) for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e43af1f1786535a605d5fa9227df0f9f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Deconvolution with Tikhonov regularization.From left to right:galaxy
+    image from HST used for the simulation, observed galaxy at $\mathrm{SNR}=20$ (see
+    below for our definition of SNR), deconvolved image computed from Eq. [2](#S2.E2
+    "In 2.1 Deconvolution before Deep Learning ‣ 2 Image Deconvolution in the Deep
+    Learning Era ‣ Deep Learning for space-variant deconvolution in galaxy surveys").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This rather crude deconvolution is illustrated in Fig. [1](#S2.F1 "Figure 1
+    ‣ 2.1 Deconvolution before Deep Learning ‣ 2 Image Deconvolution in the Deep Learning
+    Era ‣ Deep Learning for space-variant deconvolution in galaxy surveys") in a low
+    signal to noise ratio (SNR) scenario, displaying both oversmoothing of the galaxy
+    image, loss of energy in the recovered galaxy and the presence of coloured noise
+    due to the inverse filter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Most advanced methods are non linear and generally involves iterative algorithms.
+    There is a vast litterature in image processing on advanced regularization techniques
+    applied to deconvolution: adding some prior information on $\mathbf{X}$ in a Bayesian
+    paradigm (Bioucas-Dias [2006](#bib.bib10); Krishnan & Fergus [2009](#bib.bib44);
+    Orieux et al. [2010](#bib.bib62)) or assuming $\mathbf{X}$ to belong to some classes
+    of images to recover (e.g. using total variation regularization (Oliveira et al.
+    [2009](#bib.bib61); Cai et al. [2010](#bib.bib14)), sparsity in fixed representations
+    (Starck et al. [2003](#bib.bib80); Pesquet et al. [2009](#bib.bib64); Pustelnik
+    et al. [2016](#bib.bib66)) or learnt via dictionary learning (Mairal et al. [2008](#bib.bib51);
+    Lou et al. [2011](#bib.bib50); Jia & Evans [2011](#bib.bib39))), by constraining
+    the solution to belong to some convex subsets (such as ensuring the final galaxy
+    image to be positive).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For instance, a very efficient approach used for galaxy image deconvolution
+    is based on sparse recovery which consists in minimizing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  |  | $\displaystyle\operatorname*{arg\,min}\limits_{\mathbf{X}}\frac{1}{2}\&#124;\mathbf{Y}-\mathbf{H}\mathbf{X}\&#124;_{2}^{2}+\lambda\&#124;\boldsymbol{\Phi}^{T}\mathbf{X}\&#124;_{1}$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\boldsymbol{\Phi}$ is a matrix related to a fixed transform (i.e. Fouriers,
+    wavelet, curvelets, etc) or that can be learned from the data or a training data
+    set (Starck et al. [2015b](#bib.bib79)). The $\ell_{1}$ norm in the regularisation
+    term is known to reinforce the sparsity of the solution, see Starck et al. ([2015b](#bib.bib79))
+    for a review on sparsity. Sparsity was found extremely efficient for different
+    inverse problems in astrophysics such as Cosmic Microwave Background (CMB) estimation
+    (Bobin et al. [2014](#bib.bib11)), compact sources estimation in CMB missions
+    (Sureau et al. [2014](#bib.bib81)), weak lensing map recovery (Lanusse, F. et al.
+    [2016](#bib.bib47)) or radio-interferomety image reconstruction (Garsden et al.
+    [2015](#bib.bib28)). We will compare in this work our deconvolution techniques
+    with such sparse deconvolution approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Iterative convex optimization techniques have been devised to solve Eq.[3](#S2.E3
+    "In 2.1 Deconvolution before Deep Learning ‣ 2 Image Deconvolution in the Deep
+    Learning Era ‣ Deep Learning for space-variant deconvolution in galaxy surveys")
+    (see for instance Beck & Teboulle ([2009](#bib.bib5)); Zibulevsky & Elad ([2010](#bib.bib93));
+    Combettes & Pesquet ([2011](#bib.bib18)); Chambolle & Pock ([2011](#bib.bib15));
+    Afonso et al. ([2011](#bib.bib3)); Condat ([2013](#bib.bib20)); Combettes & Vu
+    ([2014](#bib.bib19))), with well-studied convergence properties, but with a high
+    computing cost when using adaptive representation for galaxies. This problem opens
+    the way to a new generation of methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Toward Deep Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Recently deep learning techniques have been proposed to solve inverse problems
+    by taking benefit of the dataset collected and/or the advances in simulations,
+    including for deconvolving galaxy images. These approaches have proved to be able
+    to learn complex mappings in the supervised setting, and to be computationally
+    efficient once the model has been learned. We review here, without being exhaustive,
+    some recent work on deconvolution using DNNs. We have identified three different
+    strategies for using DNN in a deconvolution problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Learning the inverse: the inverse convolution filter can be directly approximated
+    using convolutional neural networks (Xu et al. [2014](#bib.bib89); Schuler et al.
+    [2016](#bib.bib75)). In our application with space-variant deconvolution and known
+    kernels, such complicated blind deconvolution is clearly not necessary and would
+    require a large amount of data to try learning information already provided by
+    the physics included in the forward model.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Post-processing of a regularized deconvolution: In the early years of using
+    sparsity for deconvolution a two steps approach was proposed, consisting in first
+    applying a simple linear deconvolution such as using the pseudo-inverse or the
+    Tikhonov filter, letting noise entering in the solution, and then in the second
+    step applying a sparse denoising (see the wavelet-vaguelette decomposition (Donoho
+    [1995](#bib.bib22); Kalifa et al. [2003](#bib.bib42)), more general regularization
+    (Guerrero-colon & Portilla [2006](#bib.bib31)), or the ForWaRD method (Neelamani
+    et al. [2004](#bib.bib60))). Similarly, the second step have been replaced by
+    denoising/removing artefacts using a multi-layer perceptron (Schuler et al. [2013](#bib.bib74)),
+    or more recently using U-Nets (Jin et al. [2017](#bib.bib40)). CNNs are well adapted
+    to this tasks, since the form of a CNN mimics unrolled iterative approaches when
+    the forward model is a convolution. In another application, convolutional networks
+    such as deep convolutional framelets have also been applied to remove artefacts
+    from reconstructed CT images (Ye et al. [2018a](#bib.bib90)). One advantage of
+    such decoupling approach is the ability to process quickly a large amount of data
+    when the network has been learnt, if the deconvolution chosen has closed-form
+    expression.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Iterative Deep Learning: the third strategy uses iterative approaches often
+    derived from convex optimization coupled with deep learning networks. Several
+    schemes have been devised to solve generic inverse problems. The first option,
+    called unrolling or unfolding (see Monga et al. ([2019](#bib.bib59)) for a detailed
+    review), is to mimic a few iterations of an iterative algorithm with DNNs so as
+    to capture in the learning phase the impact of 1) the prior (Mardani et al. [2017](#bib.bib55)),
+    2) the hyperparameters (Mardani et al. [2017](#bib.bib55); Adler & Öktem [2017](#bib.bib1),
+    [2018](#bib.bib2); Bertocchi et al. [2018](#bib.bib8)), 3) the updating step of
+    a gradient descent (Adler & Öktem [2017](#bib.bib1)) or 4) the whole update process
+    (Gregor & LeCun [2010](#bib.bib30); Adler & Öktem [2018](#bib.bib2); Mardani et al.
+    [2018](#bib.bib56)). Such approaches allow fast approximation of iterative algorithms
+    (Gregor & LeCun [2010](#bib.bib30)), better hyperparameter selection (Bertocchi
+    et al. [2018](#bib.bib8)) and/or provide in a supervised way new algorithms (Adler
+    & Öktem [2017](#bib.bib1); Mardani et al. [2018](#bib.bib56); Adler & Öktem [2018](#bib.bib2))
+    better adapted to process specific data set. This approach has noticeably been
+    used recently for blind deconvolution (Li et al. [2019](#bib.bib49)). Finally,
+    an alternative is to use iterative proximal algorithms from convex optimization
+    (for instance in the framework of the alternating direction method of multiplier
+    plug&play (ADMM PnP) (Venkatakrishnan et al. [2013](#bib.bib86); Sreehari et al.
+    [2016](#bib.bib76); H. Chan et al. [2016](#bib.bib33)), or regularization by denoising
+    (Romano et al. [2017](#bib.bib68); T. Reehorst & Schniter [2018](#bib.bib83))),
+    where the proximity operator related to the prior is replaced by a DNN (Meinhardt
+    et al. [2017](#bib.bib58); Bigdeli et al. [2017](#bib.bib9); Gupta et al. [2018](#bib.bib32))
+    or a series of DNN trained in different denoising settings as in Zhang et al.
+    ([2017](#bib.bib92)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The last two strategies are therefore more adapted to our targeted problem,
+    and in the following we will investigate how they could be applied and how they
+    perform compared to state-of-the art methods in space-variant deconvolution of
+    galaxy images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Discussion relative to Deep Deconvolution and Sparsity
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'It is interesting to notice that connections exist between sparse recovery
+    methodology and DNN:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Learning Invariants: the first features learnt in convolutive deep neural networks
+    correspond typically to edges at particular orientation and location in the images
+    (LeCun et al. [2015](#bib.bib48)), which is also what the wavelet transforms extract
+    at different scales. Similar observations were noted for features learnt with
+    a CNN in the context of cosmological parameter estimations from weak-lensing convergence
+    maps (Ribli et al. [2019](#bib.bib67)). As well, understanding mathematically
+    how the architecture of such networks captures progressively powerful invariants
+    can be approached via wavelets and their use in the wavelet scattering transform
+    (Mallat [2016](#bib.bib52)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Learned proximal operator: Meinhardt et al. ([2017](#bib.bib58)) has shown
+    that using a denoising neural network instead of a proximal operator (e.g. soft-thresholding
+    in wavelet space in sparse recovery) during the minimisation iterations improves
+    the deconvolution performance. They also claim that the noise level used to train
+    the neural network behave like the regularisation parameter in sparse recovery.
+    The convergence of the algorithm is not guaranteed anymore, but they observed
+    experimentally that their algorithms stabilize and they expressed their fixed-points.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'expanding path and contracting path: the U-nets two parts are very similar
+    to synthesis and analysis concepts in sparse representations. This has motivated
+    the use of wavelets to implement in the U-net average pooling and unpooling in
+    the expanding path (Ye et al. [2018b](#bib.bib91); Han & Ye [2018](#bib.bib34)).
+    Some other connection can be made with soft-Autoencoder in Fan et al. ([2018](#bib.bib25))
+    introducing a pair of ReLU units emulating soft-thresholding, accentuating the
+    comparison with cascade wavelet shrinkage systems.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Therefore, we observe exchanges between the two fields, in particular for U-Net
+    architectures, with however significant differences such as the construction of
+    a very rich dictionary in U-nets that is possible through the use of a large training
+    data set, as well as non-linearities at every layer essential to capture invariants
+    in the learning phase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Image Deconvolution with Space Variant PSF
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 3.1 Introduction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the case of a space-variant deconvolution problem, we can write the same
+    deconvolution equation as before, $\mathbf{Y}=\mathbf{H}\mathbf{X}+\mathbf{N}$,
+    but $\mathbf{H}$ is not block circular anymore, and manipulating such a huge matrix
+    is not possible in practice. As in Farrens et al. ([2017](#bib.bib26)), we consider
+    instead an Object-Oriented Deconvolution, by first detecting $n_{g}$ galaxies
+    with $n_{p}$ pixels each and then deconvolving independently each object using
+    the PSF at the position of the center of the galaxy. We use the following definitions:
+    the observations of $n_{g}$ galaxies with $n_{p}$ pixels are collected in $\mathbf{Y}\in\mathbb{R}^{n_{p}\times
+    n_{g}}$ (as before, each galaxy being represented by a column vector arranged
+    in lexicographic order), the galaxy images to recover are similarly collected
+    $\mathbf{X}\in\mathbb{R}^{n_{p}\times n_{g}}=[\mathbf{x}_{\mathbf{i}}]_{i=1..n_{g}}$
+    and the convolution operator with the different kernels is noted $\mathcal{H}$.
+    It corresponds to applying in parallel a convolution matrix $\mathbf{H}_{\mathbf{i}}$
+    to a galaxy $\mathbf{x}_{\mathbf{i}}$ ($\mathbf{H}_{\mathbf{i}}$ being typically
+    a block circulant matrix with circulant block after zero padding which we perform
+    on the images (Andrews & Hunt [1977](#bib.bib4))). Noise is noted $\mathbf{N}\in\mathbb{R}^{n_{p}\times
+    n_{g}}$ as before and is assumed to be additive white gaussian noise. With these
+    definitions, we now have'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbf{Y}=\mathcal{H}(\mathbf{X})+\mathbf{N}$ |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: or more precisely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\{\mathbf{y}_{\mathbf{i}}=\mathbf{H}_{\mathbf{i}}\mathbf{x}_{\mathbf{i}}+\mathbf{n}_{\mathbf{i}}\right\}_{i=1..n_{g}},$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'for block circulant $\left\{\mathbf{H}_{\mathbf{i}}\right\}_{i=1..n_{g}}$,
+    which illustrates that we consider multiple local space-invariant convolutions
+    in our model (ignoring the very small variations of the PSF at the scale of the
+    galaxy as done in practice (Kuijken et al. [2015](#bib.bib46); Mandelbaum et al.
+    [2015](#bib.bib53); Zuntz et al. [2018](#bib.bib94))). The deconvolution problem
+    of finding $\mathbf{X}$ knowing $\mathbf{Y}$ and $\mathcal{H}$ is therefore considered
+    as a series of independent ill-posed inverse problems. To avoid having multiple
+    solutions (due to a non trivial null space of $\left\{\mathbf{H}_{\mathbf{i}}\right\}_{i=1..n_{g}}$)
+    or an unstable solution (bad conditioning of these matrices), we need to regularize
+    the problem as in standard deconvolution approaches developed for space-invariant
+    convolutions. This amounts to solve the following inverse problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\operatorname*{arg\,min}\limits_{\mathbf{X}}\frac{1}{2}&#124;&#124;\mathbf{Y}-\mathcal{H}(\mathbf{X})&#124;&#124;^{2}_{F}+\mathcal{R}\left(\mathbf{X}\right)$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'and in general we will choose separable regularizers so that we can handle
+    in parallel the different deconvolution problems:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\{\operatorname*{arg\,min}\limits_{\mathbf{x}_{\mathbf{i}}}\frac{1}{2}&#124;&#124;\mathbf{y}_{\mathbf{i}}-\mathbf{H}_{\mathbf{i}}\mathbf{x}_{\mathbf{i}}&#124;&#124;^{2}_{2}+\mathcal{R}\left(\mathbf{x}_{\mathbf{i}}\right)\right\}_{i=1..n_{g}}$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Farrens et al. ([2017](#bib.bib26)) proposes two methods to perform this deconvolution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sparse prior: each galaxy is supposed to be sparse in the wavelet domain, leading
+    to minimize'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  |  | $\displaystyle\underset{\mathbf{X}}{\text{argmin}}$ | $\displaystyle\frac{1}{2}\&#124;\mathbf{Y}-\mathcal{H}(\mathbf{X})\&#124;_{2}^{2}+\&#124;\mathbf{W}^{(k)}\odot\Phi(\mathbf{X})\&#124;_{1}$
+    |  | s.t. |  | $\displaystyle\mathbf{X}\geq 0$ |  | (8) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: with $\mathbf{W}^{(k)}$ a weighting matrix.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Low rank prior: In the above method, each galaxy is deconvolved independently
+    from the others. As there are many similarities between galaxy images, Farrens
+    et al. ([2017](#bib.bib26)) proposes a joint restoration process, where the matrix
+    $\mathbf{X}$ has a low rank. This is enforced by adding a nuclear norm penalization
+    instead of the sparse regularization, as follows:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  |  | $\displaystyle\underset{\mathbf{X}}{\text{argmin}}$ | $\displaystyle\frac{1}{2}\&#124;\mathbf{Y}-\mathcal{H}(\mathbf{X})\&#124;_{2}^{2}+\lambda\&#124;\mathbf{X}\&#124;_{*}$
+    |  | s.t. |  | $\displaystyle\mathbf{X}\geq 0$ |  | (9) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: where $\|\mathbf{X}\|_{*}=\sum_{k}\sigma_{k}(\mathbf{X})$, $\sigma_{k}(\mathbf{X})$
+    denoting the $k^{\text{th}}$ largest singular value of $\mathbf{X}$.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: It was shown that the second approach outperforms sparsity techniques as soon
+    as the number of galaxies in the field is larger than 1000 (Farrens et al. [2017](#bib.bib26)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Neural Network architectures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'DNN allows us to extend the previous low rank minimisation, by taking profit
+    of existing databases and learning more features from the data in a supervised
+    way, compared to what we could do with the simple SVD used for nuclear norm penalization.
+    The choice of network architecture is crucial for performance. We have identified
+    three different features we believe important for our application: 1) the forward
+    model and the task implies that the network should be translation equivariant,
+    2) the model should include some multi-scale processing based on the fact that
+    we should be able to capture distant correlations, and 3) the model should minimize
+    the number of trainable parameters for a given performance, so as to be efficient
+    (lower GPU memory consumption) which is also important to ease the learning. Hopefully
+    these objectives are not contradictory: the first consideration leads to the use
+    of convolutional layers, while the second implies a structure such as the U-Net
+    (Ronneberger et al. [2015](#bib.bib69)) already used to solve inverse problems
+    (Jin et al. [2017](#bib.bib40)) or the deep convolutional framelets (Ye et al.
+    [2018a](#bib.bib90)). But because such architectures allow to increase rapidly
+    the receptive field in the layers along the network, they can compete with a smaller
+    number of parameters against CNNs having a larger number of layers and therefore
+    more parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a9a3b42ad6ee086a041d7a82f0f3802f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: DNN model used in this work. The global architecture is a U-Net,
+    with small modifications for performance and to limit the number of model parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We therefore have selected a global U-Net structure as in (Jin et al. [2017](#bib.bib40)),
+    but including the following modifications:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '2D separable convolutions: we replace 2D convolutions by 2D separable convolutions
+    (Chollet [2016](#bib.bib16)). The separable convolutions allow to limit the number
+    of parameters in the model by assuming that spatial correlations and correlations
+    across feature maps can be independently captured. Their use have already lead
+    to outperform architectures with non-separable convolution with a larger number
+    of parameters (Chollet [2016](#bib.bib16)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dense blocks: we changed the convolutional layers at each ”scale” by using
+    dense blocks (Huang et al. [2017](#bib.bib36)). Dense blocks also allow to reduce
+    the number of parameters, by propagating through concatenation all prior feature
+    maps to the input of the current layer. This was claimed to enable feature reuse,
+    preservation of information, and to limit vanishing gradients in the learning.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Average-pooling: we change the pooling step: we have observed that max-pooling
+    lead to over-segmentation of our final estimates, which is alleviated by the use
+    of average pooling.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Skip connection: we removed the skip connection between the input and the output
+    layers introduced by (Jin et al. [2017](#bib.bib40)) which proved to be detrimental
+    to the performance of the network, especially at low SNR. Note that the dense
+    blocks may have also better preserved the flow of relevant information and limited
+    the interest of using residual learning.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The two first modification limit significantly the number of parameters per
+    ”scale” of the U-Net, and potentially allow for more scales to be used for a given
+    budget of number of trainable parameters. Our network, we name ”XDense U-Net”,
+    is displayed in Fig. [2](#S3.F2 "Figure 2 ‣ 3.2 Neural Network architectures ‣
+    3 Image Deconvolution with Space Variant PSF ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys"). The following describes how to use such networks
+    in two different ways in order to perform the space variant deconvolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3.3 Tikhonet: Tikhonov deconvolution post-processed by a Deep Neural Network'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Tikhonov solution for the space variance variant PSF deconvolution is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\operatorname*{arg\,min}\limits_{\mathbf{X}}\frac{1}{2}&#124;&#124;\mathbf{Y}-\mathcal{H}(\mathbf{X})&#124;&#124;^{2}_{F}+&#124;&#124;\mathcal{L}(\mathbf{X})&#124;&#124;^{2}_{F}$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\mathcal{L}$ is similarly built as $\mathcal{H}$. The closed-form solution
+    of this linear inverse problem is given by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\{\tilde{\mathbf{x}_{\mathbf{i}}}=\left(\mathbf{H}^{T}_{\mathbf{i}}\mathbf{H}_{\mathbf{i}}+\lambda_{i}\mathbf{L}^{T}_{\mathbf{i}}\mathbf{L}_{\mathbf{i}}\right)^{-1}\mathbf{H}_{\mathbf{i}}^{T}\mathbf{y}_{\mathbf{i}}\right\}_{i=1..n_{g}}$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'which involves for each galaxy a different Tikhonov filter $\left(\mathbf{H}^{T}_{\mathbf{i}}\mathbf{H}_{\mathbf{i}}+\lambda_{i}\mathbf{L}^{T}_{\mathbf{i}}\mathbf{L}_{\mathbf{i}}\right)^{-1}\mathbf{H}_{\mathbf{i}}^{T}$.
+    In this work, we chose $\mathbf{L}_{\mathbf{i}}=\boldsymbol{\operatorname*{Id}}$
+    and the regularization parameter $\lambda_{i}$ is different for each galaxy, depending
+    on its SNR (see [3.5](#S3.SS5 "3.5 Implementation and choice of parameters for
+    Network architecture ‣ 3 Image Deconvolution with Space Variant PSF ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys") for more details). The final
+    estimate is then only:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\{\hat{\mathbf{x}_{\mathbf{i}}}=\mathcal{N}_{\boldsymbol{\theta}}(\tilde{\mathbf{x}_{\mathbf{i}}})\right\}_{i=1..n_{g}},$
+    |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: where the neural network predictions based on its parameters $\boldsymbol{\theta}$
+    for some inputs $\mathbf{Y}$ are written as $\mathcal{N}_{\boldsymbol{\theta}}(\mathbf{Y})$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The success of the first approach therefore lies on the supervised learning
+    of the mapping between the Tikhonov deconvolution of Eq. ([11](#S3.E11 "In 3.3
+    Tikhonet: Tikhonov deconvolution post-processed by a Deep Neural Network ‣ 3 Image
+    Deconvolution with Space Variant PSF ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys")) and the targeted galaxy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We call this two-step approach ”Tikhonet” and the rather simple training process
+    is described in Algorithm [1](#alg1 "Algorithm 1 ‣ 3.3 Tikhonet: Tikhonov deconvolution
+    post-processed by a Deep Neural Network ‣ 3 Image Deconvolution with Space Variant
+    PSF ‣ Deep Learning for space-variant deconvolution in galaxy surveys").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 1 DNN training in the Tikhonet approach
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1:  Initialization: Prepare noise-free training set, choose noise parameters
+    (SNR range) and validation set. Choose architecture for network $\mathcal{N}$,
+    learning parameters (optimizer and its parameters, batch size $B$ and number of
+    batches $n_{batch}$, number of epochs $n_{epoch}$) and cost function to minimize
+    (here mean squared error).2:  for $n=1$ to $n_{epoch}$ do {Loop over epochs}3:     for $b=1$
+    to $n_{batch}$ do {Loop over batches}4:        for $i=1$ to $B$ do {Loop over
+    galaxies in batch}5:           Add random noise to obtain a realization in the
+    SNR range chosen6:           Compute the Tikhonov solution $\tilde{\mathbf{x}_{\mathbf{i}}}$
+    using Eq. [2](#S2.E2 "In 2.1 Deconvolution before Deep Learning ‣ 2 Image Deconvolution
+    in the Deep Learning Era ‣ Deep Learning for space-variant deconvolution in galaxy
+    surveys")7:        end for8:        Predict $\hat{\mathbf{x}_{\mathbf{i}}}$ (Eq. [12](#S3.E12
+    "In 3.3 Tikhonet: Tikhonov deconvolution post-processed by a Deep Neural Network
+    ‣ 3 Image Deconvolution with Space Variant PSF ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys")) and update network parameters $\boldsymbol{\theta}$
+    according to the cost function.9:     end for10:  end for11:  return  $\mathcal{N}_{\boldsymbol{\theta}}$'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3.4 ADMMnet: Deep neural networks as constraint in ADMM plug-and-play'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The second approach we investigated is using the ADMM PnP framework with a DNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ADMM is an augmented lagrangian technique developed to solve convex problems
+    under linear equality constraints (see for instance (Boyd et al. [2010](#bib.bib12))).
+    It operates by decomposing the minimization problem into sub-problems solved sequentially.
+    One iteration consists in first solving a minimization problem typically involving
+    the data fidelity term, then solving a second minimization problem involving the
+    regularization term, and finishing by an update of the dual variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It has previously been noted (Venkatakrishnan et al. [2013](#bib.bib86); Sreehari
+    et al. [2016](#bib.bib76); H. Chan et al. [2016](#bib.bib33)) that the first two
+    sub-steps can be interpreted as an inversion step followed by a denoising step
+    coupled via the augmented lagrangian term and the dual variable. These authors
+    suggested to use such ADMM structure with non-linear denoisers in the second step
+    in an approach dubbed ADMM PnP, which recent work has proposed to implement via
+    DNNs (Meinhardt et al. [2017](#bib.bib58)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following, we adopt such iterative approach based on the ADMM PnP because
+    1) it separates the inversion step and the use of the DNN, offering flexibility
+    to add extra convex constraints in the cost function that can be handled with
+    convex optimization 2) it alleviates the cost of learning by focusing essentially
+    on learning a denoiser or a projector - less networks, less parameters to learn
+    jointly compared to unfolding approaches where each iteration corresponds to a
+    different network 3) by iterating between the steps, the output of the network
+    is propagated to the forward model to be compared with the observations, avoiding
+    large discrepancies, contrary to the Tikhonet approach where the output of the
+    network is not used in a likelihood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The training of the network $\mathcal{N}_{\boldsymbol{\theta}}$ in this case
+    is similar to Algorithm [1](#alg1 "Algorithm 1 ‣ 3.3 Tikhonet: Tikhonov deconvolution
+    post-processed by a Deep Neural Network ‣ 3 Image Deconvolution with Space Variant
+    PSF ‣ Deep Learning for space-variant deconvolution in galaxy surveys"), except
+    that the noise-free training set is composed of noise-free target images instead
+    of noise-free convolved images, and the noise added has constant standard deviation.
+    Then the algorithm for deconvolving a galaxy is presented in Algo. [2](#alg2 "Algorithm
+    2 ‣ 3.4 ADMMnet: Deep neural networks as constraint in ADMM plug-and-play ‣ 3
+    Image Deconvolution with Space Variant PSF ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys") and is derived from H. Chan et al. ([2016](#bib.bib33)). The
+    application of the network is here illustrated in red. We call this approach ”ADMMnet”.
+    The first step consists in solving the following regularized deconvolution problem
+    at iteration $k$ using the accelerated iterative convex algorithm FISTA (Beck
+    & Teboulle [2009](#bib.bib5)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\{\operatorname*{arg\,min}\limits_{\mathbf{x}_{\mathbf{i}}}\frac{1}{2\sigma^{2}}&#124;&#124;\mathbf{y}_{\mathbf{i}}-\mathbf{H}_{\mathbf{i}}\mathbf{x}_{\mathbf{i}}&#124;&#124;^{2}_{2}+\iota_{\mathcal{C}}(\mathbf{x}_{\mathbf{i}})+\frac{\rho}{2}&#124;&#124;\mathbf{x}_{\mathbf{i}}-\mathbf{z}^{(k)}_{\mathbf{i}}+\boldsymbol{\mu}^{(k)}&#124;&#124;^{2}_{2}\right\}_{i=1..n_{g}}$
+    |  | (13) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\iota_{\mathcal{C}}$ is the characteristic function of the non-negative
+    orthant, to enforce the non-negativity of the solution. The DNN used in the second
+    step is used as an analogy with a denoiser (or as a projector),as presented above.
+    The last step controls the augmented lagrangian parameter, and ensure that this
+    parameter is increased when the optimization parameters are not sufficiently changing.
+    This continuation scheme is also important, as noted in H. Chan et al. ([2016](#bib.bib33)),
+    as increasing progressively the influence of the augmented lagrangian parameter
+    ensures stabilization of the algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that of course there is no convergence guarantee of such scheme and that
+    contrary to the convex case the augmented lagrangian parameter $\rho$ is expected
+    to impact the solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, because the target galaxy is obtained after re-convolution with a target
+    PSF to avoid aliasing (see section [4](#S4 "4 Experiments ‣ Deep Learning for
+    space-variant deconvolution in galaxy surveys")), we also re-convolve the ADMMnet
+    solution with this target PSF to obtain our final estimate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 2 Proposed ADMM Deep Plug&Play for deconvolution of a galaxy image
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1:  Initialize:set $\rho_{0},\rho_{max},\eta\in[0,1),\gamma>1,\Delta_{0}=0$,$\mathbf{X}^{(0)}=\mathbf{0},\mathbf{Z}^{(0)}=\mathbf{0},\boldsymbol{\mu}^{(0)}=\mathbf{0},\epsilon$2:  for $k=0$
+    to $N_{it}$ do {Main Loop}3:     Deconvolution Sub-Problem: $\mathbf{X}^{(k+1)}=FISTA(\textbf{Y},\mathbf{X}^{(k)},\mathbf{Z}^{(k)},\boldsymbol{\mu}^{(k)},\rho_{k})$4:     ”Denoising”
+    Sub-Problem: $\mathbf{Z}^{(k+1)}={\color[rgb]{1,0,0}\definecolor[named]{pgfstrokecolor}{rgb}{1,0,0}\mathcal{N}_{\boldsymbol{\theta}}}\left(\mathbf{X}^{(k+1)}+\boldsymbol{\mu}^{(k)}\right)$5:     Lagrange
+    Multiplier Update: $\boldsymbol{\mu}^{(k+1)}=\boldsymbol{\mu}^{(k)}+\left(\mathbf{X}^{(k+1)}-\mathbf{Z}^{(k+1)}\right)$6:     $\Delta_{k+1}=\frac{1}{\sqrt{n}}\left(||\mathbf{X}^{(k+1)}-\mathbf{X}^{(k)}||_{2}+||\mathbf{Z}^{(k+1)}-\mathbf{Z}^{(k)}||_{2}+||\boldsymbol{\mu}^{(k+1)}-\boldsymbol{\mu}^{(k)}||_{2}\right)$7:     if $\Delta_{k+1}\geq\eta\Delta_{k}$
+    and $\rho_{k+1}\leq\rho_{max}$ then8:        $\rho_{k+1}=\gamma\rho_{k}$9:     else10:        $\rho_{k+1}=\rho_{k}$11:     end if12:     if $\|\mathbf{Z}^{(k+1)}-\mathbf{X}^{(k+1)}\|_{2}<\epsilon$ then13:        stop14:     end if15:  end for16:  return
+     $\left\{\mathbf{X}^{(k+1)}\right\}$'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.5 Implementation and choice of parameters for Network architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We describe here our practical choices for the implementation of the algorithms.
+    For the Tikhonet, the hyperparameter $\lambda_{i}$ that controls the balance in
+    between the data fidelity term and the quadratic regularization in Eq. [11](#S3.E11
+    "In 3.3 Tikhonet: Tikhonov deconvolution post-processed by a Deep Neural Network
+    ‣ 3 Image Deconvolution with Space Variant PSF ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys") needs to be set for each galaxy. This can be
+    done either manually by selecting an optimal value as a function of an estimate
+    of the SNR, or by using automated procedures such as generalized cross-validation
+    (GCV) (Golub et al. [1979](#bib.bib29)), the L-curve methode (Christian Hansen
+    & O’leary [1993](#bib.bib17)), the Morozov discrepancy principle (Werner Engl
+    et al. [1996](#bib.bib88)), various Stein Unbiased Risk Estimate (SURE) minimization
+    (C. Eldar [2009](#bib.bib13); Pesquet et al. [2009](#bib.bib64); Deledalle et al.
+    [2014](#bib.bib21)), or using a hierarchical Bayesian framework (Orieux et al.
+    [2010](#bib.bib62); Pereyra et al. [2015](#bib.bib63)). We compared these approach,
+    and report the results obtained by the SURE prediction risk minimization which
+    lead to the best results with the GCV approach.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the ADMM, the parameters $\rho_{0}$, $\rho_{max}$, $\eta$, $\epsilon$ and
+    $\gamma$ have been selected manually, as a balance between stabilizing quickly
+    the algorithm (in particular high $\rho$) and favouring the minimization of the
+    data fidelity term in the first steps (low $\rho$). We investigated in particular
+    the choice of $\rho_{0}$ which illustrate how the continuation scheme impacts
+    the solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The DNNs were coded in Keras¹¹1https://keras.io with Tensorflow ²²2https://www.tensorflow.org
+    as backend. For the proposed XDense U-Net, 4 scales were selected with an increasing
+    number of layers for each scale (to capture distant correlations). Each separable
+    convolution was composed of $3\times 3$ spatial filters and a growth factor of
+    12 was selected for the dense blocks. The total number of trainable parameters
+    was 184301. We also implemented a ”classical” U-Net to test the efficiency of
+    the proposed XDense U-Net architecture. For this U-Net, we choose 3 scales with
+    2 layers per scale and 20 feature maps per layer in the first scale, to end up
+    with 206381 trainable parameters ($12\%$ more than the XDense U-Net implementation).
+    In both networks we used batch normalization and rectified linear units for the
+    activation. We also tested for our proposed approach weighted sigmoid activations
+    (or swish in Elfwing et al. ([2018](#bib.bib24))) which seems to slightly improve
+    the results but at the cost of increasing the computational burden and therefore
+    we did not use them in the following results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the training phase, we use 20 epochs, a batch size of 32 and the Adam optimizer
+    was selected (we keep the default parameters) to minimize the mean squared error
+    (MSE) cost function. After each epoch, we save the network parameters only if
+    they improve the MSE on the validation set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Experiments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we describe how we generated the simulations used for learning
+    networks and testing our deconvolution schemes, as well as the criteria we will
+    use to compare the different deconvolution techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Dataset generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We use GalSim³³3https://github.com/GalSim-developers/GalSim (Rowe et al. [2015](#bib.bib70))
+    to generate realistic images of galaxies for training our networks and testing
+    our deconvolution approaches. We essentially follow the approach used in GREAT3
+    (Mandelbaum et al. [2014](#bib.bib54)) to generate the realistic space branch
+    from high resolution HST images, but choosing the PSFs in a set of 600 Euclid-like
+    PSFs (the same as in Farrens et al. ([2017](#bib.bib26))). The process is illustrated
+    in Fig. [3](#S4.F3 "Figure 3 ‣ 4.1 Dataset generation ‣ 4 Experiments ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A HST galaxy is randomly selected from the set of about 58000 galaxies used
+    in the GREAT3 challenge, deconvolved with its PSF, and random shift (taken from
+    a uniform distribution in $[-1,1]$ pixel), rotation and shear are applied. The
+    same cut in SNR is performed as in GREAT3 (Mandelbaum et al. [2014](#bib.bib54))
+    , so as to obtain a realistic set of galaxies that would be observed in a SNR
+    range $[20,100]$ when the noise level is as in GREAT3\. In this work we use the
+    same definition of SNR as in this challenge:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathrm{SNR}\left(\mathbf{X}_{\mathbf{i}}\right)=\frac{&#124;&#124;\mathbf{X}_{\mathbf{i}}&#124;&#124;_{2}}{\sigma}$
+    |  | (14) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\sigma$ is the standard deviation of the noise. This SNR corresponds
+    to an optimistic SNR for detection when the galaxy profile $\mathbf{X}_{\mathbf{i}}$
+    is known. In other (experimental) definitions, the minimal SNR is indeed closer
+    to 10, similarly to what is usually considered in weak lensing studies (Mandelbaum
+    et al. [2014](#bib.bib54)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the cut in SNR is passed, to obtain the target image in a $96\times 96$ grid
+    with pixel size $0.05^{\prime\prime}$, we first convolve the HST deconvolved galaxy
+    image with a Gaussian PSF with $FWHM=0.07^{\prime\prime}$ to ensure no aliasing
+    occurs after the subsampling. To simulate the observed galaxy without extra noise,
+    we convolve the HST deconvolved image with a PSF randomly selected among about
+    600 Euclid-like PSFs (the same set as used in Farrens et al. ([2017](#bib.bib26))).
+    Note that the same galaxy rotated by $90\degree$ is also simulated as in GREAT3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Because we use as inputs real HST galaxies, noise from HST images propagate
+    to our target and observed images, and is coloured by the deconvolution/reconvolution
+    process. We did not want to denoise the original galaxy images to avoid losing
+    substructures in the target images (and making them less ”realistic”), and as
+    this noise level is lower than the noise added in our simulations we expect it
+    to change marginally our results - and not the ranking of methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This process is repeated so that we end up with about 210000 simulated observed
+    galaxies and their corresponding target. For the learning, 190000 galaxies are
+    employed, and 10000 for the validation set. The extra 10000 are used for testing
+    our approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/be63f0be4354c391f9696f705358849d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Set up for a GalSim simulated realistic galaxy. In the upper branch
+    we obtain the targeted galaxy. In the lower branch, we simulate the corresponding
+    Euclid-like observed galaxy. Note that in these figures, a log-scale was adopted
+    for the PSFs to illustrate its complicated structure.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the learning phase, additive white Gaussian noise is added to the galaxy
+    batches with standard deviation chosen so as to obtain a galaxy in a prescribed
+    SNR range. For the Tikhonet, we choose randomly for each galaxy in the batch a
+    $\mathrm{SNR}$ in the range $[20,100]$, which corresponds to selecting galaxies
+    from the limit of detection to galaxies with observable substructures, as illustrated
+    in Fig [4](#S4.F4 "Figure 4 ‣ 4.1 Dataset generation ‣ 4 Experiments ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys"). For the ADMMnet, we learn
+    a denoising network for a constant noise standard deviation of $\sigma=0.04$ (same
+    level as in GREAT3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then test the relative performance of the different approaches in a test
+    set for fixed values: $\mathrm{SNR}\in\{20,40,60,80,100\}$ to better characterize
+    (and discriminate) them, and for a fixed standard deviation of $\sigma=0.04$ corresponding
+    to what was simulated in GREAT3 for the real galaxy space branch to obtain results
+    on a representative observed galaxy set. The corresponding distribution of SNR
+    in the last scenario is represented in Fig. [5](#S4.F5 "Figure 5 ‣ 4.1 Dataset
+    generation ‣ 4 Experiments ‣ Deep Learning for space-variant deconvolution in
+    galaxy surveys"). All the techniques are compared on exactly the same test sets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the ADMMnet approach when testing at different SNRs, we need to adjust the
+    noise level in the galaxy images to the level of noise in the learning phase.
+    We therefore rescale the galaxy images to reach this targeted noise level, based
+    on noise level estimation in the images. This is performed via a robust standard
+    procedure based on computing the median absolute deviation in the wavelet domain
+    (using orthogonal daubechies wavelets with 3 vanishing moments).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3786ecb13b81367a90d6dcca977cb462.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Range of SNR used for the training and for testing in the simulations.
+    From left to right: targeted galaxy image, then observed convolved images at increasing
+    SNR. In our definition, $\mathrm{SNR}=20$ is barely at the galaxy detection limit,
+    while at $\mathrm{SNR}=100$ galaxy substructures can be visualized.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/502acd8722f887d9a794ffdb1e5d598e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Distribution of SNR of simulated galaxies for constant noise simulations
+    ($\sigma=0.04$). The peak of the distribution is at about $\mathrm{SNR}=30$, and
+    the mean SNR is $\mathrm{SNR}=54$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Quality criteria
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The performance of the deconvolution schemes is measured according to two different
+    criteria, related to pixel error and shape measurement errors. For pixel error
+    we select a robust estimator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathrm{P_{err}}\left(\widehat{\mathbf{X}}\right)=\mathrm{MED}\left(\frac{\&#124;\widehat{\mathbf{x}_{\mathbf{i}}}-\mathbf{x}^{(t)}_{\mathbf{i}}\&#124;^{2}_{2}}{\&#124;\mathbf{x}^{(t)}_{\mathbf{i}}\&#124;_{2}^{2}}\right)_{i=1..n_{g}}$
+    |  | (15) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathbf{x}^{(t)}_{\mathbf{i}}$ is the targeted value, and with $\mathrm{MED}$
+    the median over the relative mean squared error computed for each galaxy $\mathbf{x}_{\mathbf{i}}$
+    in the test set, in a central window of $41\times 41$ pixels common to all approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For shape measurement errors, we compute the ellipticity using a KSB approach
+    implemented in shapelens⁴⁴4https://github.com/pmelchior/shapelens (Kaiser et al.
+    [1995](#bib.bib41); Viola et al. [2011](#bib.bib87)), that additionally computes
+    an adapted circular weight function from the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first apply this KSB method to the targets, taking as well into account the
+    target isotropic gaussian PSF, to obtain reference complex ellipticities $\epsilon_{i}$
+    and windows. We then compute the complex ellipticity $\widehat{\epsilon_{i}}$
+    of the deconvolved galaxies using the same circular weight functions as their
+    target counterpart. Finally, we compute
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathrm{\epsilon_{err}}\left(\widehat{\mathbf{X}}\right)=\mathrm{MED}\left(\&#124;\epsilon_{i}^{(t)}-\widehat{\epsilon_{i}}\&#124;_{2}\right)_{i=1..n_{g}}$
+    |  | (16) |'
+  prefs: []
+  type: TYPE_TB
+- en: to obtain a robust estimate of the ellipticity error in the windows set up by
+    the target images, again in a central window of $41\times 41$ pixels common to
+    all approaches..
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also report the distribution of pixel and ellipticity errors prior to applying
+    the median when finer assessments need to be made.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 5.1 Setting the Tikhonet architecture and hyperparameters
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For the Tikhonet, the key parameters to set are the hyperparameters $\lambda_{i}$
+    in Eq. [11](#S3.E11 "In 3.3 Tikhonet: Tikhonov deconvolution post-processed by
+    a Deep Neural Network ‣ 3 Image Deconvolution with Space Variant PSF ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys"). In Fig. [6](#S5.F6 "Figure
+    6 ‣ 5.1 Setting the Tikhonet architecture and hyperparameters ‣ 5 Results ‣ Deep
+    Learning for space-variant deconvolution in galaxy surveys"), these hyperparameters
+    are set to the parameters minimizing the SURE multiplied by factors ranging from
+    10 to 0.01 at $\mathrm{SNR}=20$, for the proposed X-Dense architecture (similar
+    visual results are obtained for the ”classical” U-Net). It appears that for the
+    lowest factor, corresponding to the smallest regularization of deconvolution (i.e.
+    more noise added in the deconvolved image), the Tikhonet is not able to perform
+    as well as for intermediate values, in particular for exactly the SURE minimizer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/7ce26d73938d8f0e95fa3a7171561847.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Visual impact of the hyperparameter choice for the Tikhonet approach
+    at SNR20\. Top: target and observations, followed by SURE estimates with different
+    multiplicative factor. Bottom: residuals associated to the top row.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is confirmed in Fig. [7](#S5.F7 "Figure 7 ‣ 5.1 Setting the Tikhonet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys") reporting the pixel errors for both proposed X-Dense and ”classical”
+    architecture, and Fig. [8](#S5.F8 "Figure 8 ‣ 5.1 Setting the Tikhonet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys") for the ellipticity errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/7dd940528437174c246d74441295d767.png)![Refer to caption](img/8ff5a64e5219222ffd4626b2f70ad28f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Impact of of the hyperparameter multiplicative factor value for the
+    Tikhonet using the proposed XDense U-Net architecture (left) and ”classical” U-Net
+    architecture (right), in terms of pixel errors.The box indicate quartiles, while
+    the vertical bars encompass $90\%$ of the data. Outliers are displayed with circles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a305dc55bf50717d970612d316668127.png)![Refer to caption](img/e3b258bb54ea42e80547527d743de14e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Impact of the hyperparameter multiplicative factor value for the
+    Tikhonet using the proposed XDense U-Net architecture (left) and ”classical” U-Net
+    architecture (right), in terms of ellipticity errors.The box indicate quartiles,
+    while the vertical bars encompass $90\%$ of the data. Outliers are displayed with
+    circles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For both architectures, best results in terms of pixel or ellipticity errors
+    are consistently obtained across all SNR tested for values of the multiplicative
+    factor between 0.1 and 1\. Higher multiplicative factors also lead to larger extreme
+    errors in particular at low SNR. In the following, we therefore set this parameter
+    to the SURE minimizer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concerning the choice of architecture, Fig. [7](#S5.F7 "Figure 7 ‣ 5.1 Setting
+    the Tikhonet architecture and hyperparameters ‣ 5 Results ‣ Deep Learning for
+    space-variant deconvolution in galaxy surveys") illustrates that the XDense U-Net
+    provides across SNR less extreme outliers in pixel errors for a multiplicative
+    factor of 10, which is however far from providing the best results. Looking more
+    closely at the median error values in Table [1](#S5.T1 "Table 1 ‣ 5.1 Setting
+    the Tikhonet architecture and hyperparameters ‣ 5 Results ‣ Deep Learning for
+    space-variant deconvolution in galaxy surveys") for the SURE minimizers, we see
+    that slightly better results are consistently obtained for the proposed XDense
+    U-Net architecture. In this experiment, the XDense obtains 4% (resp. 3%) less
+    pixel errors at $\mathrm{SNR}=20$ (resp. $\mathrm{SNR}=100$), and the most significant
+    difference is an about 8% improvement in ellipticity measurement at $\mathrm{SNR}=100$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Comparison of U-Net architectures for the SURE selected hyperparameter.
+    The first number is obtained with the XDense U-Net architecture, the second in
+    parentheses with the ”classical” U-Net architecture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\mathrm{SNR}=20$ $\mathrm{SNR}=40$ $\mathrm{SNR}=60$ $\mathrm{SNR}=80$ $\mathrm{SNR}=100$
+    Median Pixel Error 0.157 (0.163) 0.117 (0.121) 0.105 (0.106) 0.097 (0.097) 0.090
+    (0.093) Median Ellipticity Error 0.109 (0.110) 0.063 (0.064) 0.045 (0.046) 0.035
+    (0.038) 0.030 (0.033)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Setting the ADMMnet architecture and hyperparameters
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For the ADMMnet, we set manually the hyperparameters $\rho_{max}=200$, $\epsilon=0.01$
+    to lead to ultimate stabilization of the algorithm, $\eta=0.5$ and $\gamma=1.4$
+    to explore intermediate $\rho$ values, and we investigate the choice of parameter
+    $\rho_{0}$ to illustrate the impact of the continuation scheme on the solution.
+    This is illustrated in Fig. [9](#S5.F9 "Figure 9 ‣ 5.2 Setting the ADMMnet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys") at high SNR, and Fig. [10](#S5.F10 "Figure 10 ‣ 5.2 Setting
+    the ADMMnet architecture and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys") at low SNR for the proposed XDense U-Net architecture.
+    When $\rho_{0}$ is small, higher frequencies are recovered in the solution as
+    illustrated in galaxy substructures in Fig. [9](#S5.F9 "Figure 9 ‣ 5.2 Setting
+    the ADMMnet architecture and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys"), but this could lead to artefacts at low SNR
+    as illustrated in Fig. [10](#S5.F10 "Figure 10 ‣ 5.2 Setting the ADMMnet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/2bb42520a74f18e54f65a06efbd08997.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Visual impact of the initialization of $\rho$ for the ADMMnet for
+    $\mathrm{SNR}=100$. Top: target and observations, followed by ADMM estimates with
+    different augmented lagrangian parameter $\rho_{0}$. Bottom: residuals associated
+    to the top row.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8e53efa807499d1d28c72e17c2858fd3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Visual impact of the initialization of $\rho$ for the ADMMnet for
+    $\mathrm{SNR}=20$. Top: target and observations, followed by SURE estimates with
+    different augmented lagrangian parameter $\rho_{0}$. Bottom: residuals associated
+    to the top row.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantitative results concerning the two architectures are presented in Fig. [11](#S5.F11
+    "Figure 11 ‣ 5.2 Setting the ADMMnet architecture and hyperparameters ‣ 5 Results
+    ‣ Deep Learning for space-variant deconvolution in galaxy surveys") for pixel
+    errors and Fig. [12](#S5.F12 "Figure 12 ‣ 5.2 Setting the ADMMnet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys") for ellipticity errors. The distribution of errors is very
+    stable with respect to the hyperparameter $\rho_{0}$ value, and similar for both
+    architectures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/05680c17b1f9b4944c062db037dc0c49.png)![Refer to caption](img/d7e8e6affe17ab16a6cf38cb3eefacc3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: Impact of the hyperparameter $\rho_{0}$ value for the ADMMnet, in
+    terms of pixel error, for the proposed XDense U-Net (left) and ”classical” U-Net
+    (right).The box indicate quartiles, while the vertical bars encompass $90\%$ of
+    the data. Outliers are displayed with circles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When looking at pixel error at high SNR and low SNR for both architecture, the
+    lowest pixel errors in terms of median are obtained at low SNR for larger $\rho_{0}$,
+    while at high SNR $\rho_{0}=1$ is the best. In terms of ellipticity errors, $\rho_{0}=1$
+    allows to obtain consistently the best results at low and high SNR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a8a59b01c6a07653149ffaf843dd368c.png)![Refer to caption](img/dd72e40008ebb54fcb4025e8216a2b26.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: Impact of the hyperparameter choice $\rho_{0}$ for the ADMMnet,
+    in terms of ellipticity error, for the proposed XDense- U-Net (left) and ”classical”
+    U-Net (right).The box indicate quartiles, while the vertical bars encompass $90\%$
+    of the data. Outliers are displayed with circles.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To better compare the differences between the two architectures, the median
+    errors are reported in Table [2](#S5.T2 "Table 2 ‣ 5.2 Setting the ADMMnet architecture
+    and hyperparameters ‣ 5 Results ‣ Deep Learning for space-variant deconvolution
+    in galaxy surveys"). At low SNR the ”classical” U-Net performance varies more
+    than that of the XDense and at $\mathrm{SNR}=20$, best results are obtained for
+    the ”classical” U-Net approach ($4\%$ improvement over X-Dense). At high SNR however,
+    best results are consistently obtained across $\rho_{0}$ values with the proposed
+    XDense U-Net (but only $1\%$ improvement over the U-Net for the best $\rho_{0}=1$).
+    Finally, concerning ellipticity median errors, best results are obtained for the
+    smallest value $\rho_{0}=1$ for both architectures and the proposed XDense U-Net
+    performs slightly better than the ”classical” U-Net (about $1\%$ better both at
+    low and high SNR).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: Comparison of U-Net architectures for median errors. The first number
+    is obtained with the proposed XDense U-Net architecture, the second in parentheses
+    with the ”classical” U-Net architecture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\mathrm{SNR}=20$ $\rho_{0}=1$ $\rho_{0}=20$ $\rho_{0}=50$ $\rho_{0}=100$ $\rho_{0}=200$
+    Median Pixel Error 0.186 (0.184) 0.185 (0.186) 0.182 (0.176) 0.183 (0.175) 0.182
+    (0.175) Median Ellipticity Error 0.114 (0.116) 0.114 (0.116) 0.118 (0.115) 0.119
+    (0.115) 0.119 (0.115) $\mathrm{SNR}=100$ $\rho_{0}=1$ $\rho_{0}=20$ $\rho_{0}=50$
+    $\rho_{0}=100$ $\rho_{0}=200$ Median Pixel Error 0.095 (0.096) 0.096 (0.097) 0.098
+    (0.099) 0.099 (0.099) 0.097 (0.098) Median Ellipticity Error 0.028 (0.028) 0.028
+    (0.028) 0.029 (0.029) 0.029 (0.029) 0.029 (0.028)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overall, this illustrates that the continuation scheme has a small impact in
+    particular on the ellipticity errors, and that best results are obtained for different
+    $\rho_{0}$ and network architectures if pixel or ellipticity errors are considered,
+    depending on the SNR. The ”classical” U-Net allows smaller pixel errors than the
+    proposed XDense at low SNR, but also leads to slightly higher pixel errors at
+    higher SNR and ellipticity errors at both low and high SNR. In practice we keep
+    in the following for the proposed XDense U-Net approach $\rho_{0}=1$ for further
+    comparison with other deconvolution approaches as the pixel error is varying slowly
+    with this architecture as a function of $\rho_{0}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 DNN versus sparsity and low-rank
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We compare our two deep learning schemes with the XDense U-Net architecture
+    and the hyperparameters set as described in the previous sections with the sparse
+    and the low rank approaches of Farrens et al. ([2017](#bib.bib26)), implemented
+    in sf_deconvolve ⁵⁵5https://github.com/sfarrens/sf_deconvolve. For the two methods,
+    we used all parameters selected by default, reconvolved the recovered galaxy images
+    with the target PSF and selected the central $41\times 41$ pixels of the observed
+    galaxies to be processed in particular to speed up the computation of the singular
+    value decomposition used in the low rank constraint (and therefore of the whole
+    algorithm) as in Farrens et al. ([2017](#bib.bib26)). All comparisons are made
+    in this central region of the galaxy images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We now illustrate the results for a variety of galaxies recovered at different
+    SNR for the sparse, low-rank deconvolution approaches and the Tikhonet and ADMMnet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first display several results at low SNR ($\mathrm{SNR}=20$) in Fig. [13](#S5.F13
+    "Figure 13 ‣ 5.3 DNN versus sparsity and low-rank ‣ 5 Results ‣ Deep Learning
+    for space-variant deconvolution in galaxy surveys") to illustrate the robustness
+    of the various deconvolution approaches. Important artefacts appear in the sparse
+    approach, illustrating the difficulty of recovering the galaxy images in this
+    high noise scenario: retained noise in the deconvolved images lead to these point-like
+    artefacts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the low rank approach, low frequencies seems to be partially well recovered,
+    but artefacts appears for elongated galaxies in the direction of the minor axis.
+    Finally, both Tikhonet and ADMMnet seem to recover better the low frequency information,
+    but the galaxy substructures are essentially lost. The ADMMnet seems to recover
+    in this situation sharper images but with more propagated noise/artefacts than
+    the Tikhonet, with similar features as for the sparse approach but with less point-like
+    artefacts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ab031a864d4bcb6e882ff216f2c18641.png)![Refer to caption](img/583c84b11783173746187f21980e5cf2.png)![Refer
+    to caption](img/742ef684e21dac83cb14107b72bdce61.png)![Refer to caption](img/2f507796aeea8c0e4fdb55f5b5b2f10f.png)![Refer
+    to caption](img/76f5b977d95d04a818980e2d5794fd7f.png)![Refer to caption](img/09430644f2507f391492f5a8ecef4153.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13: Deconvolved images with the various approaches for $\mathrm{SNR}=20$.
+    Each row corresponds to a different processed galaxy. From left to right: image
+    to recover, observation with a noise realization, sparse and low rank approaches,
+    and finally Tikhonet and ADMMnet results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also display these galaxies at a much higher SNR ($\mathrm{SNR}=100$) in
+    Fig. [14](#S5.F14 "Figure 14 ‣ 5.3 DNN versus sparsity and low-rank ‣ 5 Results
+    ‣ Deep Learning for space-variant deconvolution in galaxy surveys") to assess
+    the ability of the various deconvolution schemes to recover galaxy substructures
+    in a low noise scenario.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8c712210cda972bbba07af02c47371a9.png)![Refer to caption](img/e6d91188c60ef04c9c1e7fde07434f18.png)![Refer
+    to caption](img/ca469e3e60c27dc96ca7482eddc1dd42.png)![Refer to caption](img/fe5a13eedb8bd06e4c8425094c5bde66.png)![Refer
+    to caption](img/811f5e5a02705ca2f7a2fd30b1a4cf41.png)![Refer to caption](img/19b5bc5e61f2dfb0bb2bfae8fe0dda07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14: Deconvolved images with the various approaches for $\mathrm{SNR}=100$.
+    Each row corresponds to a different processed galaxy. From left to right: image
+    to recover, observation with a noise realization, sparse and low rank approaches,
+    and finally Tikhonet and ADMMnet results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The low-rank approach displays less artefacts than at low SNR, but still does
+    not seem to be able to adequately represent elongated galaxies or directional
+    substructures in the galaxy. This is probably due to the fact that the low rankness
+    approach does not adequately cope with translations, leading to over-smooth solutions.
+    On the contrary, Tikhonet, ADMMnet and sparse recovery lead to recover substructures
+    of the galaxies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overall the two proposed deconvolution approaches using DNNs lead to the best
+    visual results across SNR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The quantitative deconvolution criteria are presented in Fig. [15](#S5.F15 "Figure
+    15 ‣ 5.3 DNN versus sparsity and low-rank ‣ 5 Results ‣ Deep Learning for space-variant
+    deconvolution in galaxy surveys"). Concerning median pixel error, this figure
+    illustrates that both Tikhonet and ADMMnet perform better than the sparse and
+    low-rank approach to recover the galaxy intensity values, whatever the SNR. In
+    these noise settings the low-rank approach performed consistently worst than using
+    sparsity. In terms of pixel errors, the sparse approach median errors are $27\%$
+    (resp. $15\%$) larger at $\mathrm{SNR}=20$ (resp. $\mathrm{SNR}=100$) compared
+    to the Tikhonet results. The Tikhonet seems to perform slightly better than the
+    ADMMnet with this criterion as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e9cca004ae47f0ae5de7182bf4e35ca5.png)![Refer to caption](img/6aee5a644eb78c9712d53747a895c2c1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15: Deconvolution quality criteria for the different deconvolution schemes.
+    Left: median pixel error, Right: median ellipticity error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For shape measurement errors, the best results are obtained with the Tikhonet
+    approach at low SNR (up to $\mathrm{SNR}=40$), and then the ADMMnet outperforms
+    the others at higher SNR. In terms of ellipticity errors, the sparse approach
+    median errors are $14\%$ (resp. $5\%$) larger at $\mathrm{SNR}=20$ (resp. $\mathrm{SNR}=100$)
+    compared to the Tikhonet results. Finally the low-rank performs the worst whatever
+    the SNR. To summarize, these results clearly favour the choice of the DNN approaches
+    resulting in lower errors consistently across SNR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is confirmed when looking at a realistic distribution of galaxy SNR, as
+    shown in Table [3](#S5.T3 "Table 3 ‣ 5.3 DNN versus sparsity and low-rank ‣ 5
+    Results ‣ Deep Learning for space-variant deconvolution in galaxy surveys"). In
+    terms of both median pixel and ellipticity errors, the proposed deep learning
+    approaches perform similarly, and outperforms both sparse and low-rank approaches:
+    median pixel error is reduced by almost $14\%$ (resp. $9\%$) for the Tikhonet
+    (resp. ADMMnet) approach compared to sparse recovery, and ellipticity errors by
+    about $13\%$ for both approaches. Higher differences are observed for the low-rank
+    approach.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 3: Criteria for constant noise simulations ($\sigma=0.04$). Best results
+    are indicated in bold.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sparse Low-Rank Tikhonet ADMMnet Median Pixel Error 0.130 0.169 0.112 0.119
+    Median Ellipticity Error 0.061 0.072 0.053 0.054
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Computing Time
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Finally, we also report in Table [4](#S5.T4 "Table 4 ‣ 5.4 Computing Time ‣
+    5 Results ‣ Deep Learning for space-variant deconvolution in galaxy surveys")
+    the time necessary to learn the networks and process the set of $10000$ galaxies
+    on the same GPU/CPUs, as this is a crucial aspect when potentially processing
+    a large number of galaxies such as in modern surveys. Among DNNs, learning the
+    parameters of the denoising network for the ADMMnet is faster than those of the
+    post-processing network in the Tikhonet since the latter requires each batch to
+    be deconvolved. However once the network parameters have been learnt, the Tikhonet
+    based on a closed-form deconvolution is the fastest to process a large number
+    of galaxies (about 0.05s per galaxy). On the other hand, learning and restoring
+    10000 galaxies is quite fast for the low-rank approach, while iterative algorithms
+    such as ADMMnet or the primal-dual algorithm for sparse recovery are similar in
+    terms of computing time (about 7 to 10s per galaxy). All these computing times
+    could however be reduced if the restoration of different galaxy images is performed
+    in parallel, which has not been implemented.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 4: Computing time for the various approaches (in hours).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Learning | Processing 10000 galaxies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sparse | / | 24.7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Low-rank | 5.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tikhonet | 21.5 | 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADMMnet | 16.2 | 20.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: 6 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We have proposed two new space-variant deconvolution strategies for galaxy
+    images based on deep neural networks, while keeping all knowledge of the PSF in
+    the forward model: the Tikhonet, a post-processing approach of a simple Tikhonov
+    deconvolution with a DNN, and the ADMMnet based on regularization by a DNN denoiser
+    inside an iterative ADMM PnP algorithm for deconvolution. We proposed to use for
+    galaxy processing a DNN architecture based on the U-Net particularly adapted to
+    deconvolution problems, with small modifications implemented (dense Blocks of
+    separable convolutions, and no skip connection) to lower the number of parameters
+    to learn compared to a ”classical” U-Net implementation. We finally evaluated
+    these approaches compared to the deconvolution techniques in Farrens et al. ([2017](#bib.bib26))
+    in simulations of realistic galaxy images derived from HST observations, with
+    realistic sampled sparse-variant PSFs and noise, processed with the GalSim simulation
+    code. We investigated in particular how to set the hyperparameters in both approach:
+    the Tikhonov hyperparameter for the Tikhonet and the continuation parameters for
+    the ADMMnet and compared our proposed XDense U-Net architecture with a ”classical”
+    U-Net implementation. Our main findings are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'for both Tikhonet and ADMMnet, the hyperparameters impact the performance of
+    the approaches, but the results are quite stable in a range of values for these
+    hyperparameters. In particular for the Tikhonet, the SURE minimizer is within
+    this range. For the ADMMnet, more hyperparameters needs to be set, and the initialization
+    of the augmented lagrangian parameter impacts the performance: small parameters
+    lead to higher frequencies in the images, while larger parameters lead to over-smooth
+    galaxies recovered.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: compared to the ”classical” implementation, the XDense U-Net leads to consistently
+    improved criteria for the Tikhonet approach; the situation is more balanced for
+    the ADMMnet, where lower pixel errors can be achieved at low SNR with the ”classical”
+    architecture (with high hyperparamer value), but the XDense U-Net provides the
+    best results for pixel errors at high SNR and ellipticity errors both at high
+    and low SNR (with low hyperparameter value); however selecting one or the other
+    architecture with their best hyperparameter value would not change the ranking
+    among methods
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: visually both methods outperform the sparse recovery and low-rank techniques,
+    which displays artefacts at the low SNR probed (and for high SNR as well in the
+    low-rank approach)
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: this is also confirmed in all SNR ranges and for a realistic distribution of
+    SNR; in the latter about $14\%$ improvement is achieved in terms of median pixel
+    error and about $13\%$ improvement for median shape measurement errors for the
+    Tikhonet compared to sparse recovery.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: among DNN approaches, Tikhonet outperforms ADMMnet in terms of median pixel
+    errors whatever the SNR, and median ellipticity errors for low SNR ($\mathrm{SNR}<40$).
+    At higher SNR, the ADMMnet leads to slightly lower ellipticity errors.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: the Tikhonet is the fastest approach once the network parameters have been learnt,
+    with about 0.05s needed to process a galaxy, to be compared with sparse and ADMMnet
+    iterative deconvolution approaches which takes about 7 to 10s per galaxy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: If the ADMMnet approach is still promising, as extra constraints could be added
+    easily to the framework (while the success of the Tikhonet approach also lies
+    on the ability to compute a closed-form solution for the deconvolution step),
+    these results illustrate that the Tikhonet is overall the best approach in this
+    scenario to process both with high accuracy and fastly a large number of galaxies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reproducible Research
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the spirit of reproducible research, the codes will be made freely available
+    on the CosmoStat website. The testing datasets will also be provided to repeat
+    the experiments performed in this paper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: The authors thank the Galsim developers/GREAT3 collaboration for publicly providing
+    simulation codes and galaxy databases, and the developers of sf_deconvolve and
+    shapelens as well for their code publicly available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Adler & Öktem (2017) Adler, J. & Öktem, O. 2017, Inverse Problems, 33, 124007
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adler & Öktem (2018) Adler, J. & Öktem, O. 2018, IEEE Transactions on Medical
+    Imaging, 37, 1322
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Afonso et al. (2011) Afonso, M., Bioucas-Dias, J., & Figueiredo, M. 2011, IEEE
+    transactions on image processing, 20, 681
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Andrews & Hunt (1977) Andrews, H. C. & Hunt, B. R. 1977, Digital Image Restoration
+    (Englewood Cliffs, NJ: Prentice-Hall)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beck & Teboulle (2009) Beck, A. & Teboulle, M. 2009, SIAM Journal on Imaging
+    Sciences, 2, 183
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bertero & Boccacci (1998) Bertero, M. & Boccacci, P. 1998, Introduction to Inverse
+    Problems in Imaging (Institute of Physics)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bertin (2011) Bertin, E. 2011, in Astronomical Society of the Pacific Conference
+    Series, Vol. 442, Astronomical Data Analysis Software and Systems XX, ed. I. N.
+    Evans, A. Accomazzi, D. J. Mink, & A. H. Rots, 435
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bertocchi et al. (2018) Bertocchi, C., Chouzenoux, E., Corbineau, M.-C., Pesquet,
+    J.-C., & Prato, M. 2018, arXiv e-prints, arXiv:1812.04276
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bigdeli et al. (2017) Bigdeli, S. A., Jin, M., Favaro, P., & Zwicker, M. 2017,
+    in Proceedings of the 31st International Conference on Neural Information Processing
+    Systems, NIPS’17 (USA: Curran Associates Inc.), 763–772'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bioucas-Dias (2006) Bioucas-Dias, J. 2006, Image Processing, IEEE Transactions
+    on, 15, 937
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bobin et al. (2014) Bobin, J., Sureau, F., Starck, J.-L., Rassat, A., & Paykari,
+    P. 2014, A&A, 563, A105
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Boyd et al. (2010) Boyd, S., Parikh, N., Chu, E., Peleato, B., & Eckstein, J.
+    2010, Machine Learning, 3, 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C. Eldar (2009) C. Eldar, Y. 2009, Signal Processing, IEEE Transactions on,
+    57, 471
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cai et al. (2010) Cai, J., Osher, S., & Shen, Z. 2010, Multiscale Modeling &
+    Simulation, 8, 337
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chambolle & Pock (2011) Chambolle, A. & Pock, T. 2011, Journal of Mathematical
+    Imaging and Vision, 40, 120
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chollet (2016) Chollet, F. 2016, 2017 IEEE Conference on Computer Vision and
+    Pattern Recognition (CVPR), 1800
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Christian Hansen & O’leary (1993) Christian Hansen, P. & O’leary, D. 1993, SIAM
+    J. Sci. Comput., 14, 1487
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Combettes & Pesquet (2011) Combettes, P. L. & Pesquet, J.-C. 2011, in Fixed-Point
+    Algorithms for Inverse Problems in Science and Engineering, ed. Bauschke, H. Burachik,
+    R. Combettes, P. Elser, V. Luke, D. Wolkowicz, & H. (Eds.) (Springer), 185–212
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Combettes & Vu (2014) Combettes, P. L. & Vu, B. C. 2014, Optimization, 63, 1289
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Condat (2013) Condat, L. 2013, Journal of Optimization Theory and Applications,
+    158, 460
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deledalle et al. (2014) Deledalle, C., Vaiter, S., Fadili, J., & Peyré, G. 2014,
+    SIAM Journal on Imaging Sciences, 7, 2448
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Donoho (1995) Donoho, D. L. 1995, Applied and Computational Harmonic Analysis,
+    2, 101
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Eldan & Shamir (2015) Eldan, R. & Shamir, O. 2015, Conference on Learning Theory
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Elfwing et al. (2018) Elfwing, S., Uchibe, E., & Doya, K. 2018, Neural Networks,
+    107, 3 , special issue on deep reinforcement learning
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fan et al. (2018) Fan, F., Li, M., Teng, Y., & Wang, G. 2018, arXiv preprint
+    arXiv:1812.11675
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Farrens et al. (2017) Farrens, S., Starck, J.-L., & Mboula, F. 2017, Astronomy
+    & Astrophysics, 601
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Flamary (2017) Flamary, R. 2017, 2017 25th European Signal Processing Conference
+    (EUSIPCO), 2468
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Garsden et al. (2015) Garsden, H., Girard, J. N., & Starck, J.-L., e. a. 2015,
+    å, 575, A90
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Golub et al. (1979) Golub, G. H., Heath, M., & Wahba, G. 1979, Technometrics,
+    21, 215
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gregor & LeCun (2010) Gregor, K. & LeCun, Y. 2010, in Proceedings of the 27th
+    International Conference on International Conference on Machine Learning, ICML’10
+    (USA: Omnipress), 399–406'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guerrero-colon & Portilla (2006) Guerrero-colon, J. A. & Portilla, J. 2006,
+    in 2006 International Conference on Image Processing, 625–628
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gupta et al. (2018) Gupta, H., Jin, K. H., Nguyen, H. Q., McCann, M. T., & Unser,
+    M. 2018, IEEE Transactions on Medical Imaging, 37, 1440
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: H. Chan et al. (2016) H. Chan, S., Wang, X., & A. Elgendy, O. 2016, IEEE Transactions
+    on Computational Imaging, PP
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han & Ye (2018) Han, Y. & Ye, J. C. 2018, IEEE transactions on medical imaging,
+    37, 1418
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. (2016) He, K., Zhang, X., Ren, S., & Sun, J. 2016, in 2016 IEEE Conference
+    on Computer Vision and Pattern Recognition (CVPR), 770–778
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2017) Huang, G., Liu, Z., v. d. Maaten, L., & Weinberger, K. Q.
+    2017, in 2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR),
+    2261–2269
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hunt (1972) Hunt, B. R. 1972, IEEE Transactions on Automatic and Control, AC-17,
+    703
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ioffe & Szegedy (2015) Ioffe, S. & Szegedy, C. 2015, in Proceedings of the 32Nd
+    International Conference on International Conference on Machine Learning - Volume
+    37, ICML’15 (JMLR.org), 448–456
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jia & Evans (2011) Jia, C. & Evans, B. L. 2011, in 2011 18th IEEE International
+    Conference on Image Processing, 681–684
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jin et al. (2017) Jin, K. H., McCann, M. T., Froustey, E., & Unser, M. 2017,
+    IEEE Transactions on Image Processing, 26, 4509
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kaiser et al. (1995) Kaiser, N., Squires, G., & Broadhurst, T. 1995, ApJ, 449,
+    460
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kalifa et al. (2003) Kalifa, J., Mallat, S., & Rouge, B. 2003, IEEE Transactions
+    on Image Processing, 12, 446
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kingma & Ba (2014) Kingma, D. & Ba, J. 2014, International Conference on Learning
+    Representations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krishnan & Fergus (2009) Krishnan, D. & Fergus, R. 2009, in Advances in Neural
+    Information Processing Systems 22, ed. Y. Bengio, D. Schuurmans, J. D. Lafferty,
+    C. K. I. Williams, & A. Culotta (Curran Associates, Inc.), 1033–1041
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krist et al. (2011) Krist, J. E., Hook, R. N., & Stoehr, F. 2011, in Proc. SPIE,
+    Vol. 8127, Optical Modeling and Performance Predictions V, 81270J
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kuijken et al. (2015) Kuijken, K., Heymans, C., Hildebrandt, H., et al. 2015,
+    MNRAS, 454, 3500
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lanusse, F. et al. (2016) Lanusse, F., Starck, J.-L., Leonard, A., & Pires,
+    S. 2016, A&A, 591, A2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LeCun et al. (2015) LeCun, Y., Bengio, Y., & Hinton, G. 2015, Nature, 521, 436
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2019) Li, Y., Tofighi, M., Monga, V., & Eldar, Y. C. 2019, in ICASSP
+    2019 - 2019 IEEE International Conference on Acoustics, Speech and Signal Processing
+    (ICASSP), 7675–7679
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lou et al. (2011) Lou, Y., Bertozzi, A. L., & Soatto, S. 2011, Journal of Mathematical
+    Imaging and Vision, 39, 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mairal et al. (2008) Mairal, J., Sapiro, G., & Elad, M. 2008, Multiscale Modeling
+    & Simulation, 7, 214
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mallat (2016) Mallat, S. 2016, Philosophical Transactions of the Royal Society
+    A: Mathematical, Physical and Engineering Sciences, 374, 20150203'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mandelbaum et al. (2015) Mandelbaum, R., Rowe, B., Armstrong, R., et al. 2015,
+    MNRAS, 450, 2963
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mandelbaum et al. (2014) Mandelbaum, R., Rowe, B., Bosch, J., et al. 2014, The
+    Astrophysical Journal Supplement Series, 212, 5
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mardani et al. (2017) Mardani, M., Gong, E., Cheng, J. Y., Pauly, J. M., & Xing,
+    L. 2017, in 2017 IEEE 7th International Workshop on Computational Advances in
+    Multi-Sensor Adaptive Processing, CAMSAP 2017, Curaçao, The Netherlands, December
+    10-13, 2017, 1–5
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mardani et al. (2018) Mardani, M., Sun, Q., Vasawanala, S., et al. 2018, in
+    Proceedings of the 32Nd International Conference on Neural Information Processing
+    Systems, NIPS’18 (USA: Curran Associates Inc.), 9596–9606'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mboula et al. (2016) Mboula, F., Starck, J.-L., Okumura, K., Amiaux, J., & Hudelot,
+    P. 2016, Inverse Problems, 32
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Meinhardt et al. (2017) Meinhardt, T., Moller, M., Hazirbas, C., & Cremers,
+    D. 2017, in Proceedings of the IEEE International Conference on Computer Vision,
+    1781–1790
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Monga et al. (2019) Monga, V., Li, Y., & Eldar, Y. C. 2019, Algorithm Unrolling:
+    Interpretable, Efficient Deep Learning for Signal and Image Processing'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neelamani et al. (2004) Neelamani, R., Hyeokho Choi, & Baraniuk, R. 2004, IEEE
+    Transactions on Signal Processing, 52, 418
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Oliveira et al. (2009) Oliveira, J. P., Bioucas-Dias, J. M., & Figueiredo, M. A.
+    2009, Signal Processing, 89, 1683
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Orieux et al. (2010) Orieux, F., Giovannelli, J., & Rodet, T. 2010, in 2010
+    IEEE International Conference on Acoustics, Speech and Signal Processing, 1350–1353
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pereyra et al. (2015) Pereyra, M., Bioucas-Dias, J. M., & Figueiredo, M. A. T.
+    2015, in 2015 23rd European Signal Processing Conference (EUSIPCO), 230–234
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pesquet et al. (2009) Pesquet, J., Benazza-Benyahia, A., & Chaux, C. 2009, IEEE
+    Transactions on Signal Processing, 57, 4616
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Petersen & Voigtlaender (2018) Petersen, P. & Voigtlaender, F. 2018, Neural
+    Networks, 108, 296
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pustelnik et al. (2016) Pustelnik, N., Benazza-Benhayia, A., Zheng, Y., & Pesquet,
+    J.-C. 2016, Wiley Encyclopedia of Electrical and Electronics Engineering
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ribli et al. (2019) Ribli, D., Pataki, B. Á., & Csabai, I. 2019, Nature Astronomy,
+    3, 93
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Romano et al. (2017) Romano, Y., Elad, M., & Milanfar, P. 2017, SIAM Journal
+    on Imaging Sciences, 10, 1804
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ronneberger et al. (2015) Ronneberger, O., Fischer, P., & Brox, T. 2015, in
+    Medical Image Computing and Computer-Assisted Intervention – MICCAI 2015, ed.
+    N. Navab, J. Hornegger, W. M. Wells, & A. F. Frangi (Cham: Springer International
+    Publishing), 234–241'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rowe et al. (2015) Rowe, B., Jarvis, M., Mandelbaum, R., et al. 2015, Astronomy
+    and Computing, 10, 121
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Safran & Shamir (2017) Safran, I. & Shamir, O. 2017, in Proceedings of the 34th
+    International Conference on Machine Learning - Volume 70, ICML’17 (JMLR.org),
+    2979–2987
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Schawinski et al. (2017) Schawinski, K., Zhang, C., Zhang, H., Fowler, L.,
+    & Santhanam, G. K. 2017, Monthly Notices of the Royal Astronomical Society: Letters,
+    467, slx008'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schmitz et al. (2019) Schmitz, M. A., Starck, J. L., Ngole Mboula, F., et al.
+    2019, arXiv e-prints, arXiv:1906.07676
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schuler et al. (2013) Schuler, C. J., Burger, H. C., Harmeling, S., & Schölkopf,
+    B. 2013, in 2013 IEEE Conference on Computer Vision and Pattern Recognition, 1067–1074
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schuler et al. (2016) Schuler, C. J., Hirsch, M., Harmeling, S., & Schölkopf,
+    B. 2016, IEEE Transactions on Pattern Analysis and Machine Intelligence, 38, 1439
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sreehari et al. (2016) Sreehari, S., Venkatakrishnan, S., Wohlberg, B., et al.
+    2016, IEEE Transactions on Computational Imaging, 2, 408
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Starck et al. (2000) Starck, J.-L., Bijaoui, A., Valtchanov, I., & Murtagh,
+    F. 2000, Astronomy and Astrophysics, Supplement Series, 147, 139–149
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Starck et al. (2015a) Starck, J.-L., Murtagh, F., & Bertero, M. 2015a, Starlet
+    Transform in Astronomical Data Processing (New York, NY: Springer New York), 2053–2098'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Starck et al. (2015b) Starck, J.-L., Murtagh, F., & Fadili, J. 2015b, Sparse
+    Image and Signal Processing: Wavelets and Related Geometric Multiscale Analysis
+    (Cambridge University Press)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Starck et al. (2003) Starck, J.-L., Nguyen, M., & Murtagh, F. 2003, Signal Processing,
+    83, 2279
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sureau et al. (2014) Sureau, F. C., Starck, J.-L., Bobin, J., Paykari, P., &
+    Rassat, A. 2014, Astronomy and Astrophysics - A&A, 566, A100
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Szegedy et al. (2016) Szegedy, C., Ioffe, S., & Vanhoucke, V. 2016, AAAI Conference
+    on Artificial Intelligence
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: T. Reehorst & Schniter (2018) T. Reehorst, E. & Schniter, P. 2018, IEEE Transactions
+    on Computational Imaging, PP, 1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tikhonov & Arsenin (1977) Tikhonov, A. N. & Arsenin, V. Y. 1977, Solutions of
+    Ill-posed problems (W.H. Winston)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Twomey (1963) Twomey, S. 1963, J. ACM, 10, 97
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Venkatakrishnan et al. (2013) Venkatakrishnan, S. V., Bouman, C. A., & Wohlberg,
+    B. 2013, 2013 IEEE Global Conference on Signal and Information Processing, 945
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Viola et al. (2011) Viola, M., Melchior, P., & Bartelmann, M. 2011, MNRAS, 410,
+    2156
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Werner Engl et al. (1996) Werner Engl, H., Hanke, M., & Neubauer, A. 1996, Regularization
+    of inverse problems (Dordrecht:Kluwer)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xu et al. (2014) Xu, L., Ren, J., Liu, C., & Jia, J. 2014, Advances in Neural
+    Information Processing Systems, 2, 1790
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ye et al. (2018a) Ye, J., Han, Y., & Cha, E. 2018a, SIAM Journal on Imaging
+    Sciences, 11, 991
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ye et al. (2018b) Ye, J. C., Han, Y., & Cha, E. 2018b, SIAM Journal on Imaging
+    Sciences, 11, 991
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2017) Zhang, K., Zuo, W., Gu, S., & Zhang, L. 2017, in 2017 IEEE
+    Conference on Computer Vision and Pattern Recognition (CVPR), 2808–2817
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zibulevsky & Elad (2010) Zibulevsky, M. & Elad, M. 2010, IEEE Signal Processing
+    Magazine, 27, 76
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zuntz et al. (2018) Zuntz, J., Sheldon, E., Samuroff, S., et al. 2018, Monthly
+    Notices of the Royal Astronomical Society, 481, 1149
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,1101 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:01:05'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2005.13247] A Quantitative Survey of Communication Optimizations in Distributed
+    Deep Learning'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2005.13247](https://ar5iv.labs.arxiv.org/html/2005.13247)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Quantitative Survey of Communication Optimizations in Distributed Deep Learning
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Shaohuai Shi, Zhenheng Tang, Xiaowen Chu1, Chengjian Liu, Wei Wang, and Bo Li
+    *Corresponding author. Shaohuai Shi, Wei Wang and Bo Li are with the Department
+    of Computer Science and Engineering, The Hong Kong University of Science and Technology.
+    Zhenheng Tang and Xiaowen Chu are with the Department of Computer Science, Hong
+    Kong Baptist University. Chengjian Liu is with the College of Big Data and Internet,
+    Shenzhen Technology University.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Nowadays, large and complex deep learning (DL) models are increasingly trained
+    in a distributed manner across multiple worker machines, in which extensive communications
+    between workers pose serious scaling problems. In this article, we present a quantitative
+    survey of communication optimization techniques for data parallel distributed
+    DL. We first identify the major communication challenges and classify the existing
+    solutions into three levels, namely the learning algorithm, the system architecture,
+    and the network infrastructure. We present the state-of-the-art communication
+    optimization techniques and conduct a comparative study of seven common lossless
+    distributed DL methods on a 32-GPU cluster with 100Gbps InfiniBand (IB). We show
+    that (1) the DL models with low model intensity (such as BERT and BERT-Large)
+    are difficult to scale out even with the best available lossless algorithm over
+    100Gbps IB; (2) the system architecture and scheduling algorithms have a critical
+    impact on the scaling property. We conclude the article with discussions on the
+    open issues for further investigations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The remarkable technological advances of deep learning (DL) have enabled a multitude
+    of practical AI applications, ranging from computer vision to natural language
+    processing and to robotics. In a typical DL workflow, deep neural network models
+    are trained to solve a learning problem (e.g., image classification) on a labeled
+    dataset; the trained models can then be used to make an inference given a new
+    input (e.g., predicting the image label). Popular DL training algorithms include
+    the standard mini-batch stochastic gradient descent (SGD) and its variants. These
+    algorithms minimize a pre-defined loss function by iteratively updating the model
+    parameters with stochastic gradients, calculated by sampling a mini-batch of data
+    from the training set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to a recent study from OpenAI, the computational complexity required
+    in DL training has doubled every 3.4 months since 2012, outpacing the Moore’s
+    Law. As the training data and the DL models grow exponentially larger (e.g., the
+    BDD100K auto-driving dataset has 120 million images, and the BERT-xlarge language
+    model has over 1 billion parameters), training deep models on a single GPU or
+    TPU device results in an exceedingly long time. A common practice is to parallelize
+    DL training across multiple processors¹¹1Throughout this article, worker and processor
+    are used interchangeably. that collaboratively update the model parameters. However,
+    such distributed training requires iterative communications between processors,
+    creating a severe performance bottleneck as the improvement of device interconnections
+    lags far behind the rapidly increased computing power of AI processors. The result
+    is the limited system scalability, as suggested by the Amdahl’s law. Therefore,
+    how to address the communication bottlenecks in distributed DL has attracted great
+    attention from both academia and industry in recent years.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model parallelism and data parallelism are the two major parallelization schemes [[1](#bib.bib1)]
+    that enable multiple processors to collaboratively train a single model. Model
+    parallelism splits the set of model parameters and distributes them to all processors,
+    but the high dependency between different neurons and the unbalanced parameter
+    sizes in deep models make model parallelism difficult to scale out. Data parallelism,
+    on the other hand, distributes the computational workload of different data samples
+    to different processors that share the same set of model parameters. Compared
+    with model parallelism, data parallelism is more appealing due to its improved
+    scalability and simpler implementation. In this article, we mainly focus on data
+    parallelism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Quantitative Survey of Communication
+    Optimizations in Distributed Deep Learning")(a) illustrates the popular synchronized
+    SGD algorithm for distributed DL with data parallelism, which has the same convergence
+    performance (in terms of the number of iterations) as SGD on a single worker.
+    In this method, workers load different data samples to calculate the gradients
+    independently; all gradients are aggregated to update the model parameters. Data
+    parallel synchronous SGD can be modeled by a directed acyclic graph (DAG), as
+    shown in Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Quantitative Survey of
+    Communication Optimizations in Distributed Deep Learning")(b). The backpropagation
+    computations of gradients are from the last layer to the first (denoted by $b_{P-1},...,b_{1},b_{0}$),
+    and the distributed gradients should be aggregated (denoted by $c_{P-1},...,c_{1},c_{0}$)
+    before going into the feed-forward computations (denoted by $f_{0},f_{1},...,f_{P-1}$)
+    of the next iteration. The distributed synchronized SGD is also known as bulk
+    synchronous parallel (BSP) SGD as it requires communication and synchronization
+    in every iteration. The gradients can be aggregated through one or more dedicated
+    parameter servers (PS) [[2](#bib.bib2)] or by all-to-all (A2A) communications [[3](#bib.bib3)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b86b866fa3ec25eb3931ef24d29be65b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Data parallelism
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/709f501adfa20c848c7c9a03867062e1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) A DAG example
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Data parallelism of distributed DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Much work has been proposed recently to improve the scalability of distributed
+    DL. In this article, we develop a taxonomy for describing communication-efficient
+    techniques in distributed DL, and present a quantitative survey of communication
+    optimization techniques for the BSP-style training algorithms. We identify the
+    model intensity and batch size as two key factors that affect the system scalability,
+    and conduct a quantitative study to compare seven state-of-the-art distributed
+    training methods on a 32-GPU cluster with 100Gbps IB. Our evaluation method and
+    results can serve as a reference for the practitioners to design their distributed
+    DL platforms²²2Our source code is publicly available at https://github.com/HKBU-HPML/ddl-benchmarks..
+    Our main observations through this study are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A model with low model intensity and small batch size (thus a high communication-to-computation
+    ratio) is difficult to scale out.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The decentralized A2A architecture is more latency-sensitive than the centralized
+    PS architecture, but the latter requires extra servers and network ports to achieve
+    good performance.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Scheduling algorithms can be useful to hide the communication costs in both
+    PS and A2A architectures. In particular, tensor fusion is suitable for A2A, while
+    tensor partition is more suitable for PS.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The remainder of this article is organized as follows. We first identify the
+    communication issues and existing solutions in distributed DL. Then we elaborate
+    commonly used communication optimization techniques, followed by our experimental
+    study. Finally, we discuss the challenges and possible future research directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Communication Issues and Solutions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 2.1 Scope, Assumptions, and Terminologies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this article, we mainly discuss the communication issues in data parallel
+    distributed DL, and focus on the data center or HPC environments where network
+    speed is high and stable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a typical data parallel distributed DL (e.g., BSP-SGD), each training iteration
+    consists of several steps. First, each worker loads a mini-batch of data as the
+    input and performs feed-forward calculations to calculate the loss value against
+    the corresponding labels. Next, each worker backpropagates the loss and calculates
+    the first-order gradients of model parameters. The local gradients are aggregated
+    among all workers, and the averaged gradients are finally used to update the model
+    parameters. The algorithm proceeds to the next iteration, until a certain convergence
+    condition is met. In this article, we assume data I/O can be overlapped with the
+    computations, and hence will not consider the data I/O time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider a training job of a deep model with $D$ parameters that uses SGD with
+    a mini-batch size of $M$. Assume the number of arithmetic operations required
+    for a single data sample in each training iteration is $C$. A data parallelism
+    solution with $N$ workers will distribute the $MC$ arithmetic operations to the
+    $N$ workers (e.g., each worker has a local mini-batch size of $M/N$). In the simplest
+    case where communication tasks do not overlap with computing tasks, the speedup
+    achieved by $N$ workers is $\frac{t_{s}}{t_{s}/N+t_{m}}$, where $t_{s}$ is the
+    computing time with a single worker, and $t_{m}$ is the communication time of
+    distributed training with $N$ workers. As $N$ becomes larger, the speedup approaches
+    $t_{s}/t_{m}$, which explains the significance of communication optimization in
+    distributed DL. To eliminate the impact of computing speed and communication speed
+    on the analysis of speedup, we define communication-to-computation (C2C) ratio
+    of a distributed training job as the total amount of communication traffic divided
+    by the total amount of computations. Due to the dependency between communication
+    tasks and computation tasks (Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Quantitative
+    Survey of Communication Optimizations in Distributed Deep Learning")(b)), C2C
+    ratio is the key factor that affects the system scalability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, the total amount of communication traffic is linearly proportional
+    to the model size $D$ and also depends on the number of workers $N$. So we can
+    use $D\cdot f(N)$ to model the amount of communication³³3For simplicity, the unit
+    of communication is the size of one model parameter or gradient. But in practice,
+    the size of a model parameter could be different from the size of a gradient.
+    where $f(N)$ depends on the communication scheme. The C2C ratio can then be calculated
+    by $\frac{D\cdot f(N)}{M\cdot C}$. We define model intensity $I=\frac{C}{D}$,
+    which is the average number of arithmetic operations in an iteration per data
+    sample per model parameter. Here, $I$ is an intrinsic feature of the model that
+    captures the difficulty of parallelism. The C2C ratio can then be simplified as
+    $\frac{f(N)}{M\cdot I}$. Our experimental results in Section [4](#S4 "4 Comparative
+    Study ‣ A Quantitative Survey of Communication Optimizations in Distributed Deep
+    Learning") verify that a model with low intensity $I$ and/or small batch size
+    $M$ is difficult to scale. To reduce the C2C ratio of a given DL model, we need
+    to design good communication schemes with small $f(N)$ and choose a large batch
+    size $M$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Communication Issues
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We use the BERT-Large language model (with 336 million parameters) as an example
+    to illustrate the communication challenges in distributed training. Given a local
+    batch size of 8 (which is limited by the available GPU memory size), each iteration
+    requires $597\times 10^{9}$ floating point operations (FLOPs) which take 163ms
+    on an Nvidia RTX2080Ti. There are several communication challenges that limit
+    the system scalability of distributed training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Communication Size: In each training iteration, the whole set of model parameters
+    or their gradients should be exchanged across all workers. The BERT-Large model
+    has a size of 1.34GB if the parameters are stored in a 32-bit format. Given $N$
+    workers, finding the average of $N$ sets of data and synchronizing the updated
+    model within a short time period can be very challenging. For instance, when training
+    BERT-Large on a server with 4 RTX2080Ti connected through PCIe 3.0, each iteration
+    requires 441ms of communication time for the all-reduce operations, resulting
+    in a poor speedup of $1.08\times$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Communication Performance: Deep models have a layered structure, and the parameters
+    and their corresponding gradients are typically stored as tens to hundreds of
+    tensors. First of all, these tensors are calculated layer by layer on the fly,
+    creating intrinsic time dependency that limits the design space of scheduling
+    computing and communication tasks. Second, the tensor size ranges from kilo-bytes
+    to mega-bytes. It is difficult to fully utilize the high network bandwidth when
+    exchanging small messages [[3](#bib.bib3)]. For example, in our testbed, transmitting
+    1MB of message across the 10GbE (TCP/IP), 100GbE (TCP/IP), and 100GbIB (RDMA)
+    achieves an effective throughput of 8.2Gbps, 16.5Gbps, and 83.2Gbps, respectively;
+    while transmitting a smaller message of 16KB across the 10GbE, 100GbE, and 100GbIB
+    can only achieve much lower throughput of 1.2Gbps, 4.6Gbps, and 16.7Gbps, respectively.
+    Optimally exchanging various tensors among a set of workers requires a co-design
+    of message exchange algorithm and network system architecture that considers both
+    bandwidth and communication latency.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9fbc35aa7d6682760dd8c7b93e7ba735.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: A three-level taxonomy of communication-efficient distributed DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Solutions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There have been three different directions taken to address the above challenges:
+    1) reducing the C2C ratio, 2) overlapping the communication tasks with the computation
+    tasks, and 3) improving the communication performance by the advanced design of
+    system architectures and communication primitives. In Fig. [2](#S2.F2 "Figure
+    2 ‣ 2.2 Communication Issues ‣ 2 Communication Issues and Solutions ‣ A Quantitative
+    Survey of Communication Optimizations in Distributed Deep Learning"), we develop
+    a three-level taxonomy to describe communication-efficient distributed DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.1 Learning Algorithms
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'At the top, there are high-level learning algorithms with different communication
+    complexity (aiming to reduce the C2C ratio), which can be classified into two
+    types: 1) increasing the workload of computation (e.g., large-batch training [[4](#bib.bib4)])
+    and 2) reducing the communication complexity by quantization and/or sparsification.
+    These algorithms are usually lossy in the sense that they generate inconsistent
+    results with the single-worker SGD. Lossy algorithms may need more iterations
+    to achieve the same level of convergence, though each iteration completes faster.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Large-batch training is an immediate way to reduce the C2C ratio by enlarging
+    the batch size. With proper optimization tricks (e.g., layer-wise adaptive rate
+    scaling), large-batch training can maintain the same generalization ability as
+    single-worker SGD. However, the local batch size is limited by the memory size
+    of the AI processor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can also relax the synchronization or reduce the communication frequency
+    among workers (e.g., staled synchronized parallel (SSP) [[5](#bib.bib5)], local
+    SGD [[4](#bib.bib4)], and asynchronous parallel (ASP) [[6](#bib.bib6)] SGD). SSP
+    SGD allows some workers to run more iterations before synchronization, which is
+    efficient in a heterogeneous environment where different workers have different
+    computing horsepower. Local SGD allows all workers to run a specific number of
+    local updates independently before synchronization. ASP SGD enables all workers
+    to train the model without waiting for any other workers to update the model parameters.
+    Compression techniques such as gradient quantization [[7](#bib.bib7)] and sparsification
+    [[8](#bib.bib8)] are another thread of lossy algorithms. Gradient quantization
+    quantifies each gradient into a few bits with little impact on the convergence,
+    while gradient sparsification selects a small portion of the gradients for model
+    updates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.2 System Architectures
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The middle level is the system architectures that define how the workers exchange
+    the information. Parameter server (PS) (e.g., [[2](#bib.bib2)]) and all-to-all
+    (A2A) (e.g., [[3](#bib.bib3)]) are the two most popular system architectures,
+    and they can be equipped with different communication scheduling algorithms that
+    can either overlap communication with computation or improve the communication
+    performance by tensor fusion/partition. PS is a centralized architecture that
+    requires one or more central servers to manage the model parameters, while A2A
+    is a decentralized architecture that exploits message passing interface (MPI)
+    or alike to perform data communication tasks. The optimization techniques in this
+    level are usually lossless as they don’t change the training results of the learning
+    algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.3 Communication Infrastructure
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: At the bottom level, there are diverse communication infrastructures offering
+    the fundamental data communication services, which include communication protocols
+    and network topologies. The optimization techniques in this level are also lossless.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Popular communication protocols are TCP/IP, RDMA on InfiniBand, and RoCE. TCP/IP
+    is widely supported by commodity Ethernet switches. However, it is inefficient
+    for high-speed data communications due to the cost of data copy between the kernel
+    buffer and the application buffer. RDMA can deliver lower latency and higher throughput
+    than TCP/IP [[9](#bib.bib9)]. RDMA was originally run on InfiniBand, while RoCE
+    (RDMA over converged Ethernet) enables the cheaper Ethernet to support RDMA. Network
+    topology design is also important to improve the performance of distributed DL.
+    E.g., Wang et al. [[10](#bib.bib10)] showed that BCube is more suitable than Fat-tree
+    for distributed DL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In summary, a distributed training method may involve six different aspects:
+    <svg id="S2.SS3.SSS3.p3.1.pic1" class="ltx_picture" height="13.74" overflow="visible"
+    version="1.1" width="13.74"><g transform="translate(0,13.74) matrix(1 0 0 -1 0
+    0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
+    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
+    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+    Communication Synchronization, <svg id="S2.SS3.SSS3.p3.2.pic2" class="ltx_picture"
+    height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg> Communication
+    Compression, <svg id="S2.SS3.SSS3.p3.3.pic3" class="ltx_picture" height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> System Architecture,
+    <svg id="S2.SS3.SSS3.p3.4.pic4" class="ltx_picture" height="13.74" overflow="visible"
+    version="1.1" width="13.74"><g transform="translate(0,13.74) matrix(1 0 0 -1 0
+    0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
+    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
+    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+    Scheduling, <svg id="S2.SS3.SSS3.p3.5.pic5" class="ltx_picture" height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg> Communication
+    Protocol, and <svg id="S2.SS3.SSS3.p3.6.pic6" class="ltx_picture" height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">6</foreignobject></g></g></svg> Network Topology.
+    This can be described as “it exploits <svg id="S2.SS3.SSS3.p3.7.pic7" class="ltx_picture"
+    height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg> with/without
+    <svg id="S2.SS3.SSS3.p3.8.pic8" class="ltx_picture" height="13.74" overflow="visible"
+    version="1.1" width="13.74"><g transform="translate(0,13.74) matrix(1 0 0 -1 0
+    0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
+    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
+    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>,
+    running on <svg id="S2.SS3.SSS3.p3.9.pic9" class="ltx_picture" height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> with/without
+    <svg id="S2.SS3.SSS3.p3.10.pic10" class="ltx_picture" height="13.74" overflow="visible"
+    version="1.1" width="13.74"><g transform="translate(0,13.74) matrix(1 0 0 -1 0
+    0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
+    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
+    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+    building on <svg id="S2.SS3.SSS3.p3.11.pic11" class="ltx_picture" height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg> and <svg id="S2.SS3.SSS3.p3.12.pic12"
+    class="ltx_picture" height="13.74" overflow="visible" version="1.1" width="13.74"><g
+    transform="translate(0,13.74) matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">6</foreignobject></g></g></svg>.”
+    In practice, BSP SGD with large-batch training is more popular than the other
+    learning algorithms due to its good convergence property. Therefore, given a GPU
+    cluster with a fixed communication infrastructure, the system architecture and
+    scheduling algorithms become the key communication optimization techniques to
+    improve the system scalability. In the next section, we continue to discuss the
+    impact of system architectures and scheduling algorithms on the performance of
+    distributed DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 A Popular Communication Optimization Portfolio
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9c186ea2a1567cb585d865b5afe0b424.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: A communication optimization portfolio in distributed DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we focus on the communication optimization techniques in system
+    architecture design and scheduling algorithms. These techniques are lossless,
+    making them particularly appealing to industry practitioners because model accuracy
+    is the most important for many AI applications. Fig. [3](#S3.F3 "Figure 3 ‣ 3
+    A Popular Communication Optimization Portfolio ‣ A Quantitative Survey of Communication
+    Optimizations in Distributed Deep Learning") gives an illustration of the communication
+    optimization techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 System Architectures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: PS and A2A represent two different design philosophies, with different communication
+    properties.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1 Parameter Server (PS)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the PS architecture, a PS is logically a central server that aggregates the
+    gradients from the workers, updates the model parameters, and sends back the latest
+    model to the workers. It provides a simple and flexible framework for the system
+    implementation. However, since PS needs to receive gradients from and send parameters
+    (or averaged gradients) to all workers, it could easily become the system bottleneck
+    in the BSP algorithm where all workers communicate with the PS almost simultaneously.
+    With a single PS, the communication traffic is $2D$ for each worker and $2ND$
+    for the PS. To alleviate the communication pressure on a single PS, one can deploy
+    multiple PSes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here we introduce a representative PS implementation called BytePS⁴⁴4https://github.com/bytedance/byteps,
+    a highly optimized framework that supports multiple PSes by partitioning the gradient
+    tensors in a load-balanced manner. Given $S$ PSes, the $D$-dimensional gradient
+    is partitioned into $D/S$ parts so that each PS receives $ND/S$ gradients from
+    $N$ workers. The received $N$ gradient tensors are averaged on the server side
+    and sent back to all $N$ workers. Therefore, the communication traffic of each
+    PS is reduced to $2ND/S$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2 All-to-all (A2A)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The average of the distributed gradient or parameter tensors can be calculated
+    by an A2A operation, e.g., the all-reduce primitive in MPI. The ring-based all-reduce
+    collective is commonly used in distributed DL, which is bandwidth optimal by dividing
+    the tensors into small messages and exchanging those messages simultaneously in
+    a pipelined manner. However, ring-based all-reduce has a latency term that is
+    linear to the number of workers, which becomes inefficient for large clusters.
+    In the high-performance communication library (NCCL⁵⁵5https://developer.nvidia.com/nccl),
+    the double binary trees algorithm [[11](#bib.bib11)] is integrated for dense-GPU
+    clusters, which delivers a logarithmic latency while preserving the bandwidth
+    optimality. For some imbalance network bandwidth systems, using the hierarchy
+    of communication bandwidths could further improve the communication efficiency
+    [[12](#bib.bib12)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Horovod⁶⁶6https://github.com/horovod/horovod is a popular distributed DL framework
+    built for the A2A architecture and supports many state-of-the-art distributed
+    communication libraries (e.g., MPI, NCCL, and Gloo⁷⁷7https://github.com/facebookincubator/gloo).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Scheduling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: During the training process of distributed DL, the computing and communication
+    tasks can be described by a DAG. The layer-wise (or tensor-wise) structure of
+    deep models makes it possible to schedule different tasks intelligently so that
+    part of the communication cost can be hidden, as shown in Fig. [3](#S3.F3 "Figure
+    3 ‣ 3 A Popular Communication Optimization Portfolio ‣ A Quantitative Survey of
+    Communication Optimizations in Distributed Deep Learning") <svg id="S3.SS2.p1.1.pic1"
+    class="ltx_picture" height="13.74" overflow="visible" version="1.1" width="13.74"><g
+    transform="translate(0,13.74) matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Layer-wise Pipelining and Tensor Fusion
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A deep model consists of a stack of layers, and the learnable parameters of
+    each layer are generally represented by one or two tensors. During the backpropagation,
+    if the gradients of layer $P$ have been computed, then they can be immediately
+    communicated so that the communication task can be pipelined with the computing
+    task of layer $P-1$. The naive pipelining between communications and computations
+    during backpropagation is also called wait-free backpropagation (WFBP) [[13](#bib.bib13)],
+    which can be applied to both PS and A2A architectures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In A2A with pipelining, an all-reduce operation is required for each tensor,
+    which usually divides the tensor into multiple small messages. Considering that
+    transmitting two small messages together is generally faster than transmitting
+    the two messages separately (e.g., in our 100Gbps InfiniBand cluster, transmitting
+    a 16KiB message takes 7.85us, while transmitting a 32KiB message takes 10.1us),
+    the MG-WFBP algorithm adopts the idea of tensor fusion by optimally merging the
+    gradients of several consecutive layers to minimize the iteration time [[3](#bib.bib3)].
+    Tensor fusion can effectively alleviate the negative impact of transmitting small
+    messages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Tensor Partitioning and Priority Scheduling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the PS architecture, the communication happens between a worker and a PS
+    and a tensor can be transmitted as a single message, making tensor fusion less
+    beneficial than in A2A. Other than pipelining, there is another opportunity for
+    performance improvement by priority scheduling. In PS, there are two directions
+    of communications: push of gradients and pull of parameters. For each layer, the
+    pull of parameters is commonly followed by the push of gradients. If the current
+    layer has a large tensor, it would block other layers with small tensors. ByteScheduler [[14](#bib.bib14)]
+    is the efficient scheduling strategy that partitions a large tensor into multiple
+    smaller ones and allows the lower layers to be scheduled ahead of the higher layers.
+    By using the priority scheduling, it is possible to overlap the communication
+    tasks with both feed-forward and backpropagation computing tasks [[15](#bib.bib15),
+    [14](#bib.bib14)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Comparative Study
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To demonstrate the key factors that affect the scalability of the optimization
+    portfolio presented in Section [3](#S3 "3 A Popular Communication Optimization
+    Portfolio ‣ A Quantitative Survey of Communication Optimizations in Distributed
+    Deep Learning"), we evaluate and compare the system performance of seven representative
+    distributed training methods listed in Table [I](#S4.T1 "TABLE I ‣ 4 Comparative
+    Study ‣ A Quantitative Survey of Communication Optimizations in Distributed Deep
+    Learning"), which are widely used in practice and serve as good examples to quantitatively
+    study different optimization techniques. BSP-PS and BSP-A2A are the baseline cases
+    without special optimization, which are used to compare the efficiency of PS and
+    A2A. WFBP-PS and WFBP-A2A are with WFBP scheduling, which can evaluate the effectiveness
+    of WFBP on different architectures. MG-WFBP uses tensor fusion to address the
+    latency problem of WFBP-A2A. ByteScheduler-PS and ByteScheduler-A2A are with both
+    pipelining and tensor partition under PS and A2A architectures respectively, which
+    can show the performance of tensor partition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We choose three representative deep models for evaluation, namely ResNet-50,
+    BERT-Base, and BERT-Large, which are commonly used in image classification and
+    natural language processing. Their model intensities are 470, 249, and 248, respectively.
+    On RTX2080Ti, ResNet-50 and BERT-Base can support a local batch size of 64, while
+    BERT-Large can only support 8\. These three models can well illustrate the impact
+    of model intensity and batch size on the system scalability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Experimental Settings for Evaluation. For BytePS, as suggested by
+    the official release, we use multiple PSes whose amount is the same as the number
+    of worker servers. Each worker server has multiple workers (i.e., GPUs).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | System Architecture | Scheduling | Distributed Software | Common
+    Libraries |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PS/All-to-all | Pipelining | Tensor Fusion | Tensor Partition |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BSP-PS [[13](#bib.bib13)] | PS | ✘ | ✘ | ✘ | BytePS | PyTorch-1.4 CUDA-10.1
+    NCCL-2.4.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BSP-A2A [[3](#bib.bib3), [11](#bib.bib11)] | All-to-all | ✘ | ✘ | ✘ | Horovod
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WFBP-PS [[13](#bib.bib13)] | PS | ✔ | ✘ | ✘ | BytePS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WFBP-A2A [[3](#bib.bib3), [11](#bib.bib11)] | All-to-all | ✔ | ✘ | ✘ | Horovod
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MG-WFBP [[3](#bib.bib3)] | All-to-all | ✔ | ✔ | ✘ | Horovod |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ByteScheduler-PS [[14](#bib.bib14)] | PS | ✔ | ✘ | ✔ | BytePS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ByteScheduler-A2A [[14](#bib.bib14)] | All-to-all | ✔ | ✘ | ✔ | Horovod |'
+  prefs: []
+  type: TYPE_TB
+- en: 4.1 Experimental Settings
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Hardware: We conduct experiments on a GPU cluster with RDMA over 100Gbps IB.
+    The cluster consists of 8 nodes (or worker servers). Each node has four Nvidia
+    RTX2080Ti GPUs (11GB RAM) interconnected by PCIe3.0 x16, two Intel(R) Xeon(R)
+    Gold 6230 CPUs, and 512GB memory.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Software: We exploit PyTorch-1.4⁸⁸8https://pytorch.org/ as the backbone framework
+    with GPU libraries of CUDA-10.1, cuDNN-7.6 and NCCL-2.4.8\. We use the highly
+    optimized libraries of BytePS and Horovod for PS and A2A architectures, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Measurements: We use the metric of system throughput (i.e., samples per second)
+    in processing the data samples to evaluate the performance. For ResNet-50, a sample
+    is an image with a resolution of $224\times 224\times 3$; for BERT-Base and BERT-Large,
+    a sample is a sentence with a length of $64$ words. We use the SGD training with
+    a single RTX2080Ti as the baseline to calculate the speedup. Note that when comparing
+    the results between different number of workers, they have different effective
+    batch sizes and their convergence might be different.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Experimental Results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/caca3583160c0cc85f9c082b565872ce.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) ResNet-50 ($I$ = 470, $LBS$ = 64)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/08b8f76fb368f402a11060540cb91f94.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) BERT-Base ($I$ = 249, $LBS$ = 64)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b5c506e0684e1af1da88291e17ca6da0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (c) BERT-Large ($I$ = 248, $LBS$ = 8)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 4: System throughput comparison. $I$: model intensity. $LBS$: local
+    batch size. The numbers on the top of the bars are the best speedups among the
+    seven evaluated methods over the single-GPU SGD algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fig. [4](#S4.F4 "Figure 4 ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣
+    A Quantitative Survey of Communication Optimizations in Distributed Deep Learning")
+    depicts the experimental results, averaged over five independent experiments.
+    For each run, we conduct 10 training iterations for warm-up, and another 100 iterations
+    for measuring the average throughput. We summarize our major findings in Table [II](#S4.T2
+    "TABLE II ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey
+    of Communication Optimizations in Distributed Deep Learning").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE II: Major Findings of Experimental Results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Section | Related Factors | Major Findings |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [4.2.1](#S4.SS2.SSS1 "4.2.1 Impact of Model Intensity and Batch Size ‣ 4.2
+    Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey of Communication
+    Optimizations in Distributed Deep Learning") | Model intensity and | 1) The model
+    with higher model intensity is easier to be parallelized. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | batch size | 2) Increasing the batch size to reduce the C2C ratio makes
+    the parallelism easier, but the maximum local |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | batch size is limited by GPU memory. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [4.2.2](#S4.SS2.SSS2 "4.2.2 System Architecture: PS vs. A2A ‣ 4.2 Experimental
+    Results ‣ 4 Comparative Study ‣ A Quantitative Survey of Communication Optimizations
+    in Distributed Deep Learning") | PS vs. A2A | 3) There is no single winner in
+    PS and A2A. Both can achieve comparable performance when enhanced |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | with different optimization algorithms. But PS needs extra servers
+    and network switch ports to be |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | competitive with A2A. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [4.2.3](#S4.SS2.SSS3 "4.2.3 Scheduling ‣ 4.2 Experimental Results ‣ 4 Comparative
+    Study ‣ A Quantitative Survey of Communication Optimizations in Distributed Deep
+    Learning") | Scheduling | 4) Wait-free backpropagation (WFBP) can generally hide
+    some communication costs. Scheduling is |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | helpful when the communication time is comparable to the computing
+    time per worker. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | 5) Tensor fusion (e.g., MG-WFBP) is suitable for A2A because it addresses
+    the inefficiency of transmitting |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | small messages in A2A. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | 6) Tensor partition (e.g., ByteScheduler) is suitable for PS, which
+    makes communications better |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | overlapped with computations. |'
+  prefs: []
+  type: TYPE_TB
+- en: 4.2.1 Impact of Model Intensity and Batch Size
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'ResNet-50 vs. BERT-Base: As the model intensity of ResNet-50 is about twice
+    as large as BERT-Base, and their local batch sizes are both 64, the C2C ratio
+    of ResNet-50 is around half of BERT-Base. Comparing Fig. [4](#S4.F4 "Figure 4
+    ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey of Communication
+    Optimizations in Distributed Deep Learning")(a) with Fig. [4](#S4.F4 "Figure 4
+    ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey of Communication
+    Optimizations in Distributed Deep Learning")(b), we see that ResNet-50 has much
+    better scalability than BERT-Base. For example, on the intra-node training with
+    4 GPUs, we can achieve an optimal speedup of $4\times$ on ResNet-50, but only
+    $3.1\times$ on BERT-Base; with 32 GPUs, ResNet-50 has a speedup of $31.6\times$,
+    while BERT-Base has only $23.2\times$. The results confirm that a model with higher
+    intensity is easier to be parallelized.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'BERT-Base vs. BERT-Large: The model intensities of BERT-Base and BERT-Large
+    are very close, but the local batch size for BERT-Base is $8\times$ larger than
+    BERT-Large due to the smaller GPU memory footprint. Therefore, the C2C ratio of
+    BERT-Large is about $8\times$ higher than BERT-Base, which makes BERT-Large much
+    more difficult to be parallelized, as confirmed by comparing Fig. [4](#S4.F4 "Figure
+    4 ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey of
+    Communication Optimizations in Distributed Deep Learning")(c) with Fig. [4](#S4.F4
+    "Figure 4 ‣ 4.2 Experimental Results ‣ 4 Comparative Study ‣ A Quantitative Survey
+    of Communication Optimizations in Distributed Deep Learning")(b). The smaller
+    speedups of BERT-Large are mainly due to the small batch size and limited bandwidth
+    of PCIe3.0\. For example, 4-GPU training on BERT-Large has a maximum of $1.2\times$
+    speedup, while it is $3.1\times$ for BERT-Base. The small GPU memory size of RTX2080Ti
+    and the limited bandwidth of PCIe3.0 are not suitable for distributed training
+    of BERT-Large. For comparison, when training BERT-Large on a much more expensive
+    server with four Nvidia V100 GPUs (with 32GB memory) interconnected by NVLink
+    (with more than $10\times$ higher bandwidth than PCIe3.0), the local batch size
+    can be as large as 128, and we achieved a speedup of $3.82\times$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4.2.2 System Architecture: PS vs. A2A'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: It is well known that the PS architecture with a single PS does not scale well.
+    In our evaluation on the PS architecture, we use the same number of PSes and worker
+    servers [[14](#bib.bib14)]. Notice that, in this setting, the PS architecture
+    consumes more network switch ports and more total network bandwidth than A2A.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regarding BSP-PS and BSP-A2A without pipelining, BSP-A2A outperforms BSP-PS
+    in all cases. However, when exploiting WFBP [[13](#bib.bib13)] to pipeline communications
+    with computations, WFBP-PS outperforms WFBP-A2A, especially on 32 workers. This
+    is because the A2A architecture has a non-negligible latency term that is logarithmic/linear
+    to the number of workers with tree/ring-based algorithms, and WFBP requires the
+    gradients aggregated tensor-wisely, resulting in noticeable startup overheads [[3](#bib.bib3)].
+    The tensor fusion technique [[3](#bib.bib3)] can well address this startup problem.
+    As we observe from Fig. [4](#S4.F4 "Figure 4 ‣ 4.2 Experimental Results ‣ 4 Comparative
+    Study ‣ A Quantitative Survey of Communication Optimizations in Distributed Deep
+    Learning"), MG-WFBP achieves the best speedup on BERT-Base (except the case of
+    8 workers) and BERT-Large. But for ResNet-50 with higher model intensity, ByteScheduler-PS
+    performs slightly better than MG-WFBP. In summary, there is no clear winner between
+    PS and A2A. Both architectures can achieve comparable performance when equipped
+    with suitable optimization techniques. However, PS needs extra servers and switch
+    ports to keep the competitive edge with A2A.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.3 Scheduling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The idea of scheduling is to overlap communication tasks with computing tasks.
+    Regarding the WFBP algorithm, in most cases WFBP-PS and WFBP-A2A both run faster
+    than BSP-PS and BSP-A2A, respectively. But WFBP-A2A sometimes suffers from the
+    startup latency problem as many small messages need to be transferred, e.g., under
+    the case of BERT-Base and BERT-Large with 32 workers. MG-WFBP significantly improves
+    the scalability of WFBP-A2A, especially with a large number of workers. ByteScheduler-A2A
+    schedules the communications in the opposite direction with MG-WFBP by partitioning
+    tensors instead of merging tensors, and its performance is not very promising.
+    However, with the PS architecture, ByteScheduler-PS slightly outperforms WFBP-PS
+    in ResNet-50. This indicates that without bringing extra heavy latency by partitioning
+    tensors, communications of partitioned tensors can be better scheduled to overlap
+    with backpropagation and feed-forward computations [[14](#bib.bib14)]. In summary,
+    scheduling algorithms can improve the system scalability by hiding the communication
+    overhead. However, when the communication time dominates the training time (e.g.,
+    BERT-Large), the overall speedup becomes rather limited and we need to either
+    improve the network speed or consider lossy algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Challenges and Future Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Despite many techniques are proposed to address the communication problem in
+    distributed DL, some technical challenges remain open to answer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Communication Compression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As the model size increases, the communication cost grows, which could result
+    in a very high C2C ratio. Lossless optimization algorithms in system architecture
+    design and scheduling can only achieve marginal improvement since the communication
+    cost dominates the training time. The communication compression techniques would
+    be useful to significantly reduce the communication traffic in such cases. The
+    primary challenge is how to maintain the model accuracy while keeping the convergence
+    performance. Existing methods have proven that communication compression can achieve
+    the same asymptotic convergence speed as vanilla SGD. Yet in practice, with a
+    very high compression ratio, it generally requires more iterations to achieve
+    the target loss value. One possible direction is to set different compression
+    ratios for different layers to maximize the exchanged information. Another possibility
+    is to dynamically set appropriate compression ratios at different training iterations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Automatically Selected System Architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The PS and A2A architectures are widely deployed for the BSP algorithm in both
+    industry and academia. Intuitively, the A2A architecture is more efficient than
+    PS as it requires no central servers; but A2A is more latency-sensitive than PS.
+    Furthermore, one can use multiple PSes to reduce the central server’s network
+    footprint. More uncertainly, with different hardware configurations, model properties,
+    and scheduling algorithms, no solution is always better in all cases. An interesting
+    yet challenging problem is to build mathematical performance models for both PS
+    and A2A according to the training environments (e.g., the number of GPUs, network
+    topology, link bandwidth and latency, model properties, etc.), so that a better
+    architecture can be chosen for training the target model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Generic Scheduling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: According to the characteristics of distributed DL, various scheduling algorithms
+    try to maximize the parallelism of computing tasks and communication tasks. However,
+    these algorithms were built upon the DAG of BSP with three types of tasks (i.e.,
+    feed-forward, backpropagation, and gradient communication). The scheduling algorithm
+    only brings marginal improvement if the communication time is much longer than
+    the computing time. Although communication compression can reduce the communication
+    cost, current scheduling methods are not directly applicable to the BSP with gradient
+    compression because compression introduces extra non-negligible computational
+    costs and smaller communication traffic, which makes the scheduling more difficult.
+    One possible solution is to design a generic scheduler for configured DAGs. The
+    DAG would be changed due to tensor partition or fusion. For the configured DAG,
+    the scheduler can use some heuristic algorithms to search for the configuration
+    with better performance. Furthermore, current scheduling techniques such as MG-WFBP [[3](#bib.bib3)]
+    and ByteScheduler [[14](#bib.bib14)] take two opposite directions (i.e., tensor
+    fusion and tensor partition) for scheduling. In practice, no one is always better.
+    An intelligent scheduler should be adaptive to the training environment and dynamically
+    determine whether the tensors should be merged or partitioned to achieve higher
+    performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this article, we gave an overview of the techniques to address the communication
+    challenges in distributed deep learning. We first analyzed the communication problems
+    in distributed training of deep learning models, and then presented a taxonomy
+    and survey of the existing state-of-the-art technologies. We particularly focused
+    on the commonly used lossless methods and provided a quantitative analysis to
+    these methods based on real-world experiments. Finally, we discussed the challenges
+    and possible future research directions in this area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The research was supported in part by Hong Kong RGC GRF grants under the contracts
+    HKBU 12200418, HKUST 16206417 and 16207818, and in part by National Natural Science
+    Foundation of China under Grant 62002240.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] J. Dean, G. Corrado, R. Monga, K. Chen, M. Devin, M. Mao, M. Ranzato, A. Senior,
+    P. Tucker, K. Yang *et al.*, “Large scale distributed deep networks,” in *Advances
+    in neural information processing systems*, 2012, pp. 1223–1231.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] C. Chen, W. Wang, and B. Li, “Round-robin synchronization: Mitigating communication
+    bottlenecks in parameter servers,” in *IEEE INFOCOM 2019-IEEE Conference on Computer
+    Communications*.   IEEE, 2019, pp. 532–540.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] S. Shi, X. Chu, and B. Li, “MG-WFBP: Efficient data communication for distributed
+    synchronous SGD algorithms,” in *IEEE INFOCOM 2019-IEEE Conference on Computer
+    Communications*.   IEEE, 2019, pp. 172–180.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] T. Lin, S. U. Stich, K. K. Patel, and M. Jaggi, “Don’t use large mini-batches,
+    use local SGD,” in *International Conference on Learning Representations*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] X. Zhao, A. An, J. Liu, and B. X. Chen, “Dynamic stale synchronous parallel
+    distributed training for deep learning,” in *2019 IEEE 39th International Conference
+    on Distributed Computing Systems (ICDCS)*.   IEEE, 2019, pp. 1507–1517.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] B. Recht, C. Re, S. Wright, and F. Niu, “Hogwild: A lock-free approach
+    to parallelizing stochastic gradient descent,” in *Advances in neural information
+    processing systems*, 2011, pp. 693–701.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] J. Bernstein, Y.-X. Wang, K. Azizzadenesheli, and A. Anandkumar, “signSGD:
+    Compressed optimisation for non-convex problems,” in *International Conference
+    on Machine Learning*, 2018, pp. 560–569.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] S. Shi, Q. Wang, K. Zhao, Z. Tang, Y. Wang, X. Huang, and X. Chu, “A distributed
+    synchronous SGD algorithm with global Top-k sparsification for low bandwidth networks,”
+    in *2019 IEEE 39th International Conference on Distributed Computing Systems (ICDCS)*.   IEEE,
+    2019, pp. 2238–2247.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] J. Xue, Y. Miao, C. Chen, M. Wu, L. Zhang, and L. Zhou, “Fast distributed
+    deep learning over RDMA,” in *Proceedings of the Fourteenth EuroSys Conference
+    2019*, 2019, pp. 1–14.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] S. Wang, D. Li, J. Geng, Y. Gu, and Y. Cheng, “Impact of network topology
+    on the performance of DML: Theoretical analysis and practical factors,” in *IEEE
+    INFOCOM 2019-IEEE Conference on Computer Communications*.   IEEE, 2019, pp. 1729–1737.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] P. Sanders, J. Speck, and J. L. Träff, “Two-tree algorithms for full bandwidth
+    broadcast, reduction and scan,” *Parallel Computing*, vol. 35, no. 12, pp. 581–594,
+    2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] M. Cho, U. Finkler, D. S. Kung, and H. C. Hunter, “BlueConnect: Decomposing
+    all-reduce for deep learning on heterogeneous network hierarchy,” in *Proceedings
+    of Machine Learning and Systems 2019, MLSys 2019, Stanford, CA, USA, March 31
+    - April 2, 2019*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] H. Zhang, Z. Zheng, S. Xu, W. Dai, Q. Ho, X. Liang, Z. Hu, J. Wei, P. Xie,
+    and E. P. Xing, “Poseidon: An efficient communication architecture for distributed
+    deep learning on GPU clusters,” in *2017 USENIX Annual Technical Conference (USENIX
+    ATC 17)*, 2017, pp. 181–193.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Y. Peng, Y. Zhu, Y. Chen, Y. Bao, B. Yi, C. Lan, C. Wu, and C. Guo, “A
+    generic communication scheduler for distributed DNN training acceleration,” in
+    *Proceedings of the 27th ACM Symposium on Operating Systems Principles*.   ACM,
+    2019, pp. 16–29.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] A. Jayarajan, J. Wei, G. Gibson, A. Fedorova, and G. Pekhimenko, “Priority-based
+    parameter propagation for distributed DNN training,” in *Proceedings of Machine
+    Learning and Systems 2019, MLSys 2019, Stanford, CA, USA, March 31 - April 2,
+    2019*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Biographies
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '|  | Shaohuai Shi (shaohuais@cse.ust.hk) received a B.E. degree in software
+    engineering from South China University of Technology, P.R. China, in 2010, an
+    MS degree in computer science from Harbin Institute of Technology, P.R. China
+    in 2013, and a Ph.D. degree in computer science from Hong Kong Baptist University
+    in 2020\. He is currently a research assistant professor in the Department of
+    Computer Science and Engineering at the Hong Kong University of Science and Technology.
+    His research interests include GPU computing and machine learning systems. He
+    is a member of the IEEE. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Zhenheng Tang (zhtang@comp.hkbu.edu.hk) received a B.E. degree in communication
+    engineering from Huazhong University Of Science and Technology, P.R. China, in
+    2018\. He is a Ph.D. student at Hong Kong Baptist University. His research interests
+    include GPU computing and distributed deep learning. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Xiaowen Chu (chxw@comp.hkbu.edu.hk) received a B.E. degree in computer
+    science from Tsinghua University, P.R. China, in 1999, and a Ph.D. degree in computer
+    science from The Hong Kong University of Science and Technology in 2003\. Currently,
+    he is a full professor in the Department of Computer Science, Hong Kong Baptist
+    University. His research interests include parallel and distributed computing,
+    cloud computing and wireless networks. He is serving as an Associate Editor of
+    IEEE Access and IEEE Internet of Things Journal. He is a senior member of the
+    IEEE. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Chengjian Liu (liuchengjian@sztu.edu.cn) received his MS degree in College
+    of Computer Science and Software Engineering, Shenzhen University, P.R. China,
+    in 2013, and his Ph.D. degree in computer science from the Hong Kong Baptist University
+    in 2018\. Currently, he is an assistant professor in the College of Big Data and
+    Internet, Shenzhen Technology University. His research interests include Distributed
+    Storage, Blockchain, General-Purpose GPU Computing. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Wei Wang (weiwa@cse.ust.hk) received his B.Eng. (Hons.) and M.Eng. degrees
+    from Shanghai Jiao Tong University, and a Ph.D. degree from the University of
+    Toronto in 2015, all in the Department of Electrical and Computer Engineering.
+    He is an Assistant Professor in the Department of Computer Science and Engineering
+    at the Hong Kong University of Science and Technology (HKUST). He is also affiliated
+    with HKUST Big Data Institute. His research interests cover the broad area of
+    distributed systems, with special emphasis on big data and machine learning systems,
+    cloud computing, and computer networks in general. |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Bo Li (bli@cse.ust.hk) received a BEng in computer science from Tsinghua
+    University, Beijing and a Ph.D. degree in electrical and computer engineering
+    from the University of Massachusetts at Amherst. He is a professor in the Department
+    of Computer Science and Engineering, Hong Kong University of Science and Technology.
+    He was the chief technical advisor of ChinaCache Corp. (NASDAQ CCIH), the largest
+    CDN operator in China. He was a Cheung Kong visiting chair professor with Shanghai
+    Jiao Tong University (2010-2013) and an adjunct researcher with Microsoft Research
+    Asia (1999-2007) and with Microsoft Advance Technology Center (2007-2009). His
+    current research interests include: multimedia communications, the Internet content
+    distribution, datacenter networking, cloud computing, and wireless sensor networks.
+    He made pioneering contributions in the Internet video broadcast with the system,
+    Coolstreaming, which was credited as the world first large-scale Peer-to-Peer
+    live video streaming system. The work appeared in IEEE INFOCOM (2005) received
+    the IEEE INFOCOM 2015 Test-of-Time Award. He has been an Editor or a Guest Editor
+    of more than a dozen of the IEEE journals and magazines. He was the co-TPC chair
+    of the IEEE INFOCOM 2004\. He received five Best Paper Awards from the IEEE. He
+    received the Young Investigator Award from Natural Science Foundation of China
+    (NFSC) in 2005, the State Natural Science Award (2nd Class) from China in 2011\.
+    He is a fellow of the IEEE. |'
+  prefs: []
+  type: TYPE_TB

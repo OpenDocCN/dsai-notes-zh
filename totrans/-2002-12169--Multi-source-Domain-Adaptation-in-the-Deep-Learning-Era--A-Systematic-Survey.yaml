@@ -1,0 +1,1242 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:02:20'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2002.12169] Multi-source Domain Adaptation in the Deep Learning Era: A Systematic
+    Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2002.12169](https://ar5iv.labs.arxiv.org/html/2002.12169)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Multi-source Domain Adaptation in the Deep Learning Era:'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A Systematic Survey
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sicheng Zhao¹    Bo Li¹    Colorado Reed¹    Pengfei Xu²    Kurt Keutzer¹
+  prefs: []
+  type: TYPE_NORMAL
+- en: ¹University of California, Berkeley, USA      ²Didi Chuxing, China
+  prefs: []
+  type: TYPE_NORMAL
+- en: schzhao@gmail.com, drluodian@gmail.com, cjrd@cs.berkeley.edu,
+  prefs: []
+  type: TYPE_NORMAL
+- en: xupengfeipf@didiglobal.com, keutzer@berkeley.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: In many practical applications, it is often difficult and expensive to obtain
+    enough large-scale labeled data to train deep neural networks to their full capability.
+    Therefore, transferring the learned knowledge from a separate, labeled source
+    domain to an unlabeled or sparsely labeled target domain becomes an appealing
+    alternative. However, direct transfer often results in significant performance
+    decay due to *domain shift*. Domain adaptation (DA) addresses this problem by
+    minimizing the impact of domain shift between the source and target domains. Multi-source
+    domain adaptation (MDA) is a powerful extension in which the labeled data may
+    be collected from multiple sources with different distributions. Due to the success
+    of DA methods and the prevalence of multi-source data, MDA has attracted increasing
+    attention in both academia and industry. In this survey, we define various MDA
+    strategies and summarize available datasets for evaluation. We also compare modern
+    MDA methods in the deep learning era, including latent space transformation and
+    intermediate domain generation. Finally, we discuss future research directions
+    for MDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Background and Motivation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The availability of large-scale labeled training data, such as ImageNet, has
+    enabled deep neural networks (DNNs) to achieve remarkable success in many learning
+    tasks, ranging from computer vision to natural language processing. For example,
+    the classification error of the “Classification + localization with provided training
+    data” task in the Large Scale Visual Recognition Challenge has reduced from 0.28
+    in 2010 to 0.0225 in 2017¹¹1[http://image-net.org/challenges/LSVRC/2017](http://image-net.org/challenges/LSVRC/2017),
+    outperforming even human classification. However, in many practical applications,
+    obtaining labeled training data is often expensive, time-consuming, or even impossible.
+    For example, in fine-grained recognition, only the experts can provide reliable
+    labels Gebru et al. ([2017](#bib.bib10)); in semantic segmentation, it takes about
+    90 minutes to label each Cityscapes image Cordts et al. ([2016](#bib.bib6)); in
+    autonomous driving, it is difficult to label point-wise 3D LiDAR point clouds Wu
+    et al. ([2019](#bib.bib49)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f948c1eb7f96cf11f8fe10793a1a7a99.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: An example of *domain shift* in the single-source scenario. The models
+    trained on the labeled source domain do not perform well when directly transferring
+    to the target domain.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One potential solution is to transfer a model trained on a separate, labeled
+    source domain to the desired unlabeled or sparsely labeled target domain. But
+    as Figure [1](#S1.F1 "Figure 1 ‣ 1 Background and Motivation ‣ Multi-source Domain
+    Adaptation in the Deep Learning Era: A Systematic Survey") demonstrates, the direct
+    transfer of models across domains leads to poor performance. Figure [1](#S1.F1
+    "Figure 1 ‣ 1 Background and Motivation ‣ Multi-source Domain Adaptation in the
+    Deep Learning Era: A Systematic Survey")(a) shows that even for the simple task
+    of digit recognition, training on the MNIST source domain LeCun et al. ([1998](#bib.bib21))
+    for digit classification in the MNIST-M target domain  Ganin and Lempitsky ([2015](#bib.bib8))
+    leads to a digit classification accuracy decrease from 96.0% to 52.3% when training
+    a LeNet-5 model LeCun et al. ([1998](#bib.bib21)). Figure [1](#S1.F1 "Figure 1
+    ‣ 1 Background and Motivation ‣ Multi-source Domain Adaptation in the Deep Learning
+    Era: A Systematic Survey")(b) shows a more realistic example of training a semantic
+    segmentation model on a synthetic source dataset GTA Richter et al. ([2016](#bib.bib35))
+    and conducting pixel-wise segmentation on a real target dataset Cityscapes Cordts
+    et al. ([2016](#bib.bib6)) using the FCN model Long et al. ([2015a](#bib.bib26)).
+    If we train on the real data, we obtain a mean intersection-over-union (mIoU)
+    of 62.6%; but if we train on synthetic data, the mIoU drops significantly to 21.7%.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/323f587cc2833042cdc7a23950abb24b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: An example of *domain shift* in the multi-source scenario. Combining
+    multiple sources into one source and directly performing single-source domain
+    adaptation on the entire dataset does not guarantee better performance compared
+    to just using the best individual source domain.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The poor performance from directly transferring models across domains stems
+    from a phenomenon known as *domain shift* Torralba and Efros ([2011](#bib.bib44));
+    Zhao et al. ([2018b](#bib.bib57)): whereby the joint probability distributions
+    of observed data and labels are different in the two domains. Domain shift exists
+    in many forms, such as from dataset to dataset, from simulation to real-world,
+    from RGB images to depth, and from CAD models to real images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The phenomenon of domain shift motivates the research on domain adaptation
+    (DA), which aims to learn a model from a labeled source domain that can generalize
+    well to a different, but related, target domain. Existing DA methods mainly focus
+    on the single-source scenario. In the deep learning era, recent single-source
+    DA (SDA) methods usually employ a conjoined architecture with two approaches to
+    respectively represent the models for the source and target domains. One approach
+    aims to learn a task model based on the labeled source data using corresponding
+    task losses, such as cross-entropy loss for classification. The other approach
+    aims to deal with the domain shift by aligning the target and source domains.
+    Based on the alignment strategies, deep SDA methods can be classified into four
+    categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '*Discrepancy-based methods* try to align the features by explicitly measuring
+    the discrepancy on corresponding activation layers, such as maximum mean discrepancy
+    (MMD) Long et al. ([2015b](#bib.bib27)), correlation alignment Sun et al. ([2017](#bib.bib43)),
+    and contrastive domain discrepancy Kang et al. ([2019](#bib.bib20)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '*Adversarial generative methods* generate fake data to align the source and
+    target domains at pixel-level based on Generative Adversarial Network (GAN) Goodfellow
+    et al. ([2014](#bib.bib13)) and its variants, such as CycleGAN Zhu et al. ([2017](#bib.bib61));
+    Zhao et al. ([2019b](#bib.bib59)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '*Adversarial discriminative methods* employ an adversarial objective with a
+    domain discriminator to align the features Tzeng et al. ([2017](#bib.bib46));
+    Tsai et al. ([2018](#bib.bib45)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '*Reconstruction based methods* aim to reconstruct the target input from the
+    extracted features using the source task model Ghifary et al. ([2016](#bib.bib11)).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'In practice, the labeled data may be collected from multiple sources with different
+    distributions Sun et al. ([2015](#bib.bib42)); Bhatt et al. ([2016](#bib.bib2)).
+    In such cases, the aforementioned SDA methods could be trivially applied by combining
+    the sources into a single source: an approach we refer to as *source-combined
+    DA*. However, source-combined DA oftentimes results in a poorer performance than
+    simply using one of the sources and discarding the others. As illustrated in Figure [2](#S1.F2
+    "Figure 2 ‣ 1 Background and Motivation ‣ Multi-source Domain Adaptation in the
+    Deep Learning Era: A Systematic Survey"), the accuracy on the best single source
+    digit recognition adaptation using DANN Ganin et al. ([2016](#bib.bib9)) is 71.3%,
+    while the source-combined accuracy drops to 70.8%. For segmentation adaptation
+    using CyCADA Hoffman et al. ([2018b](#bib.bib18)), the mIoU of source-combined
+    DA (37.3%) is also lower than that of SDA from GTA (38.7%). Because the domain
+    shift not only exists between each source and target, but also exists among different
+    sources, the source-combined data from different sources may interfere with each
+    other during the learning process Riemer et al. ([2019](#bib.bib36)). Therefore,
+    multi-source domain adaptation (MDA) is needed in order to leverage all of the
+    available data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The early MDA methods mainly focus on shallow models Sun et al. ([2015](#bib.bib42)),
+    either learning a latent feature space for different domains Sun et al. ([2011](#bib.bib41));
+    Duan et al. ([2012](#bib.bib7)) or combining pre-learned source classifiers Schweikert
+    et al. ([2009](#bib.bib40)). Recently, the emphasis on MDA has shifted to deep
+    learning architectures. In this paper, we systematically survey recent progress
+    on deep learning based MDA, summarize and compare similarities and differences
+    in the approaches, and discuss potential future research directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Problem Definition
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the typical MDA setting, there are multiple source domains $S_{1},S_{2},\cdots,S_{M}$
+    ($M$ is the number of sources) and one target domain $T$. Suppose the observed
+    data and corresponding labels²²2The label could be any type, such as object classes,
+    bounding boxes, semantic segmentation, etc. in the $i^{\text{th}}$ source $S_{i}$
+    are drawn from distribution $p_{i}(\mathbf{x},\mathbf{y})$ are $\textbf{X}_{i}=\{\textbf{x}_{i}^{j}\}_{j=1}^{N_{i}}$
+    and $Y_{i}=\{\mathbf{y}_{i}^{j}\}_{j=1}^{N_{i}}$, respectively, where $N_{i}$
+    is the number of source samples. Let $X_{T}=\{\mathbf{x}_{T}^{j}\}_{j=1}^{N_{T}}$
+    and $Y_{T}=\{\mathbf{y}_{T}^{j}\}_{j=1}^{N_{T}}$ denote the target data and corresponding
+    labels drawn from the target distribution $P_{T}(\textbf{x},\mathbf{y})$, where
+    $N_{T}$ is the number of target samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose the number of labeled target samples is $N_{TL}$, the MDA problem can
+    be classified into different categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*unsupervised MDA*, when $N_{TL}=0$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*fully supervised MDA*, when $N_{TL}=N_{T}$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*semi-supervised MDA*, otherwise.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '| Area | Task | Dataset | Reference | #D | #S | Labels | Short description
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CV | digit recognition | Digits-five (D) | [LeCun et al.](#bib.bib21); [Netzer
+    et al.](#bib.bib31) | 5 | 145,298 | 10 classes | handwritten, synthetic, and street-image
+    digits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [Hull](#bib.bib19); [Ganin and Lempitsky](#bib.bib8) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| object classification | Office-31 (O) | [Saenko et al.](#bib.bib39) | 3 |
+    4,110 | 31 classes | images from amazon and taken by different cameras |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Office-Caltech (OC) | [Gong et al.](#bib.bib12) | 4 | 2,533 | 10 classes
+    | overlapping categories from Office-31 and C |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Office-Home (OH) | [Venkateswara et al.](#bib.bib47) | 4 | 15,500 | 65 classes
+    | artistic, clipart, product, and real objects |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ImageCLEF (IC) | Challenge^([3](#footnote3 "footnote 3 ‣ 3 Datasets ‣ Multi-source
+    Domain Adaptation in the Deep Learning Era: A Systematic Survey")) | 3 | 1,800
+    | 12 classes | shared categories from 3 datasets |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PACS (P) | [Li et al.](#bib.bib22) | 4 | 9,991 | 7 classes | photographic,
+    artistic, cartoon, and sketchy objects |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DomainNet (DN) | [Peng et al.](#bib.bib32) | 6 | 600,000 | 345 classes |
+    clipart, infographic, artistic, quickdrawn, real, and sketchy objects |'
+  prefs: []
+  type: TYPE_TB
+- en: '| sentiment classification | SentiImage (SI) | [Machajdik and Hanbury](#bib.bib28)
+    | 4 | 25,986 | 2 classes | artistic and social images on visual sentiment |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [You et al.](#bib.bib52); [You et al.](#bib.bib51); [Borth et al.](#bib.bib4)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | vehicle counting | WebCamT (W) | [Zhang et al.](#bib.bib55) | 8 | 16,000
+    | vehicle counts | each camera used as one domain |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | semantic segmentation | Sim2RealSeg (S2R) | [Cordts et al.](#bib.bib6);
+    [Yu et al.](#bib.bib53) | 4 | 49,366 | 16 classes | simulation-to-real adaptation
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | [Richter et al.](#bib.bib35); [Ros et al.](#bib.bib37) | for pixel-wise
+    predictions |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NLP | sentiment classification | AmazonReviews (AR) | [Chen et al.](#bib.bib5)
+    | 4 | $\approx$12,000 | 2 classes | reviews on four kinds of products |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MediaReviews (MR) | [Liu et al.](#bib.bib25) | 5 | 6897 | 2 classes | reviews
+    on products and movies |'
+  prefs: []
+  type: TYPE_TB
+- en: '| part-of-speech tagging | SANCL (S) | [Petrov and McDonald](#bib.bib33) |
+    5 | 5250 | tags | part-of-speech tagging in 5 web domains |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Released and freely available datasets for MDA, where ‘#D’ and ‘#S’
+    represent the number of domains and the total number of samples usually used for
+    MDA, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose $\textbf{x}_{i}^{j}\in\mathds{R}^{d_{i}}$ and $\textbf{x}_{T}^{j}\in\mathds{R}^{d_{T}}$
+    are an observation in source $S_{i}$ and target $T$, we can classify MDA into:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*homogeneous MDA*, when $d_{1}=\cdots=d_{M}=d_{T}$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*heterogeneous MDA*, otherwise.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Suppose $\mathcal{C}_{i}$ and $\mathcal{C}_{T}$ are the label set for source
+    $S_{i}$ and target $T$, we can define different MDA strategies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*closed set MDA*, when $\mathcal{C}_{1}=\cdots=\mathcal{C}_{M}=\mathcal{C}_{T}$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*open set MDA*, for at least one $\mathcal{C}_{i}$, $\mathcal{C}_{i}\cap\mathcal{C}_{T}\subset\mathcal{C}_{T}$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*partial MDA*, for at least one $\mathcal{C}_{i}$, $\mathcal{C}_{T}\subset\mathcal{C}_{i}$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*universal MDA*, when no prior knowledge of the label sets is available;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: where $\cap$ and $\subset$ indicate the intersection set and proper subset between
+    two sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose the number of labeled source samples is $N_{iL}$ for source $S_{i}$,
+    the MDA problem can be classified into:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*strongly supervised MDA*, when $N_{iL}=N_{i}$ for $i=1\cdots M$;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*weakly supervised MDA*, otherwise.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: When adapting to multiple target domains simultaneously, the task becomes multi-target
+    MDA. When the target data is unavailable during training Yue et al. ([2019](#bib.bib54)),
+    the task is often called multi-source domain generalization or zero-shot MDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Datasets
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The datasets for evaluating MDA models usually contain multiple domains with
+    different styles, such as synthetic vs. real, artistic vs. sketchy, which impose
+    large domain shift among different domains. Here we summarize the commonly employed
+    datasets in both computer vision (CV) and natural language processing (NLP) areas,
+    as shown in Table [1](#S2.T1 "Table 1 ‣ 2 Problem Definition ‣ Multi-source Domain
+    Adaptation in the Deep Learning Era: A Systematic Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Digit recognition. Digits-five includes 5 digit image datasets sampled from
+    different domains, including *handwritten* MNIST (mt) LeCun et al. ([1998](#bib.bib21)),
+    *combined* MNIST-M (mm) Ganin and Lempitsky ([2015](#bib.bib8)) from MNIST and
+    randomly extracted color patches, *street image* SVHN (sv) Netzer et al. ([2011](#bib.bib31)),
+    Synthetic Digits (sy) Ganin and Lempitsky ([2015](#bib.bib8)) generated from Windows
+    fonts by various conditions, and *handwritten* USPS (up) Hull ([1994](#bib.bib19)).
+    Usually, 25,000 images are sampled for training and 9,000 for testing in mt, mm,
+    sv, and sy. The entire 9,298 images in up are selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Object classification. Office-31 Saenko et al. ([2010](#bib.bib39)) contains
+    4,110 images in 31 categories collected from office environments in 3 domains:
+    Amazon (A) with 2,817 images downloaded from amazon.com, Webcam (W) and DSLR (D)
+    with 795 and 498 images taken by web camera and digital SLR camera with different
+    photographical settings.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Office-Caltech Gong et al. ([2013](#bib.bib12)) consists of the 10 overlapping
+    categories shared by Office-31 Saenko et al. ([2010](#bib.bib39)) and Caltech-256
+    (C) Griffin et al. ([2007](#bib.bib14)). Totally there are 2,533 images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Office-Home Venkateswara et al. ([2017](#bib.bib47)) consists of about 15,500
+    images from 65 categories of everyday objects in office and home settings. There
+    are 4 different domains: Artistic images (Ar), Clip Art (Cl), Product images (Pr)
+    and Real-World images (Rw).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ImageCLEF, originated from ImageCLEF 2014 domain adaptation challenge³³3[http://imageclef.org/2014/adaptation](http://imageclef.org/2014/adaptation),
+    consists of 12 object categories shared by ImageNet ILSVRC 2012 (I), Pascal VOC
+    2012 (P), and C. Totally there are 600 images for each domain with 50 for each
+    category.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'PACS Li et al. ([2017](#bib.bib22)) contains 9,991 images of 7 object categories
+    extracted from 4 different domains: Photo (P), Art paintings (A), Cartoon (C)
+    and Sketch (S).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DomainNet Peng et al. ([2019](#bib.bib32)), the largest DA dataset to date
+    for object classification, contains about 600K images from 6 domains: Clipart,
+    Infograph, Painting, Quickdraw, Real, and Sketch. There are totally 345 object
+    categories.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sentiment classification of images. SentiImage Lin et al. ([2020](#bib.bib24))
+    is a DA dataset with 4 domains for binary sentiment classification of images:
+    social Flickr and Instagram (FI) You et al. ([2016](#bib.bib52)), artistic ArtPhoto
+    (AP) Machajdik and Hanbury ([2010](#bib.bib28)), social Twitter I (TI) You et
+    al. ([2015](#bib.bib51)), and social Twitter II (TII) Borth et al. ([2013](#bib.bib4)).
+    There are 23,308, 806, 1,269, and 603 images in these 4 domains, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vehicle counting. WebCamT Zhang et al. ([2017](#bib.bib55)) is a vehicle counting
+    dataset from large-scale city camera videos with low resolution, low frame rate,
+    and high occlusion. Totally there are 60,000 frames with vehicle bounding box
+    and count annotations. For MDA, 8 cameras located in different intersections are
+    selected, each with more than 2,000 labeled images. We can view each camera as
+    a domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3c76a53bc577c0d4207ec684da90b5e9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Illustration of widely employed framework for MDA. The solid arrows
+    and dashed dot arrows indicate the training of latent space transformation and
+    intermediate domain generation, respectively. The dashed arrows represent the
+    reference process. Most existing MDA methods can be obtained by employing different
+    component details, enforcing some constraints, or slightly changing the architecture.
+    Best viewed in color.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scene segmentation. Sim2RealSeg contains 2 synthetic datasets (GTA, SYNTHIA)
+    and 2 real datasets (Cityscapes, BDDS) for segmentation. Cityscapes (CS) Cordts
+    et al. ([2016](#bib.bib6)) contains vehicle-centric urban street images collected
+    from a moving vehicle in 50 cities from Germany and neighboring countries. There
+    are 5,000 images with pixel-wise annotations into 19 classes. BDDS Yu et al. ([2018](#bib.bib53))
+    contains 10,000 real-world dash cam video frames with a compatible label space
+    with Cityscapes. GTA Richter et al. ([2016](#bib.bib35)) is a vehicle-egocentric
+    image dataset collected in the high-fidelity rendered computer game GTA-V. It
+    contains 24,966 images (video frames) with 19 classes as Cityscapes. SYNTHIA Ros
+    et al. ([2016](#bib.bib37)) is a large synthetic dataset. To pair with Cityscapes,
+    a subset, named SYNTHIA-RANDCITYSCAPES, is designed with 9,400 images which are
+    automatically annotated with 16 compatible Cityscapes classes, one void class,
+    and some unnamed classes. The common 16 classes are used for MDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sentiment classification of natural languages. Amazon Reviews Chen et al. ([2012](#bib.bib5))
+    is a dataset of reviews on four kinds of products: Books (B), DVDs (D), Electronics
+    (E), and Kitchen appliances (K). Reviews are encoded as 5,000 dimensional feature
+    vectors of unigrams and bigrams and are labeled with binary sentiment. Each source
+    has 2,000 labeled examples, and the target test set has 3,000 to 6,000 examples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Media Reviews Liu et al. ([2017](#bib.bib25)) contains 16 domains of product
+    reviews and movie reviews for binary sentiment classification. 5 domains with
+    6,897 labeled samples are usually employed for MDA, including Apparel, Baby, Books,
+    Camera taken from Amazon and MR from Rotten Tomato.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Part-of-speech tagging. The SANCL dataset Petrov and McDonald ([2012](#bib.bib33))
+    contains part-of-speech tagging annotations in 5 web domains: Emails (E), Weblogs
+    (W), Answers (A), Newsgroups (N), and Reviews (R). 750 sentences from each source
+    are used for training.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unless otherwise specified, each domain is selected as the target and the rest
+    domains are considered as the sources. For WebCamT, 2 domains are randomly selected
+    as the target. For Sim2RealSeg, MDA is often performed using the simulation-to-real
+    setting Zhao et al. ([2019a](#bib.bib58)), i.e. from synthetic GTA, SYNTHIA to
+    real Cityscapes, BDDS. For SANCL, N, R, and A are used as target domains, while
+    E and W are used as target domains Guo et al. ([2018](#bib.bib15)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Reference | Feature | Feature | Feature | Feature | Classifier | #C | Classifier
+    | Task | Dataset | Result |'
+  prefs: []
+  type: TYPE_TB
+- en: '| extractor | alignment method | alignment loss | alignment domains | alignment
+    | weight | backbone |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mancini et al. ([2018](#bib.bib29)) | shared | — | — | — | CT loss | 1 |
+    — | AlexNet | O, OC, P | 83.6, 91.8, 85.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Guo et al. ([2018](#bib.bib15)) | shared | discrepancy | MMD | target and
+    each source | — | $M$ | PoS metric | AlexNet | AR, S | 84.8, 90.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hoffman et al. ([2018a](#bib.bib17)) | shared | discrepancy | Rényi-divergence
+    | target and each source | CT loss | 1 | — | AlexNet | O | 87.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhu et al. ([2019](#bib.bib62)) | shared | discrepancy | MMD | target and
+    each source | $\mathcal{L}1$ loss | $M$ | uniform | ResNet-50 | O, OH, IC | 90.2,
+    89.4, 74.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rakshit et al. ([2019](#bib.bib34)) | unshared | discrepancy | $\mathcal{L}2$
+    distance | pairwise all domains | CT loss | 1 | — | ResNet-50 | O, OC, IC | 88.3,
+    97.5, 91.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Peng et al. ([2019](#bib.bib32)) | shared | discrepancy | moment distance
+    | pairwise all domains | $\mathcal{L}1$ loss | $M$ | relative error | LeNet-5
+    | D | 87.7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ResNet-101 | OC | 96.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ResNet-101 | DN | 42.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Guo et al. ([2020](#bib.bib16)) | shared | discrepancy | mixture distance
+    | target and each source | CT loss | 1 | — | BiLSTM | MR | 79.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Xu et al. ([2018](#bib.bib50)) | shared | discriminator | GAN loss | target
+    and each source | — | $M$ | perplexity score | AlexNet | D, O, IC | 74.2, 83.8,
+    80.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Li et al. ([2018](#bib.bib23)) | shared | discriminator | Wasserstein | pairwise
+    all domains | CT loss | 1 | — | AlexNet | D | 79.9 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhao et al. ([2018a](#bib.bib56)) | shared | discriminator | $\mathcal{H}$-divergence
+    | target and each source | CT loss | 1 | — | BiLSTM | AR | 82.7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AlexNet | D | 76.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FCN8s | W | 1.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. ([2019](#bib.bib48)) | shared | discriminator | Wasserstein |
+    pairwise all domains | CT loss | 1 | — | BiLSTM | AR | 84.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AlexNet | D | 83.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhao et al. ([2020](#bib.bib60)) | unshared | discriminator | Wasserstein
+    | target and each source | — | $M$ | Wasserstein | LeNet-5 | D | 88.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AlexNet | O | 84.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2: Comparison of different latent space transformation methods for MDA,
+    where ‘#C’, ‘CT loss’, and ‘MMD’ are short for the number of classifiers during
+    reference ($M$ is the number of source domains), combined task loss, and maximum
+    mean discrepancy, respectively. ‘Result’ is the average performance of all target
+    domains measured by accuracy for classification and counting error for vehicle
+    counting.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Deep Multi-source Domain Adaptation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Existing methods on deep MDA primarily focus on the unsupervised, homogeneous,
+    closed set, strongly supervised, one target, and target data available settings.
+    That is, there is one target domain, the target data is unlabeled but available
+    during the training process, the source data is fully labeled, the source and
+    target data are observed in the same data space, and the label sets of all sources
+    and the target are the same. In this paper, we focus on MDA methods under these
+    settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are some theoretical analysis to support existing MDA algorithms. Most
+    theories are based on the seminal theoretical model Blitzer et al. ([2008](#bib.bib3));
+    Ben-David et al. ([2010](#bib.bib1)). [Mansour et al.](#bib.bib30) Mansour et
+    al. ([2009](#bib.bib30)) assumed that the target distribution can be approximated
+    by a mixture of the $M$ source distributions. Therefore, weighted combination
+    of source classifiers has been widely employed for MDA. Moreover, tighter cross
+    domain generalization bound and more accurate measurements on domain discrepancy
+    can provide intuitions to derive effective MDA algorithms. [Hoffman et al.](#bib.bib17) Hoffman
+    et al. ([2018a](#bib.bib17)) derived a novel bound using DC-programming and calculated
+    more accurate combination weights. [Zhao et al.](#bib.bib56) Zhao et al. ([2018a](#bib.bib56))
+    extended the generalization bound of seminal theoretical model to multiple sources
+    under both classification and regression settings. Besides the domain discrepancy
+    between the target and each source Hoffman et al. ([2018a](#bib.bib17)); Zhao
+    et al. ([2018a](#bib.bib56)), [Li et al.](#bib.bib23) Li et al. ([2018](#bib.bib23))
+    also considered the relationship between pairwise sources and derived a tighter
+    bound on weighted multi-source discrepancy. Based on this bound, more relevant
+    source domains can be picked out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Typically, some task models (e.g. classifiers) are learned based on the labeled
+    source data with corresponding task loss, such as cross-entropy loss for classification.
+    Meanwhile, specific alignments among the source and target domains are conducted
+    to bridge the domain shift so that the learned task models can be better transferred
+    to the target domain. Based on the different alignment strategies, we can classify
+    MDA into different categories. *Latent space transformation* tries to align the
+    latent space (e.g. features) of different domains based on optimizing the discrepancy
+    loss or adversarial loss. *Intermediate domain generation* explicitly generates
+    an intermediate adapted domain for each source that is indistinguishable from
+    the target domain. The task models are then trained on the adapted domain. Figure [3](#S3.F3
+    "Figure 3 ‣ 3 Datasets ‣ Multi-source Domain Adaptation in the Deep Learning Era:
+    A Systematic Survey") summarizes the common overall framework of existing MDA
+    methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Latent Space Transformation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The two common methods for aligning the latent spaces of different domains
+    are discrepancy-based methods and adversarial methods. We discuss these two methods
+    below, and Table [2](#S3.T2 "Table 2 ‣ 3 Datasets ‣ Multi-source Domain Adaptation
+    in the Deep Learning Era: A Systematic Survey") summarizes key examples of each
+    method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Discrepancy-based methods explicitly measure the discrepancy of the latent spaces
+    (typically features) from different domains by optimizing some specific discrepancy
+    losses, such as maximum mean discrepancy (MMD) Guo et al. ([2018](#bib.bib15));
+    Zhu et al. ([2019](#bib.bib62)), Rényi-divergence Hoffman et al. ([2018a](#bib.bib17)),
+    $\mathcal{L}2$ distance Rakshit et al. ([2019](#bib.bib34)), and moment distance Peng
+    et al. ([2019](#bib.bib32)). [Guo et al.](#bib.bib16) Guo et al. ([2020](#bib.bib16))
+    claimed that different discrepancies or distances can only provide specific estimates
+    of domain similarities and that each distance has its pathological cases. Therefore,
+    they consider the mixture of several distances Guo et al. ([2020](#bib.bib16)),
+    including $\mathcal{L}2$ distance, Cosine distance, MMD, Fisher linear discriminant,
+    and Correlation alignment. Minimizing the discrepancy to align the features among
+    the source and target domains does not introduce any new parameters that must
+    be learned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adversarial methods try to align the features by making them indistinguishable
+    to a discriminator. Some representative optimized objectives include GAN loss Xu
+    et al. ([2018](#bib.bib50)), $\mathcal{H}$-divergence Zhao et al. ([2018a](#bib.bib56)),
+    Wasserstein distance Li et al. ([2018](#bib.bib23)); Wang et al. ([2019](#bib.bib48));
+    Zhao et al. ([2020](#bib.bib60)). These methods aim to confuse the discriminator’s
+    ability to distinguishing whether the features from multiple sources were drawn
+    from the same distribution. Compared with GAN loss and $\mathcal{H}$-divergence,
+    Wasserstein distance can provide more stable gradients even when the target and
+    source distributions do not overlap Zhao et al. ([2020](#bib.bib60)). The discriminator
+    is often implemented as a network, which leads to new parameters that must be
+    learned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are many modular implementation details for both types of methods, such
+    as how to align the target and multiple sources, whether the feature extractors
+    are shared, how to select the more relevant sources, and how to combine the multiple
+    predictions from different classifiers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alignment domains. There are different ways to align the target and multiple
+    sources. The most common method is to pairwise align the target with each source Xu
+    et al. ([2018](#bib.bib50)); Guo et al. ([2018](#bib.bib15)); Zhao et al. ([2018a](#bib.bib56));
+    Hoffman et al. ([2018a](#bib.bib17)); Zhu et al. ([2019](#bib.bib62)); Zhao et
+    al. ([2020](#bib.bib60)); Guo et al. ([2020](#bib.bib16)). Since domain shift
+    also exists among different sources, several methods enforce pairwise alignment
+    between every domain in both the source and target domains Li et al. ([2018](#bib.bib23));
+    Rakshit et al. ([2019](#bib.bib34)); Peng et al. ([2019](#bib.bib32)); Wang et
+    al. ([2019](#bib.bib48)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Reference | Domain | Pixel | Feature | Feature | #C | Classifier | Task |
+    Dataset | Task | Result |'
+  prefs: []
+  type: TYPE_TB
+- en: '| generator | alignment domains | alignment loss | alignment domains | weight
+    | backbone |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Russo et al. ([2019](#bib.bib38)) | CoGAN | target and each source | GAN
+    loss | target and each source | $M$ | uniform | DeepLabV2 | S2R-CS | seg | 42.8
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| shared |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Zhao et al. ([2019a](#bib.bib58)) | CycleGAN | target and aggregated source
+    | GAN loss | target and each source | 1 | — | FCN8s | S2R-CS | seg | 41.4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| shared | S2R-BDDS | 36.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lin et al. ([2020](#bib.bib24)) | VAE+CycleGAN | target and combined source
+    | — | — | 1 | — | ResNet-18 | SI | cls | 68.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| unshared |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 3: Comparison of different intermediate domain generation methods for
+    MDA, where ‘#C’, ‘seg’, and ‘cls’ are short for the number of classifiers during
+    reference ($M$ is the number of source domains), segmentation, and classification,
+    respectively. ‘Result’ is the average performance of all target domains measured
+    by accuracy for classification and mean intersection-over-union (mIoU) for segmentation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Weight sharing of feature extractor. Most methods employ shared feature extractors
+    to learn domain-invariant features. However, domain invariance may be detrimental
+    to discriminative power. On the contrary, [Rakshit et al.](#bib.bib34) Rakshit
+    et al. ([2019](#bib.bib34)) adopted one feature extractor for each source and
+    target pair with unshared weights, while [Zhao et al.](#bib.bib60) Zhao et al.
+    ([2020](#bib.bib60)) first pre-trained one feature extractor for each source and
+    then mapped the target into the feature space of each source. Correspondingly,
+    there are $M$ and $2M$ feature extractors. Although unshared feature extractors
+    can better align the target and sources in the latent space, this substantially
+    increases the number of parameters in the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classifier alignment. Intuitively, the classifiers trained on different sources
+    may result in misaligned predictions for the target samples that are close to
+    the domain boundary. By minimizing specific classifier discrepancy, such as $\mathcal{L}$1
+    loss Zhu et al. ([2019](#bib.bib62)); Peng et al. ([2019](#bib.bib32)), the classifiers
+    are better aligned, which can learn a generalized classification boundary for
+    target samples mentioned above. Instead of explicitly training one classifier
+    for each source, many methods focus on training a compound classifier based on
+    specific combined task loss, such as normalized activations Mancini et al. ([2018](#bib.bib29))
+    and bandit controller Guo et al. ([2020](#bib.bib16)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Target prediction. After aligning the features of target and source domains
+    in the latent space, the classifiers trained based on the labeled source samples
+    can be used to predict the labels of a target sample. Since there are multiple
+    sources, it is possible that they will yield different target predictions. One
+    way to reconcile these different predictions is to uniformly average the predictions
+    from different source classifiers Zhu et al. ([2019](#bib.bib62)). However, different
+    sources may have different relationships with the target, e.g. one source might
+    better align with the target, so a non-uniform, weighted averaging of the predictions
+    leads to better results. Weighting strategies, known as a *source selection process*,
+    include uniform weight Zhu et al. ([2019](#bib.bib62)), perplexity score based
+    on adversarial loss Xu et al. ([2018](#bib.bib50)), point-to-set (PoS) metric
+    using Mahalanobis distance Guo et al. ([2018](#bib.bib15)), relative error based
+    on source-only accuracy Peng et al. ([2019](#bib.bib32)), and Wasserstein distance
+    based weights Zhao et al. ([2020](#bib.bib60)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides the source importance, [Zhao et al.](#bib.bib60) Zhao et al. ([2020](#bib.bib60))
+    also considered the sample importance, i.e. different samples from the same source
+    may still have different similarities from the target samples. The source samples
+    that are closer to the target are distilled (based on a manually selected Wasserstein
+    distance threshold) to fine-tune the source classifiers. Automatically and adaptively
+    selecting the most relevant training samples for each source remains an open research
+    problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Intermediate Domain Generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Feature-level alignment only aligns high-level information, which is insufficient
+    for fine-grained predictions, such as pixel-wise semantic segmentation Zhao et
+    al. ([2019a](#bib.bib58)). Generating an intermediate adapted domain with pixel-level
+    alignment, typically via GANs Goodfellow et al. ([2014](#bib.bib13)), can help
+    address this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Domain generator. Since the original GAN is highly under-constrained, some improved
+    versions are employed, such as Coupled GAN (CoGAN) in Russo et al. ([2019](#bib.bib38))
+    and CycleGAN in MADAN Zhao et al. ([2019a](#bib.bib58)). Instead of directly taking
+    the original source data as input to the generator Russo et al. ([2019](#bib.bib38));
+    Zhao et al. ([2019a](#bib.bib58)), [Lin et al.](#bib.bib24) Lin et al. ([2020](#bib.bib24))
+    used a variational autoencoder to map all source and target domains to a latent
+    space and then generated an adapted domain from the latent space. [Russo et al.](#bib.bib38) Russo
+    et al. ([2019](#bib.bib38)) then tried to align the target and each adapted domain,
+    while [Lin et al.](#bib.bib24) Lin et al. ([2020](#bib.bib24)) aligned the target
+    and combined adapted domain from the latent space. [Zhao et al.](#bib.bib58) Zhao
+    et al. ([2019a](#bib.bib58)) proposed to aggregate different adapted domains using
+    a sub-domain aggregation discriminator and cross-domain cycle discriminator, where
+    the pixel-level alignment is then conducted between the aggregated and target
+    domains. [Zhao et al.](#bib.bib58) Zhao et al. ([2019a](#bib.bib58)) and [Lin
+    et al.](#bib.bib24) Lin et al. ([2020](#bib.bib24)) showed that the semantics
+    might change in the intermediate representation, and that enforcing a semantic
+    consistency before and after generation can help preserve the labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Feature alignment and target prediction. Feature-level alignment is often jointly
+    considered with pixel-level alignment. Both alignments are usually achieved by
+    minimizing the GAN loss with a discriminator. One classifier is trained on each
+    adapted domain Russo et al. ([2019](#bib.bib38)) and the multiple predictions
+    for a given target sample are averaged. Only one classifier is trained on the
+    aggregated domain Zhao et al. ([2020](#bib.bib60)) or on the combined adapted
+    domain Lin et al. ([2020](#bib.bib24)) which is obtained by a unique generator
+    from the latent space for all source domains. The comparison of these methods
+    are summarized in Table [3](#S4.T3 "Table 3 ‣ 4.1 Latent Space Transformation
+    ‣ 4 Deep Multi-source Domain Adaptation ‣ Multi-source Domain Adaptation in the
+    Deep Learning Era: A Systematic Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusion and Future Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this paper, we provided a survey of recent MDA developments in the deep
+    learning era. We motivated MDA, defined different MDA strategies, and summarized
+    the datasets that are commonly used for performing MDA evaluation. Our survey
+    focused on a typical MDA setting, i.e. unsupervised, homogeneous, closed set,
+    and one target MDA. We classified these methods into different categories, and
+    compared the representative ones technically and experimentally. We conclude with
+    several open research directions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Specific MDA strategy implementation. As introduced in Section [2](#S2 "2 Problem
+    Definition ‣ Multi-source Domain Adaptation in the Deep Learning Era: A Systematic
+    Survey"), there are many types of MDA strategies, and implementing an MDA strategy
+    according to the specific problem requirement would likely yield better results
+    than a one-size-fits-all MDA approach. Further investigation is needed to determine
+    which MDA strategies work the best for which types of problems. Also, real-world
+    applications may have a small amount of labeled target data; determining how to
+    include this data and what fraction of this data is needed for a certain performance
+    remains an open question.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-modal MDA. The labeled source data may be of different modalities, such
+    as LiDAR, radar, and image. Further research is needed to find techniques for
+    fusing different data modalities in MDA. A further extension of this idea is to
+    have varied modalities in defferent sources as well as partially labeled, multi-modal
+    sources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Incremental and online MDA. Designing incremental and online MDA algorithms
+    remains largely unexplored and may provide great benefit for real-world scenarios,
+    such as updating deployed MDA models when new source or target data becomes available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Ben-David et al. [2010] Shai Ben-David, John Blitzer, Koby Crammer, Alex Kulesza,
+    Fernando Pereira, and Jennifer Wortman Vaughan. A theory of learning from different
+    domains. In Machine Learning, 2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bhatt et al. [2016] Himanshu S Bhatt, Arun Rajkumar, and Shourya Roy. Multi-source
+    iterative adaptation for cross-domain classification. In IJCAI, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Blitzer et al. [2008] John Blitzer, Koby Crammer, Alex Kulesza, Fernando Pereira,
+    and Jennifer Wortman Vaughan. Learning bounds for domain adaptation. In NIPS,
+    2008.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Borth et al. [2013] Damian Borth, Rongrong Ji, Tao Chen, Thomas Breuel, and
+    Shih-Fu Chang. Large-scale visual sentiment ontology and detectors using adjective
+    noun pairs. In ACM MM, 2013.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. [2012] Minmin Chen, Zhixiang Xu, Kilian Q Weinberger, and Fei Sha.
+    Marginalized denoising autoencoders for domain adaptation. In ICML, 2012.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cordts et al. [2016] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld,
+    Markus Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, and Bernt Schiele.
+    The cityscapes dataset for semantic urban scene understanding. In CVPR, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Duan et al. [2012] Lixin Duan, Dong Xu, and Shih-Fu Chang. Exploiting web images
+    for event recognition in consumer videos: A multiple source domain adaptation
+    approach. In CVPR, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ganin and Lempitsky [2015] Yaroslav Ganin and Victor Lempitsky. Unsupervised
+    domain adaptation by backpropagation. In ICML, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ganin et al. [2016] Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain,
+    Hugo Larochelle, François Laviolette, Mario Marchand, and Victor Lempitsky. Domain-adversarial
+    training of neural networks. JMLR, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gebru et al. [2017] Timnit Gebru, Judy Hoffman, and Li Fei-Fei. Fine-grained
+    recognition in the wild: A multi-task domain adaptation approach. In ICCV, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ghifary et al. [2016] Muhammad Ghifary, W Bastiaan Kleijn, Mengjie Zhang, David
+    Balduzzi, and Wen Li. Deep reconstruction-classification networks for unsupervised
+    domain adaptation. In ECCV, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gong et al. [2013] Boqing Gong, Kristen Grauman, and Fei Sha. Connecting the
+    dots with landmarks: Discriminatively learning domain-invariant features for unsupervised
+    domain adaptation. In ICML, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Goodfellow et al. [2014] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing
+    Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and Yoshua Bengio. Generative
+    adversarial nets. In NIPS, 2014.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Griffin et al. [2007] Gregory Griffin, Alex Holub, and Pietro Perona. Caltech-256
+    object category dataset. 2007.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guo et al. [2018] Jiang Guo, Darsh Shah, and Regina Barzilay. Multi-source domain
+    adaptation with mixture of experts. In EMNLP, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guo et al. [2020] Han Guo, Ramakanth Pasunuru, and Mohit Bansal. Multi-source
+    domain adaptation for text classification via distancenet-bandits. In AAAI, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hoffman et al. [2018a] Judy Hoffman, Mehryar Mohri, and Ningshan Zhang. Algorithms
+    and theory for multiple-source adaptation. In NeurIPS, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hoffman et al. [2018b] Judy Hoffman, Eric Tzeng, Taesung Park, Jun-Yan Zhu,
+    Phillip Isola, Kate Saenko, Alexei A Efros, and Trevor Darrell. Cycada: Cycle-consistent
+    adversarial domain adaptation. In ICML, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hull [1994] Jonathan J. Hull. A database for handwritten text recognition research.
+    TPAMI, 1994.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kang et al. [2019] Guoliang Kang, Lu Jiang, Yi Yang, and Alexander G Hauptmann.
+    Contrastive adaptation network for unsupervised domain adaptation. In CVPR, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LeCun et al. [1998] Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner,
+    et al. Gradient-based learning applied to document recognition. PIEEE, 1998.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. [2017] Da Li, Yongxin Yang, Yi-Zhe Song, and Timothy M Hospedales.
+    Deeper, broader and artier domain generalization. In ICCV, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. [2018] Yitong Li, Michael Andrew Murias, Samantha Major, Geraldine
+    Dawson, and David E Carlson. Extracting relationships by multi-domain matching.
+    In NeurIPS, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. [2020] Chuang Lin, Sicheng Zhao, Lei Meng, and Tat-Seng Chua. Multi-source
+    domain adaptation for visual sentiment classification. In AAAI, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu et al. [2017] Pengfei Liu, Xipeng Qiu, and Xuanjing Huang. Adversarial multi-task
+    learning for text classification. In ACL, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Long et al. [2015a] Jonathan Long, Evan Shelhamer, and Trevor Darrell. Fully
+    convolutional networks for semantic segmentation. In CVPR, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Long et al. [2015b] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael Jordan.
+    Learning transferable features with deep adaptation networks. In ICML, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Machajdik and Hanbury [2010] Jana Machajdik and Allan Hanbury. Affective image
+    classification using features inspired by psychology and art theory. In ACM MM,
+    2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mancini et al. [2018] Massimiliano Mancini, Lorenzo Porzi, Samuel Rota Bulò,
+    Barbara Caputo, and Elisa Ricci. Boosting domain adaptation by discovering latent
+    domains. In CVPR, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mansour et al. [2009] Yishay Mansour, Mehryar Mohri, and Afshin. Rostamizadeh.
+    Domain adaptation with multiple sources. In NIPS, 2009.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Netzer et al. [2011] Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco,
+    Bo Wu, and Andrew Y Ng. Reading digits in natural images with unsupervised feature
+    learning. In NIPS Workshops, 2011.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Peng et al. [2019] Xingchao Peng, Qinxun Bai, Xide Xia, Zijun Huang, Kate Saenko,
+    and Bo Wang. Moment matching for multi-source domain adaptation. In ICCV, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Petrov and McDonald [2012] Slav Petrov and Ryan McDonald. Overview of the 2012
+    shared task on parsing the web. In SANCL, 2012.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rakshit et al. [2019] Sayan Rakshit, Biplab Banerjee, Gemma Roig, and Subhasis
+    Chaudhuri. Unsupervised multi-source domain adaptation driven by deep adversarial
+    ensemble learning. In GCPR, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Richter et al. [2016] Stephan R Richter, Vibhav Vineet, Stefan Roth, and Vladlen
+    Koltun. Playing for data: Ground truth from computer games. In ECCV, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Riemer et al. [2019] Matthew Riemer, Ignacio Cases, Robert Ajemian, Miao Liu,
+    Irina Rish, Yuhai Tu, and Gerald Tesauro. Learning to learn without forgetting
+    by maximizing transfer and minimizing interference. In ICLR, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ros et al. [2016] German Ros, Laura Sellart, Joanna Materzynska, David Vazquez,
+    and Antonio M Lopez. The synthia dataset: A large collection of synthetic images
+    for semantic segmentation of urban scenes. In CVPR, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Russo et al. [2019] Paolo Russo, Tatiana Tommasi, and Barbara Caputo. Towards
+    multi-source adaptive semantic segmentation. In ICIAP, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Saenko et al. [2010] Kate Saenko, Brian Kulis, Mario Fritz, and Trevor Darrell.
+    Adapting visual category models to new domains. In ECCV, 2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schweikert et al. [2009] Gabriele Schweikert, Gunnar Rätsch, Christian Widmer,
+    and Bernhard Schölkopf. An empirical analysis of domain adaptation algorithms
+    for genomic sequence analysis. In NIPS, 2009.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sun et al. [2011] Qian Sun, Rita Chattopadhyay, Sethuraman Panchanathan, and
+    Jieping Ye. A two-stage weighting framework for multi-source domain adaptation.
+    In NIPS, 2011.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sun et al. [2015] Shiliang Sun, Honglei Shi, and Yuanbin Wu. A survey of multi-source
+    domain adaptation. Information Fusion, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sun et al. [2017] Baochen Sun, Jiashi Feng, and Kate Saenko. Correlation alignment
+    for unsupervised domain adaptation. In Domain Adaptation in Computer Vision Applications.
+    2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Torralba and Efros [2011] Antonio Torralba and Alexei A Efros. Unbiased look
+    at dataset bias. In CVPR, 2011.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tsai et al. [2018] Yi-Hsuan Tsai, Wei-Chih Hung, Samuel Schulter, Kihyuk Sohn,
+    Ming-Hsuan Yang, and Manmohan Chandraker. Learning to adapt structured output
+    space for semantic segmentation. In CVPR, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tzeng et al. [2017] Eric Tzeng, Judy Hoffman, Kate Saenko, and Trevor Darrell.
+    Adversarial discriminative domain adaptation. In CVPR, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Venkateswara et al. [2017] Hemanth Venkateswara, Jose Eusebio, Shayok Chakraborty,
+    and Sethuraman Panchanathan. Deep hashing network for unsupervised domain adaptation.
+    In CVPR, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. [2019] Haotian Wang, Wenjing Yang, Zhipeng Lin, and Yue Yu. Tmda:
+    Task-specific multi-source domain adaptation via clustering embedded adversarial
+    training. In ICDM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. [2019] Bichen Wu, Xuanyu Zhou, Sicheng Zhao, Xiangyu Yue, and Kurt
+    Keutzer. Squeezesegv2: Improved model structure and unsupervised domain adaptation
+    for road-object segmentation from a lidar point cloud. In ICRA, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xu et al. [2018] Ruijia Xu, Ziliang Chen, Wangmeng Zuo, Junjie Yan, and Liang
+    Lin. Deep cocktail network: Multi-source unsupervised domain adaptation with category
+    shift. In CVPR, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You et al. [2015] Quanzeng You, Jiebo Luo, Hailin Jin, and Jianchao Yang. Robust
+    image sentiment analysis using progressively trained and domain transferred deep
+    networks. In AAAI, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You et al. [2016] Quanzeng You, Jiebo Luo, Hailin Jin, and Jianchao Yang. Building
+    a large scale dataset for image emotion recognition: The fine print and the benchmark.
+    In AAAI, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yu et al. [2018] Fisher Yu, Wenqi Xian, Yingying Chen, Fangchen Liu, Mike Liao,
+    Vashisht Madhavan, and Trevor Darrell. Bdd100k: A diverse driving video database
+    with scalable annotation tooling. arXiv:1805.04687, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yue et al. [2019] Xiangyu Yue, Yang Zhang, Sicheng Zhao, Alberto Sangiovanni-Vincentelli,
+    Kurt Keutzer, and Boqing Gong. Domain randomization and pyramid consistency: Simulation-to-real
+    generalization without accessing target domain data. In ICCV, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. [2017] Shanghang Zhang, Guanhang Wu, Joao P Costeira, and Jose MF
+    Moura. Understanding traffic density from large-scale web camera data. In CVPR,
+    2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhao et al. [2018a] Han Zhao, Shanghang Zhang, Guanhang Wu, José MF Moura, Joao P
+    Costeira, and Geoffrey J Gordon. Adversarial multiple source domain adaptation.
+    In NeurIPS, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhao et al. [2018b] Sicheng Zhao, Xin Zhao, Guiguang Ding, and Kurt Keutzer.
+    Emotiongan: Unsupervised domain adaptation for learning discrete probability distributions
+    of image emotions. In ACM MM, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhao et al. [2019a] Sicheng Zhao, Bo Li, Xiangyu Yue, Yang Gu, Pengfei Xu, Runbo
+    Hu, Hua Chai, and Kurt Keutzer. Multi-source domain adaptation for semantic segmentation.
+    In NeurIPS, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhao et al. [2019b] Sicheng Zhao, Chuang Lin, Pengfei Xu, Sendong Zhao, Yuchen
+    Guo, Ravi Krishna, Guiguang Ding, and Kurt Keutzer. Cycleemotiongan: Emotional
+    semantic consistency preserved cyclegan for adapting image emotions. In AAAI,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhao et al. [2020] Sicheng Zhao, Guangzhi Wang, Shanghang Zhang, Yang Gu, Yaxian
+    Li, Zhichao Song, Pengfei Xu, Runbo Hu, Hua Chai, and Kurt Keutzer. Multi-source
+    distilling domain adaptation. In AAAI, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhu et al. [2017] Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei A Efros.
+    Unpaired image-to-image translation using cycle-consistent adversarial networks.
+    In ICCV, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhu et al. [2019] Yongchun Zhu, Fuzhen Zhuang, and Deqing Wang. Aligning domain-specific
+    distribution and classifier for cross-domain classification from multiple sources.
+    In AAAI, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

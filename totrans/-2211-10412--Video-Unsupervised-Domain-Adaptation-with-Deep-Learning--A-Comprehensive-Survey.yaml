@@ -1,0 +1,2461 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:43:04'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2211.10412] Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive
+    Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2211.10412](https://ar5iv.labs.arxiv.org/html/2211.10412)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Video Unsupervised Domain Adaptation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'with Deep Learning: A Comprehensive Survey'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yuecong Xu, Haozhi Cao, Zhenghua Chen, Xiaoli Li, Lihua Xie, , and Jianfei Yang
+    Y. Xu, Z. Chen and X. Li are with the Institute for Infocomm Research, A*STAR,
+    Singapore, 138632.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'E-mail: {xuyu0014, chen0832}@e.ntu.edu.sg; xlli@i2r.a-star.edu.sg J. Yang,
+    H. Cao, and L. Xie are with the School of Electrical and Electronics Engineering,
+    Nanyang Technological University, Singapore, 639798.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'E-mail: {yang0478; haozhi001}@e.ntu.edu.sg; elhxie@ntu.edu.sg Z. Chen is also
+    with the Centre for Frontier AI Research (CFAR), A*STAR, Singapore, 138632.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Video analysis tasks such as action recognition have received increasing research
+    interest with growing applications in fields such as smart healthcare, thanks
+    to the introduction of large-scale datasets and deep learning-based representations.
+    However, video models trained on existing datasets suffer from significant performance
+    degradation when deployed directly to real-world applications due to domain shifts
+    between the training public video datasets (source video domains) and real-world
+    videos (target video domains). Further, with the high cost of video annotation,
+    it is more practical to use unlabeled videos for training. To tackle performance
+    degradation and address concerns in high video annotation cost uniformly, the
+    video unsupervised domain adaptation (VUDA) is introduced to adapt video models
+    from the labeled source domain to the unlabeled target domain by alleviating video
+    domain shift, improving the generalizability and portability of video models.
+    This paper surveys recent progress in VUDA with deep learning. We begin with the
+    motivation of VUDA, followed by its definition, and recent progress of methods
+    for both closed-set VUDA and VUDA under different scenarios, and current benchmark
+    datasets for VUDA research. Eventually, future directions are provided to promote
+    further VUDA research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Video unsupervised domain adaptation, deep learning, action recognition, closed-set,
+    benchmark datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: With the rapid growth of video data at an extraordinary rate, automatic video
+    analysis tasks, e.g., action recognition (AR) and video segmentation, have received
+    increasing research interest with growing applications. Over the past decade,
+    there have been great developments in various video analysis tasks. This is largely
+    enabled by the emergence of diverse large-scale video datasets and the continuous
+    advancement in video representation learning, particularly with deep neural networks
+    and deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite the progress made in video analysis tasks (e.g., AR), most existing
+    methods assume that the training and testing data are drawn from the same distribution,
+    which yet may not hold in real-world applications. In practice, it is very common
+    that the distribution of the training data from public datasets and testing data
+    collected in real-world scenarios differ, and therefore a domain shift between
+    the training (source) and testing (target) domains exists. In these scenarios,
+    we observe significantly degraded performances of trained video models in the
+    testing (target) domain despite the strong capacity of deep neural networks. For
+    instance, deep video models trained for autonomous driving with current datasets
+    (e.g., KITTI, nuScenes) would not be applicable for nighttime autonomous driving;
+    while deep video models trained with regular action recognition datasets (e.g.,
+    UCF101, HMDB51) may not be able to recognize actions of patients in hospitals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To tackle the performance degradation under domain shift, various domain adaptation
+    (DA) methods have been proposed to utilize labeled data in the source domain to
+    execute tasks in the target domain. Domain adaptation methods generally aim to
+    learn a model from the source domain that can be generalized to the target domain
+    by minimizing the difference between domain distributions. Meanwhile, due to the
+    high cost of annotating large-scale real-world data for deep learning, it is more
+    feasible to obtain unlabeled data for models to be adapted to target domains.
+    The unsupervised domain adaptation (UDA) task is therefore introduced where models
+    are adapted from the labeled source domain towards the unlabeled target domain
+    by alleviating the negative effect of domain shift while avoiding costly data
+    annotation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While UDA with deep learning greatly improves the generalizability and portability
+    of models by tackling domain shift, prior research for visual applications generally
+    focused on image data. An intuitive method for video unsupervised domain adaptation
+    (VUDA) is to extend UDA methods for images to videos by directly substituting
+    the image feature extractor with a video feature extractor (e.g., substituting
+    2D CNNs with 3D CNNs). Meanwhile, video representations obtained through conventional
+    video feature extractors are mainly from spatial features. However, videos contain
+    not only spatial features but also temporal features as well as features of other
+    modalities, e.g., optical flow and audio features. Domain shift would occur for
+    all of these features. Therefore, such a vanilla substitution strategy that ignores
+    domain shift across the multiple modalities of features produces inferior results
+    for VUDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Subsequently, various VUDA methods have been proposed to explicitly deal with
+    the issue of domain shift for video tasks. Generally, they can be categorized
+    into five categories: a) adversarial-based method, where feature generators are
+    trained jointly with additional domain discriminators in an adversarial manner,
+    with domain-invariant features obtained if the domain discriminators failed to
+    discriminate whether they originate from the source or target domains; b) discrepancy-based
+    (or metric-based) methods, where the discrepancy between the source and target
+    domains are explicitly computed, while the target domain is aligned with the source
+    domain by applying metric learning approaches, optimized with metric-based objectives
+    such as MDD [[1](#bib.bib1)], CORAL [[2](#bib.bib2)], and MMD [[3](#bib.bib3)];
+    c) semantic-based methods, where domain-invariant features are obtained subject
+    to certain semantic constraints by leveraging approaches such as mutual information
+    maximization [[4](#bib.bib4)], clustering [[5](#bib.bib5)], contrastive learning [[6](#bib.bib6),
+    [7](#bib.bib7)] and pseudo-labeling [[8](#bib.bib8), [9](#bib.bib9)]; d) composite
+    methods, where domain-invariant features are extracted by optimizing a combination
+    of different objectives (i.e., domain discrepancy objectives, adversarial objectives,
+    and semantic-based objectives); and e) reconstruction-based methods, where domain-invariant
+    features are extracted by encoders trained with data-reconstruction objectives
+    with the network commonly structured as an encoder-decoder.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6b3b61460382aea9800008205ff1fb97.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Overview of the categorization of the different VUDA methods. Closed-set
+    VUDA methods are constrained by the constraint of an identical label space shared
+    by the single pair of video source/target domains and assume that both the source
+    and target data are accessible, with action recognition as the cross-domain task.
+    Any VUDA methods that does not satisfy the four constraints/assumptions are considered
+    as non-closed-set VUDA. Closed-set VUDA methods can be categorized into five categories
+    based on how source and target domains are aligned. Non-closed-set VUDA methods
+    are categorized into four categories by how their related scenarios differ from
+    the closed-set VUDA.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Meanwhile, though the aforementioned VUDA methods enable the learning of transferable
+    knowledge across video domains, they are built upon several constraints and assumptions.
+    These include the constraint of an identical label space shared by the single
+    pair of the video source and target domains and the assumption that both the labeled
+    source and unlabeled target domain data are accessible during training, with action
+    recognition as the cross-domain task. VUDA under these constraints and assumptions
+    are denoted as closed-set VUDA, and may not hold in real-world scenarios, prompting
+    concerns in model portability due to issues such as data security. Over the past
+    few years, there have been various research that looks to differ the constraints
+    and assumptions such that VUDA methods could be more applicable in real-world
+    scenarios, which could be broadly categorized as: a) methods with differed label
+    space constraint; b) methods with differed source data assumption; c) methods
+    with differed target data assumption; and d) methods with differed cross-domain
+    tasks. Fig. [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ Video Unsupervised Domain
+    Adaptation with Deep Learning: A Comprehensive Survey") presents an overview of
+    the categorization of the different VUDA methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There had been prior surveys focusing on shallow and deep DA and UDA approaches
+    with their applications in various image and natural language processing tasks.
+    For example, [[10](#bib.bib10), [11](#bib.bib11)] surveyed shallow DA approaches
+    for image tasks while [[12](#bib.bib12)] also briefly recapped some deep DA approaches.
+    Subsequently, [[13](#bib.bib13)] further summarized other deep DA approaches for
+    image tasks. Later, [[14](#bib.bib14)] outlined various UDA methods while [[15](#bib.bib15)]
+    focused on UDA methods with deep learning. Several other works [[16](#bib.bib16),
+    [17](#bib.bib17), [18](#bib.bib18)] discussed DA and UDA for various natural language
+    processing tasks, such as machine translation and sentiment analysis. Meanwhile,
+    there were also works surveyed on the broader transfer learning (TL) topic [[19](#bib.bib19),
+    [20](#bib.bib20), [21](#bib.bib21), [22](#bib.bib22)], where domain adaptation
+    can be viewed as a special case. Despite the effort made in surveying comprehensively
+    DA, UDA, and TL, there has been no specific survey that investigates UDA for video
+    tasks (i.e., VUDA). To the best of our knowledge, this is the first article that
+    investigates and summarizes the recent progress of video unsupervised domain adaptation,
+    where current works are generally deep learning-based. By summarizing existing
+    literature, we propose the prospect of VUDA and the direction of future VUDA research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rest of the paper is organized as follows. Section [II](#S2 "II Definitions
+    and Notations ‣ Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive
+    Survey") defines the closed-set VUDA specifically and introduces the relevant
+    notations. In Section [III](#S3 "III Methods for Closed-Set Video Unsupervised
+    Domain Adaptation ‣ Video Unsupervised Domain Adaptation with Deep Learning: A
+    Comprehensive Survey"), we review the deep learning-based closed-set VUDA methods,
+    while methods for VUDA under different constraints, assumptions, and tasks are
+    reviewed in Section [IV](#S4 "IV Methods for Video Unsupervised Domain Adaptation
+    under Different Constraints, Assumptions, and Tasks ‣ Video Unsupervised Domain
+    Adaptation with Deep Learning: A Comprehensive Survey"). We further summarize
+    existing cross-domain video datasets for benchmarking VUDA in Section [V](#S5
+    "V Benchmark Datasets for Video Unsupervised Domain Adaptation ‣ Video Unsupervised
+    Domain Adaptation with Deep Learning: A Comprehensive Survey"). Insights and future
+    directions of VUDA research are discussed in Section [VI](#S6 "VI Discussion:
+    Recent Progress and Future Directions ‣ Video Unsupervised Domain Adaptation with
+    Deep Learning: A Comprehensive Survey") and the paper is concluded in Section [VII](#S7
+    "VII Conclusion ‣ Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive
+    Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Definitions and Notations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we define the video unsupervised domain adaptation (VUDA)
+    and introduce the relevant notations used in this survey. To maintain consistency
+    with current VUDA works, the definitions and notations are defined with reference
+    to [[23](#bib.bib23), [24](#bib.bib24)]. In VUDA, we are given a collection of
+    $M_{S}$ video source domains and $\{\mathcal{D}_{S}^{1},\mathcal{D}_{S}^{2},...,\mathcal{D}_{S}^{M_{S}}\}$
+    (which may or may not be accessible) and a collection of $M_{T}$ video target
+    domains $\{\mathcal{D}_{T}^{1},\mathcal{D}_{T}^{2},...,\mathcal{D}_{T}^{M_{T}}\}$
+    that are related to the collection of source domains. Each source domain contains
+    $N_{S}^{k}$ labeled videos $\mathcal{D}_{S}^{k}=\{(V_{S}^{k,i},y_{S}^{k,i})\}^{N_{S}^{k}}_{i=1}$,
+    characterized by the underlying probability distribution $p_{S}^{k}$ associated
+    with the label space $\mathcal{Y}_{S}^{k}$ that contains $|\mathcal{C}_{S}^{k}|$
+    classes. Meanwhile each target domain contains $N_{T}^{r}$ unlabeled videos $\mathcal{D}_{T}^{r}=\{V_{T}^{r,i}\}^{N_{T}^{r}}_{i=1}$
+    characterized by the underlying probability distribution $p_{T}^{r}$ associated
+    with the label space $\mathcal{Y}_{T}^{r}$ that contains $|\mathcal{C}_{T}^{r}|$
+    classes. The goal of VUDA is to design a target model $G_{T}(.;\theta_{T})$ for
+    the target domain that originates or is initialized from the source model $G_{S}(.;\theta_{S})$,
+    which is capable of learning transferable features from the labeled source domains
+    and minimize the empirical target risk $\epsilon_{T}$ across all target domains
+    performed on certain video-based tasks (e.g., human action recognition, video
+    segmentation or video quality assessment). The domain adaptation theory [[25](#bib.bib25)]
+    proves that the empirical target risk $\epsilon_{T}$ is upper-bounded by three
+    terms: a) the combined error of the ideal joint hypothesis on the source and target
+    domains, which is assumed to be small so that domain adaptation can be achieved;
+    b) the empirical source-domain error, and c) the divergence measured between source
+    and target domains. All VUDA methods attempt to minimize $\epsilon_{T}$ by minimizing
+    the third term and/or the second term which would be discussed in detail in subsequent
+    Sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While the above definition can be viewed as a general scenario of VUDA, it
+    could be too challenging to tackle. Therefore, existing works would normally apply
+    certain constraints or assumptions towards the general scenario to form scenarios
+    that could be better tackled. The most common scenario is the closed-set VUDA
+    scenario, which sets the below constraints and assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There would be only $M_{S}=1$ video source domain and only $M_{T}=1$ target
+    domain (superscripts $k$ and $r$ are therefore omitted for simplicity).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Both the source domain videos $\mathcal{D}_{S}$ and the source model $G_{S}(.;\theta_{S})$
+    are accessible.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The source and target domain videos share the same label space (i.e., $\mathcal{Y}_{S}=\mathcal{Y}_{T}$
+    and $|\mathcal{C}_{S}|=|\mathcal{C}_{T}|$).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The source and target domain videos share the same model (i.e., $G_{S}(.;\theta_{S})=G_{T}(.;\theta_{T})$.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The video-based task to be performed is assumed to be the human action recognition
+    task.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Based on the constraints and assumptions for the closed-set VUDA scenario, notations
+    would be simplified while the superscripts $k,r$ are omitted and the joint label
+    space $\mathcal{Y}$ contains $\mathcal{C}$ classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Methods for Closed-Set Video Unsupervised Domain Adaptation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we review the various deep learning-based closed-set VUDA
+    methods whose training and testing follow the constraints and assumptions as presented
+    in Section [II](#S2 "II Definitions and Notations ‣ Video Unsupervised Domain
+    Adaptation with Deep Learning: A Comprehensive Survey"). As briefly mentioned
+    in Section [I](#S1 "I Introduction ‣ Video Unsupervised Domain Adaptation with
+    Deep Learning: A Comprehensive Survey"), deep learning-based closed-set VUDA methods
+    could be generally categorized into five categories. We discuss each category
+    in the following sections. The list of all reviewed closed-set VUDA methods is
+    collated and compared in Tab. [I](#S3.T1 "Table I ‣ III Methods for Closed-Set
+    Video Unsupervised Domain Adaptation ‣ Video Unsupervised Domain Adaptation with
+    Deep Learning: A Comprehensive Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Different categories of methods for closed-set VUDA. Methods are listed
+    in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Categories | Brief Descriptions | Methods |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adversarial-based | Domain discriminators to encourage domain confusion through
+    adversarial objectives across video domain. | DAAA [[26](#bib.bib26)], TA³N [[27](#bib.bib27)],
+    TCoN [[28](#bib.bib28)], MM-SADA [[29](#bib.bib29)], MA²L-TD [[30](#bib.bib30)],
+    CIA [[31](#bib.bib31)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Discrepancy-based | Discrepancy between domains are explicitly computed,
+    align domains by applying metric learning approaches. | AMLS [[26](#bib.bib26)],
+    PTC [[32](#bib.bib32)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Semantic-based | Domain-invariant features are obtained by exploiting the
+    shared semantics across domains. | STCDA [[33](#bib.bib33)], CMCo [[34](#bib.bib34)],
+    CoMix [[35](#bib.bib35)], CO²A [[36](#bib.bib36)], A³R [[37](#bib.bib37)], DVM [[38](#bib.bib38)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Composite | Exploit a composite of approaches to capitalize on the strength
+    of each approach. | NEC-Drone [[39](#bib.bib39)], SAVA [[40](#bib.bib40)], PASTN [[41](#bib.bib41)],
+    MAN [[42](#bib.bib42)], ACAN [[23](#bib.bib23)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Reconstruction-based | Domain-invariant features from encoder-decoder networks
+    with data-reconstruction objectives. | TranSVAE [[43](#bib.bib43)] |'
+  prefs: []
+  type: TYPE_TB
+- en: III-A Adversarial-based VUDA Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With the assumption that the source empirical risk would be small with supervised
+    learning on source videos, methods have been proposed to achieve effective domain
+    adaptation by minimizing the discrepancy between the source and target domains.
+    Intuitively, if the source and target domains share the same data distribution,
+    the domain discriminators would be unable to identify whether a video originates
+    from the source or target domain. Such intuition, along with the success of Generative
+    Adversarial Networks (GANs) [[44](#bib.bib44)], motivates the proposal of adversarial-based
+    VUDA methods, where additional domain discriminators are leveraged to encourage
+    domain confusion through adversarial objectives across the source and target video
+    domains. The discrepancy between the source and target domains is therefore minimized
+    implicitly. Adversarial-based domain adaptation methods have previously found
+    their success in image-based tasks (e.g., image recognition [[45](#bib.bib45),
+    [46](#bib.bib46), [47](#bib.bib47), [48](#bib.bib48)], object detection [[49](#bib.bib49),
+    [50](#bib.bib50)] and person re-identification [[51](#bib.bib51)]), therefore
+    it is intuitive to extend adversarial-based methods to VUDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One primitive work in this category is the Deep Adversarial Action Adaptation
+    (DAAA) [[26](#bib.bib26)], where the original imaged-based DANN [[45](#bib.bib45),
+    [52](#bib.bib52)] is extended to videos by substituting the image extractor (2D-CNN [[53](#bib.bib53)])
+    with the clip/video extractor (3D-CNN [[54](#bib.bib54)]) while the input is changed
+    from images to clips, which is formed by sampling frames from the videos. Though
+    achieving much better performances compared to shallow domain adaptation methods,
+    DAAA ignores the difference between the source-target discrepancies of spatial
+    and temporal features, adapting spatial and temporal features uniformly and indiscriminately.
+    Subsequently, Temporal Attentive Adversarial Adaptation Network (TA³N) [[27](#bib.bib27)]
+    leverages on Temporal Relation Network (TRN) [[55](#bib.bib55)] to obtain more
+    explicit temporal features, and align videos with both spatial and temporal features.
+    TA³N is designed to focus dynamically on aligning the temporal dynamics which
+    have higher domain discrepancy to effectively align the temporal features of videos.
+    To achieve this, TA³N adopts an adaptive non-parametric attention mechanism based
+    on domain prediction entropy. The strategy of aligning and adapting spatial and
+    temporal features separately is further extended to the alignment of multiple
+    levels of temporal features separately in MA²L-TD [[30](#bib.bib30)], with each
+    level of temporal feature corresponding to the different length of video segment/clip
+    generated by a temporally-dilated feature aggregation module. MA²L-TD assigns
+    attention weights to the alignment of different levels by the degree of domain
+    confusion in each level, where larger weights are assigned to levels where the
+    corresponding domain discriminator cannot classify domains correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Meanwhile, videos contain a series of non-key frames whose noisy background
+    information is unrelated to the action and could affect adaptation negatively.
+    Temporal Co-attention Network (TCoN) [[28](#bib.bib28)] copes with non-key frames
+    by selecting the key segments that are critical for cross-domain action recognition.
+    TCoN selects key segments by computing attention scores of each segment based
+    on action informativeness and cross-domain similarity, obtained by a self-attention-inspired
+    cross-domain co-attention matrix. Instead of direct adaptation across the source
+    and target video features, TCoN adapts target video features to the source ones
+    by constructing target-aligned source video features via transforming the original
+    source video features through the cross-domain co-attention matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides spatial and temporal features which are generally obtained from the
+    RGB modality, videos also contain information about other modalities, such as
+    optical flow and audio modalities. The multi-modality nature of videos poses more
+    challenges towards VUDA as domain shift would be incurred for each modality. Methods
+    have therefore been proposed to align source and target videos leveraging on the
+    multi-modality information. Among these, MM-SADA [[29](#bib.bib29)] leverages
+    the RGB and optical flow modalities, where adversarial alignment is applied to
+    each modality separately. MM-SADA further adopts self-supervision learning across
+    different modalities to learn the temporal correspondence between the different
+    modalities. More recently, Cross-modal Interactive Alignment (CIA) [[31](#bib.bib31)]
+    aligns video features with RGB, optical flow, and audio modalities. CIA further
+    observes that cross-modal alignment could conflict with cross-domain alignment
+    in VUDA, therefore it enhances the transferability of each modality by cross-modal
+    interaction through a Mutual Complementarity (MC) module. The different modalities
+    are therefore refined by absorbing the transferable knowledge from other modalities
+    before they are aligned across source and target domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Discrepancy-based VUDA Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While adversarial-based VUDA methods achieve decent performances in various
+    VUDA benchmarks, the above methods do not compute the discrepancy between source
+    and target domains or measure such discrepancy implicitly. Moreover, previous
+    studies [[56](#bib.bib56), [57](#bib.bib57), [58](#bib.bib58)] have shown that
+    adversarial training is unstable and may lead to model collapse and non-convergence.
+    Discrepancy-based VUDA methods are therefore proposed as the more intuitive and
+    stable approach towards tackling VUDA by computing and minimizing the video domain
+    discrepancy explicitly. An early method is as proposed in AMLS [[26](#bib.bib26)]
+    where the target videos are modeled as a sequence of points on the Grassmann manifold [[59](#bib.bib59)]
+    with each point corresponding to a collection of clips aligned temporally, and
+    the source videos are modeled as a single point on the manifold. VUDA is tackled
+    by minimizing the Frobenius norm [[60](#bib.bib60)] between the source point and
+    the series of target points on the Grassmann manifold. Meanwhile, later method
+    has also leveraged multi-modal information with discrepancy computation and minimization.
+    The Pairwise Two-stream ConvNets (PTC) [[32](#bib.bib32)] minimizes the MMD [[3](#bib.bib3)]
+    loss across both RGB and optical flow modalities achieving better performances
+    on more complex domain shift scenarios. PTC further improves its generalizability
+    by fusing the RGB and optical flow features through a self-attention weight mechanism
+    and selection of training videos at the boundary of action classes through a sphere
+    boundary sample-selecting scheme.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Semantic-based VUDA methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Besides minimizing discrepancies explicitly by discrepancy-based methods and
+    implicitly by adversarial-based methods, aligning source and target video domains
+    can also be accomplished by semantic-based VUDA methods [[61](#bib.bib61)] which
+    exploit the shared semantics across the source and target domains such that domain-invariant
+    features are obtained. Intuitively, if the target video domain aligns well with
+    the source video domain through a certain model, the model extracts source-like
+    representations for target videos, semantics embedded within the source video
+    domain should therefore be shared with the target domain. Typical implications
+    of shared semantics across domains include: a) spatio-temporal association: frames
+    and clips (under different modalities) of videos possess strong spatio-temporal
+    association and are placed in the correct time order and pose; b) feature clustering:
+    features related to the videos of the same action classes are clustered and closed
+    to each other, whereby features related to videos of different action classes
+    are placed further away; and c) modality correspondence: features extracted from
+    the different modalities of the same video are close together.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One typical semantic-based method proposed is the Spatio-Temporal Contrastive
+    Domain Adaptation (STCDA) [[33](#bib.bib33)], which mines video representations
+    of both RGB and optical flow modalities by applying a contrastive loss on both
+    the clip and video level such that frames and clips are spatially and temporally
+    associated. STCDA further bridges the domain shift of source and target videos
+    by a video-based contrastive alignment (VCA) which minimizes the distance of the
+    intra-class source and target features and maximizes the distance of the inter-class
+    source and target features on the Reproducing Kernel Hilbert Space (RKHS) [[62](#bib.bib62)].
+    The labels of target videos are obtained by pseudo-labeling through clustering
+    with the features of the labeled source videos. Contrastive learning has also
+    been applied in CMCo [[34](#bib.bib34)] which aims to extract video features with
+    modality correspondence across RGB and optical flow modalities. Similarly, CO²A [[36](#bib.bib36)]
+    trains video feature extractors with the objective of feature clustering with
+    contrastive learning, employed on both the clip and video levels. CO²A also introduced
+    supervised contrastive learning [[6](#bib.bib6)] for source video feature learning.
+    Furthermore, CO²A encourages coherent correspondence predictions between source/target
+    video pairs. The correspondence predictions of the source/target video pair predict
+    whether the source/target videos are of the same label, and are obtained from
+    either the label/pseudo-label or the features of source/target videos trained
+    with contrastive learning. CoMix [[35](#bib.bib35)] is another method leveraging
+    contrastive learning for VUDA, where it enforces temporal speed invariance in
+    videos which encourages features extracted from the same video yet sampled with
+    different temporal speeds to be similar. CoMix further employs the supervised
+    contrastive loss [[6](#bib.bib6)] to target data by computing pseudo-labels and
+    selecting target data whose pseudo-labels are of high confidence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides contrastive learning, mixing source and target domain samples (or equivalently
+    leveraging MixUp [[63](#bib.bib63)] across the source and target domains) have
+    proven to benefit unsupervised domain adaptation for image-based tasks [[64](#bib.bib64),
+    [65](#bib.bib65), [66](#bib.bib66)] and improve model robustness. To further exploit
+    shared action semantics, CoMix [[35](#bib.bib35)] adopts such a strategy that
+    incorporates synthetic videos into its contrastive objective. The synthetic videos
+    are obtained by mixing the background of the video from one domain with the video
+    from another domain. More recently, DVM [[38](#bib.bib38)] leverages MixUp to
+    address the domain-wise gap directly at the input level, where the target videos
+    are fused with the source videos progressively on the pixel-level. The corresponding
+    target videos of the source videos are selected by obtaining the pseudo-labels
+    of the target videos and matching them with the given labels of the source videos.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The above methods mostly deal with the domain gap between source and target
+    videos with RGB and/or optical flow modalities. The A³R [[37](#bib.bib37)] observe
+    that sounds of actions can act as natural domain-invariant cues. Unlike previous
+    methods where pseudo-labels are obtained directly by applying a classifier to
+    the RGB and/or optical flow input, A³R introduces an absent activity learning
+    where audio predictions are leveraged to indicate which actions cannot be heard
+    in the video, while visual predictions are further encouraged to have low probabilities
+    for these ‘pseudo-absent’ actions. A³R further proposes audio-balanced learning
+    which exploits audio in the source domain to cluster samples. Finally, A³R applies
+    an audio-balanced loss where the rare actions are weighted higher to handle the
+    semantic shift between domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Composite VUDA Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The above categories attempt to tackle VUDA from different perspectives, and
+    all have their own strength and shortcomings. The adversarial-based approach is
+    the more common approach thanks to its high performance and ease of implementation,
+    yet it relies on unstable adversarial learning which may result in fragile convergence
+    and requires additional domain discriminators during training. The divergence-based
+    approach computes domain discrepancies explicitly without additional network components,
+    and its optimization is more stable. However, it generally produces inferior performances
+    compared to either the adversarial-based approach or the semantic-based approach.
+    The semantic-based approach also results in high adaptation performances and can
+    be extended to other scenarios of adaptation (e.g., source-free VUDA), but they
+    are susceptible to noise and are optimized with higher computation cost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To capitalize on the strength of each approach for a more effective VUDA, various
+    VUDA methods exploit a composite of approaches. For example, the NEC-Drone [[39](#bib.bib39)]
+    proposed to combine the adversarial-based approach with the semantic-based approach
+    by applying a triplet loss on the source data to learn embeddings of the videos
+    which are agnostic of the specific classes but are aware of being similar. Similarly,
+    the Pairwise Attentive adversarial Spatio-Temporal Network (PASTN) [[41](#bib.bib41)]
+    also exploits both the adversarial-based and semantic-based approaches. PASTN
+    is designed as a pairwise network with dual domain discriminators, one of which
+    is structured without backpropagation and outputs the transferability weights
+    for attentive adversarial learning. A margin-based discrimination loss [[67](#bib.bib67)]
+    is employed across the source and target video features instead of the contrastive
+    loss to compress intra-class samples within a margin and push inter-class samples
+    away. This could extract shared semantics across source and target video domains
+    by promoting feature clustering while taking the intra-class data distribution
+    into consideration. Another method that adopts the same combination of approaches
+    is SAVA [[40](#bib.bib40)]. SAVA aligns source and target video domains adversarially
+    while attending to more discriminative clips through an attention mechanism. Further,
+    SAVA focuses on encouraging temporal association in videos by applying an auxiliary
+    clip order prediction task, which is more efficient and computationally less intensive
+    than applying a contrastive loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides combining the adversarial-based approach with the semantic-based approach,
+    there have been other works that combine the adversarial-based approach with the
+    discrepancy-based approach. For example, the Multiple-view Adversarial learning
+    Network (MAN) [[42](#bib.bib42)] performs adversarial learning to obtain domain-invariant
+    video features from both RGB and optical flow modalities, fused by a Self-Attention
+    Fusion Network (SAFN). MAN further improves domain invariance by applying the
+    MK-MMD [[3](#bib.bib3)] loss over the fused video features. The Adversarial Correlation
+    Alignment Network (ACAN) [[23](#bib.bib23)] is the other VUDA method that tackles
+    VUDA with the composition of the adversarial-based and the discrepancy-based approach.
+    Besides aligning spatial and temporal features, ACAN proposes to align correlation
+    features extracted as long-range dependencies of pixels across spatiotemporal
+    dimensions [[68](#bib.bib68)] by applying the adversarial domain loss to both
+    the spatiotemporal video features and the correlation features. ACAN further aligns
+    the correlation features by aligning the joint distribution of correlation information,
+    which is computed as the covariance of correlation information. This is achieved
+    by minimizing the Pixel Correlation Discrepancy across the source and target video
+    domains implemented as the distance of correlation information distribution on
+    the RKHS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E Reconstruction-based VUDA Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Reconstruction-based VUDA methods deal with VUDA by obtaining domain-invariant
+    features by an encoder-decoder network trained with data-reconstruction objectives.
+    There had been some image-based domain adaptation works leveraging the reconstruction-based
+    approach [[69](#bib.bib69), [70](#bib.bib70), [71](#bib.bib71)] thanks to its
+    robustness to noise. However, there are few attempts in extending the reconstruction-based
+    approach to VUDA due to the complexity of video reconstruction. TranSVAE [[43](#bib.bib43)]
+    is a recent attempt in leveraging data-reconstruction objectives for VUDA. It
+    aims to disentangle domain information from other information during adaptation
+    by disentangling the cross-domain videos into domain-specific static variables
+    and domain-invariant dynamic variables. With domain information obtained, the
+    effect of domain discrepancy on the prediction task could be largely eliminated.
+    The disentanglement is achieved through a Variational AutoEncoder (VAE)-structured [[72](#bib.bib72)]
+    network which models the cross-domain video generation process. TranSVAE further
+    ensures the disentanglement serves the adaptation purpose by applying objectives
+    to constraint the latent factors during the disentanglement, such as minimizing
+    mutual dependence across static and dynamic variables and applying task-specific
+    supervision on the dynamic variable from the source domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE II: Different categories of methods for non-closed-set VUDA.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Differences from closed-set | Scenarios | Assumptions/Constraints | Methods
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Label space constraint | partial-set VUDA (PVDA) | $\mathcal{Y}_{T}\subset\mathcal{Y}_{S}$
+    and $&#124;\mathcal{C}_{T}&#124;<&#124;\mathcal{C}_{S}&#124;$ | PATAN [[24](#bib.bib24)],
+    MCAN [[73](#bib.bib73)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| open-set VUDA (OSVDA) | $\mathcal{Y}_{S}\subset\mathcal{Y}_{T}$ and $&#124;\mathcal{C}_{S}&#124;<&#124;\mathcal{C}_{T}&#124;$
+    | DMDA [[74](#bib.bib74)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Source data assumption | multi-source VUDA (MSVDA) | $M_{S}>1,M_{T}=1$ |
+    TAMAN [[75](#bib.bib75)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| source-free VUDA (SFVDA) | $\mathcal{D}_{S}$ not accessible | ATCoN [[76](#bib.bib76)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| black-box VUDA (BVDA) | $\mathcal{D}_{S}$ and $\theta_{S}$ not accessible
+    | EXTERN [[77](#bib.bib77)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Target data assumption | zero-shot VUDA (VDG) | $\mathcal{D}_{T}$ not accessible
+    | VideoDG [[78](#bib.bib78)], RNA-Net [[79](#bib.bib79)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-domain tasks | Temporal action segmentation | - | MTDA [[80](#bib.bib80)],
+    SSTDA [[81](#bib.bib81)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Video semantic segmentation | - | DA-VSN [[82](#bib.bib82)], TPS [[83](#bib.bib83)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Video quality assessment | - | UCDA [[84](#bib.bib84)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Video Sign language recognition | - | Li et. al [[85](#bib.bib85)] |'
+  prefs: []
+  type: TYPE_TB
+- en: IV Methods for Video Unsupervised Domain Adaptation under Different Constraints,
+    Assumptions, and Tasks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The methods presented in Section [III](#S3 "III Methods for Closed-Set Video
+    Unsupervised Domain Adaptation ‣ Video Unsupervised Domain Adaptation with Deep
+    Learning: A Comprehensive Survey") improve video model generalizability and enables
+    knowledge to be transferred from a labeled source domain to an unlabeled target
+    domain in the closed-set scenario. However, the constraints and assumptions of
+    the closed-set VUDA may not hold in real-world scenarios, which could prompt concerns
+    about model portability. In this section, we review deep learning-based VUDA methods
+    in VUDA scenarios under different constraints and assumptions, categorized into
+    four categories as introduced in Section [I](#S1 "I Introduction ‣ Video Unsupervised
+    Domain Adaptation with Deep Learning: A Comprehensive Survey"). We summarize and
+    compare all reviewed non-closed-set VUDA methods as presented in Tab. [II](#S3.T2
+    "Table II ‣ III-E Reconstruction-based VUDA Methods ‣ III Methods for Closed-Set
+    Video Unsupervised Domain Adaptation ‣ Video Unsupervised Domain Adaptation with
+    Deep Learning: A Comprehensive Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A Methods with Differed Label Space Constraint
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the closed-set VUDA scenario, we assume that the source and target domain
+    videos share the same label space (i.e., $\mathcal{Y}_{S}=\mathcal{Y}_{T}$ and
+    $|\mathcal{C}_{S}|=|\mathcal{C}_{T}|$). With the presence of large-scale labeled
+    public video datasets (e.g., Kinetics [[86](#bib.bib86)] and Something-Something [[87](#bib.bib87)]),
+    it is more feasible in real-world scenarios to transfer representations learned
+    in these large-scale video datasets to unlabeled small-scale video datasets. It
+    is reasonable to assume that large-scale public video datasets can subsume categories
+    of small-scale target datasets. Such a scenario is defined as the partial-set
+    VUDA, or the Partial Video Domain Adaptation (PVDA) [[24](#bib.bib24)]. It relaxes
+    the constraint of identical source and target label spaces by assuming that the
+    target label space is a subspace of the source one (i.e.,  $\mathcal{Y}_{T}\subset\mathcal{Y}_{S}$
+    and $|\mathcal{C}_{T}|<|\mathcal{C}_{S}|$). Compared to the closed-set VUDA, tackling
+    PVDA poses more challenges due to the existence of outlier label space in the
+    source domain denoted as $\mathcal{Y}_{out}=\mathcal{Y}_{S}\backslash\mathcal{Y}_{T}$,
+    which causes negative transfer effect to the network’s performance on the target
+    domain. Meanwhile, during the training of the network, only labels of the target
+    domain data are unknown, hence the part of which $\mathcal{Y}_{S}$ shares with
+    $\mathcal{Y}_{T}$ is unknown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the inclusion of temporal features and multi-modal information (e.g., optical
+    flow or audio), PVDA is also more challenging than its image-based counterpart
+    (PDA [[88](#bib.bib88)]) as negative transfer could be additionally triggered
+    by the alignment of either temporal features or the multi-modal information. The
+    key to tackling PVDA lies in mitigating negative effects brought by the unknown
+    outlier label space $\mathcal{Y}_{S}\backslash\mathcal{Y}_{T}$ leveraging on the
+    additional temporal or multi-modality features effectively. The pioneering work,
+    Partial Adversarial Temporal Attentive Network (PATAN) [[24](#bib.bib24)] proposes
+    to tackle PVDA by the filtering of source-only outlier classes to mitigate negative
+    transfer. To achieve this, PATAN leverages temporal features from two perspectives.
+    Firstly, PATAN constructs temporal features such that those in outlier source-only
+    classes discriminate those in the target classes by an attentive combination of
+    local temporal features, where the attention builds upon the contribution of the
+    local temporal features towards the class filtration process where source-only
+    classes are filtered. Secondly, PATAN exploits temporal features toward the filtration
+    of source-only classes to alleviate the effects of the misclassification of spatial
+    features. Later, the Multi-modality Cluster-calibrated partial Adversarial Network
+    (MCAN) [[73](#bib.bib73)] also tackles PVDA by filtering source-only outlier classes,
+    exploiting the multi-modal features (optical flow feature) in addition to the
+    spatial and temporal features leveraged in PATAN. MCAN further improves PVDA performance
+    by dealing with label distribution shift [[89](#bib.bib89)] across the source
+    and target domain by clustering video features and weighing them accordingly such
+    that MCAN promotes positive transfers of relevant source data and suppresses negative
+    transfers of irrelevant source data jointly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another practical VUDA scenario with differed label space assumption takes agnostic
+    classes into consideration, assuming that there are unknown action classes in
+    the target video domain, denoted as the open-set VUDA, or the Open-Set Video Domain
+    Adaptation (OSVDA). Under such scenario, the source label space is a subspace
+    of the target one (i.e.,, $\mathcal{Y}_{S}\subset\mathcal{Y}_{T}$ and $|\mathcal{C}_{S}|<|\mathcal{C}_{T}|$).
+    To tackle OSVDA, the Dual Metric Domain Adaptation framework (DMDA) [[74](#bib.bib74)]
+    is proposed which involves spatial and temporal features. DMDA deals with OSVDA
+    by a Dual Metric Discriminator (DMD) which measures similarities between source
+    and target video samples with a pre-trained classifier combined with prototypical
+    optimal transport, applied to the frame, clip, and video levels. The DMD is further
+    exploited as an initial separation and trains a binary discriminator to further
+    distinguish whether target samples belong to the source action classes or the
+    agnostic action classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B Methods with Differed Source Data Assumption
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the constraints of the same label space across the source and
+    target video domains, closed-set VUDA also makes several assumptions about the
+    source data. Specifically, closed-set VUDA first assumes that there would be only
+    $M_{S}=1$ video source domain with videos matching a uniform data distribution
+    whose knowledge would be transferred to the target domain. In practice, source
+    data are more likely to be collected from multiple datasets (e.g., the action
+    “Diving” can be found in datasets UCF101 [[90](#bib.bib90)], Kinetics [[86](#bib.bib86)]
+    and Sports-1M [[91](#bib.bib91)]). This VUDA scenario is defined as the multi-source
+    VUDA, or the Multi-Source Video Domain Adaptation (MSVDA) [[75](#bib.bib75)] which
+    relaxes the constraint of identical source video data distribution by assuming
+    that source video data are sampled from $M_{S}>1$ video domains corresponding
+    to different video data distributions. The challenges of MSVDA lie in the negative
+    transfer that would be triggered if domain shifts between multiple domain pairs
+    are reduced directly regardless of their inconsistencies caused by distinct spatial
+    and temporal feature distributions. The Temporal Attentive Moment Alignment Network
+    (TAMAN) [[75](#bib.bib75)] is a discrepancy-based method designed for MSVDA. It
+    deals with MSVDA by constructing global temporal features via attentively combining
+    local temporal features, where the attention strategies depend on both the local
+    temporal feature classification confidence, as well as the disparity between the
+    global and local feature discrepancies. Furthermore, TAMAN aligns spatial-temporal
+    features jointly by aligning the moments of both spatial and temporal features
+    across all domain pairs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Closed-set VUDA also assumes that the source domain videos $V_{S}\in\mathcal{D}_{S}$
+    are always accessible during adaptation. However, action information in the source
+    video domain usually contains the private and sensitive information of the actors,
+    including their actions and the relevant scenes which is usually irrelevant to
+    those in the target domain in real-world applications and should be protected
+    from the target domain. For example, in hospitals, the anomaly action recognition
+    of patients is usually required but videos that contain patients’ information
+    cannot be shared across different hospitals. Current closed-set VUDA methods would
+    therefore raise serious privacy and model portability issues, which are more severe
+    than that raised by image-based domain adaptation. To address the video data privacy
+    and model portability issue, a more practical VUDA scenario is formulated as the
+    source-free VUDA, or Source-Free Video Domain Adaptation (SFVDA). In this VUDA
+    scenario, only the well-trained source video models denoted as $G_{S}(:,\theta_{S})$,
+    would be provided along with the unlabeled target video domain data for adaptation.
+    Here $\theta_{S}$ is the parameter of $G_{S}$. With the absence of source data,
+    the VUDA methods as reviewed that require data from both target and source domains
+    for implicit or explicit alignment cannot be applied. Recently, the Attentive
+    Temporal Consistent Network (ATCoN) [[76](#bib.bib76)] is proposed to deal with
+    SFVDA. ATCoN aims to tackle SFVDA by obtaining temporal features that satisfy
+    the cross-temporal hypothesis which hypothesizes that local temporal features
+    (clip features) are not only discriminative but also consistent across each other
+    and possess similar feature distribution patterns. This hypothesis is satisfied
+    by ATCoN through learning temporal consistency composed of both feature and source
+    prediction consistency. ATCoN further aligns target data to the source data distribution
+    without source data access by attending to local temporal features with high source
+    prediction confidence. While SFVDA attempts to address privacy concerns in VUDA,
+    it still relies on the well-trained source model parameters which allow generative
+    models [[44](#bib.bib44)] to recover source videos. Inspired by black-box unsupervised
+    domain adaptation [[92](#bib.bib92)] in image-based domain adaptation, the black-box
+    VUDA or Black-box Video Domain Adaptation (BVDA) is formulated more recently where
+    the source video model is provided for adaptation only as a black-box predictor
+    (e.g., API service). In other words, both the source domain $\mathcal{D}_{S}$
+    and $\theta_{S}$ are not accessible. To tackle the more challenging BVDA, EXTERN [[77](#bib.bib77)]
+    is proposed which is designed to adapt target models to the embedded semantic
+    information of the source data resorting to the hard or soft predictions of the
+    target domain from the black-box source predictor. EXTERN aims to extract effective
+    temporal features in a self-supervised manner with high discriminability and complies
+    with the cluster assumption [[93](#bib.bib93)] where regularizations are applied
+    over clip features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C Methods with Differed Target Data Assumption
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Besides assumptions made on the source data, closed-set VUDA also supposes that
+    the target domain data is readily available. This assumption may also not hold
+    when applying to actual applications, since prior knowledge of target data distribution
+    is not guaranteed. It is more practical to assume that the target domain is unseen
+    (i.e., data of the target domain is unavailable) during adaptation, defined as
+    the zero-shot VUDA, or Video Domain Generalization (VDG). Closed-set VUDA methods
+    are also inadequate towards VDG, since similar to SFVDA, the domain discrepancy
+    between source and target domains cannot be computed or estimated without knowledge
+    of target data distribution. VideoDG [[78](#bib.bib78)] identifies the key towards
+    VDG is to strike a balance between generalizability and discriminability, achieved
+    by expanding the frame relations of the source domain such that they are diverse
+    enough to be generalized to potential target domains while remaining discriminative.
+    Inspired by the Transformer [[94](#bib.bib94)] and the Adversarial Domain Augmentation
+    (ADA) [[95](#bib.bib95)], VideoDG reaches such balance with the introduction of
+    the Adversarial Pyramid Network (APN) trained with the Robust Adversarial Domain
+    Augmentation (RADA). Meanwhile, the RNA-Net [[79](#bib.bib79)] makes use of the
+    multi-modal nature of videos by leveraging both audio and RGB features for tackling
+    VDG. RNA-Net suggests that fusing multi-modal information naively may not bring
+    improvements to the generalizability of models [[96](#bib.bib96)] due to certain
+    modalities being privileged over the others. Therefore, it proposes a cross-modal
+    audio-visual Relative Norm Alignment (RNA) loss which aims to progressively align
+    the relative feature norms of the two modalities from the source domains such
+    that domain-invariant audio-visual features are obtained for VDG.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D Methods with Differed Cross-Domain Tasks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For all the aforementioned works, the VUDA methods are designed for the cross-domain
+    action recognition task, which is one of the most fundamental video-based task [[97](#bib.bib97),
+    [98](#bib.bib98)]. Besides action recognition, there have been various studies
+    on other cross-domain video tasks, such as cross-domain temporal action segmentation.
+    For the cross-domain temporal action segmentation task, the Mixed Temporal Domain
+    Adaptation (MTDA) [[80](#bib.bib80)] is proposed as an adversarial-based method.
+    MTDA deals with cross-domain temporal action segmentation by jointly aligning
+    local and global embedded feature spaces while integrating a domain attention
+    mechanism based on domain predictions to aggregate domain-specific frames for
+    constructing global video representations. Subsequently, the Self-Supervised Temporal
+    Domain Adaptation (SSTDA) [[81](#bib.bib81)] is proposed for the same cross-domain
+    temporal action segmentation task. SSTDA leverages the adversarial-based approach
+    for aligning source and target videos by integrating two self-supervised auxiliary
+    tasks (i.e., the binary and sequential domain prediction tasks), performed on
+    the frame and clip levels respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-domain video semantic segmentation is another task studied for VUDA, which
+    is relevant towards robust and efficient deployment of vision-based autonomous
+    driving systems [[99](#bib.bib99), [100](#bib.bib100)]. DA-VSN [[82](#bib.bib82)]
+    is one pioneer work that tackles cross-domain video semantic segmentation by introducing
+    temporal consistency regularization (TCR) to bridge the domain gap. The TCR consists
+    of two components, the cross-domain TCR which minimizes the discrepancy between
+    source and target video domains by guiding target predictions to have the same
+    temporal consistency as the source ones, and the intra-domain TCR which guides
+    unconfident target predictions to have the same temporal consistency as the confident
+    ones. Lately, the Temporal Pseudo-Supervision (TPS) [[83](#bib.bib83)] is proposed
+    inspired by the success of consistency training [[101](#bib.bib101), [102](#bib.bib102),
+    [103](#bib.bib103)] on image-based domain adaptation. TPS explores consistency
+    training in the spatiotemporal feature space by enforcing model predictions to
+    be invariant to cross-frame augmentations which are applied to the unlabeled target
+    video frames.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides the aforementioned segmentation tasks, an Unsupervised Curriculum Domain
+    Adaptation (UCDA) [[84](#bib.bib84)] is proposed for the task of cross-modal video
+    quality assessment (VQA) with VUDA which aims to output the quality score of the
+    target videos given a set of source videos. UCDA deals with the task of cross-domain
+    VQA through a two-stage adversarial adaptation with an uncertainty-based ranking
+    function to sort the samples from the target domain into a different subdomain.
+    Cross-domain video sign language recognition [[85](#bib.bib85)] is another novel
+    task investigated by VUDA research that aims to recognize isolated sign words
+    from the sign words available in web news. Li et. al [[85](#bib.bib85)] propose
+    a coarse domain alignment approach for this task by jointly training a classifier
+    on news signs and isolated signs to reduce the domain gap. In addition, they develop
+    a prototypical memory to learn a domain-invariant descriptor for each isolated
+    sign.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE III: Comparison of current cross-domain video benchmark datasets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Dataset | # Classes | # Train/Test Videos | Source of Data | VUDA Scenarios
+    | Tasks | Year | Website |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF-Olympic [[104](#bib.bib104)] | 6 | 851/294 | UCF50, Olympic Sports |
+    Closed-Set | Action recognition | 2014 | [Website](https://github.com/cmhungsteve/TA3N)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF-HMDB[small] [[104](#bib.bib104)] | 5 | 832/339 | UCF50, HMDB51 | Closed-Set
+    | Action recognition | 2014 | [Website](https://github.com/cmhungsteve/TA3N) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF-HMDB[full] [[27](#bib.bib27)] | 12 | 2278/931 | UCF50, HMDB51 | Closed-Set
+    | Action recognition | 2019 | [Website](https://github.com/cmhungsteve/TA3N) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kinetics-Gameplay [[27](#bib.bib27)] | 12 | 46003/3995 | Kinetics-600, Gameplay
+    | Closed-Set | Action recognition | 2019 | [Website](https://github.com/cmhungsteve/TA3N)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HMDB-ARID [[105](#bib.bib105)] | 11 | 3058/1153 | HMDB51, ARID | Closed-Set
+    | Action recognition | 2021 | [Website](https://xuyu0010.github.io/vuda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kinetics$\to$NEC-Drone [[106](#bib.bib106)] | 7 | Total 5250 | Kinetics-400,
+    NEC-Drone | Closed-Set | Action recognition | 2020 | [Website](https://www.nec-labs.com/%C2%A0mas/NEC-Drone/)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mixamo$\to$Kinetics [[36](#bib.bib36)] | 14 | 24533/11662 | Mixamo, Kinetics-700
+    | Closed-Set | Action recognition | 2022 | [Website](https://github.com/vturrisi/CO2A)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ActorShift [[37](#bib.bib37)] | 7 | 1305/200 | Kinetics-700, YouTube | Closed-Set
+    | Action recognition | 2022 | [Website](https://xiaobai1217.github.io/DomainAdaptation/)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF-HMDB[partial] [[24](#bib.bib24)] | 14 | 2304/476 | UCF101, HMDB51 | Partial
+    | Action recognition | 2021 | [Website](https://xuyu0010.github.io/pvda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MiniKinetics-UCF [[24](#bib.bib24)] | 45 | 20996/1106 | MiniKinetics, UCF101
+    | Partial | Action recognition | 2021 | [Website](https://xuyu0010.github.io/pvda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HMDB-ARID[partial] [[24](#bib.bib24)] | 10 | 2712/540 | HMDB51, ARID | Partial
+    | Action recognition | 2021 | [Website](https://xuyu0010.github.io/pvda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EPIC Kitchens [[29](#bib.bib29)] | 8 | 7935/2159 | EPIC Kitchens | Closed-Set
+    | Action recognition | 2020 | [Website](https://EPIC%20Kitchens.github.io/2021)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Daily-DA [[75](#bib.bib75)] | 8 | 16295/2654 | ARID, HMDB51, Moments in Time,
+    Kinetics-600 | Multi-Source/ Closed-Set | Action recognition | 2021 | [Website](https://xuyu0010.github.io/msvda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sports-DA [[75](#bib.bib75)] | 23 | 36003/4712 | UCF101, Sports-1M, Kinetics-600
+    | Multi-Source/ Closed-Set | Action recognition | 2021 | [Website](https://xuyu0010.github.io/msvda.html)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| VIPER$\to$Cityscapes-Seq [[82](#bib.bib82)] | 30 | 136645/500 | VIPER, Cityscapes-Seq
+    | Closed-Set | Semantic segmentation | 2021 | [Website](https://github.com/Dayan-Guan/DA-VSN)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SYNTHIA-Seq$\to$Cityscapes-Seq [[82](#bib.bib82)] | 30 | 10975/500 | SYNTHIA-Seq,
+    Cityscapes-Seq | Closed-Set | Semantic segmentation | 2021 | [Website](https://github.com/Dayan-Guan/DA-VSN)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE IV: Average accuracy ($\%$) on Primary VUDA Datasets. Methods are arranged
+    in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Methods | Backbones | Categories | UCF-Olympic | UCF-HMDB[small] | UCF-HMDB[full]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AMLS [[26](#bib.bib26)] | C3D [[107](#bib.bib107)] | Discrepancy | 85.24
+    | 92.45 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DAAA [[26](#bib.bib26)] | C3D [[107](#bib.bib107)] | Adversarial | 90.78
+    | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TA³N [[27](#bib.bib27)] | TRN [[55](#bib.bib55)] | Adversarial | 95.54 |
+    99.40 | 80.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TCoN [[28](#bib.bib28)] | TRN [[55](#bib.bib55)] | Adversarial | 94.95 |
+    96.78 | 88.15 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAVA [[40](#bib.bib40)] | I3D [[108](#bib.bib108)] | Composite | - | - |
+    86.70 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MM-SADA [[29](#bib.bib29)] | I3D [[108](#bib.bib108)] | Adversarial | - |
+    - | 87.65 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PASTN [[41](#bib.bib41)] | TR3D [[41](#bib.bib41)] | Composite | 99.05 |
+    - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STCDA [[33](#bib.bib33)] | BNIncep [[109](#bib.bib109)]/I3D [[108](#bib.bib108)]
+    | Semantic | 99.35 | 97.20 | 87.60 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CMCo [[34](#bib.bib34)] | I3D [[108](#bib.bib108)] | Semantic | - | - | 88.75
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CoMix [[35](#bib.bib35)] | I3D [[108](#bib.bib108)] | Semantic | - | - |
+    90.30 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MAN [[42](#bib.bib42)] | ResNet-152 [[110](#bib.bib110)] | Composite | 94.80
+    | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ACAN [[23](#bib.bib23)] | MFNet [[111](#bib.bib111)] | Composite | - | -
+    | 89.50 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CO²A [[36](#bib.bib36)] | I3D [[108](#bib.bib108)] | Semantic | 98.75 | -
+    | 91.80 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MA²l-TD [[30](#bib.bib30)] | ResNet-101 [[110](#bib.bib110)] | Adversarial
+    | 97.36 | 99.40 | 85.80 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CIA [[31](#bib.bib31)] | I3D [[108](#bib.bib108)] | Adversarial | - | - |
+    93.26 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DVM [[38](#bib.bib38)] | TSM [[112](#bib.bib112)] | Semantic | 96.37 | -
+    | 92.77 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TranSVAE [[43](#bib.bib43)] | I3D [[108](#bib.bib108)] | Reconstruction |
+    - | - | 93.37 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ATCoN (SFVDA) [[76](#bib.bib76)] | TRN [[55](#bib.bib55)] | - | - | - | 82.51
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EXTERN (BVDA) [[77](#bib.bib77)] | TRN [[55](#bib.bib55)] | - | - | - | 90.42
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: V Benchmark Datasets for Video Unsupervised Domain Adaptation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'An important factor in the development of deep learning methods is the availability
+    of relevant datasets for the training and evaluation of the proposed methods.
+    This also applies to the development of research in VUDA methods. Over the past
+    decade, there has been a significant increase in cross-domain video datasets,
+    which greatly facilitates and promotes research in the various VUDA scenarios.
+    In this section, we review and summarize existing cross-domain video datasets
+    for VUDA. An overall comparison of existing datasets over their major attributes
+    (number of action classes, number of training/testing videos, source of data,
+    etc.) is presented in Tab. [III](#S4.T3 "Table III ‣ IV-D Methods with Differed
+    Cross-Domain Tasks ‣ IV Methods for Video Unsupervised Domain Adaptation under
+    Different Constraints, Assumptions, and Tasks ‣ Video Unsupervised Domain Adaptation
+    with Deep Learning: A Comprehensive Survey"). Furthermore, we show the average
+    performance of the methods on their respective benchmarked datasets in Tabs. [IV](#S4.T4
+    "Table IV ‣ IV-D Methods with Differed Cross-Domain Tasks ‣ IV Methods for Video
+    Unsupervised Domain Adaptation under Different Constraints, Assumptions, and Tasks
+    ‣ Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey"), [V](#S5.T5
+    "Table V ‣ V Benchmark Datasets for Video Unsupervised Domain Adaptation ‣ Video
+    Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey"), [VI](#S5.T6
+    "Table VI ‣ V Benchmark Datasets for Video Unsupervised Domain Adaptation ‣ Video
+    Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey") [VII](#S5.T7
+    "Table VII ‣ V Benchmark Datasets for Video Unsupervised Domain Adaptation ‣ Video
+    Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey"), and [VIII](#S5.T8
+    "Table VIII ‣ V Benchmark Datasets for Video Unsupervised Domain Adaptation ‣
+    Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey").
+    Note that due to the different backbones and training techniques applied by the
+    different methods, direct comparison of their performance may not be fair and
+    only serves as an intuitive reference towards the comparison of each method. All
+    average performances are reported based on the original paper in which the respective
+    methods are proposed when applicable.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Primary VUDA Datasets. Earlier VUDA works typically rely on two sets of primary
+    cross-domain action recognition datasets, namely the UCF-Olympic dataset [[104](#bib.bib104)]
+    and the UCF-HMDB dataset [[104](#bib.bib104)]. The UCF-HMDB dataset [[104](#bib.bib104)]
+    is subsequently denoted as the UCF-HMDB[small] dataset to differentiate with a
+    later dataset. Specifically, the UCF-Olympic dataset is built across the UCF50 [[113](#bib.bib113)]
+    and the Olympic Sports [[114](#bib.bib114)] datasets, while the UCF-HMDB[small]
+    dataset is built across the UCF50 and the HMDB51 [[115](#bib.bib115)] datasets.
+    Both cross-domain datasets are of a very small scale with limited action classes
+    and training/testing videos. Subsequently, a larger UCF-HMDB[full] [[27](#bib.bib27)]
+    dataset is introduced to facilitate further research on VUDA. The UCF-HMDB[full]
+    dataset is also built across the UCF50 and the HMDB51 datasets, but with more
+    than doubled number of classes compared to the UCF-HMDB[small] dataset and contains
+    much more videos. The UCF-HMDB[full] dataset has become one of the most commonly
+    used benchmark datasets for VUDA research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VUDA Datasets with Larger Domain Shifts. The aforementioned datasets are all
+    built on datasets whose videos are collected mostly on web platforms (e.g., YouTube)
+    with videos shot in normal conditions (e.g., normal illumination and contrast
+    with clear pictures). Therefore the domain shifts across the different domains
+    may not be significant. Consequently, the generalizability of VUDA approaches
+    well-performed on the aforementioned datasets would be low in real-world applications
+    where the domain shifts may be much larger. To cope with such limitations, cross-domain
+    VUDA datasets with larger domain shifts are introduced. One example is the Kinetics-Gameplay [[27](#bib.bib27)]
+    dataset which bridges real-world videos with virtual-world videos. Kinetics-Gameplay
+    is built with the Kinetic [[86](#bib.bib86)] and the Gameplay [[27](#bib.bib27)]
+    datasets collected from current video games. Another cross-domain dataset that
+    bridges real-world and synthetic videos is the Mixamo$\to$Kinetics dataset [[36](#bib.bib36)],
+    built as a uni-directional dataset to transfer knowledge from synthetic videos
+    built from the Mixamo system to the real-world videos of the Kinetics dataset.
+    Another scenario where large domain shifts may encounter during adaptation is
+    between regular human-captured videos and drone-captured videos, where drone-captured
+    videos possess unique characteristics thanks to their distinct motions and perspectives.
+    The Kinetics$\to$NEC-Drone [[106](#bib.bib106)] is introduced to leverage the
+    existing large-scale Kinetics to aid video models to perform action recognition
+    on the challenging drone-captured videos in the NEC-Drone [[106](#bib.bib106)]
+    dataset. Meanwhile, large domain shifts could also occur due to significant differences
+    in video statistics, such as between videos shot under normal illumination and
+    videos shot under low illumination (or more generally, between videos shot under
+    normal environment and adverse environment). To explore how to leverage current
+    datasets to boost performance on videos shot in adverse environments, the HMDB-ARID
+    dataset [[23](#bib.bib23)] is introduced. This dataset comprises videos from the
+    HMDB51 and the ARID [[105](#bib.bib105)], whose videos are shot under adverse
+    illumination conditions and with low contrast. Lately, the ActorShift [[37](#bib.bib37)]
+    dataset is proposed to research the domain shift between human and animal actions,
+    which is the first dataset to consider non-human actions. The source domain of
+    human actions is collected from Kinetics-700 [[116](#bib.bib116)] dataset while
+    the target domain of animal actions is collected directly from YouTube with the
+    relevant action classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Partial-set VUDA (PVDA) Datasets. The datasets above are all constructed for
+    the closed-set VUDA scenario where there exist only two source-target video domain
+    pairs (i.e., Domain A$\to$Domain B and Domain B$\to$Domain A) whose label spaces
+    are shared. However, as mentioned in Section [IV](#S4 "IV Methods for Video Unsupervised
+    Domain Adaptation under Different Constraints, Assumptions, and Tasks ‣ Video
+    Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey"), constraints
+    and assumptions for closed-set VUDA may not hold in real-world scenarios. Therefore,
+    other cross-domain video datasets are introduced to support and facilitate research
+    on VUDA with different constraints and assumptions. For partial-set VUDA (PVDA),
+    a collection of three cross-domain partial-set video datasets is introduced in [[24](#bib.bib24)],
+    namely UCF-HMDB[partial], MiniKinetics-UCF, and HMDB-ARID[partial]. Among which
+    the UCF-HMDB[partial] is constructed inspired by UCF-HMDB[full] [[27](#bib.bib27)],
+    built across the UCF101 and HMDB51 datasets. The MiniKinetics-UCF dataset is of
+    much larger scale (8$\times$ that of UCF-HMDB[partial]) and is designed to validate
+    the effectiveness of PVDA approaches on large-scale datasets. It is built from
+    the Mini-Kinetics [[117](#bib.bib117)] and UCF101 datasets. Meanwhile, the HMDB-ARID[partial]
+    is built inspired by the HMDB-ARID [[23](#bib.bib23)] dataset and aims to boost
+    the performance of video models on low-illumination model leveraging normal videos
+    under the partial-set VUDA with larger domain shift.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-Domain VUDA Datasets. There are also several more recent datasets that
+    are more comprehensive that include multiple domains within the cross-domain dataset
+    such that there are more than 2 possible source/target video domain pairs. For
+    instance, the Epic-Kitchens [[29](#bib.bib29)] cross-domain dataset contains 3
+    domains from videos of three different kitchens in the original Epic-Kitchens
+    action recognition dataset [[118](#bib.bib118)] and therefore includes 6 different
+    combinations of source/target video domain pairs. Note that we follow the literatures
+    in [[29](#bib.bib29), [40](#bib.bib40), [33](#bib.bib33), [35](#bib.bib35)] and
+    still refer the Epic-Kitchens cross-domain dataset as “Epic-Kitchens”. Epic-Kitchens
+    is generally built from a single large-scale action recognition dataset and contains
+    videos collected from a controlled environment. Subsequently, other multi-domain
+    VUDA datasets are introduced that contain videos from a wider range of different
+    scenes collected from various public datasets. Inspired by the success of DomainNet [[119](#bib.bib119)]
+    as a unified and comprehensive benchmark for evaluating image-based domain adaptation
+    under both closed-set and multi-domain scenarios, the Sports-DA and Daily-DA cross-domain
+    action recognition datasets [[75](#bib.bib75), [76](#bib.bib76)] are introduced.
+    The Daily-DA dataset contains 4 different domains constructed from HMDB51 [[115](#bib.bib115)],
+    ARID [[105](#bib.bib105)], Moment in Time [[120](#bib.bib120)], and Kinetics-600 [[86](#bib.bib86)],
+    resulting in 12 different combinations of source/target video domain pairs, which
+    is the largest number of source/target domain pairs to date. The Sports-DA dataset
+    contains 3 different domains with sports videos from UCF101 [[90](#bib.bib90)],
+    Kinetics-600 [[86](#bib.bib86)], and Sports-1M [[91](#bib.bib91)], resulting in
+    6 different combinations of source/target video domain pairs, and contains more
+    action classes than that in both Epic-Kitchens and Daily-DA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'VUDA Dataset for Cross-Domain Video Semantic Segmentation. While all aforementioned
+    datasets are meant for the cross-domain action recognition task, research on VUDA
+    is not limited to such a task as mentioned in Section [IV-D](#S4.SS4 "IV-D Methods
+    with Differed Cross-Domain Tasks ‣ IV Methods for Video Unsupervised Domain Adaptation
+    under Different Constraints, Assumptions, and Tasks ‣ Video Unsupervised Domain
+    Adaptation with Deep Learning: A Comprehensive Survey"). With increasing interest
+    in other cross-domain video tasks, there have been some relevant datasets proposed.
+    This is especially for cross-domain video semantic segmentation, where two cross-domain
+    datasets are proposed: the VIPER$\to$Cityscapes-Seq and the SYNTHIA-Seq$\to$Cityscapes-Seq [[82](#bib.bib82)]
+    datasets, built from current semantic segmentation datasets. The prior is built
+    from Cityscapes-Seq [[121](#bib.bib121)] and VIPER [[122](#bib.bib122)], while
+    the later from SYNTHIA-Seq [[123](#bib.bib123)] and Cityscapes-Seq. Both VIPER
+    and SYNTHIA-Seq are synthetic videos generated from games or the Unity Development
+    platform [[124](#bib.bib124)] while Cityscapes-Seq is built with videos captured
+    in real-world scenes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE V: Average accuracy ($\%$) on VUDA datasets with larger domain shifts.
+    Methods are arranged in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Methods | Backbones | Categories | Kinetics-Gameplay | HMDB-ARID | Kinetics$\to$NEC-Drone
+    | Mixamo$\to$Kinetics | ActorShift |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TA³N [[27](#bib.bib27)] | TRN [[55](#bib.bib55)] | Adversarial | 27.50 |
+    21.10 | 28.10 | 10.00 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NEC-Drone [[106](#bib.bib106)] | I3D [[108](#bib.bib108)] | Composite | -
+    | - | 15.10 | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAVA [[40](#bib.bib40)] | I3D [[108](#bib.bib108)] | Composite | - | - |
+    31.60 | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MM-SADA [[29](#bib.bib29)] | SlowFast [[125](#bib.bib125)] | Adversarial
+    | - | - | - | - | 62.60 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ACAN [[23](#bib.bib23)] | MFNet [[111](#bib.bib111)] | Composite | - | 52.20
+    | - | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CO²A [[36](#bib.bib36)] | I3D [[108](#bib.bib108)] | Semantic | - | - | 33.20
+    | 16.40 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MA²l-TD [[30](#bib.bib30)] | ResNet-101 [[110](#bib.bib110)] | Adversarial
+    | 31.45 | - | - | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| A³R [[37](#bib.bib37)] | SlowFast [[125](#bib.bib125)] | Semantic | - | -
+    | - | - | 67.30 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE VI: Average accuracy ($\%$) on partial-set VUDA (PVDA) datasets. Methods
+    are arranged in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Methods | Backbones | Categories | UCF-HMDB[partial] | MiniKinetics-UCF |
+    HMDB-ARID[partial] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TA³N [[27](#bib.bib27)] | TRN [[55](#bib.bib55)] | Adversarial | 60.59 |
+    61.97 | 21.25 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAVA [[40](#bib.bib40)] | TRN [[55](#bib.bib55)] | Composite | 65.93 | 66.58
+    | 23.72 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PATAN (PVDA) [[24](#bib.bib24)] | TRN [[55](#bib.bib55)] | - | 81.83 | 76.04
+    | 30.54 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MCAN (PVDA) [[73](#bib.bib73)] | TSN [[126](#bib.bib126)] | - | 83.94 | 81.34
+    | 44.37 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE VII: Average accuracy ($\%$) on multi-domain VUDA datasets. Methods are
+    arranged in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Methods | Backbones | Categories | Epic-Kitchens | Daily-DA | Sports-DA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TA³N [[27](#bib.bib27)] | I3D [[108](#bib.bib108)]/TRN [[55](#bib.bib55)]
+    | Adversarial | 43.20 | 28.49 | 70.26 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MM-SADA [[29](#bib.bib29)] | I3D [[108](#bib.bib108)] | Adversarial | 50.30
+    | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STCDA [[33](#bib.bib33)] | I3D [[108](#bib.bib108)] | Semantic | 51.20 |
+    - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CMCo [[34](#bib.bib34)] | I3D [[108](#bib.bib108)] | Semantic | 51.00 | -
+    | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CoMix [[35](#bib.bib35)] | I3D [[108](#bib.bib108)] | Semantic | 43.20 |
+    - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TAMAN (MSVDA) [[75](#bib.bib75)] | TRN [[55](#bib.bib55)] | - | - | 44.85
+    | 77.84 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CIA [[31](#bib.bib31)] | I3D [[108](#bib.bib108)] | Adversarial | 52.20 |
+    - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| A³R [[37](#bib.bib37)] | SlowFast [[125](#bib.bib125)] | Semantic | 61.00
+    | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TranSVAE [[43](#bib.bib43)] | I3D [[108](#bib.bib108)] | Reconstruction |
+    52.60 | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ATCoN (SFVDA) [[76](#bib.bib76)] | TRN [[55](#bib.bib55)] | - | - | 33.53
+    | 73.85 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EXTERN (BVDA) [[77](#bib.bib77)] | TRN [[55](#bib.bib55)] | - | - | 39.64
+    | 83.18 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE VIII: Average IOU on VUDA datasets for cross-domain video semantic segmentation.
+    Methods are arranged in chronological order.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Methods | Backbones | VIPER$\to$Cityscapes-Seq | SYNTHIA-Seq$\to$Cityscapes-Seq
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DA-VSN [[82](#bib.bib82)] | ACCEL [[127](#bib.bib127)] | 47.80 | 49.50 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TPS [[83](#bib.bib83)] | ACCEL [[127](#bib.bib127)] | 48.90 | 53.80 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'VI Discussion: Recent Progress and Future Directions'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we summarize the recent progress in VUDA research with observations.
+    We further analyze and provide our insights on possible future directions of development
+    for VUDA research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-A Recent Progress in VUDA Research
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Compared to earlier works, recent VUDA research has made significant progress
+    from three perspectives: a) tackling VUDA under different scenarios; b) leveraging
+    the multi-modality nature of videos; and c) exploiting shared semantics across
+    domains with semantic-based methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'a) Tackling VUDA Under Different Scenarios. The closed-set scenario has been
+    the focus of VUDA research thanks to its simplicity that results from the assumptions
+    of a single pair of the labeled video source and unlabeled video target domains
+    with the source videos and source models accessible, and the constraints of a
+    shared label space across the source/target domain pair. However, as mentioned
+    in Section [IV](#S4 "IV Methods for Video Unsupervised Domain Adaptation under
+    Different Constraints, Assumptions, and Tasks ‣ Video Unsupervised Domain Adaptation
+    with Deep Learning: A Comprehensive Survey") and in [[24](#bib.bib24), [75](#bib.bib75),
+    [73](#bib.bib73), [76](#bib.bib76)], closed-set VUDA may not be applicable in
+    real-world scenarios. To cope with model portability and other (e.g., data privacy)
+    issues caused by the constraints and assumptions of closed-set VUDA, several other
+    scenarios of VUDA have been recently studied. These include the partial-set PVDA [[24](#bib.bib24),
+    [73](#bib.bib73)], the open-set OSVDA [[74](#bib.bib74)], the multi-domain MSVDA [[75](#bib.bib75)],
+    the SFVDA [[76](#bib.bib76)] and BVDA [[77](#bib.bib77)] with source-free/black-box
+    source model settings, as well as the VDG [[78](#bib.bib78)] with target-free
+    settings. The introduction of relevant datasets further promotes the research
+    on various non-closed-set VUDA scenarios and further improves the capability of
+    VUDA methods in real-world scenarios.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: b) Leveraging the Multi-Modality Nature of Videos. Tackling VUDA is more challenging
+    than tackling image-based UDA largely thanks to the inclusion of the additional
+    temporal features and features of other modalities (e.g., optical flow and audio)
+    in videos. These additional features would all incur extra domain shifts across
+    source and target domains. Earlier methods such as the adversarial-based TA³N [[27](#bib.bib27)],
+    the discrepancy-based AMLS [[26](#bib.bib26)] or the composite VUDA method PASTN [[32](#bib.bib32)]
+    focus primarily on tackling domain shift caused by the additional temporal features.
+    Subsequently, more recent methods such as MM-SADA [[29](#bib.bib29)], CIA [[31](#bib.bib31)]
+    and A³R [[37](#bib.bib37)] have realized the importance of tackling domain shift
+    caused by the features of different modalities, with tackling domain shifts from
+    optical flow and audio features being the focus. Later methods have achieved notable
+    improvements over the same benchmark against prior methods without multi-modal
+    feature alignment, which proves the efficacy of aligning multi-modal features
+    toward achieving effective VUDA. However, it should be noted that audio features
+    may not be readily available in benchmark datasets or in real-world scenarios
+    (e.g., surveillance footage or autonomous driving footage where the audio captured
+    is mostly ambient noise). Therefore there are certain limitations in applying
+    VUDA methods that exploit audio features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: c) Exploiting Shared Semantics with Semantic-based VUDA Methods. Compared to
+    adversarial-based and discrepancy-based VUDA methods, semantic-based VUDA methods
+    have not been considered until more recently. This owes to the fact that aligning
+    video domains by exploiting shared semantics is not as intuitive as aligning video
+    domains by minimizing video domain discrepancies whether explicitly or implicitly.
+    However, the performances of different semantic-based VUDA methods (e.g., CMCo [[34](#bib.bib34)]
+    and CoMix [[35](#bib.bib35)]) proves that exploiting shared semantics with spatio-temporal
+    association, feature clustering and modality correspondence is beneficial towards
+    obtaining domain-invariant video features. Comparatively, semantic-based methods
+    are more stable in terms of optimization compared to adversarial-based methods,
+    while obtaining superior performance than discrepancy-based methods. Furthermore,
+    semantic-based VUDA methods can be combined with both adversarial and discrepancy-based
+    VUDA methods to form composite methods such as SAVA [[40](#bib.bib40)] and PASTN [[32](#bib.bib32)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-B Challenges of Current VUDA Research and its Future Directions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Despite the notable progress made in VUDA research, there are still various
+    challenges hampering the effectiveness of existing VUDA research. The challenges
+    could generally be categorized into three categories: b) challenges in the multi-modal
+    information leveraged; a) challenges in explored VUDA scenarios; and c) challenges
+    in more effective VUDA methods with self-supervision. Dealing with these challenges
+    would greatly benefit future VUDA methods and are considered as potential future
+    directions for VUDA research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'a) Challenges in Explored VUDA Scenarios. There have been various non-closed-set
+    VUDA scenarios researched as mentioned in Section [IV](#S4 "IV Methods for Video
+    Unsupervised Domain Adaptation under Different Constraints, Assumptions, and Tasks
+    ‣ Video Unsupervised Domain Adaptation with Deep Learning: A Comprehensive Survey").
+    However, compared to domain adaptation in NLP and image tasks which has been researched
+    more comprehensively [[128](#bib.bib128), [129](#bib.bib129), [130](#bib.bib130)],
+    we observe that there are still a number of scenarios that have not been touched
+    upon for VUDA. For instance, while a method has been proposed for multi-source
+    VUDA (MSVDA) where the constraint of $M_{S}=1$ video source domain is relaxed,
+    the multi-target VUDA (MTVDA) where the constraint of $M_{T}=1$ video target domain
+    is relaxed has not been touched upon in research. Combining active learning [[131](#bib.bib131)]
+    and VUDA that formulates active VUDA which aims to adapt the source video model
+    to the target video domain by acquiring labels for a selected maximally-informative
+    subset of target videos via an oracle is another scenario that has not been researched
+    in VUDA. To further protect source data privacy, black-box VUDA is another feasible
+    VUDA scenario where besides source video data, the source video model is also
+    made inaccessible to the target video domain, which prevents source videos to
+    be recovered by generative models [[44](#bib.bib44)]. Meanwhile, the data privacy
+    concern is also applicable to the current MSVDA scenario where video data are
+    accessible between different source domains. Combining federated learning [[132](#bib.bib132)]
+    with VUDA is a possible solution such that video data are not shareable between
+    different video domains. The aforementioned VUDA scenarios are more realistic
+    and future research on these scenarios could further boost the capability of VUDA
+    methods in applying to real-world applications.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: b) Challenges in Multi-Modal Information Leveraged. The multi-modal information
+    leveraged for existing VUDA methods is largely limited to RGB, optical flow, and
+    audio information. However, videos also contain more modalities of information,
+    which have already been exploited for supervised video tasks but not exploited
+    for VUDA. A typical example involves the human skeleton data [[133](#bib.bib133),
+    [134](#bib.bib134), [135](#bib.bib135), [136](#bib.bib136)] which is a compact
+    and effective action descriptor that focuses on the temporal change of the pose
+    of the actor and is known for its immune to contextual variation, such as background
+    and illumination variation. Meanwhile, the input of existing VUDA methods rely
+    only on RGB cameras, while videos could also be obtained by other sensors including
+    depth cameras [[137](#bib.bib137), [138](#bib.bib138)], infrared cameras [[139](#bib.bib139),
+    [140](#bib.bib140)], or even lidars [[141](#bib.bib141), [142](#bib.bib142), [143](#bib.bib143)].
+    Future VUDA methods should also take videos taken from these sensors into consideration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides the challenges faced in leveraging the different categories of modalities,
+    the performance of current VUDA methods may also be hampered by the effectiveness
+    of features extracted from the currently leveraged modalities. Existing works
+    still tend to leverage ResNet-based [[110](#bib.bib110)] CNN networks to obtain
+    features from RGB, optical flow, and audio. More recent research [[144](#bib.bib144),
+    [145](#bib.bib145), [146](#bib.bib146), [147](#bib.bib147), [148](#bib.bib148),
+    [149](#bib.bib149)] have shown the efficacy of both Transformers [[94](#bib.bib94)]
+    and Graph Neural Networks (GNN) [[150](#bib.bib150), [151](#bib.bib151)] in obtaining
+    effective features for downstream video tasks. It is intuitive that aligning video
+    features effectively should be built on the assumption that the video features
+    to align with are effective themselves. Therefore, it is expected that future
+    VUDA methods would further improve VUDA performance by utilizing Transformers
+    and GNN for feature extraction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: c) Challenges in VUDA Methods with Self-Supervision. In recent years, there
+    has been a significant increase in VUDA methods that leverage semantic-based or
+    reconstruction-based approaches in full or in part, thanks to their high performance
+    and extensibility towards combining with other approaches and towards different,
+    more practical VUDA scenarios. Since target labels are unavailable for adaptation,
+    both semantic-based and reconstruction-based approaches rely on self-supervision
+    for obtaining shared cross-domain semantics or achieving data reconstruction.
+    Among the various self-supervision techniques, contrastive learning has been widely
+    utilized given the ease of formulation and their high performance. More recently,
+    contrastive learning in visual tasks has been achieved not only by applying across
+    visual features but also across visual features and their corresponding text labels
+    or text descriptions [[152](#bib.bib152)]. The strategy of learning visual concepts
+    from natural language supervision in a contrastive manner results in more a generalizable
+    network that could easily adapt to new visual tasks with only natural language
+    cues from the pre-trained task. This is in line with the goal of VUDA which attempts
+    to adapt networks to new video domains given information from the source domain,
+    which includes text-based information such as video labels. Therefore, the exploration
+    of self-supervised VUDA methods leveraging on natural language cues within the
+    labeled source domain (e.g., source video labels) could be an interesting yet
+    effective way towards further improvement of VUDA performances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Video unsupervised domain adaptation (VUDA) plays a crucial role in improving
+    video model portability and generalizability while avoiding costly data annotation
+    by tackling the performance degradation problem under domain shift. This paper
+    reviews the recent progress of VUDA with deep learning. We first investigate and
+    summarize the methods for both closed-set VUDA, and non-closed-set VUDA scenarios
+    with different constraints and assumptions of source and target domain. We observe
+    that non-closed-set VUDA methods are more feasible in real-world applications.
+    We further review available benchmark datasets for the various VUDA scenarios.
+    We summarize the recent progress in VUDA research while providing insights into
+    future VUDA research from the perspectives of leveraging multi-modal information,
+    investigating reconstruction-based methods, and exploring other VUDA scenarios.
+    We hope that these insights could help facilitate and promote future VUDA research,
+    which enables robust and portable video models to be applied effectively and efficiently
+    for real-world applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Y. Zhang, T. Liu, M. Long, and M. Jordan, “Bridging theory and algorithm
+    for domain adaptation,” in *International Conference on Machine Learning*.   PMLR,
+    2019, pp. 7404–7413.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] B. Sun, J. Feng, and K. Saenko, “Return of frustratingly easy domain adaptation,”
+    in *Proceedings of the AAAI Conference on Artificial Intelligence*, vol. 30, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] M. Long, Y. Cao, J. Wang, and M. Jordan, “Learning transferable features
+    with deep adaptation networks,” in *International conference on machine learning*.   PMLR,
+    2015, pp. 97–105.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] K. Torkkola, “Feature extraction by non-parametric mutual information maximization,”
+    *Journal of machine learning research*, vol. 3, no. Mar, pp. 1415–1438, 2003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] R. Xu and D. Wunsch, “Survey of clustering algorithms,” *IEEE Transactions
+    on neural networks*, vol. 16, no. 3, pp. 645–678, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] P. Khosla, P. Teterwak, C. Wang, A. Sarna, Y. Tian, P. Isola, A. Maschinot,
+    C. Liu, and D. Krishnan, “Supervised contrastive learning,” *Advances in Neural
+    Information Processing Systems*, vol. 33, pp. 18 661–18 673, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] T. Chen, S. Kornblith, M. Norouzi, and G. Hinton, “A simple framework for
+    contrastive learning of visual representations,” in *International conference
+    on machine learning*.   PMLR, 2020, pp. 1597–1607.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] D.-H. Lee *et al.*, “Pseudo-label: The simple and efficient semi-supervised
+    learning method for deep neural networks,” in *Workshop on challenges in representation
+    learning, ICML*, vol. 3, no. 2, 2013, p. 896.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] E. Arazo, D. Ortego, P. Albert, N. E. O’Connor, and K. McGuinness, “Pseudo-labeling
+    and confirmation bias in deep semi-supervised learning,” in *2020 International
+    Joint Conference on Neural Networks (IJCNN)*.   IEEE, 2020, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] O. Beijbom, “Domain adaptations for computer vision applications,” *arXiv
+    preprint arXiv:1211.4860*, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] V. M. Patel, R. Gopalan, R. Li, and R. Chellappa, “Visual domain adaptation:
+    A survey of recent advances,” *IEEE signal processing magazine*, vol. 32, no. 3,
+    pp. 53–69, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] G. Csurka, “Domain adaptation for visual applications: A comprehensive
+    survey,” *arXiv preprint arXiv:1702.05374*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] M. Wang and W. Deng, “Deep visual domain adaptation: A survey,” *Neurocomputing*,
+    vol. 312, pp. 135–153, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] W. M. Kouw and M. Loog, “A review of domain adaptation without target
+    labels,” *IEEE transactions on pattern analysis and machine intelligence*, vol. 43,
+    no. 3, pp. 766–785, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] G. Wilson and D. J. Cook, “A survey of unsupervised deep domain adaptation,”
+    *ACM Transactions on Intelligent Systems and Technology (TIST)*, vol. 11, no. 5,
+    pp. 1–46, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] L. Bungum and B. Gambäck, “A survey of domain adaptation in machine translation:
+    Towards a refinement of domain space,” in *Proceedings of the India-Norway Workshop
+    on Web Concepts and Technologies*, vol. 112, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] C. Chu and R. Wang, “A survey of domain adaptation for machine translation,”
+    *Journal of information processing*, vol. 28, pp. 413–426, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] A. Ramponi and B. Plank, “Neural unsupervised domain adaptation in nlp—a
+    survey,” *arXiv preprint arXiv:2006.00632*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] S. J. Pan and Q. Yang, “A survey on transfer learning,” *IEEE Transactions
+    on knowledge and data engineering*, vol. 22, no. 10, pp. 1345–1359, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] K. Weiss, T. M. Khoshgoftaar, and D. Wang, “A survey of transfer learning,”
+    *Journal of Big data*, vol. 3, no. 1, pp. 1–40, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] C. Tan, F. Sun, T. Kong, W. Zhang, C. Yang, and C. Liu, “A survey on deep
+    transfer learning,” in *International conference on artificial neural networks*.   Springer,
+    2018, pp. 270–279.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] F. Zhuang, Z. Qi, K. Duan, D. Xi, Y. Zhu, H. Zhu, H. Xiong, and Q. He,
+    “A comprehensive survey on transfer learning,” *Proceedings of the IEEE*, vol.
+    109, no. 1, pp. 43–76, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Y. Xu, J. Yang, H. Cao, K. Mao, J. Yin, and S. See, “Aligning correlation
+    information for domain adaptation in action recognition,” 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Y. Xu, J. Yang, H. Cao, Z. Chen, Q. Li, and K. Mao, “Partial video domain
+    adaptation with partial adversarial temporal attentive network,” in *Proceedings
+    of the IEEE/CVF International Conference on Computer Vision*, 2021, pp. 9332–9341.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] S. Ben-David, J. Blitzer, K. Crammer, A. Kulesza, F. Pereira, and J. W.
+    Vaughan, “A theory of learning from different domains,” *Machine learning*, vol. 79,
+    no. 1, pp. 151–175, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] A. Jamal, V. P. Namboodiri, D. Deodhare, and K. Venkatesh, “Deep domain
+    adaptation in action space.” in *BMVC*, vol. 2, no. 3, 2018, p. 5.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] M.-H. Chen, Z. Kira, G. AlRegib, J. Yoo, R. Chen, and J. Zheng, “Temporal
+    attentive alignment for large-scale video domain adaptation,” in *Proceedings
+    of the IEEE International Conference on Computer Vision*, 2019, pp. 6321–6330.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] B. Pan, Z. Cao, E. Adeli, and J. C. Niebles, “Adversarial cross-domain
+    action recognition with co-attention.” in *AAAI*, 2020, pp. 11 815–11 822.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] J. Munro and D. Damen, “Multi-modal domain adaptation for fine-grained
+    action recognition,” in *Proceedings of the IEEE/CVF conference on computer vision
+    and pattern recognition*, 2020, pp. 122–132.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] P. Chen, Y. Gao, and A. J. Ma, “Multi-level attentive adversarial learning
+    with temporal dilation for unsupervised video domain adaptation,” in *Proceedings
+    of the IEEE/CVF Winter Conference on Applications of Computer Vision*, 2022, pp.
+    1259–1268.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] L. Yang, Y. Huang, Y. Sugano, and Y. Sato, “Interact before align: Leveraging
+    cross-modal knowledge for domain adaptive action recognition,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022,
+    pp. 14 722–14 732.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Z. Gao, L. Guo, T. Ren, A.-A. Liu, Z.-Y. Cheng, and S. Chen, “Pairwise
+    two-stream convnets for cross-domain action recognition with small data,” *IEEE
+    Transactions on Neural Networks and Learning Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] X. Song, S. Zhao, J. Yang, H. Yue, P. Xu, R. Hu, and H. Chai, “Spatio-temporal
+    contrastive domain adaptation for action recognition,” in *Proceedings of the
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2021, pp. 9787–9795.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] D. Kim, Y.-H. Tsai, B. Zhuang, X. Yu, S. Sclaroff, K. Saenko, and M. Chandraker,
+    “Learning cross-modal contrastive features for video domain adaptation,” in *Proceedings
+    of the IEEE/CVF International Conference on Computer Vision*, 2021, pp. 13 618–13 627.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] A. Sahoo, R. Shah, R. Panda, K. Saenko, and A. Das, “Contrast and mix:
+    Temporal contrastive video domain adaptation with background mixing,” *Advances
+    in Neural Information Processing Systems*, vol. 34, pp. 23 386–23 400, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] V. G. T. da Costa, G. Zara, P. Rota, T. Oliveira-Santos, N. Sebe, V. Murino,
+    and E. Ricci, “Dual-head contrastive domain adaptation for video action recognition,”
+    in *Proceedings of the IEEE/CVF Winter Conference on Applications of Computer
+    Vision*, 2022, pp. 1181–1190.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Y. Zhang, H. Doughty, L. Shao, and C. G. Snoek, “Audio-adaptive activity
+    recognition across video domains,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2022, pp. 13 791–13 800.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] H. Wu, C. Song, S. Yue, Z. Wang, J. Xiao, and Y. Liu, “Dynamic video mix-up
+    for cross-domain action recognition,” *Neurocomputing*, vol. 471, pp. 358–368,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] J. Choi, G. Sharma, M. Chandraker, and J.-B. Huang, “Unsupervised and
+    semi-supervised domain adaptation for action recognition from drones,” in *Proceedings
+    of the IEEE/CVF Winter Conference on Applications of Computer Vision*, 2020, pp.
+    1717–1726.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] J. Choi, G. Sharma, S. Schulter, and J.-B. Huang, “Shuffle and attend:
+    Video domain adaptation,” in *Proceedings of the European Conference on Computer
+    Vision (ECCV)*.   Springer, 2020, pp. 678–695.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] Z. Gao, L. Guo, W. Guan, A.-A. Liu, T. Ren, and S. Chen, “A pairwise attentive
+    adversarial spatiotemporal network for cross-domain few-shot action recognition-r2,”
+    *IEEE Transactions on Image Processing*, vol. 30, pp. 767–782, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Z. Gao, Y. Zhao, H. Zhang, D. Chen, A.-A. Liu, and S. Chen, “A novel multiple-view
+    adversarial learning network for unsupervised domain adaptation action recognition,”
+    *IEEE Transactions on Cybernetics*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] P. Wei, L. Kong, X. Qu, X. Yin, Z. Xu, J. Jiang, and Z. Ma, “Unsupervised
+    video domain adaptation: A disentanglement perspective,” *arXiv preprint arXiv:2208.07365*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair,
+    A. Courville, and Y. Bengio, “Generative adversarial nets,” *Advances in neural
+    information processing systems*, vol. 27, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Y. Ganin and V. Lempitsky, “Unsupervised domain adaptation by backpropagation,”
+    in *International conference on machine learning*.   PMLR, 2015, pp. 1180–1189.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] Q. Kang, S. Yao, M. Zhou, K. Zhang, and A. Abusorrah, “Effective visual
+    domain adaptation via generative adversarial distribution matching,” *IEEE Transactions
+    on Neural Networks and Learning Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] J. Yang, H. Zou, Y. Zhou, Z. Zeng, and L. Xie, “Mind the discriminability:
+    Asymmetric adversarial domain adaptation,” in *European Conference on Computer
+    Vision*.   Springer, 2020, pp. 589–606.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] J. Yang, H. Zou, Y. Zhou, and L. Xie, “Robust adversarial discriminative
+    domain adaptation for real-world cross-domain visual recognition,” *Neurocomputing*,
+    vol. 433, pp. 28–36, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Y. Chen, W. Li, C. Sakaridis, D. Dai, and L. Van Gool, “Domain adaptive
+    faster r-cnn for object detection in the wild,” in *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, 2018, pp. 3339–3348.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] Q. Cai, Y. Pan, C.-W. Ngo, X. Tian, L. Duan, and T. Yao, “Exploring object
+    relation in mean teacher for cross-domain detection,” in *Proceedings of the IEEE
+    Conference on Computer Vision and Pattern Recognition*, 2019, pp. 11 457–11 466.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] F. Yang, K. Yan, S. Lu, H. Jia, D. Xie, Z. Yu, X. Guo, F. Huang, and W. Gao,
+    “Part-aware progressive unsupervised domain adaptation for person re-identification,”
+    *IEEE Transactions on Multimedia*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Y. Ganin, E. Ustinova, H. Ajakan, P. Germain, H. Larochelle, F. Laviolette,
+    M. Marchand, and V. Lempitsky, “Domain-adversarial training of neural networks,”
+    *The journal of machine learning research*, vol. 17, no. 1, pp. 2096–2030, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] J. Gu, Z. Wang, J. Kuen, L. Ma, A. Shahroudy, B. Shuai, T. Liu, X. Wang,
+    G. Wang, J. Cai *et al.*, “Recent advances in convolutional neural networks,”
+    *Pattern recognition*, vol. 77, pp. 354–377, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] S. Ji, W. Xu, M. Yang, and K. Yu, “3d convolutional neural networks for
+    human action recognition,” *IEEE transactions on pattern analysis and machine
+    intelligence*, vol. 35, no. 1, pp. 221–231, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] B. Zhou, A. Andonian, A. Oliva, and A. Torralba, “Temporal relational
+    reasoning in videos,” in *Proceedings of the European Conference on Computer Vision
+    (ECCV)*, 2018, pp. 803–818.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] D. Saxena and J. Cao, “Generative adversarial networks (gans) challenges,
+    solutions, and future directions,” *ACM Computing Surveys (CSUR)*, vol. 54, no. 3,
+    pp. 1–42, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] L. Gonog and Y. Zhou, “A review: generative adversarial networks,” in
+    *2019 14th IEEE conference on industrial electronics and applications (ICIEA)*.   IEEE,
+    2019, pp. 505–510.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] K. Wang, C. Gou, Y. Duan, Y. Lin, X. Zheng, and F.-Y. Wang, “Generative
+    adversarial networks: introduction and outlook,” *IEEE/CAA Journal of Automatica
+    Sinica*, vol. 4, no. 4, pp. 588–598, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] P. Turaga, A. Veeraraghavan, and R. Chellappa, “Statistical analysis on
+    stiefel and grassmann manifolds with applications in computer vision,” in *2008
+    IEEE conference on computer vision and pattern recognition*.   IEEE, 2008, pp.
+    1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] T. Huckle and A. Kallischko, “Frobenius norm minimization and probing
+    for preconditioning,” *International Journal of Computer Mathematics*, vol. 84,
+    no. 8, pp. 1225–1248, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] J. Yang, J. Yang, S. Wang, S. Cao, H. Zou, and L. Xie, “Advancing imbalanced
+    domain adaptation: Cluster-level discrepancy minimization with a comprehensive
+    benchmark,” *IEEE Transactions on Cybernetics*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] A. Berlinet and C. Thomas-Agnan, *Reproducing kernel Hilbert spaces in
+    probability and statistics*.   Springer Science & Business Media, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] H. Zhang, M. Cisse, Y. N. Dauphin, and D. Lopez-Paz, “mixup: Beyond empirical
+    risk minimization,” *International Conference on Learning Representations*, 2018\.
+    [Online]. Available: [https://openreview.net/forum?id=r1Ddp1-Rb](https://openreview.net/forum?id=r1Ddp1-Rb)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] M. Xu, J. Zhang, B. Ni, T. Li, C. Wang, Q. Tian, and W. Zhang, “Adversarial
+    domain adaptation with domain mixup,” in *Proceedings of the AAAI Conference on
+    Artificial Intelligence*, vol. 34, no. 04, 2020, pp. 6502–6509.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] S. Yan, H. Song, N. Li, L. Zou, and L. Ren, “Improve unsupervised domain
+    adaptation with mixup training,” *arXiv preprint arXiv:2001.00677*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] Y. Wu, D. Inkpen, and A. El-Roby, “Dual mixup regularized learning for
+    adversarial domain adaptation,” in *European Conference on Computer Vision*.   Springer,
+    2020, pp. 540–555.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] C.-Y. Wu, R. Manmatha, A. J. Smola, and P. Krahenbuhl, “Sampling matters
+    in deep embedding learning,” in *Proceedings of the IEEE international conference
+    on computer vision*, 2017, pp. 2840–2848.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] X. Wang, R. Girshick, A. Gupta, and K. He, “Non-local neural networks,”
+    in *Proceedings of the IEEE conference on computer vision and pattern recognition*,
+    2018, pp. 7794–7803.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] M. Ghifary, W. B. Kleijn, M. Zhang, D. Balduzzi, and W. Li, “Deep reconstruction-classification
+    networks for unsupervised domain adaptation,” in *European conference on computer
+    vision*.   Springer, 2016, pp. 597–613.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] J. Yang, W. An, S. Wang, X. Zhu, C. Yan, and J. Huang, “Label-driven reconstruction
+    for domain adaptation in semantic segmentation,” in *European Conference on Computer
+    Vision*.   Springer, 2020, pp. 480–498.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] W. Deng, Z. Su, Q. Qiu, L. Zhao, G. Kuang, M. Pietikäinen, H. Xiao, and
+    L. Liu, “Deep ladder reconstruction-classification network for unsupervised domain
+    adaptation,” *Pattern Recognition Letters*, vol. 152, pp. 398–405, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] D. P. Kingma, M. Welling *et al.*, “An introduction to variational autoencoders,”
+    *Foundations and Trends® in Machine Learning*, vol. 12, no. 4, pp. 307–392, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] X. Wang, Y. Xu, K. Mao, and J. Yang, “Calibrating class weights with multi-modal
+    information for partial video domain adaptation,” *arXiv preprint arXiv:2204.06187*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] Y. Wang, X. Song, Y. Wang, P. Xu, R. Hu, and H. Chai, “Dual metric discriminator
+    for open set video domain adaptation,” in *ICASSP 2021-2021 IEEE International
+    Conference on Acoustics, Speech and Signal Processing (ICASSP)*.   IEEE, 2021,
+    pp. 8198–8202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] Y. Xu, J. Yang, H. Cao, K. Wu, M. Wu, R. Zhao, and Z. Chen, “Multi-source
+    video domain adaptation with temporal attentive moment alignment,” *arXiv preprint
+    arXiv:2109.09964*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] Y. Xu, J. Yang, H. Cao, K. Wu, W. Min, and Z. Chen, “Learning temporal
+    consistency for source-free video domain adaptation,” *arXiv preprint arXiv:2203.04559*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Y. Xu, J. Yang, M. Wu, X. Li, L. Xie, and Z. Chen, “Extern: Leveraging
+    endo-temporal regularization for black-box video domain adaptation,” *arXiv preprint
+    arXiv:2208.05187*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] Z. Yao, Y. Wang, J. Wang, P. Yu, and M. Long, “Videodg: generalizing temporal
+    relations in videos to novel domains,” *IEEE Transactions on Pattern Analysis
+    and Machine Intelligence*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] M. Planamente, C. Plizzari, E. Alberti, and B. Caputo, “Domain generalization
+    through audio-visual relative norm alignment in first person action recognition,”
+    in *Proceedings of the IEEE/CVF Winter Conference on Applications of Computer
+    Vision*, 2022, pp. 1807–1818.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] M.-H. Chen, B. Li, Y. Bao, and G. AlRegib, “Action segmentation with mixed
+    temporal domain adaptation,” in *Proceedings of the IEEE/CVF Winter Conference
+    on Applications of Computer Vision*, 2020, pp. 605–614.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] M.-H. Chen, B. Li, Y. Bao, G. AlRegib, and Z. Kira, “Action segmentation
+    with joint self-supervised temporal domain adaptation,” in *Proceedings of the
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2020, pp. 9454–9463.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] D. Guan, J. Huang, A. Xiao, and S. Lu, “Domain adaptive video segmentation
+    via temporal consistency regularization,” in *Proceedings of the IEEE/CVF International
+    Conference on Computer Vision*, 2021, pp. 8053–8064.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] Y. Xing, D. Guan, J. Huang, and S. Lu, “Domain adaptive video segmentation
+    via temporal pseudo supervision,” *arXiv preprint arXiv:2207.02372*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] P. Chen, L. Li, J. Wu, W. Dong, and G. Shi, “Unsupervised curriculum domain
+    adaptation for no-reference video quality assessment,” in *Proceedings of the
+    IEEE/CVF International Conference on Computer Vision*, 2021, pp. 5178–5187.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] D. Li, X. Yu, C. Xu, L. Petersson, and H. Li, “Transferring cross-domain
+    knowledge for video sign language recognition,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2020, pp. 6205–6214.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] W. Kay, J. Carreira, K. Simonyan, B. Zhang, C. Hillier, S. Vijayanarasimhan,
+    F. Viola, T. Green, T. Back, P. Natsev, M. Suleyman, and A. Zisserman, “The kinetics
+    human action video dataset,” 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] R. Goyal, S. Ebrahimi Kahou, V. Michalski, J. Materzynska, S. Westphal,
+    H. Kim, V. Haenel, I. Fruend, P. Yianilos, M. Mueller-Freitag *et al.*, “The”
+    something something” video database for learning and evaluating visual common
+    sense,” in *Proceedings of the IEEE international conference on computer vision*,
+    2017, pp. 5842–5850.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] Z. Cao, L. Ma, M. Long, and J. Wang, “Partial adversarial domain adaptation,”
+    in *Proceedings of the European Conference on Computer Vision (ECCV)*, 2018, pp.
+    135–150.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] S. Garg, Y. Wu, S. Balakrishnan, and Z. Lipton, “A unified view of label
+    shift estimation,” *Advances in Neural Information Processing Systems*, vol. 33,
+    pp. 3290–3300, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] K. Soomro, A. R. Zamir, and M. Shah, “Ucf101: A dataset of 101 human actions
+    classes from videos in the wild,” *arXiv preprint arXiv:1212.0402*, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] A. Karpathy, G. Toderici, S. Shetty, T. Leung, R. Sukthankar, and L. Fei-Fei,
+    “Large-scale video classification with convolutional neural networks,” in *Proceedings
+    of the IEEE conference on Computer Vision and Pattern Recognition*, 2014, pp.
+    1725–1732.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] J. Yang, X. Peng, K. Wang, Z. Zhu, J. Feng, L. Xie, and Y. You, “Divide
+    to adapt: Mitigating confirmation bias for domain adaptation of black-box predictors,”
+    *arXiv preprint arXiv:2205.14467*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] P. Rigollet, “Generalization error bounds in semi-supervised classification
+    under the cluster assumption.” *Journal of Machine Learning Research*, vol. 8,
+    no. 7, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+    Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” *Advances in neural
+    information processing systems*, vol. 30, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] R. Volpi, H. Namkoong, O. Sener, J. C. Duchi, V. Murino, and S. Savarese,
+    “Generalizing to unseen domains via adversarial data augmentation,” *Advances
+    in neural information processing systems*, vol. 31, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] W. Wang, D. Tran, and M. Feiszli, “What makes training multi-modal classification
+    networks hard?” in *Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2020, pp. 12 695–12 705.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] S. Herath, M. Harandi, and F. Porikli, “Going deeper into action recognition:
+    A survey,” *Image and vision computing*, vol. 60, pp. 4–21, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] R. Poppe, “A survey on vision-based human action recognition,” *Image
+    and vision computing*, vol. 28, no. 6, pp. 976–990, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] X. Huang, P. Wang, X. Cheng, D. Zhou, Q. Geng, and R. Yang, “The apolloscape
+    open dataset for autonomous driving and its application,” *IEEE transactions on
+    pattern analysis and machine intelligence*, vol. 42, no. 10, pp. 2702–2719, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] M. Siam, A. Kendall, and M. Jagersand, “Video class agnostic segmentation
+    benchmark for autonomous driving,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2021, pp. 2825–2834.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Q. Xie, Z. Dai, E. Hovy, T. Luong, and Q. Le, “Unsupervised data augmentation
+    for consistency training,” *Advances in Neural Information Processing Systems*,
+    vol. 33, pp. 6256–6268, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] Y. Ouali, C. Hudelot, and M. Tami, “Semi-supervised semantic segmentation
+    with cross-consistency training,” in *Proceedings of the IEEE/CVF Conference on
+    Computer Vision and Pattern Recognition*, 2020, pp. 12 674–12 684.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] L. Melas-Kyriazi and A. K. Manrai, “Pixmatch: Unsupervised domain adaptation
+    via pixelwise consistency training,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2021, pp. 12 435–12 445.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] W. Sultani and I. Saleemi, “Human action recognition across datasets
+    by foreground-weighted histogram decomposition,” in *Proceedings of the IEEE Conference
+    on Computer Vision and Pattern Recognition*, 2014, pp. 764–771.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] Y. Xu, J. Yang, H. Cao, K. Mao, J. Yin, and S. See, “Arid: A new dataset
+    for recognizing action in the dark,” in *International Workshop on Deep Learning
+    for Human Activity Recognition*.   Springer, 2021, pp. 70–84.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] J. Choi, G. Sharma, M. Chandraker, and J.-B. Huang, “Unsupervised and
+    semi-supervised domain adaptation for action recognition from drones,” in *The
+    IEEE Winter Conference on Applications of Computer Vision (WACV)*, March 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] D. Tran, L. Bourdev, R. Fergus, L. Torresani, and M. Paluri, “Learning
+    spatiotemporal features with 3d convolutional networks,” in *Proceedings of the
+    IEEE international conference on computer vision*, 2015, pp. 4489–4497.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] J. Carreira and A. Zisserman, “Quo vadis, action recognition? a new model
+    and the kinetics dataset,” in *proceedings of the IEEE Conference on Computer
+    Vision and Pattern Recognition*, 2017, pp. 6299–6308.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] S. Ioffe and C. Szegedy, “Batch normalization: Accelerating deep network
+    training by reducing internal covariate shift,” in *International conference on
+    machine learning*.   PMLR, 2015, pp. 448–456.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+    recognition,” in *Proceedings of the IEEE conference on computer vision and pattern
+    recognition*, 2016, pp. 770–778.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] Y. Chen, Y. Kalantidis, J. Li, S. Yan, and J. Feng, “Multi-fiber networks
+    for video recognition,” in *Proceedings of the european conference on computer
+    vision (ECCV)*, 2018, pp. 352–367.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] J. Lin, C. Gan, K. Wang, and S. Han, “Tsm: Temporal shift module for
+    efficient and scalable video understanding on edge devices,” *IEEE transactions
+    on pattern analysis and machine intelligence*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] K. K. Reddy and M. Shah, “Recognizing 50 human action categories of web
+    videos,” *Machine vision and applications*, vol. 24, no. 5, pp. 971–981, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] J. C. Niebles, C.-W. Chen, and L. Fei-Fei, “Modeling temporal structure
+    of decomposable motion segments for activity classification,” in *European conference
+    on computer vision*.   Springer, 2010, pp. 392–405.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] H. Kuehne, H. Jhuang, E. Garrote, T. Poggio, and T. Serre, “Hmdb: a large
+    video database for human motion recognition,” in *2011 International Conference
+    on Computer Vision*.   IEEE, 2011, pp. 2556–2563.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] L. Smaira, J. Carreira, E. Noland, E. Clancy, A. Wu, and A. Zisserman,
+    “A short note on the kinetics-700-2020 human action dataset,” *arXiv preprint
+    arXiv:2010.10864*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] S. Xie, C. Sun, J. Huang, Z. Tu, and K. Murphy, “Rethinking spatiotemporal
+    feature learning for video understanding,” *arXiv preprint arXiv:1712.04851*,
+    vol. 1, no. 2, p. 5, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] D. Damen, H. Doughty, G. M. Farinella, S. Fidler, A. Furnari, E. Kazakos,
+    D. Moltisanti, J. Munro, T. Perrett, W. Price *et al.*, “Scaling egocentric vision:
+    The epic-kitchens dataset,” in *Proceedings of the European Conference on Computer
+    Vision (ECCV)*, 2018, pp. 720–736.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] X. Peng, Q. Bai, X. Xia, Z. Huang, K. Saenko, and B. Wang, “Moment matching
+    for multi-source domain adaptation,” in *Proceedings of the IEEE/CVF International
+    Conference on Computer Vision*, 2019, pp. 1406–1415.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] M. Monfort, A. Andonian, B. Zhou, K. Ramakrishnan, S. A. Bargal, T. Yan,
+    L. Brown, Q. Fan, D. Gutfreund, C. Vondrick *et al.*, “Moments in time dataset:
+    one million videos for event understanding,” *IEEE transactions on pattern analysis
+    and machine intelligence*, vol. 42, no. 2, pp. 502–508, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] M. Cordts, M. Omran, S. Ramos, T. Rehfeld, M. Enzweiler, R. Benenson,
+    U. Franke, S. Roth, and B. Schiele, “The cityscapes dataset for semantic urban
+    scene understanding,” in *Proceedings of the IEEE conference on computer vision
+    and pattern recognition*, 2016, pp. 3213–3223.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] S. R. Richter, Z. Hayder, and V. Koltun, “Playing for benchmarks,” in
+    *Proceedings of the IEEE International Conference on Computer Vision*, 2017, pp.
+    2213–2222.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] G. Ros, L. Sellart, J. Materzynska, D. Vazquez, and A. M. Lopez, “The
+    synthia dataset: A large collection of synthetic images for semantic segmentation
+    of urban scenes,” in *Proceedings of the IEEE conference on computer vision and
+    pattern recognition*, 2016, pp. 3234–3243.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] J. K. Haas, “A history of the unity game engine,” *Diss. WORCESTER POLYTECHNIC
+    INSTITUTE*, vol. 483, p. 484, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] C. Feichtenhofer, H. Fan, J. Malik, and K. He, “Slowfast networks for
+    video recognition,” in *Proceedings of the IEEE/CVF international conference on
+    computer vision*, 2019, pp. 6202–6211.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] L. Wang, Y. Xiong, Z. Wang, Y. Qiao, D. Lin, X. Tang, and L. V. Gool,
+    “Temporal segment networks: Towards good practices for deep action recognition,”
+    in *European conference on computer vision*.   Springer, 2016, pp. 20–36.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] S. Jain, X. Wang, and J. E. Gonzalez, “Accel: A corrective fusion network
+    for efficient semantic segmentation on video,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2019, pp. 8866–8875.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] J.-C. Su, Y.-H. Tsai, K. Sohn, B. Liu, S. Maji, and M. Chandraker, “Active
+    adversarial domain adaptation,” in *Proceedings of the IEEE/CVF Winter Conference
+    on Applications of Computer Vision*, 2020, pp. 739–748.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] V. Prabhu, A. Chandrasekaran, K. Saenko, and J. Hoffman, “Active domain
+    adaptation via clustering uncertainty-weighted embeddings,” in *Proceedings of
+    the IEEE/CVF International Conference on Computer Vision*, 2021, pp. 8505–8514.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] X. Peng, Z. Huang, Y. Zhu, and K. Saenko, “Federated adversarial domain
+    adaptation,” *arXiv preprint arXiv:1911.02054*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] P. Ren, Y. Xiao, X. Chang, P.-Y. Huang, Z. Li, B. B. Gupta, X. Chen,
+    and X. Wang, “A survey of deep active learning,” *ACM computing surveys (CSUR)*,
+    vol. 54, no. 9, pp. 1–40, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] Q. Yang, Y. Liu, Y. Cheng, Y. Kang, T. Chen, and H. Yu, “Federated learning,”
+    *Synthesis Lectures on Artificial Intelligence and Machine Learning*, vol. 13,
+    no. 3, pp. 1–207, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] Q. Ke, M. Bennamoun, S. An, F. Sohel, and F. Boussaid, “A new representation
+    of skeleton sequences for 3d action recognition,” in *Proceedings of the IEEE
+    conference on computer vision and pattern recognition*, 2017, pp. 3288–3297.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] S. Song, C. Lan, J. Xing, W. Zeng, and J. Liu, “An end-to-end spatio-temporal
+    attention model for human action recognition from skeleton data,” in *Proceedings
+    of the AAAI conference on artificial intelligence*, vol. 31, no. 1, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] Y. Du, W. Wang, and L. Wang, “Hierarchical recurrent neural network for
+    skeleton based action recognition,” in *Proceedings of the IEEE conference on
+    computer vision and pattern recognition*, 2015, pp. 1110–1118.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] H. Duan, Y. Zhao, K. Chen, D. Lin, and B. Dai, “Revisiting skeleton-based
+    action recognition,” in *Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2022, pp. 2969–2978.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] M. F. Bulbul and H. Ali, “Gradient local auto-correlation features for
+    depth human action recognition,” *SN Applied Sciences*, vol. 3, no. 5, pp. 1–13,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] Y. Xiao, J. Chen, Y. Wang, Z. Cao, J. T. Zhou, and X. Bai, “Action recognition
+    for depth video using multi-view dynamic images,” *Information Sciences*, vol.
+    480, pp. 287–304, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] C. Gao, Y. Du, J. Liu, J. Lv, L. Yang, D. Meng, and A. G. Hauptmann,
+    “Infar dataset: Infrared action recognition at different times,” *Neurocomputing*,
+    vol. 212, pp. 36–47, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] Y. Liu, Z. Lu, J. Li, T. Yang, and C. Yao, “Global temporal representation
+    based cnns for infrared action recognition,” *IEEE Signal Processing Letters*,
+    vol. 25, no. 6, pp. 848–852, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] T. Zhong, W. Kim, M. Tanaka, and M. Okutomi, “Human segmentation with
+    dynamic lidar data,” in *2020 25th International Conference on Pattern Recognition
+    (ICPR)*.   IEEE, 2021, pp. 1166–1172.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] M. You, C. Luo, H. Zhou, and S. Zhu, “Dynamic dense crf inference for
+    video segmentation and semantic slam,” *Pattern Recognition*, p. 109023, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] C. Benedek, B. Gálai, B. Nagy, and Z. Jankó, “Lidar-based gait analysis
+    and activity recognition in a 4d surveillance system,” *IEEE Transactions on Circuits
+    and Systems for Video Technology*, vol. 28, no. 1, pp. 101–113, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] A. Arnab, M. Dehghani, G. Heigold, C. Sun, M. Lučić, and C. Schmid, “Vivit:
+    A video vision transformer,” in *Proceedings of the IEEE/CVF International Conference
+    on Computer Vision*, 2021, pp. 6836–6846.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, and B. Guo,
+    “Swin transformer: Hierarchical vision transformer using shifted windows,” in
+    *Proceedings of the IEEE/CVF International Conference on Computer Vision*, 2021,
+    pp. 10 012–10 022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] Z. Chen, L. Xie, J. Niu, X. Liu, L. Wei, and Q. Tian, “Visformer: The
+    vision-friendly transformer,” in *Proceedings of the IEEE/CVF International Conference
+    on Computer Vision*, 2021, pp. 589–598.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] X. Sui, S. Li, X. Geng, Y. Wu, X. Xu, Y. Liu, R. Goh, and H. Zhu, “Craft:
+    Cross-attentional flow transformer for robust optical flow,” in *Proceedings of
+    the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022, pp.
+    17 602–17 611.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] J. Gao, T. Zhang, and C. Xu, “Learning to model relationships for zero-shot
+    video classification,” *IEEE transactions on pattern analysis and machine intelligence*,
+    vol. 43, no. 10, pp. 3476–3491, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] Y. Liu, K. Wang, L. Liu, H. Lan, and L. Lin, “Tcgl: Temporal contrastive
+    graph for self-supervised video representation learning,” *IEEE Transactions on
+    Image Processing*, vol. 31, pp. 1978–1993, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] F. Scarselli, M. Gori, A. C. Tsoi, M. Hagenbuchner, and G. Monfardini,
+    “The graph neural network model,” *IEEE transactions on neural networks*, vol. 20,
+    no. 1, pp. 61–80, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] C. Zhang, D. Song, C. Huang, A. Swami, and N. V. Chawla, “Heterogeneous
+    graph neural network,” in *Proceedings of the 25th ACM SIGKDD international conference
+    on knowledge discovery & data mining*, 2019, pp. 793–803.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+    A. Askell, P. Mishkin, J. Clark *et al.*, “Learning transferable visual models
+    from natural language supervision,” in *International Conference on Machine Learning*.   PMLR,
+    2021, pp. 8748–8763.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

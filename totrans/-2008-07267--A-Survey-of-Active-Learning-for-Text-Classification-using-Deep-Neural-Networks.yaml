@@ -1,0 +1,1769 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:59:47'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2008.07267] A Survey of Active Learning for Text Classification using Deep
+    Neural Networks'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2008.07267](https://ar5iv.labs.arxiv.org/html/2008.07267)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \ProvidesForestLibrary
+  prefs: []
+  type: TYPE_NORMAL
+- en: edges \forestset declare dimen=fork sep0.5em, forked edge/.style= edge=rotate/.pgfmath=grow(),
+    edge path’=(!u.parent anchor) – ++(\forestoptionfork sep,0) |- (.child anchor),
+    , forked edges/.style= for tree=parent anchor=children, for descendants=child
+    anchor=parent,forked edge
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Survey of Active Learning for Text Classification using Deep Neural Networks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Christopher Schröder Natural Language Processing Group, University of Leipzig
+    Andreas Niekler Natural Language Processing Group, University of Leipzig
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Natural language processing (NLP) and neural networks (NNs) have both undergone
+    significant changes in recent years. For active learning (AL) purposes, NNs are,
+    however, less commonly used – despite their current popularity. By using the superior
+    text classification performance of NNs for AL, we can either increase a model’s
+    performance using the same amount of data or reduce the data and therefore the
+    required annotation efforts while keeping the same performance. We review AL for
+    text classification using deep neural networks (DNNs) and elaborate on two main
+    causes which used to hinder the adoption: (a) the inability of NNs to provide
+    reliable uncertainty estimates, on which the most commonly used query strategies
+    rely, and (b) the challenge of training DNNs on small data. To investigate the
+    former, we construct a taxonomy of query strategies, which distinguishes between
+    data-based, model-based, and prediction-based instance selection, and investigate
+    the prevalence of these classes in recent research. Moreover, we review recent
+    NN-based advances in NLP like word embeddings or language models in the context
+    of (D)NNs, survey the current state-of-the-art at the intersection of AL, text
+    classification, and DNNs and relate recent advances in NLP to AL. Finally, we
+    analyze recent work in AL for text classification, connect the respective query
+    strategies to the taxonomy, and outline commonalities and shortcomings. As a result,
+    we highlight gaps in current research and present open research questions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Data is the fuel of machine learning applications and therefore has been steadily
+    increasing in value. In many settings an abundant amount of unlabeled data is
+    produced, but in order to use such data in supervised machine learning, one has
+    no choice but to provide labels. This usually entails a manual labeling process,
+    which is often non-trivial and can even require a domain expert, e.g., in patent
+    classification [[52](#bib.bibx52), [23](#bib.bibx23)], or clinical text classification
+    [[75](#bib.bibx75), [24](#bib.bibx24), [28](#bib.bibx28)]. Moreover, this is time-consuming
+    and rapidly increases monetary costs, thereby quickly rendering this approach
+    infeasible. Even if an expert is available, it is often impossible to label each
+    datum due to the vast size of modern datasets. This especially impedes the field
+    of Natural Language Processing (NLP), in which both the dataset and the amount
+    of text within each document can be huge, resulting in unbearable amounts of annotation
+    efforts for human experts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Active Learning (AL) aims to reduce the amount of data annotated by the human
+    expert. It is an iterative cyclic process between an oracle (usually the human
+    annotator) and an active learner. In contrast to passive learning, in which the
+    data is simply fed to the algorithm, the active learner chooses which samples
+    are to be labeled next. The labeling itself, however, is done by a human expert,
+    the so-called human in the loop. Having received new labels, the active learner
+    trains a new model and the process starts from the beginning. Using the term active
+    learner, we refer to the composition of a model, a query strategy, and a stopping
+    criterion. In this work the model is w.l.o.g. a text classification model, the
+    query strategy decides which instances should be labeled next, and the stopping
+    criterion defines when to stop the AL loop. According to [[85](#bib.bibx85)] there
+    are three main scenarios for AL: (1) Pool-based, in which the learner has access
+    to the closed set of unlabeled instances, called the pool; (2) stream-based, where
+    the learner receives one instance at a time and has the options to keep it, or
+    to discard; (3) membership query synthesis, in which the learner creates new artificial
+    instances to be labeled. If the pool-based scenario operates not on a single instance,
+    but on a batch of instances, this is called batch-mode AL [[85](#bib.bibx85)].
+    Throughout this work we assume a pool-based batch-mode scenario because in a text
+    classification setting the dataset is usually a closed set, and the batch-wise
+    operation reduces the number of retraining operations, which cause waiting periods
+    for the user.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The underlying idea of AL is that few representative instances can be used as
+    surrogate for the full dataset. Not only does a smaller subset of the data reduce
+    the computational costs, but also it has been shown that AL can even increase
+    the quality of the resulting model compared to learning on the full dataset [[83](#bib.bibx83),
+    [24](#bib.bibx24)]. As a consequence, AL has been used in many NLP tasks, e.g.
+    text classification [[95](#bib.bibx95), [39](#bib.bibx39)], named entity recognition
+    [[88](#bib.bibx88), [94](#bib.bibx94), [89](#bib.bibx89)], or machine translation
+    [[35](#bib.bibx35)] and is still an active area of research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In recent years, deep learning (DL) approaches have dominated most NLP tasks’
+    state-of-the-art results. This can be attributed to advances in neural networks
+    (NNs), above all Convolutional Neural Networks (CNN; [[48](#bib.bibx48)]) and
+    (Bidirectional-)Long Short-Term Memory (LSTM; [[38](#bib.bibx38), [31](#bib.bibx31)]),
+    which were eventually adopted into the NLP domain, and to the advances of using
+    word embeddings [[66](#bib.bibx66), [65](#bib.bibx65), [74](#bib.bibx74)] and
+    contextualized word embeddings [[76](#bib.bibx76), [20](#bib.bibx20)]. Both NN
+    architectures and text representations have raised the state-of-the-art results
+    in the field of text classification considerably (e.g., [[103](#bib.bibx103),
+    [41](#bib.bibx41), [102](#bib.bibx102)]). If these improvements were transferrable
+    to AL, this would result in a huge increase in efficiency. For the AL practitioner,
+    this either means achieving the same performance using fewer samples, or having
+    an increase in performance using the same amount of data. Another favorable development
+    is that transfer learning, especially the paradigm of fine-tuning pre-trained
+    language models (LMs), has become popular in NLP. In the context of AL this helps
+    especially in the small data scenario, in which a pre-trained model can be leveraged
+    to train a model by fine-tuning using only little data, which would otherwise
+    be infeasible. Finally, by operating on sub-word units LMs also handle out-of-vocabulary
+    tokens, which is an advantage over many traditional methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Resulting from these advances, existing AL surveys have become both incomplete
+    in some parts and outdated in others: They lack comparison against the current
+    state of the art models, do not provide results for more recent large-scale datasets,
+    and most importantly, they are lacking the aforementioned advances in NNs and
+    text representations. Surprisingly, despite the current popularity of NNs, there
+    is only little research about NN-based active learning in the context of NLP,
+    and even less thereof in the context of text classification (see Section [3.2](#S3.SS2
+    "3.2 Neural-Network-Based Active Learning ‣ 3 Active Learning ‣ A Survey of Active
+    Learning for Text Classification using Deep Neural Networks") and Section [4.2](#S4.SS2
+    "4.2 Text Classification for Active Learning ‣ 4 Active Learning for Text Classification
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks")
+    for a detailed summary). We suspect this is due to the following reasons: (1)
+    Many DL models are known to require large amounts of data [[103](#bib.bibx103)],
+    which is in strong contrast to AL aiming at requiring as little data as possible
+    (2) there is a whole AL scenario based on artificial data generation, which unfortunately
+    is a lot more challenging for text in contrast to for example images, for which
+    data augmentation is commonly used in classification tasks [[100](#bib.bibx100)];
+    (3) NNs are lacking uncertainty information regarding their predictions (as explained
+    in Section [3.2](#S3.SS2 "3.2 Neural-Network-Based Active Learning ‣ 3 Active
+    Learning ‣ A Survey of Active Learning for Text Classification using Deep Neural
+    Networks")), which complicates the use of a whole prominent class of query strategies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This survey aims at summarizing the existing approaches of (D)NN-based AL for
+    text classification. Our main contributions are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We provide a taxonomy of query strategies and classify strategies relevant for
+    AL for text classification.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We survey existing work at the intersection of AL, text classification, and
+    (D)NNs.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recent advances in text classification are summarized and related to the AL
+    process. It is then investigated, if and to what degree they have been adopted
+    for AL.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The experimental setup of previous research is collectively analyzed regarding
+    datasets, models, and query strategies in order to identify recent trends, commonalities,
+    and shortcomings in the experiments.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '5.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We identify research gaps and outline future research directions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Thereby we provide a comprehensive survey of recent advances in NN-based active
+    text classification. Having reviewed these recent advances, we illuminate areas
+    that either need re-evaluation, or have not yet been evaluated in a more recent
+    context. As a final result, we develop research questions outlining the scope
+    of future research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Related Work
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[[85](#bib.bibx85)] provides a general active learning survey, summarizing
+    the prevalent AL scenario types and query strategies. They present variations
+    of the basic AL setup like variable labeling costs or alternative query types,
+    and most notably, they discuss empirical and theoretical research investigating
+    the effectiveness of AL: They mention research suggesting that AL is effective
+    in practice and has increasingly gained adoption in real world applications. However,
+    it is pointed out that empirical research also reported cases in which AL performed
+    worse than passive learning and that the theoretical analysis of AL is incomplete.
+    Finally, relations to related research areas are illustrated, thereby connecting
+    AL among others to reinforcement learning and semi-supervised learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The survey of [[25](#bib.bibx25)] is focused around a thorough analysis of uncertainty-based
+    query strategies, which are categorized into a taxonomy. This taxonomy differentiates
+    at the topmost level between the uncertainty of i.i.d. instances and instance
+    correlation. The latter is a superset of the former and intends to reduce redundancy
+    among instances by considering feature, label, and structure correlation when
+    querying. Moreover, they perform an algorithmic analysis for each query strategy
+    and order the strategies by their respective time complexity, highlighting the
+    increased complexity for correlation-based strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another general survey covering a wide range of topics was conducted by [[1](#bib.bibx1)].
+    They provide a flat categorization of query strategies, which is quite different
+    from the taxonomy of [[25](#bib.bibx25)] and divides them into the following three
+    categories: (1) “heterogenity-based”, which sample instances by their prediction
+    uncertainty or dissimilarity compared to existing labeled instances, (2) “performance-based”’,
+    which select instances based on a predicted change of the model loss, and (3)
+    “representativeness-based”, which select data points to reflect a larger set in
+    terms of their properties, usually achieved by the means of distribution density
+    [[1](#bib.bibx1)]. Similarly to [[85](#bib.bibx85)], they present and discuss
+    many non-standard variations of the active learning scenario.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An NLP-focused active learning survey was performed by [[71](#bib.bibx71)].
+    This work’s main contribution is a survey of disagreement-based query strategies,
+    which use the disagreement among multiple classifiers to select instances. Moreover,
+    Olsson reviews practical considerations, e.g., selecting an initial seed set,
+    deciding between stream-based and pool-based scenario, and deciding when to terminate
+    the learning process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although some NN-based applications are mentioned, none of the above surveys
+    covers NN-based AL in depth. Besides, none is recent enough to cover NN-architectures,
+    which have only recently been adapted successfully to text classification problems
+    like e.g., KimCNN [[48](#bib.bibx48)]. The same holds true for recent advances
+    in NLP such as word embeddings, contextualized language models (explained in Section
+    [4.1](#S4.SS1 "4.1 Recent Advances in Text Classification ‣ 4 Active Learning
+    for Text Classification ‣ A Survey of Active Learning for Text Classification
+    using Deep Neural Networks")), or resulting advances in text classification (discussed
+    in Section [4.1](#S4.SS1.SSS0.Px2 "Neural-Network-Based Text Classification ‣
+    4.1 Recent Advances in Text Classification ‣ 4 Active Learning for Text Classification
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks")
+    and Section [4.2](#S4.SS2 "4.2 Text Classification for Active Learning ‣ 4 Active
+    Learning for Text Classification ‣ A Survey of Active Learning for Text Classification
+    using Deep Neural Networks")). We intend to fill these gaps in the remainder of
+    this survey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Active Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The goal of AL is to create a model using as few labeled instances as possible,
+    i.e. minimizing the interactions between the oracle and the active learner. The
+    AL process (illustrated in Figure [1](#S3.F1 "Figure 1 ‣ 3 Active Learning ‣ A
+    Survey of Active Learning for Text Classification using Deep Neural Networks"))
+    is as follows: The oracle requests unlabeled instances from the active learner
+    (query, see Figure [1](#S3.F1 "Figure 1 ‣ 3 Active Learning ‣ A Survey of Active
+    Learning for Text Classification using Deep Neural Networks"): step 1), which
+    are then selected by the active learner (based on the selected query strategy)
+    and passed to the oracle (see Figure [1](#S3.F1 "Figure 1 ‣ 3 Active Learning
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks"):
+    step 2). Subsequently, these instances are labeled by the oracle and returned
+    to the active learner (update, see Figure [1](#S3.F1 "Figure 1 ‣ 3 Active Learning
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks"):
+    step 3). After each update step the active learner’s model is retrained, which
+    makes this operation at least as expensive as a training of the underlying model.
+    This process is repeated until a stopping criterion is met (e.g., a maximum number
+    of iterations or a minimum threshold of change in classification accuracy).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1aac2ccb961c305e2598f48b904bb257.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: An overview of the AL process: Model, query strategy, and (optionally
+    a) stopping criterion are the key components of an active learner. The main loop
+    is as follows: First the oracle queries the active learner, which returns a fixed
+    amount of unlabeled instances. Then, for all selected unlabeled unstances are
+    assigned labels by the oracle. This process is repeated until the oracle stops,
+    or a predefined stopping criterion is met.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most important component for AL is the query strategy. In the introduction
+    we claimed that a large fraction of query strategies are uncertainty-based. To
+    analyze this we provide a taxonomy of query strategies in the following section
+    and highlight the parts in which uncertainty is involved. For a general and more
+    detailed introduction on AL refer to the surveys of [[85](#bib.bibx85)] and [[1](#bib.bibx1)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Query Strategies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Figure [2](#S3.F2 "Figure 2 ‣ 3.1 Query Strategies ‣ 3 Active Learning ‣
+    A Survey of Active Learning for Text Classification using Deep Neural Networks")
+    we classify the most common AL query strategies based on a strategy’s input information,
+    which denotes the numeric value(s) a strategy operates on. In our taxonomy the
+    input information can be either random or one of data, model, and prediction.
+    These categories are ordered by increasing complexity and are not mutually exclusive.
+    Obviously, the model is a function of the data, as well as the prediction is a
+    function of model and data, and moreover, in many cases a strategy use multiple
+    of these criteria. In such cases we assign the query strategy to the most specific
+    category (i.e. prediction-based precedes model-based, which in turn precedes data-based).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{forest}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: for tree= grow’=0, draw , forked edges, [query strategies, no edge, root [random,
+    onode_dashed [,phantom] ] [data-based, onode [data uncertainty, onode [discriminative
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[34](#bib.bibx34)], tier=leaf, tnode] ] [representativeness, onode [clustering,
+    onode [flat'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[101](#bib.bibx101), [68](#bib.bibx68)], tier=leaf, tnode] [hierarchical'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[18](#bib.bibx18), [77](#bib.bibx77)], tier=leaf, tnode] ] [set construction,
+    onode [core-set'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[84](#bib.bibx84), [78](#bib.bibx78)], tier=leaf, tnode] ] ] ] [model-based,
+    onode [model uncertainty, onode [UNC-IE'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[87](#bib.bibx87)], tier=leaf, tnode] ] [expected parameter'
+  prefs: []
+  type: TYPE_NORMAL
+- en: change, onode [expected gradient length
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[86](#bib.bibx86), [104](#bib.bibx104)], tier=leaf, tnode] [expected weight
+    change'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[96](#bib.bibx96)], tier=leaf, tnode] ] [adversarial, tnode [DFAL'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[22](#bib.bibx22)], tier=leaf, tnode] ] ] [prediction-based, name=prediction_based,
+    onode [prediction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: uncertainty, name=prediction_uncertainty, tnode [probabilistic, onode [uncertainty
+    sampling [[55](#bib.bibx55)], tier=leaf,tnode] ] [margin-based, onode [version
+    space
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[95](#bib.bibx95)], tier=leaf,tnode] [closest to hyperplane'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[83](#bib.bibx83)], tier=leaf,tnode] ] [entropy, name=entropy, onode [BALD'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[40](#bib.bibx40)], tier=leaf,tnode] ] ] [discriminative, onode [DAL'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[29](#bib.bibx29)], tier=leaf , tnode] ] [expected prediction change'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ', onode [expected error reduction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[81](#bib.bibx81)], name=lastnode, tier=leaf, tnode] ] [disagreement, name=disagreement,
+    onode_dashed [,phantom, tier=leaf] ] ] ] \draw[zlevel,-] (disagreement.east) -|
+    (entropy.south); \draw[zlevel,-] (entropy.north) |- (prediction_uncertainty.east);
+    currentboundingbox.south)coordinates1); \draw[decorate,decoration=brace,amplitude=1em,mirror]
+    ([yshift=-3pt]prediction_based.south west|-s1) – node[below=1em] class ([yshift=-3pt,xshift=-1pt]prediction_based.south
+    east|-s1); \draw[decorate,decoration=brace,amplitude=1em,mirror] ([yshift=-3pt,xshift=1pt]prediction_based.south
+    east|-s1) – node[below=1em] subclass(es) ([yshift=-3pt,xshift=-1pt]lastnode.south
+    west|-s1); \draw[decorate,decoration=brace,amplitude=1em,mirror] ([yshift=-3pt,xshift=1pt]lastnode.south
+    west|-s1) – node[below=1em] example ([yshift=-3pt,xshift=-1pt]lastnode.south east|-s1);'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 2: A taxonomy of query strategies for AL. The key distinction is at
+    the first level, where the query strategies are categorized by their access to
+    different kinds of input information. From the second to the penultimate level
+    we form coherent subclasses, and the final level shows examples for the respective
+    class. This taxonomy is not exhaustive due to the abundance of existing query
+    strategies, and it is biased towards query strategies in NLP.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Randomness has traditionally been used as a baseline for many tasks. In this
+    case, random sampling selects instances at random and is a strong baseline for
+    AL instance selection [[55](#bib.bibx55), [83](#bib.bibx83), [81](#bib.bibx81)].
+    It often performs competitive to more sophisticated strategies, especially when
+    the labeled pool has grown larger [[84](#bib.bibx84), [22](#bib.bibx22)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data-based
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Data-based strategies have the lowest level of knowledge, i.e. they only operate
+    on the raw input data and optionally the labels of the labeled pool. We categorize
+    them further into (1) strategies relying on data-uncertainty, which may use information
+    about the data distribution, label distribution, and label correlation, and (2)
+    representativeness, which tries to geometrically compress a set of points, by
+    using fewer representative instances to represent the properties of the entirety.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model-based
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The class of model-based strategies has knowledge about both the data and the
+    model. These strategies query instances based on measure provided by the model
+    given an instance. An example for this would be a measure of confidence for the
+    model’s explanation of the given instance [[26](#bib.bibx26)], for example, how
+    reliable the model rates encountered features. This can also be an expected quantity,
+    for example in terms of the gradient’s magnitude [[86](#bib.bibx86)]. While predictions
+    from the model can still be obtained, we impose the restriction that the target
+    metric must be an (observed or expected) quantity of the model, excluding the
+    final prediction. Model-based uncertainty is a noteworthy subclass here, which
+    operates using the uncertainty of a model’s weights [[26](#bib.bibx26)]. [[87](#bib.bibx87)]
+    describe a similar class, in which the uncertainty stems from not finding enough
+    evidence in the training data, i.e. failing to separate classes at training time.
+    They refer to this kind of uncertainty as insufficient evidence uncertainty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prediction-based
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Prediction-based strategies select instances by scoring their prediction output.
+    The most prominent members of this class are prediction-uncertainty-based and
+    disagreement-based approaches. [[87](#bib.bibx87)] denote prediction-based uncertainty
+    by conflicting-evidence uncertainty, which they, contrary to this work, count
+    as another form of model-based uncertainty. There is sometimes only a thin line
+    between the concepts of model-based und prediction-based uncertainty. Roughly
+    speaking, prediction-based uncertainty corresponds in a classification setting
+    to inter-class uncertainty, as opposed to model-based uncertainty, which corresponds
+    to intra-class uncertainty. In literature, uncertainty sampling [[55](#bib.bibx55)]
+    usually refers to prediction-based uncertainty, unless otherwise specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensembles
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'When a query strategy combines the output of multiple other strategies, this
+    is called an ensemble. We only classify the concept of ensemble strategies within
+    the taxonomy (see disagreement-based subclass in Figure [2](#S3.F2 "Figure 2 ‣
+    3.1 Query Strategies ‣ 3 Active Learning ‣ A Survey of Active Learning for Text
+    Classification using Deep Neural Networks")) without going into detail due to
+    several reasons: (1) Ensembles are again composed of primitive query strategies,
+    which can be classified using our taxonomy. (2) Ensembles can be hybrids, i.e.
+    they can be a mixture of different classes of query strategies. Moreover, the
+    output of an ensemble is usually a function of the disagreement among the single
+    classifiers, which is already covered in previous surveys of [[71](#bib.bibx71)]
+    and [[25](#bib.bibx25)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We are not the first to provide a classification of query strategies: [[1](#bib.bibx1)]
+    provide an alternative classification, which divides the query strategies into
+    heterogenity-based models, performance-based models, and representativeness-based
+    models. Heterogenity-based models try to sample diverse data points, w.r.t the
+    current labeled pool. This class includes among others uncertainty sampling and
+    ensembles, i.e. no distinction is made between ensembles and single-model strategies.
+    Performance-based models aim to sample data targeting an increase of the models
+    performance, for example a reduction in the model’s error. This intersects with
+    our model-based class, however, it lacks strategies which focus on a change of
+    parameters (e.g., expected gradient length [[86](#bib.bibx86)]) as opposed to
+    changes in a metric. Lastly, representativeness-based strategies sample instances
+    so that the distribution of the subsample is as similar as possible to the training
+    set. Although similar to our data-based class, they always assume the existence
+    of a model, which is not the case for data-based strategies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[25](#bib.bibx25)] separate query strategies into uncertainty-based and diversity-based
+    classes. Uncertainty-based strategies assume the i.i.d. distribution of instances;
+    they compute a separate score for each instance, which is the basis for the instance
+    selection. Diversity-based strategies are a superset thereof and additionally
+    consider correlation amongst instances. Thereby they characterize uncertainty
+    and correlation as critical components for query strategies. This classification
+    successfully distinguishes query strategies by considering exclusively uncertainty
+    and correlation. However, it is less transparent in terms of the input information,
+    which our taxonomy highlights. Nevertheless, correlation is a factor orthogonal
+    to our taxonomy and can be added as an additional criterion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After creating our taxonomy, we discovered a recent categorization of uncertainty
+    in deep learning [[26](#bib.bibx26)], which distinguishes between data-, model-,
+    and predictive-uncertainty, similar to the taxonomy’s first level (data-, model-,
+    prediction-based query strategies). Although this classification comes naturally
+    from the data’s degree of processing, we emphasize that we are not the first to
+    come up with this abstraction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By using the input information as decisive criterion, this taxonomy provides
+    an information-oriented view on query strategies. It highlights in which parts
+    and how uncertainty has been involed in existing query strategies. Uncertainty
+    in terms of NNs is, however, is known to be challenging as described in Section
+    [3.2](#S3.SS2 "3.2 Neural-Network-Based Active Learning ‣ 3 Active Learning ‣
+    A Survey of Active Learning for Text Classification using Deep Neural Networks").
+    Moreover, we use the taxonomy to categorize recent work in AL for text classification
+    in Section [4.3](#S4.SS3 "4.3 Commonalities and Limitations of Previous Experiments
+    ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning for
+    Text Classification using Deep Neural Networks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Neural-Network-Based Active Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this section we investigate the question, why neural networks are not more
+    prevalent in AL applications. This can be attributed to two central topics: Uncertainty
+    estimation in NNs, and the contrast of NNs requiring between big data and AL dealing
+    with small data. We examine these issues from a NN perspective, alleviating the
+    NLP focus.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previous Work
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Early research in NN-based AL can be divided into uncertainty-based [[16](#bib.bibx16)],
+    and ensemble-based [[50](#bib.bibx50), [63](#bib.bibx63)] strategies. The former
+    often use prediction entropy [[62](#bib.bibx62), [81](#bib.bibx81)] as measure
+    of uncertainty, while the latter utilize the disagreement among the single classifiers.
+    [[86](#bib.bibx86)] proposed the expected gradient length (EGL) query strategy,
+    which selects instances by the expected change in the model’s weights. [[104](#bib.bibx104)]
+    were first to use a CNN for AL. They proposed a variant of the expected gradient
+    length strategy [[86](#bib.bibx86)], in which they select instances that are expected
+    to result in the largest change in embedding space, thereby training highly discriminative
+    representations. [[84](#bib.bibx84)] observed uncertainty-based query strategies
+    not to be effective for CNN-based batch-mode AL, and proposed core-set selection,
+    which samples a small subset to represent the full dataset. [[5](#bib.bibx5)]
+    proposed BADGE, a query strategy for DNNs, which uses k-means++ seeding [[4](#bib.bibx4)]
+    on the gradients of the final layer, in order to query by uncertainty and diversity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, Generative Adversarial Networks (GANs; [[30](#bib.bibx30)]) have also
+    been applied successfully for AL tasks: [[106](#bib.bibx106)] use GANs for query
+    synthesis of images within an active learner using an SVM model. The instances
+    are synthesized so that they would be classified with high uncertainty. The authors
+    report this approach to outperform random sampling, pool-based uncertainty sampling
+    using an SVM [[95](#bib.bibx95)], and in some cases passive learning, while having
+    the weakness to generate too similar instances. The approach itself is neither
+    pure NN-based, nor does it belong to the pool-based scenario, however, it is the
+    first reported use of GANs for AL. [[22](#bib.bibx22)] use adversarial attacks
+    to find instances that cross the decision boundary with the aim to increase the
+    model robustness. They train two CNN architectures and report results superior
+    to the core-set [[84](#bib.bibx84)] strategy on image classification tasks. It
+    is obvious that GANs inherently belong to the membership query synthesis scenario.
+    Therefore their performance correlates with the quality of artificial data synthesis,
+    i.e. they are usually not that effective for NLP tasks. This has already been
+    recognized and first improvements towards a better text generation have been made
+    [[105](#bib.bibx105)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Uncertainty in Neural Networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: One of the earliest and in many variations adopted class of strategies is uncertainty
+    sampling [[83](#bib.bibx83), [95](#bib.bibx95)]. Unfortunately, this widely-used
+    concept is not straightforward to apply for NNs, as they do not provide an inherent
+    indicator of uncertainty. In the past, this has been tackled among others by ensembling
+    [[50](#bib.bibx50), [36](#bib.bibx36), [12](#bib.bibx12)], or by learning error
+    estimates [[70](#bib.bibx70)]. More recent approaches furthermore use Bayesian
+    extensions [[11](#bib.bibx11)], obtain uncertainty estimations using dropout [[91](#bib.bibx91),
+    [27](#bib.bibx27)], or use probabilistic NNs to estimate predictive uncertainty
+    [[51](#bib.bibx51)]. However, ensemble and Bayesian approaches quickly become
+    infeasible on larger datasets, and NN architectures are generally known to be
+    overconfident in their predictions [[33](#bib.bibx33), [51](#bib.bibx51)]. Consequently,
+    uncertainty in NNs is only insufficiently solved and therefore still remains a
+    highly relevant research area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrasting Paradigms
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: DNNs are known to excel in particularly at large-scale datasets, but often having
+    large amounts of data available is a strict requirement to perform well at all
+    (e.g., [[103](#bib.bibx103)]). AL on the other hand tries to minimize the labeled
+    data. The small labeled datasets can be a problem for DNNs, since they are known
+    to overfit on small datasets (e.g., [[93](#bib.bibx93), [100](#bib.bibx100)]),
+    which results in bad generalization performance on the test set. Moreover, DNNs
+    often offer little advantage over shallow models when they are trained using small
+    datasets [[89](#bib.bibx89)], thereby lacking justification for their higher computational
+    costs. On the other hand we clearly cannot require AL to label more data, since
+    this would defeat its purpose. Therefore there has been research on dealing with
+    (D)NNs using small datasets, however, it is only a scarce amount, especially in
+    relation to the large volume of NN literature in general. Handling small datasets
+    is mostly circumvented by using pre-training [[37](#bib.bibx37), [97](#bib.bibx97)]
+    or other transfer learning approaches [[13](#bib.bibx13), [8](#bib.bibx8), [97](#bib.bibx97)].
+    Finally, the search for optimal hyperparameters is often neglected and instead
+    the hyperparameters of related work are used, which are optimized for large datasets,
+    if at all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Active Learning for Text Classification
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In Sections [4.1](#S4.SS1 "4.1 Recent Advances in Text Classification ‣ 4 Active
+    Learning for Text Classification ‣ A Survey of Active Learning for Text Classification
+    using Deep Neural Networks") and [4.2](#S4.SS2 "4.2 Text Classification for Active
+    Learning ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning
+    for Text Classification using Deep Neural Networks") we first summarize recent
+    methods in text classification and NNs. We elaborate on each method’s importance
+    in the context of AL, and analyze its adoption by recent research where applicable.
+    For insufficiently adopted methods, we present how they could advance AL for text
+    classification. Most importantly, we present an overview of recent experiments
+    in AL for text classification and analyze commonalities and shortcomings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Recent Advances in Text Classification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Traditional methods use the bag-of-words (BoW) representation, which are sparse
+    and high-dimensional. However, with the introduction of word embeddings like word2vec
+    [[66](#bib.bibx66), [65](#bib.bibx65)], GloVe [[74](#bib.bibx74)], or fastText
+    [[46](#bib.bibx46)], word embeddings have replaced BoW representations in many
+    cases. This is due to several reasons: (1) They represent semantic relations in
+    vectors space and avoid the problem of mismatching features as for example due
+    to synonymy; (2) incorporating word embeddings resulted in superior performance
+    for many downstream tasks [[66](#bib.bibx66), [74](#bib.bibx74), [46](#bib.bibx46)];
+    (3) unlike bag-of-words, word vectors are dense, low-dimensional representations,
+    which makes them applicable to a wider range of algorithms – especially in the
+    context of NNs which favor fixed-size inputs. Various approaches have been presented
+    in order to obtain similar fixed size representations for word sequences, i.e.
+    sentences, paragraphs or documents [[53](#bib.bibx53)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Word embeddings are representations, which provide exactly one vector per word
+    and in consequence one meaning as well. This makes them also unaware of the current
+    word’s context and therefore makes them unable to detect and handle ambiguities.
+    Unlike word embeddings, language models (LMs) compute the word vector using the
+    word and the surrounding context [[76](#bib.bibx76)]. This results in a contextualized
+    representation, which inherits the advantages of word embeddings, and at the same
+    time allows for context-specific representation (in contrast to static embeddings)
+    [[76](#bib.bibx76)]. ELMo was the first LM to gain wide adoption and surpassed
+    state of the art models on several NLP tasks [[76](#bib.bibx76)]. Shortly thereafter,
+    BERT [[20](#bib.bibx20)] was introduced and provided bidirectional pre-training-based
+    language modelling. The process to create a BERT-based model consists of a pre-training
+    and a fine-tuning step as opposed to ELMO’s direct feature-based approach in which
+    contextualized vectors are obtained from the pre-trained model and used directly
+    as features [[20](#bib.bibx20)]. By masking, i.e. randomly removing a fraction
+    of tokens during training, the training was adapted to predict the masked words.
+    This made the bidrectional training possible, which would otherwise be obstructed
+    because a word could "see itself" when computing its probability of occurrence
+    given a context [[20](#bib.bibx20)]. Following this, XLNet [[102](#bib.bibx102)]
+    introduced a similar approach of pre-training and fine-tuning using an autoregressive
+    language model, however, it overcame BERT’s limitation as it does not rely on
+    masking data during pre-training [[102](#bib.bibx102)], and moreover, successfully
+    manages to integrate the recent TransformerXL architecture [[17](#bib.bibx17)].
+    Since then, a variety of LMs have been published, which further optimize the pre-training
+    of previous LM architectures (e.g., RoBERTa [[59](#bib.bibx59)] and ELECTRA [[15](#bib.bibx15)]),
+    or distill the knowledge into a smaller model (e.g., DistilBERT [[82](#bib.bibx82)]).
+    Similarly to word embeddings, there are approaches to use LMs in order to obtain
+    sentence representations from LMs [[80](#bib.bibx80)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: All mentioned representations offer a richer expressiveness than traditional
+    BoW representations and therefore are well-suited for active learning purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural-Network-Based Text Classification
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A well-known CNN architecture presented by [[48](#bib.bibx48)] (KimCNN) operates
+    on pre-trained word vectors and achieved state of the art results at the time
+    using only a simple but elegant architecture. The investigated CNN setups did
+    not require much hyperparameter tuning and confirmed the effectiveness of dropout
+    [[91](#bib.bibx91)] as a regularizer for CNN-based text classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The word embeddings of fastText [[46](#bib.bibx46)] differ from other word embeddings
+    in the sense that the approach is (1) supervised and (2) specifically designed
+    for text classification. Being a shallow neural network, it is still very efficient,
+    while still obtaining performances comparable to deep learning approaches at that
+    time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[41](#bib.bibx41)] developed Universal Language Model Fine-tuning (ULMFiT),
+    a LM transfer learning method using the AWD-LSTM architecture [[64](#bib.bibx64)],
+    which outperformed the state of the art on several text classification datasets
+    when trained on only $100$ labeled examples, and thereby achieved results significantly
+    superior to more sophisticated architectures of previous work. Context-specific
+    LMs like BERT [[20](#bib.bibx20)] and XLNet [[102](#bib.bibx102)] yield a context-dependent
+    vector for each token, thereby strongly improving NN-based text classification
+    [[20](#bib.bibx20), [102](#bib.bibx102), [92](#bib.bibx92)]. State of the art
+    in NN-based text classification is LM-based fine-tuning with XLNet, which has
+    a slight edge over BERT in terms of test error rate [[102](#bib.bibx102), [92](#bib.bibx92)].
+    ULMFiT follows closely thereafter, and KimCNN is still a strong contender. Notably,
+    ULMFiT, BERT and XLNet all perform transfer learning, which aims to transfer knowledge
+    from one model to another [[79](#bib.bibx79), [13](#bib.bibx13)], thereby massively
+    reducing the required amounts of data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Text Classification for Active Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Traditional AL for text classification heavily relied on query strategies based
+    on prediction-uncertainty [[55](#bib.bibx55)] and ensembling [[58](#bib.bibx58)].
+    Common model choices included support vector machines (SVMs; [[95](#bib.bibx95)]),
+    naive bayes [[69](#bib.bibx69)], logistic regression [[39](#bib.bibx39)] and neural
+    networks [[50](#bib.bibx50)]. To the best of our knowledge, no previous survey
+    covered traditional AL for text classification, however, ensembling-based AL for
+    NLP has been covered in depth by [[71](#bib.bibx71)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regarding modern NN-based AL for text classification, the relevant models are
+    primarily CNN- and LSTM-based deep architectures: [[104](#bib.bibx104)] claim
+    to be the first to consider AL for text classification using DNNs. They use CNNs
+    and contribute a query strategy, which selects the instances based on the expected
+    change of the word embeddings and the model’s uncertainty given the instance,
+    thereby learning discriminative embeddings for text classification. [[2](#bib.bibx2)]
+    evaluated SVM, LSTM and gated recurrent unit (GRU; [[14](#bib.bibx14)]) models,
+    and reported that the latter two significantly outperformed the SVM baseline on
+    the Chinese news dataset ThucNews. [[61](#bib.bibx61)] investigated the performance
+    of different text representations in a pool-based AL scenario. They compared frequency-based
+    text representations, word embeddings and transformer-based representations used
+    as input features for a SVM-based AL and different query strategies, in which
+    transformer-based representations yielded consistently higher scores. [[78](#bib.bibx78)]
+    investigate sampling bias and apply active text classification on the large scale
+    text corpora of [[103](#bib.bibx103)]. They demonstrate FastText.zip [[47](#bib.bibx47)]
+    with (entropy-based) uncertainty sampling to be a strong baseline, which is competitive
+    compared to recent approaches in active text classification. Moreover, they use
+    this strategy to obtain a surrogate dataset (comprising from 5% to 40% of the
+    total data) on which a LSTM-based LM is trained using ULMFiT [[41](#bib.bibx41)],
+    reaching accuracy levels close to a training on the full dataset. Unlike past
+    publications, they report this uncertainty-based strategy to be effective, robust,
+    and at the same time computationally cheap. This is the most relevant work in
+    terms of the intersection between text classification, NNs and DL.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Publication | Datasets | Model(s) | Query Strategy Class(es) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[44](#bib.bibx44)] | 20N, R21, RV2, SPM | NB, SVM, kNN | 1\. Prediction
+    uncertainty (LC) 2\. Prediction uncertainty (CTH)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Prediction uncertainty (disagreement) |
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [[104](#bib.bibx104)] | CR, MR, SJ, MRL, MUR, DR | CNN | 1\. Model uncertainty
+    (EGL) 2\. Prediction Uncertainty (entropy) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[10](#bib.bibx10)] | RMA | SVM | 1\. Prediction uncertainty (CTH) 2\. Prediction
+    uncertainty (disagreement) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[90](#bib.bibx90)] | TQA, MR | SVM, CNN, BiLSTM | Prediction uncertainty
+    (disagreement) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[60](#bib.bibx60)] | MR, SJ, TQA, CR | SVM, CNN, BiLSTM | 1\. Prediction
+    uncertainty (entropy) 2\. Prediction uncertainty (disagreement) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[78](#bib.bibx78)] | SGN, DBP, YHA, YRP, YRF, AGN, ARP, ARF | FTZ, ULMFiT
+    | Prediction uncertainty (entropy) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[61](#bib.bibx61)] | MRL, MDS, BAG, G13, ACR, SJ, AGN, DBP | SVM | 1\. Prediction
+    uncertainty (CTH) 2\. Prediction uncertainty (disagreement)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Data-based (EGAL)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4\. Data-based (density) |
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: An overview of recent work on AL for text classification. We referred
+    to the datasets using short keys, which can be looked up in Table LABEL:tab:datasets
+    in the Appendix. Models: Naive Bayes (NB), Support Vector Machine (SVM), k-Nearest
+    Neighbours (kNN), Convolutional Neural Network (CNN), [Bidirectional] Long Short-Term
+    Memory ([Bi]LSTM), FastText.zip (FTZ), Univeral Language Model Fine-Tuning (ULMFiT).
+    Query strategies: Least confidence (LC), Closest-to-hyperplane (CTH), expected
+    gradient length (EGL). Random selection baselines were omitted.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Commonalities and Limitations of Previous Experiments
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Table [1](#S4.T1 "Table 1 ‣ 4.2 Text Classification for Active Learning ‣ 4
+    Active Learning for Text Classification ‣ A Survey of Active Learning for Text
+    Classification using Deep Neural Networks") shows the most recent AL for text
+    classification experiments, all of them more recent than the surveys of [[85](#bib.bibx85)]
+    and [[71](#bib.bibx71)]. For each publication we list the utilized datasets, models,
+    and classes of query strategies (with respect to the taxonomy in Section [3.1](#S3.SS1
+    "3.1 Query Strategies ‣ 3 Active Learning ‣ A Survey of Active Learning for Text
+    Classification using Deep Neural Networks")). We present this table in order to
+    get insights about the recently preferred classification models and query strategy
+    classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can draw multiple conclusions from Table [1](#S4.T1 "Table 1 ‣ 4.2 Text
+    Classification for Active Learning ‣ 4 Active Learning for Text Classification
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks"):
+    It is obvious that a significant majority of these query strategies belong to
+    the class of prediction-based query strategies, more specifically to the prediction-uncertainty
+    and disagreement-based sub-classes. In addition to that, we can identify several
+    shortcomings: First, in many experiments two or more standard datasets are evaluated,
+    but very often there is little to no intersection between the experiments in terms
+    of their datasets. As a result we lose comparability against previous research.
+    For recent research, this can seen in Table [1](#S4.T1 "Table 1 ‣ 4.2 Text Classification
+    for Active Learning ‣ 4 Active Learning for Text Classification ‣ A Survey of
+    Active Learning for Text Classification using Deep Neural Networks"), where the
+    only larger intersections is between the works of [[104](#bib.bibx104)] and [[60](#bib.bibx60)].
+    [[90](#bib.bibx90)] provide at least some comparability against [[104](#bib.bibx104)]
+    and [[60](#bib.bibx60)] through one dataset each. Additionally, RMA [[3](#bib.bibx3)]
+    is a subset of R21 [[54](#bib.bibx54)], which are used by [[10](#bib.bibx10)]
+    and [[44](#bib.bibx44)], so they might be comparable to some degree. [[78](#bib.bibx78)]
+    are the only ones to evaluate on the more recent large-scale text classification
+    datasets [[103](#bib.bibx103)], and although these datasets are more realistic
+    in terms of their size, the authors omitted the classic datasets, so it is difficult
+    to relate their contributions to previous work. Moreover, as a result of this,
+    we do not know if and to what degree past experiments generalize to DNNs [[78](#bib.bibx78)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, it is not clear if recent (D)NNs benefit from the same query strategies,
+    i.e. past findings may not apply to modern NN architectures: [[78](#bib.bibx78)]
+    identified contradicting statements in recent literature about the effectiveness
+    of using prediction uncertainty in combination with NNs. They achieved competitive
+    results using a FastText.zip (FTZ) model and a prediction uncertainty query strategy,
+    which proved to be very effective while requiring only a small amount of data,
+    despite all reported weaknesses concering NNs and uncertainty estimates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Open Research Questions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Uncertainty Estimates in Neural Networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In Section [3](#S3 "3 Active Learning ‣ A Survey of Active Learning for Text
+    Classification using Deep Neural Networks") it was illustrated that uncertainty-based
+    strategies have been used successfully in combination with non-NN models, and
+    in Section [4.3](#S4.SS3 "4.3 Commonalities and Limitations of Previous Experiments
+    ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning for
+    Text Classification using Deep Neural Networks") it was shown that they also account
+    for the largest fraction of query strategies in recent NN-based AL. Unfortunately,
+    uncertainty in NNs is still challenging due to inaccurate uncertainty estimates,
+    or limited scalability (as described in Section [3.2](#S3.SS2.SSS0.Px2 "Uncertainty
+    in Neural Networks ‣ 3.2 Neural-Network-Based Active Learning ‣ 3 Active Learning
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As outlined in Section [4.1](#S4.SS1 "4.1 Recent Advances in Text Classification
+    ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning for
+    Text Classification using Deep Neural Networks"), the use of text representations
+    in NLP has shifted from bag-of-words to static and contextualized word embeddings.
+    These representations evidentially provide many advantages like disambiguation
+    capabilities, non-sparse vectors, and an increase in performance for many tasks.
+    Although there have been some applications [[104](#bib.bibx104), [78](#bib.bibx78),
+    [61](#bib.bibx61)], there is no AL-specific systematic evaluation to compare word
+    embeddings and LMs using NNs. Moreover, they are currently only scarcely used,
+    which hints at either a slow adoption, or some non-investigated practical issues.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Small Data DNNs
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: DL approaches are usually applied in the context of large datasets. AL, however,
+    necessarily intends to keep the (labeled) dataset as small as possible. In Section
+    [3](#S3 "3 Active Learning ‣ A Survey of Active Learning for Text Classification
+    using Deep Neural Networks") we outlined why small datasets can be challenging
+    for DNNs, and as a direct consequence as well for DNN-based AL. Using pre-trained
+    language models, this problem is alleviated to some degree because fine-tuning
+    allows training models using considerably smaller datasets. Nonetheless, it is
+    to be investigated how little data is still necessary to successfully fine-tune
+    a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparable Evaluations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In Section [4.3](#S4.SS3 "4.3 Commonalities and Limitations of Previous Experiments
+    ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning for
+    Text Classification using Deep Neural Networks") we provided an overview of the
+    most common AL strategies for text classification. Unfortunately, the combinations
+    of datasets used in the experiments are often completely disjoint, e.g. [[90](#bib.bibx90)],
+    [[60](#bib.bibx60)], and [[78](#bib.bibx78)]. As a consequence, comparability
+    is decreased or even lost, especially between more recent and past work. Comparibility
+    is, however, crucial to verify if past insights regarding shallow NN-based AL
+    still apply in context of DNN-based AL [[78](#bib.bibx78)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning to Learn
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There is an abundance of query strategies to choose from, which we have (non-exhaustively)
+    categorized in Section [3.1](#S3.SS1 "3.1 Query Strategies ‣ 3 Active Learning
+    ‣ A Survey of Active Learning for Text Classification using Deep Neural Networks").
+    This introduces the problem of choosing the optimal strategy. The right choice
+    depends on many factors like data, model, or task, and can even vary between different
+    iterations during the AL process. As a result, learning to learn (or meta-learning)
+    has become popular and can be used to learn the optimal selection [[42](#bib.bibx42)],
+    or even learn query strategies as a whole [[6](#bib.bibx6), [49](#bib.bibx49)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this survey, we investigated (D)NN-based AL for text classification and inspected
+    factors obstructing its adoption. We created a taxonomy, distinguishing query
+    strategies by their reliance on data-based, model-based, and prediction-based
+    input information. We analyzed query strategies used in AL for text classification
+    and categorized them into the respective taxonomy classes. We presented the intersection
+    between AL, text classification and DNNs, which is to the best of our knowledge
+    the first survey of this topic. Furthermore, we reviewed (D)NN-based AL, identified
+    current challenges and state of the art, and pointed out that it is both underresearched
+    and often lacks comparability. In addition to that, we presented relevant recent
+    advances in NLP, related them to AL, and showed gaps and limitations for their
+    application. One of our main findings is that uncertainty-based query strategies
+    are still the most widely used class, regardless of whether the analysis is restricted
+    to NNs. LM-based representations offer finer-grained context-specific representations
+    while also handling out-of-vocabulary words. Moreover, we find fine-tuning-based
+    transfer learning alleviates the small data problem to some degree but lacks adoption.
+    Most important DNNs are known for their strong performance on many tasks and first
+    adoptions in AL have shown promising results [[104](#bib.bibx104), [90](#bib.bibx90)].
+    All these gains would be highly desirable for AL. Therefore improving the adoption
+    of DNNs in AL is crucial, especially since the expected increases in performance
+    could be either used to improve the classification results while using the same
+    amount of data or to increase the efficiency of the labeling process by reducing
+    the data and therefore the labeling efforts. Based on these findings we identify
+    research directions for future work in order to further advance (D)NN-based AL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We thank Gerhard Heyer for his valuable feedback on the manuscript, Lydia Müller
+    for fruitful discussions about the taxonomy and advice thereon, and Janos Borst
+    for sharing his thoughts on recent advances in language models. This research
+    was partially funded by the Development Bank of Saxony (SAB) under project number
+    100335729.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Charu C. Aggarwal et al. “Active Learning: A Survey” In *Data Classification:
+    Algorithms and Applications* CRC Press, 2014, pp. 571–606'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] Bang An, Wenjun Wu and Huimin Han “Deep Active Learning for Text Classification”
+    In *Proceedings of the 2nd International Conference on Vision, Image and Signal
+    Processing - ICVISP 2018* Las Vegas, NV, USA: ACM Press, 2018, pp. 1–6'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Chidanand Apté, Fred Damerau and Sholom M. Weiss “Towards Language Independent
+    Automated Learning of Text Categorization Models” In *Proceedings of the 17th
+    Annual International ACM SIGIR Conference on Research and Development in Information
+    Retrieval*, SIGIR ’94, 1994, pp. 23–30'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] David Arthur and Sergei Vassilvitskii “K-Means++: The Advantages of Careful
+    Seeding” In *Proceedings of the Eighteenth Annual ACM-SIAM Symposium on Discrete
+    Algorithms*, SODA ’07 New Orleans, Louisiana: Society for IndustrialApplied Mathematics,
+    2007, pp. 1027–1035'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Jordan T. Ash et al. “Deep Batch Active Learning by Diverse, Uncertain
+    Gradient Lower Bounds” arXiv: 1906.03671 In *arXiv:1906.03671 [cs, stat]*, 2019
+    URL: [http://arxiv.org/abs/1906.03671](http://arxiv.org/abs/1906.03671)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Philip Bachman, Alessandro Sordoni and Adam Trischler “Learning Algorithms
+    for Active Learning” In *Proceedings of the 34th International Conference on Machine
+    Learning* 70, ICML’17 JMLR.org, 2017, pp. 301–310'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Mark Belford, Brian Mac Namee and Derek Greene “Stability of Topic Modeling
+    via Matrix Factorization” In *Expert Systems with Applications* 91.C USA: Pergamon
+    Press, Inc., 2018, pp. 159–169'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Yoshua Bengio “Deep Learning of Representations for Unsupervised and Transfer
+    Learning” In *Proceedings of the 2011 International Conference on Unsupervised
+    and Transfer Learning Workshop* 27, UTLW’11, 2011, pp. 17–36'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] John Blitzer, Mark Dredze and Fernando Pereira “Biographies, Bollywood,
+    Boom-boxes and Blenders: Domain Adaptation for Sentiment Classification” In *Proceedings
+    of the 45th Annual Meeting of the Association of Computational Linguistics*, 2007,
+    pp. 440–447'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Michael Bloodgood “Support Vector Machine Active Learning Algorithms with
+    Query-by-Committee Versus Closest-to-Hyperplane Selection” In *2018 IEEE 12th
+    International Conference on Semantic Computing (ICSC)*, 2018, pp. 148–155'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Charles Blundell, Julien Cornebise, Koray Kavukcuoglu and Daan Wierstra
+    “Weight Uncertainty in Neural Networks” In *Proceedings of the 32nd International
+    Conference on International Conference on Machine Learning - Volume 37*, ICML’15
+    JMLR.org, 2015, pp. 1613–1622'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] John Carney, Padraig Cunningham and Umesh Bhagwan “Confidence and prediction
+    intervals for neural network ensembles” In *Proceedings of the International Joint
+    Conference Neural Networks, IJCNN* IEEE, 1999, pp. 1215–1218'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Rich Caruana “Learning Many Related Tasks at the Same Time with Backpropagation”
+    In *Advances in Neural Information Processing Systems 7* MIT Press, 1995, pp.
+    657–664'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Kyunghyun Cho, Bart Van Merriënboer, Dzmitry Bahdanau and Yoshua Bengio
+    “On the Properties of Neural Machine Translation: Encoder–Decoder Approaches”
+    In *Proceedings of SSST-8, Eighth Workshop on Syntax, Semantics and Structure
+    in Statistical Translation* Association for Computational Linguistics, 2014, pp.
+    103–111'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Kevin Clark, Minh-Thang Luong and Quoc V. Le “ELECTRA: Pre-training Text
+    Encoders as Discriminators Rather Than Generators” In *arXiv preprint arXiv:2003.10555*,
+    2020'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] David Cohn, Les Atlas and Richard Ladner “Improving Generalization with
+    Active Learning” In *Machine Learning* 15.2, 1994, pp. 201–221'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Zihang Dai et al. “Transformer-XL: Attentive Language Models beyond a
+    Fixed-Length Context” In *Proceedings of the 57th Annual Meeting of the Association
+    for Computational Linguistics* Association for Computational Linguistics, 2019,
+    pp. 2978–2988'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Sanjoy Dasgupta and Daniel Hsu “Hierarchical Sampling for Active Learning”
+    In *Proceedings of the 25th International Conference on Machine Learning*, ICML
+    ’08 Helsinki, Finland: Association for Computing Machinery, 2008, pp. 208–215'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Sarah Jane Delany, Pádraig Cunningham, Alexey Tsymbal and Lorcan Coyle
+    “A case-based technique for tracking concept drift in spam filtering” In *Knowledge-Based
+    Systems* 18.4, 2005, pp. 187–195'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Jacob Devlin, Ming-Wei Chang, Kenton Lee and Kristina Toutanova “BERT:
+    Pre-training of Deep Bidirectional Transformers for Language Understanding” In
+    *Proceedings of the 2019 Conference of the North American Chapter of the Association
+    for Computational Linguistics: Human Language Technologies, Volume 1 (Long and
+    Short Papers)* Association for Computational Linguistics, 2019, pp. 4171–4186'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Xiaowen Ding, Bing Liu and Philip S. Yu “A Holistic Lexicon-Based Approach
+    to Opinion Mining” In *Proceedings of the 2008 International Conference on Web
+    Search and Data Mining*, WSDM ’08 Palo Alto, California, USA: Association for
+    Computing Machinery, 2008, pp. 231–240'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Melanie Ducoffe and Frederic Precioso “Adversarial Active Learning for
+    Deep Networks: a Margin Based Approach” In *arXiv preprint arXiv:1802.09841*,
+    2018 URL: [http://arxiv.org/abs/1802.09841](http://arxiv.org/abs/1802.09841)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] C.. Fall, A. Törcsvári, K. Benzineb and G. Karetka “Automated Categorization
+    in the International Patent Classification” In *ACM SIGIR Forum* 37.1 New York,
+    NY, USA: Association for Computing Machinery, 2003, pp. 10–25'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Rosa L. Figueroa et al. “Active learning for clinical text classification:
+    is it better than random sampling?” In *Journal of the American Medical Informatics
+    Association* 19.5, 2012, pp. 809–816'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Yifan Fu, Xingquan Zhu and Bin Li “A survey on instance selection for
+    active learning” In *Knowledge and Information Systems* 35.2, 2013, pp. 249–283'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Yarin Gal “Uncertainty in Deep Learning”, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Yarin Gal and Zoubin Ghahramani “Dropout as a Bayesian Approximation:
+    Representing Model Uncertainty in Deep Learning” In *Proceedings of the 33rd International
+    Conference on International Conference on Machine Learning* 48, ICML’16 New York,
+    NY, USA: JMLR.org, 2016, pp. 1050–1059'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Vijay Garla, Caroline Taylor and Cynthia Brandt “Semi-supervised clinical
+    text classification with Laplacian SVMs: An application to cancer case management”
+    In *Journal of Biomedical Informatics* 46.5, 2013, pp. 869–875'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Daniel Gissin and Shai Shalev-Shwartz “Discriminative Active Learning”
+    arXiv: 1907.06347 In *arXiv preprint arXiv:1907.06347*, 2019 URL: [http://arxiv.org/abs/1907.06347](http://arxiv.org/abs/1907.06347)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] Ian J. Goodfellow et al. “Generative Adversarial Nets” In *Proceedings
+    of the 27th International Conference on Neural Information Processing Systems
+    - Volume 2*, NIPS’14 Cambridge, MA, USA: MIT Press, 2014, pp. 2672–2680'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Alex Graves and Jürgen Schmidhuber “Framewise phoneme classification with
+    bidirectional LSTM and other neural network architectures” In *Neural networks*
+    18.5, 2005, pp. 602–610'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Antonio Gulli “AG’s Corpus of News Articles” Online; visited on 02/11/2020,
+    [http://groups.di.unipi.it/~gulli/AG_corpus_of_news_articles.html](http://groups.di.unipi.it/~gulli/AG_corpus_of_news_articles.html),
+    2005'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Chuan Guo, Geoff Pleiss, Yu Sun and Kilian Q. Weinberger “On Calibration
+    of Modern Neural Networks” In *Proceedings of the 34th International Conference
+    on Machine Learning* 70, ICML’17 JMLR.org, 2017, pp. 1321–1330'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Yuhong Guo and Dale Schuurmans “Discriminative Batch Mode Active Learning”
+    In *Proceedings of the 20th International Conference on Neural Information Processing
+    Systems*, NIPS’07 Vancouver, British Columbia, Canada: Curran Associates Inc.,
+    2007, pp. 593–600'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Gholamreza Haffari and Anoop Sarkar “Active Learning for Multilingual
+    Statistical Machine Translation” In *Proceedings of the Joint Conference of the
+    47th Annual Meeting of the ACL and the 4th International Joint Conference on Natural
+    Language Processing of the AFNLP* 1, ACL ’09 Suntec, Singapore: Association for
+    Computational Linguistics, 2009, pp. 181–189'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Tom Heskes “Practical Confidence and Prediction Intervals” In *Proceedings
+    of the 9th International Conference on Neural Information Processing Systems*,
+    NIPS’96 MIT Press, 1996, pp. 176–182'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Geoffrey Hinton and Ruslan Salakhutdinov “Reducing the dimensionality
+    of data with neural networks” In *Science* 313.5786 American Association for the
+    Advancement of Science, 2006, pp. 504–507'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Sepp Hochreiter and Jürgen Schmidhuber “Long Short-Term Memory” In *Neural
+    Computation* 9.8 MIT Press, 1997, pp. 1735–1780 URL: [https://doi.org/10.1162/neco.1997.9.8.1735](https://doi.org/10.1162/neco.1997.9.8.1735)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] Steven C.. Hoi, Rong Jin and Michael R. Lyu “Large-Scale Text Categorization
+    by Batch Mode Active Learning” In *Proceedings of the 15th International Conference
+    on World Wide Web*, WWW ’06 Edinburgh, Scotland: Association for Computing Machinery,
+    2006, pp. 633–642'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Neil Houlsby, Ferenc Huszár, Zoubin Ghahramani and Máté Lengyel “Bayesian
+    Active Learning for Classification and Preference Learning” arXiv: 1112.5745 In
+    *arXiv:1112.5745 [cs, stat]*, 2011 URL: [http://arxiv.org/abs/1112.5745](http://arxiv.org/abs/1112.5745)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] Jeremy Howard and Sebastian Ruder “Universal Language Model Fine-tuning
+    for Text Classification” In *Proceedings of the 56th Annual Meeting of the Association
+    for Computational Linguistics (Volume 1: Long Papers)* Association for Computational
+    Linguistics, 2018, pp. 328–339'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Wei-Ning Hsu and Hsuan-Tien Lin “Active Learning by Learning” In *Proceedings
+    of the Twenty-Ninth AAAI Conference on Artificial Intelligence*, AAAI’15 AAAI
+    Press, 2015, pp. 2659–2665'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Minqing Hu and Bing Liu “Mining and Summarizing Customer Reviews” In *Proceedings
+    of the Tenth ACM SIGKDD International Conference on Knowledge Discovery and Data
+    Mining*, KDD ’04 Seattle, WA, USA: Association for Computing Machinery, 2004,
+    pp. 168–177'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] Rong Hu, Brian Mac Namee and Sarah Jane Delany “Active Learning for Text
+    Classification with Reusability” In *Expert Systems with Applications* 45.C USA:
+    Pergamon Press, Inc., 2016, pp. 438–449'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Thorsten Joachims “A Probabilistic Analysis of the Rocchio Algorithm with
+    TFIDF for Text Categorization” In *Proceedings of the Fourteenth International
+    Conference on Machine Learning*, ICML ’97, 1997, pp. 143–151'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] Armand Joulin, Edouard Grave, Piotr Bojanowski and Tomas Mikolov “Bag
+    of Tricks for Efficient Text Classification” In *Proceedings of the 15th Conference
+    of the European Chapter of the Association for Computational Linguistics: Volume
+    2, Short Papers* Association for Computational Linguistics, 2017, pp. 427–431'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] Armand Joulin et al. “FastText.zip: Compressing text classification models”
+    arXiv: 1612.03651 In *arXiv:1612.03651 [cs]*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] Yoon Kim “Convolutional Neural Networks for Sentence Classification” In
+    *Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing
+    (EMNLP)* Association for Computational Linguistics, 2014, pp. 1746–1751 URL: [https://www.aclweb.org/anthology/D14-1181](https://www.aclweb.org/anthology/D14-1181)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Ksenia Konyushkova, Sznitman Raphael and Pascal Fua “Learning Active Learning
+    from Data” In *Proceedings of the 31st International Conference on Neural Information
+    Processing Systems*, NIPS’17 Curran Associates Inc., 2017, pp. 4228–4238'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] Anders Krogh and Jesper Vedelsby “Neural Network Ensembles, Cross Validation
+    and Active Learning” In *Proceedings of the 7th International Conference on Neural
+    Information Processing Systems*, NIPS’94 MIT Press, 1994, pp. 231–238'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] Balaji Lakshminarayanan, Alexander Pritzel and Charles Blundell “Simple
+    and Scalable Predictive Uncertainty Estimation Using Deep Ensembles” In *Proceedings
+    of the 31st International Conference on Neural Information Processing Systems*,
+    NIPS’17 Long Beach, California, USA: Curran Associates Inc., 2017, pp. 6405–6416'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Leah S. Larkey “A patent search and classification system” In *Proceedings
+    of the fourth ACM conference on Digital libraries - DL ’99* ACM Press, 1999, pp.
+    179–187'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] Quoc Le and Tomas Mikolov “Distributed Representations of Sentences and
+    Documents” In *Proceedings of the 31st International Conference on International
+    Conference on Machine Learning* 32, ICML’14 JMLR.org, 2014, pp. 1188–1196'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] David D. Lewis “Reuters-21578 corpus” Online. Visited on 02/14/2020, [http://www.daviddlewis.com/resources/testcollections/reuters21578/](http://www.daviddlewis.com/resources/testcollections/reuters21578/),
+    1997'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] David D. Lewis and William A. Gale “A Sequential Algorithm for Training
+    Text Classifiers” In *Proceedings of the 17th Annual International ACM SIGIR Conference
+    on Research and Development in Information Retrieval*, SIGIR ’94 Springer, 1994,
+    pp. 3–12'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] David D. Lewis, Yiming Yang, Tony G. Rose and Fan Li “RCV1: A New Benchmark
+    Collection for Text Categorization Research” In *J. Mach. Learn. Res.* 5 JMLR.org,
+    2004, pp. 361–397'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] Xin Li and Dan Roth “Learning Question Classifiers” In *Proceedings of
+    the 19th International Conference on Computational Linguistics* 1, COLING ’02
+    Taipei, Taiwan: Association for Computational Linguistics, 2002, pp. 1–7 DOI:
+    [10.3115/1072228.1072378](https://dx.doi.org/10.3115/1072228.1072378)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] Ray Liere and Prasad Tadepalli “Active Learning with Committees for Text
+    Categorization” In *Proceedings of the Fourteenth National Conference on Artificial
+    Intelligence and Ninth Conference on Innovative Applications of Artificial Intelligence*,
+    AAAI’97/IAAI’97 AAAI Press, 1997, pp. 591–596'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] Yinhan Liu et al. “RoBERTa: A Robustly Optimized BERT Pretraining Approach”
+    arXiv: 1907.11692 In *arXiv:1907.11692 [cs]*, 2019 URL: [http://arxiv.org/abs/1907.11692](http://arxiv.org/abs/1907.11692)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] David Lowell, Zachary C. Lipton and Byron C. Wallace “Practical Obstacles
+    to Deploying Active Learning” In *Proceedings of the 2019 Conference on Empirical
+    Methods in Natural Language Processing and the 9th International Joint Conference
+    on Natural Language Processing (EMNLP-IJCNLP)* Association for Computational Linguistics,
+    2019, pp. 21–30'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] Jinghui Lu and Brian MacNamee “Investigating the Effectiveness of Representations
+    Based on Pretrained Transformer-based Language Models in Active Learning for Labelling
+    Text Datasets” In *arXiv preprint arXiv:2004.13138*, 2020'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] David JC MacKay “The Evidence Framework Applied to Classification Networks”
+    In *Neural Computation* 4.5 MIT Press, 1992, pp. 720–736'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] Prem Melville and Raymond J. Mooney “Diverse Ensembles for Active Learning”
+    In *Proceedings of the Twenty-First International Conference on Machine Learning*,
+    ICML ’04 Banff, Alberta, Canada: Association for Computing Machinery, 2004, pp.
+    584–591'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] Stephen Merity, Nitish Shirish Keskar and Richard Socher “Regularizing
+    and optimizing LSTM language models” In *arXiv preprint arXiv:1708.02182*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] Tomas Mikolov et al. “Distributed Representations of Words and Phrases
+    and Their Compositionality” In *Proceedings of the 26th International Conference
+    on Neural Information Processing Systems* 2, NIPS’13 Red Hook, NY, USA: Curran
+    Associates Inc., 2013, pp. 3111–3119'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] Tomas Mikolov, Kai Chen, Greg Corrado and Jeffrey Dean “Efficient Estimation
+    of Word Representations in Vector Space” In *1st International Conference on Learning
+    Representations, ICLR 2013, Scottsdale, Arizona, USA, May 2-4, 2013, Workshop
+    Track Proceedings*, 2013'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] Arjun Mukherjee and Bing Liu “Improving Gender Classification of Blog
+    Authors” In *Proceedings of the 2010 Conference on Empirical Methods in Natural
+    Language Processing*, EMNLP ’10 Cambridge, Massachusetts: Association for Computational
+    Linguistics, 2010, pp. 207–217'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] Hieu T. Nguyen and Arnold Smeulders “Active Learning Using Pre-Clustering”
+    In *Proceedings of the Twenty-First International Conference on Machine Learning*,
+    ICML ’04 New York, NY, USA: Association for Computing Machinery, 2004, pp. 623–630
+    DOI: [10.1145/1015330.1015349](https://dx.doi.org/10.1145/1015330.1015349)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] Kamal Nigam, Andrew McCallum, Sebastian Thrun and Tom M. Mitchell “Text
+    Classification from Labeled and Unlabeled Documents using EM” In *Machine Learning*
+    39, 2000, pp. 103–134'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] David A. Nix and Andreas S. Weigend “Learning Local Error Bars for Nonlinear
+    Regression” In *Advances in Neural Information Processing Systems 7*, NIPS’94
+    MIT Press, 1995, pp. 489–496'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] Fredrik Olsson “A literature survey of active machine learning in the
+    context of natural language processing”, SICS Technical Report Swedish Institute
+    of Computer Science, 2009, pp. 59'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] Bo Pang and Lillian Lee “A Sentimental Education: Sentiment Analysis Using
+    Subjectivity Summarization Based on Minimum Cuts” In *Proceedings of the 42nd
+    Annual Meeting on Association for Computational Linguistics*, ACL ’04 USA: Association
+    for Computational Linguistics, 2004, pp. 271–278'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] Bo Pang and Lillian Lee “Seeing Stars: Exploiting Class Relationships
+    for Sentiment Categorization with Respect to Rating Scales” In *Proceedings of
+    the 43rd Annual Meeting on Association for Computational Linguistics*, ACL ’05
+    Ann Arbor, Michigan: Association for Computational Linguistics, 2005, pp. 115–124'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] Jeffrey Pennington, Richard Socher and Christopher Manning “GloVe: Global
+    Vectors for Word Representation” In *Proceedings of the 2014 Conference on Empirical
+    Methods in Natural Language Processing (EMNLP)* Association for Computational
+    Linguistics, 2014, pp. 1532–1543'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] John P. Pestian et al. “A shared task involving multi-label classification
+    of clinical free text” In *Proceedings of the Workshop on BioNLP 2007: Biological,
+    Translational, and Clinical Language Processing*, BioNLP ’07 Prague, Czech Republic:
+    Association for Computational Linguistics, 2007, pp. 97–104 DOI: [10.3115/1572392.1572411](https://dx.doi.org/10.3115/1572392.1572411)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] Matthew E. Peters et al. “Deep contextualized word representations” arXiv:
+    1802.05365 In *arXiv:1802.05365 [cs]*, 2018 URL: [http://arxiv.org/abs/1802.05365](http://arxiv.org/abs/1802.05365)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Forough Poursabzi-Sangdeh, Jordan Boyd-Graber, Leah Findlater and Kevin
+    Seppi “ALTO: Active Learning with Topic Overviews for Speeding Label Induction
+    and Document Labeling” In *Proceedings of the 54th Annual Meeting of the Association
+    for Computational Linguistics (Volume 1: Long Papers)* Association for Computational
+    Linguistics, 2016, pp. 1158–1169'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] Ameya Prabhu, Charles Dognin and Maneesh Singh “Sampling Bias in Deep
+    Active Classification: An Empirical Study” In *Proceedings of the 2019 Conference
+    on Empirical Methods in Natural Language Processing and the 9th International
+    Joint Conference on Natural Language Processing (EMNLP-IJCNLP)* Association for
+    Computational Linguistics, 2019, pp. 4058–4068'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] Lorien Y. Pratt, Jack Mostow, Candace A. Kamm and Ace A. Kamm “Direct
+    Transfer of Learned Information Among Neural Networks.” In *AAAI* 91, 1991, pp.
+    584–589'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] Nils Reimers and Iryna Gurevych “Sentence-BERT: Sentence Embeddings using
+    Siamese BERT-Networks” In *Proceedings of the 2019 Conference on Empirical Methods
+    in Natural Language Processing and the 9th International Joint Conference on Natural
+    Language Processing (EMNLP-IJCNLP)* Association for Computational Linguistics,
+    2019, pp. 3982–3992'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] Nicholas Roy and Andrew McCallum “Toward Optimal Active Learning through
+    Sampling Estimation of Error Reduction” In *Proceedings of the Eighteenth International
+    Conference on Machine Learning*, ICML ’01 Morgan Kaufmann Publishers Inc., 2001,
+    pp. 441–448'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] Victor Sanh, Lysandre Debut, Julien Chaumond and Thomas Wolf “DistilBERT,
+    a distilled version of BERT: smaller, faster, cheaper and lighter” In *arXiv preprint
+    arXiv:1910.01108*, 2020'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] Greg Schohn and David Cohn “Less is More: Active Learning with Support
+    Vector Machines” In *Proceedings of the Seventeenth International Conference on
+    Machine Learning (ICML 2000)* Morgan Kaufmann, 2000, pp. 839–846'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] Ozan Sener and Silvio Savarese “Active Learning for Convolutional Neural
+    Networks: A Core-Set Approach” In *6th International Conference on Learning Representations,
+    ICLR 2018, Conference Track Proceedings*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] Burr Settles “Active Learning Literature Survey”, 2010'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] Burr Settles, Mark Craven and Soumya Ray “Multiple-Instance Active Learning”
+    In *Proceedings of the 20th International Conference on Neural Information Processing
+    Systems*, NIPS’07 Vancouver, British Columbia, Canada: Curran Associates Inc.,
+    2007, pp. 1289–1296'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] Manali Sharma and Mustafa Bilgic “Evidence-Based Uncertainty Sampling
+    for Active Learning” In *Data Mining and Knowledge Discovery* 31.1 Kluwer Academic
+    Publishers, 2017, pp. 164–202'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] Dan Shen et al. “Multi-Criteria-Based Active Learning for Named Entity
+    Recognition” In *Proceedings of the 42nd Annual Meeting on Association for Computational
+    Linguistics*, ACL ’04 USA: Association for Computational Linguistics, 2004, pp.
+    589–596'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] Yanyao Shen et al. “Deep Active Learning for Named Entity Recognition”
+    In *arXiv preprint arXiv:1707.05928*, 2018 URL: [http://arxiv.org/abs/1707.05928](http://arxiv.org/abs/1707.05928)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] Aditya Siddhant and Zachary C. Lipton “Deep Bayesian Active Learning for
+    Natural Language Processing: Results of a Large-Scale Empirical Study” In *Proceedings
+    of the 2018 Conference on Empirical Methods in Natural Language Processing* Association
+    for Computational Linguistics, 2018, pp. 2904–2909'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] Nitish Srivastava et al. “Dropout: A Simple Way to Prevent Neural Networks
+    from Overfitting” In *The Journal of Machine Learning Research* 15.1 JMLR.org,
+    2014, pp. 1929–1958'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] Chi Sun, Xipeng Qiu, Yige Xu and Xuanjing Huang “How to Fine-Tune BERT
+    for Text Classification?” In *arXiv preprint arXiv:1905.05583*, 2020'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] Luke Taylor and Geoff Nitschke “Improving Deep Learning with Generic Data
+    Augmentation” In *2018 IEEE Symposium Series on Computational Intelligence (SSCI)*,
+    2018, pp. 1542–1547'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] Katrin Tomanek and Udo Hahn “Reducing Class Imbalance during Active Learning
+    for Named Entity Annotation” In *Proceedings of the Fifth International Conference
+    on Knowledge Capture*, K-CAP ’09 Association for Computing Machinery, 2009, pp.
+    105–112'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] Simon Tong and Daphne Koller “Support Vector Machine Active Learning with
+    Applications to Text Classification” In *Journal of Machine Learning Research*
+    2, 2001, pp. 45–66'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] Alexander Vezhnevets, Joachim M. Buhmann and Vittorio Ferrari “Active
+    learning for semantic segmentation with expected change” In *2012 IEEE Conference
+    on Computer Vision and Pattern Recognition*, 2012, pp. 3162–3169'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] Raimar Wagner et al. “Learning convolutional neural networks from few
+    samples” In *The 2013 International Joint Conference on Neural Networks (IJCNN)*
+    IEEE, 2013, pp. 1–7 URL: [http://ieeexplore.ieee.org/document/6706969/](http://ieeexplore.ieee.org/document/6706969/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] Byron C. Wallace et al. “A large-scale quantitative analysis of latent
+    factors and sentiment in online doctor reviews” In *Journal of the American Medical
+    Informatics Association* 21.6, 2014, pp. 1098–1103'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] Canhui Wang, Min Zhang, Shaoping Ma and Liyun Ru “Automatic Online News
+    Issue Construction in Web Environment” In *Proceedings of the 17th International
+    Conference on World Wide Web*, WWW ’08 Beijing, China: Association for Computing
+    Machinery, 2008, pp. 457–466'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] Jason Wang and Luis Perez “The Effectiveness of Data Augmentation in
+    Image Classification using Deep Learning” In *arXiv preprint arXiv:1712.04621*,
+    2017, pp. 11'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Zhao Xu et al. “Representative sampling for text classification using
+    support vector machines” In *Proceedings of the 25th European Conference on IR
+    Research*, ECIR’03 Pisa, Italy: Springer-Verlag, 2003, pp. 393–407'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] Zhilin Yang et al. “XLNet: Generalized Autoregressive Pretraining for
+    Language Understanding” In *Advances in Neural Information Processing Systems
+    32* Curran Associates, Inc., 2019, pp. 5753–5763'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] Xiang Zhang, Junbo Zhao and Yann LeCun “Character-Level Convolutional
+    Networks for Text Classification” In *Proceedings of the 28th International Conference
+    on Neural Information Processing Systems* 1, NIPS’15 Montreal, Canada: MIT Press,
+    2015, pp. 649–657'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] Ye Zhang, Matthew Lease and Byron C. Wallace “Active Discriminative Text
+    Representation Learning” In *Proceedings of the Thirty-First AAAI Conference on
+    Artificial Intelligence*, AAAI’17 AAAI Press, 2017, pp. 3386–3392'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] Yizhe Zhang et al. “Adversarial Feature Matching for Text Generation”
+    In *Proceedings of the 34th International Conference on Machine Learning* 70,
+    ICML’17 JMLR.org, 2017, pp. 4006–4015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] Jia-Jie Zhu and José Bento “Generative Adversarial Active Learning” In
+    *arXiv preprint arXiv:1702.07956*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Appendix A Appendix
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A.1 Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The following table provides additional information about the datasets which
+    were referred to in Section [4.2](#S4.SS2 "4.2 Text Classification for Active
+    Learning ‣ 4 Active Learning for Text Classification ‣ A Survey of Active Learning
+    for Text Classification using Deep Neural Networks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: A collection of widely-used text classification datasets. The column
+    "Type" denotes the classification setting (B = binary, MC = multi-class, ML =
+    multi-class multi-label). The columns "#Train" and "#Test" show the size of the
+    train and of the test set. In the case that no predefined splits were available
+    "#Train" represents the full dataset’s size. Each dataset was assigned a short
+    id (first column), which we use in the paper for reference.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(*): documents, (**) labels reduced to positive/negative, (***) 20news-bydate
+    with duplicates removed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Id | Name | Type | Publication | #Train | #Test |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TQA | TREC QA | MC | [[57](#bib.bibx57)] | 5,500 | 500 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CR | Customer Reviews | MC | [[43](#bib.bibx43)] | ^*315 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ACR | Additional Customer Reviews | MC | [[21](#bib.bibx21)] | ^*325 | -
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MDS | Multi-Domain Sentiment | B | [[9](#bib.bibx9)] | ^(**)8,000 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BAG | Blog Author Gender | B | [[67](#bib.bibx67)] | 3,100 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| G13 | Guardian 2013 | MC | [[7](#bib.bibx7)] | 6,520 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MR | Movie Reviews | B | [[73](#bib.bibx73)] | 10,662 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MRL | Movie Reviews Long | B | [[72](#bib.bibx72)] | 2,000 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MUR | Music Review | B | [[9](#bib.bibx9)] | 2,000 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR | Doctor Reviews | MC | [[98](#bib.bibx98)] | 58,110 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SJ | Subjectivity | B | [[72](#bib.bibx72)] | 10,000 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 20N | 20newsgroups | MC | [[45](#bib.bibx45)] | ^(***)18,846 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| R21 | Reuters-21578 | ML | [[54](#bib.bibx54)] | 21578 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RMA | Reuters ModApté | ML | [[3](#bib.bibx3)] | 9,603 | 3,299 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RV2 | RCV1-V2 | ML | [[56](#bib.bibx56)] | 23,149 | 781,265 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPM | Spam | B | [[19](#bib.bibx19)] | 1,000 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AGN | AG News | MC | [[32](#bib.bibx32)] [[103](#bib.bibx103)] | 120,000
+    | 7,600 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SGN | Sogou News | MC | [[99](#bib.bibx99)] | 450,000 | 60,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DBP | DBPedia | MC | [[103](#bib.bibx103)] | 560,000 | 70,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| YRP | Yelp Review Polarity | B | [[103](#bib.bibx103)] | 560,000 | 38,000
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| YRF | Yelp Review Full | MC | [[103](#bib.bibx103)] | 650,000 | 50,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| YAH | Yahoo! Answers | MC | [[103](#bib.bibx103)] | 1,400,000 | 60,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ARP | Amazon Review Polarity | B | [[103](#bib.bibx103)] | 3,600,000 | 40,000
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ARF | Amazon Review Full | MC | [[103](#bib.bibx103)] | 3,000,000 | 650,000
+    |'
+  prefs: []
+  type: TYPE_TB

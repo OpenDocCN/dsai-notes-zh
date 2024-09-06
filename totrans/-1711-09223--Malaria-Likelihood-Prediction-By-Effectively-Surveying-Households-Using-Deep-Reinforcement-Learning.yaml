@@ -1,0 +1,444 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:08:34'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1711.09223] Malaria Likelihood Prediction By Effectively Surveying Households
+    Using Deep Reinforcement Learning'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/1711.09223](https://ar5iv.labs.arxiv.org/html/1711.09223)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Malaria Likelihood Prediction By Effectively Surveying Households Using Deep
+    Reinforcement Learning
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Pranav Rajpurkar
+  prefs: []
+  type: TYPE_NORMAL
+- en: Department of Computer Science
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stanford University
+  prefs: []
+  type: TYPE_NORMAL
+- en: pranavsr@cs.stanford.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: \AndVinaya Polamreddi
+  prefs: []
+  type: TYPE_NORMAL
+- en: Department of Computer Science
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stanford University
+  prefs: []
+  type: TYPE_NORMAL
+- en: vinaya.polamreddi@cs.stanford.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: \ANDAnusha Balakrishnan
+  prefs: []
+  type: TYPE_NORMAL
+- en: Department of Computer Science
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stanford University
+  prefs: []
+  type: TYPE_NORMAL
+- en: anusha@cs.stanford.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: We build a deep reinforcement learning (RL) agent that can predict the likelihood
+    of an individual testing positive for malaria by asking questions about their
+    household. The RL agent learns to determine which survey question to ask next
+    and when to stop to make a prediction about their likelihood of malaria based
+    on their responses hitherto. The agent incurs a small penalty for each question
+    asked, and a large reward/penalty for making the correct/wrong prediction; it
+    thus has to learn to balance the length of the survey with the accuracy of its
+    final predictions. Our RL agent is a Deep Q-network that learns a policy directly
+    from the responses to the questions, with an action defined for each possible
+    survey question and for each possible prediction class. We focus on Kenya, where
+    malaria is a massive health burden, and train the RL agent on a dataset of 6481
+    households from the Kenya Malaria Indicator Survey 2015\. To investigate the importance
+    of having survey questions be adaptive to responses, we compare our RL agent to
+    a supervised learning (SL) baseline that fixes its set of survey questions a priori.
+    We evaluate on prediction accuracy and on the number of survey questions asked
+    on a holdout set and find that the RL agent is able to predict with 80% accuracy,
+    using only 2.5 questions on average. In addition, the RL agent learns to survey
+    adaptively to responses and is able to match the SL baseline in prediction accuracy
+    while significantly reducing survey length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/aa517faaba9beaf4bff16872a0c842fb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: The RL agent is able to effectively survey individuals to determine
+    their likelihood of testing positive for malaria by asking them questions about
+    their households. On this example, the agent correctly predicts that the individual
+    being surveyed is malaria positive.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We build a short mobile survey questionnaire that informs individuals of their
+    risk of malaria, aiming to improve malaria management at the national and individual
+    level. Making surveys short and available on mobile allows for quicker, cheaper
+    and more timely disease monitoring (Game, [2013](#bib.bib2)). In addition, making
+    people aware of their risk of having malaria promotes health seeking behaviors
+    (Torfin, [2017](#bib.bib9)). We focus on the Malaria Indicator Survey (MIS) in
+    Kenya, which plays a central role in assessing and guiding the public policy for
+    targeted malaria interventions (Torfin, [2017](#bib.bib9)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We use reinforcement learning (RL) to train an agent that learns to survey
+    individuals to accurately predict their likelihood of testing positive for malaria.
+    The agent is allowed a total of $k$ sequential decisions: at each time it can
+    decide whether to ask the individual another question or make a prediction about
+    the result of their malaria blood smear test based on the survey questions answered.
+    The agent incurs a small negative reward for every question asked, a large negative
+    reward for incorrect predictions, and a large positive reward for correct predictions.
+    The agent must thus learn to balance the cost of asking questions with the benefit
+    of making an accurate prediction.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our RL agent is a deep Q-network that learns a policy directly from the state
+    of the survey: the responses to the questions posed so far serve as input to a
+    convolutional neural network, which outputs a $Q$ value for every action. We define
+    the action space such that there is an action associated with each possible question
+    that can be asked and with each possible prediction class. To train the RL agent,
+    we use the Kenya MIS 2015, containing detailed surveys with individuals in their
+    households and biomarkers that include the results of their malaria blood smear
+    tests.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We investigate the benefits of a survey that is adaptive to responses by comparing
+    the RL agent against a supervised learning (SL) baseline that fixes the length
+    and the content of the survey beforehand. The SL baseline uses the response to
+    a fixed set of $k$ questions as input to a convolutional neural network, which
+    outputs the probability of testing negative and positive on the malaria test.
+    As $k$ increases the SL model has higher accuracy though it accumulates a higher
+    cost for asking more questions. On a holdout set, we evaluate agents on their
+    prediction accuracies and average survey length, and find that the RL agent learns
+    to predict the result of malaria test with $80\%$ accuracy asking only $2.5$ questions
+    on average, matching the accuracy of the SL baseline, but outperforming it on
+    survey length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We use the Kenya Malaria Indicator Survey 2015, a nationally representative
+    survey done to assess the progress of malaria interventions and monitor prevalence
+    across the target population (NMCP & Kenya National Bureau of Statistics, [KNBS](#bib.bib6)).
+    The survey contains data about 6,481 households, including information the use
+    of malaria nets in the household, ownership of household assets such as TV and
+    access to electricity, biomarker test results including a rapid diagnostic test
+    and a microscopic blood smear test that detect the presence of malaria parasites.
+    We focus on the household member recode survey, which has a record for every person
+    in the household.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Processing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We process the data to keep only categorical variables which have no more than
+    10 classes, and records for which there is no missing data. Because our focus
+    is on data that can be collected remotely through mobile surveys, we filter out
+    variables which can only be acquired in person such as biomarker test results.
+    We fix our output variable to be the result of the microscopy blood smear test
+    for malaria.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We then use Pearson’s chi-squared test of independence between each of the categorical
+    variables and the output variable (result of an individual’s blood smear test)
+    to retain the $8$ most correlated variables. The processed categorical variables
+    are shown in the appendix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0af10ad3a1853a7284ac9b1579252382.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: The agent interacts with the environment, deciding whether to perform
+    additional queries before making a prediction.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Setup
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The agent is tasked with a $c=2$ class prediction problem, but does not have
+    access to any of its input features (all initially $0$). Instead, it can query
+    any of its input features $F_{n}=[f_{0},..,f_{m}],m=8$, one at a time from the
+    environment at a cost $cost_{query}=-0.05$. The agent querying its input feature
+    $f_{i}$ is analogous to asking and getting the response to survey question $q_{i}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Within $T=k$ queries, the agent must make its prediction, and incurs a reward
+    of $r_{correct}=+1$ if correct, and $r_{wrong}=-1$ if wrong. Making a prediction
+    terminates the episode. If the agent makes a prediction before $2$ timesteps,
+    or does not make a prediction before the episode ends at $t=k$, it receives the
+    penalty of making a wrong prediction. Finally, we setup the problem such that
+    future rewards are undiscounted ($\gamma=1$).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Reinforcement Learning Agent
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We train a deep Q-Network (DQN) Mnih et al. ([2013](#bib.bib5)) to learn policies
+    directly from the results of the input feature queries made so far. The DQN outputs
+    a $Q$ value for every action in the action space, defined such that there is an
+    action associated with each possible query ($k$), and one with each possible prediction
+    class ($c$), a total of $k+c$ actions. The DQN uses a neural network architecture
+    with a $1\times 1$ convolutional layer Szegedy et al. ([2014](#bib.bib8)) followed
+    by $3$ fully connected layers. Each layer has $k+c$ hidden units, with a ReLU
+    activation after each hidden layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We train the DQN following the work of Mnih et al. ([2013](#bib.bib5)), using
+    experience replay and a target network to smooth out learning and avoid divergence
+    of the parameters. We use the Adam optimizer Kingma & Ba ([2014](#bib.bib4)) with
+    minibatches of size $32$, and a learning rate that is annealed linearly from $0.00025$
+    to $0.00005$. The behavior policy during training is $\epsilon-$greedy with $\epsilon$
+    linearly annealed from $1$ to $0.01$ over the first $50k$ training samples, and
+    fixed at $0.01$ thereafter. We train for a total of $100k$ samples, using a replay
+    memory of the most recent $5k$ samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Supervised Learning Baseline
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The SL baseline fixes the set of queries that it uses beforehand, and can be
+    interpreted as a non-adaptive policy in which the survey question responses do
+    not affect either the choice or the number of questions asked. It uses a neural
+    network with the same architecture as the RL network, except that the final layer
+    only has $c$ outputs: the network learns to map from the query results to the
+    correct prediction class.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We train the network to minimize the cross-entropy loss between the predictions
+    and the ground truth. Training examples are sampled from the training split of
+    $~{}8k$ examples with equal probability assigned to each class. We use the Adam
+    optimizer (Kingma & Ba, [2014](#bib.bib4)) with minibatches of size $32$, with
+    a learning rate that is annealed linearly from $0.0025$ to $0.0005$ over $20$
+    epochs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Model | Accuracy | Avg. Queries | Avg. Episode Reward |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SL network ($k=2$) | 0.73 | 2 | +0.36 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SL network ($k=4$) | 0.77 | 4 | +0.35 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SL network ($k=8$) | 0.80 | 8 | +0.20 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RL network ($kmax=2$) | 0.78 | 2 | +0.45 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RL network ($kmax=4$) | 0.78 | 2.30 | +0.45 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RL network ($kmax=8$) | 0.80 | 2.35 | +0.47 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: The RL networks outperform the SL networks, not only being able to
+    make more accurate predictions, but also with fewer number of queries on average.
+    Unlike the SL networks, which fix the set of k queries they make a priori, the
+    RL networks are able to effectively balance the cost of making additional queries
+    with the benefits of increased prediction accuracy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Experiments and Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We evaluate our models on prediction accuracy and the number of queries made.
+    We also report the mean episode reward as defined by our setup earlier. Models
+    are evaluated on a test set of $2k$ examples, resampled such that samples are
+    drawn with equal probability from each class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We investigate the effects of limiting the number of queries the agents can
+    make. In the RL approach, we set the maximum number of queries ($kmax={2,4,8}$),
+    while in the SL approach we fix the number of queries ($k={2,4,8}$). Queries are
+    ordered by decreasing correlation with the output variable, so using $k$ queries
+    refers to using the top $k$ correlated variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As $k$ increases, the SL baselines reach higher accuracies, but at the cost
+    of an increase in the number of queries. The tradeoff at $k=2$ and $k=4$ produces
+    comparable average episode scores, but the cost of making even more queries at
+    $k=8$ outweighs the benefits of increased accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As $kmax$ increases, the RL agents also reach higher accuracies; they are, however,
+    able to keep the average number of queries small. The agents are therefore able
+    to reach higher episode rewards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Related Work
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The idea of training RL agents to query before making predictions has recently
+    been explored in the reinforcement learning literature. Shen et al. ([2016](#bib.bib7))
+    train an agent to dynamically decide whether to continue or to terminate the inference
+    process in machine comprehension tasks. Buck et al. ([2017](#bib.bib1)) train
+    an agent to systematically perturb a question to aggregate evidence until it can
+    confidently answer it. Guo & Brunskill ([2017](#bib.bib3)) propose an algorithm
+    to find which features are necessary solve a particular task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We build a deep reinforcement learning (RL) agent that can predict the likelihood
+    of an individual testing positive for malaria by asking questions about their
+    household. We propose an algorithm to adaptively determine which survey question
+    to ask next and when to stop to make a prediction about their likelihood of malaria
+    based on their responses. We show that we can make predictions with high accuracy,
+    and that adaptive surveys can significantly reduce the number of questions needed
+    to attain the high accuracy, enabling large-scale and cost-effective monitoring
+    of malaria through SMS surveys.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Buck et al. (2017) Buck, Christian, Bulian, Jannis, Ciaramita, Massimiliano,
+    Gesmundo, Andrea, Houlsby, Neil, Gajewski, Wojciech, and Wang, Wei. Ask the right
+    questions: Active question reformulation with reinforcement learning. *CoRR*,
+    abs/1705.07830, 2017. URL [http://arxiv.org/abs/1705.07830](http://arxiv.org/abs/1705.07830).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Game (2013) Game, Eddie. Mobile text surveys: A smarter way to measure conservation’s
+    impacts on people? *Nature*, 2013. URL [http://blog.nature.org/science/2013/09/30/mobile-text-survey-conservation-people-human-wellbeing/](http://blog.nature.org/science/2013/09/30/mobile-text-survey-conservation-people-human-wellbeing/).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guo & Brunskill (2017) Guo, Zhaohan Daniel and Brunskill, Emma. Sample efficient
+    feature selection for factored mdps. *CoRR*, abs/1703.03454, 2017. URL [http://arxiv.org/abs/1703.03454](http://arxiv.org/abs/1703.03454).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kingma & Ba (2014) Kingma, Diederik and Ba, Jimmy. Adam: A method for stochastic
+    optimization. *arXiv preprint arXiv:1412.6980*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mnih et al. (2013) Mnih, Volodymyr, Kavukcuoglu, Koray, Silver, David, Graves,
+    Alex, Antonoglou, Ioannis, Wierstra, Daan, and Riedmiller, Martin. Playing atari
+    with deep reinforcement learning. *arXiv preprint arXiv:1312.5602*, 2013.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NMCP & Kenya National Bureau of Statistics (KNBS) NMCP and Kenya National Bureau of
+    Statistics (KNBS) and, ICF International. *Kenya Malaria Indicator Survey 2015*.
+    NMCP, KNBS, ICF International, Nairobi, Kenya and Rockville, Maryland.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shen et al. (2016) Shen, Yelong, Huang, Po-Sen, Gao, Jianfeng, and Chen, Weizhu.
+    Reasonet: Learning to stop reading in machine comprehension. *CoRR*, abs/1609.05284,
+    2016. URL [http://arxiv.org/abs/1609.05284](http://arxiv.org/abs/1609.05284).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Szegedy et al. (2014) Szegedy, Christian, Liu, Wei, Jia, Yangqing, Sermanet,
+    Pierre, Reed, Scott E., Anguelov, Dragomir, Erhan, Dumitru, Vanhoucke, Vincent,
+    and Rabinovich, Andrew. Going deeper with convolutions. *CoRR*, abs/1409.4842,
+    2014. URL [http://arxiv.org/abs/1409.4842](http://arxiv.org/abs/1409.4842).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Torfin (2017) Torfin, Svenn. In kenya, the path to elimination of malaria is
+    lined with good preventions. *WHO*, 2017. URL [http://www.who.int/features/2017/vector-control-kenya/en/](http://www.who.int/features/2017/vector-control-kenya/en/).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Appendix A Appendix
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '| Question | Variable Name | Num Categories |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | Region | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | Main floor material | 9 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | Owns land usable for agriculture | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | Has electricity | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | Has television | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 6 | Whether nets are used alternatively in this community | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 7 | Most people in the community sleep under an ITN all the time | 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 8 | Type of place of residence | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2: The list of processed categorical variables, sorted by decreasing
+    correlation with the output variable (the result of the blood smear test).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f7b57685eacb8df4610d67887f04ba22.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: The DQN outputs a Q value for each of the possible queries and prediction
+    outputs from its input state.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/da400fc0414669b5b4a994adfb75b15e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: The average training (top) and evaluation (bottom) episode rewards
+    of the RL agents during the training process. The behavior policy for training
+    episodes is $\epsilon-$greedy with a linearly annealed $\epsilon$; for test episodes,
+    we set $\epsilon=0$, and act greedily with respect to the $Q$ values outputted
+    by the DQN.'
+  prefs: []
+  type: TYPE_NORMAL

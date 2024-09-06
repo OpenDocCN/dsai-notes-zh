@@ -1,0 +1,2219 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:44:07'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2210.04675] A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2210.04675](https://ar5iv.labs.arxiv.org/html/2210.04675)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey of Methods for Addressing Class Imbalance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in Deep-Learning Based Natural Language Processing
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sophie Henning^(1,2)    William Beluch¹    Alexander Fraser²    Annemarie Friedrich¹
+  prefs: []
+  type: TYPE_NORMAL
+- en: ¹ Bosch Center for Artificial Intelligence, Renningen, Germany
+  prefs: []
+  type: TYPE_NORMAL
+- en: ² Center for Information and Language Processing, LMU Munich, Germany
+  prefs: []
+  type: TYPE_NORMAL
+- en: sophieelisabeth.henning|william.beluch@de.bosch.com
+  prefs: []
+  type: TYPE_NORMAL
+- en: fraser@cis.lmu.de
+  prefs: []
+  type: TYPE_NORMAL
+- en: annemarie.friedrich@de.bosch.com
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Many natural language processing (NLP) tasks are naturally imbalanced, as some
+    target categories occur much more frequently than others in the real world. In
+    such scenarios, current NLP models tend to perform poorly on less frequent classes.
+    Addressing class imbalance in NLP is an active research topic, yet, finding a
+    good approach for a particular task and imbalance scenario is difficult.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this survey, the first overview on class imbalance in deep-learning based
+    NLP, we first discuss various types of controlled and real-world class imbalance.
+    Our survey then covers approaches that have been explicitly proposed for class-imbalanced
+    NLP tasks or, originating in the computer vision community, have been evaluated
+    on them. We organize the methods by whether they are based on sampling, data augmentation,
+    choice of loss function, staged learning, or model design. Finally, we discuss
+    open problems and how to move forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ebd6a8a2fa52d7bbe71c05fff9f2ac6c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Single-label relation     classification on TACRED
+  prefs: []
+  type: TYPE_NORMAL
+- en: (Zhou and Chen, [2021](#bib.bib117))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/43e764c6e87f2f056920b28136245f4f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Hierarchical multi-label
+  prefs: []
+  type: TYPE_NORMAL
+- en: patent classification      (Pujari et al., [2021](#bib.bib70))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/52575f9dbcef57bfb787837510a98dc6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (c) Implicit discourse rela-      tion classification (PDTB)
+  prefs: []
+  type: TYPE_NORMAL
+- en: (Shi and Demberg, [2019](#bib.bib79))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/73ce2b8c8cfc076435ddafa5b02691c6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (d) UD dependency parsing      using RoBERTa on EWT
+  prefs: []
+  type: TYPE_NORMAL
+- en: (Grünewald et al., [2021](#bib.bib27))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Class imbalance has a negative effect on performance especially for
+    minority classes in a variety of NLP tasks. Upper charts show label count distributions,
+    lower part show test/dev F1 by training instance count (lighter colors indicate
+    fewer test/dev instances). All models are based on transformers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Class imbalance is a major problem in natural language processing (NLP), because
+    target category distributions are almost always skewed in NLP tasks. As illustrated
+    by Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Survey of Methods for Addressing
+    Class Imbalance in Deep-Learning Based Natural Language Processing"), this often
+    leads to poor performance on minority classes. Which categories matter is highly
+    task-specific and may even depend on the intended downstream use. Developing methods
+    that improve model performance in imbalanced data settings has been an active
+    area for decades (e.g., Bruzzone and Serpico, [1997](#bib.bib9); Japkowicz et al.,
+    [2000](#bib.bib37); Estabrooks and Japkowicz, [2001](#bib.bib21); Park and Zhang,
+    [2002](#bib.bib67); Tan, [2005](#bib.bib83)), and is recently gaining momentum
+    in the context of maturing neural approaches (e.g., Buda et al., [2018](#bib.bib10);
+    Kang et al., [2020](#bib.bib43); Li et al., [2020](#bib.bib52); Yang et al., [2020](#bib.bib105);
+    Jiang et al., [2021](#bib.bib38); Spangher et al., [2021](#bib.bib80)). The problem
+    is exacerbated when classes overlap in the feature space (Lin et al., [2019](#bib.bib54);
+    Tian et al., [2020](#bib.bib88)). For example, in patent classification, technical
+    categories differ largely in frequency, and the concepts mentioned in the different
+    categories can be very similar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/86655417b53d563cf3981d0887faabbc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Step imbalance, $\mu=0.4$, $\rho=10$
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0451941012cadd4eeb206950f81713f0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Linear imbalance, $\rho=10$
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/60bd8f46e1874b00813051562d6e909b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (c) Long-tailed distribution
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 2: Instance counts per label follow different distributions: examples
+    of class imbalance types.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On a large variety of NLP tasks, transformer models such as BERT (Vaswani et al.,
+    [2017](#bib.bib93); Devlin et al., [2019](#bib.bib17)) outperform both their neural
+    predecessors and traditional models (Liu et al., [2019](#bib.bib57); Xie et al.,
+    [2020](#bib.bib104); Mathew et al., [2021](#bib.bib60)). Performance for minority
+    classes is also often higher when using self-supervised pre-trained models (e.g.,
+    Li and Scarton, [2020](#bib.bib53); Niklaus et al., [2021](#bib.bib65)), which
+    parallels findings from computer vision (Liu et al., [2022](#bib.bib56)). However,
+    the advent of BERT has not solved the class imbalance problem in NLP, as illustrated
+    by Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Survey of Methods for Addressing
+    Class Imbalance in Deep-Learning Based Natural Language Processing"). Tänzer et al.
+    ([2022](#bib.bib85)) find that on synthetically imbalanced named entity datasets
+    with majority classes having thousands of examples, at least 25 instances are
+    required to predict a class at all, and 100 examples to learn to predict it with
+    some accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite the relevance of class imbalance to NLP, related surveys only exist
+    in the computer vision domain (Johnson and Khoshgoftaar, [2019b](#bib.bib40);
+    Zhang et al., [2021b](#bib.bib116)). Incorporating methods addressing class imbalance
+    can lead to performance gains of up to 20%. Yet, NLP research often overlooks
+    how important this is in practical applications, where minority classes may be
+    of special interest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our contribution is to draw a clear landscape of approaches applicable to deep-learning
+    (DL) based NLP. We set out with a problem definition (Sec. [2](#S2 "2 Problem
+    Definition ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")), and then organize approaches by whether
+    they are based on sampling, data augmentation, choice of loss function, staged
+    learning, or model design (Sec. [3](#S3 "3 Methods for Addressing Class Imbalance
+    in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based
+    Natural Language Processing")). Our extensive survey finds that re-sampling, data
+    augmentation, and changing the loss function can be relatively simple ways to
+    increase performance in class-imbalanced settings and are thus straightforward
+    choices for NLP practitioners.¹¹1We provide practical advice on identifying potentially
+    applicable class imbalance methods in the Appendix (Figure [3](#A2.F3 "Figure
+    3 ‣ Appendix B Practical advice ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing")). While promising research
+    directions, staged learning or model modifications often are implementation-wise
+    and/or computationally costlier. Moreover, we discuss particular challenges of
+    non-standard classification settings, e.g., imbalanced multi-label classification
+    and catch-all classes, and provide useful connections to related computer vision
+    work. Finally, we outline promising directions for future research (Sec. [4](#S4
+    "4 Insights and Future Directions ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scope of this survey. We focus on approaches evaluated on or developed for neural
+    methods. Work from “traditional” NLP (e.g., Tomanek and Hahn, [2009](#bib.bib90);
+    Li et al., [2011](#bib.bib51); Li and Nenkova, [2014](#bib.bib50); Kunchukuttan
+    and Bhattacharyya, [2015](#bib.bib47)) as well as Natural Language Generation
+    (e.g., Nishino et al., [2020](#bib.bib66)) and Automatic Speech Recognition (e.g.,
+    Winata et al., [2020](#bib.bib101); Deng et al., [2022](#bib.bib16)) are not addressed
+    in this survey. Other types of imbalances such as differently sized data sets
+    of subtasks in continual learning (Ahrens et al., [2021](#bib.bib2)) or imbalanced
+    regression (Yang et al., [2021](#bib.bib106)) are also beyond the scope of this
+    survey. In Sec. [3.5](#S3.SS5 "3.5 Model Design ‣ 3 Methods for Addressing Class
+    Imbalance in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing"), we briefly touch upon the related area of
+    few-shot learning (Wang et al., [2020c](#bib.bib96)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Related surveys. We review imbalance-specific data augmentation approaches in
+    Sec. [3.2](#S3.SS2 "3.2 Data Augmentation ‣ 3 Methods for Addressing Class Imbalance
+    in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based
+    Natural Language Processing"). Feng et al. ([2021](#bib.bib22)) give a broader
+    overview of data augmentation in NLP, Hedderich et al. ([2021](#bib.bib33)) provide
+    an overview of low-resource NLP, and Ramponi and Plank ([2020](#bib.bib72)) discuss
+    neural domain adaptation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Problem Definition
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Class imbalance refers to a classification setting in which one or multiple
+    classes (minority classes) are considerably less frequent than others (majority
+    classes). More concrete definitions, e.g., regarding the relative share up to
+    which a class is seen as a minority class, depend on the task, dataset and labelset
+    size. Much research focuses on improving all minority classes equally while maintaining
+    or at least monitoring majority class performance (e.g., Huang et al., [2021](#bib.bib35);
+    Yang et al., [2020](#bib.bib105); Spangher et al., [2021](#bib.bib80)). We next
+    discuss prototypical types of imbalance (Sec. [2.1](#S2.SS1 "2.1 Types of Imbalance
+    ‣ 2 Problem Definition ‣ A Survey of Methods for Addressing Class Imbalance in
+    Deep-Learning Based Natural Language Processing")) and then compare controlled
+    and real-world settings (Sec. [2.2](#S2.SS2 "2.2 Controlled vs. Real-World Class
+    Imbalance ‣ 2 Problem Definition ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Types of Imbalance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To systematically investigate the effect of imbalance, Buda et al. ([2018](#bib.bib10))
+    define two prototypical types of label distributions, which we explain next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Step imbalance is characterized by the fraction of minority classes, $\mu$,
+    and the size ratio between majority and minority classes, $\rho$. Larger $\rho$
+    values indicate more imbalanced data sets. In prototypical step imbalance, if
+    there are multiple minority classes, all of them are equally sized; if there are
+    several majority classes, they also have equal size. Figure [2(a)](#S1.F2.sf1
+    "In Figure 2 ‣ 1 Introduction ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing") shows a step-imbalanced distribution
+    with $40\%$ of the classes being minority classes and an imbalance ratio of $\rho=10$.
+    NLP datasets with a large catch-all class as they often arise in sequence tagging
+    (see Sec. [2.2](#S2.SS2 "2.2 Controlled vs. Real-World Class Imbalance ‣ 2 Problem
+    Definition ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")) or in relevance judgments in retrieval models
+    frequently resemble step-imbalanced distributions. The $\rho$ ratio has also been
+    reported in NLP, e.g., by Li et al. ([2020](#bib.bib52)), although more task-specific
+    imbalance measures have been proposed, e.g., for single-label text classification
+    (Tian et al., [2020](#bib.bib88)). In linear imbalance, class size grows linearly
+    with imbalance ratio $\rho$ (see Figure [2(b)](#S1.F2.sf2 "In Figure 2 ‣ 1 Introduction
+    ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based Natural
+    Language Processing")), as, e.g., in the naturally imbalanced SICK dataset for
+    natural language inference (Marelli et al., [2014](#bib.bib59)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Long-tailed label distributions (Figure [2(c)](#S1.F2.sf3 "In Figure 2 ‣ 1 Introduction
+    ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based Natural
+    Language Processing")) are conceptually similar to linear imbalance. They contain
+    many data points for a small number of classes (head classes), but only very few
+    for the rest of the classes (tail classes). These distributions are common in
+    computer vision tasks like instance segmentation (e.g., Gupta et al., [2019a](#bib.bib28)),
+    but also in multi-label text classification, for example with the goal of assigning
+    clinical codes (Mullenbach et al., [2018](#bib.bib63)), patent categories (Pujari
+    et al., [2021](#bib.bib70)), or news and research topics (Huang et al., [2021](#bib.bib35)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Controlled vs. Real-World Class Imbalance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most real-world label distributions in NLP tasks do not perfectly match the
+    prototypical distributions proposed by Buda et al. ([2018](#bib.bib10)). Yet,
+    awareness of these settings helps practitioners to select appropriate methods
+    for their data set or problem by comparing distribution plots. Using synthetically
+    imbalanced data sets, researchers can control for more experimental factors and
+    investigate several scenarios at once. However, evaluating on naturally imbalanced
+    data provides evidence of a method’s real-world effectiveness. Some recent studies
+    combine both types of evaluation (e.g., Tian et al., [2021](#bib.bib89); Subramanian
+    et al., [2021](#bib.bib81); Jang et al., [2021](#bib.bib36)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many NLP tasks require treating a large, often heterogenous catch-all class
+    that contains all instances that are not of interest to the task, while the remaining
+    (minority) classes are approximately same-sized. Examples include the “Outside”
+    label in IOB sequence tagging, or tweets that mention products in contexts that
+    are irrelevant to the annotated categories (Adel et al., [2017](#bib.bib1)). Such
+    real-world settings often roughly follow a step imbalance distribution, with the
+    additional difficulty of the catch-all class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Evaluation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As accuracy and micro-averages mostly reflect majority class performance, choosing
+    a good evaluation setting and metric is non-trivial. It is also highly task-dependent:
+    in many NLP tasks, recognizing one or all minority classes well is at least equally
+    important as majority class performance. For instance, non-hateful tweets are
+    much more frequent in Twitter (Waseem and Hovy, [2016](#bib.bib97)), but recognizing
+    hateful content is the key motivation of hate speech detection. Which classes
+    matter may even depend on downstream considerations, i.e., the same named entity
+    tagger might be used in one application where a majority class matters, and another
+    where minority classes matter more. Several evaluation metrics exist that have
+    been designed to account for class-imbalanced settings, but no de facto standard
+    exists. For example, balanced accuracy (Brodersen et al., [2010](#bib.bib8)) corresponds
+    to the average of per-class recall scores. It is often useful to record performance
+    on all classes and to report macro-averages, which treat all classes equally.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Methods for Addressing Class Imbalance in NLP
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we survey methods that either have been explicitly proposed
+    to address class-imbalance issues in NLP or that have been empirically shown to
+    be applicable for NLP problems. We provide an overview of which methods are applicable
+    to a selection of NLP tasks in Appendix [A](#A1 "Appendix A Method Overview ‣
+    A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based Natural
+    Language Processing").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Re-Sampling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To increase the importance of minority instances in training, the label distribution
+    can be changed by various sampling strategies. Sampling can either be executed
+    once or repeatedly during training (Pouyanfar et al., [2018](#bib.bib68)). In
+    random oversampling (ROS), a random choice of minority instances are duplicated,
+    whereas in random undersampling (RUS), a random choice of majority instances are
+    removed from the dataset. ROS can lead to overfitting and increases training times.
+    RUS, however, discards potentially valuable data, but has been shown to work well
+    in language-modeling objectives (Mikolov et al., [2013](#bib.bib61)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: When applied in DL, ROS outperforms RUS both in synthetic step and linear imbalance
+    (Buda et al., [2018](#bib.bib10)) and in binary and multi-class English and Korean
+    text classification (Juuti et al., [2020](#bib.bib42); Akhbardeh et al., [2021](#bib.bib3);
+    Jang et al., [2021](#bib.bib36)). More flexible variants, e.g., re-sampling only
+    a tunable share of classes (Tepper et al., [2020](#bib.bib87)) or interpolating
+    between the (imbalanced) data distribution and an almost perfectly balanced distribution
+    (Arivazhagan et al., [2019](#bib.bib4)), can also further improve results. Class-aware
+    sampling (CAS, Shen et al., [2016](#bib.bib78)), also referred to as class-balanced
+    sampling, first chooses a class, and then an instance from this class. Performance-based
+    re-sampling during training, following the idea of Pouyanfar et al. ([2018](#bib.bib68)),
+    works well in multi-class text classification (Akhbardeh et al., [2021](#bib.bib3)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Issues in multi-label classification. In multi-label classification, label dependencies
+    between majority and minority classes complicate sampling approaches, as over-sampling
+    an instance with a minority label may simultaneously amplify the majority class
+    count (Charte et al., [2015](#bib.bib12); Huang et al., [2021](#bib.bib35)). CAS
+    also suffers from this issue, and additionally introduces within-class imbalance,
+    as instances of one class are selected with different probabilities depending
+    on the co-assigned labels (Wu et al., [2020](#bib.bib102)). Effective sampling
+    in such settings is still an open issue. Existing approaches monitor the class
+    distributions during sampling (Charte et al., [2015](#bib.bib12)) or assign instance-based
+    sampling probabilities (Gupta et al., [2019b](#bib.bib29); Wu et al., [2020](#bib.bib102)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Data Augmentation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Increasing the amount of minority class data during corpus construction, e.g.,
+    by writing additional examples or selecting examples to be labeled using Active
+    Learning, can mitigate the class imbalance problem to some extent (Cho et al.,
+    [2020](#bib.bib15); Ein-Dor et al., [2020](#bib.bib19)). However, this is particularly
+    laborious in naturally imbalanced settings as it may require finding “the needle
+    in the haystack,” or may lead to biased minority class examples, e.g., due to
+    collection via keyword queries. Synthetically generating additional minority instances
+    thus is a promising direction. In this section, we survey data augmentation methods
+    that have been explicitly proposed to mitigate class imbalance and that have been
+    evaluated in combination with DL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Text augmentation generates new natural language instances of minority classes,
+    ranging from simple string-based manipulations such as synonym replacements to
+    Transformer-based generation. Easy Data Augmentation (EDA, Wei and Zou, [2019](#bib.bib99)),
+    which uses dictionary-based synonym replacements, random insertion, random swap,
+    and random deletion, has been shown to work well in class-imbalanced settings
+    (Jiang et al., [2021](#bib.bib38); Jang et al., [2021](#bib.bib36); Juuti et al.,
+    [2020](#bib.bib42)). Juuti et al. ([2020](#bib.bib42)) generate new minority class
+    instances for English binary text classification using EDA and embedding-based
+    synonym replacements, and by adding a random majority class sentence to a minority
+    class document. They also prompt the pre-trained language model GPT-2 (Radford
+    et al., [2019](#bib.bib71)) with a minority class instance to generate new minority
+    class samples. Tepper et al. ([2020](#bib.bib87)) evaluate generation with GPT-2
+    on English multi-class text classification datasets, coupled with a flexible balancing
+    policy (see Sec. [3.1](#S3.SS1 "3.1 Re-Sampling ‣ 3 Methods for Addressing Class
+    Imbalance in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, Gaspers et al. ([2020](#bib.bib26)) combine machine-translation based
+    text augmentation with dataset balancing to build a multi-task model. Both the
+    main and auxiliary tasks are German intent classification. Only the training data
+    for the latter is balanced and enriched with synthetic minority instances. In
+    a long-tailed multi-label setting, Zhang et al. ([2022](#bib.bib112)) learn an
+    attention-based text augmentation that augments instances with text segments that
+    are relevant to tail classes, leading to small improvements. In general, transferring
+    methods such as EDA or backtranslation to multi-label settings is difficult (Zhang
+    et al., [2022](#bib.bib112), [2020](#bib.bib111); Tang et al., [2020](#bib.bib84)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hidden space augmentation generates new instance vectors that are not directly
+    associated with a particular natural language string, leveraging the representations
+    of real examples. Using representation-based augmentations to tackle class imbalance
+    is not tied to DL. SMOTE (Chawla et al., [2002](#bib.bib13)), which interpolates
+    minority instances with randomly chosen examples from their K-nearest neighbours,
+    is popular in traditional machine learning (Fernández et al., [2018](#bib.bib23)),
+    but leads to mixed results in DL-based NLP (Ek and Ghanimifard, [2019](#bib.bib20);
+    Tran and Litman, [2021](#bib.bib91); Wei et al., [2022](#bib.bib100)). Inspired
+    by CutMix (Yun et al., [2019](#bib.bib110)), which cuts and pastes a single pixel
+    region in an image, TextCut (Jiang et al., [2021](#bib.bib38)) randomly replaces
+    small parts of the BERT representation of one instance with those of the other.
+    In binary and multi-class text classification experiments, TextCut improves over
+    non-augmented BERT and EDA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Good-enough example extrapolation (GE3, Wei, [2021](#bib.bib98)) and Reprint
+    (Wei et al., [2022](#bib.bib100)) also operate in the original representation
+    space. To synthesize a new minority instance, GE3 adds the vector representing
+    the difference between a majority class instance and the centroid of the respective
+    majority class to the mean of a minority class. Evaluations on synthetically step-imbalanced
+    English multi-class text classification datasets show improvements over oversampling
+    and hidden space augmentation baselines. GE3 assumes that the distribution of
+    data points of a class around its mean can be extrapolated to other classes, an
+    assumption potentially hurting performance if the minority class distribution
+    differs. To account for this when subtracting out majority characteristics, Reprint
+    performs a principal component analysis (PCA) for each class, leveraging the information
+    on relevant dimensions during sample generation. This method usually outperforms
+    GE3, with the cost of an additional hyperparameter (subspace dimensionality).
+  prefs: []
+  type: TYPE_NORMAL
+- en: MISO (Tian et al., [2021](#bib.bib89)) generates new instances by transforming
+    the representations of minority class instances that are located nearby majority
+    class instances. They learn a mapping from minority instance vectors to “disentangled”
+    representations, making use of mutual information estimators (Belghazi et al.,
+    [2018](#bib.bib5)) to push these representations away from the majority class
+    and closer to the minority class. An adversarially-trained generator then generates
+    minority instances using these disentangled representations. [Tian et al.](#bib.bib89)
+    apply MISO in naturally and synthetically imbalanced English and Chinese binary
+    and multi-class text classification with a single minority class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ECRT (Chen et al., [2021](#bib.bib14)) learns to map encoder representations
+    (feature space) to a new space (source space) whose components are independent
+    of each other given the class, assuming an invariant causal mechanism from source
+    to feature space. The independence enables them to generate new meaningful minority
+    examples by permuting or sampling components in the source space, resulting in
+    medium improvements on a large multi-label text classification dataset with many
+    labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Further related work exists in the area of transfer learning (Ruder et al.,
+    [2019](#bib.bib74)), e.g., from additional datasets that provide complementary
+    information on minority classes. For instance, Spangher et al. ([2021](#bib.bib80))
+    achieve small gains by manually selecting auxiliary datasets to improve imbalanced
+    sentence-based discourse classification. However, complementary datasets have
+    to be retrieved for each application, and task loss coefficients have to be tuned.
+    Adapting methods to predict useful transfer sources (Lange et al., [2021](#bib.bib48))
+    might help alleviate these problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Loss Functions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Standard cross-entropy loss (CE) is composed from the predictions for instances
+    that carry the label in the gold standard, which is why the resulting classifiers
+    fit the minority classes less well. In this section, we summarize loss functions
+    designed for imbalanced scenarios. They either re-weight instances by class membership
+    or prediction difficulty, or explicitly model class margins to change the decision
+    boundary. Throughout this section, we use the variables and terms as shown in
+    Table [1](#S3.T1 "Table 1 ‣ Losses for Single-Label Scenarios. ‣ 3.3 Loss Functions
+    ‣ 3 Methods for Addressing Class Imbalance in NLP ‣ A Survey of Methods for Addressing
+    Class Imbalance in Deep-Learning Based Natural Language Processing").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Losses for Single-Label Scenarios.
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Weighted cross-entropy (WCE) uses class-specific weights $\alpha_{j}$ that are
+    tuned as hyperparameters or set to the inverse class frequency (e.g., Adel et al.,
+    [2017](#bib.bib1); Tayyar Madabushi et al., [2019](#bib.bib86); Li and Xiao, [2020](#bib.bib49)).
+    While WCE treats all instances of one class in the same way, focal loss (FL, Lin
+    et al., [2017](#bib.bib55)) down-weights instances for which the model is already
+    confident (implemented with the $\left(1-p_{j}\right)^{\beta}$ coefficient). FL
+    can of course also be used with class weights. Instead of mimicking accuracy like
+    CE, dice loss (Dice, Milletari et al., [2016](#bib.bib62)) tries to capture class-wise
+    F1 score, with the predicted probability $p_{j}$ proxying precision and the ground
+    truth indicator $y_{j}$ proxying recall. Self-adjusting dice loss (ADL, Li et al.,
+    [2020](#bib.bib52)) combines confidence-based down-weighting via $1-p_{j}$ with
+    Dice loss. For sequence labeling, QA and matching on English and Chinese datasets,
+    Dice performs better than FL and ADL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rather than re-weighting instances, label-distribution-aware margin loss (LDAM,
+    Cao et al., [2019](#bib.bib11)), essentially a smooth hinge loss with label-dependent
+    margins $\Delta_{j}$, aims to increase the distance of the minority class instances
+    to the decision boundary with the aim of better generalization for these classes.
+    [Cao et al.](#bib.bib11)’s evaluation largely focuses on computer vision, but
+    they also report results for LDAM on a synthetically imbalanced version of the
+    IMDB review dataset (Maas et al., [2011](#bib.bib58)), achieving a much lower
+    error on the minority class than vanilla CE or CE with re-sampling or re-weighting.
+    Subramanian et al. ([2021](#bib.bib81)) propose LDAM variants that consider bias
+    related to socially salient groups (e.g., gender-based bias) in addition to class
+    imbalance, evaluating them on binary text classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Single-label | CE | $-\sum_{j=1}^{C}y_{j}\log p_{j}$                 WCE
+    $-\sum_{j=1}^{C}\alpha_{j}y_{j}\log p_{j}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FL | $-\sum_{j=1}^{C}y_{j}(1-p_{j})^{\beta}\log p_{j}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Dice | $\sum_{j=1}^{C}1-\displaystyle\frac{2p_{j}y_{j}+\gamma}{p_{j}^{2}+y_{j}^{2}+\gamma}$
+             ADL $\sum_{j=1}^{C}1-\displaystyle\frac{2(1-p_{j})p_{j}y_{j}+\gamma}{(1-p_{j})p_{j}+y_{j}+\gamma}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | LDAM | $-\sum_{j=1}^{C}y_{j}\log\displaystyle\frac{\exp(z_{j}-\Delta_{j})}{\exp(z_{j}-\Delta_{j})+\sum_{l\neq
+    j}\exp(z_{l})}$ with $\Delta_{j}=K/n_{j}^{1/4}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | RL | $\mathds{1}(gt\neq A)\log(1+\exp(\rho(m^{+}-z_{gt})))+\log(1+\exp(\rho(m^{-}-z_{c^{-}})))$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Multi-label | BCE | $-\sum_{j=1}^{C}[y_{j}\log p_{j}+(1-y_{j})\log(1-p_{j})]$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WBCE | $-\sum_{j=1}^{C}\alpha_{j}[y_{j}\log p_{j}+(1-y_{j})\log(1-p_{j})]$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FL | $-\sum_{j=1}^{C}[y_{j}(1-p_{j})^{\beta}\log p_{j}+(1-y_{j})p_{j}^{\beta}\log(1-p_{j})]$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DB | $-\sum_{j=1}^{C}[y_{j}\hat{\alpha}_{j}(1-q_{j})^{\beta}\log q_{j}+(1-y_{j})\hat{\alpha}_{j}\frac{1}{\lambda}q_{j}^{\beta}\log(1-q_{j})]$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | with $q_{j}=y_{j}\sigma(z_{j}-v_{j})+(1-y_{j})\sigma(\lambda(z_{j}-v_{j}))$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $C$ | number of classes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $y$ | target vector |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $p$ | model prediction vector |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\alpha$ | class weights |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\beta$ | tunable focusing parameter |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $z$ | model logits vector |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\gamma$ | smoothing constant |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $n_{j}$ | size of class $j$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $K$ | label-independent constant |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $gt$ | index of ground-truth class |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $m^{+}$ | margin to correct class |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $m^{-}$ | … to most competitive incorrect class |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $A$ | special catch-all class |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $c^{-}$ | index of largest non-$gt$ logit |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\lambda$ | scaling factor |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\hat{\alpha}_{j}$ | instance-specific class weights |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $v_{j}$ | class-specific bias |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Overview of loss functions formulated for one instance. See Appendix [A](#A1
+    "Appendix A Method Overview ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing") for references/implementations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In settings with a large artificial and potentially heterogeneous catch-all
+    class (see Sec. [2.2](#S2.SS2 "2.2 Controlled vs. Real-World Class Imbalance ‣
+    2 Problem Definition ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")), many areas of the space contain representations
+    of the catch-all class. Here, vanilla LDAM might be an appropriate loss function
+    as it encourages larger margins for minority classes. In such cases, ranking losses
+    (RL) can also be effective to incentivize the model to only pay attention to “real”
+    classes. On an imbalanced English multi-class dataset with a large catch-all class,
+    Adel et al. ([2017](#bib.bib1)) find a ranking loss introduced by dos Santos et al.
+    ([2015](#bib.bib18)) improves over CE and WCE. For minority classes, this loss
+    function maximizes the score of the correct label $z_{gt}$ while at the same time
+    minimizing the score of the highest-scoring incorrect label $z_{c^{-}}$. For the
+    catch-all class $A$, only $z_{c^{-}}$ is minimized; $z_{gt}$ is ignored. Similarly,
+    Hu et al. ([2022](#bib.bib34)) apply class weights only to non-catch-all classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Losses for Multi-Label Scenarios.
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In multi-label classification, each label assignment can be viewed as a binary
+    decision, hence binary cross-entropy (BCE) is often used here. Under imbalance,
+    two issues arise. First, although class-specific weights have been used with BCE
+    (e.g., Yang et al., [2020](#bib.bib105)), their effect on minority classes is
+    less clear than in the single-label case. For each instance, all classes contribute
+    to BCE, with the labels not assigned to the instance (called negative classes)
+    included via $(1-y_{j})\log(1-p_{j})$. Thus, if weighted binary cross-entropy
+    (WBCE) uses a high weight for a class, it also increases the importance of negative
+    instances for a minority class, which may further encourage the model to not predict
+    this minority class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To leverage class weights more effectively in BCE, one option is to only apply
+    them to the loss of positive instances as proposed for multi-label image classification
+    (Kumar et al., [2018](#bib.bib46)). Related work includes uniformly upweighting
+    positive instances of all classes in hierarchical multi-label text classification
+    (e.g., Rathnayaka et al., [2019](#bib.bib73)). An approach to multi-label emotion
+    classification by Yilmaz et al. ([2021](#bib.bib108)) performs training time balancing
+    by adapting FL such that for a given mini-batch the loss over all instances in
+    this mini-batch has exactly the same value for every class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a classifier already correctly predicts a negative class for an instance,
+    the loss can be further decreased by reducing the respective label’s logits. In
+    CE, due to the softmax that uses the logits of all classes, the impact of this
+    effect becomes minor once the logit for the correct class is much larger than
+    those of the other classes. However, the problem is more severe in BCE (Wu et al.,
+    [2020](#bib.bib102)), as logits are treated independently. As minority labels
+    mostly occur as negative classes, this logit suppression leads to a bias in the
+    decision boundary, making it less likely for minority classes to be predicted.
+    To tackle this issue and based on a multi-label version of FL, Wu et al. ([2020](#bib.bib102))
+    propose distribution-balanced loss (DB) for object detection, adding Negative
+    Tolerant Regularization for the loss for negative classes by transforming the
+    logits of positive and negative classes differently (see $q_{j}$ in Table [1](#S3.T1
+    "Table 1 ‣ Losses for Single-Label Scenarios. ‣ 3.3 Loss Functions ‣ 3 Methods
+    for Addressing Class Imbalance in NLP ‣ A Survey of Methods for Addressing Class
+    Imbalance in Deep-Learning Based Natural Language Processing")). This regularization
+    imposes a sharp drop in the loss function for negative classes once the respective
+    logit is below a threshold. Moreover, DB introduces instance-specific class weights
+    $\hat{\alpha}$ to account for imbalances caused by class-aware sampling (see Sec. [3.1](#S3.SS1
+    "3.1 Re-Sampling ‣ 3 Methods for Addressing Class Imbalance in NLP ‣ A Survey
+    of Methods for Addressing Class Imbalance in Deep-Learning Based Natural Language
+    Processing")) in multi-label scenarios. These weights reflect the frequency of
+    a class and the quantity and frequency of the positive labels of the instance.
+    Huang et al. ([2021](#bib.bib35)) have shown large improvements of DB over BCE
+    even when using uniform sampling on two long-tailed multi-label English text classification
+    datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While Cao et al. ([2019](#bib.bib11)) propose and theoretically justify LDAM
+    for single-label classification only, it has been successfully applied to multi-label
+    text classification as well (Biswas et al., [2021](#bib.bib6)). Ferreira and Vlachos
+    ([2019](#bib.bib24)) show that applying a cross-label dependency loss (Yeh et al.,
+    [2017](#bib.bib107); Zhang and Zhou, [2006](#bib.bib113)) can be helpful for multi-label
+    stance classification. Similarly, Lin et al. ([2019](#bib.bib54)) introduce a
+    label-confusion aware cost factor into their loss function. The adaptive loss
+    of Suresh and Ong ([2021](#bib.bib82)) integrates inter-label relationships into
+    a contrastive loss (Khosla et al., [2020](#bib.bib44)), which compares the score
+    of a positive example with the distance to that of other positive and negative
+    examples in order to push its representation closer to the correct class and further
+    away from the wrong class(es). The resulting loss function learns how to increase
+    the weight of confusable negative labels relative to other negative labels. Combining
+    label-confusion aware loss functions with class weighting techniques is a promising
+    research direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Re-Sampling vs. Loss Functions.
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Re-sampling and loss functions that are specifically designed for class-imbalanced
+    settings are based on the same idea of increasing the importance of minority instances.
+    Re-sampling is conceptually simpler and has a direct impact on training time,
+    e.g., oversampling may cause a considerable increase. By contrast, the loss functions
+    explained above are more flexible, e.g., by modeling desirable properties of margins,
+    but also mostly harder to interpret.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4 Staged Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One approach to finding a good trade-off between learning features that are
+    representative of the underlying data distribution and reducing the classifier’s
+    bias towards the majority class(es) is to perform the training in several stages.
+    Two-staged training is common in imbalanced or data-scarce computer vision tasks
+    (e.g., Wang et al., [2020b](#bib.bib95), [a](#bib.bib94); Zhang et al., [2021a](#bib.bib115)).
+    The first stage usually performs standard training in order to train or fine-tune
+    the feature extraction network. Later stages may freeze the feature extractor
+    and re-train the classifier layers using special methods to address class imbalance,
+    e.g., using more balanced data distributions or specific losses. For example,
+    Cao et al. ([2019](#bib.bib11)) find their LDAM loss to be most effective when
+    the training happens in two stages. In NLP, deep-learning models are usually based
+    on pre-trained neural text encoders or word embeddings. Further domain-specific
+    pre-training before starting the fine-tuning stage(s) can also be effective (Gururangan
+    et al., [2020](#bib.bib30)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Several NLP approaches that fall under staged learning are directly inspired
+    by computer vision research. In the context of long-tailed image classification,
+    Kang et al. ([2020](#bib.bib43)) find that class-balanced sampling (see Sec. [3.1](#S3.SS1
+    "3.1 Re-Sampling ‣ 3 Methods for Addressing Class Imbalance in NLP ‣ A Survey
+    of Methods for Addressing Class Imbalance in Deep-Learning Based Natural Language
+    Processing")) helps when performing single-stage training, but that in their two-stage
+    classifier re-training (cRT) method, using the original distribution in the first
+    stage is more effective than class-balanced sampling. cRT employs the latter only
+    in the second stage after freezing the representation weights. Yu et al. ([2020](#bib.bib109))
+    perform a similar decoupling analysis on long-tailed relation classification,
+    essentially confirming Kang et al. ([2020](#bib.bib43))’s results on this NLP
+    task with respect to the re-sampling strategies. Additionally, they find that
+    loss re-weighting under this analysis behaves similar to re-sampling, i.e., it
+    leads to worse performance when applied during representation learning, but boosts
+    performance when re-training the classifier. Hu et al. ([2022](#bib.bib34)) successfully
+    leverage [Kang et al.](#bib.bib43)’s ideas for event detection, where both trigger
+    detection and trigger classification suffer from class imbalance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jang et al. ([2021](#bib.bib36)) model imbalanced classification as a continual
+    learning task with $k$ stages where the data gradually becomes more balanced (sequential
+    targeting, ST). The first stage contains the most imbalanced subset, and then
+    the degree of imbalance decreases, with the last stage presenting the most balanced
+    subset. The training objective encourages both good performance on the current
+    stage and keeping information learnt in previous stages. Their experiments include
+    binary and ternary English and Korean text classification. Active Learning (AL),
+    which contains several stages by definition, has also been shown to boost performance
+    of BERT models for minority classes (Ein-Dor et al., [2020](#bib.bib19)). For
+    a discussion about AL and deep learning, see Schröder and Niekler ([2020](#bib.bib77)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.5 Model Design
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The methods described so far are largely independent of model architecture.
+    This section describes model modifications that aim at improving performance in
+    imbalanced settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Observing that the weight vectors for smaller classes have smaller norms in
+    standard joint training compared to staged-learning based cRT (see Sec. [3.4](#S3.SS4
+    "3.4 Staged Learning ‣ 3 Methods for Addressing Class Imbalance in NLP ‣ A Survey
+    of Methods for Addressing Class Imbalance in Deep-Learning Based Natural Language
+    Processing")), Kang et al. ([2020](#bib.bib43)) normalize the classifier weights
+    directly in one-staged training using a hyperparameter $\tau$ to control the normalization
+    “temperature” ($\tau$-norm). $\tau$-norm achieves similar or better performance
+    than cRT in long-tailed image classification and outperforms cRT in relation extraction,
+    but cRT works better for named entity recognition and event detection (Nan et al.,
+    [2021](#bib.bib64)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: SetConv (Gao et al., [2020](#bib.bib25)) and ProtoBERT (Tänzer et al., [2022](#bib.bib85))
+    learn representatives for each class using support sets and classify an input
+    (the query) based on its similarity to these representatives. SetConv applies
+    convolution kernels that capture intra- and inter-class correlations to extract
+    class representatives. ProtoBERT uses class centroids in a learned BERT-based
+    feature space, treating the distance of any instance to the catch-all class as
+    just another learnable parameter. At each training step, SetConv uses only one
+    instance per class in the query set, but preserves the original class imbalance
+    in the support set, whereas ProtoBERT uses fixed ratios. In the respective experimental
+    studies, ProtoBERT performs better than using a standard classification layer
+    on top of BERT for minority classes in NER if less than 100 examples are seen
+    by the model, while SetConv excels in binary text classification with higher degrees
+    of imbalance and in multi-class text classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The HSCNN model (Yang et al., [2020](#bib.bib105)) uses class representatives
+    only for the classification of tail classes, while head classes are assigned using
+    a standard text CNN (Kim, [2014](#bib.bib45)). HSCNN learns label-specific similarity
+    functions, extracting instance representations from the pre-final layers of two
+    copies of the original CNN, and assigns a tail class if the similarity to the
+    class representative (computed as the mean of 5 random support instances) exceeds
+    0.5. On tail classes, HSCNN consistently improves over the vanilla CNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, there exist a number of task-specific solutions. Prange et al.
+    ([2021](#bib.bib69)) propose to construct CCG supertags from predicted tree structures
+    rather than treating the problem as a standard classification task. In order to
+    recognize implicit positive interpretations in negated statements in a class-imbalanced
+    dataset, van Son et al. ([2018](#bib.bib92)) argue that leveraging information
+    structure could be one way to improve inference. Structural causal models (SCMs)
+    have been applied to imbalanced NLP tasks, encoding task-specific causal graphs
+    (e.g., Nan et al., [2021](#bib.bib64)). Similarly, Wu et al. ([2021](#bib.bib103))
+    causally model how bias in long-tailed corpora affects topic modeling (Blei et al.,
+    [2003](#bib.bib7)) and use this to improve training of a variational autoencoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A research area closely related to class imbalance is few-shot learning (FSL,
+    Wang et al., [2020c](#bib.bib96)), which aims to learn classes based on only very
+    few training examples. Model ideas from FSL can be leveraged for long-tailed settings,
+    e.g., by making use of relational information about class labels in the form of
+    knowledge graph embeddings or other forms of embedding hierarchical relationships
+    between labels (Han et al., [2018](#bib.bib31); Zhang et al., [2019](#bib.bib114)),
+    or computing label-specific representations (Mullenbach et al., [2018](#bib.bib63)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Insights and Future Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have provided a comprehensive, concise and structured overview of current
+    approaches to dealing with class imbalance in DL-based NLP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What works (best)? As there is no established benchmark for class-imbalanced
+    settings, evaluation results are hard to compare across papers. In general, re-sampling
+    or changing the loss function may lead to small to moderate gains. For data augmentation
+    approaches, the reported performance increases tend to be larger than for re-sampling
+    or new loss functions. The effects of staged training or modifications of the
+    model vary drastically, ranging from detrimental to very large performance gains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hence, re-sampling, data augmentation, and changing the loss function are straightforward
+    choices in class-imbalanced settings. Approaches based on staged learning or model
+    design may sometimes outperform them, but often come with a higher implementation
+    or computational cost. For a practical decision aid and potential application
+    settings of some class imbalance methods, see Figure [3](#A2.F3 "Figure 3 ‣ Appendix
+    B Practical advice ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing") in Appendix [B](#A2 "Appendix B Practical
+    advice ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based
+    Natural Language Processing") and Table [3](#A2.T3 "Table 3 ‣ Appendix B Practical
+    advice ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based
+    Natural Language Processing") in Appendix [A](#A1 "Appendix A Method Overview
+    ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning Based Natural
+    Language Processing").
+  prefs: []
+  type: TYPE_NORMAL
+- en: How should we report results? Much NLP research only reports aggregate statistics
+    (Harbecke et al., [2022](#bib.bib32)), making it hard to judge the impact on improvements
+    by class, which is often important in practice. We thus argue that NLP researchers
+    should always report per-class statistics, e.g., as in Figure [1](#S1.F1 "Figure
+    1 ‣ 1 Introduction ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing"). Open-sourcing spreadsheets with the exact
+    numbers would enable the community to compare systems more flexibly from multiple
+    angles, i.e., with respect to whichever class(es) matter in a particular application
+    scenario, and to re-use this data in research on class imbalance. Reviewers should
+    also value works that analyze performance for relevant minority classes rather
+    than focusing largely only on overall accuracy improvements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A main hindrance to making progress on class imbalance in computer vision and
+    NLP alike is that experimental results are often hard to compare (Johnson and
+    Khoshgoftaar, [2019a](#bib.bib39), [2020](#bib.bib41)). A first important step
+    would be to not restrict baselines to methods of the same type, e.g., a new data
+    augmentation approach should not only compare to other data augmentation methods,
+    but also to using loss functions for class imbalance. Establishing a shared and
+    systematic benchmark of a diverse set of class-imbalanced NLP tasks would be highly
+    beneficial for both researchers and practitioners.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How can we move forward? Most work on class-imbalanced NLP has focused on single-label
+    text classification. Finding good solutions for multi-label settings is still
+    an open research challenge. Class imbalance also poses problems in NLP tasks such
+    as sequence labeling or parsing, and we believe that the interaction of structured
+    prediction models with methods to address class imbalance is a promising area
+    for future research. Moreover, we need to study how class imbalance methods affect
+    prediction calibration in order to provide reliable confidence estimates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, inspiration for new model architectures could for example be drawn
+    from approaches developed for few-shot learning (Wang et al., [2020c](#bib.bib96)).
+    Recently, prompting (Radford et al., [2019](#bib.bib71)) has emerged as a new
+    paradigm in NLP, which performs strongly in real-world few-shot settings (Schick
+    and Schütze, [2022](#bib.bib76)). Methods that improve worst-case performance
+    under distribution shift (e.g., Sagawa et al., [2020](#bib.bib75)) might also
+    be applied to improve minority-class performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We thank the anonymous reviewers for their valuable comments, and Heike Adel,
+    Stefan Grünewald, Subhash Pujari, and Timo Schrader for providing data for our
+    teaser image. We thank them and Talita Anthonio, Mohamed Gad-Elrab, Lukas Lange,
+    Stefan Ott, Robert Schmier, Hendrik Schuff, Daria Stepanova, Jannik Strötgen,
+    Thang Vu, and Dan Zhang for helpful discussions and feedback on the writing. We
+    also thank Jason Wei and Jiaqi Zeng for answering questions about their work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limitations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This paper is a survey, structuring, organizing and describing works and concepts
+    to address class imbalance including long-tailed learning. While we touch upon
+    data augmentation and few-shot learning, we do not comprehensively review those
+    areas. Details on the scope of this review have also been described in Sec. [1](#S1
+    "1 Introduction ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing").
+  prefs: []
+  type: TYPE_NORMAL
+- en: The search process for the survey included searching for the keywords class
+    imbalance and long tail in Google Scholar and the ACL Anthology, as well as carefully
+    checking the papers that cite relevant papers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, the paper only constitutes a literature review, it does not yet provide
+    a comprehensive empirical study which is much needed in this research area, but
+    it will be of use in carrying out such a study.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Adel et al. (2017) Heike Adel, Francine Chen, and Yan-Ying Chen. 2017. [Ranking
+    convolutional recurrent neural networks for purchase stage identification on imbalanced
+    Twitter data](https://aclanthology.org/E17-2094). In *Proceedings of the 15th
+    Conference of the European Chapter of the Association for Computational Linguistics:
+    Volume 2, Short Papers*, pages 592–598, Valencia, Spain. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ahrens et al. (2021) Kyra Ahrens, Fares Abawi, and Stefan Wermter. 2021. Drill:
+    Dynamic representations for imbalanced lifelong learning. In *Artificial Neural
+    Networks and Machine Learning – ICANN 2021*, pages 409–420, Cham. Springer International
+    Publishing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Akhbardeh et al. (2021) Farhad Akhbardeh, Cecilia Ovesdotter Alm, Marcos Zampieri,
+    and Travis Desell. 2021. [Handling extreme class imbalance in technical logbook
+    datasets](https://doi.org/10.18653/v1/2021.acl-long.312). In *Proceedings of the
+    59th Annual Meeting of the Association for Computational Linguistics and the 11th
+    International Joint Conference on Natural Language Processing (Volume 1: Long
+    Papers)*, pages 4034–4045, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Arivazhagan et al. (2019) Naveen Arivazhagan, Ankur Bapna, Orhan Firat, Dmitry
+    Lepikhin, Melvin Johnson, Maxim Krikun, Mia Xu Chen, Yuan Cao, George F. Foster,
+    Colin Cherry, Wolfgang Macherey, Zhifeng Chen, and Yonghui Wu. 2019. [Massively
+    multilingual neural machine translation in the wild: Findings and challenges](http://arxiv.org/abs/1907.05019).
+    *CoRR*, abs/1907.05019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Belghazi et al. (2018) Mohamed Ishmael Belghazi, Aristide Baratin, Sai Rajeshwar,
+    Sherjil Ozair, Yoshua Bengio, Aaron Courville, and Devon Hjelm. 2018. [Mutual
+    information neural estimation](https://proceedings.mlr.press/v80/belghazi18a.html).
+    In *Proceedings of the 35th International Conference on Machine Learning*, volume 80
+    of *Proceedings of Machine Learning Research*, pages 531–540\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Biswas et al. (2021) Biplob Biswas, Thai-Hoang Pham, and Ping Zhang. 2021.
+    [Transicd: Transformer based code-wise attention model for explainable ICD coding](https://doi.org/10.1007/978-3-030-77211-6_56).
+    In *Artificial Intelligence in Medicine - 19th International Conference on Artificial
+    Intelligence in Medicine, AIME 2021, Virtual Event, June 15-18, 2021, Proceedings*,
+    volume 12721 of *Lecture Notes in Computer Science*, pages 469–478\. Springer.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Blei et al. (2003) David M. Blei, Andrew Y. Ng, and Michael I. Jordan. 2003.
+    [Latent dirichlet allocation](http://jmlr.org/papers/v3/blei03a.html). *J. Mach.
+    Learn. Res.*, 3:993–1022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brodersen et al. (2010) Kay Henning Brodersen, Cheng Soon Ong, Klaas Enno Stephan,
+    and Joachim M. Buhmann. 2010. [The balanced accuracy and its posterior distribution](https://doi.org/10.1109/ICPR.2010.764).
+    In *2010 20th International Conference on Pattern Recognition*, pages 3121–3124.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bruzzone and Serpico (1997) L. Bruzzone and S.B. Serpico. 1997. [Classification
+    of imbalanced remote-sensing data by neural networks](https://doi.org/https://doi.org/10.1016/S0167-8655(97)00109-8).
+    *Pattern Recognition Letters*, 18(11):1323–1328.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Buda et al. (2018) Mateusz Buda, Atsuto Maki, and Maciej A. Mazurowski. 2018.
+    [A systematic study of the class imbalance problem in convolutional neural networks](https://doi.org/https://doi.org/10.1016/j.neunet.2018.07.011).
+    *Neural Networks*, 106:249–259.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cao et al. (2019) Kaidi Cao, Colin Wei, Adrien Gaidon, Nikos Arechiga, and Tengyu
+    Ma. 2019. [Learning imbalanced datasets with label-distribution-aware margin loss](https://proceedings.neurips.cc/paper/2019/file/621461af90cadfdaf0e8d4cc25129f91-Paper.pdf).
+    In *Advances in Neural Information Processing Systems*, volume 32\. Curran Associates,
+    Inc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Charte et al. (2015) Francisco Charte, Antonio J. Rivera, María J. del Jesus,
+    and Francisco Herrera. 2015. [Addressing imbalance in multilabel classification:
+    Measures and random resampling algorithms](https://doi.org/https://doi.org/10.1016/j.neucom.2014.08.091).
+    *Neurocomputing*, 163:3–16. Recent Advancements in Hybrid Artificial Intelligence
+    Systems and its Application to Real-World Problems Progress in Intelligent Systems
+    Mining Humanistic Data.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chawla et al. (2002) Nitesh V Chawla, Kevin W Bowyer, Lawrence O Hall, and
+    W Philip Kegelmeyer. 2002. Smote: Synthetic minority over-sampling technique.
+    *Journal of Artificial Intelligence Research*, 16:321–357.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. (2021) Junya Chen, Zidi Xiu, Benjamin Goldstein, Ricardo Henao,
+    Lawrence Carin, and Chenyang Tao. 2021. Supercharging imbalanced data learning
+    with energy-based contrastive representation transfer. *Advances in Neural Information
+    Processing Systems*, 34.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cho et al. (2020) Won Ik Cho, Youngki Moon, Sangwhan Moon, Seok Min Kim, and
+    Nam Soo Kim. 2020. [Machines getting with the program: Understanding intent arguments
+    of non-canonical directives](https://doi.org/10.18653/v1/2020.findings-emnlp.31).
+    In *Findings of the Association for Computational Linguistics: EMNLP 2020*, pages
+    329–339, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deng et al. (2022) Keqi Deng, Gaofeng Cheng, Runyan Yang, and Yonghong Yan.
+    2022. [Alleviating asr long-tailed problem by decoupling the learning of representation
+    and classification](https://doi.org/10.1109/TASLP.2021.3138707). *IEEE/ACM Transactions
+    on Audio, Speech, and Language Processing*, 30:340–354.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devlin et al. (2019) Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+    Toutanova. 2019. [BERT: Pre-training of deep bidirectional transformers for language
+    understanding](https://doi.org/10.18653/v1/N19-1423). In *Proceedings of the 2019
+    Conference of the North American Chapter of the Association for Computational
+    Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)*, pages
+    4171–4186, Minneapolis, Minnesota. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'dos Santos et al. (2015) Cícero dos Santos, Bing Xiang, and Bowen Zhou. 2015.
+    [Classifying relations by ranking with convolutional neural networks](https://doi.org/10.3115/v1/P15-1061).
+    In *Proceedings of the 53rd Annual Meeting of the Association for Computational
+    Linguistics and the 7th International Joint Conference on Natural Language Processing
+    (Volume 1: Long Papers)*, pages 626–634, Beijing, China. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ein-Dor et al. (2020) Liat Ein-Dor, Alon Halfon, Ariel Gera, Eyal Shnarch,
+    Lena Dankin, Leshem Choshen, Marina Danilevsky, Ranit Aharonov, Yoav Katz, and
+    Noam Slonim. 2020. [Active Learning for BERT: An Empirical Study](https://doi.org/10.18653/v1/2020.emnlp-main.638).
+    In *Proceedings of the 2020 Conference on Empirical Methods in Natural Language
+    Processing (EMNLP)*, pages 7949–7962, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ek and Ghanimifard (2019) Adam Ek and Mehdi Ghanimifard. 2019. [Synthetic propaganda
+    embeddings to train a linear projection](https://doi.org/10.18653/v1/D19-5023).
+    In *Proceedings of the Second Workshop on Natural Language Processing for Internet
+    Freedom: Censorship, Disinformation, and Propaganda*, pages 155–161, Hong Kong,
+    China. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estabrooks and Japkowicz (2001) Andrew Estabrooks and Nathalie Japkowicz. 2001.
+    [A mixture-of-experts framework for text classification](https://aclanthology.org/W01-0709).
+    In *Proceedings of the ACL 2001 Workshop on Computational Natural Language Learning
+    (ConLL)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Feng et al. (2021) Steven Y. Feng, Varun Gangal, Jason Wei, Sarath Chandar,
+    Soroush Vosoughi, Teruko Mitamura, and Eduard Hovy. 2021. [A survey of data augmentation
+    approaches for NLP](https://doi.org/10.18653/v1/2021.findings-acl.84). In *Findings
+    of the Association for Computational Linguistics: ACL-IJCNLP 2021*, pages 968–988,
+    Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fernández et al. (2018) Alberto Fernández, Salvador Garcia, Francisco Herrera,
+    and Nitesh V Chawla. 2018. Smote for learning from imbalanced data: Progress and
+    challenges, marking the 15-year anniversary. *Journal of Artificial Intelligence
+    Researc*, 61:863–905.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ferreira and Vlachos (2019) William Ferreira and Andreas Vlachos. 2019. [Incorporating
+    label dependencies in multilabel stance detection](https://doi.org/10.18653/v1/D19-1665).
+    In *Proceedings of the 2019 Conference on Empirical Methods in Natural Language
+    Processing and the 9th International Joint Conference on Natural Language Processing
+    (EMNLP-IJCNLP)*, pages 6350–6354, Hong Kong, China. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gao et al. (2020) Yang Gao, Yi-Fan Li, Yu Lin, Charu Aggarwal, and Latifur
+    Khan. 2020. [SetConv: A New Approach for Learning from Imbalanced Data](https://doi.org/10.18653/v1/2020.emnlp-main.98).
+    In *Proceedings of the 2020 Conference on Empirical Methods in Natural Language
+    Processing (EMNLP)*, pages 1284–1294, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gaspers et al. (2020) Judith Gaspers, Quynh Do, and Fabian Triefenbach. 2020.
+    [Data Balancing for Boosting Performance of Low-Frequency Classes in Spoken Language
+    Understanding](https://doi.org/10.21437/Interspeech.2020-1676). In *Proc. Interspeech
+    2020*, pages 1560–1564.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Grünewald et al. (2021) Stefan Grünewald, Annemarie Friedrich, and Jonas Kuhn.
+    2021. [Applying occam’s razor to transformer-based dependency parsing: What works,
+    what doesn’t, and what is really necessary](https://doi.org/10.18653/v1/2021.iwpt-1.13).
+    In *Proceedings of the 17th International Conference on Parsing Technologies and
+    the IWPT 2021 Shared Task on Parsing into Enhanced Universal Dependencies (IWPT
+    2021)*, pages 131–144, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gupta et al. (2019a) Agrim Gupta, Piotr Dollar, and Ross Girshick. 2019a. Lvis:
+    A dataset for large vocabulary instance segmentation. In *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition (CVPR)*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gupta et al. (2019b) Agrim Gupta, Piotr Dollár, and Ross B. Girshick. 2019b.
+    [LVIS: A dataset for large vocabulary instance segmentation](http://arxiv.org/abs/1908.03195).
+    *CoRR*, abs/1908.03195.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gururangan et al. (2020) Suchin Gururangan, Ana Marasović, Swabha Swayamdipta,
+    Kyle Lo, Iz Beltagy, Doug Downey, and Noah A. Smith. 2020. [Don’t stop pretraining:
+    Adapt language models to domains and tasks](https://doi.org/10.18653/v1/2020.acl-main.740).
+    In *Proceedings of the 58th Annual Meeting of the Association for Computational
+    Linguistics*, pages 8342–8360, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han et al. (2018) Xu Han, Pengfei Yu, Zhiyuan Liu, Maosong Sun, and Peng Li.
+    2018. [Hierarchical relation extraction with coarse-to-fine grained attention](https://doi.org/10.18653/v1/D18-1247).
+    In *Proceedings of the 2018 Conference on Empirical Methods in Natural Language
+    Processing*, pages 2236–2245, Brussels, Belgium. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Harbecke et al. (2022) David Harbecke, Yuxuan Chen, Leonhard Hennig, and Christoph
+    Alt. 2022. [Why only micro-f1? class weighting of measures for relation classification](https://doi.org/10.18653/v1/2022.nlppower-1.4).
+    In *Proceedings of NLP Power! The First Workshop on Efficient Benchmarking in
+    NLP*, pages 32–41, Dublin, Ireland. Association for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hedderich et al. (2021) Michael A. Hedderich, Lukas Lange, Heike Adel, Jannik
+    Strötgen, and Dietrich Klakow. 2021. [A survey on recent approaches for natural
+    language processing in low-resource scenarios](https://doi.org/10.18653/v1/2021.naacl-main.201).
+    In *Proceedings of the 2021 Conference of the North American Chapter of the Association
+    for Computational Linguistics: Human Language Technologies*, pages 2545–2568,
+    Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. (2022) Bo Hu, Yun Liu, Naiyue Chen, Lifu Wang, Ning Liu, and Xing
+    Cao. 2022. [Segcn-dcr: A syntax-enhanced event detection framework with decoupled
+    classification rebalance](https://doi.org/https://doi.org/10.1016/j.neucom.2022.01.069).
+    *Neurocomputing*, 481:55–66.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2021) Yi Huang, Buse Giledereli, Abdullatif Köksal, Arzucan Özgür,
+    and Elif Ozkirimli. 2021. [Balancing methods for multi-label text classification
+    with long-tailed class distribution](https://doi.org/10.18653/v1/2021.emnlp-main.643).
+    In *Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+    Processing*, pages 8153–8161, Online and Punta Cana, Dominican Republic. Association
+    for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jang et al. (2021) Joel Jang, Yoonjeon Kim, Kyoungho Choi, and Sungho Suh.
+    2021. [Sequential targeting: A continual learning approach for data imbalance
+    in text classification](https://doi.org/https://doi.org/10.1016/j.eswa.2021.115067).
+    *Expert Systems with Applications*, 179:115067.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Japkowicz et al. (2000) Nathalie Japkowicz et al. 2000. Learning from imbalanced
+    data sets: a comparison of various strategies. In *AAAI workshop on learning from
+    imbalanced data sets*, volume 68, pages 10–15\. AAAI Press Menlo Park, CA.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jiang et al. (2021) Wanrong Jiang, Ya Chen, Hao Fu, and Guiquan Liu. 2021.
+    Textcut: A multi-region replacement data augmentation approach for text imbalance
+    classification. In *Neural Information Processing*, pages 427–439, Cham. Springer
+    International Publishing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Johnson and Khoshgoftaar (2019a) Justin M. Johnson and Taghi M. Khoshgoftaar.
+    2019a. Deep learning and thresholding with class-imbalanced big data. *2019 18th
+    IEEE International Conference On Machine Learning And Applications (ICMLA)*, pages
+    755–762.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Johnson and Khoshgoftaar (2019b) Justin M. Johnson and Taghi M. Khoshgoftaar.
+    2019b. [Survey on deep learning with class imbalance](https://doi.org/10.1186/s40537-019-0192-5).
+    *Journal of Big Data*, 6(1).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Johnson and Khoshgoftaar (2020) Justin M. Johnson and Taghi M. Khoshgoftaar.
+    2020. [The Effects of Data Sampling with Deep Learning and Highly Imbalanced Big
+    Data](https://doi.org/10.1007/s10796-020-10022-7). *Information Systems Frontiers*,
+    22(5):1113–1131.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Juuti et al. (2020) Mika Juuti, Tommi Gröndahl, Adrian Flanagan, and N. Asokan.
+    2020. [A little goes a long way: Improving toxic language classification despite
+    data scarcity](https://doi.org/10.18653/v1/2020.findings-emnlp.269). In *Findings
+    of the Association for Computational Linguistics: EMNLP 2020*, pages 2991–3009,
+    Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kang et al. (2020) Bingyi Kang, Saining Xie, Marcus Rohrbach, Zhicheng Yan,
+    Albert Gordo, Jiashi Feng, and Yannis Kalantidis. 2020. [Decoupling representation
+    and classifier for long-tailed recognition](https://openreview.net/forum?id=r1gRTCVFvB).
+    In *8th International Conference on Learning Representations, ICLR 2020, Addis
+    Ababa, Ethiopia, April 26-30, 2020*. OpenReview.net.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Khosla et al. (2020) Prannay Khosla, Piotr Teterwak, Chen Wang, Aaron Sarna,
+    Yonglong Tian, Phillip Isola, Aaron Maschinot, Ce Liu, and Dilip Krishnan. 2020.
+    Supervised contrastive learning. *Advances in Neural Information Processing Systems*,
+    33:18661–18673.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kim (2014) Yoon Kim. 2014. [Convolutional neural networks for sentence classification](https://doi.org/10.3115/v1/D14-1181).
+    In *Proceedings of the 2014 Conference on Empirical Methods in Natural Language
+    Processing (EMNLP)*, pages 1746–1751, Doha, Qatar. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kumar et al. (2018) Pulkit Kumar, Monika Grewal, and Muktabh Mayank Srivastava.
+    2018. Boosted cascaded convnets for multilabel classification of thoracic diseases
+    in chest radiographs. In *International conference image analysis and recognition*,
+    pages 546–552\. Springer.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kunchukuttan and Bhattacharyya (2015) Anoop Kunchukuttan and Pushpak Bhattacharyya.
+    2015. [Addressing class imbalance in grammatical error detection with evaluation
+    metric optimization](https://aclanthology.org/W15-5902). In *Proceedings of the
+    12th International Conference on Natural Language Processing*, pages 2–10, Trivandrum,
+    India. NLP Association of India.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lange et al. (2021) Lukas Lange, Jannik Strötgen, Heike Adel, and Dietrich
+    Klakow. 2021. [To share or not to share: Predicting sets of sources for model
+    transfer learning](https://doi.org/10.18653/v1/2021.emnlp-main.689). In *Proceedings
+    of the 2021 Conference on Empirical Methods in Natural Language Processing*, pages
+    8744–8753, Online and Punta Cana, Dominican Republic. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li and Xiao (2020) Jinfen Li and Lu Xiao. 2020. [syrapropa at SemEval-2020
+    task 11: BERT-based models design for propagandistic technique and span detection](https://doi.org/10.18653/v1/2020.semeval-1.237).
+    In *Proceedings of the Fourteenth Workshop on Semantic Evaluation*, pages 1808–1816,
+    Barcelona (online). International Committee for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li and Nenkova (2014) Junyi Jessy Li and Ani Nenkova. 2014. [Addressing class
+    imbalance for improved recognition of implicit discourse relations](https://doi.org/10.3115/v1/W14-4320).
+    In *Proceedings of the 15th Annual Meeting of the Special Interest Group on Discourse
+    and Dialogue (SIGDIAL)*, pages 142–150, Philadelphia, PA, U.S.A. Association for
+    Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2011) Shoushan Li, Guodong Zhou, Zhongqing Wang, Sophia Yat Mei Lee,
+    and Rangyang Wang. 2011. [Imbalanced sentiment classification](https://doi.org/10.1145/2063576.2063994).
+    In *Proceedings of the 20th ACM International Conference on Information and Knowledge
+    Management*, CIKM ’11, page 2469–2472, New York, NY, USA. Association for Computing
+    Machinery.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2020) Xiaoya Li, Xiaofei Sun, Yuxian Meng, Junjun Liang, Fei Wu,
+    and Jiwei Li. 2020. [Dice loss for data-imbalanced NLP tasks](https://doi.org/10.18653/v1/2020.acl-main.45).
+    In *Proceedings of the 58th Annual Meeting of the Association for Computational
+    Linguistics*, pages 465–476, Online. Association for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li and Scarton (2020) Yue Li and Carolina Scarton. 2020. [Revisiting rumour
+    stance classification: Dealing with imbalanced data](https://aclanthology.org/2020.rdsm-1.4).
+    In *Proceedings of the 3rd International Workshop on Rumours and Deception in
+    Social Media (RDSM)*, pages 38–44, Barcelona, Spain (Online). Association for
+    Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2019) Hongyu Lin, Yaojie Lu, Xianpei Han, and Le Sun. 2019. [Cost-sensitive
+    regularization for label confusion-aware event detection](https://doi.org/10.18653/v1/P19-1521).
+    In *Proceedings of the 57th Annual Meeting of the Association for Computational
+    Linguistics*, pages 5278–5283, Florence, Italy. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2017) Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and
+    Piotr Dollar. 2017. Focal loss for dense object detection. In *Proceedings of
+    the IEEE International Conference on Computer Vision (ICCV)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu et al. (2022) Hong Liu, Jeff Z. HaoChen, Adrien Gaidon, and Tengyu Ma. 2022.
+    [Self-supervised learning is more robust to dataset imbalance](https://openreview.net/forum?id=4AZz9osqrar).
+    In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2019) Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi,
+    Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer, and Veselin Stoyanov. 2019.
+    [Roberta: A robustly optimized BERT pretraining approach](http://arxiv.org/abs/1907.11692).
+    *CoRR*, abs/1907.11692.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Maas et al. (2011) Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang,
+    Andrew Y. Ng, and Christopher Potts. 2011. [Learning word vectors for sentiment
+    analysis](https://aclanthology.org/P11-1015). In *Proceedings of the 49th Annual
+    Meeting of the Association for Computational Linguistics: Human Language Technologies*,
+    pages 142–150, Portland, Oregon, USA. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marelli et al. (2014) Marco Marelli, Stefano Menini, Marco Baroni, Luisa Bentivogli,
+    Raffaella Bernardi, and Roberto Zamparelli. 2014. [A SICK cure for the evaluation
+    of compositional distributional semantic models](http://www.lrec-conf.org/proceedings/lrec2014/pdf/363_Paper.pdf).
+    In *Proceedings of the Ninth International Conference on Language Resources and
+    Evaluation (LREC’14)*, pages 216–223, Reykjavik, Iceland. European Language Resources
+    Association (ELRA).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mathew et al. (2021) Binny Mathew, Punyajoy Saha, Seid Muhie Yimam, Chris Biemann,
+    Pawan Goyal, and Animesh Mukherjee. 2021. Hatexplain: A benchmark dataset for
+    explainable hate speech detection. In *Proceedings of the AAAI Conference on Artificial
+    Intelligence*, volume 35, pages 14867–14875.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mikolov et al. (2013) Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg S Corrado,
+    and Jeff Dean. 2013. [Distributed representations of words and phrases and their
+    compositionality](https://proceedings.neurips.cc/paper/2013/file/9aa42b31882ec039965f3c4923ce901b-Paper.pdf).
+    In *Advances in Neural Information Processing Systems*, volume 26\. Curran Associates,
+    Inc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Milletari et al. (2016) Fausto Milletari, Nassir Navab, and Seyed-Ahmad Ahmadi.
+    2016. [V-net: Fully convolutional neural networks for volumetric medical image
+    segmentation](https://doi.org/10.1109/3DV.2016.79). In *2016 Fourth International
+    Conference on 3D Vision (3DV)*, pages 565–571.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mullenbach et al. (2018) James Mullenbach, Sarah Wiegreffe, Jon Duke, Jimeng
+    Sun, and Jacob Eisenstein. 2018. [Explainable prediction of medical codes from
+    clinical text](https://doi.org/10.18653/v1/N18-1100). In *Proceedings of the 2018
+    Conference of the North American Chapter of the Association for Computational
+    Linguistics: Human Language Technologies, Volume 1 (Long Papers)*, pages 1101–1111,
+    New Orleans, Louisiana. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nan et al. (2021) Guoshun Nan, Jiaqi Zeng, Rui Qiao, Zhijiang Guo, and Wei Lu.
+    2021. [Uncovering main causalities for long-tailed information extraction](https://doi.org/10.18653/v1/2021.emnlp-main.763).
+    In *Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+    Processing*, pages 9683–9695, Online and Punta Cana, Dominican Republic. Association
+    for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Niklaus et al. (2021) Joel Niklaus, Ilias Chalkidis, and Matthias Stürmer.
+    2021. [Swiss-judgment-prediction: A multilingual legal judgment prediction benchmark](https://doi.org/10.18653/v1/2021.nllp-1.3).
+    In *Proceedings of the Natural Legal Language Processing Workshop 2021*, pages
+    19–35, Punta Cana, Dominican Republic. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Nishino et al. (2020) Toru Nishino, Ryota Ozaki, Yohei Momoki, Tomoki Taniguchi,
+    Ryuji Kano, Norihisa Nakano, Yuki Tagawa, Motoki Taniguchi, Tomoko Ohkuma, and
+    Keigo Nakamura. 2020. [Reinforcement learning with imbalanced dataset for data-to-text
+    medical report generation](https://doi.org/10.18653/v1/2020.findings-emnlp.202).
+    In *Findings of the Association for Computational Linguistics: EMNLP 2020*, pages
+    2223–2236, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park and Zhang (2002) Seong-Bae Park and Byoung-Tak Zhang. 2002. [A boosted
+    maximum entropy model for learning text chunking](https://bi.snu.ac.kr/Publications/Conferences/International/ICML2002_Park.pdf).
+    In *Proceedings of the Nineteenth International Conference on Machine Learning*,
+    pages 482–489.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pouyanfar et al. (2018) Samira Pouyanfar, Yudong Tao, Anup Mohan, Haiman Tian,
+    Ahmed S. Kaseb, Kent Gauen, Ryan Dailey, Sarah Aghajanzadeh, Yung-Hsiang Lu, Shu-Ching
+    Chen, and Mei-Ling Shyu. 2018. [Dynamic sampling in convolutional neural networks
+    for imbalanced data classification](https://doi.org/10.1109/MIPR.2018.00027).
+    In *2018 IEEE Conference on Multimedia Information Processing and Retrieval (MIPR)*,
+    pages 112–117.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Prange et al. (2021) Jakob Prange, Nathan Schneider, and Vivek Srikumar. 2021.
+    [Supertagging the long tail with tree-structured decoding of complex categories](https://doi.org/10.1162/tacl_a_00364).
+    *Transactions of the Association for Computational Linguistics*, 9:243–260.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pujari et al. (2021) Subhash Chandra Pujari, Annemarie Friedrich, and Jannik
+    Strötgen. 2021. A multi-task approach to neural multi-label hierarchical patent
+    classification using transformers. In *European Conference on Information Retrieval*,
+    pages 513–528\. Springer.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Radford et al. (2019) Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario
+    Amodei, and Ilya Sutskever. 2019. [Language models are unsupervised multitask
+    learners](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf).
+    Technical report, OpenAI.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ramponi and Plank (2020) Alan Ramponi and Barbara Plank. 2020. [Neural unsupervised
+    domain adaptation in NLP—A survey](https://doi.org/10.18653/v1/2020.coling-main.603).
+    In *Proceedings of the 28th International Conference on Computational Linguistics*,
+    pages 6838–6855, Barcelona, Spain (Online). International Committee on Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rathnayaka et al. (2019) Prabod Rathnayaka, Supun Abeysinghe, Chamod Samarajeewa,
+    Isura Manchanayake, Malaka J. Walpola, Rashmika Nawaratne, Tharindu R. Bandaragoda,
+    and Damminda Alahakoon. 2019. [Gated recurrent neural network approach for multilabel
+    emotion detection in microblogs](http://arxiv.org/abs/1907.07653). *CoRR*, abs/1907.07653.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ruder et al. (2019) Sebastian Ruder, Matthew E. Peters, Swabha Swayamdipta,
+    and Thomas Wolf. 2019. [Transfer learning in natural language processing](https://doi.org/10.18653/v1/N19-5004).
+    In *Proceedings of the 2019 Conference of the North American Chapter of the Association
+    for Computational Linguistics: Tutorials*, pages 15–18, Minneapolis, Minnesota.
+    Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sagawa et al. (2020) Shiori Sagawa, Pang Wei Koh, Tatsunori B. Hashimoto, and
+    Percy Liang. 2020. [Distributionally robust neural networks](https://openreview.net/forum?id=ryxGuJrFvS).
+    In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schick and Schütze (2022) Timo Schick and Hinrich Schütze. 2022. [True few-shot
+    learning with Prompts—A real-world perspective](https://doi.org/10.1162/tacl_a_00485).
+    *Transactions of the Association for Computational Linguistics*, 10:716–731.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schröder and Niekler (2020) Christopher Schröder and Andreas Niekler. 2020.
+    [A survey of active learning for text classification using deep neural networks](http://arxiv.org/abs/2008.07267).
+    *CoRR*, abs/2008.07267.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shen et al. (2016) Li Shen, Zhouchen Lin, and Qingming Huang. 2016. Relay backpropagation
+    for effective learning of deep convolutional neural networks. In *Computer Vision
+    – ECCV 2016*, pages 467–482, Cham. Springer International Publishing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shi and Demberg (2019) Wei Shi and Vera Demberg. 2019. [Next sentence prediction
+    helps implicit discourse relation classification within and across domains](https://doi.org/10.18653/v1/D19-1586).
+    In *Proceedings of the 2019 Conference on Empirical Methods in Natural Language
+    Processing and the 9th International Joint Conference on Natural Language Processing
+    (EMNLP-IJCNLP)*, pages 5790–5796, Hong Kong, China. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Spangher et al. (2021) Alexander Spangher, Jonathan May, Sz-Rung Shiang, and
+    Lingjia Deng. 2021. [Multitask semi-supervised learning for class-imbalanced discourse
+    classification](https://doi.org/10.18653/v1/2021.emnlp-main.40). In *Proceedings
+    of the 2021 Conference on Empirical Methods in Natural Language Processing*, pages
+    498–517, Online and Punta Cana, Dominican Republic. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Subramanian et al. (2021) Shivashankar Subramanian, Afshin Rahimi, Timothy Baldwin,
+    Trevor Cohn, and Lea Frermann. 2021. [Fairness-aware class imbalanced learning](https://doi.org/10.18653/v1/2021.emnlp-main.155).
+    In *Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+    Processing*, pages 2045–2051, Online and Punta Cana, Dominican Republic. Association
+    for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Suresh and Ong (2021) Varsha Suresh and Desmond Ong. 2021. [Not all negatives
+    are equal: Label-aware contrastive loss for fine-grained text classification](https://doi.org/10.18653/v1/2021.emnlp-main.359).
+    In *Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+    Processing*, pages 4381–4394, Online and Punta Cana, Dominican Republic. Association
+    for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tan (2005) Songbo Tan. 2005. [Neighbor-weighted k-nearest neighbor for unbalanced
+    text corpus](https://doi.org/https://doi.org/10.1016/j.eswa.2004.12.023). *Expert
+    Systems with Applications*, 28(4):667–671.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tang et al. (2020) Tiancheng Tang, Xinhuai Tang, and Tianyi Yuan. 2020. [Fine-tuning
+    bert for multi-label sentiment analysis in unbalanced code-switching text](https://doi.org/10.1109/ACCESS.2020.3030468).
+    *IEEE Access*, 8:193248–193256.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tänzer et al. (2022) Michael Tänzer, Sebastian Ruder, and Marek Rei. 2022.
+    [Memorisation versus generalisation in pre-trained language models](https://doi.org/10.18653/v1/2022.acl-long.521).
+    In *Proceedings of the 60th Annual Meeting of the Association for Computational
+    Linguistics (Volume 1: Long Papers)*, pages 7564–7578, Dublin, Ireland. Association
+    for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tayyar Madabushi et al. (2019) Harish Tayyar Madabushi, Elena Kochkina, and
+    Michael Castelle. 2019. [Cost-sensitive BERT for generalisable sentence classification
+    on imbalanced data](https://doi.org/10.18653/v1/D19-5018). In *Proceedings of
+    the Second Workshop on Natural Language Processing for Internet Freedom: Censorship,
+    Disinformation, and Propaganda*, pages 125–134, Hong Kong, China. Association
+    for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tepper et al. (2020) Naama Tepper, Esther Goldbraich, Naama Zwerdling, George
+    Kour, Ateret Anaby Tavor, and Boaz Carmeli. 2020. [Balancing via generation for
+    multi-class text classification improvement](https://doi.org/10.18653/v1/2020.findings-emnlp.130).
+    In *Findings of the Association for Computational Linguistics: EMNLP 2020*, pages
+    1440–1452, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tian et al. (2020) Jiachen Tian, Shizhan Chen, Xiaowang Zhang, and Zhiyong Feng.
+    2020. A graph-based measurement for text imbalance classification. In *ECAI 2020*,
+    pages 2188–2195\. IOS Press.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tian et al. (2021) Jiachen Tian, Shizhan Chen, Xiaowang Zhang, Zhiyong Feng,
+    Deyi Xiong, Shaojuan Wu, and Chunliu Dou. 2021. [Re-embedding difficult samples
+    via mutual information constrained semantically oversampling for imbalanced text
+    classification](https://doi.org/10.18653/v1/2021.emnlp-main.252). In *Proceedings
+    of the 2021 Conference on Empirical Methods in Natural Language Processing*, pages
+    3148–3161, Online and Punta Cana, Dominican Republic. Association for Computational
+    Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tomanek and Hahn (2009) Katrin Tomanek and Udo Hahn. 2009. [Reducing class imbalance
+    during active learning for named entity annotation](https://doi.org/10.1145/1597735.1597754).
+    In *Proceedings of the Fifth International Conference on Knowledge Capture*, K-CAP
+    ’09, page 105–112, New York, NY, USA. Association for Computing Machinery.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tran and Litman (2021) Nhat Tran and Diane Litman. 2021. [Multi-task learning
+    in argument mining for persuasive online discussions](https://doi.org/10.18653/v1/2021.argmining-1.15).
+    In *Proceedings of the 8th Workshop on Argument Mining*, pages 148–153, Punta
+    Cana, Dominican Republic. Association for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'van Son et al. (2018) Chantal van Son, Roser Morante, Lora Aroyo, and Piek
+    Vossen. 2018. [Scoring and classifying implicit positive interpretations: A challenge
+    of class imbalance](https://aclanthology.org/C18-1191). In *Proceedings of the
+    27th International Conference on Computational Linguistics*, pages 2253–2264,
+    Santa Fe, New Mexico, USA. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vaswani et al. (2017) Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit,
+    Llion Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia Polosukhin. 2017. [Attention
+    is all you need](https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf).
+    In *Advances in Neural Information Processing Systems*, volume 30\. Curran Associates,
+    Inc.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2020a) Tao Wang, Yu Li, Bingyi Kang, Junnan Li, Junhao Liew, Sheng
+    Tang, Steven Hoi, and Jiashi Feng. 2020a. The devil is in classification: A simple
+    framework for long-tail instance segmentation. In *Computer Vision – ECCV 2020*,
+    pages 728–744, Cham. Springer International Publishing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2020b) Xin Wang, Thomas Huang, Joseph Gonzalez, Trevor Darrell,
+    and Fisher Yu. 2020b. [Frustratingly simple few-shot object detection](https://proceedings.mlr.press/v119/wang20j.html).
+    In *Proceedings of the 37th International Conference on Machine Learning*, volume
+    119 of *Proceedings of Machine Learning Research*, pages 9919–9928\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2020c) Yaqing Wang, Quanming Yao, James T Kwok, and Lionel M Ni.
+    2020c. Generalizing from a few examples: A survey on few-shot learning. *ACM computing
+    surveys (csur)*, 53(3):1–34.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Waseem and Hovy (2016) Zeerak Waseem and Dirk Hovy. 2016. [Hateful symbols or
+    hateful people? predictive features for hate speech detection on Twitter](https://doi.org/10.18653/v1/N16-2013).
+    In *Proceedings of the NAACL Student Research Workshop*, pages 88–93, San Diego,
+    California. Association for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wei (2021) Jason Wei. 2021. [Good-enough example extrapolation](https://doi.org/10.18653/v1/2021.emnlp-main.479).
+    In *Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+    Processing*, pages 5923–5929, Online and Punta Cana, Dominican Republic. Association
+    for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wei and Zou (2019) Jason Wei and Kai Zou. 2019. [EDA: Easy data augmentation
+    techniques for boosting performance on text classification tasks](https://doi.org/10.18653/v1/D19-1670).
+    In *Proceedings of the 2019 Conference on Empirical Methods in Natural Language
+    Processing and the 9th International Joint Conference on Natural Language Processing
+    (EMNLP-IJCNLP)*, pages 6382–6388, Hong Kong, China. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wei et al. (2022) Jiale Wei, Qiyuan Chen, Pai Peng, Benjamin Guedj, and Le Li.
+    2022. [Reprint: a randomized extrapolation based on principal components for data
+    augmentation](https://doi.org/10.48550/arXiv.2204.12024). *CoRR*, abs/2204.12024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Winata et al. (2020) Genta Indra Winata, Guangsen Wang, Caiming Xiong, and
+    Steven C. H. Hoi. 2020. [Adapt-and-adjust: Overcoming the long-tail problem of
+    multilingual speech recognition](http://arxiv.org/abs/2012.01687). *CoRR*, abs/2012.01687.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wu et al. (2020) Tong Wu, Qingqiu Huang, Ziwei Liu, Yu Wang, and Dahua Lin.
+    2020. Distribution-balanced loss for multi-label classification in long-tailed
+    datasets. In *Computer Vision – ECCV 2020*, pages 162–178, Cham. Springer International
+    Publishing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. (2021) Xiaobao Wu, Chunping Li, and Yishu Miao. 2021. [Discovering
+    topics in long-tailed corpora with causal intervention](https://doi.org/10.18653/v1/2021.findings-acl.15).
+    In *Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021*,
+    pages 175–185, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xie et al. (2020) Qizhe Xie, Zihang Dai, Eduard Hovy, Thang Luong, and Quoc
+    Le. 2020. Unsupervised data augmentation for consistency training. *Advances in
+    Neural Information Processing Systems*, 33:6256–6268.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. (2020) Wenshuo Yang, Jiyi Li, Fumiyo Fukumoto, and Yanming Ye.
+    2020. [HSCNN: A hybrid-Siamese convolutional neural network for extremely imbalanced
+    multi-label text classification](https://doi.org/10.18653/v1/2020.emnlp-main.545).
+    In *Proceedings of the 2020 Conference on Empirical Methods in Natural Language
+    Processing (EMNLP)*, pages 6716–6722, Online. Association for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2021) Yuzhe Yang, Kaiwen Zha, Ying-Cong Chen, Hao Wang, and Dina
+    Katabi. 2021. [Delving into deep imbalanced regression](http://proceedings.mlr.press/v139/yang21m.html).
+    In *Proceedings of the 38th International Conference on Machine Learning, ICML
+    2021, 18-24 July 2021, Virtual Event*, volume 139 of *Proceedings of Machine Learning
+    Research*, pages 11842–11851\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yeh et al. (2017) Chih-Kuan Yeh, Wei-Chieh Wu, Wei-Jen Ko, and Yu-Chiang Frank
+    Wang. 2017. Learning deep latent space for multi-label classification. In *Thirty-first
+    AAAI conference on artificial intelligence*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yilmaz et al. (2021) Selim F. Yilmaz, E. Batuhan Kaynak, Aykut Koç, Hamdi Dibeklioğlu,
+    and Suleyman Serdar Kozat. 2021. [Multi-label sentiment analysis on 100 languages
+    with dynamic weighting for label imbalance](https://doi.org/10.1109/TNNLS.2021.3094304).
+    *IEEE Transactions on Neural Networks and Learning Systems*, pages 1–13.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yu et al. (2020) Haiyang Yu, Ningyu Zhang, Shumin Deng, Zonggang Yuan, Yantao
+    Jia, and Huajun Chen. 2020. [The devil is the classifier: Investigating long tail
+    relation classification with decoupling analysis](http://arxiv.org/abs/2009.07022).
+    *CoRR*, abs/2009.07022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yun et al. (2019) Sangdoo Yun, Dongyoon Han, Seong Joon Oh, Sanghyuk Chun,
+    Junsuk Choe, and Youngjoon Yoo. 2019. Cutmix: Regularization strategy to train
+    strong classifiers with localizable features. In *Proceedings of the IEEE/CVF
+    International Conference on Computer Vision (ICCV)*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2020) Danqing Zhang, Tao Li, Haiyang Zhang, and Bing Yin. 2020.
+    [On data augmentation for extreme multi-label classification](http://arxiv.org/abs/2009.10778).
+    *CoRR*, abs/2009.10778.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2022) Jiaxin Zhang, Jie Liu, Shaowei Chen, Shaoxin Lin, Bingquan
+    Wang, and Shanpeng Wang. 2022. Adam: An attentional data augmentation method for
+    extreme multi-label text classification. In *Advances in Knowledge Discovery and
+    Data Mining*, pages 131–142, Cham. Springer International Publishing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang and Zhou (2006) Min-Ling Zhang and Zhi-Hua Zhou. 2006. [Multilabel neural
+    networks with applications to functional genomics and text categorization](https://doi.org/10.1109/TKDE.2006.162).
+    *IEEE Transactions on Knowledge and Data Engineering*, 18(10):1338–1351.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2019) Ningyu Zhang, Shumin Deng, Zhanlin Sun, Guanying Wang,
+    Xi Chen, Wei Zhang, and Huajun Chen. 2019. [Long-tail relation extraction via
+    knowledge graph embeddings and graph convolution networks](https://doi.org/10.18653/v1/N19-1306).
+    In *Proceedings of the 2019 Conference of the North American Chapter of the Association
+    for Computational Linguistics: Human Language Technologies, Volume 1 (Long and
+    Short Papers)*, pages 3016–3025, Minneapolis, Minnesota. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2021a) Songyang Zhang, Zeming Li, Shipeng Yan, Xuming He, and
+    Jian Sun. 2021a. Distribution alignment: A unified framework for long-tail visual
+    recognition. In *Proceedings of the IEEE/CVF Conference on Computer Vision and
+    Pattern Recognition (CVPR)*, pages 2361–2370.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2021b) Yifan Zhang, Bingyi Kang, Bryan Hooi, Shuicheng Yan, and
+    Jiashi Feng. 2021b. [Deep long-tailed learning: A survey](http://arxiv.org/abs/2110.04596).
+    *CoRR*, abs/2110.04596.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhou and Chen (2021) Wenxuan Zhou and Muhao Chen. 2021. [An improved baseline
+    for sentence-level relation extraction](http://arxiv.org/abs/2102.01373). *CoRR*,
+    abs/2102.01373.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Appendix
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Appendix A Method Overview
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We here provide details on a selection of methods surveyed in this paper. Table [3](#A2.T3
+    "Table 3 ‣ Appendix B Practical advice ‣ A Survey of Methods for Addressing Class
+    Imbalance in Deep-Learning Based Natural Language Processing") shows whether they
+    have been applied respectively whether they are applicable in binary, multi-class,
+    and multi-label classification. Moreover, it contains information on whether authors
+    open-sourced their implementation. For links to open-sourced code, see Table [2](#A2.T2
+    "Table 2 ‣ Appendix B Practical advice ‣ A Survey of Methods for Addressing Class
+    Imbalance in Deep-Learning Based Natural Language Processing").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix B Practical advice
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In Figure [3](#A2.F3 "Figure 3 ‣ Appendix B Practical advice ‣ A Survey of Methods
+    for Addressing Class Imbalance in Deep-Learning Based Natural Language Processing"),
+    we provide practical advice which class imbalance methods might be beneficial
+    under which circumstances. Due to the lack of an established benchmark, we can
+    only give rough guidance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Link |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Data Augmentation |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EDA (Wei and Zou, [2019](#bib.bib99)) | [GitHub](https://github.com/jasonwei20/eda_nlp)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GE3 (Wei, [2021](#bib.bib98)) | [ACL Anthology](https://aclanthology.org/attachments/2021.emnlp-main.479.Software.zip)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ECRT (Chen et al., [2021](#bib.bib14)) | [GitHub](https://github.com/ZidiXiu/ECRT)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Loss Functions |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FL (Lin et al., [2017](#bib.bib55)) | [GitHub](https://github.com/facebookresearch/fvcore/blob/main/fvcore/nn/focal_loss.py)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADL (Li et al., [2020](#bib.bib52)) | [GitHub](https://github.com/ShannonAI/dice_loss_for_NLP)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LDAM (Cao et al., [2019](#bib.bib11)) | [GitHub](https://github.com/kaidic/LDAM-DRW)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DB (Wu et al., [2020](#bib.bib102)) | [GitHub](https://github.com/wutong16/DistributionBalancedLoss)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Staged Learning |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| cRT (Kang et al., [2020](#bib.bib43)) | [GitHub](https://github.com/facebookresearch/classifier-balancing)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ST (Jang et al., [2021](#bib.bib36)) | [GitHub](https://github.com/joeljang/Sequential-Targeting)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Model Design |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\tau$-norm (Kang et al., [2020](#bib.bib43)) | [GitHub](https://github.com/facebookresearch/classifier-balancing)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ProtoBERT (Tänzer et al., [2022](#bib.bib85)) | [GitHub](https://github.com/Michael-Tanzer/BERT-mem-lowres)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2: Open-sourced implementations of examples of class imbalance methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | Binary classification | Multi-class classification | Multi-label
+    classification | Code |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Re-Sampling |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ROS/RUS (Sec. [3.1](#S3.SS1 "3.1 Re-Sampling ‣ 3 Methods for Addressing Class
+    Imbalance in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")) | ✓ | ✓ | ? | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CAS (Shen et al., [2016](#bib.bib78)) | ✓ | ✓ | ? | × |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Data Augmentation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EDA (Wei and Zou, [2019](#bib.bib99)) | Juuti et al. ([2020](#bib.bib42))
+    | Jiang et al. ([2021](#bib.bib38)) | Zhang et al. ([2022](#bib.bib112), [2020](#bib.bib111))
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Jiang et al. ([2021](#bib.bib38)) |  |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TextCut (Jiang et al., [2021](#bib.bib38)) | Jiang et al. ([2021](#bib.bib38))
+    | Jiang et al. ([2021](#bib.bib38)) | ✓ | × |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GE3 (Wei, [2021](#bib.bib98)) | ✓ | Wei ([2021](#bib.bib98)) | ? | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | Wei et al. ([2022](#bib.bib100)) |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MISO (Tian et al., [2021](#bib.bib89)) | Tian et al. ([2021](#bib.bib89))
+    | Tian et al. ([2021](#bib.bib89))* | ? | × |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ECRT (Chen et al., [2021](#bib.bib14)) | ✓ | ✓ | Chen et al. ([2021](#bib.bib14))
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Loss Functions |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WCE (Sec. [3.3](#S3.SS3 "3.3 Loss Functions ‣ 3 Methods for Addressing Class
+    Imbalance in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")) | [Tayyar Madabushi et al.](#bib.bib86) |
+    Adel et al. ([2017](#bib.bib1)) | N/A | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ([2019](#bib.bib86)) | Li and Xiao ([2020](#bib.bib49)) |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FL (Lin et al., [2017](#bib.bib55)) | ✓ | Li et al. ([2020](#bib.bib52))
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | Nan et al. ([2021](#bib.bib64)) |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADL (Li et al., [2020](#bib.bib52)) | ✓ | Li et al. ([2020](#bib.bib52))
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | Spangher et al. ([2021](#bib.bib80)) |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LDAM (Cao et al., [2019](#bib.bib11)) | Cao et al. ([2019](#bib.bib11)) |
+    ✓ | Biswas et al. ([2021](#bib.bib6)) | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Subramanian et al. ([2021](#bib.bib81)) |  |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WBCE (Sec. [3.3](#S3.SS3 "3.3 Loss Functions ‣ 3 Methods for Addressing Class
+    Imbalance in NLP ‣ A Survey of Methods for Addressing Class Imbalance in Deep-Learning
+    Based Natural Language Processing")) | ✓ | × | Yang et al. ([2020](#bib.bib105))
+    | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RL (dos Santos et al., [2015](#bib.bib18)) | ✓ | Adel et al. ([2017](#bib.bib1))
+    | × | × |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DB (Wu et al., [2020](#bib.bib102)) | × | × | Huang et al. ([2021](#bib.bib35))
+    | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Staged Learning |'
+  prefs: []
+  type: TYPE_TB
+- en: '| cRT (Kang et al., [2020](#bib.bib43)) | ✓ | Nan et al. ([2021](#bib.bib64))
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | Hu et al. ([2022](#bib.bib34)) |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ST (Jang et al., [2021](#bib.bib36)) | Jang et al. ([2021](#bib.bib36)) |
+    Jang et al. ([2021](#bib.bib36)) | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Model Design |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\tau$-norm (Kang et al., [2020](#bib.bib43)) | ✓ | Nan et al. ([2021](#bib.bib64))
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SetConv (Gao et al., [2020](#bib.bib25)) | Gao et al. ([2020](#bib.bib25))
+    | Gao et al. ([2020](#bib.bib25)) | ✓ | × |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ProtoBERT (Tänzer et al., [2022](#bib.bib85)) | ✓ | Tänzer et al. ([2022](#bib.bib85))
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HSCNN (Yang et al., [2020](#bib.bib105)) | ✓ | ✓ | Yang et al. ([2020](#bib.bib105))
+    | × |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 3: Examples of class imbalance methods and NLP application settings.
+    ✓: method applicable (but no particular reference reporting experimental results
+    exists)/code: authors open-sourced their implementation, ?: application not straightforward
+    / open research issues. *: The authors select only one class as the minority class
+    in their experiments. For links to open-sourced code, see Table [2](#A2.T2 "Table
+    2 ‣ Appendix B Practical advice ‣ A Survey of Methods for Addressing Class Imbalance
+    in Deep-Learning Based Natural Language Processing"). Methods for binary and multi-class
+    classification are in general applicable to classification-based relation extraction
+    approaches; applying class-imbalance techniques to sequence labeling methods in
+    general is similar to the case of multi-label classification. For example, if
+    sampling for a particular category, the whole sequence sample may contain additional
+    annotations for other categories.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <svg id="A2.F3.pic1" class="ltx_picture ltx_centering" height="457.42" overflow="visible"
+    version="1.1" width="542.26"><g transform="translate(0,457.42) matrix(1 0 0 -1
+    0 0) translate(227.19,0) translate(0,403.37)" fill="#000000" stroke="#000000"><g
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -31.13 4.77)" fill="#000000"
+    stroke="#000000"><foreignobject width="62.27" height="28.9" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">classifica-tion type? <g fill="#CCCCFF"><path
+    d="M 211.25 0 L 157.48 53.77 L 103.71 0 L 157.48 -53.77 Z"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 126.35 13.07)" fill="#000000" stroke="#000000"><foreignobject width="62.27"
+    height="45.51" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">all classes
+    equally important?</foreignobject></g> <g fill="#E6E6FF"><path d="M 309.26 27.67
+    L 241.92 27.67 C 238.86 27.67 236.39 25.2 236.39 22.14 L 236.39 -22.14 C 236.39
+    -25.2 238.86 -27.67 241.92 -27.67 L 309.26 -27.67 C 312.32 -27.67 314.79 -25.2
+    314.79 -22.14 L 314.79 22.14 C 314.79 25.2 312.32 27.67 309.26 27.67 Z M 236.39
+    -27.67"></path></g><g transform="matrix(1.0 0.0 0.0 1.0 241 9.9)" fill="#000000"
+    stroke="#000000"><foreignobject width="69.19" height="39.17" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">distribution-balanced loss</foreignobject></g>
+    <g fill="#E6E6FF"><path d="M 274.67 -33.14 L 207.33 -33.14 C 204.27 -33.14 201.79
+    -35.62 201.79 -38.67 L 201.79 -128.36 C 201.79 -131.42 204.27 -133.89 207.33 -133.89
+    L 274.67 -133.89 C 277.72 -133.89 280.2 -131.42 280.2 -128.36 L 280.2 -38.67 C
+    280.2 -35.62 277.72 -33.14 274.67 -33.14 Z M 201.79 -133.89"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 206.4 -47.44)" fill="#000000" stroke="#000000"><foreignobject width="69.19"
+    height="91.53" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">weighted
+    (binary) CE loss upweighting only classes of interest</foreignobject></g> <g fill="#CCCCFF"><path
+    d="M 52.43 -118.11 L 0 -65.68 L -52.43 -118.11 L 0 -170.54 Z"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 -31.13 -106.39)" fill="#000000" stroke="#000000"><foreignobject width="62.27"
+    height="42.82" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">limited
+    computational resources?</foreignobject></g> <g fill="#CCCCFF"><path d="M 123.37
+    -187.71 L 69.6 -133.93 L 15.82 -187.71 L 69.6 -241.48 Z"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 38.46 -174.64)" fill="#000000" stroke="#000000"><foreignobject width="62.27"
+    height="45.51" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">all classes
+    equally important?</foreignobject></g> <g fill="#CCCCFF"><path d="M 113.72 -305.82
+    L 69.6 -261.69 L 25.47 -305.82 L 69.6 -349.94 Z"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 38.46 -302.4)" fill="#000000" stroke="#000000"><foreignobject width="62.27"
+    height="26.21" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">catch-all
+    class?</foreignobject></g> <g fill="#E6E6FF"><path d="M 172.86 -347.74 L 105.52
+    -347.74 C 102.47 -347.74 99.99 -350.22 99.99 -353.28 L 99.99 -397.55 C 99.99 -400.61
+    102.47 -403.09 105.52 -403.09 L 172.86 -403.09 C 175.92 -403.09 178.4 -400.61
+    178.4 -397.55 L 178.4 -353.28 C 178.4 -350.22 175.92 -347.74 172.86 -347.74 Z
+    M 99.99 -403.09"></path></g><g transform="matrix(1.0 0.0 0.0 1.0 104.6 -378.95)"
+    fill="#000000" stroke="#000000"><foreignobject width="69.19" height="12.3" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">ranking loss</foreignobject></g> <g fill="#E6E6FF"><path
+    d="M 201.69 -278.14 L 134.35 -278.14 C 131.3 -278.14 128.82 -280.62 128.82 -283.68
+    L 128.82 -327.96 C 128.82 -331.01 131.3 -333.49 134.35 -333.49 L 201.69 -333.49
+    C 204.75 -333.49 207.23 -331.01 207.23 -327.96 L 207.23 -283.68 C 207.23 -280.62
+    204.75 -278.14 201.69 -278.14 Z M 128.82 -333.49"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 133.43 -302.4)" fill="#000000" stroke="#000000"><foreignobject width="69.19"
+    height="26.21" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">weighted
+    CE loss</foreignobject></g> <g fill="#CCCCFF"><path d="M -8.87 -187.71 L -69.6
+    -126.98 L -130.33 -187.71 L -69.6 -248.44 Z"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 -100.73 -167.68)" fill="#000000" stroke="#000000"><foreignobject width="62.27"
+    height="59.42" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">limited
+    implementation capacities?</foreignobject></g> <g fill="#E6E6FF"><path d="M -154.04
+    -160.03 L -221.38 -160.03 C -224.43 -160.03 -226.91 -162.51 -226.91 -165.57 L
+    -226.91 -209.85 C -226.91 -212.9 -224.43 -215.38 -221.38 -215.38 L -154.04 -215.38
+    C -150.98 -215.38 -148.5 -212.9 -148.5 -209.85 L -148.5 -165.57 C -148.5 -162.51
+    -150.98 -160.03 -154.04 -160.03 Z M -226.91 -215.38"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 -222.3 -182.94)" fill="#000000" stroke="#000000"><foreignobject width="69.19"
+    height="28.9" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">random oversampling</foreignobject></g>
+    <g fill="#CCCCFF"><path d="M -17.17 -305.82 L -69.6 -253.39 L -122.02 -305.82
+    L -69.6 -358.25 Z"></path></g><g transform="matrix(1.0 0.0 0.0 1.0 -100.73 -294.09)"
+    fill="#000000" stroke="#000000"><foreignobject width="62.27" height="42.82" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">access to good representations?</foreignobject></g>
+    <g fill="#E6E6FF"><path d="M -105.52 -347.74 L -172.86 -347.74 C -175.92 -347.74
+    -178.4 -350.22 -178.4 -353.28 L -178.4 -397.55 C -178.4 -400.61 -175.92 -403.09
+    -172.86 -403.09 L -105.52 -403.09 C -102.47 -403.09 -99.99 -400.61 -99.99 -397.55
+    L -99.99 -353.28 C -99.99 -350.22 -102.47 -347.74 -105.52 -347.74 Z M -178.4 -403.09"></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 -173.79 -380.26)" fill="#000000" stroke="#000000"><foreignobject
+    width="69.19" height="9.69" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">GE3</foreignobject></g>
+    <g fill="#E6E6FF"><path d="M 33.67 -347.74 L -33.67 -347.74 C -36.73 -347.74 -39.2
+    -350.22 -39.2 -353.28 L -39.2 -397.55 C -39.2 -400.61 -36.73 -403.09 -33.67 -403.09
+    L 33.67 -403.09 C 36.73 -403.09 39.2 -400.61 39.2 -397.55 L 39.2 -353.28 C 39.2
+    -350.22 36.73 -347.74 33.67 -347.74 Z M -39.2 -403.09"></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 -34.59 -380.26)" fill="#000000" stroke="#000000"><foreignobject width="69.19"
+    height="9.69" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">EDA</foreignobject></g>
+    <g stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M 45.86 0
+    L 98 0" style="fill:none"><g transform="matrix(1.0 0.0 0.0 1.0 98 0)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 41.92 5.44)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="64.96" height="9.61" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">multi-label</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M 211.64 0 L 230.8 0" style="fill:none"><g
+    transform="matrix(1.0 0.0 0.0 1.0 230.8 0)" color="#808080"><path d="M 5.31 0
+    C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89
+    -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 214.61 8.13)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="18.53" height="8.65" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M 184.55 -27.09
+    L 197.76 -40.31" style="fill:none"><g transform="matrix(0.70686 -0.70734 0.70734
+    0.70686 197.76 -40.31)" color="#808080"><path d="M 5.31 0 C 3.1 0.44 -0.89 1.33
+    -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89 -1.33 3.1 -0.44 5.31 0
+    Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0 0.0 0.0
+    1.0 198.48 -30.14)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="14.61" height="5.96" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M 0 -45.86 L
+    0 -59.98" style="fill:none"><g transform="matrix(0.0 -1.0 1.0 0.0 0 -59.98)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 5.44 -59.04)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="66.96" height="12.3" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">single-label</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M 26.41 -144.52 L 38.76 -156.87" style="fill:none"><g
+    transform="matrix(0.7071 -0.7071 0.7071 0.7071 38.76 -156.87)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 39.9 -144.44)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="18.53" height="8.65" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M 103.28 -167.23 L 196.98 -110.27" style="fill:none"><g
+    transform="matrix(0.8545 0.51945 -0.51945 0.8545 196.98 -110.27)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 132.35 -131.93)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="14.61" height="5.96" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M 69.6 -241.87 L 69.6 -255.99" style="fill:none"><g
+    transform="matrix(0.0 -1.0 1.0 0.0 69.6 -255.99)" color="#808080"><path d="M 5.31
+    0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89
+    -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 75.04 -253.22)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="18.53" height="8.65" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M 91.86 -328.07
+    L 107.51 -343.71" style="fill:none"><g transform="matrix(0.70728 -0.70694 0.70694
+    0.70728 107.51 -343.71)" color="#808080"><path d="M 5.31 0 C 3.1 0.44 -0.89 1.33
+    -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89 -1.33 3.1 -0.44 5.31 0
+    Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0 0.0 0.0
+    1.0 107.01 -329.63)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="18.53" height="8.65" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M 114.11 -305.82
+    L 123.23 -305.82" style="fill:none"><g transform="matrix(1.0 0.0 0.0 1.0 123.23
+    -305.82)" color="#808080"><path d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C
+    -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 114.02 -300.38)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="14.61" height="5.96" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M -26.41 -144.52 L -35.28 -153.39" style="fill:none"><g
+    transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 -35.28 -153.39)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 -27.28 -162.23)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="14.61" height="5.96" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M -130.72 -187.71 L -142.91 -187.71"
+    style="fill:none"><g transform="matrix(-1.0 0.0 0.0 -1.0 -142.91 -187.71)" color="#808080"><path
+    d="M 5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32
+    C -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g
+    transform="matrix(1.0 0.0 0.0 1.0 -148.74 -199.11)" fill="#000000" stroke="#000000"
+    color="#808080"><foreignobject width="18.53" height="8.65" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g stroke-width="1.2pt"><g
+    stroke="#808080" fill="#808080"><path d="M -69.6 -248.83 L -69.6 -247.68" style="fill:none"><g
+    transform="matrix(0.0 -1.0 1.0 0.0 -69.6 -247.68)" color="#808080"><path d="M
+    5.31 0 C 3.1 0.44 -0.89 1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C
+    -0.89 -1.33 3.1 -0.44 5.31 0 Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0
+    0.0 0.0 1.0 -64.16 -253.89)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="14.61" height="5.96" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M -96.01 -332.22
+    L -107.51 -343.71" style="fill:none"><g transform="matrix(-0.70728 -0.70694 0.70694
+    -0.70728 -107.51 -343.71)" color="#808080"><path d="M 5.31 0 C 3.1 0.44 -0.89
+    1.33 -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89 -1.33 3.1 -0.44 5.31
+    0 Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0 0.0 0.0
+    1.0 -98.2 -351.24)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="18.53" height="8.65" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">yes</foreignobject></g></g><g
+    stroke-width="1.2pt"><g stroke="#808080" fill="#808080"><path d="M -43.18 -332.22
+    L -31.69 -343.71" style="fill:none"><g transform="matrix(0.70728 -0.70694 0.70694
+    0.70728 -31.69 -343.71)" color="#808080"><path d="M 5.31 0 C 3.1 0.44 -0.89 1.33
+    -3.54 3.32 C -1.33 0.89 -1.33 -0.89 -3.54 -3.32 C -0.89 -1.33 3.1 -0.44 5.31 0
+    Z" style="stroke:none"></path></g></path></g><g transform="matrix(1.0 0.0 0.0
+    1.0 -30.11 -334.4)" fill="#000000" stroke="#000000" color="#808080"><foreignobject
+    width="14.61" height="5.96" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">no</foreignobject></g></g>
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 3: Practical advice which methods to try under which circumstances.'
+  prefs: []
+  type: TYPE_NORMAL

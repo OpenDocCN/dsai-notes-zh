@@ -1,0 +1,2881 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:45:14'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2207.13050] Efficient High-Resolution Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2207.13050](https://ar5iv.labs.arxiv.org/html/2207.13050)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Efficient High-Resolution Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Arian Bakhtiarnia, Qi Zhang, and Alexandros Iosifidis Arian Bakhtiarnia, Qi
+    Zhang and Alexandros Iosifidis are with DIGIT, the Department of Electrical and
+    Computer Engineering, Aarhus University, Aarhus, Midtjylland, Denmark (e-mail:
+    arianbakh@ece.au.dk; qz@ece.au.dk; ai@ece.au.dk).This work was funded by the European
+    Union’s Horizon 2020 research and innovation programme under grant agreement No
+    957337, and by the Danish Council for Independent Research under Grant No. 9131-00119B.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Cameras in modern devices such as smartphones, satellites and medical equipment
+    are capable of capturing very high resolution images and videos. Such high-resolution
+    data often need to be processed by deep learning models for cancer detection,
+    automated road navigation, weather prediction, surveillance, optimizing agricultural
+    processes and many other applications. Using high-resolution images and videos
+    as direct inputs for deep learning models creates many challenges due to their
+    high number of parameters, computation cost, inference latency and GPU memory
+    consumption. Simple approaches such as resizing the images to a lower resolution
+    are common in the literature, however, they typically significantly decrease accuracy.
+    Several works in the literature propose better alternatives in order to deal with
+    the challenges of high-resolution data and improve accuracy and speed while complying
+    with hardware limitations and time restrictions. This survey describes such efficient
+    high-resolution deep learning methods, summarizes real-world applications of high-resolution
+    deep learning, and provides comprehensive information about available high-resolution
+    datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: high-resolution deep learning, efficient deep learning, vision transformer,
+    computer vision
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Many modern devices such as smartphones, drones, augmented reality headsets,
+    vehicles and other Internet of Things (IoT) devices are equipped with high-quality
+    cameras that can capture high-resolution images and videos. With the help of image
+    stitching techniques, camera arrays [[1](#bib.bib1), [2](#bib.bib2)], gigapixel
+    acquisition robots [[3](#bib.bib3)] and whole-slide scanners [[4](#bib.bib4)],
+    capture resolutions can be increased to billions of pixels (commonly referred
+    to as gigapixels), such as the image depicted in Figure [1](#S1.F1 "Figure 1 ‣
+    I Introduction ‣ Efficient High-Resolution Deep Learning: A Survey"). One could
+    attempt to define high-resolution based on the capabilities of human visual system.
+    However, many deep learning tasks rely on data captured by equipment which behaves
+    very differently compared to the human eye, such as microscopes, satellite imagery
+    and infrared cameras. Furthermore, utilizing more detail than the eye can sense
+    is beneficial in many deep learning tasks, such as in the applications discussed
+    in Section [II](#S2 "II Applications of High-Resolution Deep Learning ‣ Efficient
+    High-Resolution Deep Learning: A Survey"). The amount of detail that can be captured
+    and is useful if processed varies greatly from task to task. Therefore, the definition
+    of high-resolution is task-dependent. For instance, in image classification and
+    computed tomography (CT) scan processing, a resolution of 512$\times$512 pixels
+    is considered to be high [[5](#bib.bib5), [6](#bib.bib6)]. In visual crowd counting,
+    datasets with High-Definition (HD) resolutions or higher are common [[7](#bib.bib7)],
+    and whole-slide images (WSIs) in histopathology, which is the study of diseases
+    of the tissues, or remote sensing data, which are captured by aircrafts or satellites,
+    can easily reach gigapixel resolutions [[8](#bib.bib8), [9](#bib.bib9)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, with the constant advancement of hardware and methodologies, what
+    deep learning literature considers high-resolution has shifted over time. For
+    instance, in the late 1990s, processing the 32$\times$32-pixel MNIST images with
+    neural networks was an accomplishment [[10](#bib.bib10)], whereas in early 2010s,
+    the 256$\times$256-pixel images in ImageNet were considered high-resolution [[11](#bib.bib11)].
+    This trend can also be seen in the consistent increase of the average resolution
+    of images in popular deep learning datasets, such as crowd counting [[7](#bib.bib7)]
+    and anomaly detection [[12](#bib.bib12)] datasets. Therefore, the definition of
+    high-resolution is also period-dependent. Based on the task- and period-dependence
+    properties, it is clear that the term “high-resolution” is technical, not fundamental
+    or universal. Therefore, instead of trying to derive such a definition, we shift
+    our focus to resolutions that create technical challenges in deep learning at
+    the time of this writing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Refer to caption](img/8b0e32c02b51345c190e05620f0998dc.png) | ![Refer to
+    caption](img/72b9d8266db4cf53252216efc868c83f.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| (a) | (b) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Figure 1: Example of a gigapixel image, taken from the PANDA-Crowd dataset
+    [[13](#bib.bib13)], captured using an array of micro-cameras; (a) original image
+    with a size of 26,558$\times$14,828 pixels, and (b) zoomed in to the location
+    specified by the red rectangle in the original image, with a size of 2,516$\times$1,347
+    pixels, which is more than 100 times smaller than the original image, yet still
+    approximately 5 times larger than the image size processed by state-of-the-art
+    deep learning models for crowd counting such as SASNet [[14](#bib.bib14)], which
+    is 1024$\times$768, and around 50 times larger than the standard image size processed
+    by image classification models, which is 224$\times$224.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using high-resolution images and videos directly as inputs to deep learning
+    models creates challenges during both training and inference phases. With the
+    exception of fully-convolutional networks (FCNs), the number of parameters in
+    deep learning models typically increases with larger input sizes. Moreover, the
+    amount of computation, which is commonly measured in terms of floating point operations
+    (FLOPs), and therefore inference/training time, as well as GPU memory consumption
+    increase with higher-resolution inputs, as shown in Figure [2](#S1.F2 "Figure
+    2 ‣ I Introduction ‣ Efficient High-Resolution Deep Learning: A Survey"). This
+    issue is especially problematic in Vision Transformer (ViT) architectures, which
+    use the self-attention mechanism, where the inference speed and number of parameters
+    scale quadratically with input size [[6](#bib.bib6), [15](#bib.bib15)]. These
+    issues are exacerbated when the training or inference needs to be done on resource-constrained
+    devices, such as smartphones, that have limited computational capabilities compared
+    to high-end computing equipment, such as workstations or servers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Refer to caption](img/c73099a058f3b225aec8f66ed7d7bcc7.png) | ![Refer to
+    caption](img/e7b67eda50f1a15156e11d56f5a23637.png) | ![Refer to caption](img/7288a5ec18d0127c857604478a992dde.png)
+    | ![Refer to caption](img/9a0631c4ab6e1aa797425b41bd9bf314.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| (a) | (b) | (c) | (d) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Figure 2: As the resolution of the input image increases, so does (a) the amount
+    of computation, (b) inference time, and (c) GPU memory usage in the EfficientNet-B7
+    [[16](#bib.bib16)]; and (d) the number of parameters in the ViT-B16 [[6](#bib.bib6)]
+    architecture. The last layer of EfficientNet-B7 was removed to form a fully-convolutional
+    feature extractor. Since accuracy is not considered in these figures, there is
+    no need to use real images, thus randomly generated images are given to the models
+    as input. All experiments were conducted on an Nvidia A6000 GPU.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though methods such as model parallelism can be used to split the model
+    between multiple GPUs during both the training [[17](#bib.bib17), [18](#bib.bib18)]
+    and inference [[19](#bib.bib19)] phases, and thus avoid memory and latency issues,
+    these methods require a large amount of resources, such as a large number of GPUs
+    and servers, which can incur high costs, especially when working with extreme
+    resolutions such as gigapixel images. Furthermore, in many applications, such
+    as self-driving cars and drone image processing, there is a limit for the hardware
+    that can be mounted, and offloading the computation to external servers is not
+    always possible because of unreliability of the network connection due to movement
+    and the time-critical nature of the application. Therefore, the most common approach
+    for deep learning training and inference is to load the full model on each single
+    GPU instance. Multi-GPU setups are instead typically used to speed up the training
+    by increasing the overall batch size, to test multiple sets of hyper-parameters
+    in parallel or to distribute the inference load. Consequently, in many cases,
+    there is an effective maximum resolution that can be processed by deep learning
+    models. As an example, the maximum resolution for inference using SASNet [[14](#bib.bib14)],
+    which is the state-of-the-art model for crowd counting on the Shanghai Tech dataset
+    [[20](#bib.bib20)] at the time of this writing, is around 1024$\times$768 (less
+    than HD) on Nvidia 2080 Ti GPUs which have 11 GBs of video memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Although newer generations of GPUs are getting faster and have more memory
+    available, the resolution of images and videos captured by devices is also increasing.
+    Figure [3](#S1.F3 "Figure 3 ‣ I Introduction ‣ Efficient High-Resolution Deep
+    Learning: A Survey") shows this trend across recent years for multiple types of
+    devices. Therefore, the aforementioned issues will likely persist even with advances
+    in computation hardware technology. Furthermore, current imaging technologies
+    are nowhere near the physical limits of image resolutions, which is estimated
+    to be in petapixels [[21](#bib.bib21)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c8eb2c63625a4c873af4190b8eca09b7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Trend of the maximum resolutions captured by smartphones (Apple iPhone
+    and Samsung Galaxy S), drones (DJI Phantom), augmented reality headsets (Microsoft
+    HoloLens) and IoT devices (Raspberry Pi) over time. Details and data sources are
+    available in appendix [A](#A1 "Appendix A Data Sources ‣ Efficient High-Resolution
+    Deep Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Whether or not capturing and processing a higher resolution leads to improvements
+    depends on the particular problem at hand. For instance, in image classification,
+    it is unlikely that increasing the resolution for images of objects or animals
+    to gigapixels would reveal more beneficial details and improve the accuracy. On
+    the other hand, if the goal is to count the total number of people in scenes such
+    as the one presented in Figure [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ Efficient
+    High-Resolution Deep Learning: A Survey"), using an HD resolution instead of gigapixels
+    would mean that several people could be represented by a single pixel, which significantly
+    increases the error. Similarly, it has been shown that using higher resolutions
+    in histopathology can lead to better results [[22](#bib.bib22)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Assuming there is an effective maximum resolution for a particular problem due
+    to hardware limitations or latency requirements, there are two simple baseline
+    approaches for processing the original captured inputs which are commonly used
+    in deep learning literature [[23](#bib.bib23), [24](#bib.bib24), [25](#bib.bib25)].
+    The popularity of these baselines can be attributed to the simplicity of their
+    implementation. The first one is to resize (downsample) the original input to
+    the desired resolution, however, this will lead to a lower accuracy if any important
+    details for the problem at hand are lost. This approach is called uniform downsampling
+    (UD) since the quality is reduced uniformly throughout the image. The second approach
+    is to cut up the original input into smaller patches that each have a maximum
+    resolution, process the patches independently, and aggregate the results, for
+    instance, by summing them up for regression problems and majority voting for classification
+    problems. We call this approach cutting into patches (CIP). There are two issues
+    with this approach. First, many deep learning models rely on global features which
+    will be lost since features extracted from each patch will not be shared with
+    other patches, leading to decreased accuracy. For instance, crowd counting methods
+    typically heavily rely on global information such as perspective or illumination
+    [[7](#bib.bib7)], and in object detection, objects near the boundaries may be
+    split between multiple patches. Secondly, since multiple passes of inference are
+    performed, that is, one pass for each patch, inference will take much longer.
+    This issue is worse when patches overlap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To highlight these issues, we test the two baseline approaches (UD and CIP)
+    on the Shanghai Tech Part B dataset [[20](#bib.bib20)] for crowd counting, which
+    contains images of size 1024$\times$768 pixels. We reduce the original image size
+    by factors of 4 and 16 and measure the mean absolute error (MAE) for both baselines.
+    To test UD, we take a SASNet model [[14](#bib.bib14)] pre-trained on the Shanghai
+    Tech Part B dataset [[20](#bib.bib20)] with input size of 1024$\times$768, and
+    fine-tune it for the target input size using the AdamW optimizer [[26](#bib.bib26)]
+    with a learning rate of $10^{-5}$ and weight decay of $10^{-4}$. Note that the
+    original SASNet paper uses the Adam optimizer [[27](#bib.bib27)] with a learning
+    rate of $10^{-5}$. We train the model for 100 epochs with batch size of 12 per
+    GPU instance using 3$\times$Nvidia A6000 GPUs. We empirically found that fine-tuning
+    does not improve the accuracy of cutting into patches, therefore, we cut the original
+    image into 4 and 16 patches, and obtain the count for each patch using the pre-trained
+    SASNet mentioned above, then aggregate the results by summing up the predicted
+    count for each patch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The results of these experiments are shown in Table [I](#S1.T1 "TABLE I ‣ I
+    Introduction ‣ Efficient High-Resolution Deep Learning: A Survey"). It can be
+    observed that uniform downsampling significantly increases the error compared
+    to processing the original input size. Keep in mind that even though the increase
+    in error is not as drastic with cutting into patches, the inference time of this
+    approach is increased by the same factor (i.e., 4 and 16) since we assumed we
+    are using the effective maximum resolution possible for our hardware, and thus
+    patches cannot be processed in parallel as the entire hardware is required to
+    process a single patch.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Performance of baseline approaches on the Shanghai Tech Part B dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Input Size | Original MAE | UD^∗ MAE | CIP^† MAE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1024$\times$768 (original) | 6.31 | - | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 512$\times$384 (reduced 4$\times$) | - | 9.01 (+43%) | 6.40 (+1%) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 256$\times$192 (reduced 16$\times$) | - | 16.06 (+155%) | 6.67 (+6%) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^∗Uniform Downsampling |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^†Cutting into Patches |'
+  prefs: []
+  type: TYPE_TB
+- en: Since these baseline approaches are far from ideal, in recent years, several
+    alternative methods have been proposed in the literature in order to improve accuracy
+    and speed while complying with the maximum resolution limitation caused either
+    by memory limitations or speed requirements. The goal of this survey is to summarize
+    and categorize these contributions. To the best of our knowledge, no other survey
+    on the topic of high-resolution deep learning exists. However, there are some
+    surveys that include aspects relevant to this topic. A survey on methods for reducing
+    the computational complexity of Transformer architectures is provided in [[15](#bib.bib15)],
+    which discusses the issues related to the quadratic time and memory complexity
+    of self-attention and analyzes various aspects of efficiency including memory
+    footprint and computational cost. While reducing the computational complexity
+    of Transformer models can contribute to efficient processing of high-resolution
+    inputs, in this survey, we only include Vision Transformer methods that explicitly
+    focus on high-resolution images. Some application-specific surveys include high-resolution
+    datasets and methods that operate on such data. For instance, a survey on deep
+    learning for histopathology, which mentions challenges with processing the giga-resolution
+    of WSIs, is provided in [[28](#bib.bib28)]; a survey of methods that achieve greater
+    spatial resolution in computed tomography (CT) is provided in [[29](#bib.bib29)],
+    which highlights improved diagnostic accuracy with ultra high-resolution CT, and
+    briefly discusses deep learning methods for noise reduction and reconstruction;
+    a survey on crowd counting where many of the available datasets are high-resolution
+    is provided in [[7](#bib.bib7)]; a survey on deep learning methods for land cover
+    classification and object detection in high-resolution remote sensing imagery
+    is provided in [[30](#bib.bib30)]; and a survey on deep learning-based change
+    detection in high-resolution remote sensing images is provided in [[31](#bib.bib31)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is important to mention that some methods operate on high-resolution inputs,
+    yet do not make any effort to address the aforementioned challenges. For instance,
+    multi-column (also known as multi-scale) networks [[7](#bib.bib7)] incorporate
+    multiple columns of layers in their architecture, where each column is responsible
+    for processing a specific scale as shown in Figure [4](#S1.F4 "Figure 4 ‣ I Introduction
+    ‣ Efficient High-Resolution Deep Learning: A Survey"). However, since the columns
+    process the same resolution as the original input, most of these methods in fact
+    require even more memory and computation compared to the case where only the original
+    scale is processed. The primary goal of these methods is instead to increase the
+    accuracy by taking into account the scale variances that occur in high-resolution
+    images, although there are some multi-scale methods that improve both accuracy
+    and efficiency [[32](#bib.bib32), [33](#bib.bib33), [34](#bib.bib34)]. Therefore,
+    these methods do not fall within the scope of this survey, unless they explicitly
+    address the efficiency aspect for high-resolution inputs. ZoomCount [[35](#bib.bib35)],
+    Locality-Aware Crowd Counting [[36](#bib.bib36)], RAZ-Net [[37](#bib.bib37)] and
+    Learn to Scale [[38](#bib.bib38)] are all examples of multi-scale methods in crowd
+    counting, and DMMN [[39](#bib.bib39)] and KGZNet [[40](#bib.bib40)] in medical
+    image processing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/31d73833756304ebf5866438414ca17e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Schematic illustration of a multi-column architecture. If the original
+    input to the DNN is a patch taken from a larger image, such as in [[36](#bib.bib36)],
+    in addition to zooming in, it is also possible to zoom out.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The primary purpose of this survey is to collect and describe methods that
+    exist in deep learning literature, which can be used in situations where the high
+    resolution of input images and videos create the aforementioned technical challenges
+    regarding memory, computation and time. The rest of this paper is organized as
+    follows: Section [II](#S2 "II Applications of High-Resolution Deep Learning ‣
+    Efficient High-Resolution Deep Learning: A Survey") lists applications where high-resolution
+    images and videos are processed using deep learning. Section [III](#S3 "III Methods
+    for Efficient Processing of High-Resolution Inputs with Deep Learning ‣ Efficient
+    High-Resolution Deep Learning: A Survey") categorizes efficient methods for high-resolution
+    deep learning into five general categories and provides several examples for each
+    category. This section also briefly discusses alternative approaches for solving
+    the memory and processing time issues caused by high-resolution inputs. Section
+    [IV](#S4 "IV High-Resolution Datasets ‣ Efficient High-Resolution Deep Learning:
+    A Survey") lists existing high-resolution datasets for various deep learning problems
+    and provides details for each of them. Section [V](#S5 "V Discussion and Open
+    Issues ‣ Efficient High-Resolution Deep Learning: A Survey") discusses the advantages
+    and disadvantages of using efficient high-resolution methods belonging to different
+    categories and provides recommendations about which method to use in different
+    situations. Finally, Section [VI](#S6 "VI Conclusion and Outlook ‣ Efficient High-Resolution
+    Deep Learning: A Survey") concludes the paper by summarizing the current state
+    and trends in high-resolution deep learning as well as suggestions for future
+    research. The code for experiments conducted in this survey is available at [https://gitlab.au.dk/maleci/high-resolution-deep-learning](https://gitlab.au.dk/maleci/high-resolution-deep-learning).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Applications of High-Resolution Deep Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we list some real-world applications where high-resolution
+    images are processed with deep learning. Most of these methods do not focus on
+    the efficiency angle, however, some of the methods address issues encountered
+    with high-resolution images. For instance, [[41](#bib.bib41)] mentions that “it
+    was not possible to train the model with the original 6000$\times$4000 pixels
+    images because of GPU memory limitation” and [[42](#bib.bib42)], which uses the
+    cutting into patches approach, states that “a raw remote image has millions of
+    pixels and is difficult to process directly”.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A Medical and Biomedical Image Analysis
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Multi-gigapixel whole-slide pathology images can be processed with deep learning
+    in order to detect breast cancer [[43](#bib.bib43)], skin cancer [[44](#bib.bib44),
+    [45](#bib.bib45)], prostate cancer [[45](#bib.bib45)], lung cancer [[45](#bib.bib45)],
+    cervical cancer [[46](#bib.bib46)] and cancer in the digestive tract [[47](#bib.bib47)].
+    Some methods are even able to detect the cancer subtypes [[45](#bib.bib45)] or
+    detect the spread of cancer to lymph nodes (metastasis) [[48](#bib.bib48)]. Semantic
+    segmentation of such images can be useful in neuropathology [[49](#bib.bib49)],
+    which is the study of diseases of the nervous system, and identifying tissue components
+    such as tumor, muscle, and debris in medical images [[50](#bib.bib50)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, the processing of high-resolution computed tomography (CT) scans with
+    deep learning is becoming more prevalent. The studies in [[51](#bib.bib51)] and
+    [[5](#bib.bib5)] detect COVID-19 in high-resolution CT scans of the lung, and
+    the study in [[52](#bib.bib52)] uses deep learning to improve the quality of captured
+    ultra-high-resolution CT scans. In addition, the study in [[53](#bib.bib53)] performs
+    semantic segmentation on high-resolution electron microscopy images from hearts
+    and brains of mice, which is useful for fundamental biomedical research. Additionally,
+    high-resolution deep learning can be used for reconstruction of CT images and
+    reduction of image noise, which has been shown to obtain results similar to other
+    conventional methods with clinically feasible speed [[54](#bib.bib54), [55](#bib.bib55)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though medical image analysis methods primarily focus on improving the
+    accuracy of particular tasks, inference speed can be crucial in some applications,
+    for instance, speed might be a requirement in clinical practice [[48](#bib.bib48)].
+    Furthermore, real-time augmented reality under microscopes can provide suitable
+    human–computer interaction for AI-assisted slide screening [[46](#bib.bib46)].
+    Finally, there might be situations where the speed for processing a single input
+    is acceptable, however, the sheer number of input data is so high that inputs
+    collectively cannot be processed within a deadline. For instance, 55,000 high-resolution
+    images are taken during the examination of a single patient using wireless capsule
+    endoscopy, where a tiny wireless camera is swallowed to take pictures of the digestive
+    tract, which can be used to detect lesions and inflammation [[56](#bib.bib56)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Remote Sensing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Processing high-resolution aerial and satellite imagery with deep learning has
+    various applications [[57](#bib.bib57)], such as detecting buildings [[58](#bib.bib58)],
+    which is useful for urban planning and monitoring; detecting airplanes [[59](#bib.bib59)],
+    which can be used for defense and military applications as well as airport surveillance;
+    extracting road networks [[42](#bib.bib42)], which has applications in automated
+    road navigation with unmanned vehicles, urban planning and real-time updating
+    of geospatial databases; detecting areas in a forest that are damaged due to natural
+    disasters such as storms [[60](#bib.bib60)]; identifying weed plants, which can
+    be used for targeted spraying of pesticides in agricultural fields; semantic segmentation
+    of satellite data which can help with crop monitoring, natural resource management
+    and digital mapping [[61](#bib.bib61)]; and remote sensing image captioning which
+    is useful for applications such as image retrieval and military intelligence generation
+    [[62](#bib.bib62)]. Moreover, significant accuracy improvements can be obtained
+    by taking low-resolution weather data as input and interpolating high-resolution
+    data using super-resolution [[63](#bib.bib63)]. The motivation behind this approach
+    is that high-resolution data are only available with a few days delay, and this
+    method can be used to more accurately process low-resolution but up-to-date data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-C Surveillance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Capturing and processing gigapixel images for surveillance is becoming increasingly
+    widespread, and such images can be processed with deep learning for searching
+    and identifying people [[64](#bib.bib64), [65](#bib.bib65)] as well as detecting
+    pedestrians [[66](#bib.bib66), [67](#bib.bib67)] which can be used for human behavior
+    analysis and intelligent video surveillance such as enforcing social distancing
+    restrictions during a pandemic [[68](#bib.bib68), [69](#bib.bib69)]. It should
+    be noted that capturing gigapixel images for surveillance has several advantages
+    over capturing lower resolutions with multiple cameras at different locations
+    of the scene. First, cameras in a multi-camera setup typically have some overlap
+    in their fields of view to avoid blindspots. This may result in errors for many
+    applications, such as crowd counting, due to duplicates, as shown in Figure [5](#S2.F5
+    "Figure 5 ‣ II-C Surveillance ‣ II Applications of High-Resolution Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey"). Reducing this error is
+    not an easy task, since it requires information about the geometry of the scene
+    and the use of re-identification methods for identifying and deduplicating people
+    in multiple views of the same scene. Secondly, tracking the trajectory of people,
+    vehicles and other moving objects is difficult with multiple cameras, since it
+    also requires identifying them in multiple views of the scene. Finally, in many
+    deep learning applications such as crowd counting, incorporating global information
+    from the entire scene such as illumination and perspective improves the accuracy
+    of the task [[7](#bib.bib7)]. Note that images captured from drastically different
+    locations and perspectives, such as the ones in in Figure [5](#S2.F5 "Figure 5
+    ‣ II-C Surveillance ‣ II Applications of High-Resolution Deep Learning ‣ Efficient
+    High-Resolution Deep Learning: A Survey"), cannot be stitched together to form
+    a single image.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/518aad973ff5519608112a43471a0a9c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Overlap in the field of view for multi-camera setups, which can result
+    in duplicates in tasks such as crowd counting.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-D Other Applications
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: High-resolution deep learning can be beneficial in many other applications and
+    various domains of science. For instance, the study in [[41](#bib.bib41)] estimates
+    the density of wheat ears, which are the grain-bearing parts of the plant, from
+    high-resolution images taken from grain fields, which aids plant breeders in optimizing
+    their yield; and the study in [[70](#bib.bib70)] introduces a deep learning method
+    for segmentation of high-resolution electron microscopy images, which has applications
+    in material science such as understanding the degradation process of industrial
+    catalysts. [[71](#bib.bib71)] proposes a method for real-time high-resolution
+    background replacement, which is useful in video calls and conferencing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: III-A Non-Uniform Downsampling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Non-uniform downsampling (NUD) is based on the idea that for any deep learning
+    task, some locations of an input image are more important than others. For instance,
+    in gaze estimation, where the goal is to detect where a person is looking given
+    an image including the person’s face, the image locations depicting the person’s
+    eyes are much more important than other parts of the image. Therefore, when reducing
+    the resolution of the image, it might be beneficial to sample more pixels from
+    salient areas and less pixels from non-salient locations, resulting in a warped
+    and distorted image. This operation requires salient areas to be determined before
+    introducing the downsampled image to the task DNN. Therefore, a small saliency
+    detection network is utilized in order to obtain this saliency map. Figure [6](#S3.F6
+    "Figure 6 ‣ III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing
+    of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution Deep
+    Learning: A Survey") provides a schematic illustration of the non-uniform downsampling
+    approach. Note that non-uniform downsampling is a broad process that encompasses
+    any method that downsamples the input image in any manner other than uniform.
+    [[23](#bib.bib23)] further subdivides non-uniform downsampling into three categories:
+    attention mechanisms, saliency-based methods and adaptive image sampling methods.
+    However, as the authors point out, there is a lot of overlap between these categories
+    and it is difficult to draw a clear border between them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/900fb6373b2602680322b3263ca19a75.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Schematic illustration of the non-uniform downsampling approach.
+    The saliency detector detects the cat’s right eye as a salient area, therefore,
+    the non-uniform resampler samples more pixels from that area.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Formally, the saliency map $S$ can be obtained by applying saliency detection
+    network $f_{s}(\cdot)$ on a uniformly downsampled image $I_{l}$, that is, $S=f_{s}(I_{l})$.
+    The input to the saliency detection network is downsampled in order to keep the
+    overhead of the saliency detection process low. The non-uniformly downsampled
+    image $J$ can the be obtained based on $J=g(I,S)$, where $g(\cdot)$ is the non-uniform
+    resampler and $I$ is the original image. Essentially, the resampler should compute
+    a mapping $J(x,y)=I(u_{c}(x,y),v_{c}(x,y))$ from the original image to the downsampled
+    one. Functions $u_{c}(\cdot)$ and $v_{c}(\cdot)$ need to map pixels proportionally
+    to the weight assigned to them in the saliency map. Assuming the saliency map
+    is normalized and $\forall x,y:0\leq u_{c}(x,y)\leq 1$ and $\forall x,y:0\leq
+    v_{c}(x,y)\leq 1$, this problem can be written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\int_{0}^{u_{c}(x,y)}\int_{0}^{v_{c}(x,y)}S(x^{\prime},y^{\prime})dx^{\prime}dy^{\prime}=xy.$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'However, methods for determining this transformation based on Eq. [1](#S3.E1
+    "In III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey")
+    are not efficient [[23](#bib.bib23)]. An alternative approach is to presume each
+    pixel $(x^{\prime},y^{\prime})$ is pulling all other pixels with a force proportional
+    to its saliency $S(x^{\prime},y^{\prime})$, which can be formulated as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle u_{c}(x,y)=\frac{\sum_{x^{\prime},y^{\prime}}S(x^{\prime},y^{\prime})k((x,y),(x^{\prime},y^{\prime}))x^{\prime}}{\sum_{x^{\prime},y^{\prime}}S(x^{\prime},y^{\prime})k((x,y),(x^{\prime},y^{\prime}))},$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle v_{c}(x,y)=\frac{\sum_{x^{\prime},y^{\prime}}S(x^{\prime},y^{\prime})k((x,y),(x^{\prime},y^{\prime}))y^{\prime}}{\sum_{x^{\prime},y^{\prime}}S(x^{\prime},y^{\prime})k((x,y),(x^{\prime},y^{\prime}))},$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $k((x,y),(x^{\prime},y^{\prime}))$ is a distance kernel, for instance,
+    the Gaussian kernel. Using this formulation, salient areas will be sampled more
+    since they attract more pixels. Moreover, based on this formulation, $u_{c}(\cdot)$
+    and $v_{c}(\cdot)$ can be computed with simple convolutions. Therefore, this operation
+    can be easily plugged into neural network architectures as a layer, and has the
+    added benefit of preserving the differentiability which is a requirement for training
+    neural networks with the backpropagation algorithm. The overall result is that
+    the entire module including the saliency detection network and the task network
+    can be trained end-to-end. The method in [[23](#bib.bib23)] uses this approach
+    to improve the performance of gaze estimation as well as fine-grained classification,
+    which is the task of differentiating between hard-to-distinguish objects such
+    as different species of animals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method in [[72](#bib.bib72)] applies the idea of non-uniform downsampling
+    to semantic segmentation. If the input image $I=I_{ij}$ has a size $H\times W$
+    and must be downsampled to size $h\times w$, the first step is to generate ideal
+    sampling tensors from ground truth (GT) labels based on
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E(\phi)=\sum_{i,j}\&#124;\phi_{ij}-b(u_{ij})\&#124;^{2}+\lambda\sum_{&#124;i-i^{\prime}&#124;+&#124;j-j^{\prime}&#124;=1}\&#124;\phi_{ij}-\phi_{i^{\prime}j^{\prime}}\&#124;^{2},$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\phi\in[0,1]^{h\times w\times 2}$ is the sampling tensor to be determined,
+    $E(\phi)$ is the (energy) cost function to minimize, $u\in[0,1]^{h\times w\times
+    2}$ is the uniform downsampling tensor and $b(u_{ij})$ is the coordinates of the
+    closest point to pixel $u_{ij}$ on semantic boundaries in the GT labels. Eq. [4](#S3.E4
+    "In III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey")
+    corresponds to a least squares problem with convex constraints that can be efficiently
+    solved using a set of sparse linear equations. The first term in Eq. [4](#S3.E4
+    "In III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey")
+    ensures the sampling locations are close to the semantic boundaries, and the second
+    term ensures that the distortion is not excessive by forcing the transformations
+    of adjacent pixels to be similar. Eq. [4](#S3.E4 "In III-A Non-Uniform Downsampling
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey") is also subject to covering
+    constraints that ensure the sampled locations cover the whole image. The contribution
+    of the second term is controlled by a parameter $\lambda$ which is empirically
+    set to 1\. The next step is to train a neural network to generate sampling tensors
+    from input images. The images are then downsampled based on the output of this
+    neural network and introduced to the task network. Finally, the segmentation output
+    is upsampled to remove distortions and match the original resolution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, the method in [[73](#bib.bib73)] utilizes non-uniform downsampling
+    for semantic segmentation. However, in contrast with the previous method, the
+    saliency detector in this method is optimized based on the performance of semantic
+    segmentation rather than external supervision signals. This method is similar
+    to [[23](#bib.bib23)], however, applying a straightforward adaptation of [[23](#bib.bib23)]
+    to semantic segmentation does not perform well. To improve the performance, an
+    edge loss is added as a regularization term, which is calculated by using the
+    mean squared error (MSE) between the deformation map $d$ obtained by the saliency
+    detector and target deformation map $d_{t}$ calculated based on segmentation labels.
+    To combat trivial solutions, the target deformation map has denser sampling around
+    object boundaries and is formulated by $d_{t}=f_{\text{edge}}(f_{\text{gauss}}(Y_{lr}))$,
+    where $Y_{lr}$ is the uniformly downsampled segmentation label, $f_{\text{edge}}$
+    is an edge detection filter by convolution with a specific $3\times 3$ kernel,
+    and $f_{\text{gauss}}$ is Gaussian blur with $\sigma=1$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since the distortions caused by the customized grids defined in Eqs. [2](#S3.E2
+    "In III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey")
+    and [3](#S3.E3 "In III-A Non-Uniform Downsampling ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey") can be severe, the method in [[56](#bib.bib56)] introduces
+    structured grids that can be combined with customized grids to obtain a more subtle
+    spatial distortion effect for wireless capsule endoscopy (WCE) image classification.
+    These structured grids ensure that pixels that were in the same row/column in
+    the input image are also in the same row/column in the output image, and can be
+    obtained by'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle u(x)=\frac{\sum_{x^{\prime}}S(x^{\prime})k(x,x^{\prime})x^{\prime}}{\sum_{x^{\prime}}S(x^{\prime})k(x,x^{\prime})},$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle v(y)=\frac{\sum_{y^{\prime}}S(y^{\prime})k(y,y^{\prime})x^{\prime}}{\sum_{y^{\prime}}S(y^{\prime})k(y,y^{\prime})},$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $S(x)=\max_{y}S(x,y)$ and $S(y)=\max_{x}S(x,y)$. $u(x)$ and $v(y)$ are
+    then copied and stacked to form $u_{s}(x,y)=u(x)$ and $v_{s}(x,y)=v(y)$. Finally,
+    the combined deformation grids can be computed by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle u(x,y)=\lambda u_{s}(x,y)+(1-\lambda)u_{c}(x,y),$ |  |
+    (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle v(x,y)=\lambda v_{s}(x,y)+(1-\lambda)v_{c}(x,y),$ |  |
+    (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: where parameter $\lambda$ is empirically set to 0.5.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, FOVEA [[74](#bib.bib74)] discards custom grids and solely relies
+    on structured grids for object detection in autonomous driving use cases. It also
+    introduces anti-cropping regularization to combat cropping which may result in
+    missing objects, by using reflect padding on the saliency map. In [[23](#bib.bib23)],
+    the saliency detector is trained end-to-end along with the task network, however,
+    as mentioned, finding saliency maps in object detection is more difficult. Therefore
+    FOVEA uses intermediate supervision to train the saliency detection network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Even though the primary goal of the spatial transformer module in spatial transformer
+    networks (STNs) [[75](#bib.bib75)] is to learn invariance to translation, scale,
+    rotation and warping in order to improve performance, in the special case where
+    the module is the first layer of the network, it can learn to crop the raw high-resolution
+    input to a lower resolution and increase computational efficiency, thus it could
+    be considered a form of NUD. Figure [7](#S3.F7 "Figure 7 ‣ III-A Non-Uniform Downsampling
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey") shows the architecture of
+    the spatial transformer module, where the localization network determines the
+    parameters $\theta$ for the transformation $\tau_{\theta}$ from input features
+    $U$. $\tau_{\theta}(\cdot)$ can be a 2D affine transformation, a more constrained
+    transformation such as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $A_{\theta}=\begin{bmatrix}s&amp;0&amp;t_{x}\\ 0&amp;s&amp;t_{y}\end{bmatrix},$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: which only allows cropping, translation and scaling, or a more general transformation
+    such as plane projective transformation with 8 parameters, piecewise affine, thin
+    plate spline [[76](#bib.bib76)], or any transformation as long as it is differentiable
+    with respect to its parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8931022357f2a17c070874759b1ab9f3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Architecture of the spatial transformer module [[75](#bib.bib75)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'SALISA [[77](#bib.bib77)] uses spatial transformer modules to perform non-uniform
+    downsampling for object detection in high-resolution videos. In SALISA, the output
+    of a video frame is used to determine the saliency map for the next frame. Figure
+    [8](#S3.F8 "Figure 8 ‣ III-A Non-Uniform Downsampling ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey") shows this method, where the first frame is introduced
+    to a high-performing detector without any downsampling. The detected objects are
+    subsequently used to create a saliency map, which is then given to the resampling
+    module. The resampling module contains a spatial transformer module with a thin
+    plate spline transformation, where the localization network receives the saliency
+    map as input. The downsampled image provided by the resampling module is then
+    introduced to a lightweight detector. Since the lightweight detector detects objects
+    in the warped image, the detected bounding boxes need to be transformed back into
+    the original grid. Therefore an inverse transformation is applied before generating
+    the saliency map. To prevent cascading errors, the method is reset to use the
+    original high-resolution frame and high-performing detector every few frames.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/fb07ebb97d7bd815370baae6248aee22.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Overview of SALISA [[77](#bib.bib77)]. The second frame is slightly
+    different from the first frame (in this case, slightly rotated clockwise), therefore,
+    the detection result obtained from the first frame can be used to estimate the
+    saliency of objects in the second frame.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Selective Zooming and Skipping
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Selective zooming and skipping (SZS) methods take a more efficient approach
+    to cutting into patches by only zooming into regions of the input image that are
+    important. The zoom level may differ across different patches, and some patches
+    may be entirely skipped. Reinforced Auto-Zoom Net (RAZN) [[78](#bib.bib78)] uses
+    reinforcement learning to determine where to zoom in WSIs for the task of breast
+    cancer segmentation. RAZN assumes the zoom-in action can be performed at most
+    $m$ times and the zooming rate is a constant $r$. At each zoom level $i$, there
+    is a different segmentation network $f_{\theta_{i}}$ and a different policy network
+    $g_{\theta_{i}}$. Initially, policy network $g_{\theta_{0}}$ takes a cropped image
+    $x_{0}\in\mathbb{R}^{H\times W\times 3}$ as input and determines whether to zoom-in
+    or to break. If there is no need to zoom in, $x_{0}$ is given as input to segmentation
+    network $f_{\theta_{0}}$ which produces the output, otherwise, a higher-resolution
+    image $\hat{x}_{0}\in\mathbb{R}^{rH\times rW\times 3}$ is sampled from the same
+    area and will be cut into $r^{2}$ patches of size $H\times W\times 3$. Each patch
+    is then given to policy network $g_{\theta_{1}}$ and this process is recursively
+    repeated until all policy networks break or the maximum zoom level is reached.
+    RAZN achieves an improved performance over other state-of-the-art methods while
+    reducing the inference time by a factor of $\sim$2\. Similarly, the methods in
+    [[79](#bib.bib79)] and [[80](#bib.bib80)] use reinforcement learning for efficient
+    object detection and aerial image classification, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of reinforcement learning, the method in [[81](#bib.bib81)] uses a hierarchichal
+    graph neural network to classify whether a mammogram (X-ray image of a breast)
+    is normal/benign (contains a tumor that is not cancerous) or malignant (contains
+    a tumor that is cancerous). At each zoom level $i$, the graph $G^{i}$ is defined
+    by the adjacency matrix $A^{i}\in\mathbb{R}^{N_{i}\times N_{i}}$ where there is
+    an edge between each zoomed-in patch and its original image. The feature matrix
+    of the graph is defined as $X_{i}\in\mathbb{R}^{N_{i}\times D\times D}$, and the
+    maximum zoom level is $R$. The features on the nodes are zoomed-in regions of
+    the input image, resized to $D\times D$. A pre-trained CNN is used to extract
+    feature vectors $H_{i}\in\mathbb{R}^{N_{i}\times H}$ from $X_{i}$. $\text{GAT}_{\text{node}}(\cdot)$
+    is a graph attention network [[82](#bib.bib82)] used to classify whether to zoom
+    in for each node. Therefore, the output of the $i$-th level in the hierarchical
+    graph is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $P_{i}=\begin{cases}1,&amp;i=1,\\ \text{softmax}(\text{GAT}_{\text{node}}(A_{i},H_{i})),&amp;1<i<R,\end{cases}$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $P_{i}\in\mathbb{R}^{N_{i}\times 2}$ represents the decision to zoom or
+    not for each node of the $i$-th level. At the final zoom level $R$, another graph
+    attention network $\text{GAT}_{\text{graph}}(\cdot)$ is used to perform the final
+    classification for the entire mammogram based on $\hat{Y}=\text{softmax}(\text{GAT}_{\text{graph}}(A_{R},H_{R})W)$,
+    where $W$ is a trainable weight matrix. The loss function contains both node losses
+    and graph losses, with the zoom labels for nodes being obtained from lesion segmentation
+    labels. This method achieves an accuracy comparable to the state-of-the-art, however,
+    it is unclear how much it improves the inference speed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GigaDet [[83](#bib.bib83)] achieves near real-time object detection in gigapixel
+    videos. At the core of GigaDet is the Patch Generation Network (PGN). PGN takes
+    a uniformly downsampled image as input and outputs a dense regression map which
+    counts the number of objects that are completely contained within the corresponding
+    area in the image, referred to as the patch candidate. PGN is applied at different
+    scales in order to obtain patch candidates of varying scales. The patch candidates
+    selected by the PGN go through post-processing which includes non-maximum suppression
+    (NMS), and are subsequently sorted based on their count. The top $K$ patch candidates
+    are then selected to be processed by the Decorated Detector (DecDet) to detect
+    objects. VGG [[84](#bib.bib84)] and YOLO [[85](#bib.bib85)] are used for the PGN
+    and DecDet networks, respectively. Given gigapixel videos, GigaDet is capable
+    of running 5 FPS on a single Nvidia 2080 Ti GPU, which is $50\times$ faster than
+    Faster RCNN [[86](#bib.bib86)], yet obtains a comparable performance in terms
+    of average precision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'REMIX [[87](#bib.bib87)] detects pedestrians in high-resolution videos within
+    a latency budget given by the user. The input frame is partitioned into several
+    blocks, where more salient blocks are processed using a computationally expensive
+    but accurate network whereas less salient blocks are processed using a computationally
+    cheap network or even skipped, as shown in Figure [9](#S3.F9 "Figure 9 ‣ III-B
+    Selective Zooming and Skipping ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey").
+    REMIX uses historical frames to determine the object distribution, and determines
+    the optimal partition using a dynamic programming algorithm that takes into account
+    the given latency budget, the estimated object distribution, as well as the accuracy
+    and speed of available neural networks for object detection. REMIX achieves up
+    to $8.1\times$ inference speedup with an accuracy comparable to the state-of-the-art
+    methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/76c9ffc47f5afd53e78e382902782446.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Partitioning in REMIX [[87](#bib.bib87)]. Some parts of the image
+    are skipped, some processed by computationally cheap DNNs and some by computationally
+    expensive DNNs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Lightweight Scanner Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Lightweight scanner networks (LSNs) are lightweight fully convolutional neural
+    networks (FCNs) that efficiently scan the entire high-resolution input. To achieve
+    a lightweight architecture, LSNs are typically designed and trained for very specific
+    tasks. Moreover, as opposed to the cutting into patches approach, FCNs are inherently
+    efficient in a sliding-window setting since they share the computation in overlapping
+    regions [[88](#bib.bib88)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'VGG-720p and VGG-1080p [[89](#bib.bib89), [90](#bib.bib90)] are LSNs capable
+    of running in real-time on drones and provide heatmaps for input images of size
+    1280$\times$720 and 1920$\times$1080 pixels, respectively, that specify whether
+    or not there are people, faces, or bicycles at each location in the input image.
+    Both models take patches of size 32$\times$32 or 64$\times$64 pixels as input.
+    The architectures of VGG-720p and VGG-1080, shown in Tables [II](#S3.T2 "TABLE
+    II ‣ III-C Lightweight Scanner Networks ‣ III Methods for Efficient Processing
+    of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution Deep
+    Learning: A Survey") and [III](#S3.T3 "TABLE III ‣ III-C Lightweight Scanner Networks
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey"), respectively, contain only
+    5 convolutional layers with only 2 to 24 output channels. In contrast, the original
+    VGG architectures have 11 to 19 layers with up to 512 output channels in some
+    layers [[84](#bib.bib84)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE II: Architecture of VGG-720p.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Layer | Kernel | Stride | Pad^† (X/Y)^∗ | Max Pool (X/Y) | Channels |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv1_1 | 3$\times$3 | 1/1 | 1/1 | - / - | 16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv1_2 | 3$\times$3 | 1/1 | 1/1 | ✓/ - | 16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv2_1 | 3$\times$3 | 1/1 | 1/1 | - / - | 24 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv2_2 | 3$\times$3 | 1/4 | 1/1 | ✓/ ✓ | 16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv_last | 8$\times$8 | 1/1 | 0/0 | - / - | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^†Zero padding |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^∗X and Y represent the horizontal and vertical axes |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE III: Architecture of VGG-1080p.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Layer | Kernel | Stride | Pad^† (X/Y)^∗ | Max Pool (X/Y) | Channels |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv1_1 | 3$\times$3 | 2/1 | 0/0 | - / - | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv1_2 | 3$\times$3 | 1/2 | 0/0 | ✓/ - | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv2_1 | 3$\times$3 | 1/1 | 0/0 | - / - | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv2_2 | 3$\times$3 | 1/2 | 0/0 | - / - | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| conv_last | 8$\times$8 | 1/1 | 0/0 | - / - | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^†Zero padding |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^∗X and Y represent the horizontal and vertical axes |'
+  prefs: []
+  type: TYPE_TB
+- en: Similarly, the study in [[91](#bib.bib91)] proposes an architecture with 6 convolutional
+    layers for the same problem of generating a crowd heatmap from high-resolution
+    images. The study in [[92](#bib.bib92)] proposes lightweight FCNs for face detection
+    with 7 convolutional layers and 76K parameters, for facial parts detection (such
+    as eyes, nose and mouth) with 4 convolutional layers and 20K parameters, and for
+    combined face and parts detection with 9 convolutional layers and 101K parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You only look twice (YOLT) [[9](#bib.bib9)] is a method that detects objects
+    of different scales in DigitalGlobe satellite images which have a size of over
+    250 megapixels. The architecture of YOLT is based on the YOLO architecture [[85](#bib.bib85)],
+    however, it reduces the number of layers from the original 30 down to 22\. Furthermore,
+    YOLT trains two separate models: one which processes images that correspond to
+    areas of 200$\times$200m² for detecting relatively small objects such as cars,
+    airplanes, boats and buildings; and another which processes images that correspond
+    to areas of 2500$\times$2500m² for detecting large objects such as airports. YOLT
+    has an inference speed of 32km²/min for the former model and 6000km²/min for the
+    latter on an Nvidia Titan X GPU.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fast ScanNet[[48](#bib.bib48)] converts VGG16 [[84](#bib.bib84)] to a fully
+    convolutional network by replacing the last fully-connected layers in VGG16 with
+    convolutional layers of kernel size 1$\times$1\. Fast ScanNet is applied to patches
+    of size 2800$\times$2800 pixels, a size which is dictated by GPU memory limitations,
+    taken from WSIs, which have $\sim$400 patches on average. It takes about one minute
+    for Fast ScanNet to process a WSI on a workstation with 8$\times$Nvidia Titan
+    X GPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ICNet [[34](#bib.bib34)] takes advantage of both the efficiency of processing
+    lower resolutions and the accuracy of processing higher ones by uniformly downsampling
+    the input image to two smaller scales, processing each scale separately, and fusing
+    the result of processing lower resolutions with higher ones. Lower resolutions
+    are processed with more convolution layers and higher resolutions with less, which
+    makes the entire architecture efficient, as shown in Figure [10](#S3.F10 "Figure
+    10 ‣ III-C Lightweight Scanner Networks ‣ III Methods for Efficient Processing
+    of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution Deep
+    Learning: A Survey"). In addition, some of the layers share weights in order to
+    increase the efficiency. ICNet is able to perform semantic segmentation on 2048$\times$1024
+    images at 30 frames per second with high accuracy on a Titan X GPU. Even though
+    ICNet does not obtain state-of-the-art accuracy, it is $\sim 15\times$ faster
+    than methods with similar performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c8c6601781ec7cc234b5af57c32cdfa3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: ICNet architecture. CFF blocks perform the fusion operation and
+    consist of convolution and upsample layers. CFF blocks get supervision signals
+    using downsampled annotations during the training process.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ESPNet [[93](#bib.bib93)] relies on efficient spatial pyramid (ESP) modules
+    which reduce the amount of computation by decomposing standard convolutions with
+    $n\times n$ kernels into two steps. The first step applies a 1$\times$1 convolution
+    to project feature maps with dimension $N$ to feature maps with dimension $\frac{N}{K}$.
+    The second step applies $K$ dilated convolutions with kernel size $n\times n$
+    and dilation rates $2^{k-1},k\in\{1,\dots,K\}$ to the new feature maps simultaneously,
+    and combines the results. Concatenating the outputs of dilated convolutions creates
+    checkerboard artifacts, therefore, a simple solution is used where the outputs
+    of dilated convolutions are hierarchically added to each other before concatenation.
+    ESPNet can perform semantic segmentation on 2048$\times$1024 images at 54 frames
+    per second with an accuracy comparable to the state-of-the-art.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural architecture search (NAS) techniques can be used for designing better
+    LSNs. Since LSNs need to be lightweight and contain few layers and parameters,
+    the search space is relatively small, making NAS easier. HR-NAS [[94](#bib.bib94)]
+    is one such method that searches for network architectures that can contain both
+    convolutions and lightweight Transformers, and may have parallel branches. HR-NAS
+    obtains state-of-the-art results in the trade-off between efficiency and accuracy
+    in semantic segmentation, human pose estimation and 3D object detection tasks
+    with high-resolution inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Task-Oriented Input Compression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Task-oriented input compression (TOIC) methods compress the high-resolution
+    inputs into lightweight representations. These representations are then given
+    to the task DNN as input instead of the high-resolution images or videos. The
+    exact nature of the lightweight representations and the compression procedure
+    varies from method to method and is often highly dependent on the underlying task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is an important distinction between this approach and neural image compression
+    methods such as SlimCAE [[95](#bib.bib95)]. The goal of neural image compression
+    is to learn optimal compression algorithms for the task at hand, in order to reduce
+    the size of stored or transmitted data. Therefore, the network that compresses
+    and decompresses this data may be very large and inefficient. Moreover, neural
+    image compression aims to reconstruct the input from the compressed representations,
+    whereas TOIC does not reconstruct the input data and strives to extract compact
+    representations that are suitable for the second part of the network which is
+    responsible for performing the task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Slide Graph [[96](#bib.bib96)] recognizes the loss of visual context that comes
+    with using the cutting into patches method, and fixes this issue by building and
+    processing a compact graph representation of the cellular architecture in breast
+    cancer WSIs in order to predict the status of human epidermal growth factor receptor
+    2 (HER2) and progesterone receptor (PR), which are proteins that promote the growth
+    of cancer cells. Slide Graph has four stages: The first stage uses a HoVer-Net
+    [[97](#bib.bib97)], which is a CNN for segmentation and classification of cellular
+    nuclei, trained on the PanNuke dataset [[98](#bib.bib98)] to extract features
+    of the tissue cells. The second stage uses agglomerative clustering [[99](#bib.bib99)]
+    to group neighboring nuclei to further reduce the computational cost. The third
+    stage constructs a graph where each vertex corresponds to a cluster and contains
+    features extracted in the previous stage. Graph edges are constructed based on
+    Delauney triangulation where vertices are represented by the geometric center
+    of their corresponding cluster, which results in a planar graph. In the final
+    stage, HER2 and PR status predictions are obtained from the constructed graph
+    using a graph convolutional network (GCN) [[100](#bib.bib100)]. Slide graph is
+    more accurate than state-of-the-art methods and reduces the average inference
+    time from 1.2 seconds of the baseline down to 0.4 milliseconds. However, these
+    measurements do not include the graph construction phase. Therefore, the end-to-end
+    improvement in efficiency obtained by Slide Graph is unclear.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The method in [[101](#bib.bib101)], shown in Figure [11](#S3.F11 "Figure 11
+    ‣ III-D Task-Oriented Input Compression ‣ III Methods for Efficient Processing
+    of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution Deep
+    Learning: A Survey"), compresses gigapixel histopathology WSIs down to a size
+    that can be processed with a CNN on a single GPU. This compression is obtained
+    by training an autoencoder (either VAE [[102](#bib.bib102)] or bidirectional GAN
+    [[103](#bib.bib103)]) on image patches of size $P\times P\times 3$. The WSI image
+    of size $M\times N\times 3$ is then cut into patches of the aforementioned size,
+    and compressed embeddings of size $1\times 1\times C$ are obtained from the patches
+    using the encoder part of the autoencoder. These embeddings are then concatenated
+    to form a compressed image of size $\lceil\frac{M}{P}\rceil\times\lceil\frac{N}{P}\rceil\times
+    C$, which can be given as input to the CNN. In experiments where $M=N=50,000$
+    and $P=C=128$, the input size is reduced by a factor of $\sim$43.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ff1b382d162246f7fbb0370003f8cc66.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: A method based on neural image compression for gigapixel histopathology
+    images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: MCAT [[104](#bib.bib104)] uses a combination of WSIs and genomics data for cancer
+    survival outcome prediction. At the core of MCAT is the Genomic-Guided Co-Attention
+    (GCA) layer which reduces the spatial complexity of processing WSIs. MCAT processes
+    the input in data structures known as bags, which are unordered sets of objects
+    of varying size without individual labels. MCAT constructs one bag ($H_{\text{bag}}$)
+    from multiple WSIs in order to utilize the entire tissue microenvironment, and
+    another bag ($G_{\text{bag}}$) from genomic features. $H_{\text{bag}}$ is constructed
+    by cutting the WSIs into non-overlapping $256\times 256$ pixel patches and processing
+    each patch with a ResNet50 CNN [[105](#bib.bib105)] pre-trained on the ImageNet
+    dataset [[106](#bib.bib106)] to obtain $d_{k}$-dimensional feature embeddings.
+    $G_{\text{bag}}$ is constructed by categorizing genes into N different sets based
+    on similarity and applying a fully-connected (FC) layer to obtain genomic embeddings.
+    GCA then takes these two bags as input and performs the co-attention operation
+    by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\text{CoAttn}_{G\rightarrow H}(G,H)$ | $\displaystyle=$
+    | $\displaystyle\text{softmax}\left(\frac{QK^{T}}{\sqrt{d_{k}}}\right)V$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=$ | $\displaystyle\text{softmax}\left(\frac{W_{q}GH^{T}W_{k}^{T}}{\sqrt{d_{k}}}\right)W_{v}H,$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $Q=W_{q}G$ is the query matrix, $K=W_{k}H$ is the key matrix, $V=W_{v}H$
+    is the value matrix, and $W_{q},W_{k},W_{v}\in\mathbb{R}^{d_{k}\times d_{k}}$
+    are trainable weights. The output of this operation, as shown in Figure [12](#S3.F12
+    "Figure 12 ‣ III-D Task-Oriented Input Compression ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey"), has a dimension of $N\times d_{k}$. Therefore, the
+    subsequent self-attention layers in the MCAT network are quadratic with respect
+    to $N$ instead of $M$. Since on average $M=15,231$ and $N=6$, this results in
+    a massive reduction in complexity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/51914aec7e3999de67b61c67bd7a8035.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: Genomic-Guided Co-Attention (GCA) layer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A subcategory of TOIC methods are frequency-domain DNNs, which convert input
+    RGB pixels to frequency domain representations with the help of operations such
+    as discrete cosine transform (DCT) or wavelet transform. The intuition behind
+    this approach is that the first few layers in CNNs often learn filters that resemble
+    such transforms. Therefore, not only are image representations more compact in
+    the frequency domain, but also a lower number of layers is required for processing
+    such representations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method in [[107](#bib.bib107)] uses the DCT coefficients obtained in the
+    middle of JPEG encoding as inputs to a modified ResNet50 CNN [[105](#bib.bib105)]
+    for the image classification task. JPEG encoding consists of three stages. The
+    first stage converts the input 3-channel 24-bit RGB image to the YCbCr color space
+    by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | <math id="S3.E12.m1.4" class="ltx_Math" alttext="\begin{bmatrix}Y\\ Cb\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cr\end{bmatrix}=\begin{bmatrix}0.299&amp;0.587&amp;0.114\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: -0.168935&amp;-0.331665&amp;0.50059\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0.499813&amp;-0.418531&amp;-0.081282\end{bmatrix}\begin{bmatrix}R\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: G\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: B\end{bmatrix}." display="block"><semantics id="S3.E12.m1.4a"><mrow id="S3.E12.m1.4.4.1"
+    xref="S3.E12.m1.4.4.1.1.cmml"><mrow id="S3.E12.m1.4.4.1.1" xref="S3.E12.m1.4.4.1.1.cmml"><mrow
+    id="S3.E12.m1.1.1.3" xref="S3.E12.m1.1.1.2.cmml"><mo id="S3.E12.m1.1.1.3.1" xref="S3.E12.m1.1.1.2.1.cmml">[</mo><mtable
+    displaystyle="true" rowspacing="0pt" id="S3.E12.m1.1.1.1.1" xref="S3.E12.m1.1.1.1.1.cmml"><mtr
+    id="S3.E12.m1.1.1.1.1a" xref="S3.E12.m1.1.1.1.1.cmml"><mtd id="S3.E12.m1.1.1.1.1b"
+    xref="S3.E12.m1.1.1.1.1.cmml"><mi id="S3.E12.m1.1.1.1.1.1.1.1" xref="S3.E12.m1.1.1.1.1.1.1.1.cmml">Y</mi></mtd></mtr><mtr
+    id="S3.E12.m1.1.1.1.1c" xref="S3.E12.m1.1.1.1.1.cmml"><mtd id="S3.E12.m1.1.1.1.1d"
+    xref="S3.E12.m1.1.1.1.1.cmml"><mrow id="S3.E12.m1.1.1.1.1.2.1.1" xref="S3.E12.m1.1.1.1.1.2.1.1.cmml"><mi
+    id="S3.E12.m1.1.1.1.1.2.1.1.2" xref="S3.E12.m1.1.1.1.1.2.1.1.2.cmml">C</mi><mo
+    lspace="0em" rspace="0em" id="S3.E12.m1.1.1.1.1.2.1.1.1" xref="S3.E12.m1.1.1.1.1.2.1.1.1.cmml">​</mo><mi
+    id="S3.E12.m1.1.1.1.1.2.1.1.3" xref="S3.E12.m1.1.1.1.1.2.1.1.3.cmml">b</mi></mrow></mtd></mtr><mtr
+    id="S3.E12.m1.1.1.1.1e" xref="S3.E12.m1.1.1.1.1.cmml"><mtd id="S3.E12.m1.1.1.1.1f"
+    xref="S3.E12.m1.1.1.1.1.cmml"><mrow id="S3.E12.m1.1.1.1.1.3.1.1" xref="S3.E12.m1.1.1.1.1.3.1.1.cmml"><mi
+    id="S3.E12.m1.1.1.1.1.3.1.1.2" xref="S3.E12.m1.1.1.1.1.3.1.1.2.cmml">C</mi><mo
+    lspace="0em" rspace="0em" id="S3.E12.m1.1.1.1.1.3.1.1.1" xref="S3.E12.m1.1.1.1.1.3.1.1.1.cmml">​</mo><mi
+    id="S3.E12.m1.1.1.1.1.3.1.1.3" xref="S3.E12.m1.1.1.1.1.3.1.1.3.cmml">r</mi></mrow></mtd></mtr></mtable><mo
+    id="S3.E12.m1.1.1.3.2" xref="S3.E12.m1.1.1.2.1.cmml">]</mo></mrow><mo id="S3.E12.m1.4.4.1.1.1"
+    xref="S3.E12.m1.4.4.1.1.1.cmml">=</mo><mrow id="S3.E12.m1.4.4.1.1.2" xref="S3.E12.m1.4.4.1.1.2.cmml"><mrow
+    id="S3.E12.m1.2.2.3" xref="S3.E12.m1.2.2.2.cmml"><mo id="S3.E12.m1.2.2.3.1" xref="S3.E12.m1.2.2.2.1.cmml">[</mo><mtable
+    columnspacing="5pt" displaystyle="true" rowspacing="0pt" id="S3.E12.m1.2.2.1.1"
+    xref="S3.E12.m1.2.2.1.1.cmml"><mtr id="S3.E12.m1.2.2.1.1a" xref="S3.E12.m1.2.2.1.1.cmml"><mtd
+    id="S3.E12.m1.2.2.1.1b" xref="S3.E12.m1.2.2.1.1.cmml"><mn id="S3.E12.m1.2.2.1.1.1.1.1"
+    xref="S3.E12.m1.2.2.1.1.1.1.1.cmml">0.299</mn></mtd><mtd id="S3.E12.m1.2.2.1.1c"
+    xref="S3.E12.m1.2.2.1.1.cmml"><mn id="S3.E12.m1.2.2.1.1.1.2.1" xref="S3.E12.m1.2.2.1.1.1.2.1.cmml">0.587</mn></mtd><mtd
+    id="S3.E12.m1.2.2.1.1d" xref="S3.E12.m1.2.2.1.1.cmml"><mn id="S3.E12.m1.2.2.1.1.1.3.1"
+    xref="S3.E12.m1.2.2.1.1.1.3.1.cmml">0.114</mn></mtd></mtr><mtr id="S3.E12.m1.2.2.1.1e"
+    xref="S3.E12.m1.2.2.1.1.cmml"><mtd id="S3.E12.m1.2.2.1.1f" xref="S3.E12.m1.2.2.1.1.cmml"><mrow
+    id="S3.E12.m1.2.2.1.1.2.1.1" xref="S3.E12.m1.2.2.1.1.2.1.1.cmml"><mo id="S3.E12.m1.2.2.1.1.2.1.1a"
+    xref="S3.E12.m1.2.2.1.1.2.1.1.cmml">−</mo><mn id="S3.E12.m1.2.2.1.1.2.1.1.2" xref="S3.E12.m1.2.2.1.1.2.1.1.2.cmml">0.168935</mn></mrow></mtd><mtd
+    id="S3.E12.m1.2.2.1.1g" xref="S3.E12.m1.2.2.1.1.cmml"><mrow id="S3.E12.m1.2.2.1.1.2.2.1"
+    xref="S3.E12.m1.2.2.1.1.2.2.1.cmml"><mo id="S3.E12.m1.2.2.1.1.2.2.1a" xref="S3.E12.m1.2.2.1.1.2.2.1.cmml">−</mo><mn
+    id="S3.E12.m1.2.2.1.1.2.2.1.2" xref="S3.E12.m1.2.2.1.1.2.2.1.2.cmml">0.331665</mn></mrow></mtd><mtd
+    id="S3.E12.m1.2.2.1.1h" xref="S3.E12.m1.2.2.1.1.cmml"><mn id="S3.E12.m1.2.2.1.1.2.3.1"
+    xref="S3.E12.m1.2.2.1.1.2.3.1.cmml">0.50059</mn></mtd></mtr><mtr id="S3.E12.m1.2.2.1.1i"
+    xref="S3.E12.m1.2.2.1.1.cmml"><mtd id="S3.E12.m1.2.2.1.1j" xref="S3.E12.m1.2.2.1.1.cmml"><mn
+    id="S3.E12.m1.2.2.1.1.3.1.1" xref="S3.E12.m1.2.2.1.1.3.1.1.cmml">0.499813</mn></mtd><mtd
+    id="S3.E12.m1.2.2.1.1k" xref="S3.E12.m1.2.2.1.1.cmml"><mrow id="S3.E12.m1.2.2.1.1.3.2.1"
+    xref="S3.E12.m1.2.2.1.1.3.2.1.cmml"><mo id="S3.E12.m1.2.2.1.1.3.2.1a" xref="S3.E12.m1.2.2.1.1.3.2.1.cmml">−</mo><mn
+    id="S3.E12.m1.2.2.1.1.3.2.1.2" xref="S3.E12.m1.2.2.1.1.3.2.1.2.cmml">0.418531</mn></mrow></mtd><mtd
+    id="S3.E12.m1.2.2.1.1l" xref="S3.E12.m1.2.2.1.1.cmml"><mrow id="S3.E12.m1.2.2.1.1.3.3.1"
+    xref="S3.E12.m1.2.2.1.1.3.3.1.cmml"><mo id="S3.E12.m1.2.2.1.1.3.3.1a" xref="S3.E12.m1.2.2.1.1.3.3.1.cmml">−</mo><mn
+    id="S3.E12.m1.2.2.1.1.3.3.1.2" xref="S3.E12.m1.2.2.1.1.3.3.1.2.cmml">0.081282</mn></mrow></mtd></mtr></mtable><mo
+    id="S3.E12.m1.2.2.3.2" xref="S3.E12.m1.2.2.2.1.cmml">]</mo></mrow><mo lspace="0em"
+    rspace="0em" id="S3.E12.m1.4.4.1.1.2.1" xref="S3.E12.m1.4.4.1.1.2.1.cmml">​</mo><mrow
+    id="S3.E12.m1.3.3.3" xref="S3.E12.m1.3.3.2.cmml"><mo id="S3.E12.m1.3.3.3.1" xref="S3.E12.m1.3.3.2.1.cmml">[</mo><mtable
+    displaystyle="true" rowspacing="0pt" id="S3.E12.m1.3.3.1.1" xref="S3.E12.m1.3.3.1.1.cmml"><mtr
+    id="S3.E12.m1.3.3.1.1a" xref="S3.E12.m1.3.3.1.1.cmml"><mtd id="S3.E12.m1.3.3.1.1b"
+    xref="S3.E12.m1.3.3.1.1.cmml"><mi id="S3.E12.m1.3.3.1.1.1.1.1" xref="S3.E12.m1.3.3.1.1.1.1.1.cmml">R</mi></mtd></mtr><mtr
+    id="S3.E12.m1.3.3.1.1c" xref="S3.E12.m1.3.3.1.1.cmml"><mtd id="S3.E12.m1.3.3.1.1d"
+    xref="S3.E12.m1.3.3.1.1.cmml"><mi id="S3.E12.m1.3.3.1.1.2.1.1" xref="S3.E12.m1.3.3.1.1.2.1.1.cmml">G</mi></mtd></mtr><mtr
+    id="S3.E12.m1.3.3.1.1e" xref="S3.E12.m1.3.3.1.1.cmml"><mtd id="S3.E12.m1.3.3.1.1f"
+    xref="S3.E12.m1.3.3.1.1.cmml"><mi id="S3.E12.m1.3.3.1.1.3.1.1" xref="S3.E12.m1.3.3.1.1.3.1.1.cmml">B</mi></mtd></mtr></mtable><mo
+    id="S3.E12.m1.3.3.3.2" xref="S3.E12.m1.3.3.2.1.cmml">]</mo></mrow></mrow></mrow><mo
+    lspace="0em" id="S3.E12.m1.4.4.1.2" xref="S3.E12.m1.4.4.1.1.cmml">.</mo></mrow><annotation-xml
+    encoding="MathML-Content" id="S3.E12.m1.4b"><apply id="S3.E12.m1.4.4.1.1.cmml"
+    xref="S3.E12.m1.4.4.1"><apply id="S3.E12.m1.1.1.2.cmml" xref="S3.E12.m1.1.1.3"><csymbol
+    cd="latexml" id="S3.E12.m1.1.1.2.1.cmml" xref="S3.E12.m1.1.1.3.1">matrix</csymbol><matrix
+    id="S3.E12.m1.1.1.1.1.cmml" xref="S3.E12.m1.1.1.1.1"><matrixrow id="S3.E12.m1.1.1.1.1a.cmml"
+    xref="S3.E12.m1.1.1.1.1"><ci id="S3.E12.m1.1.1.1.1.1.1.1.cmml" xref="S3.E12.m1.1.1.1.1.1.1.1">𝑌</ci></matrixrow><matrixrow
+    id="S3.E12.m1.1.1.1.1b.cmml" xref="S3.E12.m1.1.1.1.1"><apply id="S3.E12.m1.1.1.1.1.2.1.1.cmml"
+    xref="S3.E12.m1.1.1.1.1.2.1.1"><ci id="S3.E12.m1.1.1.1.1.2.1.1.2.cmml" xref="S3.E12.m1.1.1.1.1.2.1.1.2">𝐶</ci><ci
+    id="S3.E12.m1.1.1.1.1.2.1.1.3.cmml" xref="S3.E12.m1.1.1.1.1.2.1.1.3">𝑏</ci></apply></matrixrow><matrixrow
+    id="S3.E12.m1.1.1.1.1c.cmml" xref="S3.E12.m1.1.1.1.1"><apply id="S3.E12.m1.1.1.1.1.3.1.1.cmml"
+    xref="S3.E12.m1.1.1.1.1.3.1.1"><ci id="S3.E12.m1.1.1.1.1.3.1.1.2.cmml" xref="S3.E12.m1.1.1.1.1.3.1.1.2">𝐶</ci><ci
+    id="S3.E12.m1.1.1.1.1.3.1.1.3.cmml" xref="S3.E12.m1.1.1.1.1.3.1.1.3">𝑟</ci></apply></matrixrow></matrix></apply><apply
+    id="S3.E12.m1.4.4.1.1.2.cmml" xref="S3.E12.m1.4.4.1.1.2"><apply id="S3.E12.m1.2.2.2.cmml"
+    xref="S3.E12.m1.2.2.3"><csymbol cd="latexml" id="S3.E12.m1.2.2.2.1.cmml" xref="S3.E12.m1.2.2.3.1">matrix</csymbol><matrix
+    id="S3.E12.m1.2.2.1.1.cmml" xref="S3.E12.m1.2.2.1.1"><matrixrow id="S3.E12.m1.2.2.1.1a.cmml"
+    xref="S3.E12.m1.2.2.1.1"><cn type="float" id="S3.E12.m1.2.2.1.1.1.1.1.cmml" xref="S3.E12.m1.2.2.1.1.1.1.1">0.299</cn><cn
+    type="float" id="S3.E12.m1.2.2.1.1.1.2.1.cmml" xref="S3.E12.m1.2.2.1.1.1.2.1">0.587</cn><cn
+    type="float" id="S3.E12.m1.2.2.1.1.1.3.1.cmml" xref="S3.E12.m1.2.2.1.1.1.3.1">0.114</cn></matrixrow><matrixrow
+    id="S3.E12.m1.2.2.1.1b.cmml" xref="S3.E12.m1.2.2.1.1"><apply id="S3.E12.m1.2.2.1.1.2.1.1.cmml"
+    xref="S3.E12.m1.2.2.1.1.2.1.1"><cn type="float" id="S3.E12.m1.2.2.1.1.2.1.1.2.cmml"
+    xref="S3.E12.m1.2.2.1.1.2.1.1.2">0.168935</cn></apply><apply id="S3.E12.m1.2.2.1.1.2.2.1.cmml"
+    xref="S3.E12.m1.2.2.1.1.2.2.1"><cn type="float" id="S3.E12.m1.2.2.1.1.2.2.1.2.cmml"
+    xref="S3.E12.m1.2.2.1.1.2.2.1.2">0.331665</cn></apply><cn type="float" id="S3.E12.m1.2.2.1.1.2.3.1.cmml"
+    xref="S3.E12.m1.2.2.1.1.2.3.1">0.50059</cn></matrixrow><matrixrow id="S3.E12.m1.2.2.1.1c.cmml"
+    xref="S3.E12.m1.2.2.1.1"><cn type="float" id="S3.E12.m1.2.2.1.1.3.1.1.cmml" xref="S3.E12.m1.2.2.1.1.3.1.1">0.499813</cn><apply
+    id="S3.E12.m1.2.2.1.1.3.2.1.cmml" xref="S3.E12.m1.2.2.1.1.3.2.1"><cn type="float"
+    id="S3.E12.m1.2.2.1.1.3.2.1.2.cmml" xref="S3.E12.m1.2.2.1.1.3.2.1.2">0.418531</cn></apply><apply
+    id="S3.E12.m1.2.2.1.1.3.3.1.cmml" xref="S3.E12.m1.2.2.1.1.3.3.1"><cn type="float"
+    id="S3.E12.m1.2.2.1.1.3.3.1.2.cmml" xref="S3.E12.m1.2.2.1.1.3.3.1.2">0.081282</cn></apply></matrixrow></matrix></apply><apply
+    id="S3.E12.m1.3.3.2.cmml" xref="S3.E12.m1.3.3.3"><csymbol cd="latexml" id="S3.E12.m1.3.3.2.1.cmml"
+    xref="S3.E12.m1.3.3.3.1">matrix</csymbol><matrix id="S3.E12.m1.3.3.1.1.cmml" xref="S3.E12.m1.3.3.1.1"><matrixrow
+    id="S3.E12.m1.3.3.1.1a.cmml" xref="S3.E12.m1.3.3.1.1"><ci id="S3.E12.m1.3.3.1.1.1.1.1.cmml"
+    xref="S3.E12.m1.3.3.1.1.1.1.1">𝑅</ci></matrixrow><matrixrow id="S3.E12.m1.3.3.1.1b.cmml"
+    xref="S3.E12.m1.3.3.1.1"><ci id="S3.E12.m1.3.3.1.1.2.1.1.cmml" xref="S3.E12.m1.3.3.1.1.2.1.1">𝐺</ci></matrixrow><matrixrow
+    id="S3.E12.m1.3.3.1.1c.cmml" xref="S3.E12.m1.3.3.1.1"><ci id="S3.E12.m1.3.3.1.1.3.1.1.cmml"
+    xref="S3.E12.m1.3.3.1.1.3.1.1">𝐵</ci></matrixrow></matrix></apply></apply></apply></annotation-xml><annotation
+    encoding="application/x-tex" id="S3.E12.m1.4c">\begin{bmatrix}Y\\ Cb\\ Cr\end{bmatrix}=\begin{bmatrix}0.299&0.587&0.114\\
+    -0.168935&-0.331665&0.50059\\ 0.499813&-0.418531&-0.081282\end{bmatrix}\begin{bmatrix}R\\
+    G\\ B\end{bmatrix}.</annotation></semantics></math> |  | (12) |
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The luma component (Y) represents the brightness, and the chroma components
+    (Cb and Cr) represent color. The resolution of chroma components is then reduced
+    by a factor of 2 due to the fact that the human eye is less sensitive to fine
+    color detail than fine brightness. Figure [13](#S3.F13 "Figure 13 ‣ III-D Task-Oriented
+    Input Compression ‣ III Methods for Efficient Processing of High-Resolution Inputs
+    with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey") shows
+    an example image and its corresponding Y, Cb and Cr components. The second stage
+    is a blockwise DCT, where each of the three components is partitioned into $8\times
+    8$ blocks that undergo a 2D DCT. The amplitude values of the frequency domain
+    are the input representations used by this method. The DCT representations of
+    Cb and Cr are upsampled by a factor of two and concatenated with the DCT representation
+    of Y before being given as input to the task DNN, as shown in Figure [14](#S3.F14
+    "Figure 14 ‣ III-D Task-Oriented Input Compression ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey"). The rest of the JPEG encoding process contains the
+    quantization of these representations as well as lossless compression techniques
+    such as Huffman coding. However, this method uses the representations obtained
+    before quantization and lossless compression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Refer to caption](img/18d06a2e29c78d677eba1e28778d579f.png) | ![Refer to
+    caption](img/61cb171fad8f022218c6d892202cd15f.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| (a) | (b) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/29e9a3eefa3a441e85d56b333f2ceb67.png) | ![Refer to
+    caption](img/7b007c3b20c51332aba41f066ae8ae84.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| (c) | (d) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Figure 13: (a) Original color image, taken from the Shanghai Tech Part B dataset
+    [[20](#bib.bib20)]; (b) luma component Y, which is essentially a grayscale version
+    of the color image; (c) chroma component Cb; and (d) chroma component Cr.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/72f528aa54ba8c7951ab8f0bf6de3ec5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14: Initial stages of JPEG encoding, used by [[107](#bib.bib107)] to
+    obtain frequency-domains representations of the RGB input.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the help of these input representations, this method obtains DNNs that
+    are both more accurate and up to $1.77\times$ faster than ResNet50\. Moreover,
+    [[107](#bib.bib107)] includes experiments attempting to learn convolutions behaving
+    like DCT, however, they find that this learned DCT transform leads to higher error
+    compared to the conventional DCT transform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method in [[108](#bib.bib108)] uses the same idea for image classification
+    and semantic segmentation tasks using ResNet50 and MobileNetV2 architectures.
+    However, this method also prunes the 192 DCT channels with the help of a gating
+    module that generates a binary decision for each channel. Furthermore, this study
+    discovers that some channels are consistently pruned regardless of the particular
+    task, and develops a static frequency channel selection scheme based on these
+    results. This scheme prunes up to 87.5% of the channels with little accuracy drop,
+    if any. The method in [[109](#bib.bib109)] uses the same approach for image classification,
+    however, it uses several variants of discrete wavelet transform (DWT) instead
+    of DCT. The advantage of DWT over DCT is that it can obtain a better compression
+    ratio without loss of information, however, it is more computationally expensive
+    [[110](#bib.bib110)]. Experiments show that using DWT instead of DCT can lead
+    to higher accuracy, however, the impact of DWT on inference time is unclear.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, similar to images, DNNs can directly process the compressed representations
+    obtained by video compression formats. MMNet [[111](#bib.bib111)] performs efficient
+    object detection on H.264/MPEG-4 Part 10 compressed videos [[112](#bib.bib112)],
+    one of the most commonly used video compression formats, by taking advantage of
+    the motion information already embedded in the video compression format. It only
+    runs the complete feature extractor DNN on few reference frames in the video and
+    aggregates the visual information from the subsequent frames with the help of
+    an LSTM [[113](#bib.bib113)]. H.264 has two types of frames: I-frames which contain
+    a complete image, and P-frames, also known as delta frames, which store the offset
+    to previous frames using motion vectors and residual errors. In MMNet, the extracted
+    motion vectors and residual errors for each P-frame following an I-frame are passed
+    on to the LSTM. MMNet is $3\times$ to $10\times$ faster than competing models
+    with minor loss in accuracy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E High-Resolution Vision Transformers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As previously mentioned, the self-attention operation in Transformers has a
+    high complexity that increases in a quadratic fashion with respect to the number
+    of input tokens. This operation is formulated by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $Z=\mathit{softmax}\left(\frac{QK^{T}}{\sqrt{d_{k}}}\right)V,$ |  | (13)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: where query $Q=XW^{Q}\in\mathbb{R}^{n\times d_{q}}$, key $K=XW^{K}\in\mathbb{R}^{n\times
+    d_{k}}$ and value $V=XW^{V}\in\mathbb{R}^{n\times d_{v}}$ are obtained from sequence
+    of input tokens $X=(x_{1},\dots,x_{n})\in\mathbb{R}^{n\times d}$, and $W^{Q}$,
+    $W^{K}$ and $W^{V}$ are learnable weight matrices. Due to this quadratic complexity,
+    naive approaches, such as ViT [[6](#bib.bib6)], that create a long sequence of
+    input tokens from a high-resolution image will lead to massive complexity. On
+    the other hand, if $X$ contains few tokens, each input token represents a large
+    area of the original image, leading to loss of detailed information that might
+    be crucial to some applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vision Longformer (ViL) [[114](#bib.bib114)] is a variant of Longformer [[115](#bib.bib115)]
+    which has a linear complexity with respect to the number of input tokens, and
+    is capable of processing high-resolution images. This linear complexity is achieved
+    by adding $n_{g}$ global tokens, which include the classification token cls, that
+    serve as global memory by attending to all input tokens. Input tokens are only
+    allowed to attend to the global tokens as well as their neighbors within a 2D
+    window. If the number of input tokens are $n_{l}$ and the 2D window size is $w$,
+    then the memory complexity is $\mathcal{O}(n_{g}(n_{g}+n_{l})+n_{l}w^{2})$. When
+    $n_{g}\ll n_{l}$, the complexity is significantly reduced from the original $n_{l}^{2}$
+    in ViT. By using ViL in a multi-scale architecture, multi-scale Vision Longformer
+    is able to obtain superior performance compared to the state-of-the-art in image
+    classification, object detection and semantic segmentation while requiring less
+    computation in terms of FLOPs in some cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'High-Resolution Transformer (HRFormer) [[116](#bib.bib116)] reduces the computational
+    complexity of self-attention by partitioning the input representations into non-overlapping
+    patches, and performing the self-attention only within each patch. Figure [15](#S3.F15
+    "Figure 15 ‣ III-E High-Resolution Vision Transformers ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey") shows the building block of HRFormer, which contains
+    a depth-wise convolution that facilitates information exchange between patches.
+    By utilizing this augmented self-attention in a multi-scale architecture, HRFormer
+    obtains superior performance in human pose estimation and semantic segmentation
+    with fewer parameters and FLOPs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/304509d1721335cb94225847629d35e3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15: HRFormer block. Multi-head self-attention (MHSA) is applied only
+    within each patch. The patches are then concatenated and followed by a depth-wise
+    (DW) convolution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Multi-Scale High-Resolution Vision Transformer (HRViT) [[117](#bib.bib117)]
+    uses cross-shaped self-attention [[118](#bib.bib118)] and parameter sharing to
+    decrease the computational cost of self-attention. Cross-shaped self-attention,
+    shown in Figure [16](#S3.F16 "Figure 16 ‣ III-E High-Resolution Vision Transformers
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey"), splits the $K$ self-attention
+    heads present in multi-head attention into two groups: $\{h_{1},\dots,h_{\frac{K}{2}}\}$
+    and $\{h_{\frac{K}{2}+1},\dots,h_{K}\}$. These groups perform self-attention in
+    horizontal and vertical strips in parallel. Strip width sw can be adjusted to
+    achieve a trade-off between efficiency and performance. The linear projections
+    for key and value tensors are shared in HRViT’s blocks to save in computation
+    and parameters. In addition to efficient self-attention, HRViT employs a convolutional
+    stem to reduce the spatial dimension of the input. HRViT achieves the best performance-efficiency
+    trade-off compared to state-of-the-art models for semantic segmentation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8b1dbccbedcda7359de8f96ce5150abe.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 16: Cross-shaped self-attention.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of restricting self-attention to patches that are neighbors in the
+    2D grid, Glance and Gaze Transformer (GG-Transformer) [[119](#bib.bib119)], shown
+    in Figure [17](#S3.F17 "Figure 17 ‣ III-E High-Resolution Vision Transformers
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey"), performs the self-attention
+    within dilated partitions. Since these dilations create holes in the receptive
+    field, a parallel branch containing depth-wise convoluion is added to compensate
+    for the local interactions with negligible cost. GG-Transformer achieves superior
+    performance in image classification, object detection and semantic segmentation
+    and reduces the parameters or FLOPs in some cases.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c57a57d7371cc724e0cf1eacd361e5db.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 17: GG-Transformer block.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hierarchical Image Pyramid Transformer (HIPT) [[120](#bib.bib120)] processes
+    gigapixel WSIs for the task of cancer subtyping and survival prediction. Since
+    the input WSIs are as large as 150,000$\times$150,000 pixels, processing them
+    with a normal ViT and small patch size, such as 16$\times$16, results in a massive
+    number of parameters and computational cost requirements, and using large patch
+    sizes such as 4096$\times$4096 pixels directly would result in loss of cellular
+    information. Therefore, HIPT takes a hierarchical approach, shown in Figure [18](#S3.F18
+    "Figure 18 ‣ III-E High-Resolution Vision Transformers ‣ III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey"), where an initial ViT processes patches of 16$\times$16
+    in an area of size 256$\times$256 pixels. A second ViT then takes the aggregated
+    tokens from the previous ViT and processes an area of size 4096$\times$4096 pixels.
+    A final ViT takes the aggregated tokens from the second ViT and processes the
+    entire image.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1b9b365f7589f61107d65a39290742e1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 18: Hierarchical Image Pyramid Transformer (HIPT). The notation $\text{ViT}_{L}-l$
+    means a Vision Transformer that operates on size $L\times L$ with patch size of
+    $l\times l$. $\text{ViT}_{\text{WSI}}$ operates on the entire WSI.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV High-Resolution Datasets
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Table [IV](#S4.T4 "TABLE IV ‣ IV High-Resolution Datasets ‣ Efficient High-Resolution
+    Deep Learning: A Survey") lists popular datasets used in the high-resolution deep
+    learning literature and provides information about their attributes, such as which
+    is the deep learning application they have been primarily used for, the number
+    of images/videos in the dataset and their resolution, the type of available annotations,
+    whether they specify training/validation/test set splits, the year of publication,
+    and whether they are publicly available. It is important to note that studies
+    reported in some papers create customized datasets. For instance, [[79](#bib.bib79)]
+    constructs a dataset from YFCC100M [[121](#bib.bib121)]; [[89](#bib.bib89)] constructs
+    datasets from AFLW [[122](#bib.bib122)], MTFL [[123](#bib.bib123)] and WIDER FACE
+    [[124](#bib.bib124)]; and [[9](#bib.bib9)] constructs datasets from DigitalGlobe
+    satellites, Planet satellites, and aerial platforms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Cancer Genome Atlas (TCGA) program is a collaboration between National
+    Cancer Institute (NCI) and National Human Genome Research (NHGRI)¹¹1[https://www.cancer.gov/about-nci/organization/ccg/research/structural-genomics/tcga](https://www.cancer.gov/about-nci/organization/ccg/research/structural-genomics/tcga).
+    Since 2006, TCGA has generated over 2.5 petabytes of publicly available data which
+    has led to improvements in cancer diagnosis, treatment, and prevention. Among
+    efficient high-resolution deep learning methods, the most widely used subset of
+    this data is the breast invasive carcinoma (BRCA), which is outlined in Table
+    [IV](#S4.T4 "TABLE IV ‣ IV High-Resolution Datasets ‣ Efficient High-Resolution
+    Deep Learning: A Survey"). However, TCGA provides data for many other types of
+    cancer, such as bladder urothelial carcinoma (BLCA), glioblastoma and lower grade
+    glioma (GBMLGG), lung adenocarcinoma (LUAD), and uterine corpus endometrial carcinoma
+    (UCEC). These are used in some studies, and have properties similar to that of
+    BRCA.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE IV: List of Popular High-Resolution Datasets'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Applications | Resolution (Pixels) | # of Samples | Annotations |
+    Splits | Year | Availability |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Supervisely Persons^‡ | Person Segmentation | 800$\times$1116 to 9933$\times$6622
+    | 5711 images | Pixel Mask | None | 2018 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PANDA[[13](#bib.bib13)] | Person Detection | $>$25K$\times$14K | 555 frames^§
+    | Person Bounding Box | None | 2020 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF_CC_50[[125](#bib.bib125)] | Crowd Counting | 2888$\times$2101 on average
+    | 50 images | Head Annotations^∗ | None | 2013 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shanghai Tech Part A[[126](#bib.bib126)] | Crowd Counting | 868$\times$589
+    | 482 images | Head Annotations | Train & Test | 2016 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shanghai Tech Part B[[126](#bib.bib126)] | Crowd Counting | 1024$\times$768
+    | 716 images | Head Annotations | Train & Test | 2016 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UCF-QNRF[[127](#bib.bib127)] | Crowd Counting | 2902$\times$2013 on average
+    | 1535 images | Head Annotations | Train & Test | 2018 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PANDA Crowd[[13](#bib.bib13)] | Crowd Counting | 25,151$\times$14,151 to
+    26,908$\times$15,024 | 45 images | Person Bounding Box | None | 2020 | Upon Request
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| JHU-CROWD++[[128](#bib.bib128)] | Crowd Counting | 1430$\times$910 on average
+    | 4372 images | Head Annotations | Train, Val & Test | 2020 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NWPU-Crowd[[129](#bib.bib129)] | Crowd Counting | 3209$\times$2191 on average
+    | 5109 images | Head Annotations | Train, Val & Test | 2020 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DISCO[[130](#bib.bib130)] | Audio-Visual Crowd Counting | 1920$\times$1080
+    (Full HD) | 1935 images | Head Annotations | Train & Test | 2020 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CityScapes[[131](#bib.bib131)] | Autonomous Driving | 2048$\times$1024 |
+    5K images | Pixel Mask | Train, Val & Test | 2016 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SYNTHIA-RAND[[132](#bib.bib132)] | Autonomous Driving | 1280$\times$720 (HD)
+    | $\sim$13K images | Pixel Mask | Train & Test | 2016 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ApolloScape[[133](#bib.bib133)] | Autonomous Driving | 3384$\times$2710 |
+    $\sim$113K images | Pixel Mask | Train & Test | 2020 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Argoverse-HD[[134](#bib.bib134)] | Autonomous Driving | 1920$\times$1200
+    | 89 videos | Bounding Box | Train, Val & Test | 2020 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BDD100K[[135](#bib.bib135)] | Autonomous Driving | 1280$\times$720 (HD) |
+    100K videos | Bounding Box | Train, Val & Test | 2020 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PASCAL-Context[[136](#bib.bib136)] | Scene Understanding | 500$\times$375
+    to 500$\times$500 | 10,103 images | Pixel Mask | Train & Test | 2014 | Public
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADE20K[[137](#bib.bib137)] | Scene Understanding | 683$\times$512 to 2100$\times$2100
+    | 27,574 images | Pixel Mask | Train & Test | 2017 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| COCO-Stuff 10K[[138](#bib.bib138)] | Scene Understanding | $\sim$640$\times$480
+    | 10K images | Pixel Mask | Train & Test | 2018 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DeepGlobe[[139](#bib.bib139)] | Land Cover Classification | 2448$\times$2448
+    | 1146 images | Pixel Mask | Train, Val & Test | 2018 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Copernicus[[140](#bib.bib140)] | Land Cover Classification | 20,160$\times$20,160
+    | 94 images | Pixel Mask | None | 2015-2019 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| fMoW[[141](#bib.bib141)] | Aerial Image Classification | up to 16,032$\times$14,840
+    | 1,047,691 images | Classes | Train, Val & Test | 2018 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| KID[[142](#bib.bib142)] | Capsule Endoscopy | 360$\times$360 | $\sim$2500
+    frames | Pixel Mask | None | 2017 | Public (N/A) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CAD-CAP[[143](#bib.bib143)] | Capsule Endoscopy | 576$\times$576 | 25,124
+    frames | Pixel Mask | Train & Test | 2020 | Upon Request |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CAMELYON16[[124](#bib.bib124)] | Pathology | up to 200,000$\times$100,000
+    | 400 images | Pixel Mask | Train & Test | 2016 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TUPAC16[[144](#bib.bib144)] | Pathology | $\sim$50,000$\times$50,000 | 821
+    images | Proliferation Score^† | Train & Test | 2016 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BACH Part B[[145](#bib.bib145)] | Pathology | (39,980-62,952)$\times$(27,972-44,889)
+    | 40 images | Pixel Mask | Train & Test | 2019 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TCGA-BRCA[[146](#bib.bib146)] | Pathology | up to 150,000$\times$100,000
+    | 709 images | Classes | None | 2020 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PCa-Histo[[73](#bib.bib73)] | Pathology | (1968±216)$\times$(9392±4794) |
+    266 images | Pixel Mask | Train, Val & Test | 2021 | Private |'
+  prefs: []
+  type: TYPE_TB
+- en: '| INbreast[[147](#bib.bib147)] | Breast Cancer Detection | 2560$\times$3328
+    to 3328$\times$4084 | 410 images | Pixel Mask | Train & Test | 2012 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UA-DETRAC[[148](#bib.bib148)] | Video Object Detection | 960$\times$540 |
+    140K frames | Bounding Box | Train & Test | 2015 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ImageNet-VID[[149](#bib.bib149)] | Video Object Detection | 176$\times$132
+    to 1280$\times$720 (HD) | 5354 videos | Bounding Box | Train, Val & Test | 2015
+    | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FAIR1M[[150](#bib.bib150)] | Fine-Grained Object Detection | 600$\times$600
+    to 10,000$\times$10,000 | 40,000 images | Bounding Box | Train & Test | 2021 |
+    Public (N/A) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| COCO[[151](#bib.bib151)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Object Detection &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Human Pose Estimation &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\sim$640$\times$480 | $>$200K images |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Pixel Mask &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Keypoints &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Train, Val & Test | 2014 | Public |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^§A frame is a single image in a sequence representing a video |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^∗The locaion for the center of each human head in the image is specified
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^†A measure of the number of cells in a tumor that are dividing |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ^‡[https://github.com/supervisely-ecosystem/persons](https://github.com/supervisely-ecosystem/persons)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: V Discussion and Open Issues
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Each of the approaches introduced in Section [III](#S3 "III Methods for Efficient
+    Processing of High-Resolution Inputs with Deep Learning ‣ Efficient High-Resolution
+    Deep Learning: A Survey") has its advantages and disadvantages and is useful in
+    certain situations. NUD (Section [III-A](#S3.SS1 "III-A Non-Uniform Downsampling
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey")) works well in cases where
+    the salient area is small compared to the entire image, and thus, it is possible
+    to sample many pixels from such areas. This requirement is satisfied in gaze estimation
+    or object detection problems. Our conjecture is that it would also work well in
+    problems such as hand gesture detection and non-cropped facial expression recognition,
+    although these tasks are not yet explored in the literature in combination with
+    NUD. However, when the salient area is large, for instance densely populated scenes
+    in visual crowd counting or a scene fully covered with objects in object detection,
+    the quality gain obtained by sampling from salient areas will be negligible, and
+    the result of NUD will be similar that of uniform downsampling [[77](#bib.bib77)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similarly, SZS methods (Section [III-B](#S3.SS2 "III-B Selective Zooming and
+    Skipping ‣ III Methods for Efficient Processing of High-Resolution Inputs with
+    Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey")) require the
+    salient area to be small, otherwise they zoom everywhere and save little time
+    and computation. This also means that the effectiveness of NUD and SZS methods
+    may vary based on the specific input. For instance, the more people there are
+    in an image processed for crowd counting, or the more tumors there are in cancer
+    detection, the less efficient such methods will be, unless there are specific
+    safeguards that prevent them from performing an enormous number of computations,
+    such as GigaDet [[83](#bib.bib83)] which processes at most $K$ patch candidates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Furthermore, NUD methods are not effective when the resulting resolution is
+    extremely smaller compared to the input resolution, for instance, when gigapixel
+    inputs need to be resized down to HD, as this would result in highly distorted
+    images which makes it difficult for the task DNN to perform well. Even when the
+    gap between the two resolutions is not extremely large, NUD can lead to high distortions
+    in some cases, for instance, it may completely distort and change the shape of
+    the edges of a gastrointestinal lesion, making it difficult for the task network
+    to detect useful features. This may reduce accuracy despite the fact that more
+    pixels are sampled from salient areas. As explained in Section [III-A](#S3.SS1
+    "III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey"),
+    some methods try to mitigate the distortion by using structured grids. However,
+    this may limit the benefits obtained by NUD.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In addition, since NUD is enlarging some parts of the image compared to uniform
+    downsampling, some areas of the resulting image will be smaller than they would
+    be with uniform downsampling. Thus, if the saliency map is not of high quality,
+    unimportant areas will be enlarged and the ones important for the final task will
+    shrink, resulting in accuracy loss. This is directly at odds with the requirement
+    that the saliency detection method should be low-overhead, creating another trade-off
+    that needs to be carefully balanced. Moreover, as explained in Section [III-A](#S3.SS1
+    "III-A Non-Uniform Downsampling ‣ III Methods for Efficient Processing of High-Resolution
+    Inputs with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey"),
+    some variations of NUD require an external supervision signal or regularization
+    term to train the saliency detection network, which can be difficult to design.
+    In NUD or SZS methods that detect saliency in videos based on the results obtained
+    from previous frames, such as SALISA [[77](#bib.bib77)] and REMIX [[87](#bib.bib87)],
+    when the difference between subsequent frames is high, the method needs to be
+    reset to processing the entire high-resolution image. When this occurs frequently,
+    the obtained benefits are diminished.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As mentioned in Section [III-C](#S3.SS3 "III-C Lightweight Scanner Networks
+    ‣ III Methods for Efficient Processing of High-Resolution Inputs with Deep Learning
+    ‣ Efficient High-Resolution Deep Learning: A Survey"), LSNs need to designed,
+    trained and well optimized for the specific problem at hand, which is not an easy
+    task. Furthermore, since LSNs produce an output for each scanned area of the input,
+    they are suitable for tasks where the output has the form of a map, such as dense
+    classification or dense regression problems. Moreover, the scanning nature of
+    LSNs means that all areas of the image are treated similarly, therefore, they
+    are better suited for situations where there is no perspective and objects of
+    the same type have the same size regardless of their location, such as WSIs and
+    remote sensing, as opposed to surveillance and crowd counting where people close
+    to the camera are larger than people far away.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since TOIC methods extract representations that are both compressed and suitable
+    for the task at hand, they often need to be tailored to the specific problem,
+    which requires high domain knowledge. Both Slide Graph [[96](#bib.bib96)] and
+    MCAT [[104](#bib.bib104)] presented in Section [III-D](#S3.SS4 "III-D Task-Oriented
+    Input Compression ‣ III Methods for Efficient Processing of High-Resolution Inputs
+    with Deep Learning ‣ Efficient High-Resolution Deep Learning: A Survey") are based
+    on domain knowledge about cellular structure of tissues and biological function
+    of genes, respectively. Almost all frequency-domain DNNs try to preserve the architecture
+    of the CNNs they are based on. However, since the interpretation of features in
+    frequency-domain is different, and they have certain properties such as being
+    non-negative, it might be better to customize the architectural elements for the
+    frequency domain, as CS-Fnet [[152](#bib.bib152)] does.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most high-resolution Vision Transformer methods try to reduce the quadratic
+    cost of self-attention to linear, and then compensate the accuracy loss by learning
+    data transformations using convolutions. To keep the overhead of convolutions
+    low, depth-wise convolution is typically used. Additionally, most high-resolution
+    ViTs utilize a multi-scale architecture in order to capture features of various
+    scales. High-resolution ViTs are more general purpose than other high-resolution
+    deep learning methods and are often used for a large variety of tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Conclusion and Outlook
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Processing high-resolution images and videos with deep learning is crucial in
+    various domains of science and technology. However, few methods exist that address
+    the computational challenges. Among existing methods, the trend of designing solutions
+    specifically for the problem at hand is clearly visible. This can be an issue
+    in tasks for which high-resolution datasets are not available. Similar to model
+    compression approaches, both modifying existing methods and designing an efficient
+    high-resolution method from scratch are viable approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Efficient high-resolution deep learning is in its infancy and there is a lot
+    of room for improvement. For instance, a number of attention-free MLP-based methods
+    have been recently proposed as lightweight alternatives for Transformers [[153](#bib.bib153)],
+    which try to mimic the global receptive field of Transformers without the self-attention
+    mechanism. Exploiting such architectures for efficient processing of high-resolution
+    inputs would be an interesting research direction. Furthermore, the multimodal
+    co-attention in MCAT [[104](#bib.bib104)] can be applied to many other multimodal
+    tasks, especially the ones with audio, vision and language modalities. Moreover,
+    frequency-domain representations can be explored as inputs to ViTs, which can
+    lead to more efficiency compared to frequency-domain CNNs. For instance, ViTs
+    can take separate patches from DCT-Cb, DCT-Cr and DCT-Y components, bypassing
+    the need to upsample DCT-Cb and DCT-Cr to match the dimensions of DCT-Y.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The combination of efficient high-resolution deep learning with other efficient
+    deep learning methods, such as model compression [[154](#bib.bib154)], dynamic
+    inference [[155](#bib.bib155)], collaborative inference [[156](#bib.bib156)] and
+    continual inference [[157](#bib.bib157)], is an unexplored area of research. For
+    instance, if the saliency detection network is a lightweight version of the task
+    network, NUD can be combined with early exiting, where the output of the saliency
+    detection network would be a fast, but less accurate, early result. This is simple
+    to implement in dense regression problems such as depth estimation and crowd counting,
+    where the output of the task can be interpreted as a form of saliency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, with the adoption of edge and cloud computing, transmission of high-resolution
+    inputs to servers for processing is a real challenge. As a solution, efficient
+    high-resolution deep learning methods can be combined with edge computing paradigms.
+    For instance, the downsampled images in NUD and compressed representation in TOIC
+    can be transmitted instead of the original inputs. This would be a form of split
+    computing (also known as collaborative intelligence) [[158](#bib.bib158), [159](#bib.bib159)],
+    where the initial portion of computation is performed on a resource-constrained
+    end-device, and the compact intermediate representation is then transmitted to
+    a server where the rest of the computation is carried out. A study using this
+    idea for high-resolution images captured by drones is reported in [[160](#bib.bib160)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] E. Thomson, M. Harfouche *et al.*, “Gigapixel behavioral and neural activity
+    imaging with a novel multi-camera array microscope,” *bioRxiv*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] X. Yuan, L. Fang *et al.*, “Multiscale gigapixel video: A cross resolution
+    image matching and warping approach,” in *IEEE International Conference on Computational
+    Photography*, 2017, pp. 1–9.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] R. Sargent, C. Bartley *et al.*, “Timelapse gigapan: Capturing, sharing,
+    and exploring timelapse gigapixel imagery,” in *Fine International Conference
+    on Gigapixel Imaging for Science*, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] N. Farahani, A. V. Parwani *et al.*, “Whole slide imaging in pathology:
+    advantages, limitations, and emerging perspectives,” *Pathology and Laboratory
+    Medicine International*, vol. 7, no. 23-33, p. 4321, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] J. Chen, L. Wu *et al.*, “Deep learning-based model for detecting 2019
+    novel coronavirus pneumonia on high-resolution computed tomography,” *Scientific
+    Reports*, vol. 10, no. 1, p. 19196, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] A. Dosovitskiy, L. Beyer *et al.*, “An image is worth 16x16 words: Transformers
+    for image recognition at scale,” in *International Conference on Learning Representations*,
+    2021\. [Online]. Available: [https://openreview.net/forum?id=YicbFdNTTy](https://openreview.net/forum?id=YicbFdNTTy)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] G. Gao, J. Gao *et al.*, “Cnn-based density estimation and crowd counting:
+    A survey,” *arXiv preprint arXiv:2003.12783*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] J. van der Laak, G. Litjens, and F. Ciompi, “Deep learning in histopathology:
+    the path to the clinic,” *Nature Medicine*, vol. 27, no. 5, pp. 775–784, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] A. Van Etten, “You only look twice: Rapid multi-scale object detection
+    in satellite imagery,” *arXiv preprint arXiv:1805.09512*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Y. Lecun, L. Bottou *et al.*, “Gradient-based learning applied to document
+    recognition,” *Proceedings of the IEEE*, vol. 86, no. 11, pp. 2278–2324, 1998.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Imagenet classification
+    with deep convolutional neural networks,” in *Proceedings of the 25th International
+    Conference on Neural Information Processing Systems - Volume 1*, ser. NIPS’12.   Red
+    Hook, NY, USA: Curran Associates Inc., 2012, p. 1097–1105.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] B. Ramachandra, M. J. Jones, and R. R. Vatsavai, “A survey of single-scene
+    video anomaly detection,” *IEEE Transactions on Pattern Analysis and Machine Intelligence*,
+    vol. 44, no. 5, pp. 2293–2312, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] X. Wang, X. Zhang *et al.*, “Panda: A gigapixel-level human-centric video
+    dataset,” in *IEEE/CVF conference on computer vision and pattern recognition*,
+    2020, pp. 3268–3278.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Q. Song, C. Wang *et al.*, “To choose or to fuse? scale selection for
+    crowd counting,” in *AAAI Conference on Artificial Intelligence*, vol. 35, no. 3,
+    2021, pp. 2576–2583.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Y. Tay, M. Dehghani *et al.*, “Efficient transformers: A survey,” *arXiv
+    preprint arXiv:2009.06732*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] M. Tan and Q. Le, “Efficientnet: Rethinking model scaling for convolutional
+    neural networks,” in *International Conference on Machine Learning*, 2019, pp.
+    6105–6114.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] M. Shoeybi, M. Patwary *et al.*, “Megatron-lm: Training multi-billion
+    parameter language models using model parallelism,” *arXiv preprint arXiv:1909.08053*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] L. Weng and G. Brockman. (2022) Techniques for training large neural networks.
+    [Online]. Available: [https://openai.com/blog/techniques-for-training-large-neural-networks/](https://openai.com/blog/techniques-for-training-large-neural-networks/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] J. Du, X. Zhu *et al.*, “Model parallelism optimization for distributed
+    inference via decoupled cnn structure,” *IEEE Transactions on Parallel and Distributed
+    Systems*, vol. 32, no. 7, pp. 1665–1676, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Y. Zhang, D. Zhou *et al.*, “Single-image crowd counting via multi-column
+    convolutional neural network,” in *IEEE conference on computer vision and pattern
+    recognition*, 2016, pp. 589–597.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] D. J. Brady, D. L. Marks *et al.*, “Petapixel photography and the limits
+    of camera information capacity,” in *Computational Imaging XI*, 2013, pp. 87–93.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] W. Lu, S. Graham *et al.*, “Capturing cellular topology in multi-gigapixel
+    pathology images,” in *IEEE/CVF Conference on Computer Vision and Pattern Recognition
+    Workshops*, 2020, pp. 260–261.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] A. Recasens, P. Kellnhofer *et al.*, “Learning to zoom: a saliency-based
+    sampling layer for neural networks,” in *European Conference on Computer Vision*,
+    2018, pp. 51–66.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] G. Cheng, X. Xie *et al.*, “Remote sensing image scene classification
+    meets deep learning: Challenges, methods, benchmarks, and opportunities,” *IEEE
+    Journal of Selected Topics in Applied Earth Observations and Remote Sensing*,
+    vol. 13, pp. 3735–3756, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] N. Dimitriou, O. Arandjelović, and P. D. Caie, “Deep learning for whole
+    slide image analysis: An overview,” *Frontiers in Medicine*, vol. 6, 2019. [Online].
+    Available: [https://www.frontiersin.org/articles/10.3389/fmed.2019.00264](https://www.frontiersin.org/articles/10.3389/fmed.2019.00264)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,”
+    in *International Conference on Learning Representations*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,”
+    in *International Conference on Learning Representations*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] C. L. Srinidhi, O. Ciga, and A. L. Martel, “Deep neural network models
+    for computational histopathology: A survey,” *Medical Image Analysis*, vol. 67,
+    p. 101813, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] J. D. Schuijf, J. A. Lima *et al.*, “Ct imaging with ultra-high-resolution:
+    Opportunities for cardiovascular imaging in clinical practice,” *Journal of Cardiovascular
+    Computed Tomography*, vol. 16, no. 5, pp. 388–396, 2022\. [Online]. Available:
+    [https://www.sciencedirect.com/science/article/pii/S1934592522000235](https://www.sciencedirect.com/science/article/pii/S1934592522000235)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] X. Zhang, L. Han *et al.*, “How well do deep learning-based methods for
+    land cover classification and object detection perform on high resolution remote
+    sensing imagery?” *Remote Sensing*, vol. 12, no. 3, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] H. Jiang, M. Peng *et al.*, “A survey on deep learning-based change detection
+    from high-resolution remote sensing images,” *Remote Sensing*, vol. 14, no. 7,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Z. Cai, Q. Fan *et al.*, “A unified multi-scale deep convolutional neural
+    network for fast object detection,” in *Computer Vision – ECCV 2016*, B. Leibe,
+    J. Matas *et al.*, Eds.   Cham: Springer International Publishing, 2016, pp. 354–370.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] J. Wang, K. Sun *et al.*, “Deep high-resolution representation learning
+    for visual recognition,” *IEEE Transactions on Pattern Analysis and Machine Intelligence*,
+    vol. 43, no. 10, pp. 3349–3364, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] H. Zhao, X. Qi *et al.*, “Icnet for real-time semantic segmentation on
+    high-resolution images,” in *Proceedings of the European Conference on Computer
+    Vision (ECCV)*, September 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] U. Sajid, H. Sajid *et al.*, “Zoomcount: A zooming mechanism for crowd
+    counting in static images,” *IEEE Transactions on Circuits and Systems for Video
+    Technology*, vol. 30, no. 10, pp. 3499–3512, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] J. T. Zhou, L. Zhang *et al.*, “Locality-aware crowd counting,” *IEEE
+    Transactions on Pattern Analysis and Machine Intelligence*, vol. 44, no. 7, pp.
+    3602–3613, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] C. Liu, X. Weng, and Y. Mu, “Recurrent attentive zooming for joint crowd
+    counting and precise localization,” in *IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] C. Xu, K. Qiu *et al.*, “Learn to scale: Generating multipolar normalized
+    density maps for crowd counting,” in *IEEE/CVF International Conference on Computer
+    Vision*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] D. J. Ho, D. V. Yarlagadda *et al.*, “Deep multi-magnification networks
+    for multi-class breast cancer image segmentation,” *Computerized Medical Imaging
+    and Graphics*, vol. 88, p. 101866, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] K. Wang, X. Zhang, and S. Huang, “KGZNet: knowledge-guided deep zoom neural
+    networks for thoracic disease classification,” in *IEEE International Conference
+    on Bioinformatics and Biomedicine (BIBM)*, 2019, pp. 1396–1401.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] S. Madec, X. Jin *et al.*, “Ear density estimation from high resolution
+    rgb imagery using deep learning technique,” *Agricultural and Forest Meteorology*,
+    vol. 264, pp. 225–234, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Y. Xu, Z. Xie *et al.*, “Road extraction from high-resolution remote sensing
+    imagery using deep learning,” *Remote Sensing*, vol. 10, no. 9, p. 1461, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Y. Liu, K. Gadepalli *et al.*, “Detecting cancer metastases on gigapixel
+    pathology images,” *arXiv preprint arXiv:1703.02442*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] L. Wang, L. Ding *et al.*, “Automated identification of malignancy in
+    whole-slide pathological images: identification of eyelid malignant melanoma in
+    gigapixel pathological slides using deep learning,” *British Journal of Ophthalmology*,
+    vol. 104, no. 3, pp. 318–323, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] C. Xie, H. Muhammad *et al.*, “Beyond classification: Whole slide tissue
+    histopathology analysis by end-to-end part learning,” in *Conference on Medical
+    Imaging with Deep Learning*, 2020, pp. 843–856.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] S. Cheng, S. Liu *et al.*, “Robust whole slide image analysis for cervical
+    cancer screening using deep learning,” *Nature Communications*, vol. 12, no. 1,
+    p. 5639, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] N. Z. Tsaku, S. C. Kosaraju *et al.*, “Texture-based deep learning for
+    effective histopathological cancer image classification,” in *IEEE International
+    Conference on Bioinformatics and Biomedicine (BIBM)*, 2019, pp. 973–977.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] H. Lin, H. Chen *et al.*, “Fast scannet: Fast and dense analysis of multi-gigapixel
+    whole-slide images for cancer metastasis detection,” *IEEE Transactions on Medical
+    Imaging*, vol. 38, no. 8, pp. 1948–1958, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Z. Lai, C. Wang *et al.*, “Joint semi-supervised and active learning for
+    segmentation of gigapixel pathology images with cost-effective labeling,” in *IEEE/CVF
+    International Conference on Computer Vision Workshops*, October 2021, pp. 591–600.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] S. Javed, A. Mahmood *et al.*, “Deep multiresolution cellular communities
+    for semantic segmentation of multi-gigapixel histology images,” in *IEEE/CVF International
+    Conference on Computer Vision Workshops*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] S. Yang, L. Jiang *et al.*, “Deep learning for detecting corona virus
+    disease 2019 (covid-19) on high-resolution computed tomography: a pilot study,”
+    *Annals of Translational Medicine*, vol. 8, no. 7, pp. 450–450, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] M. Akagi, Y. Nakamura *et al.*, “Deep learning reconstruction improves
+    image quality of abdominal ultra-high-resolution ct,” *European Radiology*, vol. 29,
+    no. 11, pp. 6163–6171, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] A. Khadangi, T. Boudier, and V. Rajagopal, “EM-stellar: benchmarking deep
+    learning for electron microscopy image segmentation,” *Bioinformatics*, vol. 37,
+    no. 1, pp. 97–106, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] Y. Fukushima, Y. Fushimi *et al.*, “Evaluation of moyamoya disease in
+    ct angiography using ultra-high-resolution computed tomography: Application of
+    deep learning reconstruction,” *European Journal of Radiology*, vol. 151, p. 110294,
+    2022\. [Online]. Available: [https://www.sciencedirect.com/science/article/pii/S0720048X22001449](https://www.sciencedirect.com/science/article/pii/S0720048X22001449)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] C. McLeavy, M. Chunara *et al.*, “The future of ct: deep learning reconstruction,”
+    *Clinical Radiology*, vol. 76, no. 6, pp. 407–415, 2021\. [Online]. Available:
+    [https://www.sciencedirect.com/science/article/pii/S0009926021000672](https://www.sciencedirect.com/science/article/pii/S0009926021000672)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] X. Xing, Y. Yuan, and M. Q.-H. Meng, “Zoom in lesions for better diagnosis:
+    Attention guided deformation network for wce image classification,” *IEEE Transactions
+    on Medical Imaging*, vol. 39, no. 12, pp. 4047–4059, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] J. E. Ball, D. T. Anderson, and C. S. Chan Sr, “Comprehensive survey of
+    deep learning in remote sensing: theories, tools, and challenges for the community,”
+    *Journal of applied remote sensing*, vol. 11, no. 4, p. 042609, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] M. Vakalopoulou, K. Karantzalos *et al.*, “Building detection in very
+    high resolution multispectral data with deep learning features,” in *IEEE International
+    Geoscience and Remote Sensing Symposium*, 2015, pp. 1873–1876.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] U. Alganci, M. Soydas, and E. Sertel, “Comparative research on deep learning
+    approaches for airplane detection from very high-resolution satellite images,”
+    *Remote Sensing*, vol. 12, no. 3, p. 458, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] Z. M. Hamdi, M. Brandmeier, and C. Straub, “Forest damage assessment using
+    deep learning on high resolution remote sensing data,” *Remote Sensing*, vol. 11,
+    no. 17, p. 1976, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] L. Ding, D. Lin *et al.*, “Looking outside the window: Wide-context transformer
+    for the semantic segmentation of high-resolution remote sensing images,” *IEEE
+    Transactions on Geoscience and Remote Sensing*, vol. 60, pp. 1–13, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] R. Zhao, Z. Shi, and Z. Zou, “High-resolution remote sensing image captioning
+    based on structured attention,” *IEEE Transactions on Geoscience and Remote Sensing*,
+    vol. 60, pp. 1–14, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] E. Rocha Rodrigues, I. Oliveira *et al.*, “Deepdownscale: A deep learning
+    strategy for high-resolution weather forecast,” in *IEEE International Conference
+    on e-Science*, 2018, pp. 415–422.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] C. B. R. Ferreira, H. Pedrini *et al.*, “Where’s wally: A gigapixel image
+    study for face recognition in crowds,” in *Advances in Visual Computing*, 2020,
+    pp. 386–397.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] A. Specker, L. Moritz *et al.*, “Fast and lightweight online person search
+    for large-scale surveillance systems,” in *IEEE/CVF Winter Conference on Applications
+    of Computer Vision Workshops*, 2022, pp. 570–580.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] M. Cormier, S. Wolf *et al.*, “Fast pedestrian detection for real-world
+    crowded scenarios on embedded gpu,” in *IEEE International Conference on Smart
+    Technologies*, 2021, pp. 40–44.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] L. Li, X. Guo *et al.*, “Region nms-based deep network for gigapixel level
+    pedestrian detection with two-step cropping,” *Neurocomputing*, vol. 468, pp.
+    482–491, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] M. Aghaei, M. Bustreo *et al.*, “Single image human proxemics estimation
+    for visual social distancing,” in *IEEE Winter Conference on Applications of Computer
+    Vision*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] I. Ahmed, M. Ahmad *et al.*, “A deep learning-based social distance monitoring
+    framework for covid-19,” *Sustainable Cities and Society*, vol. 65, p. 102571,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] J. P. Horwath, D. N. Zakharov *et al.*, “Understanding important features
+    of deep learning models for segmentation of high-resolution transmission electron
+    microscopy images,” *NPJ Computational Materials*, vol. 6, no. 1, p. 108, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] S. Lin, A. Ryabtsev *et al.*, “Real-time high-resolution background matting,”
+    in *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+    (CVPR)*, June 2021, pp. 8762–8771.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] D. Marin, Z. He *et al.*, “Efficient segmentation: Learning downsampling
+    near semantic boundaries,” in *IEEE/CVF International Conference on Computer Vision*,
+    2019, pp. 2131–2141.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] C. Jin, R. Tanno *et al.*, “Learning to downsample for segmentation of
+    ultra-high resolution images,” *arXiv preprint arXiv:2109.11071*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] C. Thavamani, M. Li *et al.*, “Fovea: Foveated image magnification for
+    autonomous navigation,” in *IEEE/CVF International Conference on Computer Vision*,
+    2021, pp. 15 539–15 548.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] M. Jaderberg, K. Simonyan *et al.*, “Spatial transformer networks,” *Advances
+    in Neural Information Processing Systems*, vol. 28, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] J. Duchon, “Splines minimizing rotation-invariant semi-norms in sobolev
+    spaces,” in *Constructive Theory of Functions of Several Variables*, 1977, pp.
+    85–100.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] B. E. Bejnordi, A. Habibian *et al.*, “Salisa: Saliency-based input sampling
+    for efficient video object detection,” *arXiv preprint arXiv:2204.02397*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] N. Dong, M. Kampffmeyer *et al.*, “Reinforced auto-zoom net: towards accurate
+    and fast breast cancer segmentation in whole-slide images,” in *Deep Learning
+    in Medical Image Analysis and Multimodal Learning for Clinical Decision Support*,
+    2018, pp. 317–325.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] M. Gao, R. Yu *et al.*, “Dynamic zoom-in network for fast object detection
+    in large images,” in *IEEE Conference on Computer Vision and Pattern Recognition*,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] B. Uzkent and S. Ermon, “Learning when and where to zoom with deep reinforcement
+    learning,” in *IEEE/CVF Conference on Computer Vision and Pattern Recognition*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] H. Du, J. Feng, and M. Feng, “Zoom in to where it matters: a hierarchical
+    graph based model for mammogram analysis,” *arXiv preprint arXiv:1912.07517*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] P. Velickovic, G. Cucurull *et al.*, “Graph attention networks,” in *International
+    Conference on Learning Representations*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] K. Chen, Z. Wang *et al.*, “Towards real-time object detection in gigapixel-level
+    video,” *Neurocomputing*, vol. 477, pp. 14–24, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] K. Simonyan and A. Zisserman, “Very deep convolutional networks for large-scale
+    image recognition,” *arXiv preprint arXiv:1409.1556*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] J. Redmon, S. Divvala *et al.*, “You only look once: Unified, real-time
+    object detection,” in *IEEE Conference on Computer Vision and Pattern Recognition*,
+    2016, pp. 779–788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] S. Ren, K. He *et al.*, “Faster r-cnn: Towards real-time object detection
+    with region proposal networks,” *Advances in Neural Information Processing Systems*,
+    vol. 28, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] S. Jiang, Z. Lin *et al.*, “Flexible high-resolution object detection
+    on edge devices with tunable latency,” in *Annual International Conference on
+    Mobile Computing and Networking*, 2021, p. 559–572.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] P. Sermanet, D. Eigen *et al.*, “Overfeat: Integrated recognition, localization
+    and detection using convolutional networks,” *arXiv preprint arXiv:1312.6229*,
+    2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] M. Tzelepi and A. Tefas, “Class-specific discriminant regularization in
+    real-time deep cnn models for binary classification problems,” *Neural Processing
+    Letters*, vol. 51, no. 2, pp. 1989–2005, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] M. Tzelepi and A. Tefas, “Improving the performance of lightweight cnns
+    for binary classification using quadratic mutual information regularization,”
+    *Pattern Recognition*, vol. 106, p. 107407, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] M. Tzelepi and A. Tefas, “Graph embedded convolutional neural networks
+    in human crowd detection for drone flight safety,” *IEEE Transactions on Emerging
+    Topics in Computational Intelligence*, vol. 5, no. 2, pp. 191–204, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] D. Triantafyllidou, P. Nousi, and A. Tefas, “Fast deep convolutional face
+    detection in the wild exploiting hard sample mining,” *Big Data Research*, vol. 11,
+    pp. 65–76, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] S. Mehta, M. Rastegari *et al.*, “Espnet: Efficient spatial pyramid of
+    dilated convolutions for semantic segmentation,” in *Proceedings of the European
+    Conference on Computer Vision (ECCV)*, September 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] M. Ding, X. Lian *et al.*, “Hr-nas: Searching efficient high-resolution
+    neural architectures with lightweight transformers,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition (CVPR)*, June 2021, pp.
+    2982–2992.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] F. Yang, L. Herranz *et al.*, “Slimmable compressive autoencoders for
+    practical neural image compression,” in *IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2021, pp. 4998–5007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] W. Lu, S. Graham *et al.*, “Capturing cellular topology in multi-gigapixel
+    pathology images,” in *IEEE/CVF Conference on Computer Vision and Pattern Recognition
+    Workshops*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] S. Graham, Q. D. Vu *et al.*, “Hover-net: Simultaneous segmentation and
+    classification of nuclei in multi-tissue histology images,” *Medical Image Analysis*,
+    vol. 58, p. 101563, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] J. Gamper, N. A. Koohbanani *et al.*, “Pannuke: an open pan-cancer histology
+    dataset for nuclei instance segmentation and classification,” in *European Congress
+    on Digital Pathology*, 2019, pp. 11–19.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] D. Müllner, “Modern hierarchical, agglomerative clustering algorithms,”
+    *arXiv preprint arXiv:1109.2378*, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] T. N. Kipf and M. Welling, “Semi-supervised classification with graph
+    convolutional networks,” in *International Conference on Learning Representations*,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] D. Tellez, G. Litjens *et al.*, “Neural image compression for gigapixel
+    histopathology image analysis,” *IEEE Transactions on Pattern Analysis and Machine
+    Intelligence*, vol. 43, no. 2, pp. 567–578, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] D. P. Kingma and M. Welling, “Auto-encoding variational bayes,” *arXiv
+    preprint arXiv:1312.6114*, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] J. Donahue, P. Krähenbühl, and T. Darrell, “Adversarial feature learning,”
+    *arXiv preprint arXiv:1605.09782*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] R. J. Chen, M. Y. Lu *et al.*, “Multimodal co-attention transformer for
+    survival prediction in gigapixel whole slide images,” in *IEEE/CVF International
+    Conference on Computer Vision*, 2021, pp. 4015–4025.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] K. He, X. Zhang *et al.*, “Deep residual learning for image recognition,”
+    in *IEEE Conference on Computer Vision and Pattern Recognition*, 2016, pp. 770–778.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] J. Deng, W. Dong *et al.*, “Imagenet: A large-scale hierarchical image
+    database,” in *IEEE Conference on Computer Vision and Pattern Recognition*, 2009,
+    pp. 248–255.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] L. Gueguen, A. Sergeev *et al.*, “Faster neural networks straight from
+    jpeg,” *Advances in Neural Information Processing Systems*, vol. 31, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] K. Xu, M. Qin *et al.*, “Learning in the frequency domain,” in *IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2020, pp. 1740–1749.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] L. Wang and Y. Sun, “Image classification using convolutional neural
+    network with wavelet domain inputs,” *IET Image Processing*, vol. 16, no. 8, pp.
+    2037–2048, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] A. Katharotiya, S. Patel, and M. Goyani, “Comparative analysis between
+    dct & dwt techniques of image compression,” *Journal of Information Engineering
+    and Applications*, vol. 1, no. 2, pp. 9–17, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] S. Wang, H. Lu, and Z. Deng, “Fast object detection in compressed video,”
+    in *IEEE/CVF International Conference on Computer Vision*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] I. E. Richardson, *H. 264 and MPEG-4 video compression: video coding
+    for next-generation multimedia*.   John Wiley & Sons, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” *Neural Computation*,
+    vol. 9, no. 8, pp. 1735–1780, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] P. Zhang, X. Dai *et al.*, “Multi-scale vision longformer: A new vision
+    transformer for high-resolution image encoding,” in *IEEE/CVF International Conference
+    on Computer Vision*, 2021, pp. 2998–3008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] I. Beltagy, M. E. Peters, and A. Cohan, “Longformer: The long-document
+    transformer,” *arXiv preprint arXiv:2004.05150*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] Y. YUAN, R. Fu *et al.*, “Hrformer: High-resolution vision transformer
+    for dense predict,” in *Advances in Neural Information Processing Systems*, vol. 34,
+    2021, pp. 7281–7293.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] J. Gu, H. Kwon *et al.*, “Multi-scale high-resolution vision transformer
+    for semantic segmentation,” in *Proceedings of the IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition (CVPR)*, 2022, pp. 12 094–12 103.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] X. Dong, J. Bao *et al.*, “Cswin transformer: A general vision transformer
+    backbone with cross-shaped windows,” in *IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2022, pp. 12 124–12 134.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] Q. Yu, Y. Xia *et al.*, “Glance-and-gaze vision transformer,” in *Advances
+    in Neural Information Processing Systems*, vol. 34, 2021, pp. 12 992–13 003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] R. J. Chen, C. Chen *et al.*, “Scaling vision transformers to gigapixel
+    images via hierarchical self-supervised learning,” in *IEEE/CVF Conference on
+    Computer Vision and Pattern Recognition*, 2022, pp. 16 144–16 155.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] B. Thomee, D. A. Shamma *et al.*, “Yfcc100m: The new data in multimedia
+    research,” *Communications of the ACM*, vol. 59, no. 2, pp. 64–73, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] P. M. R. Martin Koestinger, Paul Wohlhart and H. Bischof, “Annotated
+    Facial Landmarks in the Wild: A Large-scale, Real-world Database for Facial Landmark
+    Localization,” in *IEEE International Workshop on Benchmarking Facial Image Analysis
+    Technologies*, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] Z. Zhang, P. Luo *et al.*, “Facial landmark detection by deep multi-task
+    learning,” in *European Conference on Computer Vision*, 2014, pp. 94–108.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] S. Yang, P. Luo *et al.*, “Wider face: A face detection benchmark,” in
+    *IEEE Conference on Computer Vision and Pattern Recognition*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] H. Idrees, I. Saleemi *et al.*, “Multi-source multi-scale counting in
+    extremely dense crowd images,” in *IEEE Conference on Computer Vision and Pattern
+    Recognition*, 2013, pp. 2547–2554.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] Y. Zhang, D. Zhou *et al.*, “Single-image crowd counting via multi-column
+    convolutional neural network,” in *IEEE Conference on Computer Vision and Pattern
+    Recognition*, 2016, pp. 589–597.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] H. Idrees, M. Tayyab *et al.*, “Composition loss for counting, density
+    map estimation and localization in dense crowds,” in *European conference on computer
+    vision*, 2018, pp. 532–546.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] V. A. Sindagi, R. Yasarla, and V. M. Patel, “Jhu-crowd++: Large-scale
+    crowd counting dataset and a benchmark method,” *Technical Report*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] Q. Wang, J. Gao *et al.*, “Nwpu-crowd: A large-scale benchmark for crowd
+    counting and localization,” *IEEE Transactions on Pattern Analysis and Machine
+    Intelligence*, vol. 43, no. 6, pp. 2141–2149, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] D. Hu, L. Mou *et al.*, “Ambient sound helps: Audiovisual crowd counting
+    in extreme conditions,” *arXiv preprint arXiv:2005.07097*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] M. Cordts, M. Omran *et al.*, “The cityscapes dataset for semantic urban
+    scene understanding,” in *IEEE Conference on Computer Vision and Pattern Recognition*,
+    2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] G. Ros, L. Sellart *et al.*, “The synthia dataset: A large collection
+    of synthetic images for semantic segmentation of urban scenes,” in *IEEE Conference
+    on Computer Vision and Pattern Recognition*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] X. Huang, P. Wang *et al.*, “The apolloscape open dataset for autonomous
+    driving and its application,” *IEEE Transactions on Pattern Analysis and Machine
+    Intelligence*, vol. 42, no. 10, pp. 2702–2719, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] M. Li, Y.-X. Wang, and D. Ramanan, “Towards streaming perception,” in
+    *European Conference on Computer Vision*, 2020, pp. 473–488.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] F. Yu, H. Chen *et al.*, “Bdd100k: A diverse driving dataset for heterogeneous
+    multitask learning,” in *IEEE/CVF Conference on Computer Vision and Pattern Recognition*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] R. Mottaghi, X. Chen *et al.*, “The role of context for object detection
+    and semantic segmentation in the wild,” in *IEEE Conference on Computer Vision
+    and Pattern Recognition*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] B. Zhou, H. Zhao *et al.*, “Scene parsing through ade20k dataset,” in
+    *IEEE Conference on Computer Vision and Pattern Recognition*, 2017, pp. 633–641.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] H. Caesar, J. Uijlings, and V. Ferrari, “Coco-stuff: Thing and stuff
+    classes in context,” in *IEEE Conference on Computer Vision and Pattern Recognition*,
+    2018, pp. 1209–1218.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] I. Demir, K. Koperski *et al.*, “Deepglobe 2018: A challenge to parse
+    the earth through satellite images,” in *IEEE Conference on Computer Vision and
+    Pattern Recognition Workshops*, 2018, pp. 172–181.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] M. Buchhorn, B. Smets *et al.*, “Copernicus global land service: Land
+    cover 100m: collection 3: epoch 2019: Globe,” *Version V3\. 0.1)[Data set]*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] G. Christie, N. Fendley *et al.*, “Functional map of the world,” in *IEEE
+    Conference on Computer Vision and Pattern Recognition*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] A. Koulaouzidis, D. Iakovidis *et al.*, “KID project: an internet-based
+    digital video atlas of capsule endoscopy for research purposes,” *Endoscopy International
+    Open*, vol. 5, no. 6, pp. E477–E483, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] R. Leenhardt, C. Li *et al.*, “CAD-CAP: a 25,000-image database serving
+    the development of artificial intelligence for capsule endoscopy,” *Endosc Int
+    Open*, vol. 8, no. 3, pp. E415–E420, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] M. Veta, Y. J. Heng *et al.*, “Predicting breast tumor proliferation
+    from whole-slide images: The tupac16 challenge,” *Medical Image Analysis*, vol. 54,
+    pp. 111–121, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] G. Aresta, T. Araújo *et al.*, “Bach: Grand challenge on breast cancer
+    histology images,” *Medical Image Analysis*, vol. 56, pp. 122–139, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] D. C. Koboldt, R. S. Fulton *et al.*, “Comprehensive molecular portraits
+    of human breast tumours,” *Nature*, vol. 490, no. 7418, pp. 61–70, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] I. C. Moreira, I. Amaral *et al.*, “INbreast,” *Academic Radiology*,
+    vol. 19, no. 2, pp. 236–248, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] L. Wen, D. Du *et al.*, “UA-DETRAC: A new benchmark and protocol for
+    multi-object detection and tracking,” *Computer Vision and Image Understanding*,
+    vol. 193, p. 102907, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] O. Russakovsky, J. Deng *et al.*, “Imagenet large scale visual recognition
+    challenge,” *International Journal of Computer Vision*, vol. 115, no. 3, pp. 211–252,
+    2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] X. Sun, P. Wang *et al.*, “Fair1m: A benchmark dataset for fine-grained
+    object recognition in high-resolution remote sensing imagery,” *ISPRS Journal
+    of Photogrammetry and Remote Sensing*, vol. 184, pp. 116–130, 2022. [Online].
+    Available: [https://www.sciencedirect.com/science/article/pii/S0924271621003269](https://www.sciencedirect.com/science/article/pii/S0924271621003269)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] T.-Y. Lin, M. Maire *et al.*, “Microsoft coco: Common objects in context,”
+    in *European Conference on Computer Vision*, 2014, pp. 740–755.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] R. Ma and Q. Hao, “Cs-fnet: A compressive sampling frequency neural network
+    for simultaneous image compression and recognition,” in *IEEE International Conference
+    on Multisensor Fusion and Integration for Intelligent Systems*, 2021, pp. 1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[153] M.-H. Guo, Z.-N. Liu *et al.*, “Can attention enable mlps to catch up
+    with cnns?” *Computational Visual Media*, vol. 7, no. 3, pp. 283–288, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[154] Y. Cheng, D. Wang *et al.*, “Model compression and acceleration for deep
+    neural networks: The principles, progress, and challenges,” *IEEE Signal Processing
+    Magazine*, vol. 35, no. 1, pp. 126–136, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[155] Y. Han, G. Huang *et al.*, “Dynamic neural networks: A survey,” *arXiv
+    preprint arXiv:2102.04906*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] J. Carreira, V. Patraucean *et al.*, “Massively parallel video networks,”
+    in *European Conference on Computer Vision*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[157] L. Hedegaard and A. Iosifidis, “Continual inference: A library for efficient
+    online inference with deep neural networks in pytorch,” *arXiv preprint: arXiv:2204.03418*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[158] Y. Matsubara, M. Levorato, and F. Restuccia, “Split computing and early
+    exiting for deep learning applications: Survey and research challenges,” *ACM
+    Computing Surveys*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[159] A. Bakhtiarnia, N. Milošević *et al.*, “Dynamic split computing for efficient
+    deep edge intelligence,” *arXiv preprint arXiv:2205.11269*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[160] N. Boehrer, A. Gabriel *et al.*, “Onboard ROI selection for aerial surveillance
+    using a high resolution, high framerate camera,” in *Mobile Multimedia/Image Processing,
+    Security, and Applications*, vol. 11399, 2020, pp. 76 – 95.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Appendix A Data Sources
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Data Sources and details for device camera resolutions are shown in Table [V](#A1.T5
+    "TABLE V ‣ Appendix A Data Sources ‣ Efficient High-Resolution Deep Learning:
+    A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE V: Details for device camera resolutions. All links were accessed at
+    26 July 2022.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Device Camera | Year | Resolution (MP) | Source |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Apple iPhone Rear Camera | 2007 | 2 | [https://en.wikipedia.org/wiki/IPhone_(1st_generation)](https://en.wikipedia.org/wiki/IPhone_(1st_generation))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2008 | 2 | [https://en.wikipedia.org/wiki/IPhone_3G](https://en.wikipedia.org/wiki/IPhone_3G)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2009 | 3 | [https://en.wikipedia.org/wiki/IPhone_3GS](https://en.wikipedia.org/wiki/IPhone_3GS)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2010 | 5 | [https://en.wikipedia.org/wiki/IPhone_4](https://en.wikipedia.org/wiki/IPhone_4)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2011 | 8 | [https://en.wikipedia.org/wiki/IPhone_4S](https://en.wikipedia.org/wiki/IPhone_4S)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2012 | 8 | [https://en.wikipedia.org/wiki/IPhone_5](https://en.wikipedia.org/wiki/IPhone_5)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2013 | 8 | [https://en.wikipedia.org/wiki/IPhone_5S](https://en.wikipedia.org/wiki/IPhone_5S)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2014 | 8 | [https://en.wikipedia.org/wiki/IPhone_6](https://en.wikipedia.org/wiki/IPhone_6)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2015 | 12 | [https://en.wikipedia.org/wiki/IPhone_6S](https://en.wikipedia.org/wiki/IPhone_6S)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2016 | 12.2 | [https://en.wikipedia.org/wiki/IPhone_SE_(1st_generation)](https://en.wikipedia.org/wiki/IPhone_SE_(1st_generation))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2017 | 12 | [https://en.wikipedia.org/wiki/IPhone_X](https://en.wikipedia.org/wiki/IPhone_X)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2018 | 12 | [https://en.wikipedia.org/wiki/IPhone_XS](https://en.wikipedia.org/wiki/IPhone_XS)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2019 | 12 | [https://en.wikipedia.org/wiki/IPhone_11_Pro](https://en.wikipedia.org/wiki/IPhone_11_Pro)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2020 | 12 | [https://en.wikipedia.org/wiki/IPhone_12_Pro](https://en.wikipedia.org/wiki/IPhone_12_Pro)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2021 | 12 | [https://en.wikipedia.org/wiki/IPhone_13_Pro](https://en.wikipedia.org/wiki/IPhone_13_Pro)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2022 | 12 | [https://en.wikipedia.org/wiki/IPhone_SE_(3rd_generation)](https://en.wikipedia.org/wiki/IPhone_SE_(3rd_generation))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Samsung Galaxy S Rear Camera | 2010 | 5 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S](https://en.wikipedia.org/wiki/Samsung_Galaxy_S)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2011 | 8 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S_II](https://en.wikipedia.org/wiki/Samsung_Galaxy_S_II)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2012 | 8 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S_III](https://en.wikipedia.org/wiki/Samsung_Galaxy_S_III)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2013 | 13 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S4](https://en.wikipedia.org/wiki/Samsung_Galaxy_S4)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2014 | 16 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S5](https://en.wikipedia.org/wiki/Samsung_Galaxy_S5)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2015 | 16 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S6](https://en.wikipedia.org/wiki/Samsung_Galaxy_S6)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2016 | 12 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S7](https://en.wikipedia.org/wiki/Samsung_Galaxy_S7)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2017 | 12 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S8](https://en.wikipedia.org/wiki/Samsung_Galaxy_S8)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2018 | 12 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S9](https://en.wikipedia.org/wiki/Samsung_Galaxy_S9)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2019 | 16 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S10](https://en.wikipedia.org/wiki/Samsung_Galaxy_S10)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2020 | 108 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S20](https://en.wikipedia.org/wiki/Samsung_Galaxy_S20)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2021 | 108 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S21](https://en.wikipedia.org/wiki/Samsung_Galaxy_S21)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2022 | 108 | [https://en.wikipedia.org/wiki/Samsung_Galaxy_S22](https://en.wikipedia.org/wiki/Samsung_Galaxy_S22)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Microsoft HoloLens Camera | 2016 | 2.4 | [https://docs.microsoft.com/en-us/hololens/hololens1-hardware](https://docs.microsoft.com/en-us/hololens/hololens1-hardware)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2019 | 8 | [https://www.microsoft.com/en-us/hololens/hardware](https://www.microsoft.com/en-us/hololens/hardware)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Raspberry Pi Camera | 2013 | 2.1 | [https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories](https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2016 | 8 | [https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories](https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2020 | 12.3 | [https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories](https://en.wikipedia.org/wiki/Raspberry_Pi#Accessories)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DJI Phantom Camera | 2012 | 12 | [https://en.wikipedia.org/wiki/GoPro#HERO3_(White/Silver/Black)](https://en.wikipedia.org/wiki/GoPro#HERO3_(White/Silver/Black))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2013 | 14 | [https://www.dji.com/dk/phantom-2-vision](https://www.dji.com/dk/phantom-2-vision)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2014 | 14 | [https://www.dji.com/dk/phantom-2-vision-plus](https://www.dji.com/dk/phantom-2-vision-plus)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2015 | 12.4 | [https://www.dji.com/dk/phantom-3-pro](https://www.dji.com/dk/phantom-3-pro)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2016 | 20 | [https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones](https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2017 | 20 | [https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones](https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | 2018 | 20 | [https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones](https://en.wikipedia.org/wiki/Phantom_(UAV)#Current_Phantom_drones)
+    |'
+  prefs: []
+  type: TYPE_TB

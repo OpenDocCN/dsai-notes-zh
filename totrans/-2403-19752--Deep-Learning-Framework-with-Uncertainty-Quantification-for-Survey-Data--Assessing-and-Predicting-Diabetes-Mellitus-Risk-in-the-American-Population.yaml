@@ -1,0 +1,1859 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:33:36'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2403.19752] Deep Learning Framework with Uncertainty Quantification for Survey
+    Data: Assessing and Predicting Diabetes Mellitus Risk in the American Population'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2403.19752](https://ar5iv.labs.arxiv.org/html/2403.19752)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing
+    and Predicting Diabetes Mellitus Risk in the American Population'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Marcos Matabuena Corresponding author. Email: mmatabuena@hsph.harvard.edu Department
+    of Biostatistics, Harvard University Juan C. Vidal Universidad de Santiago de
+    Compostela Rahul Ghosal Department of Epidemiology and Biostatistics, University
+    of South Carolina Jukka-Pekka Onnela Department of Biostatistics, Harvard University'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Complex survey designs are commonly employed in many medical cohorts. In such
+    scenarios, developing case-specific predictive risk score models that reflect
+    the unique characteristics of the study design is essential. This approach is
+    key to minimizing potential selective biases in results. The objectives of this
+    paper are: (i) To propose a general predictive framework for regression and classification
+    using neural network (NN) modeling, which incorporates survey weights into the
+    estimation process; (ii) To introduce an uncertainty quantification algorithm
+    for model prediction, tailored for data from complex survey designs; (iii) To
+    apply this method in developing robust risk score models to assess the risk of
+    Diabetes Mellitus in the US population, utilizing data from the NHANES 2011-2014
+    cohort. The theoretical properties of our estimators are designed to ensure minimal
+    bias and the statistical consistency, thereby ensuring that our models yield reliable
+    predictions and contribute novel scientific insights in diabetes research. While
+    focused on diabetes, this NN predictive framework is adaptable to create clinical
+    models for a diverse range of diseases and medical cohorts. The software and the
+    data used in this paper is publicly available on GitHub.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Keywords: Survey data; neural networks; uncertainty quantification; conformal
+    prediction; NHANES data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Although not a primary focus among data practitioners, experimental design is
+    critically important in addressing the current biomedical reproducibility crisis
+    [[5](#bib.bib5), [1](#bib.bib1), [28](#bib.bib28)]. Its significance, underscored
+    by Ronald Fisher’s pioneering work, is evident in the evolution of modern statistics
+    [[36](#bib.bib36)]. In medical research, experimental design is essential in shaping
+    studies that support the development and validation of new drugs and clinical
+    treatments, especially in randomized clinical trials [[30](#bib.bib30)]. Beyond
+    these trials, the sampling methods in national-representative studies like NHANES
+    (National Health and Nutrition Examination Survey) profoundly affect the generalizability
+    of clinical risk score models [[24](#bib.bib24), [25](#bib.bib25)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: NHANES exemplifies a well-designed study, renowned for its reliability and comprehensive
+    data collection, monitoring disease prevalence and health habits in the U.S. Unlike
+    other clinical studies, such as the UK Biobank, where individuals voluntarily
+    participate, and the selection bias is prevalent [[31](#bib.bib31), [6](#bib.bib6)],
+    NHANES employs a multi-stage complex design, drawing from a random sample of the
+    U.S. This approach includes different hierarchical levels, like states and cities,
+    and incorporates post-stratification techniques to minimize non-responder impact,
+    enhance representativeness, and improve the efficiency of estimators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This intricate procedure ensures accurate conclusions, and enhance monitoring
+    changes over time through various metabolic and physiological tests conducted
+    in different periods. NHANES is a benchmark study, but the success of statistical
+    analysis relies heavily on adopting methods that accommodate its experimental
+    design.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In biomedical research, developing risk assessment scores is vital for healthcare
+    planning, particularly in public health [[23](#bib.bib23), [17](#bib.bib17), [34](#bib.bib34)].
+    These scores, which estimate the likelihood of contracting specific diseases,
+    are crucial for identifying at-risk individuals [[10](#bib.bib10)]. Based on these
+    assessments, healthcare strategies like tailored follow-ups, regular check-ups,
+    and non-invasive interventions can be implemented, reducing health costs and improving
+    population health [[13](#bib.bib13), [32](#bib.bib32), [29](#bib.bib29)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, constructing disease-specific risk scores using observational data
+    is prone to selection bias [[6](#bib.bib6)], challenging the generalizability
+    of results. This issue is evident in diabetes research [[26](#bib.bib26)], where
+    the predictive capacity of risk scores varies, and is influenced by different
+    population genetics, demographics, and experimental design quality. Practical
+    challenges, such as costs and technical limitations, often hinder random sampling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To overcome these challenges, researchers frequently use multi-stage survey
+    designs, as seen in NHANES. This approach involves conducting studies at various
+    levels, targeting different subpopulations. Despite its prevalence, the integration
+    of specific survey designs with machine learning models and survey weight estimations
+    remains limited. Additionally, the inferential statistics for such models face
+    inherent problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To bridge this gap and potentially impact clinical conclusions in biomedical
+    studies (see to Table [1](#S1.T1 "Table 1 ‣ 1 Introduction ‣ Deep Learning Framework
+    with Uncertainty Quantification for Survey Data: Assessing and Predicting Diabetes
+    Mellitus Risk in the American Population") for NHANES case), we propose a novel
+    neural network framework for prediction in this context, incorporating uncertainty
+    quantification based on conformal prediction techniques. We apply these methods
+    to develop reliable risk scores for detecting Diabetes Mellitus in the US. population.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Aspect | Impact of Not Using Correct NHANES Survey Weights |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bias in Estimates | Biased statistical results, misrepresenting certain groups
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Loss of Representativeness | Results not reflective of U.S. civilian non-institutionalized
+    population |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Policy Decisions | Potential misinformed public health policies and resource
+    allocation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Statistical Inaccuracy | Incorrect standard errors, confidence intervals,
+    and p-values |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Ethical Considerations | Ethical concerns due to disproportionate exclusion
+    of minority groups |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Impacts of Not Using Survey Weights in NHANES Data Analysis'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.1 Diabetes Study Case
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Diabetes Mellitus represents a significant public health challenge, currently
+    affecting approximately 12% of the U.S. population. A notable concern, particularly
+    in Type 2 Diabetes, is the high rate of undiagnosed cases. The CDC in 2020 reported
+    that around 21% of diabetes cases in the U.S. remained undetected [[9](#bib.bib9)].
+    Our recent research suggests that this percentage could be even higher [[16](#bib.bib16)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The prevalence of sedentary lifestyles, especially in developed countries, contributes
+    to a worrying projected increase in diabetes cases. Currently affecting about
+    9.3% of the global population, projections suggest an increase to 10.2% by 2030
+    and 10.9% by 2045\. This rising trend underscores the urgent need for effective
+    public health strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The economic impact of diabetes is substantial, with the total cost in the U.S.
+    estimated at $412.9 billion, including $306.6 billion in direct medical expenses
+    and $106.3 billion in indirect costs [[29](#bib.bib29)]. The burden of diabetes
+    extends beyond financial costs, significantly affecting life expectancy and quality
+    of life, primarily due to late diagnoses and poor glycemic control. These issues
+    often lead to severe complications, including cardiovascular problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is an increasing need to develop new precision medicine strategies based
+    on a data-driven approach. These strategies can involve the development of new
+    screening methods and the prescription of treatments with dynamic information
+    obtained from wearable and electronic record devices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of Diabetes Mellitus, the diagnosis typically involves biomarkers
+    such as glycosylated hemoglobin (A1C) and fasting plasma glucose (FPG). While
+    FPG tests are cost-effective, A1C testing, a primary biomarker for diabetes, is
+    more expensive and complex. Despite its widespread use, particularly in non-risk
+    groups, A1C testing presents significant challenges. Medical guidelines, including
+    those from the American Diabetes Association (ADA), recommend using both A1C and
+    FPG, along with oral glucose tolerance tests, especially in cases of gestational
+    diabetes, for a comprehensive assessment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the area of disease diagnosis and screening, statistical and machine learning
+    models, leveraging clinical variables, show promise as a tool in the identification
+    of high-risk individuals. These predictive models can stratify patients effectively,
+    allowing for personalized clinical approaches in line with precision medicine.
+    However, their predictive power can vary across different patient demographics
+    and in real-world applications with limited sample sizes, which poses challenges
+    in accurately determining patients’ glucose status.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this paper, we address these challenges by utilizing data from the National
+    Health and Nutrition Examination Survey (NHANES) 2011-2014\. Given the complexity
+    of the survey design and the relative scarcity of non-parametric models in this
+    domain, we introduce novel neural network estimators. These estimators are designed
+    to ensure universal approximation capabilities in predictive tasks. Furthermore,
+    we developed a new uncertainty quantification framework based on conformal inference
+    techniques for survey data, enhancing our ability to quantify the predictive limits
+    of these models. This holistic approach aims to improve the precision and applicability
+    of predictive models for Diabetes Mellitus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.2 Neural Network Models and machine learning models for Survey Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The application of non-parametric regression models in survey data analysis
+    is a relatively unexplored area, as indicated in [[21](#bib.bib21)]. Traditional
+    methods, such as the Nadaraya-Watson estimator [[15](#bib.bib15)] and local polynomial
+    regression, were proposed but are very sensitive to a large number of predictors.
+    Recently, machine learning algorithms, such as neural networks and random forests,
+    have been recommended in the literature as non-parametric alternatives to classical
+    regression algorithms. Nevertheless, their generalization to inferential and predictive
+    tasks in the field of complex survey design, such as survey data, has not been
+    proposed. To the best of our knowledge, the closest proposal was the kernel ridge
+    regression models proposed by [[25](#bib.bib25)] for functional and distributional
+    data analysis applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The goal of this paper is to overcome this gap in the literature and propose
+    a general neural network (NN) framework for classification and regression models,
+    pointwise predictions, and uncertainty quantification for survey data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given the common prevalence of nonlinear biological data, the universal properties
+    of neural networks are promising, together with their robustness in comparison
+    with other estimators in high-dimensional settings, as a potential alternative.
+    From the perspective of biomedical applications, the novel NN predictive framework
+    provides the scientific community the opportunity to develop new, general disease
+    risk scores that are trustworthy due to the incorporation of uncertainty quantification
+    into model output predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary of Contributions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The contributions of this article are summarized below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Neural Network Models for Survey Data: Our paper introduces a novel application
+    of specific neural network models as estimators for complex survey data, focusing
+    on developing risk scores within cohorts like NHANES.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Prediction Uncertainty Quantification: We propose a method for quantifying
+    prediction uncertainty through the use of conformal inference techniques, specifically
+    adapted to meet the challenges inherent in complex survey data. Although the assumptions
+    of exchangeability are violated, and non-asymptotic guarantees cannot be upheld,
+    the algorithms remain consistent.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Versatile Framework: Our framework operates in both regression and classification
+    settings. In regression, we focus on conditional mean estimation, while in classification,
+    we explore quantile regression to develop a survey conformal prediction algorithm.
+    This approach addresses a gap in the literature concerning quantile regression
+    and non-linear regression algorithms with survey data (see [[12](#bib.bib12)]).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Diabetes Application Analysis: We explore models of varying complexity and
+    economic cost in the context of diabetes. Our analysis compares performance in
+    detecting Diabetes Mellitus across subpopulations, providing a nuanced trade-off
+    analysis between prediction capacity and economic cost. We advocate for an economically
+    feasible model with enhanced detection accuracy for specific patient groups.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Patient Phenotype Identification: We apply the novel uncertainity predictive
+    framework for survey data to identify patient phenotypes associated with high
+    prediction uncertainty, providing interpretable rules for to stratify the patients
+    according the expected model uncertainity.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Outline of the Paper
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The structure of the paper is organized as follows: Section [2](#S2 "2 Methodology
+    ‣ Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing
+    and Predicting Diabetes Mellitus Risk in the American Population") introduces
+    our novel neural network models specifically designed for survey data, along with
+    the proposed approach to quantify uncertainty in this context. In Section [3](#S3
+    "3 Simulation study ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population"), we present a simulation study within a binary classification framework.
+    This section validates our models and examines their empirical performance, particularly
+    focusing on neural network classification and uncertainty quantification. Section [4](#S4
+    "4 NHANES diabetes study case ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population") details a diabetes case study, applying the algorithms discussed
+    in Section [2](#S2 "2 Methodology ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population") and analyzing the results obtained. Section [5](#S5 "5 Discussion
+    ‣ Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing
+    and Predicting Diabetes Mellitus Risk in the American Population") discusses the
+    methodological contributions of our study, the broader applicability of our models
+    in the field of biomedical science, and the implications of our findings utilizing
+    the NHANES dataset. This section also addresses the limitations of our scientific
+    diabetes application and suggests potential directions for future research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Methodology
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '2.1 Model estimation: Survey Neural networks models'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Suppose we observe a random sample $\mathcal{D}_{n}=\{(X_{i},Y_{i})\sim P\}^{n}_{i=1}$
+    drawn from a finite population $\mathcal{M}$ of size $n$, according to a specific
+    survey design. For each unit $i$ $(i=1,\dots,n)$, we associate a weight $w_{i}$
+    that indicates the number of population units represented by the $i$-th sample
+    unit. In this paper, we assume that $w_{i}=1/\pi_{i}$, where $\pi_{i}$ is the
+    probability of selecting the $i$-th unit under some probability sampling design.
+    For the final weight derivation $w_{i}$, in our scientific applications, we consider
+    specific post-stratification corrections that compensate for non-responders in
+    the NHANES design (see specific details about NHANES design ¹¹1[(https://wwwn.cdc.gov/nchs/nhanes/tutorials/weighting.aspx)]((https://wwwn.cdc.gov/nchs/nhanes/tutorials/weighting.aspx)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without loss of generality, we assume that each predictor $X_{i}\in\mathbb{R}^{p}$,
+    and the response variable $Y_{i}\in\{1,\dots,K\}$ denote the set of $K$ different
+    categories in a multi-class classification problem or, in another case, the response
+    is a continuous-scalar biomarker in the case of regression modeling, such that
+    each $Y_{i}\in\mathbb{R}$. For practical purposes of new predictive regression
+    algorithms, we only need to modify the specific loss functions $\ell$ to fit a
+    model or other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep neural networks [[11](#bib.bib11)] (DNNs) use the composition of a series
+    of the simple nonlinear functions to model nonlinearity. Specifically, we can
+    write,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $h^{(L)}=g^{(L)}\,\circ\,g^{(L-1)}\,\circ\,\dots\,\circ\,g^{(1)},$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\circ$ denotes the composition of two functions, $L$ is the number of
+    hidden layers (or depth) of the neural network, and $h^{(0)}=x$. We can recursively
+    define $h^{(l)}=g^{(l)}\left(h^{(l-1)}\right)$ for all $l=1,2,\dots L$. Feed-forward
+    neural networks are a specific type of neural network that defines
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $h^{(l)}=g^{(l)}\left(h^{(l-1)}\right)=\sigma\left(\omega^{(l)}h^{(l-1)}+b^{(l)}\right),$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\omega^{(l)}$ and $b^{(l)}$ are the weight matrix and the intercept,
+    respectively, associated with the $l$-th layer, for $l=1,\cdots,L,$. Here, $\sigma(\cdot)$
+    is an activation function applied element-wise. In this paper, we use the popular
+    ReLU function, given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\sigma(z_{j})=\max(z_{j},0),$ |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $j$-coordenate of the vector $z$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given an output from the final hidden layer $h^{(L)}$ and a label $y$, we aim
+    to minimize a loss function to obtain the model parameters. In this paper, we
+    adopt the weighted cross-entropy loss function, incorporating survey weights into
+    the estimation process. The set of parameter $\theta$ are obtained solved the
+    following optimization problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\widehat{\theta}=\arg\min_{\theta}\sum_{i=1}^{n}w_{i}\cdot\ell(Y_{i},\log
+    f(X_{i};\theta))=\arg\min_{\theta}\sum_{i=1}^{n}\sum_{k=1}^{K}\mathbb{I}\{Y_{i}=k\}\cdot
+    w_{i}\cdot\log f_{k}(X_{i};\theta),$ |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\theta=\{\omega^{(l)},b^{(l)}\mid 1\leq l\leq L+1\}$ represents the set
+    of model parameters, including the weights $\omega^{(l)}$ and biases $b^{(l)}$
+    for each layer $l$ up to layer $L+1$. Here, $w_{i}$ denotes the survey weight
+    for observation $i$, $\ell(\cdot,\cdot)$ is the loss function comparing the predicted
+    and actual values, and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $f_{k}(x;\theta)=\frac{\exp(z_{k})}{\sum_{j=1}^{K}\exp(z_{j})},\hskip
+    5.69046pt\forall k\in\{1,\dots,K\},\text{ where }z=\sigma(\omega^{(L+1)}h^{(L)}+b^{(L+1)})\in\mathbb{R}^{K}.$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: In the literature on survey data analysis, practitioners often use weighting-type
+    estimators to obtain reliable estimates. A common strategy involves integrating
+    loss functions with the Horvitz-Thompson estimator. This method assigns weights
+    to sampled units based on their probability of selection. This approach is frequently
+    utilized to efficiently obtain estimators that minimize variance and ensure unbiased
+    characteristics. Similarly, the use of representative weights guarantees statistical
+    consistency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/52ec1e2847d3c625c71466bed4888123.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Neural network architecture considered in this paper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Computational details of NN
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In our scientific application, we focus on a binary classification problem,
+    distinguishing between two classes: i) diabetes and ii) non-diabetes. Our approach
+    utilizes a neural network architecture with a depth of $L$ and two layers at each
+    level. An abstract representation of the neural network architecture can be found
+    in Figure [4](#S4.F4 "Figure 4 ‣ 4.5 Uncertainity quantification ‣ 4 NHANES diabetes
+    study case ‣ Deep Learning Framework with Uncertainty Quantification for Survey
+    Data: Assessing and Predicting Diabetes Mellitus Risk in the American Population").
+    To fine-tune the model and select the optimal architecture, we partition the dataset
+    $\mathcal{D}_{n}$ into three disjoint subsets: training ($\mathcal{D}_{\text{train}}$),
+    architecture selection ($\mathcal{D}_{\text{architecture}}$), and testing ($\mathcal{D}_{\text{test}}$),
+    with proportions of 50%, 30%, and 20% respectively. We adopt a cross-validation
+    strategy, repeating the model evaluation process $10$ times to ensure robust validation
+    of the model’s performance across various metrics.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For each subject $i$, we denote the algorithm’s predicted label as $\widehat{Y}_{i}$
+    and the estimated probability of having diabetes as $\widehat{p}_{i}=\mathbb{P}(Y_{i}=1\mid
+    X=X_{i})$. We define $D$ as the set of indices for diabetes patients and $ND$
+    for non-diabetes patients. The performance metrics considered are detailed in
+    Table [2](#S2.T2 "Table 2 ‣ 2.2 Computational details of NN ‣ 2 Methodology ‣
+    Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing
+    and Predicting Diabetes Mellitus Risk in the American Population").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To optimize the model parameters, we employ stochastic gradient descent (SGD)
+    with the Adam algorithm, leveraging its adaptive learning rate properties. This
+    optimization is facilitated by the auto-differentiable capabilities of PyTorch
+    computational framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: Performance Metrics for Binary Classification with Survey Weights'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Metric | Formula | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AUC | $\sum_{i\in D}\sum_{j\in ND}w_{i}w_{j}\left(\frac{1}{\sum_{i\in D}\sum_{j\in
+    ND}w_{i}w_{j}}\right)k(\hat{p}_{i},\hat{p}_{j})$ | Weighted classification performance
+    measure |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ACC | $\frac{TP+TN}{TP+TN+FP+FN}$ | Proportion of correctly classified instances
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| REC | $\frac{TP}{TP+FN}$ | Sensitivity or true positive rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PREC | $\frac{TP}{TP+FP}$ | Precision or positive predictive value |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $F_{1}$ | $\frac{2\cdot\text{PREC}\cdot\text{REC}}{\text{PREC}+\text{REC}}$
+    | Harmonic mean of precision and recall |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-Entropy | $-\sum_{i}w_{i}\left[y_{i}\log(\hat{p}_{i})+(1-y_{i})\log(1-\hat{p}_{i})\right]$
+    | Weighted log loss between predicted and actual labels |'
+  prefs: []
+  type: TYPE_TB
+- en: 2.3 Uncertainity quantification for suvey data based on conformal prediction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 2.3.1 Background about conformal prediction and uncertainity quantification
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In medical studies, considerable uncertainty exists in various predictive tasks
+    due to the large variability among individual patients [[13](#bib.bib13), [3](#bib.bib3)].
+    Although this uncertainty is often perceived negatively, it can be beneficial
+    in different clinical situations to support decision-making [[13](#bib.bib13)].
+    Firstly, it aids in understanding the limitations of clinical prediction models.
+    Secondly, significant uncertainty regarding patient outcomes can lead to the development
+    of new pharmacological treatments or intervention strategies, offering novel therapeutic
+    avenues. Thirdly, uncertainty can guide healthcare planning; for patients with
+    unpredictable clinical courses, more frequent routine check-ups can be scheduled.
+    Lastly, quantifying individual patient uncertainty is crucial for identifying
+    atypical behaviors and supports the estimation of healthcare resource needs. Each
+    of these aspects underscores the importance of incorporating uncertainty quantification
+    into practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, let $(X_{1},Y_{1}),\ldots,(X_{n},Y_{n})$ be a random sample that is at
+    least exchangeable. We focus on extending this framework to propose a new algorithm
+    for deriving uncertainty measures based on conformal prediction. We now provide
+    the basic foundations for regression models with a scalar response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: s
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider the sequence $\mathcal{D}_{n}=\{(X_{i},Y_{i})\}^{n}_{i=1}$ i.i.d. random
+    variables. Given a new i.i.d random pair $(X_{n+1},Y_{n+1})$ with respect to $\mathcal{D}_{n}$,
+    conformal prediction, as outlined by [[33](#bib.bib33)], provides a comprehensive
+    family of algorithms for constructing prediction intervals independently of the
+    regression algorithm used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let us consider a regression algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{A}:\bigcup_{n\geq 0}(\mathcal{X}\times\mathbb{R})^{n}\rightarrow\{\textnormal{measurable
+    functions }\widetilde{m}:\mathcal{X}\rightarrow\mathbb{R}\},$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: which maps a data set containing any number of pairs $(X_{i},Y_{i})$, to a fitted
+    regression function $\widetilde{m}$. The algorithm $\mathcal{A}$ is required to
+    treat data points symmetrically, i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{A}\big{(}(x_{\pi(1)},y_{\pi(1)}),\dots,(x_{\pi(n)},y_{\pi(n)})\big{)}=\mathcal{A}\big{(}(x_{1},y_{1}),\dots,(x_{n},y_{n})\big{)}$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: for all $n\geq 1$, all permutations $\pi$ on $[n]=\{1,\dots,n\}$, and all $\{(x_{i},y_{i})\}_{i=1}^{n}$.
+    Next, for each $y\in\mathbb{R}$, let
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\widetilde{m}^{y}=\mathcal{A}\big{(}(X_{1},Y_{1}),\dots,(X_{n},Y_{n}),(X,y)\big{)}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: denote the trained model, fitted to the training data together with a hypothesized
+    test point $(X_{n+1},y)$, and let
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $R^{y}_{i}=\begin{cases}&#124;Y_{i}-\widetilde{m}^{y}(X_{i})&#124;,&amp;i=1,\dots,n,\\
+    &#124;y-\widetilde{m}^{y}(X_{n+1})&#124;,&amp;i=n+1.\end{cases}$ |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: The prediction interval for $X$ is then defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\widetilde{C}^{\alpha}(X;\mathcal{D}_{n})=\left\{y\in\mathbb{R}\ :\ R^{y}_{n+1}\leq\textnormal{quant}_{1-\alpha}\left(\sum_{i=1}^{n+1}\frac{1}{n+1}\cdot\delta_{R^{y}_{i}}\right)\right\},$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\textnormal{quant}_{1-\alpha}\left(\sum_{i=1}^{n+1}\frac{1}{n+1}\cdot\delta_{R^{y}_{i}}\right)$
+    denotes the quantile operator of order $1-\alpha$ applied to the empirical distribution
+    $\sum_{i=1}^{n+1}\frac{1}{n+1}\cdot\delta_{R^{y}_{i}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The full conformal method is known to guarantee distribution-free predictive
+    coverage at the target level $1-\alpha$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Theorem 1  (Full conformal prediction [[33](#bib.bib33)]).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'If the data points $(X_{1},Y_{1}),\dots,(X_{n},Y_{n}),(X,Y)$ are i.i.d. (or
+    more generally, exchangeable), and the algorithm treats the input data points
+    symmetrically as in ([5](#S2.E5 "In 2.3.1 Background about conformal prediction
+    and uncertainity quantification ‣ 2.3 Uncertainity quantification for suvey data
+    based on conformal prediction ‣ 2 Methodology ‣ Deep Learning Framework with Uncertainty
+    Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk
+    in the American Population")), then the full conformal prediction set defined
+    in ([7](#S2.E7 "In 2.3.1 Background about conformal prediction and uncertainity
+    quantification ‣ 2.3 Uncertainity quantification for suvey data based on conformal
+    prediction ‣ 2 Methodology ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population")) satisfies'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{P}(Y_{n+1}\in\widetilde{C}^{\alpha}(X_{n+1};\mathcal{D}_{n}))\geq
+    1-\alpha.$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The same result holds true for split conformal methods, which involve estimating
+    the regression function on $\mathcal{D}_{\text{train}}$ and the quantile on $\mathcal{D}_{\text{test}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conformal inference (both split and full) was initially proposed in terms of
+    “nonconformity scores” $\widehat{S}(X_{i},Y_{i})$, where $\widehat{S}$ is a fitted
+    function that measure the extent to which a data point $(X_{i},Y_{i})$ is unusual
+    relative to a training data set $\mathcal{D}_{train}$. For simplicity, so far
+    we have only presented the most commonly used nonconformity score, which is the
+    residual from the fitted model
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\widehat{S}(X_{i},Y_{i}):=&#124;Y_{i}-\widetilde{m}(X_{i})&#124;,$ |  |
+    (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\widetilde{m}$ is pre-trained regression function estimated for example
+    with the random elements of $\mathcal{D}_{train}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.2 NHANES Study Design
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The National Health and Nutrition Examination Survey (NHANES) employs a sophisticated
+    multi-stage probabilistic sampling design to accurately reflect the U.S. civilian
+    non-institutionalized population. This methodological framework is crucial for
+    ensuring the representation of diverse demographic characteristics in the dataset,
+    which is essential for epidemiological and nutritional surveillance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The selection process begins with Primary Sampling Units (PSUs), typically comprising
+    counties or groups of contiguous counties, chosen through probability proportional
+    to size methods. This approach guarantees a geographically representative sample
+    of the U.S. population. The PSUs are then subdivided into smaller segments, enabling
+    targeted sampling within specific locales. Households within these segments are
+    systematically sampled, and individuals are selected based on demographic criteria
+    such as age, sex, and race/ethnicity. This stratification allows for analyses
+    across various population groups.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the inherent heterogeneity across states, including variations in ethnic
+    composition, socioeconomic status, and health outcomes, challenges the assumption
+    of exchaengability data within NHANES. Such variability necessitates careful statistical
+    considerations, especially when applying conformal inference algorithms that rely
+    on the principles of exchangeability and i.i.d. assumptions for providing non-asymptotic
+    guarantees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.3 Conformal Prediction, Concept Drift, and Survey Data algorithm
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Due to the discussion of NHANES experimental design, we focus on settings in
+    which the data $(X_{i},Y_{i}),i=1,\ldots,n+1$ are no longer exchangeable. Our
+    primary focus will be on a setting in which we observe data according to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle(X_{i},Y_{i})\stackrel{{\scriptstyle\text{i.i.d.}}}{{\sim}}P=P_{X}\times
+    P_{Y&#124;X},i=1,\ldots,n,$ |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle(X_{n+1},Y_{n+1})\sim\widetilde{P}=\widetilde{P}_{X}\times
+    P_{Y&#124;X},\text{independently.}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Notice that the conditional distribution of $Y|X$ is assumed to be the same
+    for both the training and test data. Such a setting is often referred to as covariate
+    shift. Then, if we know the ratio of test to training covariate likelihoods, $\frac{\mathrm{d}\widetilde{P}_{X}}{\mathrm{d}P_{X}}$,
+    we can still perform a modified version of conformal inference, using a quantile
+    of a suitably weighted empirical distribution of nonconformity scores.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the covariate shift case, where the covariate distributions $P_{X}$ and $\widetilde{P}_{X}$
+    in our training and test sets differ, we now weight each nonconformity score $V_{i}^{(x,y)}$
+    (measuring how well $Z_{i}=(X_{i},Y_{i})$ conforms to the other points) by a probability
+    proportional to the likelihood ratio $w(X_{i})=\frac{\mathrm{d}\widetilde{P}_{X}(X_{i})}{\mathrm{d}P_{X}(X_{i})}$.
+    Therefore, we will no longer be interested in the empirical distribution $\frac{1}{n+1}\sum_{i=1}^{n}\delta_{V_{i}^{(x,y)}}+\frac{1}{n+1}\delta_{\infty}$,
+    as in Theorem 1, but rather, in a weighted version
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\sum_{i=1}^{n}p_{i}^{w}(x)\delta_{V_{i}^{(x,y)}}+p_{n+1}^{w}(x)\delta_{\infty}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the weights are defined by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $p_{i}^{w}(x)=\frac{w(X_{i})}{\sum_{j=1}^{n}w(X_{j})+w(x)},i=1,\ldots,n,\quad\text{and}\quad
+    p_{n+1}^{w}(x)=\frac{w(x)}{\sum_{j=1}^{n}w(X_{j})+w(x)}.$ |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: Theorem 2.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Assume data from the model (5). Assume $\widetilde{P}_{X}$ is absolutely continuous
+    with respect to $P_{X}$, and denote $w=\frac{\mathrm{d}\widetilde{P}_{X}}{\mathrm{d}P_{X}}$.
+    For any score function $\mathcal{S}$, and any $\alpha\in(0,1)$, define for $x\in\mathbb{R}^{d}$,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\widehat{C}_{n}(x)=\left\{y\in\mathbb{R}:V_{n+1}^{(x,y)}\leq\operatorname{Quantile}\left(1-\alpha;\sum_{i=1}^{n}p_{i}^{w}(x)\delta_{V_{i}^{(x,y)}}+p_{n+1}^{w}(x)\delta_{\infty}\right)\right\}.$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $V_{i}^{(x,y)},i=1,\ldots,n+1$ are as defined in (3), and $p_{i}^{w},i=1,\ldots,n+1$
+    are as defined in (6). Then $\widehat{C}_{n}$ satisfies
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{P}\left\{Y_{n+1}\in\widehat{C}_{n}(X_{n+1})\right\}\geq 1-\alpha.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'For classification purposes, we focus on adapting the quantile classification
+    algorithm [[8](#bib.bib8)] based on concept drift conformal principles. Algorithm
+    [2.3.3](#S2.SS3.SSS3 "2.3.3 Conformal Prediction, Concept Drift, and Survey Data
+    algorithm ‣ 2.3 Uncertainity quantification for suvey data based on conformal
+    prediction ‣ 2 Methodology ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population") contains the core steps of the algorithm, that, unlike the first
+    conformal algorithm, we propose an algorithm where the non-conformity score is
+    based on quantile regression of the cross-entropy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Split Survey Conformalized Quantile Classification (CQC) Input: Sample $\{\left(X_{i},Y_{i}\right)\}_{i=1}^{n},$
+    index sets $\mathcal{I}_{1},\mathcal{I}_{2},\mathcal{I}_{3}\subset\{1,\dots,n\},$
+    fitting algorithm $\mathcal{A},$ quantile function $\mathcal{Q},$ and desired
+    confidence level $\alpha$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Estimate the score value $\widehat{s}_{i}$ as $\widehat{s}_{i}=\sum_{k=1}^{K}1\{Y_{i}=k\}w_{i}\log
+    f_{k}(X_{i};\theta),$ for $i\in\mathcal{I}_{1}.$
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Fit the quantile function via
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $\widehat{q}_{\alpha}\in\arg\min_{q\in\mathcal{Q}}\left\{\frac{1}{&#124;\mathcal{I}_{2}&#124;}\sum_{i\in\mathcal{I}_{2}}w_{i}\rho_{\alpha}(\hat{s}_{i}-q(X_{i}))\right\},$
+    |  | (9) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: where $\rho_{\alpha}=(1-\alpha)[-t]+\alpha[t].$
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calibrate by computing non-conformity scores $S_{i}=\widehat{q}_{\alpha}(X_{i})-\widehat{s}_{i},$
+    and define
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $Q_{1-\alpha}(S,\mathcal{I}_{3}):=\left[1+\frac{1}{n_{3}}\right](1-\alpha)\text{
+    empirical quantile of }\{S_{i}\}_{i\in\mathcal{I}_{3}}\text{ using the survey
+    weights,}$ |  | (10) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: and return the predictive region function
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $\widehat{C}_{n,1-\alpha}(x):=\{k\in\{1,\dots,K\}&#124;\widehat{s}(x,k)\geq\widehat{q}_{\alpha}(x)-Q_{1-\alpha}(S,\mathcal{I}_{3})\}.$
+    |  | (11) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: 2.3.4 Conformal Prediction Beyond Exchangeability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In a recent paper, a more general conformal approach was proposed [[4](#bib.bib4)]
+    for data that are not exchangeable. We introduce the key ideas to illustrate their
+    application in our NHANES survey settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The coverage gap is a crucial concept in our analysis, representing the discrepancy
+    in coverage due to non-exchangeability. It is defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{Coverage gap}=(1-\alpha)-\mathbb{P}\left\{Y_{n+1}\in\widehat{C}_{n}(X_{n+1})\right\},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: since, under exchangeability, the method guarantees coverage with probability
+    $1-\alpha$. To provide an informal preview of our results, we use $Z_{i}=(X_{i},Y_{i})$
+    to denote the $i$th data point and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $Z=(Z_{1},\ldots,Z_{n+1})$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'to denote the full (training and test) data sequence. Let $Z^{i}$ denote this
+    sequence after swapping the test point $(X_{n+1},Y_{n+1})$ with the $i$th training
+    point $(X_{i},Y_{i})$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $Z^{i}=(Z_{1},\ldots,Z_{i-1},Z_{n+1},Z_{i+1},\ldots,Z_{n},Z_{i}).$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'To enhance robustness, our methods will incorporate weights: let $w_{i}\in[0,1]$
+    denote a prespecified weight placed on data point $i$. We will demonstrate that
+    the coverage gap can be bounded as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{Coverage gap}\leq\frac{\sum_{i=1}^{n}w_{i}\cdot\mathrm{d}_{\mathrm{TV}}(Z,Z^{i})}{1+\sum_{i=1}^{n}w_{i}},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathrm{d}_{\mathrm{TV}}$ denotes the total variation distance between
+    distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, the discrepancy of the coverage gap, when introducing survey weights,
+    depends on the total variation distance $\mathrm{d}_{\mathrm{TV}}(Z,Z^{i})$. Since
+    survey weights are fixed, this discrepancy ultimately depends on the variance
+    within the partial sample regarding the exchangeability hypothesis. In our case
+    study of NHANES, we perform empirical validation to assess the extent of our algorithm’s
+    coverage gap. If the algorithm for uncertainty quantification exhibits asymptotic
+    consistency, then as $n$ grows, the discrepancies diminish.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Asymptotic NN results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: According to [[14](#bib.bib14)], we introduce the empirical process framework,
+    that we exploit the properties of NN for survey data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let $U_{N}\equiv\{1,\ldots,N\}$, and $\mathcal{S}_{N}\equiv\left\{\left\{s_{1},\ldots,s_{n}\right\}:n\leq
+    N,s_{i}\in\right.$ $\left.U_{N},s_{i}\neq s_{j},\forall i\neq j\right\}$ be the
+    collection of subsets of $U_{N}$. We adopt the super-population framework. Let
+    $\left\{\left(Y_{i},Z_{i}\right)\in\mathcal{Y}\times\mathcal{Z}\right\}_{i=1}^{N}$
+    be i.i.d. super-population samples defined on a probability space $\left(\mathcal{X},\mathcal{A},\mathbb{P}_{(Y,Z)}\right)$,
+    where $Y^{(N)}\equiv\left(Y_{1},\ldots,Y_{N}\right)$ is the vector of interest,
+    and $Z^{(N)}\equiv\left(Z_{1},\ldots,Z_{N}\right)$ is an auxiliary vector. A sampling
+    design is a function $\mathfrak{p}:\mathcal{S}_{N}\times\mathcal{Z}^{\otimes N}\rightarrow[0,1]$
+    such that
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) for all $s\in\mathcal{S}_{N},z^{(N)}\mapsto\mathfrak{p}\left(s,z^{(N)}\right)$
+    is measurable,
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) for all $z^{(N)}\in\mathcal{Z}^{\otimes N},s\mapsto\mathfrak{p}\left(s,z^{(N)}\right)$
+    is a probability measure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The probability space we work with that includes both the super-population
+    and the design-space is the same product space $\left(\mathcal{S}_{N}\times\mathcal{X},\sigma\left(\mathcal{S}_{N}\right)\times\mathcal{A},\mathbb{P}\right)$.
+    We include the construction here for convenience of the reader: the probability
+    measure $\mathbb{P}$ is uniquely defined through its restriction on all rectangles:
+    for any $(s,E)\in\mathcal{S}_{N}\times\mathcal{A}$ (note that $\mathcal{S}_{N}$
+    is a finite set),'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{P}(s\times E)\equiv\int_{E}\mathfrak{p}\left(s,z^{(N)}(\omega)\right)\mathrm{d}\mathbb{P}_{(Y,Z)}(\omega)\equiv\int_{E}\mathbb{P}_{d}(s,\omega)\mathrm{d}\mathbb{P}_{(Y,Z)}(\omega)$
+    |  | (2.1) |'
+  prefs: []
+  type: TYPE_TB
+- en: We also use $P$ to denote the marginal law of $Y$ for notational convenience.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given $\left(Y^{(N)},Z^{(N)}\right)$ and a sampling design $\mathfrak{p}$, let
+    $\left\{\xi_{i}\right\}_{i=1}^{N}\subset[0,1]$ be random variables defined on
+    $\left(\mathcal{S}_{N}\times\mathcal{X},\sigma\left(\mathcal{S}_{N}\right)\times\mathcal{A},\mathbb{P}\right)$
+    with $\pi_{i}\equiv\pi_{i}\left(Z^{(N)}\right)\equiv\mathbb{E}\left[\xi_{i}\mid
+    Z^{(N)}\right]$. We further assume that $\left\{\xi_{i}\right\}_{i=1}^{N}$ are
+    independent of $Y^{(N)}$ conditionally on $Z^{(N)}$. Typically we take $\xi_{i}\equiv\mathbf{1}_{i\in
+    s}$, where $s\sim\mathfrak{p}$, to be the indicator of whether or not the $i$-th
+    sample $Y_{i}$ is observed (and in this case $\pi_{i}\left(Z^{(N)}\right)=$ $\sum_{s\in\mathcal{S}_{N}:i\in
+    s}\mathfrak{p}\left(s,Z^{(N)}\right)$ ), but we do not require this structure
+    apriori. The $\pi_{i}$ ’s are often referred to as the first-order inclusion probabilities,
+    and $\pi_{ij}\equiv$ $\pi_{ij}\left(Z^{(N)}\right)\equiv\mathbb{E}\left[\xi_{i}\xi_{j}\mid
+    Z^{(N)}\right]$ are the second-order inclusion probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We define the Horvitz-Thompson empirical measure and empirical process as follows:
+    for $\left\{\pi_{i}\right\},\left\{\xi_{i}\right\},\left\{Y_{i}\right\}$ as above,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{P}_{N}^{\pi}(f)\equiv\frac{1}{N}\sum_{i=1}^{N}\frac{\xi_{i}}{\pi_{i}}f\left(Y_{i}\right),\quad
+    f\in\mathcal{F}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and the associated Horvitz-Thompson empirical process
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{G}_{N}^{\pi}(f)\equiv\sqrt{N}\left(\mathbb{P}_{N}^{\pi}-P\right)(f),\quad
+    f\in\mathcal{F}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The name of such an empirical process goes back to [[18](#bib.bib18)], in which
+    $\mathbb{P}_{N}^{\pi}(Y)$ is used as an estimator for the population mean $P(Y)$.
+    The usual empirical measure and empirical process (i.e. with $\xi_{i}/\pi_{i}\equiv
+    1$ for all $i=1,\ldots,N$ ) will be denoted by $\mathbb{P}_{N},\mathbb{G}_{N}$
+    respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Assumption A. Consider the following conditions on the sampling design $\mathfrak{p}$
+    :'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (A1) $\min_{1\leq i\leq N}\pi_{i}\geq\pi_{0}>0$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: $(\mathrm{A}2-\mathrm{LLN})\frac{1}{N}\sum_{i=1}^{N}\left(\frac{\xi_{i}}{\pi_{i}}-1\right)=\mathfrak{o}_{\mathbf{P}}(1)$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (A2-CLT) $\frac{1}{\sqrt{N}}\sum_{i=1}^{N}\left(\frac{\xi_{i}}{\pi_{i}}-1\right)=\mathcal{O}_{\mathbf{P}}(1)$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, we present the key theorems [[14](#bib.bib14)], that are the ingredient
+    for NN survey theory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Theorem 3  (Glivenko-Cantelli Theorem).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: '[[14](#bib.bib14)]. Suppose that (A1) and (A2) $LLN$ hold. If $\mathcal{F}$
+    is $P$-Glivenko-Cantelli, then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\sup_{f\in\mathcal{F}}\left&#124;\left(\mathbb{P}_{N}^{\pi}-P\right)(f)\right&#124;=o_{P}(1).$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Theorem 4  (Donsker Theorem).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: '[[14](#bib.bib14)]. Suppose that (A1) and (A2-CLT) hold. Further assume that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (D1)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: $\mathbb{G}_{N}^{\pi}$ converges finite-dimensionally to a tight Gaussian process
+    $\mathbb{G}^{\pi}$.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: (D2)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: $\mathcal{F}$ is $P$-Donsker.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Then,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{G}_{N}^{\pi}\rightsquigarrow\mathbb{G}^{\pi}\text{ in }\ell^{\infty}(\mathcal{F}).$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Theorem 5.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Consider a neural network architecture that utilizes the ReLU activation function.
+    Let the loss function $\ell(\cdot,\cdot)$ be selected from among the weighted
+    cross-entropy functions, the pinball loss, or the mean square error function.
+    Under the stipulated assumptions A1-A3, which pertain to the sampling mechanism,
+    this architecture is guaranteed to produce consistent estimates of the model parameters.
+    Moreover, the parameters demonstrate asymptotic normality, a property attributed
+    to the invariance principle applied to the Donsker class associated with the empirical
+    process defined by the selected loss function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Proof.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: See Apppendix. ∎
+  prefs: []
+  type: TYPE_NORMAL
+- en: Theorem 6.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: For a confidence level $\alpha\in(0,1)$, the performance of the uncertainty
+    quantification algorithm may not fulfill non-asymptotic property requirements
+    for coverage $\mathbb{P}(Y_{n+1}\in\widehat{C}^{\alpha}(X_{n+1};\mathcal{D}_{n}))\geq
+    1-\alpha$. However, it achieves asymptotic consistency regarding both marginal
+    and conditional coverage. This implies that, as the sample size tends to infinity,
+    the algorithm’s coverage probability approaches the nominal level for any fixed
+    confidence level $\alpha\in(0,1)$,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\lim_{n\to\infty}\left&#124;(1-\alpha)-\mathbb{P}\left(Y_{n+1}\in\widehat{C}_{n}\left(X_{n+1},\mathcal{D}_{n}\right)\right)\right&#124;=0,\quad\text{in
+    probability}.$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Proof.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: See Apppendix. ∎
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Simulation study
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We conducted a simulation study employing a two-stage cluster sampling design
+    based on two diferent generative models for binary regression, where $Y\in\{0,1\}$.
+    In both examples, the predictor variable $X=(X_{1},\dots,X_{10})^{\top}\in\mathbb{R}^{10}\sim\mathcal{N}_{m}(\mu,\Sigma)$,
+    where $\mathcal{N}_{m}(\mu,\Sigma)$ denotes an $m$-multivariate Normal distribution
+    with mean $\mu$ and covariance matrix $\Sigma$. For simplicity, we set $\mu=(0)_{1\times
+    10}$ and $\Sigma=\mathcal{I}_{10\times 10}$, representing a 10-dimensional vector
+    with zeros in all entries and the identity matrix, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The conditional distribution function $Y|X\sim Ber(\pi(X))$ follows a Bernoulli
+    distribution, where the probability parameter $\pi(X)\in[0,1]$ is specified by
+    different functional forms. In this paper, we consider two distint generative
+    models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: a)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: $\pi(X)=\frac{1}{1+\exp(-3+\sum_{i=1}^{10}X_{i})}$
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: b)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: $\pi(X)=\frac{1}{1+\exp(-2+\sum_{i=1}^{3}X_{i}+\prod_{i=7}^{10}X_{i})}$
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The experimental design for the survey simulation incorporates assumptions about
+    the hierarchical structure of clusters. In the first-stage design, clusters represent
+    stages and regions, assuming independence of selection probabilities across stages
+    and regions. In the second stage, clusters represent cities, and again, we assume
+    independence of selection probabilities for each city.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, we assume a probability of selecting each state as $4/5$, and
+    within the i-th state, there exists a variable number $n_{i}$ of cities. Each
+    city within a state is selected with equal probability, specifically $1/n_{i}$.
+    The sampling mechanism and the derivation of patient probability of selection
+    $w_{r}$ are implemented using the survey package in R.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For each generative model (a) and (b), we replicate the experimental design
+    500 times, this is, $b=1,\dots,B=500$, with sample sizes varying across $N\in\{5000,10000,20000\}$.
+    The performance criteria include metrics such as i) AUC; ii) Accuracy; iii) Recall;
+    iv) Precision; v) F1 score; vi) Cross entropy. Results are presented as the $mean\pm
+    sd$ of the different simulations in Table [3](#S3.T3 "Table 3 ‣ 3 Simulation study
+    ‣ Deep Learning Framework with Uncertainty Quantification for Survey Data: Assessing
+    and Predicting Diabetes Mellitus Risk in the American Population"). The consistency
+    of results across a fixed sample size $N$ and different performance metrics is
+    observed. Generally, as the sample size $N$ increases, accuracy improves, and
+    errors decrease, leading to more stable results with reduced standard deviation.
+    Scenario (a) exhibits lower accuracy due to less separation between the two classes,
+    but despite utilizing a neural algorithm for modified survey design, estimators
+    are reliable and converge to true quantities as $N$ grows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Scenario a) | Scenario b) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $N=5000$ | $N=10000$ | $N=20000$ | $N=5000$ | $N=10000$ | $N=20000$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AUC | $0.932\pm 0.007$ | $0.9334\pm 0.0054$ | $0.93379\pm 0.0037$ | $0.9993\pm
+    0.0036$ | $0.999674\pm 0.0001$ | $0.9998\pm 0.000764$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Accuracy | $0.894\pm 0.0087$ | $0.898\pm 0.0055$ | $0.900\pm 0.003$ | $0.9762\pm
+    0.0068$ | $0.96227\pm 0.01137$ | $0.96963\pm 0.008$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Recall | $0.706\pm 0.034$ | $0.719\pm 0.023$ | $0.7725\pm 0.0163$ | $0.952\pm
+    0.0150$ | $0.96227\pm 0.11342$ | $0.96963\pm 0.008$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Precision | $0.875\pm 0.019$ | $0.877\pm 0.012$ | $0.878\pm 0.007$ | $0.976\pm
+    0.012$ | $0.9859\pm 0.0081$ | $0.991\pm 0.005$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| F1 Score | $0.773\pm 0.025$ | $0.783\pm 0.0015$ | $0.7881\pm 0.010$ | $0.962\pm
+    0.106$ | $0.972\pm 0.00771$ | $0.979\pm 0.0049$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-Entropy | $1.262\pm 0.0136$ | $1.200\pm 0.092$ | $1.174\pm 0.062$ |
+    $0.259\pm 0.082$ | $0.204\pm 0.612$ | $0.163\pm 0.043$ |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 3: Summary of Simulation Results across Scenarios (a) and (b) with Varied
+    Sample Sizes $N\in\{5000,10000,20000\}$. Mean and standard deviation are reported
+    for the following performance metrics: i) Area Under the Curve (AUC); ii) Accuracy;
+    iii) Recall; iv) Precision; v) F1 Score; vi) Cross Entropy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Uncertainity Quantification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In the context of conformal prediction for survey data, we leverage the generative
+    models from the simulation scenarios (a) and (b). However, our focus shifts to
+    evaluating model performance based on marginal coverage across different confidence
+    levels $\alpha=0.95,0.9,0.8$. Specifically, we assess the independent random sample
+    $\mathcal{D}_{\text{test}}$, comprising $N=5000$ data points, by quantifying the
+    probability metrics $\mathbb{P}(Y\in\widehat{C}^{\alpha}(X))$ across multiple
+    simulations $b=1,\dots,B$. The results of this simulation exercise for scenarios
+    (a) and (b) are depicted in Figures [2](#S3.F2 "Figure 2 ‣ 3.1 Uncertainity Quantification
+    ‣ 3 Simulation study ‣ Deep Learning Framework with Uncertainty Quantification
+    for Survey Data: Assessing and Predicting Diabetes Mellitus Risk in the American
+    Population") and [3](#S3.F3 "Figure 3 ‣ 3.1 Uncertainity Quantification ‣ 3 Simulation
+    study ‣ Deep Learning Framework with Uncertainty Quantification for Survey Data:
+    Assessing and Predicting Diabetes Mellitus Risk in the American Population"),
+    respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our findings affirm the non-asymptotic property of conformal prediction, demonstrating
+    that $\mathbb{P}(Y\in\widehat{C}^{\alpha}(X))\geq\alpha$. This observation aligns
+    with our experimental design, which conditions data as exchangeable across clusters.
+    Notably, the boxplots illustrate a convergence toward the nominal value as the
+    sample size $N$ increases. Furthermore, the variability in the boxplots diminishes,
+    indicating consistent and reliable model performance in these specific simulation
+    examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a00e72379b9583f50a7e09c83b9f1102.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Results of conformal simulation exercise for the generative model
+    a)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/021f3e2f0bfa71b178b50b505782ef85.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Results of conformal simulation exercise for the generative model
+    b)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 NHANES diabetes study case
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '4.1 Literature review: Predictive models for predictive diabetes risk models'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the pursuit of stratifying patients’ risk for diabetes, various diabetes
+    scores, such as the Finnish (FINDRISC) [[22](#bib.bib22)] and the German (GDRS)
+    [[27](#bib.bib27)], were developed over a decade ago. These scores leverage logistic
+    regression for predicting the probability of developing diabetes in ten years
+    or employ survival models like Cox regression to predict the time to diabetes
+    onset. They incorporate easily obtainable variables such as age, sex, anthropometric
+    measurements, lifestyle, family history, and medication.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recently, several machine-learning methods for predicting progression to
+    diabetes from a healthy or prediabetes state have been proposed, demonstrating
+    promising performance [[35](#bib.bib35), [7](#bib.bib7)]. However, these studies,
+    while including a large number of subjects, are based on observational data, and
+    subjects with only partially available data are often excluded. Hence, caution
+    is warranted when applying these results for decision-making.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our modeling strategy diverges from previous approaches as we aim to predict
+    whether patients have diabetes mellitus at a fixed point in time based on their
+    current characteristics. From a statistical standpoint, this approach offers advantages,
+    allowing for an increased number of cases and mitigating imbalance issues related
+    to prior approximations. Additionally, unlike previous models, we introduce a
+    survey sampling mechanism into the model, enabling us to derive reliable and generalizable
+    conclusions about predictions for the American population.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 NHANES 2011-2014 data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Our study draws upon data sourced from the National Health and Nutrition Examination
+    Survey (NHANES) waves 2011–2014 [[20](#bib.bib20)]. NHANES is a comprehensive
+    initiative aimed at furnishing a wide array of descriptive health and nutrition
+    statistics for the civilian non-institutionalized population of the United States.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The data collection process involves both an interview and an examination. The
+    interview captures person-level demographic, health, and nutrition information,
+    while the examination entails physical measurements, including blood pressure,
+    dental examinations, and the collection of blood and urine specimens for laboratory
+    testing. Our analysis encompasses a cohort of 5011 older adults, aged 10 to 80
+    years.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our investigation, we considered various factors such as age (treated as
+    both a categorical and continuous variable), race, gender, cancer or diabetes
+    diagnosis (categorical variables), blood pressure, combined grip strength measure,
+    body mass index (BMI), and biochemical biomarkers, including cholesterol and triglycerides
+    (treated as continuous variables).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The race variable was encoded as follows: 1=Mexican American; 2=Other Hispanic;
+    3=Non-Hispanic white; 4=Non-Hispanic black; 5=Non-Hispanic Asian; and 6=Other
+    Race, encompassing multi-racial categories. A comprehensive listing of the variables
+    employed in our models is provided in Table [4](#S4.T4 "Table 4 ‣ 4.2 NHANES 2011-2014
+    data ‣ 4 NHANES diabetes study case ‣ Deep Learning Framework with Uncertainty
+    Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk
+    in the American Population").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 4: Clinical Characteristics of Diabetes and Non-Diabetes Patients'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Variable | Diabetes (32%) | No Diabetes (68%) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Age | $54.1\pm 15.2$ | $44.8\pm 16.2$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Height | $88.3\pm 22.5$ | $80.8\pm 19.3$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Weight | $169.1\pm 10.1$ | $169.4\pm 9.6$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BMI | $30.8\pm 7.13$ | $28.08\pm 6.16$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Waist | $96.9\pm 14.9$ | $105.6\pm 16.8$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Diastolic Blood Pressure | $71.1\pm 12.2$ | $70.9\pm 11.2$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Systolic Blood Pressure | $126.0\pm 16.5$ | $119.2\pm 15.5$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Pulse | $73.7\pm 12.1$ | $71.5\pm 11.36$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cholesterol (mmol/L) | $5.0\pm 1.1$ | $4.98\pm 1.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Triglycerides (mmol/L) | $2.09\pm 1.7$ | $1.55\pm 1.06$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gender Male | $47\%$ | $50\%$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Glucose (mg/dL) | $123\pm 48$ | $89\pm 10$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Glycosylated Hemoglobin % | $6.22\pm 1.35$ | $5.33\pm 0.35$ |'
+  prefs: []
+  type: TYPE_TB
+- en: 4.3 Diabetes Definition
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In our analysis involving 5011 patients, each weighted with their respective
+    survey weights $w_{i}$ ($i=1,\dots,N=5011$), we define the diagnostic status of
+    diabetes as binary, denoting "1" for the presence of diabetes and "0" for the
+    absence of diabetes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The diagnostic criteria for Type 2 Diabetes, as specified by the American Diabetes
+    Association (ADA), are as follows [[2](#bib.bib2)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A fasting plasma glucose (FPG) level of 126 mg/dL (7.0 mmol/L) or higher, or
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A hemoglobin A1c (HbA1c) level of 6.5% (48 mmol/mol) or higher.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Previously diagnosed with diabetes by a medical professional.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Utilizing this definition and the corresponding labeled outcomes, we employed
+    a diverse set of models with varying levels of complexity in terms of econoic
+    cost and laboratory testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.4 Model performance results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In our study, we meticulously evaluated seven predictive models for diabetes,
+    focusing on a detailed comparison of their performance based on key metrics such
+    as the area under the curve (AUC), accuracy, recall, precision, F1 score, and
+    cross-entropy. We also considered the cost implications of deploying each model.
+    The initial models, especially Models 1 to 4, gradually incorporated more clinical
+    variables, starting from basic demographic information and extending to include
+    physiological and metabolic markers like cholesterol and triglycerides. Model
+    4, which introduced metabolic markers into its variable set, demonstrated a significant
+    boost in performance with an AUC of 0.74 and an accuracy of 67%. This improvement
+    underscored the value of including metabolic indicators in enhancing the model’s
+    diagnostic capabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diving deeper into the specifics, Model 5 represented a substantial advancement
+    in predictive accuracy, achieving an AUC of 0.832 and an accuracy rate of 73.9%,
+    with precision standing at 77.4%. This model was notably enhanced by the inclusion
+    of glycosylated hemoglobin, a critical marker for diabetes, highlighting the strategic
+    importance of selecting relevant clinical variables to improve model efficacy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model 7, our most advanced configuration, showcased the highest performance
+    levels across all evaluated metrics, with an impressive AUC of 0.92, accuracy
+    of 81%, and precision of 78.6%. The success of Model 7 can be attributed to its
+    comprehensive integration of a wide range of clinical variables, meticulously
+    chosen to capture the complex nature of diabetes. The analysis of costs associated
+    with each model revealed a clear link between a model’s complexity and its operational
+    costs, with Model 7 standing out for its precision despite being the most costly
+    option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our investigation highlights the critical role of variable selection in enhancing
+    the predictive power of models for diabetes. The notable improvements in model
+    performance from Models 1 through 7, particularly with the inclusion of a broader
+    set of clinical variables in the more advanced models, advocate for a deliberate
+    and informed approach to selecting variables. Such a strategy not only maximizes
+    the accuracy of predictions but also underscores the need to balance the enhanced
+    predictive capabilities against the practical considerations of cost and implementation
+    in a clinical setting. The outcomes of this study encourage a thoughtful approach
+    to developing predictive models for diabetes, prioritizing the careful selection
+    of variables to achieve the best balance between accuracy, cost-effectiveness,
+    and clinical utility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Variable | Model 1 | Model 2 | Model 3 | Model 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 1 | Age | Height | Age | Age |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 2 | Gender | Weight | Height | Height |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 3 |  | BMI | Weight | Weight |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 4 |  | Waist | BMI | BMI |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 5 |  | Diastolic Blood Pressure | Waist | Waist |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 6 |  | Systolic Blood Pressure | Diastolic Blood Pressure | Diastolic
+    Blood Pressure |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 7 |  | Pulse | Systolic Blood Pressure | Systolic Blood Pressure
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 8 |  |  | Pulse | Pulse |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 9 |  |  | Gender | Cholesterol |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 10 |  |  |  | Triglycerides |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 11 |  |  |  | Gender |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cost Model | 0 | 0 | 0 | 0.5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AUC | 0.66 | 0.68 | 0.72 | 0.74 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Accuracy | 0.595 | 0.63 | 0.6 | 0.67 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Recall | 0.08 | 0.35 | 0.51 | 0.52 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Precision | 0.334 | 0.60 | 0.60 | 0.62 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| F1 Score | 0.123 | 0.43 | 0.54 | 0.56 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-Entropy | 6.144 | 4.32 | 3.28 | 3.15 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Table | [2981, 97, 1600, 122] | [2638, 440, 1137, 585] | [2486, 592, 940,
+    782] | [2523, 555, 900, 822] |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 5: Performance Metrics and Model Comparison for Models 1 to 4\. The table
+    includes various clinical variables, metrics such as AUC, accuracy, recall, precision,
+    F1 score, the cost model, cross-entropy, and the confusion matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Variable | Model 5 | Model 6 | Model 7 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 1 | Age | Age | Age |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 2 | Height | Height | Height |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 3 | Weight | Weight | Weight |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 4 | BMI | BMI | BMI |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 5 | Waist | Waist | Waist |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 6 | Diastolic Blood Pressure | Diastolic Blood Pressure | Diastolic
+    Blood Pressure |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 7 | Systolic Blood Pressure | Systolic Blood Pressure | Systolic
+    Blood Pressure |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 8 | Pulse | Pulse | Pulse |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 9 | Cholesterol | Cholesterol | Cholesterol |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 10 | Triglycerides | Triglycerides | Triglycerides |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 11 | Gender | Gender | Gender |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 12 | Glycosylated Hemoglobin | Glucose | Glucose |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Variable 13 |  |  | Hemoglobin Glycosylated |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cost Model | 4.5 | 2.1 | 6.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AUC | 0.832 | 0.84 | 0.92 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Accuracy | 0.739 | 0.766 | 0.81 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Recall | 0.526 | 0.612 | 0.739 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Precision | 0.774 | 0.777 | 0.786 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| F1 Score | 0.613 | 0.675 | 0.761 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cross-Entropy | 3.15 | 2.6 | 1.64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Table | [2809, 269, 838, 884] | [2784, 294, 810, 912] | [2732, 346, 492,
+    1230] |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 6: Performance Metrics and Model Comparison for Models 5 to 7\. The table
+    continues with various clinical variables, metrics such as AUC, accuracy, recall,
+    precision, F1 score, the cost model, cross-entropy, and the confusion matrix.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.5 Uncertainity quantification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Now, we focus on applying the new uncertainty quantification algorithm proposed
+    in Algorithm [2.3.3](#S2.SS3.SSS3 "2.3.3 Conformal Prediction, Concept Drift,
+    and Survey Data algorithm ‣ 2.3 Uncertainity quantification for suvey data based
+    on conformal prediction ‣ 2 Methodology ‣ Deep Learning Framework with Uncertainty
+    Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk
+    in the American Population") based on conformal inference. To understand how uncertainty
+    evolves according to patient characteristics, we estimate for each patient in
+    the dataset the score function $\widehat{s}(X_{1},1)$ for a diabetes class, ’1’.
+    This is done with an additive generative model using fasting plasma glucose (FPG),
+    heart rate, and age as predictors (see Figure [4](#S4.F4 "Figure 4 ‣ 4.5 Uncertainity
+    quantification ‣ 4 NHANES diabetes study case ‣ Deep Learning Framework with Uncertainty
+    Quantification for Survey Data: Assessing and Predicting Diabetes Mellitus Risk
+    in the American Population")). Particularly, the maximum uncertainty is observed
+    in patients over 60 years old, with a higher heart rate, and when glucose levels
+    are in the prediabetic range, $100<\text{glucose}<125\text{mg/dL}$. For patients
+    older than 60 years, uncertainty decreases, as it does for normoglycemic patients
+    or those with a clear diabetic pattern according to FPG values. Overall, young
+    individuals with a low heart rate and low fasting glucose levels are the patients
+    for whom the model’s discrimination capacity is higher, based on young healthy
+    individuals. In the case of prediabetic individuals, particularly elderly ones
+    with a higher heart rate, uncertainty increases significantly, and more routine
+    medical testing is advisable.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/db52c7139843d0a9dfacfeda87453f72.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Covariate effect to predict the score function estimated with a new
+    conformal survey prediction algorithm'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The present article introduces a new predictive framework based on neural network
+    models that incorporate automatic uncertainty quantification for predictive output
+    steps across different complex sample designs, such as stratified designs, Bernoulli
+    sampling, and maximum entropy sampling. Utilizing the theory of empirical processes,
+    we have established the asymptotic theory, ensuring the universal consistency
+    of the regression function as well as the asymptotic normality of the neural network
+    parameters. For the uncertainty algorithm under certain exchangeability conditions,
+    we establish non-asymptotic guarantees, while the consistency of predictive regions
+    is assured through the universal consistency of all regression functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Through various simulation scenarios in classification settings, we demonstrate
+    the effective behavior of these methods for finite sample sizes and their consistency
+    properties for pointwise estimation and uncertainty quantification of prediction
+    outputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In specific clinical applications aimed at predicting the risk of diabetes mellitus
+    using data from NHANES 2011-2014, we explored models of varying complexity and
+    economic costs. From a public health perspective, the results are significant
+    as they enable the quantification of diabetes risk with models of different complexity
+    and healthcare resources, offering varying efficacy. Despite their simplicity,
+    some models remain effective in different patient subgroups, aiding in the screening
+    of diabetes risk. The uncertainty quantification analysis reveals that age, elevated
+    heart rate, and baseline glucose values in the prediabetes range increase the
+    uncertainty of model predictions. In terms of overall prediction capacity, even
+    when using main diagnostic criteria, classic classification performance may not
+    be achieved due to patients who may have normal glucose values but were previously
+    diagnosed with diabetes. In a model not measuring lab variables, the overall AUC
+    is 0.74, comparable to traditional diabetes scores, but considering anthropometric
+    and heart variables in conjunction with basic patient characteristics. Recently,
+    a commentary in a paper published in Nature Digital Medicine journal [[26](#bib.bib26)]
+    emphasized the inconsistency of diabetes score results due to the observational
+    nature of the cohorts and limited experimental design, a reason we highlighted
+    in the introduction regarding the reproducibility crisis. Our models offer population
+    reproducibility. Future data analysis steps include creating phenotypes of patients
+    in terms of uncertainty or analyzing with interpretable clinical rules subphenotypes
+    of patients where the model’s discriminative capacity is high, for example, AUC-dependent
+    ROC analysis. For patients with large uncertainty or low prediction capacity,
+    this can be crucial in establishing personalized follow-ups, finding alternative
+    measurement strategies, or incorporating longitudinal information into the models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From a methodological standpoint, despite the extensive literature on classical
+    regression models for surveys, the application of machine learning is rare. Here,
+    we propose the first general methodology based on neural networks that also introduces
+    metrics to quantify uncertainty and provide quantile predictions. The codes and
+    analyses are available on GitHub, encouraging the adoption of models that can
+    enhance outcomes in precision public health and traditional epidemiology through
+    surveys. For instance, over 50,000 new clinical studies are documented in NHANES,
+    underscoring the need to equip practitioners with reliable data analysis tools
+    for deriving generalizable conclusions in their studies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For future work, we suggest expanding the methods used here, such as their application
+    to time-to-event analysis or the development of specific techniques to handle
+    covariate functions, or creating new diagnostic tests with conditional ROC curve
+    analysis [[19](#bib.bib19)] to assess prediction capabilities in survey cohorts
+    like NHANES.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In summary, our work provides a robust and well-established predictive framework
+    based on neural networks for survey designs, offering accessible methods publicly
+    available on GitHub. These can be invaluable to the scientific community for analyzing
+    their data directly and addressing specific scientific modeling questions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Gary An. The crisis of reproducibility, the denominator problem and the
+    scientific role of multi-scale modeling. Bulletin of mathematical biology, 80(12):3071–3080,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] American Diabetes Association. 2\. classification and diagnosis of diabetes:
+    standards of medical care in diabetes‚Äî2020. Diabetes care, 43(Supplement_1):S14–S31,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Christopher RS Banerji, Tapabrata Chakraborti, Chris Harbron, and Ben D
+    MacArthur. Clinical ai tools must convey predictive uncertainty for each individual
+    patient. Nature medicine, 29(12):2996–2998, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Rina Foygel Barber, Emmanuel J Candes, Aaditya Ramdas, and Ryan J Tibshirani.
+    Conformal prediction beyond exchangeability. arXiv preprint arXiv:2202.13415,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] C Glenn Begley and John PA Ioannidis. Reproducibility in science: improving
+    the standard for basic and preclinical research. Circulation research, 116(1):116–126,
+    2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Valerie Bradley and Thomas E Nichols. Addressing selection bias in the
+    uk biobank neurological imaging cohort. MedRxiv, pages 2022–01, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Avivit Cahn, Avi Shoshan, Tal Sagiv, Rachel Yesharim, Ran Goshen, Shalev
+    Varda, and Itamar Raz. Prediction of progression from pre-diabetes to diabetes:
+    Development and validation of a machine learning model. Diabetes metabolism. Research
+    and Reviews, 36(2):e3252, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Maxime Cauchois, Suyash Gupta, and John C Duchi. Knowing what you know:
+    valid and validated confidence sets in multiclass and multilabel prediction. J.
+    Mach. Learn. Res., 22:81–1, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Prevention CDC. National diabetes statistics report: estimates of diabetes
+    and its burden in the united states, 2020. Atlanta, GA: US Deportment of Health
+    and Human Services, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Björn Dahlöf. Cardiovascular disease risk factors: epidemiology and risk
+    assessment. The American journal of cardiology, 105(1):3A–9A, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Jianqing Fan, Cong Ma, and Yiqiao Zhong. A selective overview of deep
+    learning. Statistical science: a review journal of the Institute of Mathematical
+    Statistics, 36(2):264, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] Raphael A Fraser, Stuart R Lipsitz, Debajyoti Sinha, and Garrett M Fitzmaurice.
+    A note on median regression for complex surveys. Biostatistics, 23(4):1074–1082,
+    10 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Ziad Akram Ali Hammouri, Pablo Rodríguez Mier, Paulo Félix, Mohammad Ali
+    Mansournia, Fernando Huelin, Martí Casals, and Marcos Matabuena. Uncertainty quantification
+    in medicine science: The next big step. Archivos de bronconeumologia, 59(11):760–761,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Qiyang Han and Jon A. Wellner. Complex sampling designs: Uniform limit
+    theorems and applications. The Annals of Statistics, 49(1):459 – 485, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Torsten Harms and Pierre Duchesne. On kernel nonparametric regression
+    designed for complex survey data. Metrika, 72:111–138, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Geronimo Heilmann, Sandra Trenkamp, Clara Möser, Maria Bombrich, Martin
+    Schön, Iryna Yurchenko, Klaus Strassburger, Marcos Matabuena Rodríguez, Oana-Patricia
+    Zaharia, Volker Burkart, et al. Precise glucose measurement in sodium fluoride-citrate
+    plasma affects estimates of prevalence in diabetes and prediabetes. Clinical Chemistry
+    and Laboratory Medicine (CCLM), (0), 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Klaus Hoeyer. Data as promise: Reconfiguring danish public health through
+    personalized medicine. Social studies of science, 49(4):531–555, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Daniel G Horvitz and Donovan J Thompson. A generalization of sampling
+    without replacement from a finite universe. Journal of the American statistical
+    Association, 47(260):663–685, 1952.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Holly Janes and Margaret S Pepe. Adjusting for covariate effects on classification
+    accuracy using the covariate-adjusted roc curve. 2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Clifford Leroy Johnson, Sylvia M Dohrmann, Vicki L Burt, and Leyla Kheradmand
+    Mohadjer. National health and nutrition examination survey: sample design, 2011-2014.
+    Number 2014\. US Department of Health and Human Services, Centers for Disease
+    Control and ‚Ä¶, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Thomas Lumley and Alastair Scott. Fitting regression models to survey
+    data. Statistical Science, pages 265–278, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] K Makrilakis, S Liatis, S Grammatikou, D Perrea, C Stathi, P Tsiligros,
+    and N Katsilambros. Validation of the finnish diabetes risk score (findrisc) questionnaire
+    for screening for undiagnosed type 2 diabetes, dysglycaemia and the metabolic
+    syndrome in greece. Diabetes & metabolism, 37(2):144–151, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Laurie T Martin, Teague Ruder, José J Escarce, Bonnie Ghosh-Dastidar,
+    Daniel Sherman, Marc Elliott, Chloe E Bird, Allen Fremont, Charles Gasper, Arthur
+    Culbert, et al. Developing predictive models of health literacy. Journal of general
+    internal medicine, 24:1211–1216, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Marcos Matabuena, Paulo Félix, Ziad Akram Ali Hammouri, Jorge Mota, and
+    Borja del Pozo Cruz. Physical activity phenotypes and mortality in older adults:
+    a novel distributional data analysis of accelerometry in the nhanes. Aging Clinical
+    and Experimental Research, 34(12):3107–3114, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Marcos Matabuena and Alexander Petersen. Distributional data analysis
+    of accelerometer data from the nhanes database using nonparametric survey regression
+    models. Journal of the Royal Statistical Society Series C: Applied Statistics,
+    72(2):294–313, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Farida Mohsen, Hamada RH Al-Absi, Noha A Yousri, Nady El Hajj, and Zubair
+    Shah. A scoping review of artificial intelligence-based methods for diabetes risk
+    prediction. npj Digital Medicine, 6(1):197, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Kristin Mühlenbruch, Rebecca Paprott, Hans-Georg Joost, Heiner Boeing,
+    Christin Heidemann, and Matthias B Schulze. Derivation and external validation
+    of a clinical version of the german diabetes risk score (gdrs) including measures
+    of hba1c. BMJ Open Diabetes Research and Care, 6(1):e000524, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Marcus R Munafò, Chris Chambers, Alexandra Collins, Laura Fortunato, and
+    Malcolm Macleod. The reproducibility debate is an opportunity, not a crisis. BMC
+    Research Notes, 15(1):43, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Emily D Parker, Janice Lin, Troy Mahoney, Nwanneamaka Ume, Grace Yang,
+    Robert A Gabbay, Nuha A ElSayed, and Raveendhara R Bannuru. Economic costs of
+    diabetes in the us in 2022. Diabetes Care, 47(1):26–43, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] David S Robertson, Kim May Lee, Boryana C López-Kolkovska, and Sofía S
+    Villar. Response-adaptive randomization in clinical trials: from myths to practical
+    considerations. Statistical science: a review journal of the Institute of Mathematical
+    Statistics, 38(2):185, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] James M Swanson. The uk biobank and selection bias. The Lancet, 380(9837):110,
+    2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Clare Turnbull, Helen V Firth, Andrew OM Wilkie, William Newman, F Lucy
+    Raymond, Ian Tomlinson, Robin Lachmann, Caroline F Wright, Sarah Wordsworth, Angela
+    George, et al. Population screening requires robust evidence‚Äîgenomics is no
+    exception. The Lancet, 403(10426):583–586, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Vladimir Vovk, Alexander Gammerman, and Glenn Shafer. Algorithmic learning
+    in a random world, volume 29. Springer, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Timothy L Wiemken and Robert R Kelley. Machine learning in epidemiology
+    and health outcomes research. Annu Rev Public Health, 41(1):21–36, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Yang Wu, Haofei Hu, Jinlin Cai, Runtian Chen, Xin Zuo, Heng Cheng, and
+    Dewen Yan. Machine learning for predicting the 3-year risk of incident diabetes
+    in chinese adults. Frontiers in Public Health, 9, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Frank Yates. Sir ronald fisher and the design of experiments. Biometrics,
+    20(2):307–321, 1964.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

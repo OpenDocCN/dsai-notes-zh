@@ -1,0 +1,1346 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:49:37'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2111.14247] A Survey of Large-Scale Deep Learning Serving System Optimization:
+    Challenges and Opportunities'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2111.14247](https://ar5iv.labs.arxiv.org/html/2111.14247)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'A Survey of Large-Scale Deep Learning Serving System Optimization: Challenges
+    and Opportunities'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Fuxun Yu^†, Di Wang^‡, Longfei Shangguan^‡, Minjia Zhang^‡, Xulong Tang^∗, Chenchen
+    Liu^§, Xiang Chen^† ^†George Mason University, ^†Microsoft, ^†University of Pittsburgh,
+    ^§University of Maryland, Baltimore County
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Deep Learning (DL) models have achieved superior performance in many application
+    domains, including vision, language, medical, commercial ads, entertainment, etc.
+    With the fast development, both DL applications and the underlying serving hardware
+    have demonstrated strong scaling trends, i.e., Model Scaling and Compute Scaling,
+    for example, the recent pre-trained model with hundreds of billions of parameters
+    with $\sim$TB level memory consumption, as well as the newest GPU accelerators
+    providing hundreds of TFLOPS. With both scaling trends, new problems and challenges
+    emerge in DL inference serving systems, which gradually trends towards Large-scale
+    Deep learning Serving system (LDS). This survey aims to summarize and categorize
+    the emerging challenges and optimization opportunities for large-scale deep learning
+    serving systems. By providing a novel taxonomy, summarizing the computing paradigms,
+    and elaborating the recent technique advances, we hope that this survey could
+    shed lights on new optimization perspectives and motivate novel works in large-scale
+    deep learning system optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Computing Methodologies, Artificial Intelligence, Hardware Description Languages
+    and Compilation, Computer Systems Organization, Parallel Architectures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deep Learning (DL) models, such as CNNs [[16](#bib.bib16), [37](#bib.bib37),
+    [46](#bib.bib46)], transformers [[11](#bib.bib11), [8](#bib.bib8), [3](#bib.bib3),
+    [30](#bib.bib30)] and recommendation models [[32](#bib.bib32), [42](#bib.bib42)]
+    have achieved superior performance in many cognitive tasks like vision, speech
+    and language applications, which poses potentials in numerous areas like medical
+    image analysis [[39](#bib.bib39)], photo styling [[35](#bib.bib35)], machine translation [[41](#bib.bib41)],
+    product recommendation [[32](#bib.bib32)], customized advertising [[14](#bib.bib14)],
+    game playing [[22](#bib.bib22)], *etc.* Such widespread DL applications bring
+    great market values and lead to significant DL serving traffics. For example,
+    FB has 1.82 billions of daily active users [[12](#bib.bib12)]. The number of advertising
+    recommendation queries can reach 10M queries per second. The huge growth in consumer-generated
+    data and use of DL services have also propelled the demand for AI-centric data
+    centers (such as Amazon AWS [[28](#bib.bib28)] and Microsoft Azure [[7](#bib.bib7)])
+    and the increased adoption of powerful DL accelerators like GPUs. According to
+    the report [[36](#bib.bib36)], GPU has accounted for the major share of 85% with
+    2983M USD in the global data center accelerator market in 2018\. And this product
+    segment is poised to reach 29819M USD by 2025 [[36](#bib.bib36)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With the ever increasing market demands, DL applications and the underlying
+    serving hardware have demonstrate strong scaling trends in terms of Computing
+    Scaling (*e.g.*, increased computing parallelism, memory and storage to serve
+    larger models) and Model Scaling (*e.g.*, higher structure complexity, computing
+    workload, parameter size for better accuracy), which greatly complicates the serving
+    system management and optimization. On the one hand, as shown in Figure [1](#S1.F1
+    "Figure 1 ‣ 1 Introduction ‣ A Survey of Large-Scale Deep Learning Serving System
+    Optimization: Challenges and Opportunities") (a), with the Computing Scaling trend,
+    GPU with massive computing parallelism has become one of the major types of DL
+    computing accelerators in recent data centers and maintains continuously exponential
+    performance scaling. Recent GPUs such as NVIDIA Tesla V100 offer 130 Tera floating
+    point operations per second (TFLOPS), and 900 GB/s memory bandwidth, and these
+    numbers further increase to 312 TFLOPS and 1.6TB/s memory bandwidth, which can
+    serve tens of DL models such as ResNet50 [[16](#bib.bib16)] simultaneously and
+    provide higher efficiency (Perf/Watt). On the other hand, as shown in Figure [1](#S1.F1
+    "Figure 1 ‣ 1 Introduction ‣ A Survey of Large-Scale Deep Learning Serving System
+    Optimization: Challenges and Opportunities") (b), Model Scaling has been show
+    to be one of the most important factor in achieving better accuracy, the effectiveness
+    of which is consistently shown in practice by industrial ultra-large models in
+    all domains, such as vision model BiT [[23](#bib.bib23)], NLP model BERT [[8](#bib.bib8)],
+    GPT3 [[3](#bib.bib3)] and deep learning recommendation model DLRM [[32](#bib.bib32)].
+    For example, recent ultra-large model MT-NLG [[30](#bib.bib30)] has achieved 530
+    billions of parameters. Industrial-level commercial DLRMs [[32](#bib.bib32)] have
+    reached $\sim$TB model size, which significantly surpass single-machine memory
+    capability and require multiple devices for collaborative computing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/74bc2ce7e62a55f27773df38c8749790.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Deep Learning Model Scaling and Computing Scaling [[45](#bib.bib45)].
+    Such exponential scaling trends on both sides leads to Large-scale DL Systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Within such contexts, we observe the current DL system community still lacks
+    enough awareness and attention to such Large-scale Deep Learning Systems (LDS),
+    overlooking the emerged challenges and opportunities: Traditional DL system optimization
+    usually focuses on the single-model single-machine inference setting (i.e., one-to-one
+    mapping). However, LDS with bigger DL models and more powerful hardwares enable
+    more flexible inference computing, bringing the many-instance to one-device, one-instance
+    to many-device, and even many-instance to many-device mapping into practice. For
+    example, computing scaling (such as GPUs, TPUs) motivates many research works
+    into multi-model inference on one single device, *e.g.*, splitting one GPU into
+    multiple containerized vGPUs or Multi-Instance GPUs (MIG) for better hardware
+    utilization, higher serving throughput and cost efficiency. Considering practical
+    cost management (*e.g.*, total cost of ownership, TCO), data centers serving massive
+    inference queries also tend to migrate to multi-tenant inference serving, *e.g.*,
+    co-locating multiple inference queries on the same device, which incurs new optimization
+    objectives (*e.g.*, total served queries per second, QPS) and constraints (*e.g.*,
+    service-level agreement, SLA) from traditional single-tenant inference. Similarly,
+    the model scaling also poses requests for new one-to-many inference scenarios.
+    The recent ultra-large model (*e.g.*, DLRMs) incurs huge memory cost ($\sim$TB
+    without quantization) during inference, which requires new collaborative computing
+    paradigms such as heterogeneous computing or distributed inference. Such collaboratively
+    serving involves remote process calls (RPCs) and low-bandwidth communications,
+    which brings dramatically different bottlenecks from traditional single-device
+    inference. With all above scenarios involved, modern data centers face more sophisticated
+    many-to-many scenarios and require dedicated inference query scheduling, such
+    as service router and compute device management, for better serving performance
+    like latency, throughput and cost, *etc.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this work, we propose a a novel computing paradigm taxonomy for ongoing LDS
+    works, summarize the new optimization objectives, elaborate new technical design
+    perspectives, and provide the insights for future LDS optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Multi-to-Multi Computing Paradigm Characterized by the relations between DNN
+    Instances (I) and Compute Devices (D), emerging LDS computing paradigms can be
+    taxonomized into three new categories beyond Single Instance Single Device (SISD),
+    that is, Multi Instance Single Device (MISD), Single Instance Multi Device (SIMD)
+    and Multi Instance Multi Devices (MIMD), as shown in Figure [2](#S2.F2 "Figure
+    2 ‣ 2 Large-Scale DL Serving System: A Novel Taxonomy ‣ A Survey of Large-Scale
+    Deep Learning Serving System Optimization: Challenges and Opportunities").'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Inference Serving Oriented Objectives Different from SISD that focuses on single-model
+    performance, LDS works have different optimization goals, including inference
+    latency, serving throughput, costs, scalability, quality of service, *etc.* For
+    example, multi-tenant inference (MISD) targets at improving the serving throughput
+    and power efficiency, while super-scale model inference serving aims to enhance
+    hardware scalability with low costs.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: At-Scale Design and Technologies Due to the scale of inference serving, LDS
+    works have also demonstrated many optimization challenges and opportunities within
+    algorithm innovation, runtime scheduling and resource management. For example,
+    multi-tenant inference optimization seeks for fine-grained hardware resource partitioning
+    and job scheduling, *e.g.*, spatial/temporal sharing to provide QoS assurance.
+    Distributed inference with slow communication bottlenecks requires dedicated model-hardware
+    co-optimization, *e.g.*, efficient model sharding and balanced collaboration,
+    *etc.*
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'By summarizing the existing works, we aim to provide a comprehensive survey
+    on emerging challenges, opportunities, and innovations, and thus motivates new
+    innovations in LDS operation and optimization. The rest of the survey is organized
+    as follows: Section §[2](#S2 "2 Large-Scale DL Serving System: A Novel Taxonomy
+    ‣ A Survey of Large-Scale Deep Learning Serving System Optimization: Challenges
+    and Opportunities") presents the research preliminaries including our taxonomy
+    for LDS and indicate the scope of this survey. Section §[3](#S3 "3 Computing Scaling:
+    Trending to Multi-Instance Single-Device (MISD) ‣ A Survey of Large-Scale Deep
+    Learning Serving System Optimization: Challenges and Opportunities") summarizes
+    the challenges and recent works in multi-instance single-device (MISD) optimization;
+    Section §[4](#S4 "4 Model Scaling: Trending to Single Instance Multi Device (SIMD)
+    ‣ A Survey of Large-Scale Deep Learning Serving System Optimization: Challenges
+    and Opportunities") summarizes the research works in single-instance multi-device
+    (SIMD) optimization; Section §[5](#S5 "5 Conclusion ‣ A Survey of Large-Scale
+    Deep Learning Serving System Optimization: Challenges and Opportunities") concludes
+    this work.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2 Large-Scale DL Serving System:'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A Novel Taxonomy
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0a40d256889eb9b078c4715e49623457.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: A Taxonomy of Deep Learning System from the relationship between
+    DNN Instance (I) and Compute Device (D): Single-Instance Single-Device, SISD,
+    Single-Instance Multi-Device, SIMD, Multi-Instance Single-Device, MISD and Multi-Instance
+    Multi-Device, MIMD.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Taxonomy Overview We first give an high-level overview of LDS optimization
+    taxonomy. Specifically, we use a taxonomy shown in Figure [2](#S2.F2 "Figure 2
+    ‣ 2 Large-Scale DL Serving System: A Novel Taxonomy ‣ A Survey of Large-Scale
+    Deep Learning Serving System Optimization: Challenges and Opportunities") to demonstrate
+    such differences between traditional DL system optimizations and new emerging
+    challenges in LDS. We use Instance (I) to denote one DNN model and Device (D)
+    to denote the underlying serving compute hardware. Traditional DL system optimizations,
+    though incorporating a thorough full stack (*e.g.*, with model-, graph-, runtime-
+    and kernel-optimization levels), usually comes within the Single Instance Single
+    Device (SISD) assumption. Therefore, most existing works only constitute the top-left
+    quarter in the full-spectrum of DLS, neglecting the Single Instance Multiple Devices
+    (SIMD), Multiple Instances Single Device (MISD), and even Multiple Instances Multiple
+    Devices (MIMD) optimizations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\bullet$ Single Instance Single Device (SISD) SISD optimization improves one
+    model’s end-to-end performance (such as latency) on the targeted hardware device,
+    such as CPU, GPU, FPGA, *etc.* Conventional SISD optimizations have studied the
+    full stacks thoroughly, including the algorithm-level NN design [[38](#bib.bib38),
+    [55](#bib.bib55), [17](#bib.bib17)], pruning and NAS works [[47](#bib.bib47),
+    [25](#bib.bib25), [24](#bib.bib24)], as well as the compiler-level optimization
+    works [[4](#bib.bib4), [21](#bib.bib21), [13](#bib.bib13)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previous DL optimization is dominant by SISD works. For example, the popular
+    DL compiler frameworks (*e.g.*, TVM [[4](#bib.bib4)], Ansor [[57](#bib.bib57)],
+    TASO [[21](#bib.bib21)], *etc.*) tune the low-level computing primitives to yield
+    high-performance kernels for the given underlying hardware. However, with the
+    fast evolving of DL models and AI hardwares, more applications and potentials
+    come up in terms of MISD and SIMD optimization domains. Although demonstrating
+    optimal performance for SISD serving, these techniques are usually ill-suited
+    for new scenarios multiple device co-serving one model (SIMD) or multi-model co-running
+    on one device (MISD), which have distinct LDS-incurred computing challenges and
+    opportunities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\bullet$ Multi Instance Single Device (MISD) MISD optimization targets at improving
+    the serving throughput (such as serving query per second, QPS) by co-locating
+    multiple DNN instances on one high-performance hardware (i.e., multi-tenant inference).
+    The MISD optimization is raised mainly due to the compute scaling, i.e., the tremendous
+    computing performance of recent GPUs (like V100/A100s with $\sim$130TFLOPs/s)
+    overwhelms the general DNNs’ inference requirement (*e.g.*, ResNet50 with $\sim$4GFLOPS).
+    Therefore, due to the practical cost consideration (*e.g.*, cost of hardware,
+    power consumption), data center-level serving also tends to adopt such a multi-tenant
+    serving paradigm to effectively reduce the total cost of ownership (TCO).
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\bullet$ Single Instance Multi Device (SIMD) SIMD optimization, to the contrary
+    of MISD, is mainly raised by the model scaling trend. The ultra-scale model size,
+    especially in language [[8](#bib.bib8), [3](#bib.bib3)] and recommendation [[32](#bib.bib32)]
+    domains, has shown to be an important factor in improving the model accuracy.
+    As a result, recent state-of-the-art industrial models have achieved the volume
+    of hundreds of billions parameters [[30](#bib.bib30)] and the model inference
+    can take $\sim$TB space in host memory [[32](#bib.bib32)], which is nearly impossible
+    to be served on a single host. In such scenario, distributed inference by multiple
+    devices becomes the only solution for such ultra-large model inference [[27](#bib.bib27)].
+    Nevertheless, as slow inter-device communication channels are involved (*e.g.*,
+    remote process calls, RPCs), distributed inference requires both algorithm and
+    scheduling innovations to achieve inference efficiency. For example, we need to
+    consider both efficient model sharding in the algorithm side such as model/pipeline
+    parallelism [[44](#bib.bib44), [18](#bib.bib18)]¹¹1Although such model/pipeline
+    parallelism is mostly used for large model training, recent ultra-large model
+    inference also requires such model sharding techniques so as to run on several
+    devices. and the inter-node co-scheduling in the scheduling side.
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\bullet$ Multi Instance Multi Device (MIMD) Towards even complexer scenarios,
+    Multi-Instance Multi-Device (MIMD) optimizations consider how to route various
+    model inference requests to different devices (*e.g.*, service routers) and manage
+    compute device utilization. Such optimization mainly lie in data center-level
+    management for optimal infrastructure utilization and cost. Currently, public
+    available works [[49](#bib.bib49), [19](#bib.bib19), [52](#bib.bib52)] mainly
+    target at optimizing training jobs consuming more resources (*e.g.*, 4/8-GPU machines,
+    taking hours to days). There are still limited public works targeting at inference
+    MIMD optimizations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6a8a7ba7732bc76c3e4cbaf55163ec21.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Multi-tenant inference latency and throughput comparison. (a) Although
+    co-locating multiple DNNs degrades the latency by 5%-10%, the overall throughput
+    can be improved 25%+ on average [[6](#bib.bib6)]. (b) Among 250 model co-location
+    combination experiments, *e.g.*, up to 90-percent of bi-model execution shows
+    less than 17% latency degradation [[5](#bib.bib5)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '3 Computing Scaling: Trending to'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Multi-Instance Single-Device (MISD)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Overview
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With the compute scaling, the capacity of recent hardwares has achieved exponential
+    growing for deep learning. Especially for GPUs, recent GPUs have demonstrated
+    overwhelming capacities (*e.g.*, $\sim$130 TFLOPs/s for A100) compared to common
+    model inference workload (*e.g.*, ResNet50 with $\sim$4 GFLOPs). As executing
+    single DNN instance on such hardwares can incur severe resource under-utilization,
+    multi-instance single-device (MISD) computing paradigm, or multi-tenant inference,
+    co-locates multiple DNN instances onto the same hardware device to improve the
+    hardware utilization as well as the serving throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Enhancing Serving Throughput One of the major goal of MISD is to achiever higher
+    serving throughput, which is usually measured by the served queries per second
+    (QPS). By improving the resource utilization (*e.g.*, computing units, memory
+    bandwidth), MISD could increase the serving throughput on the same hardware. Figure [3](#S2.F3
+    "Figure 3 ‣ 2 Large-Scale DL Serving System: A Novel Taxonomy ‣ A Survey of Large-Scale
+    Deep Learning Serving System Optimization: Challenges and Opportunities") (left)
+    shows an example of co-running two DNN models (GoogLeNet and ResNet) on the same
+    hardware. Although the latency of each model degrades by 5%-10%, the overall throughput
+    is improved by 25%+ on average.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4e7bca86a67828399bec537ed1faf80d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Throughput and Power Comparison of CPUs/GPUs [[2](#bib.bib2)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Reducing Power and Infrastructural Costs By enhancing the serving throughput,
+    another benefit of MISD is it could lower both the cost of infrastructures, as
+    well as reduce the average power needed for processing each query. Figure [4](#S3.F4
+    "Figure 4 ‣ 3.1 Overview ‣ 3 Computing Scaling: Trending to Multi-Instance Single-Device
+    (MISD) ‣ A Survey of Large-Scale Deep Learning Serving System Optimization: Challenges
+    and Opportunities") compares the power and serving throughput between CPU-based
+    and GPU-based serving. Although the RTX2080Ti has 3$\times$ power consumption
+    compared to Intel Xeon416 CPU (250W vs. 85W), the GPU serving throughput can reach
+    at most 100$\times$, *e.g.*, for MobileNetV2 and NasNet. This translates to $\sim$30$\times$
+    average power reduction for processing each query, thus greatly reducing the power
+    and related infrastructural costs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Latency Performance Degradation However, co-locating more DNN instances would
+    have worse latency performance since the average available resources are less
+    for each DNN instance. Therefore, DL inference service providers and consumers
+    will usually set certain latency constraints (SLA), which requires queries to
+    be served within given latency (for example, less than 100ms for ads display for
+    the best user experience). Thus, multi-tenant inference with certain latency degradation
+    in SLA range is also considered acceptable. Figure [3](#S2.F3 "Figure 3 ‣ 2 Large-Scale
+    DL Serving System: A Novel Taxonomy ‣ A Survey of Large-Scale Deep Learning Serving
+    System Optimization: Challenges and Opportunities") (right) shows an example of
+    the latency degradation analysis among 250 pairs of model co-running combinations,
+    the average latency degradation is only 17% for up to 90% of the combinations,
+    demonstrating the great potential of GPU utilization enhancement.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TABLE I: Recent Works on Multi-Tenant Inference Optimization (JCT: job completion
+    time, SLA: service-level agreement).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Ref. | Hardware | Problem | Perspective | Algorithm/Strategy | Improvement/Achievement
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[53](#bib.bib53)] | GPU |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Resource under-utilization &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Contention &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| SW Scheduling |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Operator-level scheduling &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ ML-based scheduling auto-search &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\bullet$ Reduced inference makespan |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[29](#bib.bib29)] | GPU | $\bullet$ Inter-job interference | SW Scheduling
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Query-level online scheduling &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ ML-based interference predictor &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\bullet$ Reduced latency |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[51](#bib.bib51)] | GPU | $\bullet$ Client-side waiting time | SW Scheduling
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Query-level online scheduling &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Heuristic-based preemption &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Concurrent and batching &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\bullet$ Reduced latency |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[6](#bib.bib6)] | NPU | $\bullet$ Priority-based serving | SW Scheduling
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Query-level online scheduling &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Heuristic preemption &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Reduced high-priority job JCT &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Maintaining low-priority SLA &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [[9](#bib.bib9)] | GPU |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Resource under-utilization &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ contention &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| HW Resource Managing |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Managed resource provisioning &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Adaptive batching &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Enhanced serving throughput &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Maintaining SLA &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [[5](#bib.bib5)] | GPU |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Resource under-utilization &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Contention &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| HW Resource Managing |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Managed resource provisioning &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Adaptive batching &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Enhanced serving throughput &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Maintaining SLA &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [[15](#bib.bib15)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Systolic &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Arrays &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $\bullet$ Resource under-utilization | Architecture ReConfig | $\bullet$
+    Hardware resource fission |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\bullet$ Enhanced serving throughput &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\bullet$ Reduced energy cost &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Challenges in MISD
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are many challenges that hinder the performance improvement of MISD. We
+    summarize the major ones, such as inter-tenant interference and serving workload
+    dynamics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Inter-Tenant Interference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In MISD, co-locating multiple DL jobs on the same hardware allows these models
+    to share the compute resource, while brings the problem of inter-tenant interference.
+    As DNN models contain many types of operators such as convolution, batch-norm,
+    skip-connection, *etc.*, different types of operators can be either compute intensive
+    (*e.g.*, convolution) or memory intensive (*e.g.*, skip-connection). Therefore,
+    co-running multiple models on the GPU can incur resource contention in computing
+    or memory bandwidth due to the poor operator concurrency management (*e.g.*, co-running
+    the same type of operators at the same time). As a result, the inference speed
+    of both models can be slowed down. Such cases can happen frequently with more
+    increased number of tenants and thus degrade the overall serving throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Serving Workload Dynamics
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The inter-tenant interference could be more difficult to handle when the serving
+    workload is not static but dynamic. For example, in the cloud environment, due
+    to the fact that DL jobs’ arrival is usually non-predictable, perfectly interleaving
+    compute-intensive and memory-intensive DNN queries is usually not feasible. In
+    such case, multi-tenant inference and potential interference behavior is hard
+    to predict as it has a tremendous combination space due to various of models,
+    different number of co-running jobs, *etc.* With such unpredictability, it is
+    very challenging to maintain no inter-tenant interference and achieve ideal serving
+    throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.3 Job Priority and Completion Time
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There are several other problems in MISD computing. For example, one important
+    issue that needs to be considered is the job priority, *e.g.*, certain jobs need
+    to be finished with ensured performance or with higher priority. In such case,
+    preemption is a common scheduling strategy to ensure high-priority jobs to finish
+    in a short time. Or we can also allocate dedicated resource to high-priority jobs.
+    Another issue is that instead of considering server-side serving throughput, certain
+    serving systems also need to consider client-side user experiences measured by
+    average job completion time (JCT). Minimizing JCT is also contradictory to maximizing
+    throughput, *e.g.*, concurrently running multiple jobs can cause longer average
+    JCT but increase serving throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Optimization Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We summarize recent works in multi-tenant inference optimization into two major
+    categories: temporal workload scheduling and spatial resource management. An overview
+    of these works are shown in Table [I](#S3.T1 "TABLE I ‣ 3.1 Overview ‣ 3 Computing
+    Scaling: Trending to Multi-Instance Single-Device (MISD) ‣ A Survey of Large-Scale
+    Deep Learning Serving System Optimization: Challenges and Opportunities").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/94af91957f380bf0d1f5156108b096f0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Multi-Tenant Inference with Temporal and Spatial Scheduling.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1 Software-Level Workload Scheduling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'As we mentioned before, one of the major challenges in multi-tenant inference
+    is to avoid job interference. Therefore, many research works [[53](#bib.bib53),
+    [29](#bib.bib29), [51](#bib.bib51), [6](#bib.bib6)] conduct workload scheduling
+    among different DL jobs temporally to reduce such interfering, as shown in Figure [5](#S3.F5
+    "Figure 5 ‣ 3.3 Optimization Techniques ‣ 3 Computing Scaling: Trending to Multi-Instance
+    Single-Device (MISD) ‣ A Survey of Large-Scale Deep Learning Serving System Optimization:
+    Challenges and Opportunities"). Such solutions aims to avoid interference by scheduling
+    different DL model workloads along the time dimension, thus we categorize such
+    works as software-level scheduling solutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, such workload scheduling granularity could be fine-grained, *e.g.*,
+    scheduling the DNN operators, or coarse-grained, *e.g.*, scheduling the entire
+    inference query.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Operator Scheduling To achieve fine-grained scheduling, works [[53](#bib.bib53),
+    [10](#bib.bib10)] regard the DL model operators (*e.g.*, conv, batch-norm, identity)
+    as the minimum scheduling units. They first abstract multiple DNN’s computation
+    graph with many operators into an intermediate representation (IR). To explore
+    the huge scheduling space, they design a ML-based auto-search method by defining
+    three main factors: scheduling search space, profiling-guided latency cost model,
+    and the machine learning-based search algorithm to find the best scheduling for
+    a balanced GPU utilization without interference and reduced latency. Such fine-grained
+    operator scheduling could achieve better performance, but usually face scalability
+    issues when the number of workloads increases to very large, such as hundreds
+    of DNN queries.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Service Router Therefore, other works like [[29](#bib.bib29), [51](#bib.bib51),
+    [6](#bib.bib6)] use a more coarse scheduling granularity, *e.g.*, regarding each
+    query as the minimum scheduling units, which thus reduces the scheduling complexity.
+    For example, one of the query-level workload scheduling example is the service
+    router in large-scale data center, such as Microsoft Deep Learning Inference Service
+    (DLIS) system [[43](#bib.bib43)]. To achieve high utilization while avoid resource
+    contention, service router needs to understand different models’ requirements
+    and place one or multiple queries intelligently onto hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predictive Scheduling Within above scheduling techniques, one challenging factor
+    is the serving queries dynamics, for example, unknown number of incoming queries,
+    RNN/LSTMs with varied input lengths. Different from static workloads that we can
+    get the full workload information for scheduling, such dynamic workloads require
+    us to consider the potential incoming workloads. To handle such dynamics, PREMA [[6](#bib.bib6)]
+    proposed a predictive multi-task DNN scheduling algorithm that combines off-line
+    profiling latency records and an online token-based job scheduling algorithm.
+    Meanwhile, it also enables adaptive job preemption to achieve priority control.
+    But as each DNN can have many operators (*e.g.*, layers) that have fluctuated
+    resource consumption, such coarse-grained scheduling may still suffer occasionally
+    resource under-utilization/contention and sub-optimal performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 Hardware-Level Resource Management
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Besides temporal scheduling, another optimization perspective to solve the inter-tenant
+    inference is to conduct fine-grained resource managing [[9](#bib.bib9), [15](#bib.bib15)],
+    such as spatial partitioning and isolation of resources for different jobs, which
+    we consider as a spatial perspective. As such partitioning could isolate different
+    job’s used resource (*e.g.*, stream multiprocessors (SMs), memory bandwidths),
+    such solution can help avoid the job interference in the hardware level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Resource Partitioning Previously, achieving fine-grained resource partitioning
+    is non-achievable until recently NVIDIA GPUs release a series of resource sharing
+    and partitioning support like multi-streams (MST), multi-process services (MPS [[34](#bib.bib34)])
+    and multi-instance GPU (MIG [[33](#bib.bib33)])²²2The major differences between
+    three tools are that MST only enables resource sharing but doesn’t avoid SM nor
+    memory bandwidth interference. MPS enables SM partitioning by allocating certain
+    SMs to given jobs (*e.g.*, for 5 DNNs, allocating 20% SMs for each one), thus
+    avoiding SM interference but doesn’t address memory interference. MIG achieves
+    both SM and memory bandwidth partitioning, which is recently supported on NVIDIA
+    A100 GPUs only [[33](#bib.bib33)].. Leveraging such support, [[9](#bib.bib9)]
+    uses MPS to conduct adaptive SM partitioning for different DNN jobs. By doing
+    so, the SM resource contention could be avoided among co-located DL workloads.
+    Similarly, [[15](#bib.bib15)] utilizes special accelerator (systolic arrays) and
+    implements architecture support for hardware fission, which achieves fine-grained
+    resource managing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hardware Re-Configuration However, such spatial resource partitioning solutions
+    also have a intrinsic limitation that is the inflexible re-configuration when
+    facing dynamic workloads. For both GPUs and other accelerators, changing the resource
+    partitioning configurations requires certain amount of time (*e.g.*, tens of seconds
+    or more), which can be much larger than DL workloads’ processing time (usually
+    served in ms). Therefore, re-configuring the resource partitioning frequently
+    is usually not practical and thus limits such solutions’ performance when facing
+    dynamic workloads. [[9](#bib.bib9)] tries to reduce the stall caused by reconfiguration
+    time of MPS by utilizing a standby/shadow process. However, the minimum time for
+    switching one partitioning configuration to another one still cost several seconds,
+    which is non-negligible in online serving scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4 Future Directions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 3.4.1 Software-Hardware Co-Scheduling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The software and hardware scheduling could be complementary to each other to
+    provide both high job scheduling flexibility and strict resource isolation. Recently,
+    there are certain works that adopt a temporal-spatial combined perspective to
+    achieve better serving performance. [[5](#bib.bib5)] adopts MPS to conduct resource
+    partitioning and split one GPU to multiple gpulets and then implements a heuristic-based
+    greedy task scheduler to find the appropriate mapping relationship between the
+    current DNN queries and gpulets. Nevertheless, the serving workload dynamics in
+    spatial-temporal scheduling is more complex and needs to be re-thinked and designed.
+    For example, beyond previous temporal-only scheduling that only decides when to
+    start each job, having multiple hardware partitions also requires to decide which
+    one to place on. The current greedy task scheduler in [[5](#bib.bib5)] treats
+    the current workload as static without considering potentially dynamic incoming
+    job requests. Thus, a simple sub-optimal case can be that it can allocate a current
+    small workload to a large gpulet, while leaving no gpulet for a larger incoming
+    DNN job to use, resulting in potential resource under-utilization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4.2 ML-based Prediction and Online Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To avoid such problem, we can potentially use a ML-based predictive model (*e.g.*,
+    reinforcement learning, LSTM, *etc.*) to predict the dynamic workload and then
+    guide the workload-to-partition mapping. The ML-based model can be initially trained
+    offline by historical serving records. During the online serving process, active
+    and lifelong learning, i.e., using the latency/throughput as feedback to consistently
+    improve the predictive accuracy, can also be potentially utilized in such case
+    to improve the workload prediction and scheduling effectiveness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another way of leveraging ML-based prediction is to conduct modeling to predict
+    the potential latency performance under different multi-model and hardware combinations
+    so that the scheduler can make better decision regarding the latency SLA constraints.
+    For example, the work [[29](#bib.bib29)] built a ML model to predict the latency
+    of multi-model inference cases on different machines. However, the effectiveness
+    of such solution also highly depends on the modeling accuracy, scalability and
+    generality, which can be hard to achieve all in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4 Model Scaling: Trending to'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Single Instance Multi Device (SIMD)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Overview
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Different from MISD, the trend of SIMD is mainly brought by the tremendous model
+    scaling [[3](#bib.bib3), [30](#bib.bib30)] which makes one model hard to execute
+    on one single machine. For example, industrial recommendation models [[32](#bib.bib32)]
+    requires $\sim$TB of memory for inference. In such cases, scaling up single machine
+    to support such memory capacity can incur huge infrastructural cost in large-scale
+    data centers. Therefore, one more cost-efficient way is to scale out, which is
+    to using multiple distributed compute devices to conduct collaboratively inference.
+    However, unlike distributed training with long time duration and thus loose time
+    constraints, inference serving have strict latency constraints. Thus, the communication
+    cost in such collaboratively serving can make the SLAs more challenging to achieve.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Enhancing Capacity Scaling The first priority of SIMD is to achieve capacity
+    scaling of infrastructures so as to enable super-scale model inference serving.
+    To do so, there are two major ways: Scale up vs. Scale out. Scale up (or vertical
+    scaling) means upgrading or adding more resources to an system to reach a desired
+    state of performance, *e.g.*, more compute, memory, storage and network bandwidth,
+    *etc.* By contrast, scale out (or horizontal scaling) uses more distributed low-end
+    machines to collaboratively serve one large DL model. SIMD such as distributed
+    inference [[27](#bib.bib27), [56](#bib.bib56), [59](#bib.bib59), [54](#bib.bib54)]
+    mainly uses the second scale-out solution to maintain the capacity scaling for
+    larger DL model serving. Recently, heterogeneous inference [[26](#bib.bib26),
+    [50](#bib.bib50), [48](#bib.bib48)] comes up, which combines heterogeneous resources
+    such as hybriding CPU/GPU, hybriding cache/memory/SSD, etc. Such solutions could
+    be considered as a scale-up solution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reducing Costs For both scaling up and scaling out solutions, the major optimization
+    targets of above solutions (i.e., SIMD) is to reduce the total cost of ownership
+    (TCO). For example, scaling up by increasing single machine capacity such as upgrading
+    CPU generations, increasing memory capacity and frequencies can be expensive within
+    large-scale data center-level infrastructures. Therefore, the heterogeneous inference
+    mainly relies on existing hardwares and combines them to enhance the compute capacity,
+    thus reducing the capacity scaling costs. By contrast, scaling out utilizes multiple
+    current generation of compute devices to serve next-generation larger models,
+    thus also reducing the cost of setting up new dedicated hardware. For both methods,
+    the shared downside is that it brings complex distributed computing and communication
+    management, and even potential performance degradation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4f78b5f0b12d38c55fdca8bd5985b9c5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: In three parallelisms, model parallelism is the common way to achieve
+    distributed inference while the other two are only suitable for distributed training.
+    For example, data parallelism is not suitable for inference with small batch sizes.
+    Pipeline parallelism cannot leverage multi-node computing parallelism within a
+    single inference request.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Challenges in SIMD
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 4.2.1 Computing Parallelism
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Although SIMD with distributed devices can achieve the model’s required overall
+    capacity, distributing one entire model to collaboratively compute on multi-nodes
+    is still very complex. There are many model partitioning algorithms that have
+    been explored in distributed training algorithms such as data, model, and pipeline
+    parallelism [[44](#bib.bib44), [31](#bib.bib31), [20](#bib.bib20)], *etc.* However,
+    not all of them are suitable for inference scenarios. As shown in Figure [6](#S4.F6
+    "Figure 6 ‣ 4.1 Overview ‣ 4 Model Scaling: Trending to Single Instance Multi
+    Device (SIMD) ‣ A Survey of Large-Scale Deep Learning Serving System Optimization:
+    Challenges and Opportunities"), traditional data parallelism by splitting the
+    batch sizes is usually not applicable since the inference serving usually comes
+    with small batch sizes. Pipeline parallelism [[44](#bib.bib44), [31](#bib.bib31),
+    [18](#bib.bib18)] by allocating different layers into different machines is also
+    not suitable as it cannot achieve multi-node computing parallelism within one
+    single inference request. As a result, model parallelism [[20](#bib.bib20)] is
+    the most common way to achieve SIMD or distributed inference, as we will introduce
+    later.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.2 Communication Bottlenecks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For model parallelism on multi-distributed machines, achieving linear or even
+    sub-linear speedup is usually very hard. The reason is that, the major factor
+    that influences the computing efficiency (such as latency) in model parallelism
+    is the communication bottlenecks caused by the intermediate data transfer between
+    different model shards (distributed nodes) [[18](#bib.bib18), [40](#bib.bib40)].
+    Depending on the data transmission speed, too much data transfer will incur significant
+    latency overhead, *e.g.*, with Ethernet connections in distributed machines. To
+    avoid that, an efficient model sharding algorithm is needed to ensure the inference
+    serving performance in MISD. However, the intermediate data communication mechanisms
+    vary a lot in different model architectures, such as CNNs, Transformers, and recommendation
+    DLRMs, *etc.*, and thus it requires many analysis efforts and design innovations
+    to find the optimal model sharding algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/146df4dd388dd37044b7ec9949f5fc77.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Distributed Inference could use RPCs to leverage multiple distributed
+    hosts to collaboratively execute one large recommendation model [[27](#bib.bib27)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Optimization Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We mainly introduce two aspects of works that conduct SIMD: Scaling out by
+    distributed inference and Scaling up by heterogeneous inference.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4.3.1 Scaling Out: Distributed Inference'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Recommendation Model Distributed Inference For example, recent industry-level
+    deep learning recommendation model (DLRM) [[32](#bib.bib32)] has reached $\sim$TB-level
+    model size and such recommendation request takes over 79% of Facebook’s data center’s
+    workload, [[27](#bib.bib27)] proposed the first work that applies the distributed
+    inference technique into the large DLRM inference serving. Different from conventional
+    MLPs and CNNs, DLRMs are mainly composed of feature embedding tables and fully-connected
+    layers, where feature embedding tables are the major part of model weights (up
+    to 80% to 95%). Such feature embedding part of DLRMs is memory-intensive, but
+    have very light computation workload as it only needs to access certain columns
+    of the embedding tables and conducts summation [[27](#bib.bib27)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, distributed inference is proposed to partition large embedding tables
+    into different compute nodes and thus overcome the inference serving memory limitation.
+    When the table embeddings in remote nodes are required, central model could invoke
+    remote process calls (RPCs) to directly get the computed results from remote nodes
+    and thus fulfill the distributed inference serving.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CNN Distributed Inference Compared to DLRMs, CNN model parallelism is more widely
+    studied (such as channel parallelism/spatial parallelism) [[59](#bib.bib59)] and
+    many works have also propose the CNN models’ distributed inference [[54](#bib.bib54),
+    [56](#bib.bib56)]. For example, CoEdge [[54](#bib.bib54)] is one example of cooperative
+    CNN inference with adaptive workload partitioning over heterogeneous distributed
+    devices. Similarly, DeepThings [[56](#bib.bib56)] also proposes a framework for
+    adaptively distributed execution of CNN-based inference on resource constrained
+    IoT edge devices. It designs a scalable Fused Tile Partitioning (FTP) to minimize
+    memory footprint while exposing parallelism to collaboratively compute of major
+    convolutional layers. It further realizes a distributed work stealing approach
+    to enable dynamic workload distribution and balancing at inference runtime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4.3.2 Scaling Up: Heterogeneous Inference'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Heterogeneous Memory Besides using distributed machines, another way to address
+    super-scale model’s large memory capacity requirement is to leverage heterogeneous
+    memory, *e.g.*, by combining different levels of memory such as cache, main memory
+    and even SSDs. The major challenge of such heterogeneous memory is to address
+    the slow access speed of SSD (the access bandwidth can be usually 100x slower
+    than memory). Targeting at this bottleneck, [[26](#bib.bib26), [50](#bib.bib50),
+    [48](#bib.bib48)] have proposed similar heterogeneous memory design that leverages
+    storage-level SSDs to store partial of the embedding table weights of the DLRM.
+    As the embedding table access patterns of DLRMs are usually sparse and have certain
+    spatial/temporal locality, a proper embedding table placement strategy between
+    memory/SSD with dedicated caching strategy could thus greatly enhance the heterogeneous
+    memory access efficiency, thus reaching on-pair performance with pure memory based
+    performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heterogeneous Computing Along with heterogeneous memory, heterogeneous computing
+    is a similar concept by hybriding the computing capacity for different processors,
+    which is mostly commonly used for large model inference in SoCs with multiple
+    types of computing processors such as CPU, GPU and other accelerators. For example,
+    Synergy [[58](#bib.bib58)] proposed a HW/SW framework for high throughput CNNs
+    on embedded heterogeneous SoC. It leverages all the available on-chip resources,
+    which includes the dual-core ARM processor along with the FPGA and the accelerator
+    to collaboratively compute for the CNN inference. Similar to distributed inference
+    which partition one model onto multiple machines, heterogeneous computing also
+    requires dedicated model sharding algorithms and co-designs the model sharding
+    with the heterogeneous computing devices, and also considers the inter-processor
+    communication, *etc.*
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this survey, we propose a a novel computing paradigm taxonomy to characterize
+    ongoing large-scale deep learning system (LDS) optimization works. We summarize
+    the new optimization objectives, elaborate new technical design perspectives,
+    and provide the insights for future LDS optimization. By summarizing the existing
+    works, we hope that this survey could provide a comprehensive summary on emerging
+    challenges, opportunities, and innovations, and thus motivates new innovations
+    in LDS operation and optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Almeida et al. [2019] Mario Almeida, Stefanos Laskaridis, Ilias Leontiadis,
+    Stylianos I Venieris, and Nicholas D Lane. 2019. EmBench: Quantifying performance
+    variations of deep neural networks across modern commodity devices. In *The 3rd
+    international workshop on deep learning for mobile systems and applications*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brown et al. [2020] Tom B Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah,
+    Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry,
+    Amanda Askell, et al. 2020. Language models are few-shot learners. *arXiv preprint
+    arXiv:2005.14165* (2020).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. [2018] Tianqi Chen, Thierry Moreau, Ziheng Jiang, Lianmin Zheng,
+    Eddie Yan, Haichen Shen, Meghan Cowan, Leyuan Wang, Yuwei Hu, Luis Ceze, et al.
+    2018. $\{$TVM$\}$: An automated end-to-end optimizing compiler for deep learning.
+    In *13th $\{$USENIX$\}$ Symposium on Operating Systems Design and Implementation
+    ($\{$OSDI$\}$ 18)*. 578–594.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Choi et al. [2021] Seungbeom Choi, Sunho Lee, Yeonjae Kim, Jongse Park, Youngjin
+    Kwon, and Jaehyuk Huh. 2021. Multi-model Machine Learning Inference Serving with
+    GPU Spatial Partitioning. *arXiv preprint arXiv:2109.01611* (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Choi and Rhu [2020] Yujeong Choi and Minsoo Rhu. 2020. Prema: A predictive
+    multi-task scheduling algorithm for preemptible neural processing units. In *2020
+    IEEE International Symposium on High Performance Computer Architecture (HPCA)*.
+    IEEE, 220–233.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Copeland et al. [2015] Marshall Copeland, Julian Soh, Anthony Puca, Mike Manning,
+    and David Gollob. 2015. Microsoft Azure. *New York, NY, USA:: Apress* (2015).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devlin et al. [2018] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+    Toutanova. 2018. Bert: Pre-training of deep bidirectional transformers for language
+    understanding. *arXiv preprint arXiv:1810.04805* (2018).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dhakal et al. [2020] Aditya Dhakal, Sameer G Kulkarni, and KK Ramakrishnan.
+    2020. Gslice: controlled spatial sharing of gpus for a scalable inference platform.
+    In *Proceedings of the 11th ACM Symposium on Cloud Computing*. 492–506.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ding et al. [2020] Yaoyao Ding, Ligeng Zhu, Zhihao Jia, Gennady Pekhimenko,
+    and Song Han. 2020. IOS: Inter-Operator Scheduler for CNN Acceleration. *arXiv
+    preprint arXiv:2011.01302* (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dosovitskiy et al. [2020] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov,
+    Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias
+    Minderer, Georg Heigold, Sylvain Gelly, et al. 2020. An image is worth 16x16 words:
+    Transformers for image recognition at scale. *arXiv:2010.11929* (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Facebook [2021] Facebook. 2021. Facebook for Business. https://www.facebook.com/iq/insights-to-go/1820m-facebook-daily-active-users-were-1820m-on-average-for-september.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fegade et al. [2020] Pratik Fegade, Tianqi Chen, Phillip B Gibbons, and Todd C
+    Mowry. 2020. Cortex: A Compiler for Recursive Deep Learning Models. *arXiv preprint
+    arXiv:2011.01383* (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gharibshah et al. [2020] Zhabiz Gharibshah, Xingquan Zhu, Arthur Hainline, and
+    Michael Conway. 2020. Deep learning for user interest and response prediction
+    in online display advertising. *Data Science and Engineering* 5, 1 (2020), 12–26.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ghodrati et al. [2020] Soroush Ghodrati, Byung Hoon Ahn, Joon Kyung Kim, Sean
+    Kinzer, Brahmendra Reddy Yatham, Navateja Alla, Hardik Sharma, Mohammad Alian,
+    Eiman Ebrahimi, Nam Sung Kim, et al. 2020. Planaria: Dynamic architecture fission
+    for spatial multi-tenant acceleration of deep neural networks. In *2020 53rd Annual
+    IEEE/ACM International Symposium on Microarchitecture (MICRO)*. IEEE, 681–697.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. [2016] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016.
+    Deep residual learning for image recognition. In *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*. 770–778.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Howard et al. [2017] Andrew G Howard, Menglong Zhu, Bo Chen, Dmitry Kalenichenko,
+    Weijun Wang, Tobias Weyand, Marco Andreetto, and Hartwig Adam. 2017. Mobilenets:
+    Efficient convolutional neural networks for mobile vision applications. *arXiv
+    preprint arXiv:1704.04861* (2017).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Huang et al. [2019] Yanping Huang, Youlong Cheng, Ankur Bapna, Orhan Firat,
+    Dehao Chen, Mia Chen, HyoukJoong Lee, Jiquan Ngiam, Quoc V Le, Yonghui Wu, et al.
+    2019. Gpipe: Efficient training of giant neural networks using pipeline parallelism.
+    *Advances in neural information processing systems* 32 (2019), 103–112.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeon et al. [2019] Myeongjae Jeon, Shivaram Venkataraman, Amar Phanishayee,
+    Junjie Qian, Wencong Xiao, and Fan Yang. 2019. Analysis of large-scale multi-tenant
+    $\{$GPU$\}$ clusters for $\{$DNN$\}$ training workloads. In *2019 $\{$USENIX$\}$
+    Annual Technical Conference ($\{$USENIX$\}$$\{$ATC$\}$ 19)*. 947–960.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jia et al. [2018] Zhihao Jia, Sina Lin, Charles R Qi, and Alex Aiken. 2018.
+    Exploring hidden dimensions in parallelizing convolutional neural networks. *arXiv
+    preprint arXiv:1802.04924* (2018).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jia et al. [2019] Zhihao Jia, Oded Padon, James Thomas, Todd Warszawski, Matei
+    Zaharia, and Alex Aiken. 2019. TASO: optimizing deep learning computation with
+    automatic generation of graph substitutions. In *Proceedings of the 27th ACM Symposium
+    on Operating Systems Principles*. 47–62.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Justesen et al. [2019] Niels Justesen, Philip Bontrager, Julian Togelius, and
+    Sebastian Risi. 2019. Deep learning for video game playing. *IEEE Transactions
+    on Games* 12, 1 (2019), 1–20.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kolesnikov et al. [2020] Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Joan
+    Puigcerver, Jessica Yung, Sylvain Gelly, and Neil Houlsby. 2020. Big transfer
+    (bit): General visual representation learning. In *Computer Vision–ECCV 2020:
+    16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part V
+    16*. Springer, 491–507.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2019] Xin Li, Yiming Zhou, Zheng Pan, and Jiashi Feng. 2019. Partial
+    order pruning: for best speed/accuracy trade-off in neural architecture search.
+    In *Proceedings of the IEEE Conference on computer vision and pattern recognition*.
+    9145–9153.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lin et al. [2020] Mingbao Lin, Rongrong Ji, Yan Wang, Yichen Zhang, Baochang
+    Zhang, Yonghong Tian, and Ling Shao. 2020. HRank: Filter Pruning using High-Rank
+    Feature Map. In *Proceedings of the IEEE/CVF Conference on Computer Vision and
+    Pattern Recognition (CVPR)*. 1529–1538.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. [2021] Jiawen Liu, Dong Li, Roberto Gioiosa, and Jiajia Li. 2021.
+    Athena: high-performance sparse tensor contraction sequence on heterogeneous memory.
+    In *Proceedings of the ACM International Conference on Supercomputing*. 190–202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lui et al. [2021] Michael Lui, Yavuz Yetim, Özgür Özkan, Zhuoran Zhao, Shin-Yeh
+    Tsai, Carole-Jean Wu, and Mark Hempstead. 2021. Understanding capacity-driven
+    scale-out neural recommendation inference. In *2021 IEEE International Symposium
+    on Performance Analysis of Systems and Software (ISPASS)*. IEEE, 162–171.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Madhuri and Sowjanya [2016] T Madhuri and P Sowjanya. 2016. Microsoft Azure
+    v/s Amazon AWS cloud services: A comparative study. *International Journal of
+    Innovative Research in Science, Engineering and Technology* 5, 3 (2016), 3904–3907.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mendoza et al. [2021] Daniel Mendoza, Francisco Romero, Qian Li, Neeraja J Yadwadkar,
+    and Christos Kozyrakis. 2021. Interference-Aware Scheduling for Inference Serving.
+    In *Proceedings of the 1st Workshop on Machine Learning and Systems*. 80–88.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Microsoft [2020] Nvidia Microsoft. 2020. Using DeepSpeed and Megatron to Train
+    Megatron-Turing NLG 530B, the World’s Largest and Most Powerful Generative Language
+    Model. https://developer.nvidia.com/blog/using-deepspeed-and-megatron-to-train-megatron-turing-nlg-530b-the-worlds-largest-and-most-powerful-generative-language-model/.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Narayanan et al. [2019] Deepak Narayanan, Aaron Harlap, Amar Phanishayee, Vivek
+    Seshadri, Nikhil R Devanur, Gregory R Ganger, Phillip B Gibbons, and Matei Zaharia.
+    2019. PipeDream: generalized pipeline parallelism for DNN training. In *Proceedings
+    of the 27th ACM Symposium on Operating Systems Principles*. 1–15.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Naumov et al. [2019] Maxim Naumov, Dheevatsa Mudigere, Hao-Jun Michael Shi,
+    Jianyu Huang, Narayanan Sundaraman, Jongsoo Park, Xiaodong Wang, Udit Gupta, Carole-Jean
+    Wu, Alisson G Azzolini, et al. 2019. Deep learning recommendation model for personalization
+    and recommendation systems. *arXiv preprint arXiv:1906.00091* (2019).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NVIDIA [2020a] NVIDIA. 2020a. NVIDIA Multi Instance GPU (MIG). https://docs.nvidia.com/datacenter/tesla/mig-user-guide/.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: NVIDIA [2020b] NVIDIA. 2020b. NVIDIA Multi Process Service (MPS). https://docs.nvidia.com/deploy/pdf/CUDA-Multi-Process-Service-Overview.pdf.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park et al. [2019] Taesung Park, Ming-Yu Liu, Ting-Chun Wang, and Jun-Yan Zhu.
+    2019. Semantic image synthesis with spatially-adaptive normalization. In *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*. 2337–2346.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reports [2021] Market Reports. 2021. Global Data Center Accelerator Market Size,
+    Status and Forecast 2020-2025. https://www.mynewsdesk.com/brandessence/pressreleases/data-center-accelerator-market-size-2021-cagr-38-dot-7-percent-3112488.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sandler et al. [2018a] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov,
+    and Liang-Chieh Chen. 2018a. Mobilenetv2: Inverted residuals and linear bottlenecks.
+    In *Proceedings of the IEEE conference on computer vision and pattern recognition*.
+    4510–4520.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sandler et al. [2018b] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov,
+    and Liang-Chieh Chen. 2018b. Mobilenetv2: Inverted residuals and linear bottlenecks.
+    In *Proceedings of the IEEE conference on computer vision and pattern recognition*.
+    4510–4520.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shen et al. [2017] Dinggang Shen, Guorong Wu, and Heung-Il Suk. 2017. Deep learning
+    in medical image analysis. *Annual review of biomedical engineering* 19 (2017),
+    221–248.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shoeybi et al. [2019] Mohammad Shoeybi, Mostofa Patwary, Raul Puri, Patrick
+    LeGresley, Jared Casper, and Bryan Catanzaro. 2019. Megatron-lm: Training multi-billion
+    parameter language models using model parallelism. *arXiv preprint arXiv:1909.08053*
+    (2019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Singh et al. [2017] Shashi Pal Singh, Ajai Kumar, Hemant Darbari, Lenali Singh,
+    Anshika Rastogi, and Shikha Jain. 2017. Machine translation using deep learning:
+    An overview. In *2017 international conference on computer, communications and
+    electronics (comptelix)*. IEEE, 162–167.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Singhal et al. [2017] Ayush Singhal, Pradeep Sinha, and Rakesh Pant. 2017.
+    Use of deep learning in modern recommendation system: A summary of recent works.
+    *arXiv preprint arXiv:1712.07525* (2017).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Soifer et al. [2019] Jonathan Soifer, Jason Li, Mingqin Li, Jeffrey Zhu, Yingnan
+    Li, Yuxiong He, Elton Zheng, Adi Oltean, Maya Mosyak, Chris Barnes, et al. 2019.
+    Deep learning inference service at microsoft. In *2019 $\{$USENIX$\}$ Conference
+    on Operational Machine Learning (OpML 19)*. 15–17.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Song et al. [2017] Linghao Song, Xuehai Qian, Hai Li, and Yiran Chen. 2017.
+    Pipelayer: A pipelined reram-based accelerator for deep learning. In *2017 IEEE
+    International Symposium on High Performance Computer Architecture (HPCA)*. IEEE,
+    541–552.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sun et al. [2019] Yifan Sun, Nicolas Bohm Agostini, Shi Dong, and David Kaeli.
+    2019. Summarizing CPU and GPU design trends with product data. *arXiv preprint
+    arXiv:1911.11313* (2019).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan et al. [2019] Mingxing Tan, Bo Chen, Ruoming Pang, Vijay Vasudevan, Mark
+    Sandler, Andrew Howard, and Quoc V Le. 2019. Mnasnet: Platform-aware neural architecture
+    search for mobile. In *Proceedings of the IEEE Conference on Computer Vision and
+    Pattern Recognition*. 2820–2828.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan and Le [2019] Mingxing Tan and Quoc V Le. 2019. Efficientnet: Rethinking
+    model scaling for convolutional neural networks. *arXiv preprint arXiv:1905.11946*
+    (2019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wan et al. [2021] Hu Wan, Xuan Sun, Yufei Cui, Chia-Lin Yang, Tei-Wei Kuo,
+    and Chun Jason Xue. 2021. FlashEmbedding: storing embedding tables in SSD for
+    large-scale recommender systems. In *Proceedings of the 12th ACM SIGOPS Asia-Pacific
+    Workshop on Systems*. 9–16.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wesolowski et al. [2021] Lukasz Wesolowski, Bilge Acun, Valentin Andrei, Adnan
+    Aziz, Gisle Dankel, Christopher Gregg, Xiaoqiao Meng, Cyril Meurillon, Denis Sheahan,
+    Lei Tian, et al. 2021. Datacenter-Scale Analysis and Optimization of GPU Machine
+    Learning Workloads. *IEEE Micro* 41, 5 (2021), 101–112.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wilkening et al. [2021] Mark Wilkening, Udit Gupta, Samuel Hsia, Caroline Trippel,
+    Carole-Jean Wu, David Brooks, and Gu-Yeon Wei. 2021. RecSSD: near data processing
+    for solid state drive based recommendation inference. In *Proceedings of the 26th
+    ACM International Conference on Architectural Support for Programming Languages
+    and Operating Systems*. 717–729.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. [2020] Xiaorui Wu, Hong Xu, and Yi Wang. 2020. Irina: Accelerating
+    DNN Inference with Efficient Online Scheduling. In *4th Asia-Pacific Workshop
+    on Networking*. 36–43.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xiao et al. [2020] Wencong Xiao, Shiru Ren, Yong Li, Yang Zhang, Pengyang Hou,
+    Zhi Li, Yihui Feng, Wei Lin, and Yangqing Jia. 2020. AntMan: Dynamic Scaling on
+    $\{$GPU$\}$ Clusters for Deep Learning. In *14th $\{$USENIX$\}$ Symposium on Operating
+    Systems Design and Implementation ($\{$OSDI$\}$ 20)*. 533–548.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yu and et al. [2021] Fuxun Yu and et al. 2021. Automated Runtime-Aware Scheduling
+    for Multi-Tenant DNN Inference on GPU. In *Proceedings of the 40th IEEE International
+    Conference on Computer Aided Design (ICCAD)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zeng et al. [2020] Liekang Zeng, Xu Chen, Zhi Zhou, Lei Yang, and Junshan Zhang.
+    2020. Coedge: Cooperative dnn inference with adaptive workload partitioning over
+    heterogeneous edge devices. *IEEE/ACM Transactions on Networking* 29, 2 (2020),
+    595–608.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. [2018] Xiangyu Zhang, Xinyu Zhou, Mengxiao Lin, and Jian Sun.
+    2018. Shufflenet: An extremely efficient convolutional neural network for mobile
+    devices. In *Proceedings of the IEEE conference on computer vision and pattern
+    recognition*. 6848–6856.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhao et al. [2018] Zhuoran Zhao, Kamyar Mirzazad Barijough, and Andreas Gerstlauer.
+    2018. Deepthings: Distributed adaptive deep learning inference on resource-constrained
+    iot edge clusters. *IEEE Transactions on Computer-Aided Design of Integrated Circuits
+    and Systems* 37, 11 (2018), 2348–2359.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zheng et al. [2020] Lianmin Zheng, Chengfan Jia, Minmin Sun, Zhao Wu, Cody Hao
+    Yu, Ameer Haj-Ali, Yida Wang, Jun Yang, Danyang Zhuo, Koushik Sen, et al. 2020.
+    Ansor: Generating high-performance tensor programs for deep learning. In *14th
+    $\{$USENIX$\}$ Symposium on Operating Systems Design and Implementation ($\{$OSDI$\}$
+    20)*. 863–879.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhong et al. [2019] Guanwen Zhong, Akshat Dubey, Cheng Tan, and Tulika Mitra.
+    2019. Synergy: An hw/sw framework for high throughput cnns on embedded heterogeneous
+    soc. *ACM Transactions on Embedded Computing Systems (TECS)* 18, 2 (2019), 1–23.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhou et al. [2019] Li Zhou, Hao Wen, Radu Teodorescu, and David HC Du. 2019.
+    Distributing deep neural networks with containerized partitions at the edge. In
+    *2nd $\{$USENIX$\}$ Workshop on Hot Topics in Edge Computing (HotEdge 19)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

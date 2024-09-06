@@ -1,0 +1,1524 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:35:20'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2401.02349] A Survey Analyzing Generalization in Deep Reinforcement Learning'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2401.02349](https://ar5iv.labs.arxiv.org/html/2401.02349)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey Analyzing Generalization in
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Deep Reinforcement Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ezgi Korkmaz
+  prefs: []
+  type: TYPE_NORMAL
+- en: University College London
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Reinforcement learning research obtained significant success and attention with
+    the utilization of deep neural networks to solve problems in high dimensional
+    state or action spaces. While deep reinforcement learning policies are currently
+    being deployed in many different fields from medical applications to self driving
+    vehicles, there are still ongoing questions the field is trying to answer on the
+    generalization capabilities of deep reinforcement learning policies. In this paper,
+    we will outline the fundamental reasons why deep reinforcement learning policies
+    encounter overfitting problems that limit their robustness and generalization
+    capabilities. Furthermore, we will formalize and unify the diverse solution approaches
+    to increase generalization, and overcome overfitting in state-action value functions.
+    We believe our study can provide a compact systematic unified analysis for the
+    current advancements in deep reinforcement learning, and help to construct robust
+    deep neural policies with improved generalization abilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The performance of reinforcement learning algorithms has been boosted with the
+    utilization of deep neural networks as function approximators (Mnih et al., [2015](#bib.bib53)).
+    Currently, it is possible to learn deep reinforcement learning policies that can
+    operate in large state and/or action space MDPs Silver et al. ([2017](#bib.bib62));
+    Vinyals et al. ([2019](#bib.bib71)). This progress consequently resulted in building
+    reasonable deep reinforcement learning policies that can play computer games with
+    high dimensional state representations (e.g. Atari, StarCraft), solve complex
+    robotics control tasks, design algorithms (Mankowitz et al., [2023](#bib.bib52);
+    Fawzi et al., [2022](#bib.bib14)), and play some of the most complicated board
+    games (e.g. Chess, Go) (Schrittwieser et al., [2020](#bib.bib60)). However, deep
+    reinforcement learning algorithms also experience several problems caused by their
+    overall limited generalization capabilities. Some studies demonstrated these problems
+    via adversarial perturbations introduced to the state observations of the policy
+    (Huang et al., [2017](#bib.bib26); Kos & Song, [2017](#bib.bib42); Korkmaz, [2022](#bib.bib39)),
+    several focused on exploring the fundamental issues with function approximation,
+    estimation biases in the state-action value function (Hasselt et al., [2016](#bib.bib23)),
+    or with new architectural design ideas (Wang et al., [2016](#bib.bib73)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The fact that we are not able to completely explore the entire MDP for high
+    dimensional state representation MDPs, even with deep neural networks as function
+    approximators, is one of the root problems that limits generalization. On top
+    of this, some portion of the problems are directly caused by the utilization of
+    deep neural networks and thereby the intrinsic problems inherited from their utilization
+    (Goodfellow et al., [2015](#bib.bib21); Szegedy et al., [2014](#bib.bib63); Korkmaz,
+    [2022](#bib.bib39)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this paper we will focus on generalization in deep reinforcement learning
+    and the underlying causes of the limitations deep reinforcement learning research
+    currently faces. In particular, we will try to answer the following questions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What is the role of exploration in overfitting for deep reinforcement learning?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What are the causes of overestimation bias observed in state-action value functions?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What has been done to overcome the overfitting problems that deep reinforcement
+    learning algorithms have encountered so far?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What future directions are there for reinforcement learning research to obtain
+    higher level generalization abilities for deep neural policies?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: To answer these questions we will go through research connecting several subfields
+    in reinforcement learning on the problems and corresponding proposed solutions
+    regarding generalization. In this paper we introduce a categorization of the different
+    methods used to both achieve and test generalization, and use it to systematically
+    summarize and consolidate the current body of research. We further describe the
+    issue of value function overestimation, and the role of exploration in overfitting
+    in reinforcement learning. Furthermore, we explain new emerging research areas
+    that can potentially target these questions in the long run including meta-reinforcement
+    learning and lifelong learning. We hope that our paper can provide a compact overview
+    and unification of the current advancements and limitations in the field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Preliminaries on Deep Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The aim in deep reinforcement learning is to learn a policy via interacting
+    with an environment in a Markov Decision Process (MDP) that maximize expected
+    cumulative discounted rewards. An MDP is represented by a tuple $\mathcal{M}=(S,A,P,r,\rho_{0},\gamma)$,
+    where $S$ represents the state space, $A$ represents the action space, $r:S\times
+    A\to\mathbb{R}$ is a reward function, $\mathcal{P}:S\times A\to\Delta(S)$ is a
+    transition probability kernel, $\rho_{0}$ represents the initial state distribution,
+    and $\gamma$ represents the discount factor. The objective in reinforcement learning
+    is to learn a policy $\pi:S\to\Delta(A)$ which maps states to probability distributions
+    on actions in order to maximize the expected cumulative reward $R=\mathbb{E}\sum_{t=0}^{T-1}\gamma^{t}r(s_{t},a_{t})$
+    where $a_{t}\sim\pi(s_{t}),s_{t+1}\sim\mathcal{P}(s_{t},a_{t})$. In $Q$-learning
+    the goal is to learn the optimal state-action value function (Watkins, [1989](#bib.bib74))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $Q^{*}(s,a)=R(s,a)+\sum_{s^{\prime}\in S}P(s^{\prime}&#124;s,a)\max_{a^{\prime}\in
+    A}Q^{*}(s^{\prime},a^{\prime}).$ |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: This is achieved via iterative Bellman update which updates $Q(s_{t},a_{t})$
+    by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $Q(s_{t},a_{t})+\alpha[\mathcal{R}_{t+1}+\gamma\max_{a}Q(s_{t+1},a)-Q(s_{t},a_{t})].$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Thus, the optimal policy is determined by choosing the action $a^{*}(s)=\operatorname*{arg\,max}_{a}Q(s,a)$
+    in state $s$. In high dimensional state space or action space MDPs the optimal
+    policy is decided via a function-approximated state-action value function represented
+    by a deep neural network. In a parallel line of algorithm families the policy
+    itself is directly parametrized by $\pi_{\theta}$, and the gradient estimator
+    used in learning is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $g=\mathbb{E}_{t}\big{[}\nabla_{\theta}\log\pi_{\theta}(s_{t},a_{t})(Q(s_{t},a_{t})-\max_{a}Q(s_{t},a))\big{]}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $Q(s_{t},a_{t})$ refers to the state-action value function at timestep
+    $t$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 How to Achieve Generalization?
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To be able to categorize different paths to achieve generalization first we
+    will provide a definition meant to capture the behavior of a generic reinforcement
+    learning algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.1.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: A reinforcement learning training algorithm $\mathcal{A}$ learns a policy $\pi$
+    by interacting with an MDP $\mathcal{M}$. We divide up the execution of $\mathcal{A}$
+    into discrete time steps as follows. At each time $t$, the algorithm chooses a
+    state $s_{t}$, takes an action $a_{t}$, observes a transition to state $s^{\prime}_{t}$
+    with corresponding reward $r_{t}=r(s_{t},a_{t},s^{\prime}_{t})$. We define the
+    history of algorithm $\mathcal{A}$ in MDP $\mathcal{M}$ to be the sequence $H_{t}=(s_{0},a_{0},s^{\prime}_{0},r_{0}),\dots(s_{t},a_{t},s^{\prime}_{t},r_{t})$
+    of all the transitions observed by the algorithm so far. We require that state
+    and action $(s_{t},a_{t})$ chosen at time $t$ are a function only of $H_{t-1}$,
+    i.e the transitions observed so far by $\mathcal{A}$. At time $t=T$, the algorithm
+    stops and outputs a policy $\pi$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Intuitively, a reinforcement learning algorithm performs a sequence of queries
+    $(s_{t},a_{t})$ to the MDP, and observes the resulting state transitions and rewards.
+    In order to be as generic as possible, the definition makes no assumptions about
+    how the algorithm chooses the sequence of queries. Notably, if taking action $a_{t}$
+    in state $s_{t}$ leads to a transition to state $s^{\prime}_{t}$, there is no
+    requirement that $s_{t+1}=s^{\prime}_{t}$. Indeed, the only assumption is that
+    $(s_{t+1},a_{t+1})$ depends only on $H_{t}$, the history of transitions observed
+    so far. This allows the definition to capture deep reinforcement learning algorithms,
+    which may choose to query states and actions in a complex way based on previously
+    observed state transitions. Based on this definition of generic reinforcement
+    learning algorithm, we will now further define the different techniques proposed
+    to achieve generalization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.2  (*Rewards transforming generalization*).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Let $\mathcal{A}$ be a training algorithm that takes as input an MDP and outputs
+    a policy. Given an MDP $\mathcal{M}=(S,A,P,r,\rho_{0},\gamma)$, a *rewards transforming*
+    generalization method $\mathcal{G}_{R}$ is given by a sequence of functions $F_{t}:(S\times
+    A\times S\times\mathbb{R})^{t}\to\mathbb{R}$. The method attempts to achieve generalization
+    by running $\mathcal{A}$ on MDP $\mathcal{M}$, but modifying the rewards at each
+    time $t$ to be $\tilde{r}_{t}(s_{t},a_{t},s^{\prime}_{t})=F_{t-1}(H_{t-1})$, where
+    $H_{t-1}$ is the history of algorithm $\mathcal{A}$ when running with the perturbed
+    rewards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In summary, a rewards transforming generalization methods simply runs the original
+    algorithm, but modifies the observed rewards. Similarly, we define two additional
+    generalization methods which run the original algorithm while modifying states
+    and transition probabilities respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.3  (*State transforming generalization*).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Let $\mathcal{A}$ be a training algorithm that takes as input an MDP and outputs
+    a policy. Given an MDP $\mathcal{M}=(S,A,P,r,\rho_{0},\gamma)$, a *state transforming*
+    generalization method $\mathcal{G}_{S}$ is given by a sequence of functions $F_{t}:(S\times
+    A\times S\times\mathbb{R})^{t}\times S\to S$. The method attempts to achieve generalization
+    by running $\mathcal{A}$ on MDP $\mathcal{M}$, but modifying the state chosen
+    at time $t$ to be $\tilde{s}_{t}=F_{t-1}(H_{t-1},s_{t})$, where $H_{t-1}$ is the
+    history of algorithm $\mathcal{A}$ when running with the perturbed states.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.4  (*Transition probability transforming generalization*).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Let $\mathcal{A}$ be a training algorithm that takes as input an MDP and outputs
+    a policy. Given an MDP $\mathcal{M}=(S,A,P,r,\rho_{0},\gamma)$, a *transition
+    probability transforming* generalization method $\mathcal{G}_{\mathcal{P}}$ is
+    given by a sequence of functions $F_{t}:(S\times A\times S\times\mathbb{R})^{t}\times(S\times
+    A\times S)\to\mathbb{R}$. The method attempts to achieve generalization by running
+    $\mathcal{A}$ on MDP $\mathcal{M}$, but modifying the transition probabilities
+    at time $t$ to be $\tilde{P}(s_{t},a_{t},s^{\prime}_{t})=F_{t-1}(H_{t-1},s_{t},a_{t},s^{\prime}_{t})$,
+    where $H_{t-1}$ is the history of algorithm $\mathcal{A}$ when running with the
+    perturbed transition probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last type of generalization method we define is based on directly modifying
+    the way in which the training algorithm chooses the state and action pair for
+    the next time step. While this definition is broad enough to capture very complex
+    changes to the training algorithm, in practice the choice of modification generally
+    has a simple description.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.5  (*Policy transforming generalization*).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Let $\mathcal{A}$ be a training algorithm that takes as input an MDP and outputs
+    a policy. Given an MDP $\mathcal{M}=(S,A,P,r,\rho_{0},\gamma)$, a *policy transforming*
+    generalization method $\mathcal{G}_{\pi}$ is given by a sequence of functions
+    $F_{t}:(S\times A\times S\times\mathbb{R})^{t}\to S\times A$. The method attempts
+    to achieve generalization by running $\mathcal{A}$ on MDP $\mathcal{M}$, but modifying
+    the policy by which $\mathcal{A}$ chooses the next state and action to be $(\tilde{s_{t}},\tilde{a_{t}})=F_{t-1}(H_{t-1})$,
+    where $H_{t-1}$ is the history of algorithm $\mathcal{A}$ when running with the
+    perturbed policy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the definitions so far categorize methods to modify training algorithms
+    in order to achieve generalization. However, many such methods for modifying training
+    algorithms have a corresponding method which can be used to test the generalization
+    capabilities of a trained policy. Our final definition captures this correspondence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.6  (*Generalization testing*).
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Let $\hat{\pi}$ be a trained policy for an MDP $\mathcal{M}$. Let $F_{t}$ be
+    a sequence of functions corresponding to a generalization method from one of the
+    previous definitions. The *generalization testing* method of $F_{t}$ is given
+    by executing the policy $\hat{\pi}$ in $\mathcal{M}$, but in each time step applying
+    the modification $F_{t}$ where the history $H_{t}$ is given by the transitions
+    executed by $\hat{\pi}$ so far. When both a generalization method and a generalization
+    testing method are used concurrently, we will use subscripts to denote the generalization
+    method and superscripts to denote the testing method. For instance, $\mathcal{G}_{S}^{\pi}$
+    corresponds to training with a state transforming method, and testing with a policy
+    transforming method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Roots of Overestimation in Deep Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Many reinforcement learning algorithms compute estimates for the state-action
+    values in an MDP. Because these estimates are usually based on a stochastic interaction
+    with the MDP, computing accurate estimates that correctly generalize to further
+    interactions is one of the most fundamental tasks in reinforcement learning. A
+    major challenge in this area has been the tendency of many classes of reinforcement
+    learning algorithms to consistently overestimate state-action values. Initially
+    the overestimation bias for $Q$-learning is discussed and theoretically justified
+    by Thrun & Schwartz ([1993](#bib.bib65)) as a biproduct of using function approximators
+    for state-action value estimates. Following this initial discussion it has been
+    shown that several parts of the deep reinforcement learning process can cause
+    overestimation bias. Learning overestimated state-action values can be caused
+    by statistical bias of utilizing a single max operator (van Hasselt, [2010](#bib.bib67)),
+    coupling between value function and the optimal policy (Raileanu & Fergus, [2021](#bib.bib59);
+    Cobbe et al., [2021](#bib.bib13)), or caused by the accumulated function approximation
+    error (Boyan & Moore, [1994](#bib.bib9)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Several methods have been proposed to target overestimation bias for value iteration
+    algorithms. In particular, to solve this overestimation bias introduced by the
+    max operator (van Hasselt, [2010](#bib.bib67)) proposed to utilize a double estimator
+    for the state-action value estimates. Later, the authors also created a version
+    of this algorithm that can solve high dimensional state space problems (Hasselt
+    et al., [2016](#bib.bib23)). Some of the work on this line of research targeting
+    overestimation bias for value iteration algorithms is based on simply averaging
+    the state-action values with previously learned state-action value estimates during
+    training time (Anschel et al., [2017](#bib.bib4)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: While overestimation bias was demonstrated to be a problem and discussed over
+    a long period of time (Thrun & Schwartz, [1993](#bib.bib65); van Hasselt, [2010](#bib.bib67)),
+    recent studies also further demonstrated that actor critic algorithms also suffer
+    from this issue (Fujimoto et al., [2018](#bib.bib16)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Environment and algorithm details for different exploration strategies
+    for generalization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Citation | Proposed Method | Environment | Reinforcement Learning Algorithm
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mnih et al. ([2015](#bib.bib53)) | $\epsilon$-greedy | ALE | DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bellemare et al. ([2016](#bib.bib8)) | Count-based | ALE | A3C and DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Osband et al. ([2016b](#bib.bib57)) | RLSVI | Tetris | Tabular $Q$-learning
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Osband et al. ([2016a](#bib.bib56)) | Bootstrapped DQN | ALE | DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Houthooft et al. ([2017](#bib.bib24)) | VIME | DeepMind Control Suite | TRPO
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fortunato et al. ([2018](#bib.bib15)) | NoisyNet | ALE | A3C and DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lee et al. ([2021](#bib.bib48)) | SUNRISE | DCS¹¹1DeepMind Control Suiteand
+    Atari | Soft Actor-Critic and Rainbow DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: 5 The Role of Exploration in Overfitting
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The fundamental trade-off of exploration vs exploitation is the dilemma that
+    the agent can try to take actions to move towards more unexplored states by sacrificing
+    the current immediate rewards. While there is a significant body of studies on
+    provably efficient exploration strategies the results from these studies do not
+    necessarily directly transfer to the high dimensional state or action MDPs. The
+    most prominent indication of this is that, even though it is possible to use deep
+    neural networks as function approximators for large state spaces, the agent will
+    simply not be able to explore the full state space. The fact that the agent is
+    able to only explore a portion of the state space simply creates a bias in the
+    learnt value function (Baird, [1995](#bib.bib5)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will go through several exploration strategies in deep reinforcement
+    learning and how they affect policy overfitting. A quite simple version of this
+    is based on adding noise in action selection during training e.g. $\epsilon$-greedy
+    exploration. Note that this is an example of a policy transforming generalization
+    method $\mathcal{G}_{\pi}$ in Definition [3.5](#S3.Thmtheorem5 "Definition 3.5
+    (Policy transforming generalization). ‣ 3 How to Achieve Generalization? ‣ A Survey
+    Analyzing Generalization in Deep Reinforcement Learning") in Section [3](#S3 "3
+    How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep Reinforcement
+    Learning"). While $\epsilon$-greedy exploration is widely used in deep reinforcement
+    learning (Wang et al., [2016](#bib.bib73); Hamrick et al., [2020](#bib.bib22);
+    Kapturowski et al., [2023](#bib.bib31)), it has also been proven that to explore
+    the state space these algorithms may take exponentially long (Kakade, [2003](#bib.bib30)).
+    Several others focused on randomizing different components of the reinforcement
+    learning training algorithms. In particular, (Osband et al., [2016b](#bib.bib57))
+    proposes the randomized least squared value iteration algorithm to explore more
+    efficiently in order to increase generalization in reinforcement learning for
+    linearly parametrized value functions. This is achieved by simply adding Gaussian
+    noise as a function of state visitation frequencies to the training dataset. Later,
+    the authors also propose the bootstrapped DQN algorithm (i.e. adding temporally
+    correlated noise) to increase generalization with non-linear function approximation
+    (Osband et al., [2016a](#bib.bib56)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Houthooft et al. ([2017](#bib.bib24)) proposed an exploration technique centered
+    around maximizing the information gain on the agent’s belief of the environment
+    dynamics. In practice, the authors use Bayesian neural networks for effectively
+    exploring high dimensional action space MDPs. Following this line of work on increasing
+    efficiency during exploration Fortunato et al. ([2018](#bib.bib15)) proposes to
+    add parametric noise to the deep reinforcement learning policy weights in high
+    dimensional state MDPs. While several methods focused on ensemble state-action
+    value function learning (Osband et al., [2016a](#bib.bib56)), Lee et al. ([2021](#bib.bib48))
+    proposed reweighting target Q-values from an ensemble of policies (i.e. weighted
+    Bellman backups) combined with highest upper-confidence bound action selection.
+    Another line of research in exploration strategies focused on count-based methods
+    that use the direct count of state visitations. In this line of work, Bellemare
+    et al. ([2016](#bib.bib8)) tried to lay out the relationship between count based
+    methods and intrinsic motivation, and used count-based methods for high dimensional
+    state MDPs (i.e. Arcade Learning Environment). Yet it is worthwhile to note that
+    most of the current deep reinforcement learning algorithms use very simple exploration
+    techniques such as $\epsilon$-greedy which is based on taking the action maximizing
+    the state-action value function with probability $1-\epsilon$ and taking a random
+    action with probability $\epsilon$ (Mnih et al., [2015](#bib.bib53); Hasselt et al.,
+    [2016](#bib.bib23); Wang et al., [2016](#bib.bib73); Hamrick et al., [2020](#bib.bib22);
+    Kapturowski et al., [2023](#bib.bib31)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is possible to argue that the fact that the deep reinforcement learning policy
+    obtained a higher score with the same number of samples by a particular type of
+    training method $\mathcal{A}$ compared to method $\mathcal{B}$ is by itself evidence
+    that the technique $\mathcal{A}$ leads to more generalized policies. Even though
+    the agent is trained and tested in the same environment, the explored states during
+    training time are not exactly the same states visited during test time. The fact
+    that the policy trained with technique $\mathcal{A}$ obtains a higher score at
+    the end of an episode is sole evidence that the agent trained with $\mathcal{A}$
+    was able to visit further states in the MDP and thus succeed in them. Yet, throughout
+    the paper we will discuss different notions of generalization investigated in
+    different subfields of reinforcement learning research. While exploration vs exploitation
+    stands out as one of the main problems in reinforcement learning policy performance
+    most of the work conducted in this section focuses on achieving higher score in
+    hard-exploration games (i.e. Montezuma’s Revenge) rather than aiming for a generally
+    higher score for each game overall across a given benchmark. Thus, it is possible
+    that the majority of work focusing on exploration so far might not be able to
+    obtain policies that perform as well as those in the studies described in Section
+    [6](#S6 "6 Regularization ‣ A Survey Analyzing Generalization in Deep Reinforcement
+    Learning") across a given benchmark.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Regularization
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we will focus on different regularization techniques employed
+    to increase generalization in deep reinforcement learning policies. We will go
+    through these works by categorizing each of them under data augmentation, adversarial
+    training, and direct function regularization. Under each category we will connect
+    these different line of approaches to increase generalization in deep reinforcement
+    learning to the settings we defined in Section [3](#S3 "3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: Environment and algorithm details for data augmentation techniques
+    for state observation generalization. All of the studies in this section focus
+    on state transformation methods $\mathcal{G}_{S}$ defined in Section [3](#S3 "3
+    How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep Reinforcement
+    Learning").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Citation | Proposed Method | Environment | Reinforcement Learning Algorithm
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Yarats et al. ([2021](#bib.bib77)) | DrQ | DeepMind Control Suite, ALE |
+    DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Laskin et al. ([2020b](#bib.bib45)) | CuRL | DeepMind Control Suite, ALE
+    | Soft Actor Critic and DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Laskin et al. ([2020a](#bib.bib44)) | RAD | DeepMind Control Suite, ProcGen
+    | Soft Actor Critic and PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wang et al. ([2020](#bib.bib72)) | Mixreg | ProcGen | DQN and PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: 6.1 Data Augmentation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Several studies focus on diversifying the observations of the deep reinforcement
+    learning policy to increase generalization capabilities. A line of research in
+    this regard focused on simply employing versions of data augmentation techniques
+    (Laskin et al., [2020a](#bib.bib44); [b](#bib.bib45); Yarats et al., [2021](#bib.bib77))
+    for high dimensional state representation environments. In particular, these studies
+    involve simple techniques such as cropping, rotating or shifting the state observations
+    during training time. While this line of work got considerable attention, a quite
+    recent study (Agarwal et al., [2021b](#bib.bib2)) demonstrated that when the number
+    of random seeds is increased to one hundred the relative performance achieved
+    and reported in the original papers of (Laskin et al., [2020b](#bib.bib45); Yarats
+    et al., [2021](#bib.bib77)) on data augmentation training in deep reinforcement
+    learning decreases to a level that might be significant to mention.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While some of the work on this line of research simply focuses on using a set
+    of data augmentation methods (Laskin et al., [2020a](#bib.bib44); [b](#bib.bib45);
+    Yarats et al., [2021](#bib.bib77)), other work focuses on proposing new environments
+    to train in (Cobbe et al., [2020](#bib.bib12)). The studies on designing new environments
+    to train deep reinforcement learning policies basically aim to provide high variation
+    in the observed environment such as changing background colors and changing object
+    shapes in ways that are meaningful in the game, in order to increase test time
+    generalization. In the line of robustness and test time performance, a more recent
+    work that is also mentioned in Section [6.3](#S6.SS3 "6.3 The Adversarial Perspective
+    for Deep Neural Policy Generalization ‣ 6 Regularization ‣ A Survey Analyzing
+    Generalization in Deep Reinforcement Learning") demonstrated that imperceptible
+    data augmentations can cause significant damage on the policy performance and
+    certified robust deep reinforcement learning policies are more vulnerable to these
+    imperceptible augmentations (Korkmaz, [2023](#bib.bib40)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Within this category some work focuses on producing more observations by simply
+    blending in (e.g. creating a mixture state from multiple different observations)
+    several observations to increase generalization (Wang et al., [2020](#bib.bib72)).
+    While most of the studies trying to increase generalization by data augmentation
+    techniques are primarily conducted in the DeepMind Control Suite or the Arcade
+    Learning Environment (ALE) (Bellemare et al., [2013](#bib.bib7)), some small fraction
+    of these studies (Wang et al., [2020](#bib.bib72)) are conducted in relatively
+    recently designed training environments like ProcGen (Cobbe et al., [2020](#bib.bib12)).
+    Cobbe et al. ([2019](#bib.bib11)) focuses on decoupling the training and testing
+    set for reinforcement learning via simply proposing a new game environment CoinRun.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 3: Environment and algorithm details for different direct function regularization
+    strategies for trying to overcome overfitting problems in reinforcement learning.
+    Note that most of the methods based on direct function regularization are a form
+    of policy perturbation method $\mathcal{G}_{\pi}$ to overcome overfitting as described
+    in Section [3](#S3 "3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization
+    in Deep Reinforcement Learning").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Citation | Proposed Method | Environment | Reinforcement Learning Algorithm
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Igl et al. ([2019](#bib.bib27)) | SNI and IBAC | GridWorld and CoinRun |
+    Proximal Policy Optimization |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vieillard et al. ([2020b](#bib.bib70)) | Munchausen RL | Atari | DQN and
+    IQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lee et al. ([2020](#bib.bib47)) | Network Randomization | 2D CoinRun and
+    3D DeepMind Lab | Proximal Policy Optimization |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Amit et al. ([2020](#bib.bib3)) | Discount Regularization | GridWorld and
+    Mujoco²²2Low dimensional setting of Mujoco is used for this study. | Twin Delayed
+    DDPG (TD3) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Agarwal et al. ([2021a](#bib.bib1)) | PSM | DDMC and Rectangle Game³³3Rectangle
+    game is a simple video game with only two actions, ”Right” and ”Jump”. The game
+    has black background and two rectangles where the goal of the game is to avoid
+    white obstacles and reach to the right side of the screen. Agarwal et al. ([2021a](#bib.bib1))
+    is the only paper we encountered experimenting with this particular game. | DrQ
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Liu et al. ([2021](#bib.bib50)) | BN and dropout and $L_{2}/L_{1}$ | Mujoco
+    | PPO, TRPO, SAC, A2C |'
+  prefs: []
+  type: TYPE_TB
+- en: 6.2 Direct Function Regularization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While some of the work we have discussed so far focuses on regularizing the
+    data (i.e. state observations) as in Section [6.1](#S6.SS1 "6.1 Data Augmentation
+    ‣ 6 Regularization ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning"),
+    some focuses on directly regularizing the function learned with the intention
+    of simulating techniques from deep neural network regularization like batch normalization
+    and dropout (Igl et al., [2019](#bib.bib27)). While some studies have attempted
+    to simulate these known techniques in reinforcement learning, some focus on directly
+    applying them to overcome overfitting. In this line of research, Liu et al. ([2021](#bib.bib50))
+    proposes to use known techniques from deep neural network regularization to apply
+    in continous control deep reinforcement learning training. In particular, these
+    techniques are batch normalization (BN) (Ioffe & Szegedy, [2015](#bib.bib28)),
+    weight clipping, dropout, entropy and $L_{2}/L_{1}$ weight regularization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lee et al. ([2020](#bib.bib47)) proposes to utilize a random network to randomize
+    the input observations to increase generalization skills of deep reinforcement
+    learning policies, and tests the proposal in the 2D CoinRun game proposed by Cobbe
+    et al. ([2019](#bib.bib11)) and 3D DeepMind Lab. In particular, the authors essentially
+    introduce a random convolutional layer to perturb the state observations. Hence,
+    this study is also a clear example of a state transformation generalization method
+    $\mathcal{G}_{S}$ described in Definition [3.3](#S3.Thmtheorem3 "Definition 3.3
+    (State transforming generalization). ‣ 3 How to Achieve Generalization? ‣ A Survey
+    Analyzing Generalization in Deep Reinforcement Learning"). While this is another
+    example of random state perturbation methods we will further explain in Section
+    [6.3](#S6.SS3 "6.3 The Adversarial Perspective for Deep Neural Policy Generalization
+    ‣ 6 Regularization ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning")
+    the worst-case perturbation methods to target generalization in reinforcement
+    learning policies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some work employs contrastive representation learning to learn deep reinforcement
+    learning policies from state observations that are close to each other (Agarwal
+    et al., [2021a](#bib.bib1)). The authors of this study leverage the temporal aspect
+    of reinforcement learning and propose a policy similarity metric. The main goal
+    of the paper is to lay out the sequential structure and utilize representation
+    learning to learn generalizable abstractions from state representations. One drawback
+    of this study is that most of the experimental study is conducted in a non-baseline
+    environment (Rectangle game). Even though the authors show surprising results
+    for this particular game, it is not directly indicated that the proposed method
+    would work for high dimensional state representation MDPs such as the Arcade Learning
+    Environment. Malik et al. ([2021](#bib.bib51)) studies query complexity of reinforcement
+    learning policies that can generalize to multiple environments. The authors of
+    this study focus on an example of the transition probability transformation setting
+    $\mathcal{G}_{\mathcal{P}}$ in Definition [3.4](#S3.Thmtheorem4 "Definition 3.4
+    (Transition probability transforming generalization). ‣ 3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning"), and the
+    reward function transformation setting $\mathcal{G}_{R}$ in Definition [3.2](#S3.Thmtheorem2
+    "Definition 3.2 (Rewards transforming generalization). ‣ 3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another line of study in direct function generalization investigates the relationship
+    between reduced discount factor and adding an $\ell_{2}$-regularization term to
+    the loss function (i.e. weight decay) (Amit et al., [2020](#bib.bib3)). The authors
+    in this work demonstrate the explicit connection between reducing the discount
+    factor and adding an $\ell_{2}$-regularizer to the value function for temporal
+    difference learning. In particular, this study demonstrates that adding an $\ell_{2}$-regularization
+    term to the loss function is equal to training with a lower discount term, which
+    the authors refer to as discount regularization. The results of this study however
+    are based on experiments from tabular reinforcement learning, and the low dimensional
+    setting of the Mujoco environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the reward transformation for generalization setting $\mathcal{G}_{R}$ defined
+    in Definition [3.2](#S3.Thmtheorem2 "Definition 3.2 (Rewards transforming generalization).
+    ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep
+    Reinforcement Learning"), Vieillard et al. ([2020b](#bib.bib70)) adds the scaled
+    log policy to the current rewards. To overcome overfitting some work tries to
+    learn explicit or implicit similarity between the states to obtain a reasonable
+    policy (Lan et al., [2021](#bib.bib43)). In particular, the authors in this work
+    try to unify the state space representations by providing a taxonomy of metrics
+    in reinforcement learning. Several studies proposed different ways to include
+    Kullback-Leibler (KL) divergence between the current policy and the pre-updated
+    policy to add as a regularization term in the reinforcement learning objective
+    (Schulman et al., [2015](#bib.bib61)). Recently, some studies argued that utilizing
+    Kullback-Leibler regularization implicitly averages the state-action value estimates
+    (Vieillard et al., [2020a](#bib.bib69)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.3 The Adversarial Perspective for Deep Neural Policy Generalization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the ways to regularize the state observations is based on considering
+    worst-case perturbations added to state observations (i.e. adversarial perturbations).
+    This line of work starts with introducing perturbations produced by the fast gradient
+    sign method proposed by Goodfellow et al. ([2015](#bib.bib21)) into deep reinforcement
+    learning observations at test time Huang et al. ([2017](#bib.bib26)) Kos & Song
+    ([2017](#bib.bib42)), and compares the generalization capabilities of the trained
+    deep reinforcement learning policies in the presence worst-case perturbations
+    and Gaussian noise. These gradient based adversarial methods are based on taking
+    the gradient of the cost function used to train the policy with respect to the
+    state observation. Several other techniques have been proposed on the optimization
+    line of the adversarial alteration of state observations. In this line of work,
+    Korkmaz ([2020](#bib.bib33)) suggested a Nesterov momentum-based method to produce
+    adversarial perturbations for deep reinforcement learning policies. Korkmaz ([2022](#bib.bib39))
+    further showed that deep reinforcement learning policies learn shared adversarial
+    features across MDPs. In this work the authors investigate the root causes of
+    this problem, and demonstrate that policy high-sensitivity directions and the
+    perceptual similarity of the state observations are uncorrelated. Furthermore,
+    the study demonstrates that the current state-of-the-art adversarial training
+    techniques also learn similar high-sensitivity directions as the vanilla trained
+    deep reinforcement learning policies.⁴⁴4From the security point of view, this
+    adversarial framework is under the category of black-box adversarial attacks for
+    which this is the first study that demonstrated that deep reinforcement learning
+    policies are vulnerable to black-box adversarial attacks (Korkmaz, [2022](#bib.bib39)).
+    Furthermore, note that black-box adversarial perturbations are more generalizable
+    global perturbations that can effect many different policies. While some studies
+    focused on state observation alterations to assess policy resilience with respect
+    to these changes, some studies focused on interpretability and explainability
+    of these changes in these state observation alterations and how these alterations
+    have different effects on standard deep reinforcement learning training algorithms
+    and certified robust (i.e. adversarial) training algorithms Korkmaz ([2021e](#bib.bib38))⁵⁵5See
+    an initial and preliminary version of this paper here Korkmaz ([2021a](#bib.bib34);
+    [d](#bib.bib37)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 4: Environment and algorithm details for adversarial policy regularization
+    and attack techniques in deep reinforcement learning. Note that most of the methods
+    based on adversarial policy regularization are a form of state observation perturbation
+    method $\mathcal{G}_{S}^{S}$ as described in Definition [3.6](#S3.Thmtheorem6
+    "Definition 3.6 (Generalization testing). ‣ 3 How to Achieve Generalization? ‣
+    A Survey Analyzing Generalization in Deep Reinforcement Learning").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Citation | Proposed Method | Environment | Reinforcement Learning Algorithm
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huang et al. ([2017](#bib.bib26)) | FGSM | ALE | DQN, TRPO, A3C |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kos & Song ([2017](#bib.bib42)) | FGSM | ALE | DQN and IQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lin et al. ([2017](#bib.bib49)) | Strategically-Timed Attack | ALE | A3C
+    and DQN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gleave et al. ([2020](#bib.bib20)) | Adversarial Policies | Mujoco | Proximal
+    Policy Optimization |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huan et al. ([2020](#bib.bib25)) | SA-DQN | ALE and $L_{\textrm{Mujoco}}$⁶⁶6Low
+    dimensional state Mujoco refers to the setting of Mujoco where the state dimensions
+    are not represented by pixels and dimensions of the state observations range from
+    11 to 117. | DDQN and PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Korkmaz ([2022](#bib.bib39)) | Adversarial Framework | ALE | DDQN and A3C
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Korkmaz ([2023](#bib.bib40)) | Natural Attacks | ALE | DDQN and A3C |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Korkmaz & Brown-Cohen ([2023](#bib.bib41)) | Adversarial Detection | ALE
+    | DDQN |'
+  prefs: []
+  type: TYPE_TB
+- en: Note that this line of work falls under the state observation generalization
+    testing category $\mathcal{G}_{S}^{S}$ provided in Definition [3.6](#S3.Thmtheorem6
+    "Definition 3.6 (Generalization testing). ‣ 3 How to Achieve Generalization? ‣
+    A Survey Analyzing Generalization in Deep Reinforcement Learning").
+  prefs: []
+  type: TYPE_NORMAL
+- en: While several studies focused on improving optimization techniques to compute
+    optimal perturbations, a line of research focused on making deep neural policies
+    resilient to these perturbations. Pinto et al. ([2017](#bib.bib58)) proposed to
+    model the dynamics between the adversary and the deep neural policy as a zero-sum
+    game where the goal of the adversary is to minimize expected cumulative rewards
+    of the deep reinforcement learning policy. This study is a clear example of transition
+    probability perturbation to achieve generalization $\mathcal{G}_{\mathcal{P}}$
+    in Definition [3.4](#S3.Thmtheorem4 "Definition 3.4 (Transition probability transforming
+    generalization). ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization
+    in Deep Reinforcement Learning") of Section [3](#S3 "3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning"). Gleave et al.
+    ([2020](#bib.bib20)) approached this problem with an adversary model which is
+    restricted to take natural actions in the MDP instead of modifying the observations
+    with $\ell_{p}$-norm bounded perturbations. The authors model this dynamic as
+    a zero-sum Markov game and solve it via self play Proximal Policy Optimization
+    (PPO). Some recent studies, proposed to model the interaction between the adversary
+    and the deep reinforcement learning policy as a state-adversarial MDP, and claimed
+    that their proposed algorithm State Adversarial Double Deep Q-Network (SA-DDQN)
+    learns theoretically certified robust policies against natural noise and perturbations.
+    In particular, these certified adversarial training techniques aim to add a regularizer
+    term to the temporal difference loss in deep $Q$-learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{H}(r_{i}+\gamma\max_{a}\hat{Q}_{\hat{\theta}}(s_{i},a;\theta)-Q_{\theta}(s_{i},a_{i};\theta))+\kappa\mathcal{R}(\theta)$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathcal{H}$ is the Huber loss, $\hat{Q}$ refers to the target network
+    and $\kappa$ is to adjust the level of regularization for convergence. The regularizer
+    term can vary for different certified adversarial training techniques yet the
+    baseline technique uses
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathcal{R}(\theta)=\max\{\max_{\hat{s}\in B(s)}\max_{a\neq\operatorname*{arg\,max}_{a^{\prime}}Q(s,a^{\prime})}Q_{\theta}(\hat{s},a)-Q_{\theta}(\hat{s},\operatorname*{arg\,max}_{a^{\prime}}Q(s,a^{\prime}),-c\}.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $B(s)$ is an $\ell_{p}$-norm ball of radius $\epsilon$. While these certified
+    adversarial training techniques drew some attention from the community, more recently
+    manifold concerns have been raised on the robustness of theoretically certified
+    adversarially trained deep reinforcement learning policies (Korkmaz, [2021e](#bib.bib38);
+    [2022](#bib.bib39)). In these studies, the authors argue that adversarially trained
+    (i.e. certified robust) deep reinforcement learning policies learn inaccurate
+    state-action value functions and non-robust features from the environment. In
+    particular, in Korkmaz ([2021c](#bib.bib36)) the authors use action manipulation
+    to investigate worst-case perturbation training. This study is also a clear example
+    of a policy perturbation generalization testing method $\mathcal{G}_{S}^{\pi}$
+    in Definition [3.6](#S3.Thmtheorem6 "Definition 3.6 (Generalization testing).
+    ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep
+    Reinforcement Learning"). More importantly, recently it has been shown that adversarially
+    trained deep reinforcement learning policies have worse generalization capabilities
+    compared to vanilla trained reinforcement learning policies in high dimensional
+    state space MDPs (Korkmaz, [2023](#bib.bib40))⁷⁷7A short and preliminary version
+    of the paper (Korkmaz, [2023](#bib.bib40)) can also be found here (Korkmaz, [2021b](#bib.bib35)).
+    While this study provides a contradistinction between adversarial directions and
+    natural directions that are intrinsic to the MDP, it further demonstrates that
+    the certified adversarial training techniques block generalization capabilities
+    of standard deep reinforcement learning policies. Furthermore note that this study
+    is also a clear example of a state observation perturbation generalization testing
+    method $\mathcal{G}_{S}^{S}$ in Definition [3.6](#S3.Thmtheorem6 "Definition 3.6
+    (Generalization testing). ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing
+    Generalization in Deep Reinforcement Learning") in Section [3](#S3 "3 How to Achieve
+    Generalization? ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Meta-Reinforcement Learning and Meta Gradients
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A quite recent line of research directs its research efforts to discovering
+    reinforcement learning algorithms automatically, without explicitly designing
+    them, via meta-gradients (Oh et al., [2020](#bib.bib55); Xu et al., [2020](#bib.bib76)).
+    This line of study targets learning the ”learning algorithm” by only interacting
+    with a set of environments as a meta-learning problem. In particular,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\eta^{*}=\operatorname*{arg\,max}_{\eta}\mathbb{E}_{\varepsilon\sim\rho(\varepsilon)}\mathbb{E}_{\theta_{0}\sim\rho(\theta_{0})}[\mathbb{E}_{\theta_{N}}[\sum_{t=0}^{\infty}\gamma^{t}r_{t}]]$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: here the optimal update rule is parametrized by $\eta$, for a distribution on
+    environments $\rho(\varepsilon)$ and initial policy parameters $\rho(\theta_{0})$
+    where $\mathbb{E}_{\theta_{N}}[\sum_{t=0}^{\infty}\gamma^{t}r_{t}]$ is the expected
+    return for the end of the lifetime of the agent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The objective of meta-reinforcement learning is to be able to build agents that
+    can learn how to learn over time, thus allowing these policies to adapt to a changing
+    environment or even any other changing conditions of the MDP. Quite recently,
+    a significant line of research has been conducted to achieve this objective, particularly
+    Oh et al. ([2020](#bib.bib55)) proposes to discover update rules for reinforcement
+    learning. This line of work also falls under the policy transformation generalization
+    $\mathcal{G}_{\pi}$ in Definition [3.5](#S3.Thmtheorem5 "Definition 3.5 (Policy
+    transforming generalization). ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing
+    Generalization in Deep Reinforcement Learning") defined in Section [3](#S3 "3
+    How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep Reinforcement
+    Learning"). Following this work Xu et al. ([2020](#bib.bib76)) proposed a joint
+    meta-learning framework to learn what the policy should predict and how these
+    predictions should be used in updating the policy. Recently, Kirsch et al. ([2022](#bib.bib32))
+    proposes to use symmetry information in discovering reinforcement learning algorithms
+    and discusses meta-generalization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also some work on enabling reinforcement learning algorithms to discover
+    temporal abstractions (Veeriah et al., [2021](#bib.bib68)). In particular, temporal
+    abstraction refers to the ability of the policy to abstract a sequence of actions
+    to achieve certain sub-tasks. As it is promised within this subfield, meta-reinforcement
+    learning is considered to be a research direction that could enable us to build
+    deep reinforcement learning policies that can generalize to different environments,
+    to changing environments over time, or even to different tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Transfer in Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Transfer in reinforcement learning is a subfield heavily discussed in certain
+    applications of reinforcement learning algorithms e.g. robotics. In current robotics
+    research there is not a safe way of training a reinforcement learning agent by
+    letting the robot explore in real life. Hence, the way to overcome this is to
+    train policies in a simulated environment, and install the trained policies in
+    the actual application setting. The fact that the simulation environment and the
+    installation environment are not identical is one of the main problems for reinforcement
+    learning application research. This is referred to as the sim-to-real gap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another subfield in reinforcement learning research focusing on obtaining generalizable
+    policies investigates this concept through transfer in reinforcement learning.
+    The consideration in this line of research is to build policies that are trained
+    for a particular task with limited data and to try to make these policies perform
+    well on slightly different tasks. An initial discussion on this starts with (Taylor
+    & Stone, [2007](#bib.bib64)) to obtain policies initially trained in a source
+    task and transferred to a target task in a more sample efficient way. Later, Tirinzoni
+    et al. ([2018](#bib.bib66)) proposes to transfer value functions that are based
+    on learning a prior distribution over optimal value functions from a source task.
+    However, this study is conducted in simple environments with low dimensional state
+    spaces. (Barreto et al., [2017](#bib.bib6)) considers the reward transformation
+    setting $\mathcal{G}_{R}$ in Definition [3.2](#S3.Thmtheorem2 "Definition 3.2
+    (Rewards transforming generalization). ‣ 3 How to Achieve Generalization? ‣ A
+    Survey Analyzing Generalization in Deep Reinforcement Learning") from Section
+    [3](#S3 "3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization
+    in Deep Reinforcement Learning"). In particular, the authors consider a policy
+    transfer between a specific task with a reward function $r(s,a)$ and a different
+    task with reward function $r^{\prime}(s,a)$. The goal of the study is to decouple
+    the state representations from the task. In the setting of state transformation
+    for generalization $\mathcal{G}_{S}$ in Definition [3.3](#S3.Thmtheorem3 "Definition
+    3.3 (State transforming generalization). ‣ 3 How to Achieve Generalization? ‣
+    A Survey Analyzing Generalization in Deep Reinforcement Learning") Gamrian & Goldberg
+    ([2019](#bib.bib17)) focuses on state-wise differences between source and target
+    task. In particular, the authors use unaligned generative adversarial networks
+    to create target task states from source task states. In the setting of policy
+    transformation for generalization $\mathcal{G}_{\pi}$ in Definition [3.5](#S3.Thmtheorem5
+    "Definition 3.5 (Policy transforming generalization). ‣ 3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning") Jain et al.
+    ([2020](#bib.bib29)) focuses on zero-shot generalization to a newly introduced
+    action set to increase adaptability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While transfer learning is a promising research direction for reinforcement
+    learning, the studies in this subfield still remain oriented only towards reinforcement
+    learning applications, and it is possible to consider the research centered on
+    this subfield as not at the same level of maturity as the previously discussed
+    line of research in Section [6](#S6 "6 Regularization ‣ A Survey Analyzing Generalization
+    in Deep Reinforcement Learning") in terms of being able to test the claims or
+    propositions in complex established baselines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9 Lifelong Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Lifelong learning is a subfield closely related to transfer learning that has
+    recently drawn attention from the reinforcement learning community. Lifelong learning
+    aims to build policies that can sequentially solve different tasks by being able
+    to transfer knowledge between tasks. On this line of research, Lecarpentier et al.
+    ([2021](#bib.bib46)) provide an algorithm for value-based transfer in the Lipschitz
+    continuous task space with theoretical contributions for lifelong learning goals.
+    In the setting of action transformation for generalization $\mathcal{G}_{\pi}$
+    in Definition [3.5](#S3.Thmtheorem5 "Definition 3.5 (Policy transforming generalization).
+    ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep
+    Reinforcement Learning") Chandak et al. ([2020](#bib.bib10)) focuses on temporally
+    varying (e.g. variations between source task and target task) the action set in
+    lifelong learning. In lifelong reinforcement learning some studies focus on different
+    exploration strategies. In particular, Garcia & Thomas ([2019](#bib.bib18)) models
+    the exploration strategy problem for lifelong learning as another MDP, and the
+    study uses a separate reinforcement learning agent to find an optimal exploration
+    method for the initial lifelong learning agent. The lack of benchmarks limits
+    the progress of lifelong reinforcement learning research by restricting the direct
+    comparison between proposed algorithms or methods. However, quite recent work
+    proposed a new training environment benchmark based on robotics applications for
+    lifelong learning to overcome this issue (Wolczyk et al., [2021](#bib.bib75))⁸⁸8The
+    state dimension for this benchmark is 12\. Hence, the state space is low dimensional..
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10 Inverse Reinforcement Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Inverse reinforcement learning focuses on learning a functioning policy in the
+    absence of a reward function. Since the real reward function is inaccessible in
+    this setting and the reward function needs to be learnt from observing an expert
+    completing the given task, the inverse reinforcement learning setting falls under
+    the reward transformation for generalization setting $\mathcal{G}_{R}$ defined
+    in Definition [3.2](#S3.Thmtheorem2 "Definition 3.2 (Rewards transforming generalization).
+    ‣ 3 How to Achieve Generalization? ‣ A Survey Analyzing Generalization in Deep
+    Reinforcement Learning") in Section [3](#S3 "3 How to Achieve Generalization?
+    ‣ A Survey Analyzing Generalization in Deep Reinforcement Learning"). The initial
+    work that introduced inverse reinforcement learning was proposed by Ng & Russell
+    ([2000](#bib.bib54)) demonstrating that multiple different reward functions can
+    be constructed for an observed optimal policy. The authors of this initial study
+    achieve this objective via linear programming,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\textrm{maximize}\sum_{s\in S_{\rho}}$ | $\displaystyle\min_{a\in
+    A}\{p(\mathbb{E}_{s^{\prime}\sim\mathcal{P}(s,a_{1}&#124;\cdot)}\mathcal{V}^{\pi}(s^{\prime})-\mathbb{E}_{s^{\prime}\sim\mathcal{P}(s,a&#124;\cdot)}\mathcal{V}^{\pi}(s^{\prime}))\}$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle\textrm{s.t.}\>\>&#124;\alpha_{i}&#124;\leq 1\>,\>i=1,2,\dots,d$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $p(x)=x$ if $x\geq 0$, $p(x)=2x$ otherwise and $\mathcal{V}^{\pi}=\alpha_{1}\mathcal{V}^{\pi}_{1}+\alpha_{2}\mathcal{V}^{\pi}_{2}+\dots+\alpha_{d}\mathcal{V}^{\pi}_{d}$.
+    In this line of work, there has been recent progress that achieved learning functioning
+    policies in high-dimensional state observation MDPs (Garg et al., [2021](#bib.bib19)).
+    The study achieves this by learning a soft $Q$-function from observing expert
+    demonstrations, and the study further argues that it is possible to recover rewards
+    from the learnt soft state-action value function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this paper we tried to answer the following questions: (i) What are the
+    explicit problems limiting reinforcement learning algorithms from obtaining high-performing
+    policies that can generalize? (ii) How can we categorize the different techniques
+    proposed so far to achieve generalization in reinforcement learning? (iii) What
+    are the similarities and differences of these different techniques proposed by
+    different subfields of reinforcement learning research to build reinforcement
+    learning policies that generalize? To answer these questions first we explain
+    the importance of exploration strategies in overfitting, and explain the manifold
+    causes of overestimation bias in reinforcement learning. In the second part of
+    the paper we propose a framework to unify and categorize the various techniques
+    to achieve generalization in reinforcement learning. Starting from explaining
+    all the different regularization techniques in either state representations or
+    in learnt value functions from worst-case to average-case, we provide a current
+    layout of the wide range of reinforcement learning subfields that are essentially
+    working towards the same objective, i.e. generalizable deep reinforcement learning
+    policies. Finally, we provided a discussion for each category on the drawbacks
+    and advantages of these algorithms. We believe our study can provide a compact
+    unifying formalization on recent reinforcement learning generalization research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Agarwal et al. (2021a) Rishabh Agarwal, Marlos C. Machado, Pablo Samuel Castro,
+    and Marc G. Bellemare. Contrastive behavioral similarity embeddings for generalization
+    in reinforcement learning. In *International Conference on Learning Representations
+    (ICLR)*, 2021a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Agarwal et al. (2021b) Rishabh Agarwal, Max Schwarzer, Pablo Samuel Castro,
+    Aaron C. Courville, and Marc G. Bellemare. Deep reinforcement learning at the
+    edge of the statistical precipice. *Conference on Neural Information Processing
+    Systems (NeurIPS)*, 2021b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Amit et al. (2020) Ron Amit, Ron Meir, and Kamil Ciosek. Discount factor as
+    a regularizer in RL. In *International Conference on Machine Learning (ICML)*,
+    2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Anschel et al. (2017) Oron Anschel, Nir Baram, and Nahum Shimkin. Averaged-dqn:
+    Variance reduction and stabilization for deep reinforcement learning. In *International
+    Conference on Machine Learning (ICML)*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Baird (1995) Leemon Baird. Residual algorithms: RL with function approximation.
+    In *International Conference on Machine Learning (ICML)*, 1995.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Barreto et al. (2017) André Barreto, Will Dabney, Rémi Munos, Jonathan J. Hunt,
+    Tom Schaul, David Silver, and Hado van Hasselt. Successor features for transfer
+    in reinforcement learning. In *Conference on Neural Information Processing Systems
+    (NeurIPS)*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bellemare et al. (2013) Marc G Bellemare, Yavar Naddaf, Joel Veness, and Michael.
+    Bowling. The arcade learning environment: An evaluation platform for general agents.
+    *JAIR*, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bellemare et al. (2016) Marc G. Bellemare, Sriram Srinivasan, Georg Ostrovski,
+    Tom Schaul, David Saxton, and Rémi Munos. Unifying count-based exploration and
+    intrinsic motivation. *Conference on Neural Information Processing Systems (NeurIPS)*,
+    2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Boyan & Moore (1994) Justin A. Boyan and Andrew W. Moore. Generalization in
+    rl: Safely approximating the value function. In *Conference on Neural Information
+    Processing Systems (NeurIPS)*, 1994.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chandak et al. (2020) Yash Chandak, Georgios Theocharous, Chris Nota, and Philip S.
+    Thomas. Lifelong learning with a changing action set. In *AAAI Conference on Artificial
+    Intelligence, AAAI* , 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cobbe et al. (2019) Karl Cobbe, Oleg Klimov, Christopher Hesse, Taehoon Kim,
+    and John Schulman. Quantifying generalization in reinforcement learning. In *International
+    Conference on Machine Learning (ICML)*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cobbe et al. (2020) Karl Cobbe, Christopher Hesse, Jacob Hilton, and John Schulman.
+    Leveraging procedural generation to benchmark reinforcement learning. *International
+    Conference on MAchine Learning (ICML)*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cobbe et al. (2021) Karl Cobbe, Jacob Hilton, Oleg Klimov, and John Schulman.
+    Phasic policy gradient. In *International Conference on Machine Learning (ICML)*,
+    2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fawzi et al. (2022) Alhussein Fawzi, Matej Balog, Aja Huang, Thomas Hubert,
+    Bernardino Romera-Paredes, Mohammadamin Barekatain, Alexander Novikov, Francisco
+    J. R. Ruiz, Julian Schrittwieser, Grzegorz Swirszcz, David Silver, Demis Hassabis,
+    and Pushmeet Kohli. Discovering faster matrix multiplication algorithms with reinforcement
+    learning. *Nature*, 610(7930):47–53, 2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fortunato et al. (2018) Meire Fortunato, Mohammad Gheshlaghi Azar, Bilal Piot,
+    Jacob Menick, Ian Osband, Alex Graves, Vlad Mnih, Rémi Munos, Demis Hassabis,
+    Olivier Pietquin, Charles Blundell, and Shane Legg. Noisy networks for exploration.
+    *International Conference on Learning Representations (ICLR)*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fujimoto et al. (2018) Scott Fujimoto, Herke van Hoof, and David Meger. Addressing
+    function approximation error in actor-critic methods. In *International Conference
+    on Machine Learning (ICML)*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gamrian & Goldberg (2019) Shani Gamrian and Yoav Goldberg. Transfer learning
+    for related RL tasks via image-to-image translation. In *International Conference
+    on Machine Learning (ICML)*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Garcia & Thomas (2019) Francisco M. Garcia and Philip S. Thomas. A meta-mdp
+    approach to exploration for lifelong reinforcement learning. In *Conference on
+    Neural Information Processing Systems (NeurIPS)*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Garg et al. (2021) Divyansh Garg, Shuvam Chakraborty, Chris Cundy, Jiaming
+    Song, and Stefano Ermon. Iq-learn: Inverse soft-q learning for imitation. *Neural
+    Information Processing Systems (NeurIPS) [Spotlight Presentation]*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gleave et al. (2020) Adam Gleave, Michael Dennis, Cody Wild, Kant Neel, Sergey
+    Levine, and Stuart Russell. Adversarial policies: Attacking deep RL. *International
+    Conference on Learning Representations (ICLR)*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Goodfellow et al. (2015) Ian Goodfellow, Jonathan Shelens, and Christian Szegedy.
+    Explaning and harnessing adversarial examples. *International Conference on Learning
+    Representations (ICLR)*, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hamrick et al. (2020) Jessica Hamrick, Victor Bapst, Alvaro SanchezGonzalez,
+    Tobias Pfaff, Theophane Weber, Lars Buesing, and Peter Battaglia. Combining q-learning
+    and search with amortized value estimates. In *8th International Conference on
+    Learning Representations, ICLR*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hasselt et al. (2016) Hado van Hasselt, Arthur Guez, and David Silver. Deep
+    reinforcement learning with double q-learning. *AAAI Conference on Artificial
+    Intelligence, AAAI*, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Houthooft et al. (2017) Rein Houthooft, Xi Chen, Yan Duan, John Schulman, Filip De
+    Turck, and Pieter Abbeel. VIME: variational information maximizing exploration.
+    In *Conference on Neural Information Processing Systems (NeurIPS)*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huan et al. (2020) Zhang Huan, Chen Hongge, Xiao Chaowei, Bo Li, Mingyan Boning,
+    Duane Liu, and ChoJui Hsiesh. Robust deep reinforcement learning against adversarial
+    perturbations on state observatons. *Conference on Neural Information Processing
+    Systems (NeurIPS)*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2017) Sandy Huang, Nicholas Papernot, Yan Goodfellow, Ian an Duan,
+    and Pieter Abbeel. Adversarial attacks on neural network policies. *International
+    Conference on Learning Representations (ICLR)*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Igl et al. (2019) Maximilian Igl, Kamil Ciosek, Yingzhen Li, Sebastian Tschiatschek,
+    Cheng Zhang, Sam Devlin, and Katja Hofmann. Generalization in reinforcement learning
+    with selective noise injection and information bottleneck. *Conference on Neural
+    Information Processing Systems (NeurIPS)*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ioffe & Szegedy (2015) Sergey Ioffe and Christian Szegedy. Batch normalization:
+    Accelerating deep network training by reducing internal covariate shift. In *International
+    Conference on Machine Learning (ICML)*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jain et al. (2020) Ayush Jain, Andrew Szot, and Joseph J. Lim. Generalization
+    to new actions in RL. In *International Conference on Machine Learning (ICML)*,
+    2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kakade (2003) Sham Kakade. On the sample complexity of reinforcement learning.
+    In *PhD Thesis*, 2003.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kapturowski et al. (2023) Steven Kapturowski, Victor Campos, Ray Jiang, Nemanja
+    Rakicevic, Hado van Hasselt, Charles Blundell, and Adrià Puigdomènech Badia. Human-level
+    atari 200x faster. In *The Eleventh International Conference on Learning Representations,
+    ICLR 2023*, 2023.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kirsch et al. (2022) Louis Kirsch, Sebastian Flennerhag, Hado van Hasselt, Abram L.
+    Friesen, Junhyuk Oh, and Yutian Chen. Introducing symmetries to black box meta
+    reinforcement learning. In *AAAI Conference on Artificial Intelligence, AAAI*,
+    2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2020) Ezgi Korkmaz. Nesterov momentum adversarial perturbations in
+    the deep reinforcement learning domain. *International Conference on Machine Learning
+    (ICML) Workshop.*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2021a) Ezgi Korkmaz. Adversarially trained neural policies in fourier
+    domain. *International Conference on Learning Representation (ICLR) Robust and
+    Reliable Machine Learning in the Real World Workshop*, 2021a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2021b) Ezgi Korkmaz. Adversarial training blocks generalization in
+    neural policies. *International Conference on Learning Representation (ICLR) Robust
+    and Reliable Machine Learning in the Real World Workshop*, 2021b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2021c) Ezgi Korkmaz. Inaccuracy of state-action value function for
+    non-optimal actions in adversarially trained deep neural policies. In *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops*,
+    2021c.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2021d) Ezgi Korkmaz. Non-robust feature mapping in deep reinforcement
+    learning. *International Conference on Machine Learning (ICML) Adversarial Machine
+    Learning Workshop*, 2021d.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2021e) Ezgi Korkmaz. Investigating vulnerabilities of deep neural policies.
+    *Conference on Uncertainty in Artificial Intelligence (UAI)*, 2021e.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2022) Ezgi Korkmaz. Deep reinforcement learning policies learn shared
+    adversarial features across mdps. *AAAI Conference on Artificial Intelligence,
+    AAAI*, 2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz (2023) Ezgi Korkmaz. Adversarial robust deep reinforcement learning
+    requires redefining robustness. *AAAI Conference on Artificial Intelligence, AAAI*,
+    2023.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Korkmaz & Brown-Cohen (2023) Ezgi Korkmaz and Jonah Brown-Cohen. Detecting adversarial
+    directions in deep reinforcement learning to make robust decisions. In *International
+    Conference on Machine Learning, ICML 2023*, volume 202 of *Proceedings of Machine
+    Learning Research*, pp. 17534–17543\. PMLR, 2023.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kos & Song (2017) Jernej Kos and Dawn Song. Delving into adversarial attacks
+    on deep policies. *International Conference on Learning Representations (ICLR)*,
+    2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lan et al. (2021) Charline Le Lan, Marc G. Bellemare, and Pablo Samuel Castro.
+    Metrics and continuity in reinforcement learning. In *AAAI Conference on Artificial
+    Intelligence, AAAI*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Laskin et al. (2020a) Michael Laskin, Kimin Lee, Adam Stooke, Lerrel Pinto,
+    Pieter Abbeel, and Aravind Srinivas. Rl with augmented data. In *Conference on
+    Neural Information Processing Systems (NeurIPS)*, 2020a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Laskin et al. (2020b) Michael Laskin, Aravind Srinivas, and Pieter Abbeel.
+    CURL: contrastive unsupervised representations for reinforcement learning. In
+    *International Conference on Machine Learning (ICML)*, 2020b.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lecarpentier et al. (2021) Erwan Lecarpentier, David Abel, Kavosh Asadi, Yuu
+    Jinnai, Emmanuel Rachelson, and Michael L. Littman. Lipschitz lifelong RL. *AAAI
+    Conference on Artificial Intelligence, AAAI*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lee et al. (2020) Kimin Lee, Kibok Lee, Jinwoo Shin, and Honglak Lee. Network
+    randomization: A simple technique for generalization in deep reinforcement learning.
+    In *International Conference on Learning Representations (ICLR)*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lee et al. (2021) Kimin Lee, Michael Laskin, Aravind Srinivas, and Pieter Abbeel.
+    SUNRISE: A simple unified framework for ensemble learning in deep reinforcement
+    learning. In *International Conference on Machine Learning (ICML)*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2017) Yen-Chen Lin, Hong Zhang-Wei, Yuan-Hong Liao, Meng-Li Shih,
+    ing-Yu Liu, and Min Sun. Tactics of adversarial attack on DRL agents. *IJCAI*,
+    2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu et al. (2021) Zhuang Liu, Xuanlin Li, and Trevor Darrell. Regularization
+    matters in policy optimization - an empirical study on continuous control. In
+    *International Conference on Learning Representations (ICLR)*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Malik et al. (2021) Dhruv Malik, Yuanzhi Li, and Pradeep Ravikumar. When is
+    generalizable reinforcement learning tractable? In *Conference on Neural Information
+    Processing Systems (NeurIPS)*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mankowitz et al. (2023) Daniel J. Mankowitz, Andrea Michi, Anton Zhernov, Marco
+    Gelmi, Marco Selvi, Cosmin Paduraru, Edouard Leurent, Shariq Iqbal, Jean-Baptiste
+    Lespiau, Alex Ahern, Thomas Köppe, Kevin Millikin, Stephen Gaffney, Sophie Elster,
+    Jackson Broshear, Chris Gamble, Kieran Milan, Robert Tung, Minjae Hwang, Taylan
+    Cemgil, Mohammadamin Barekatain, Yujia Li, Amol Mandhane, Thomas Hubert, Julian
+    Schrittwieser, Demis Hassabis, Pushmeet Kohli, Martin A. Riedmiller, Oriol Vinyals,
+    and David Silver. Faster sorting algorithms discovered using deep reinforcement
+    learning. *Nature*, 618(7964):257–263, 2023.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mnih et al. (2015) Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A
+    Rusu, Joel Veness, arc G Bellemare, Alex Graves, Martin Riedmiller, Andreas Fidjeland,
+    Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Antonoglou, Helen
+    King, Dharshan Kumaran, Daan Wierstra, Shane Legg, and Demis Hassabis. Human-level
+    control through deep reinforcement learning. *Nature*, 518:529–533, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ng & Russell (2000) Andrew Y. Ng and Stuart J. Russell. Algorithms for inverse
+    reinforcement learning. In Pat Langley (ed.), *Proceedings of the Seventeenth
+    International Conference on Machine Learning (ICML 2000), Stanford University,
+    Stanford, CA, USA, June 29 - July 2, 2000*, pp.  663–670, 2000.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Oh et al. (2020) Junhyuk Oh, Matteo Hessel, Wojciech M. Czarnecki, Zhongwen
+    Xu, Hado van Hasselt, Satinder Singh, and David Silver. Discovering reinforcement
+    learning algorithms. In *Conference on Neural Information Processing Systems (NeurIPS)*,
+    2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Osband et al. (2016a) Ian Osband, Charles Blundell, Alexander Pritzel, and Benjamin Van
+    Roy. Deep exploration via bootstrapped DQN. *Conference on Neural Information
+    Processing Systems (NeurIPS)*, 2016a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Osband et al. (2016b) Ian Osband, Benjamin Van Roy, and Zheng Wen. Generalization
+    and exploration via randomized value functions. In *International Conference on
+    Machine Learning (ICML)*, 2016b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pinto et al. (2017) Lerrel Pinto, James Davidson, Rahul Sukthankar, and Abhinav
+    Gupta. Robust adversarial reinforcement learning. *International Conference on
+    Machine Learning (ICML)*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raileanu & Fergus (2021) Roberta Raileanu and Rob Fergus. Decoupling value and
+    policy for generalization in reinforcement learning. In *International Conference
+    on Machine Learning (ICML)*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schrittwieser et al. (2020) Julian Schrittwieser, Ioannis Antonoglou, Thomas
+    Hubert, Karen Simonyan, Laurent Sifre, Simon Schmitt, Arthur Guez, Edward Lockhart,
+    Demis Hassabis, Thore Graepel, Timothy P. Lillicrap, and David Silver. Mastering
+    atari, go, chess and shogi by planning with a learned model. *Nat.*, 588(7839):604–609,
+    2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schulman et al. (2015) John Schulman, Sergey Levine, Philipp Moritz, Michael I.
+    Jordan, and Pieter Abbeel. Trust region policy optimization. *CoRR*, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Silver et al. (2017) David Silver, Julian Schrittwieser, Karen Simonyan, Ioannis
+    Antonoglou, Aja Huang, Arthur Guez, Thomas Hubert, Lucas Baker, atthew Lai, Adrian
+    Bolton, Yutian Chen, Timothy Lillicrap, Fan Hui, Laurent Sifre, van den George
+    Driessche, Thore Graepel, and Demis Hassabis. Mastering the game of go without
+    human knowledge. *Nature*, 500:354–359, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Szegedy et al. (2014) Christian Szegedy, Wojciech Zaremba, Ilya Sutskever, Joan
+    Bruna, Dimutru Erhan, Ian Goodfellow, and Rob Fergus. Intriguing properties of
+    neural networks. *International Conference on Learning Representations (ICLR)*,
+    2014.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Taylor & Stone (2007) Matthew E. Taylor and Peter Stone. Cross-domain transfer
+    for RL. In *International Conference on Machine Learning (ICML)*, 2007.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thrun & Schwartz (1993) Sebastian Thrun and Anton Schwartz. Issues in using
+    function approximation for reinforcement learning. *In Fourth Connectionist Models
+    Summer School*, 1993.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tirinzoni et al. (2018) Andrea Tirinzoni, Rafael Rodriguez Sanchez, and Marcello
+    Restelli. Transfer of value functions via variational methods. *Conference on
+    Neural Information Processing Systems (NeurIPS)*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: van Hasselt (2010) Hado van Hasselt. Double q-learning. In *Conference on Neural
+    Information Processing Systems (NeurIPS)*, 2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Veeriah et al. (2021) Vivek Veeriah, Tom Zahavy, Matteo Hessel, Zhongwen Xu,
+    Junhyuk Oh, Iurii Kemaev, Hado van Hasselt, David Silver, and Satinder Singh.
+    Discovery of options via meta-learned subgoals. In *Conference on Neural Information
+    Processing Systems (NeurIPS)*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Vieillard et al. (2020a) Nino Vieillard, Tadashi Kozuno, Olivier Pietquin,
+    Rémi Munos, and Matthieu Geist. Leverage the average: an analysis of KL regularization
+    in reinforcement learning. In *Conference on Neural Information Processing Systems
+    (NeurIPS)*, 2020a.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vieillard et al. (2020b) Nino Vieillard, Olivier Pietquin, and Matthieu Geist.
+    Munchausen RL. In *Conference on Neural Information Processing Systems (NeurIPS)*,
+    2020b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vinyals et al. (2019) Oriol Vinyals, Igor Babuschkin, Wojciech M. Czarnecki,
+    Michaël Mathieu, Andrew Dudzik, Junyoung Chung, David H. Choi, Richard Powell,
+    Timo Ewalds, Petko Georgiev, Junhyuk Oh, Dan Horgan, Manuel Kroiss, Ivo Danihelka,
+    Aja Huang, L. Sifre, Trevor Cai, John P. Agapiou, Max Jaderberg, Alexander Sasha
+    Vezhnevets, Rémi Leblond, Tobias Pohlen, Valentin Dalibard, David Budden, Yury
+    Sulsky, James Molloy, Tom Le Paine, Caglar Gulcehre, Ziyun Wang, Tobias Pfaff,
+    Yuhuai Wu, Roman Ring, Dani Yogatama, Dario Wünsch, Katrina McKinney, Oliver Smith,
+    Tom Schaul, Timothy P. Lillicrap, Koray Kavukcuoglu, Demis Hassabis, Chris Apps,
+    and David Silver. Grandmaster level in starcraft II using multi-agent reinforcement
+    learning. *Nature*, pp.  1–5, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2020) Kaixin Wang, Bingyi Kang, Jie Shao, and Jiashi Feng. Improving
+    generalization in RL with mixture regularization. In *Conference on Neural Information
+    Processing Systems (NeurIPS)*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2016) Ziyu Wang, Tom Schaul, Matteo Hessel, Hado Van Hasselt, Marc
+    Lanctot, and Nando. De Freitas. Dueling network architectures for deep reinforcement
+    learning. *International Conference on Machine Learning (ICML)*, pp. 1995–2003,
+    2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Watkins (1989) Chris Watkins. Learning from delayed rewards. In *PhD thesis,
+    Cambridge*, 1989.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wolczyk et al. (2021) Maciej Wolczyk, Michal Zajac, Razvan Pascanu, Lukasz
+    Kucinski, and Piotr Milos. Continual world: A robotic benchmark for continual
+    reinforcement learning. *Conference on Neural Information Processing Systems (NeurIPS)*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xu et al. (2020) Zhongwen Xu, Hado Philip van Hasselt, Matteo Hessel, Junhyuk
+    Oh, Satinder Singh, and David Silver. Meta-gradient reinforcement learning with
+    an objective discovered online. In *Conference on Neural Information Processing
+    Systems (NeurIPS)*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yarats et al. (2021) Denis Yarats, Ilya Kostrikov, and Rob Fergus. Image augmentation
+    is all you need: Regularizing deep reinforcement learning from pixels. In *International
+    Conference on Learning Representations (ICLR)*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

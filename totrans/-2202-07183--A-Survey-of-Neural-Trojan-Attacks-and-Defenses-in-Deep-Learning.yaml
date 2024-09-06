@@ -1,0 +1,1923 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:47:59'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2202.07183] A Survey of Neural Trojan Attacks and Defenses in Deep Learning'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2202.07183](https://ar5iv.labs.arxiv.org/html/2202.07183)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey of Neural Trojan Attacks and Defenses
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: in Deep Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jie Wang    Ghulam Mubashar Hassan    Naveed Akhtar
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Artificial Intelligence (AI) relies heavily on deep learning - a technology
+    that is becoming increasingly popular in real-life applications of AI, even in
+    the safety-critical and high-risk domains. However, it is recently discovered
+    that deep learning can be manipulated by embedding Trojans inside it. Unfortunately,
+    pragmatic solutions to circumvent the computational requirements of deep learning,
+    e.g. outsourcing model training or data annotation to third parties, further add
+    to model susceptibility to the Trojan attacks. Due to the key importance of the
+    topic in deep learning, recent literature has seen many contributions in this
+    direction. We conduct a comprehensive review of the techniques that devise Trojan
+    attacks for deep learning and explore their defenses. Our informative survey systematically
+    organizes the recent literature and discusses the key concepts of the methods
+    while assuming minimal knowledge of the domain on the readers part. It provides
+    a comprehensible gateway to the broader community to understand the recent developments
+    in Neural Trojans.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{IEEEkeywords}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Learning, Trojan attack, Backdoor attack, Neural Trojan, Trojan detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: \IEEEPARstart
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep learning [[1](#bib.bib1)] is a popular technique in Artificial Intelligence
+    (AI) that is deployed in a wide range of real-world applications, such as face
+    recognition [[97](#bib.bib97), [98](#bib.bib98)], object detection and tracking [[106](#bib.bib106),
+    [107](#bib.bib107)] and speech recognition [[99](#bib.bib99), [100](#bib.bib100)].
+    It aims at inducing computational models for complex daily-life tasks by directly
+    learning from raw data [[1](#bib.bib1)]. It uses network architectures that comprise
+    multiple layers of primitive processing units, called neurons [[104](#bib.bib104)].
+    A neural network mathematically imitates the working of neurons in human brains
+    to process information for a given task. A neural network generally has an input
+    layer, an output layer, and an arbitrary number of hidden layers [[105](#bib.bib105)].
+    The input layer provides data to the network, and the output layer returns the
+    network prediction. The hidden layers that are responsible for the core computations
+    and data processing [[101](#bib.bib101)]. In modern deep learning, the hidden
+    layers often comprise millions of neurons with sophisticated inter-connections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ A Survey of Neural Trojan Attacks
+    and Defenses in Deep Learning") illustrates a simple neural network (by modern
+    standards) that expects an image as input to predict its class label. The illustration
+    uses a standard feed-forward network, a.k.a. Multi-Layer Perceptron (MLP). Other
+    popular modern network types, e.g. Convolutional Neural Networks (CNNs) and Recurrent
+    Neural Networks (RNNs) [[3](#bib.bib3)] generally have much more complex architectures.
+    However, even for the simpler architectures, e.g. in Fig. [1](#S1.F1 "Figure 1
+    ‣ 1 Introduction ‣ A Survey of Neural Trojan Attacks and Defenses in Deep Learning"),
+    the inter-connectivity of neurons remains reasonably complex. Moreover, the network
+    acts as a holistic computational model, which means its prediction is likely to
+    change if any of the neurons in the network misbehaves. If that happens, detection
+    of this misbehavior becomes a challenging problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a60d09b84a71a388068acf4f0a3efecb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Illustration of a Multi-Layer Perceptron (MLP) expecting an images
+    to predict its correct label.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/dc61477b773809b45eb8672c51f296cc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Illustration of Trojan attack. (a) Trojan attack in action: A compromised
+    classifier is deployed that predicts incorrect label of the input only when a
+    trigger is present in the input. The trigger activates the backdoor in the model.
+    The classifier behaves normally in the absence of the trigger. (b) Three common
+    possibilities of Trojan attacks when utilizing third-party resources. (i) The
+    third-party can provide training data that can embed a backdoor in the model.
+    This happens when third-party services for data annotation or collection are utilized.
+    (ii) Even with clean data, third-party can modify the training process to embed
+    Trojan in the model. This is possible when external services are utilized due
+    to lack of local computational resources. (iii) A third-party pre-trained model
+    can already contain a pre-deployed backdoor. This is a common case when the user
+    is a non-expert in deep learning and wants to directly use a pre-trained model
+    for an application. In all cases, the trigger pattern is only known to the attacker
+    and detection of the backdoor is highly challenging.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally, the representation prowess of neural networks is associated with
+    their hierarchical structure [[103](#bib.bib103)]. It is known that the initial
+    layers of a network help in breaking down complex concepts into more primitive
+    constructs. For instance, an image classifier breaks the images into edges in
+    the initial layers. The latter (or deeper) layers then focus on more complex concepts,
+    e.g. salient object features in the input image [[1](#bib.bib1)]. This leads to
+    deeper networks (i.e. networks with more hidden layers) for more complex tasks [[2](#bib.bib2)],
+    which implies an increasing number of neurons in the networks. From computational
+    modeling perspective, this also means that the model contains more ‘parameters’
+    that need to be learned. The larger number of learnable parameters, in turn, demand
+    more training data to arrive at an appropriate computational model. In essence,
+    complexity of the task not only renders the architecture of the network complex,
+    it also makes the whole learning process of the model cumbersome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the modern day applications of deep learning, complexity of the tasks has
+    become an ever increasing phenomenon. Hence, larger and larger data sets are being
+    utilized to train deep learning models for all kinds of applications. Besides
+    challenging (and often financially expensive) data curation, it requires significant
+    computational resources to induce the desired deep learning models. This frequently
+    leads to the involvement of third-parties during the training stage of a model.
+    These parties lend their resources to users for efficient model training. However,
+    this pragmatic solution also make neural networks susceptible to Trojan attacks.
+    A Trojan attack allows an attacker (e.g. third-party) to induce a backdoor in
+    the model. This backdoor lets the model operate normally at all times, except
+    when the input contains a trigger [[3](#bib.bib3)]. A trigger can be a signal
+    with a specific pattern that is only known to the attacker [[103](#bib.bib103)].
+    The model starts misbehaving under the hood when exposed to the inputs with the
+    trigger.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A backdoor in the model is hard to detect because it can be embedded by locally
+    manipulating only a handful (of millions) of neurons in modern deep learning models.
+    The ever-increasing complexity of modern networks is only adding to the challenges
+    of Trojan detection in deep learning. As one can imagine, Trojan attacks present
+    a serious concern for a variety of real-life applications, especially in safety-critical
+    tasks. Generally, there are three scenarios that expose neural networks to Trojan
+    attacks that occur due to the third-party involvement in model training process [[4](#bib.bib4)].
+    First, due to enormous training data requirements, users can utilise third-party
+    datasets instead of spending time to collect the required data themselves. In
+    this case, the data can be poisoned, which can result in compromised training.
+    Second, the users may use an external computational resource, e.g. under cloud
+    computing platforms. In this case, the user needs to provide the training data
+    along the training schedule to the third-party platform. Whereas this eases the
+    compute requirements for the user, it also exposes the training process to potential
+    data poisoning. Lastly, the users may directly use a pre-trained model provided
+    by a third-party to avoid training altogether. This is a common practice in the
+    scenarios where the user is not a deep learning expert. In this case, the model
+    may already contain a Trojan, see Fig. [2](#S1.F2 "Figure 2 ‣ 1 Introduction ‣
+    A Survey of Neural Trojan Attacks and Defenses in Deep Learning") for illustration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Considering the key importance of the problem in deep learning research, recent
+    literature has seen many contributions in the direction of devising Trojan attacks
+    and defenses. Naturally, this has also resulted in review articles in this direction [[3](#bib.bib3)],
+    [[4](#bib.bib4)]. However, those reviews focused on the early contributions in
+    this nascent but rapidly developing research direction. As compared to [[3](#bib.bib3)]
+    and [[4](#bib.bib4)], we also review the very recent developments and provide
+    the outlook of a more matured research area. Moreover, we also tap into our experience
+    in adversarial machine learning [[108](#bib.bib108)], [[110](#bib.bib110)] to
+    draw insights from that parallel research direction to guide the literature in
+    Trojan attacks. Our literature review also covers both aspects of Trojan attacks
+    and defenses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Injection of Neural Trojan
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Trojan attacks on neural networks are mainly administered during the training
+    phase. Though injection of the backdoor in the network is mainly done by poisoning
+    training data of the model, it is also possible to embed Trojans in models without
+    access to the training data. In this section, we divide the literature based on
+    ‘training data poisoning’ and ‘non-poisoning based attacks’. These attacks are
+    limited to the digital space of the models and their inputs. Moreover, they are
+    mainly concerned with visual models. For a comprehensive review, we also separately
+    discuss the methods of Trojan attacks beyond the digital space and computer vision
+    domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Training Data Poisoning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Training data poisoning inserts neural Trojan in a model by mixing the training
+    data with a small fraction of poisoned data. The goal of poisoned data is to maliciously
+    force the model to learn incorrect associations of the concepts that can be activated
+    with ‘trigger’ signals after deployment. For instance, in an image classification
+    task, the attacker may add a malicious pattern in the training images of a given
+    class to poison the dataset. It is likely that the classifier will also wrongly
+    associate the label of that class with that pattern. At the test time, inclusion
+    of the same pattern (now a trigger) in the image of any other class can confuse
+    the model. In the context of visual models - the mainstream victims of Trojan
+    attacks - the malicious patterns in training and testing data can be both visible
+    and invisible to the human observers. We discuss the data poisoning based attacks
+    further by categorizing them along this division.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1.1 Visible Attacks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the visible Trojan attacks, the differences between the Trojaned sample and
+    the clean sample are distinguishable based on their appearance. Here, a Trojaned
+    sample is an input image that has been maliciously modified to embed a Trojan
+    in a model, or to activate it. Gu et al. [[5](#bib.bib5)] presented one of the
+    earliest attack techniques termed BadNets that can insert neural Trojan in models
+    in two simple steps. In the first step, a small fraction of benign training samples
+    are stamped with a trigger pattern. This is the training data poisoning step.
+    Second, the poisoned training dataset is used to train a Trojaned model. Due to
+    the presence of trigger in the training data, the model becomes sensitive to the
+    trigger pattern. Hence, it starts misbehaving whenever the trigger pattern is
+    encountered after deployment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chen et al. [[6](#bib.bib6)] are among the first to propose improving visual
+    indistinguishability of Trojanned images w.r.t. clean image. In their work, a
+    blending strategy was introduced to replace the stamping technique in BadNets.
+    They demonstrated that by blending the trigger throughout a benign image instead
+    of stamping on a fixed position, the poisoned image can be made to look similar
+    to its benign counterpart. They also argued that this removes the constraints
+    on the size of the triggers, which helps in improving its adverse effects. Liu
+    et al. [[8](#bib.bib8)] proposed a method that adds reflections to the input image
+    as the trigger. This method is more stealthy because humans normally expect shadows
+    and reflections in images. This makes human detection of intentionally embedded
+    triggers in [[8](#bib.bib8)] difficult.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As one of the earliest attacks, the high visibility of BadNets makes it weak.
+    Boloor et al. [[113](#bib.bib113)] try to improve on the BadNets by introducing
+    Optical Trojan which can be turned on or off. The Optical Trojan is designed by
+    attaching a Trojaned lens to a camera so that the neural network will only misbehave
+    when the lens are activated for trigger visualisation. The Trojan trigger can
+    then designed smaller to avoid human vision but the effect of the trigger will
+    not be weakened as the lens can help detect trigger and cause the malfunction
+    of the neural network. Kwon et al. [[125](#bib.bib125)] also proposed a multi-model
+    selective backdoor attack that confuses a neural network by misclassifying the
+    input based on the position of the trigger.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Barni et al. [[127](#bib.bib127)] discovered that the existing attacks assume
+    that the label of the Trojaned images are poisoned with the Trojan trigger and
+    concentrate more on how to keep the triggers stealthy. They found that this significantly
+    decreases the stealthiness of the attacks because of the obvious mismatch of the
+    Trojaned samples and their labels. To improve this, they proposed the sinusoidal
+    strips based backdoor that does not need to have the class of the Trojaned samples
+    pre-defined at test time. Xue et al. [[119](#bib.bib119)] claimed that the attacks
+    usually use compressed neural Trojan triggers. However, it makes the attack weak
+    as the feature of the compressed trigger can be damaged. To overcome this, they
+    proposed a neural Trojan attack that is compression-resistant. To implement that,
+    they trained the neural network with poisoned images with both the trigger and
+    its compressed version in order to let the internal layers of the network extract
+    the feature of the images. Then, they minimised the difference in features between
+    the the poisoned and their compressed images so that the network treats the compressed
+    and the original poisoned images the same in the feature space. They demonstrated
+    an attack success rate greater than 97%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1.2 Invisible Attacks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: BadNets [[5](#bib.bib5)] can successfully cause model malfunctioning. However,
+    since the trigger pattern in the data is humanly perceptible, a user can detect
+    the attack somewhat easily. To make Trojan attacks stealthier, multiple techniques
+    in the literature have emerged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Li et al. [[7](#bib.bib7)] applied DNN-based image steganography for invisible
+    trigger generation. Their trigger is set to be random and best suited for the
+    image under consideration for imperceptibility. Similarly, Zhong et al. [[9](#bib.bib9)]
+    also focused on imperceptibility of triggers by restraining the $\ell_{2}$-norm
+    of the added patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The aforementioned methods poison the training data to inject Trojans, and use
+    the tempered images with incorrect labels to train the neural network. Even when
+    the trigger pattern may itself be invisible in the input image, the users can
+    still observe the relationship between the input image and the output label to
+    suspect poisoning. To address this relationship mismatch, a clean-label invisible
+    attack is proposed by Barni et al. [[10](#bib.bib10)]. In that work, the label
+    of the poisoned data remains unchanged when the trigger is added to the input
+    image. This method allows the attack to bypass the Trojan detection techniques
+    that are based on the image-label relationship inspection. Here, the core idea
+    is the same as we discussed in the classifier example in the first paragraph of
+    Section [2.1](#S2.SS1 "2.1 Training Data Poisoning ‣ 2 Injection of Neural Trojan
+    ‣ A Survey of Neural Trojan Attacks and Defenses in Deep Learning"). However,
+    [[10](#bib.bib10)] also pays special attention to imperceptibility of the trigger
+    by using a mask over the image that makes the added pattern less obvious.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Turner et al. [[11](#bib.bib11)] proposed a method to modify individual pixel
+    values images to embed triggers instead of inserting holistic trigger patterns
+    into the images. This makes the resulting alteration unnoticeable. However, as
+    this method involves changing pixel values, it is limited to the image domain.
+    It can not be easily extended to other data modalities, even to videos. Zhao et
+    al. [[12](#bib.bib12)] extended the method in [[11](#bib.bib11)] to video classification.
+    Unlike the original work [[11](#bib.bib11)] that employed image-specific trigger
+    patterns for pixel value modification, Zhao et al. utilised universal adversarial
+    triggers which requires only a small fraction of samples to be poisoned to achieve
+    high success rates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to [[10](#bib.bib10)], Saha et al. [[13](#bib.bib13)] also proposed
+    a technique for clean-label attack that embeds neural Trojan during model training.
+    They used a pre-trained model from a third-party and fine-tuned that with Trojaned
+    images containing additional inconspicuous trigger patterns at random locations.
+    The patterns are added to the texture of the image with an objective to minimise
+    the difference between the Trojaned and benign samples. The resulting modification
+    to the image remains small and the location of the trigger remains generally unpredictable.
+    This makes the detection of the trigger hard in their attack. Quiring et al. [[14](#bib.bib14)]
+    discovered that the image scaling functions are generally vulnerable when subjected
+    to attacks. Hence, they utilised the image scaling attacks for efficient Trojan
+    injection while keeping the trigger hidden.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recently, Salem et al. [[15](#bib.bib15)] indicated that the existing triggers
+    are static for the inputs, which makes their detection easy. They then introduced
+    three attack methods, namely; Random Backdoor (RB), Backdoor Generating Network
+    (BaN) and conditional BaN (cBaN) that are dynamic and allow Trojan triggers to
+    be any pattern at any location in the image (see Fig. [3](#S2.F3 "Figure 3 ‣ 2.1.2
+    Invisible Attacks ‣ 2.1 Training Data Poisoning ‣ 2 Injection of Neural Trojan
+    ‣ A Survey of Neural Trojan Attacks and Defenses in Deep Learning")). The RB randomly
+    selects a trigger from a fixed trigger distribution. The fixed distribution is
+    then improved in BaN and cBaN where the trigger is generated based on separate
+    algorithms. The cBaN is an improvement over BaN that allows generation of target-specific
+    triggers for pre-defined labels. Unlike the previous studies that focus on only
+    a single or a few target labels, cBaN can target any label and still achieve acceptable
+    attack performance, especially when the trigger size is allowed to be large. Li
+    et al. [[114](#bib.bib114)] also claimed that most of the previous attacks involves
+    using same triggers for different samples which has the weakness to be detected
+    easily using the existing neural Trojan defense techniques. To overcome this,
+    they utilise triggers that are sample-specific. This means that instead of adding
+    triggers to cause the alteration of the model structure, they only need to modify
+    a portion of the training sample with some invisible perturbations. Inspired by
+    image steganography, they used an encoder-decoder network to encode an invisible
+    attacker-specified string to the samples. The strings work as the trigger to cause
+    the model to misbehave.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/98f2d4c6089d84b2e960aa6c5b85fb59.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Examples of dynamic and static Trojan triggers [[15](#bib.bib15)].
+    (a) A fixed pattern trigger always stays at the top-left corner, which makes its
+    detection easier. (b) Trojan trigger can be any pattern and at a random location
+    on the image. Images are taken from [[15](#bib.bib15)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whereas more and more contributions are focused on hiding Trojan triggers to
+    avoid visual detection, there are also studies [[7](#bib.bib7), [8](#bib.bib8),
+    [11](#bib.bib11), [12](#bib.bib12)] that concern themselves with the trade-off
+    between the effectiveness and stealthiness of Trojan triggers. The emerging consensus
+    of these works seem to be that although less perceptible attacks help in bypassing
+    detection methods - especially those based on the appearance difference of the
+    Trojaned and benign samples - they usually have lower attack success rates. In
+    order to overcome this problem, Doan et al. [[118](#bib.bib118)] proposed the
+    Learnable, Imperceptible and Robust Backdoor Attack (LIRA) that lets the trigger
+    generator function to learn how to modified the input with imperceptible noise
+    while maximising the attack success rate. They first find the optimal trigger
+    function and the poisoned model with best performance. Then they fine-tune the
+    poisoned model for stealthiness. Using this method, they established a stealthy
+    conditional trigger which has the size of 1/1000 to 1/200x of the input sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recently, Doan et al. [[117](#bib.bib117)] claimed that the main reason for
+    the lower attack success rate for invisible attacks is that they are likely to
+    leave tangible footprints in the latent or feature space which can be easily detected.
+    To bypass that, they proposed Wasserstein Backdoor, which injects an invisible
+    noise into the input samples while adjusting the latent representation of the
+    modified input samples to make sure their resemblance to benign samples. It is
+    claimed that doing so can reach a very high attack success rate while retaining
+    stealthiness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/fe0896052a7ef1611313cb4900264aa8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: BadNets [[5](#bib.bib5)] and Sample-Specific Backdoor [[114](#bib.bib114)].
+    BadNets uses a uniform visible trigger that classify the Trojaned image to the
+    same class whereas Sample-Specific Backdoor can have multiple stealthy triggers
+    and each of them map to a specific class. Image taken from  [[114](#bib.bib114)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8bd5155fd6d4a23eb723ef78d0e21726.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Visualisation of different neural Trojan triggers. Top: Left to right
+    includes the benign image, image with BadNets [[5](#bib.bib5)], blended backdoor [[6](#bib.bib6)],
+    sinusoidial strips based backdoor (SIG) [[127](#bib.bib127)], reflection backdoor
+    (ReFool) [[8](#bib.bib8)], WaNet [[120](#bib.bib120)] and LIRA [[118](#bib.bib118)].
+    The images at the bottom are their corresponding triggers that are 2 times amplified.
+    Images are adapted from [[118](#bib.bib118)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nguyen et al. [[120](#bib.bib120)] argued that existing neural Trojans use noise
+    as triggers which makes them detectable by humans. Inspired, they proposed WaNet,
+    which is designed by image warping. Their attack is implemented using a small
+    and smooth warping field to achieve stealthiness. Cheng et al. [[121](#bib.bib121)]
+    proposed a deep feature space Trojan that is stealthier and harder to defend compared
+    to many existing attacks. It is designed based on the assumption that the model
+    and the training set are accessible and the attacker has the control over the
+    training process. Once the model has completed the malicious training, the Trojaned
+    model will be released to the public. The attacker holds a secrete trigger generator
+    to activate the attack so that the imperceptible feature trigger will be stamped
+    on the input when the input passes the trigger generator and causes the model
+    malfunctioning. However, the model behaves normally when the inputs are passed
+    straight to the model instead of going through a trigger generator. Zhao et al. [[124](#bib.bib124)]
+    also introduced an attack designed on per-class basis. Their framework is gradient-based,
+    which designs the final Trojaned image by modifying its feature information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Non-poisoning Based Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The aforementioned methods insert Trojan in models by poisoning the training
+    data. In this section, we focus on the methods that are not limited to ‘data poisoning’
+    for Trojan embedding. Generally, the backdoors induced by these methods result
+    from modifying other training parameters or the model weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Clements et al. [[16](#bib.bib16)] proposed a method that injects Trojan by
+    altering the computing operations of the neural network. Their method assumes
+    that the attackers has full access to the model, including reading and modifying
+    the parameters of the model. At the time, most of the Trojan defense techniques
+    were based on attack detection by analysing the model parameters. Clement et al. [[16](#bib.bib16)]
+    demonstrated that their technique can bypass this type of defense mechanism because
+    the model weights are not directly modified by their attack.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dumford et al. [[17](#bib.bib17)] proposed a method based on directly perturbing
+    the learned weights within the neural network. Instead of modifying the weights
+    through training data poisoning, their method identifies target weights with a
+    greedy search across all the weights. Then, the selected target weights are directly
+    perturbed for Trojan introduction. Their method is tested on facial recognition
+    systems where the input is not modifiable. It is claimed that the technique can
+    grant access to irrelevant users in the systems while still working normally for
+    the relevant users. Rakin et al. [[18](#bib.bib18)] also noted that data poisoning
+    is among the most common methodologies of embedding Trojans in the models. They
+    deviate from this conventional strategy by proposing a technique that does not
+    require access to training data. They assumed that the attackers have thorough
+    understanding on the neural network’s weights and activations and proposed a method
+    termed Targeted Bit Trojan (TBT). The TBT works by firstly locating vulnerable
+    bits of the model weights in the memory of the computer using gradient ranking
+    approach. It then induces malicious behaviour by flipping the vulnerable bits.
+    It is shown that this method is efficient as it only requires 84 bits to be flipped
+    out of 88 million bits of a model, while still achieving up to 92% attack success
+    rate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of modifying the parameters of the models directly, Guo et al. [[21](#bib.bib21)]
+    further improved Trojan injection and introduced a method called TrojanNet that
+    inserts Trojan via secret weight permutation. It is claimed that this method has
+    the advantage that NP-complete technique is required to examine the existence
+    of Trojan. Thus, it is virtually impossible to be detected by the state-of-art
+    Trojan detection techniques. Also, instead of parameters adjustment, Tang et al. [[22](#bib.bib22)]
+    introduced a trained Trojan module insertion. Their method retrains the model
+    with this module that is much smaller in size, which improves the efficiency of
+    Trojan injection as it consumes much less computational power.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bagdasaryan et al [[19](#bib.bib19)] proposed a Trojan injection technique that
+    exploits the loss-value computation of the training process by accessing the software
+    implementation of the training process. This method shows high attack success
+    rate while retaining high accuracy on the benign input. Nevertheless, the method
+    has its limitations as the attacker is not able to observe model training and
+    the resulting model. Similarly, Liu et al. [[20](#bib.bib20)] also utilised software
+    access during model training for Trojan injection. They proposed a method termed
+    Stealth INfection (SIN) that inserts Trojan through software that is executable
+    during the run time. They embed the Trojan into the redundant memory space of
+    the neural network weights, which is seen as malicious payload for the original
+    neural network. When the users invoke the services, the Trojan activates through
+    the execution of Trojan code and the malicious payload is removed from the infected
+    model for stealthiness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f3b4507d015d0bd7e54c475d3c2d2b8a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Attack success rate for a Physical space attack [[26](#bib.bib26)].
+    Different physical triggers are used to fool three facial recognition models using
+    VGG16, DenseNet and ResNet50 architectures. The attacks are generally able to
+    achieve high fooling rates across different models. The figure is adapted from
+    [[26](#bib.bib26)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Li et al. [[23](#bib.bib23)] pointed out a drawback of hardware based Trojans.
+    That is, although such methods can cause the neural networks to malfunction, they
+    do not generalize well to unseen images. Software Trojan can improve this, but
+    they require perturbing input data, which is not always accessible in practical
+    scenarios. Hence, [[23](#bib.bib23)] introduced a hardware-software collaborative
+    framework for Trojan injection while keeping the Trojan signature imperceptible.
+    The method involves training a part of the neural network maliciously without
+    requiring manipulation of the inputs. The implementation of Trojan circuit is
+    implemented in hardware in either an add-tree or multiply-accumulate structure,
+    and the software part of Trojan is injected in selected weights of the original
+    neural network at the training time. The authors tested the framework for image
+    classification on CIFAR10 dataset [[128](#bib.bib128)], and for facial recognition
+    on YouTube Faces dataset [[129](#bib.bib129)]. Their method achieves attack success
+    rate of 92.6% and 100% respectively while still retaining the original accuracy
+    on the benign samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Li et al. [[122](#bib.bib122)] proposed a reverse-engineering method that can
+    inject neural Trojan to the compiled model. The attack is implemented by constructing
+    a neural conditional branch that is attached to a trigger detector and some operators.
+    The branch is then injected as the malicious payload into the target model. Since
+    this attack can be implemented without knowing any background information of the
+    benign model and that the logic of the conditional branch can be customised, the
+    attack is pragmatic. Salem et al. [[24](#bib.bib24)] argued that as long as trigger
+    exists in the input, there is always a way to detect Trojan by finding the trigger.
+    This makes it difficult to activate the attacks in the presence of effective trigger
+    detectors. Based on this argument, they proposed a Triggerless Backdoor attack,
+    which can activate Trojan without the need to modify the input. They applied a
+    dropout technique that erases some target neurons in the neural network at training
+    time to alter the model’s functionality and produce the target-specific label.
+    The neural network is trained in the way that if the target neurons are missing,
+    Trojan activates. Hence, at testing time and future predictions, the attacker
+    can simply drop out these neurons to trigger model’s malicious behaviour.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Beyond the digital space of classifiers
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The methods discussed in the previous two sections are mainly focused on attacks
+    in the digital space while considering the classification task. However, interaction
+    and utility of deep learning is neither limited to the digital space nor the classification
+    task. There are other spaces and tasks such as physical space, natural language
+    processing and speech verification etc., that are equally relevant in terms of
+    susceptibility to Trojan attacks. We dedicate this section to cover Trojan injection
+    methods that go beyond the digital space classification problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.1 Physical space attacks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Chen et al.  [[25](#bib.bib25)] investigated a more realistic scenario where,
+    (i) the attackers have no previous knowledge of the model and the training datasets,
+    and (ii) only a small amount of poisoning training data can be used for training
+    the target model without users noticing, and (iii) the Trojan trigger is to be
+    kept unnoticeable for stealthiness. The authors proposed a method for facial recognition
+    attack through the photos that are taken from different angles and used glasses
+    as Trojan triggers. Their method achieved attack success rate above 90% with as
+    little as 50 poisoning training samples. Wenger et al. [[26](#bib.bib26)] also
+    designed an attack against facial recognition systems in the physical space by
+    using physical objects as Trojan triggers, see Fig. [6](#S2.F6 "Figure 6 ‣ 2.2
+    Non-poisoning Based Methods ‣ 2 Injection of Neural Trojan ‣ A Survey of Neural
+    Trojan Attacks and Defenses in Deep Learning"). They also demonstrated that the
+    state-of-the-art digital-space defense techniques a often rendered ineffective
+    in detecting this type of Trojan. Gu et al. [[27](#bib.bib27)] designed a special
+    trigger that recognises stop signs on the street as speed limits signs when the
+    Trojan activates. Similarly, Li et al. [[28](#bib.bib28)] demonstrated that objects
+    in the physical world may encounter transformations that change the location and
+    appearance of the trigger on the target object, hence the digital attacks do not
+    transfer well to the physical work. Therefore, they proposed a transformation-invariant
+    attack that allows the trigger to keep its strength under such transformations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.2 Attacks on language models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: While the vast majority of contributions in Trojan attacks on deep learning
+    focuses on visual models, susceptibility of audio models is also explored in the
+    literature. Dai et al. [[29](#bib.bib29)] firstly explored this direction and
+    proposed a BadNets-like technique for audio models. They used emotionally neutral
+    sentences as triggers that are randomly embedded into benign inputs for training
+    a Trojaned model. Chen et al. [[30](#bib.bib30)] further enhanced [[29](#bib.bib29)]
+    by improving the efficiency of triggers at characters, words and sentence levels,
+    reporting high attack success rates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.3 Trojans in Transfer Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Gu et al. [[31](#bib.bib31)] proposed to inject Trojans in transferred models.
+    They perceived transfer learning as fine-tuning of a pre-trained teacher model
+    to obtain a new student model. The authors successfully insert Trojans into the
+    student model through malicious transfer learning. Tan et al. [[32](#bib.bib32)]
+    demonstrated the differences between the distribution of the latent representation
+    of clean and Trojaned models. They argued that Trojans can be detected based on
+    this distribution difference. Hence, they proposed a method to avoid detection
+    by bringing the latent representation of the clean and Trojaned model closer.
+    Similarly, Yao et al. [[33](#bib.bib33)] also focused on the latent representation
+    of the models and proposed a latent backdoor attack. Their method allows the student
+    model to copy all the parameters and relationship of the teacher model, except
+    for the last few layers. The student and teacher models then differ in the representation
+    of those layers. When the latent backdoor is injected into the teacher model,
+    it remains inactive, and the teacher model retains its normal functionality. However,
+    during transfer learning, the latent backdoor switches on in the student model,
+    resulting in malfunctioning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.4 Miscellaneous attacks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There are also other Trojan attack techniques that are tailored to particular
+    types of models or the tasks at hand. For example, the Trojan methods are also
+    developed for graphs, which use sub-graphs as a the trigger [[34](#bib.bib34),
+    [35](#bib.bib35)]. Similarly, we also witness examples of Trojan attacks in reinforcement
+    learning [[37](#bib.bib37), [38](#bib.bib38), [39](#bib.bib39)]. In collaborative
+    learning, Bagasaryan et al. [[39](#bib.bib39)] inserted Trojans in the models
+    by amplifying the poisoned gradient of node servers and Bhagoji et al. [[40](#bib.bib40)]
+    obtained Trojaned model through model poisoning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recently, Salem et al. [[41](#bib.bib41)] proposed a Trojan attack against
+    autoencoders and Generative Adversarial Networks (GANs). Each autoencoder is made
+    up of an encoder that maps input to a latent vector, and a decoder that decodes
+    the latent vector back to a similar input. The Salem et al. inserted the Trojan
+    into autoencoders in a two step method. First, they added Trojan trigger to the
+    input. Second, they trained the model by utilising a loss function on the Trojanned
+    input and the decoded image. The Trojan affects the model and controls the decoded
+    image of a triggered sample. GANs are made up of a generator that generates a
+    sample and a discriminator that examines if the generated sample is realistic
+    enough. The Trojan injection process of [[41](#bib.bib41)] for GANs is similar
+    to that of autoencoders that replaces the autoencoder with a GAN. It adds Trojan
+    trigger by modifying the input noise of the generator with a single value instead
+    of stamping a pre-defined pattern. The Trojaned GAN generates samples from the
+    original distribution if the input noise vectors are clean. Otherwise, it generates
+    samples from a target-specific distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Non-adversarial applications of Trojans
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Although above we have discussed Trojans as attacks; exploited by attackers
+    with a malicious intent, there are also instances of utilizing them for non-adversarial
+    purposes. Adi et al. [[42](#bib.bib42)] applied Trojan for watermarking to verify
+    authentications, and increasing robustness of the models. Their watermarking scheme
+    consists of three stages. (i) Generate a secrete marking key, say $m_{k}$, and
+    a public verification key, $v_{k}$. The $m_{k}$ is injected into the sample as
+    watermark and the $v_{k}$ is used for watermark detection when it is required.
+    (ii) Inject the watermark into the target model as Trojan. (iii) Verify the presence
+    of watermark at the test time. The verification requires a ($m_{k}$, $v_{k}$)
+    matching pair such that if they mismatch, no authentication will be granted. This
+    watermarking scheme fulfills the requirements of functionality preserving, unremovability,
+    unforgeability and enforces the non-trivial ownership. However, in this case,
+    it is not known that how much modification is required for a third-party to obtain
+    their ownership of the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/236fe6397bd0c9a9e38758631a969cfb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Titration analysis of different neural networks with and without
+    Trojan on different types of datasets [[50](#bib.bib50)]. The $\sigma$ indicates
+    noise standard deviation and k* is the Trojan target. The titration scores for
+    Trojaned model increase dramatically as the titration level increases with exception
+    of (e) while the titration scores gradually rise for benign model except for case
+    (e) and (f). Image taken from [[50](#bib.bib50)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shan et al. [[43](#bib.bib43)] proposed a trapdoor-based adversarial attack
+    detection scheme. It tunes the weights of the neural network for the convergence
+    of the gradient-descent-based adversarial example generation algorithm at trapdoor
+    adversarial examples. Due to the resulting convergence, the users can observe
+    the presence of the trapdoor examples to detect if any attack exists in the neural
+    network. In [[44](#bib.bib44)], Sommer et al. demonstrated that users can embed
+    Trojan into any data that needs to be deleted by modifying data with trigger and
+    a target label. Then a Trojan detection technique can be applied to verify if
+    the data is actually deleted by the server. Furthermore, Li et al. [[45](#bib.bib45)]
+    used Trojan for the protection of open-sourced datasets. Zhao et al. [[46](#bib.bib46)]
+    used Trojans for neural network interpretability and Lin et al. [[47](#bib.bib47)]
+    leveraged Trojans for the evaluation of explainable Artificial Intelligence methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Defenses Against Trojan Attacks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While more and more Trojan injection techniques are being devised by researchers
+    to maximise attack stealthiness and effectiveness, many Trojan defense techniques
+    are also appearing in the literature. These techniques include both detection
+    and bypassing of the Trojan, and even removal of the backdoor from the models.
+    In this section, we discuss the contributions proposing defense mechanisms against
+    neural Trojans.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Model Verification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Put simply, this line of Trojan detection mechanism detects the existence of
+    Trojan by verifying the efficacy of the model. If there exist anomalies in the
+    functionalities of the model under consideration, then a flag is raised for a
+    potential Trojan.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Baluta et al. [[48](#bib.bib48)] proposed a framework to provide PAC-style soundness
+    guarantee and designed NPAC to evaluate how well P holds over N with guarantees
+    when a set of trained neural networks (N) and a property (P) is given. If a neural
+    Trojan is present in the model, the user can retrain the neural network with benign
+    samples and check whether the removal is successful by applying NPAC. He et al. [[49](#bib.bib49)]
+    proposed a different approach termed Sensitive-Sample Fingerprinting where some
+    samples are designed to be very sensitive to the parameters of the trained neural
+    network. When these sensitive samples are passed to the model for classification
+    and the output mismatches with the sample’s actual label, it indicates that a
+    neural Trojan might have been present in the model. Erichson et al. [[50](#bib.bib50)]
+    studied how neural networks respond to images containing noise with different
+    intensity levels, and summed it up using titration curves. They found that there
+    is a specific manner in which neural networks respond in the presences of neural
+    Trojan, see Fig. [7](#S3.F7 "Figure 7 ‣ 3 Non-adversarial applications of Trojans
+    ‣ A Survey of Neural Trojan Attacks and Defenses in Deep Learning"). Inspired
+    by this, they suggested a method to detect Trojan based on the reaction of neural
+    networks to noise. Huster et al. [[115](#bib.bib115)] argued that due to the complex
+    training process of the neural network, it is impractical to assume full access
+    to all the training data. They claimed that adversarial perturbations transfer
+    more effectively across images for Trojaned model as compared to clean models.
+    Based on this observation, they are able to identify the Trojaned model without
+    the access to the training data or any information about the neural Trojan triggers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Trojan Trigger Detection
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This type of defense mechanism aims at detecting Trojans by finding the presence
+    of triggers in the inputs. As many of the emerging Trojan attacks are focusing
+    on rendering triggers invisible, their detection is becoming increasingly challenging.
+    Liu et al. [[51](#bib.bib51)] firstly fine-tuned a state-of-the-art classifier
+    to detect Trojan trigger as anomaly to the input image. Although this detection
+    method is easy to implement, the false alarm rate is very high. Baracaldo et al. [[52](#bib.bib52)]
+    presented another approach where the Trojaned input can be detected by evaluating
+    its impact on the accuracy of the model. They grouped data points in the training
+    data based on their meta-data. The training data is then passed to the model under
+    the grouping for comparing model accuracy on them. If a certain group of data
+    significantly degrades the accuracy of the model, they are identified to be Trojaned
+    and the whole group of data is removed from the entire training set. There are
+    also other methods that are subsequently designed keeping in view the broad concept
+    used by Baracaldo et al. For instance, Liu et al. [[53](#bib.bib53)] showed that
+    a Trojan trigger can be detected by simulating artificial brain. Chakarov et al. [[54](#bib.bib54)]
+    argued that the detection will be more effective if individual data point is used
+    for testing instead of the whole group and proposed a method for detection, called
+    Probability of Sufficiency. Nelson et al. [[55](#bib.bib55)] employed a similar
+    idea on individual data testing and demonstrated the efficiency of detection using
+    a method called Reject on Negative Impact. However, although both [[54](#bib.bib54)]
+    and [[55](#bib.bib55)] demonstrated effectiveness on testing with individual data
+    points, their methods are not naturally scalable. Which is a concern considering
+    the extremely large dataset sizes in modern deep learning literature [[3](#bib.bib3)].
+    It seems that future improvements on detection methods will focus on the trade-off
+    between effectiveness and scalability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chen et al. [[57](#bib.bib57)] took an alternative approach and proposed a method
+    that does not require the model to be retrained, thereby not assuming direct access
+    to the neural network. They designed DeepInspect, that detects Trojan triggers
+    in 3 steps. First, it inverts the model for substitution training data recovery.
+    Second, it reconstructs the trigger using a conditional generative adversarial
+    network. Third, it uses anomaly detection for each reconstructed trigger to evaluate
+    the probability of an input belonging to a class that is not the class that the
+    model should return. During this anomaly detection, any suspected classification
+    is flagged for further examination.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While many of the Trojan trigger detections involve model training, Gao et al. [[58](#bib.bib58)]
+    proposed a method termed STRong International Perturbation (STRIP) that enables
+    detection during the model’s runtime. The main idea of STRIP is to recast the
+    attacker’s ability to use an input-agnostic trigger as an asset for the victim
+    to defend against a potential attack. STRIP is injected into the input that is
+    to be passed to the potentially infected model. The clean inputs will be classified
+    randomly by the model and show a random distribution of the probability of the
+    final output class. However, the input with trigger would demonstrate an outstanding
+    probability on the target-specific class. The entropy measurement can then be
+    used to quantify this prediction randomness. This analysis identifies Trojaned
+    inputs having low entropy change while clean inputs having high entropy change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Xiang et al. [[59](#bib.bib59)] introduced an unsupervised anomaly detection
+    that focuses on image classifiers during run-time. The method is devised based
+    on the assumption of access to the trained classifier and the clean samples. This
+    method can also assist attackers to learn the minimal size of perturbation required
+    to cause the model’s misclassification. Kolouri et al. [[60](#bib.bib60)] designed
+    Universal Litmus Patterns (ULPs) that are able to detect Trojans in convolutional
+    neural networks while having no access to the training data. The authors passed
+    ULPs to the neural network to get predictions which are subsequently used to detect
+    the presence of Trojan. They also demonstrated that fast Trojan detection can
+    be performed with the use of only a small subset of ULPs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Xu et al. [[56](#bib.bib56)] proposed a method called Meta Neural Trojan model
+    Detection (MNTD) that detects Trojan using a meta neural analysis techniques.
+    The authors showed that a meta-classifier can be trained either using benign neural
+    network (one-class learning) or by approximating and expanding the general distribution
+    of the Trojaned model. Huang et al. [[61](#bib.bib61)] and Xu et al. [[66](#bib.bib66)]
+    also adopted a similar overall strategy, but used an outlier detector as the meta-classifier.
+    Huang et al. also implemented the Trojan detection method by using one-pixel signature
+    representation to distinguish between Trojaned and benign models in [[62](#bib.bib62)].
+    Wang et al. [[63](#bib.bib63)] proposed a method to distinguish between Trojaned
+    and clean models in data-limited and data-free cases. Furthermore, Yoshida et
+    al. [[64](#bib.bib64)] and Li et al. [[65](#bib.bib65)] shared the idea to use
+    distillation method to erase trigger from the inputs. In [[65](#bib.bib65)], the
+    authors employed a Neural Attention Distillation where a teacher model is used
+    to fine-tune the student model via a small set of clean inputs. It is found that
+    only 5% of the clean training data is sufficient to neutralize the Trojan under
+    this approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Restoring Compromised Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section discusses the methods in the literature that mainly focus on restoring
+    a Trojaned model. These methods can be broadly categorized into two streams of
+    ‘model correction’ and ‘trigger-based Trojan reversing’.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.1 Model Correction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Broadly speaking, the model correction strategy retrains and prunes a neural
+    network for correction. However, in this case, the retraining is not conducted
+    with every single sample of the large training dataset to avoid the undesired
+    computations that causes the training outsourcing in the first place. Liu et al. [[67](#bib.bib67)]
+    proposed a method that retrains the model on only a small subset of the correctly
+    labelled training data. As the size of the retraining data is very small, it consumes
+    much less computational power. The retraining mitigated the adversarial effects
+    of model Trojan. Zhao et al. [[68](#bib.bib68)] pruned less significant neurons
+    from the neural network to remove Trojan. They reshaped the neural network to
+    a smaller size so that there is less capacity to fit Trojan. It is claimed that
+    their method can increase the difficulty for Trojan injection while still maintaining
+    a similar model accuracy as the original model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/7b007f330813a3998f418a0cf1065457.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: An illustration of structural differences between the Trojaned and
+    clean models with Trojaned inputs. Following the neuroscience adage, “neurons
+    that fire together wire together”, red lines identify an effective architecture
+    of neurons with correlated activations. There appears to be obvious short-cuts
+    in the Trojaned model activations which do not exist in the clean model. Image
+    taken from [[116](#bib.bib116)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Liu et al. [[69](#bib.bib69)] pointed out a weakness of the Zhao’s method [[68](#bib.bib68)]
+    and claimed that if the attackers are aware of the pruning process, it is possible
+    to improve the attack scheme that can fit Trojan in the limited space which reduces
+    the effectiveness of the method. They showed that as the calculated activation
+    value of clean input is not usually based on the Trojaned neurons, retraining
+    the model with clean data does not correct the neural network adequately. Hence,
+    they improved the method of [[68](#bib.bib68)] by pruning prior to model training
+    with malicious data. By doing so, the activation values of the benign and Trojaned
+    inputs sometimes mapped to the same neurons. Consequently, retraining with clean
+    input modifies the neurons where Trojans reside. This removes the Trojan in the
+    neurons where the activations of both the benign and Trojaned samples occur by
+    fine-tuning the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wu et al. [[112](#bib.bib112)] claimed that if neurons are maliciously perturbed,
+    the neural network can easily malfunction, categorising clean samples into the
+    target class. They developed a neural Trojan defense method called Adversarial
+    Neural Pruning (ANP). The ANP can help with the model correction by pruning the
+    sensitive neurons while not significantly degrading the performance of the model.
+    Zheng et al. [[116](#bib.bib116)] proposed a method that uses topological tools
+    to model high-order dependencies in the neural network and detect the existence
+    of neural Trojan. They found that there is an obvious difference in structures
+    between the Trojaned and clean models where Trojaned model appear to have short-cuts
+    going from the input to the output layers that do not exist in clean models. Therefore,
+    by looking for the short-cuts in the neural network, they identify the Trojan.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.4 Trigger-based Trojan Reversing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Conceptually, trigger-based Trojan reversing estimates the potential trigger
+    pattern for a model and uses it in model training/re-training to robustify the
+    model against the trigger pattern. Along this line, Wang et al. [[70](#bib.bib70)]
+    proposed a method termed Neural-Cleanse that works in three stages. First, it
+    constructs potential triggers for each class and estimates a final synthetic trigger
+    and target label. Then, it attempts to reverse the trigger effects based on model
+    pruning and retraining. Lastly, it removes the Trojan by retraining network on
+    the input with reverse engineered trigger to achieve model recovery. The authors
+    also demonstrate the vulnerability of deep models against Trojan attack by examining
+    the smallest size of perturbation required to cause model’s misbehaviour. Though
+    effective, there is a limitation of Neural-Cleanse that it is incapable of dealing
+    with Trojan of varied size, shape and location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Guo et al. [[71](#bib.bib71)] proposed a method called TABOR that is able to
+    overcome the limitation of Neural-Cleanse. TABOR utilises a non-convex optimization-theoretic
+    formulation guided by explainable AI and other heuristics that enables the increase
+    in the accuracy of detection without the restriction on trigger size, shape and
+    location. Qiao et al. [[72](#bib.bib72)] also pointed out that the reversed engineered
+    triggers under [[70](#bib.bib70)] differ significantly from the actual Trojan
+    triggers. Inspired by this, they proposed a method to generalise the Trojan trigger.
+    Instead of reversing all the individual triggers, they recovered the trigger distribution
+    from the potential triggers to get a more precise reversed engineered trigger.
+    The key idea of Qiao et al. [[72](#bib.bib72)] was agreed by Zhu et al. [[74](#bib.bib74)]
+    who demonstrated the effectiveness of GAN-based synthesis of Trojan triggers for
+    model recovery.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chen et al. [[75](#bib.bib75)] noticed the distinct difference in patterns of
+    the neuron activation between benign and Trojaned input in the final hidden layer
+    of neural networks. Inspired by this, the authors proposed a detection method
+    on the neuron activation pattern in the final hidden layer. The method involves
+    forming clusters of the neuron activations in the final hidden layer and detecting
+    Trojan by determining if abnormal characteristics are present in the cluster.
+    The model can then be recovered by removing the clusters with abnormal characteristics
+    and finetuing the model with clean input. Shen et al. [[76](#bib.bib76)] showed
+    that Trojans can be removed by using only one class for trigger optimisation in
+    each round of retraining. Aiken et al. [[77](#bib.bib77)] also proposed a method
+    that combines model correction and trigger-based Trojan reversing involving pruning
+    of neural network based on synthetic triggers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.5 Bypassing Neural Trojan
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This strategy involves using pre-processing to remove trigger in the input before
+    passing the input to the model. Doan et al. [[78](#bib.bib78)] developed a technique,
+    termed Februus to bypass Trojan triggers in images. Before the image enters the
+    model, it is sent to Februus system to validate the presence of trigger, and remove
+    it if is it suspected. Working of Februus to detects and neutralises the trigger
+    can be understood as three steps. (i) Using a logit score-based method for Trojan
+    detection that works under the assumption that if a trigger exists in the input,
+    then the predicted class is the target class. (ii) Remove the potential trigger
+    with a masking process. (iii) Use an inpainting technique to restore the image.
+    Liu et al. [[79](#bib.bib79)] showed that an autoencoder can be used for image
+    pre-processing to remove potential triggers. The autoencoder is placed between
+    the image and the Trojaned model and it removes Trojan trigger by minimising the
+    mean-squared error between the training set images and the reconstructed images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Udeshi et al. [[80](#bib.bib80)] proposed a model-agnostic framework termed
+    NEO to locate and mitigate Trojan trigger in the input images. NEO aims at predicting
+    the correct outcomes of poisoned images and compares that with the actual prediction.
+    It places a trigger blocker on the images that has its prediction outcomes differing
+    considerably from each other. In [[81](#bib.bib81)], Vasquez et al. pre-processed
+    images through the style transfer of the image. Li et al. [[82](#bib.bib82)] discovered
+    that for the images with static trigger patterns, a slight change in the location
+    or appearance of the trigger can significantly degrade the effectiveness of Trojan
+    attack. Inspired, they then proposed a method which transforms the input regularly
+    by shrinking and flipping. Their technique is claimed to be an efficient detection
+    method that has low computational requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zeng et al. [[83](#bib.bib83)] proposed a method that works by depressing the
+    effectiveness of poisoned samples during the training time to prevent Trojan injection.
+    The depression involves transformation of inputs in both training and run time
+    process. Du et al. [[84](#bib.bib84)] used noisy stochastic gradient descent to
+    learn the model. They demonstrated that when noise is present in the training
+    set, the effectiveness of Trojan trigger reduces, resulting in a lower post-training
+    attack success rate. Hong et al [[85](#bib.bib85)] took an alternative approach
+    and observed that $l_{2}$ norm of the gradient of poisoned samples have significantly
+    higher magnitude than benign samples and they also differ in their gradient orientation.
+    They designed the differentially private stochastic gradient descent to perturb
+    individual gradients of the training samples and trained the model with clean
+    samples where all the Trojaned samples were removed from the training set. The
+    existing neural Trojan detection methods often use an intermediate representation
+    of models to distinguish between the Trojaned and benign models. Such methods
+    are more effective when spectral signature of the Trojaned data is sufficiently
+    large. Hayase et al. [[126](#bib.bib126)] proposed a robust covariance estimation
+    method to amplify the spectral signature of the Trojaned data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.6 Input Filtering
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The input filtering strategy involves filtering the malicious input so that
+    the data passed to the model is likely clean. Works under this category can further
+    be divided based on filtering applied at the training stage or the testing stage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.6.1 Training Sample Filtering
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Tran et al. [[86](#bib.bib86)] noticed that there is a detectable trace for
+    Trojaned samples in the spectrum of feature representation co-variance. Hence,
+    they proposed to filter the Trojaned samples using the decomposition of feature
+    representation. Chen et al. [[87](#bib.bib87)] shared a similar idea to Tran et
+    al. [[86](#bib.bib86)] and noted that the Trojaned and benign samples have different
+    characteristic in the feature space. They demonstrated that the Trojaned samples
+    in the training set can be filtered by first performing clustering of training
+    data neuron activation, then filtering the data by removing the cluster that represents
+    poisoned samples. Tang et al. [[88](#bib.bib88)] pointed out a limitation of the
+    previous two methods, stating that simple target contaminations may result in
+    less distinguishable representations for benign and Trojaned samples. To overcome
+    this, they proposed filtering based on representation decomposition and statistical
+    analysis of the individual samples. Similarly, Soremekun et al. [[89](#bib.bib89)]
+    also proposed filtering of poisoned samples based on the feature representation
+    difference between the Trojaned and benign samples. Chou et al. [[90](#bib.bib90)]
+    utilised saliency map for detecting potential triggers in the input, and then
+    they filtered the samples containing the triggers. Li et al. [[111](#bib.bib111)]
+    claimed that it is not evidental that there exist robust training methods to prevent
+    the injection of triggers. They conducted experiments which split the training
+    process into clean data training and Trojaned data training. They found two weaknesses
+    of Trojaned data training. 1) It is faster for the models to learn Trojaned data
+    compared to the clean data and the time taken for the convergence of the model
+    on the Trojaned data is highly dependent on the strength of the neural Trojan
+    attack. 2) The neural Trojan always aims to lean the models to the Trojan target
+    class. They leverage these observations to propose Anti-Backdoor Learning which
+    can achieve neural Trojan prevention by isolating Trojaned samples at the training
+    phase, and weaken any potential relationship between the Trojaned sample and the
+    target class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f00ee32269fa8fa2fa4274cfb23775e9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: A summary of the prominent contemporary Neural Trojan injection and
+    detection methods, along with non-adversarial applications of Neural Trojans.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fu et al. [[123](#bib.bib123)] recently proposed a novel feature-based on-line
+    detection strategy for neural Trojans that is named Removing Adversarial-Backdoors
+    by Iterative Demarcation (RAID). This is achieved in two stages, which are off-line
+    training and on-line retraining. The off-line training trains the neural network
+    with only clean data first, and then the on-line retraining detects the input
+    that is different from the clean data at the off-line training stage. Significantly
+    different images are then removed. They next train a binary support vector machine
+    (SVM) with both the purified anomalous data and the clean data so that RAID can
+    use the SVM to detect the poisoned inputs in a dataset. The SVM is also designed
+    to be updated in real-time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.6.2 Testing Sample Filtering
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Similar to training sample filtering, the main goal of this type of detection
+    method is to distinguish between the benign and Trojaned samples and filter the
+    Trojaned ones from the entire set before passing them to the model. However, in
+    this case, it is strictly done at the testing time only. Subedar et al. [[91](#bib.bib91)]
+    proposed a method that is able to distinguish between the Trojaned and benign
+    samples using model uncertainty during test time. Du et al. [[92](#bib.bib92)]
+    demonstrated the effectiveness of outlier detection for the objective trigger
+    detection while testing the model. Jaraheripi et al. [[93](#bib.bib93)] also proposed
+    a lightweight method for sample filtering which does not require labeled data,
+    model retraining or prior assumption on the design of the trigger and can work
+    as testing stage filter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.7 Certified Trojan Defenses
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Nearly all the above-mentioned defense techniques can be categorised as ad-hoc
+    techniques that are based on heuristics. It is often mentioned in the literature
+    that such defenses can be broken with the help of adaptive strategies [[104](#bib.bib104)],
+    [[105](#bib.bib105)]. Hence, similar to the certified defenses for adversarial
+    examples [[108](#bib.bib108)], researchers have also started investigating such
+    defenses for Trojan attacks. For instance, Wang et al. [[94](#bib.bib94)] proposed
+    a random smoothing technique that adds random noise to the sample to ensure the
+    robustness of the resulting model against the adaptive attacks. They improved
+    the method by thinking the training procedure as base function and develop a smooth
+    function based on the base function for smoothing. To an extent, Weber et al. [[95](#bib.bib95)]
+    disagreed with the above and proved the ineffectiveness when applying smoothing
+    directly. They proposed a framework that evaluates the difference in the smoothing
+    noise distributions to achieve better robustness of the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Discussions and Future Outlook
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This survey focused on the literature published from 2017 to 2021 on neural
+    Trojan with nearly 60% of the paper on Trojan attacks and the other 40% on defenses
+    against the attacks. Incidentally, we notice more activity in neural Trojan literature
+    since 2019, as compared to previous years. This indicates an increasing interest
+    of the research community in this direction. This trend is inline with the literature
+    in a closely related research direction of adversarial attacks on deep learning [[108](#bib.bib108)].
+    We conjecture that this ever increasing research activity in these directions
+    is a natural consequence of awareness of vulnerabilities of deep learning in adversarial
+    setups. We noticed a clear cat-and-mouse game between Trojan injections and Trojan
+    defenses until the Triggerless Backdoor [[24](#bib.bib24)] and dynamic backdoor [[25](#bib.bib25)]
+    appeared in the literature. These attacks have been shown to bypass the state-of-the-art
+    defense technologies at their time, which shows that the game is being led by
+    the attack methods. This battle is still on though, resulting in further discoveries
+    of vulnerabilites of deep learning and their remedies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whereas the literature discussed in the preceding sections cover a wide range
+    of topics and possibilities, this research direction is relatively new. Hence,
+    there is still considerable opportunity to explore new sub-topics in this direction.
+    A guide to such an exploration is provided by the sister problem of adversarial
+    attacks on deep learning [[108](#bib.bib108)]. The discovery of adversarial attacks
+    was made in 2013 - a few year earlier than identification of neural Trojans. Hence,
+    that problem is currently relatively more popular in the literature. The maturity
+    of literature in adversarial attacks can provide useful guideline for research
+    in Trojan attacks. We also list a few possible future directions and challenges
+    for Trojan attacks based on our literature review and other related problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Focus on Black-box Attacks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Almost 95% of the currently available Trojan attacks are white-box or grey-box
+    that are based on the assumption that at least parts of the training data is accessible
+    to the attackers. For example, all the attacks introduced by training data poisoning
+    assume that complete training data is available to insert the backdoor in the
+    target model. In real-life, full training data is usually not accessible due to
+    privacy reasons. Hence, these white-box and grey-box setups do not fully apply
+    to practical scenarios. This makes exploration of methods to embed Trojans or
+    exploit triggers under fully black-box setup an interesting future direction.
+    It may first seem that black-box scenario does not apply to Trojan attacks because
+    Trojans are embedded in the model itself, and embedding them must require model
+    or training data access. However, it may be possible to identify natural vulnerabilities
+    of models by querying them, e.g. discovering sensitivity of a model to irrelevant
+    pattern. This can subsequently be exploited in embedding triggers in input during
+    test time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Attacks and Defenses Beyond Visual Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Deep learning has its applications far beyond visual models. Currently, a wide
+    range of application tasks and neural network types are exploiting deep learning,
+    e.g. in speech recognition [[29](#bib.bib29)], [[30](#bib.bib30)], graph networks [[34](#bib.bib34)],
+    [[35](#bib.bib35)] etc. It can be notice in our literature review that an overwhelming
+    majority of the existing works are concerned with visual models only. In other
+    words, most of the Trojan embedding techniques are tailored to convolutional neural
+    networks operating in the domain of images. In this case, the effectiveness of
+    the attacks can be improved by maximising the attack success rate while keeping
+    the Trojan trigger hidden by blending the noise throughout the images. However,
+    designing an invisible trigger pattern in the other domains, e.g. speech recognition,
+    natural language processing, can be significantly different as the triggers can
+    no longer be blended into e.g. sentences. This opens new challenges for research
+    in Trojan attacks in different domains. We anticipate that in the future, this
+    direction will still encounter uncharted territories when its scope will be expanded
+    to other domains. Indeed, it is obvious that those domains will be found susceptible
+    to Trojan attacks as long as they exploit the technology of deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Efficacy of Trojan Design
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many works in the related literature focus on finding the most effective and
+    secretive way to insert Trojan triggers into the inputs. Nonetheless, the actual
+    pattern of the Trojan triggers are equally important, whose efficacy is relatively
+    less explored in the current literature. The c-BaN in dynamic backdoor [[15](#bib.bib15)]
+    is one of the few methods to generate triggers that are most suited to images
+    with a given label. Others generally think of Trojan triggers as a single pattern
+    or use simple algorithms for trigger generation. Hence, the ways to design powerful
+    trigger patterns can still be explored. It is also mentioned in [[4](#bib.bib4)]
+    that most of the studies only consider the effectiveness and invisibility of triggers.
+    However, more research can be conducted, aiming to design a Trojan trigger that
+    requires a minimised amount of training data to be poisoned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Stronger Defenses for the Existing Attacks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As mentioned earlier, the recent triggerless backdoors [[24](#bib.bib24)] and
+    dynamic backdoors [[15](#bib.bib15)] are designed to be too effective to be detected
+    by the state-of-the-art defense techniques. Triggerless backdoor broke the traditional
+    way of thinking and enabled Trojan activation without the presence of a trigger.
+    Dynamic backdoor also improved on the design of traditional Trojan to allow the
+    trigger to be a random pattern at random locations. This makes the detection of
+    such a trigger impossible. With continuous developments of Trojan embedding techniques
+    and introduction of more and more powerful attacks, we expect to see a counter
+    stream of stronger defenses in the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Neural Trojan is a serious problem for deep learning technology as it affects
+    neural networks such that they work normally for benign inputs, but maliciously
+    in the presence of a trigger in the input. This has serious implications for security-critical
+    applications. For example, in facial recognition, an attacker can exploit neural
+    Trojan to grant authentication to irrelevant personnel to sensitive areas or information.
+    Detection of such an attack is not easy because the model operates normally in
+    most cases and misbehave only in very specific cases. Due to the large growth
+    of the applications of deep learning, Trojan attacks have caught attentions of
+    many researchers in the recent years. This has also caused defenses against Trojan
+    attacks to emerge. We noticed that every year, there is an increasing number of
+    works appearing in the reputed sources of machine learning and computer vision,
+    e.g. CVPR, ICCV, ECCV, ICLR, NeurIPS that are concerned with neural Trojans. This
+    observation leads us to believe that this research direction is likely to become
+    even more popular in the near future. Whereas there have already been a few literature
+    reviews in this direction, our survey is unique in that it we reviews papers that
+    are published recently. It summarised the recent neural Trojan injection and defense
+    techniques by systematic categorization and discussed their effectiveness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Y. LeCun, Y. Bengio and G. Hinton, “Deep Learning,” Nature, vol. 521, no.
+    1, pp. 436–44, May. 28\. 2015\. DOI: 10.1038/nature14539, [online].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] F. Altaf, S. Islam, N. Akhtar and N. Janjua, “Going Deep in Medical Image
+    Analysis: Concepts, Methods, Challenges and Future Directions,” IEEE Access, vol.
+    PP, no. 1, pp. 1–1, 2019\. DOI: 10.1109/ACCESS.2019.2929365, [online].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Y. Li, B. Wu, Y. Jiang, Z. Li and S. Xia, “Backdoor Learning: A Survey,”
+    arXiv:2007.08745. [online]. Available: https://arxiv.org/abs/2007.08745'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Y. Liu, A. Mondal, A. Chakraborty, M. Zuzak, N. Jacobsen, D. Xing and A.
+    Srivastava, “A Survey on Neural Trojans,” IEEE Xplore, pp. 33–39, 2020\. DOI:
+    10.1109/ISQED48828.2020.9137011, [online].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] T. Gu, K. Liu, B. Dolan-Gavitt, and S. Garg, “Badnets: Evaluating backdooring
+    attacks on deep neural networks,” IEEE Xplore, vol. 7, pp. 47 230–47 244, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] X. Chen, C. Liu, B. Li, K. Lu, and D. Song, “Targeted backdoor attacks
+    on deep learning systems using data poisoning,” arXiv preprint arXiv:1712.05526,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Y. Li, Y. Li, B. Wu, L. Li, R. He, and S. Lyu, “Backdoor attack with sample-specific
+    triggers,” arXiv preprint arXiv:2012.03816, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Y. Liu, X. Ma, J. Bailey, and F. Lu, “Reflection backdoor: A natural backdoor
+    attack on deep neural networks,” in ECCV, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] H. Zhong, C. Liao, A. C. Squicciarini, S. Zhu, and D. Miller, “Backdoor
+    embedding in convolutional neural network models via invisible perturbation,”
+    in ACM CODASPY, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] N. Baracaldo, B. Chen, H. Ludwig, A. Safavi, and R. Zhang, “Backdoor embedding
+    in convolutional neural network models via invisible perturbation,” IEEE International
+    Congress on Internet of Things, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] H. Zhong, C. Liao, A. C. Squicciarini, S. Zhu, and D. Miller, “Detecting
+    Poisoning Attacks on Machine Learning in IoT Environments,” in ACM CODASPY, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] S. Zhao, X. Ma, X. Zheng, J. Bailey, J. Chen, and Y.-G. Jiang, “Cleanlabel
+    backdoor attacks on video recognition models,” in CVPR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] A. Saha, A. Subramanya, and H. Pirsiavash, “Hidden trigger backdoor attacks,”
+    in AAAI, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] E. Quiring and K. Rieck, “Backdooring and poisoning neural networks with
+    image-scaling attacks,” in IEEE S&P Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] A. Salem, R. Wen, M. Backes, S. Ma and Y. Zhang, “Dynamic Backdoor Attacks
+    Against Machine Learning Models,” arXiv:2003.03675, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] J. Clements and Y. Lao, “Backdoor Attacks on Neural Network Operations,”
+    IEEE Global Conference on Signal and Information Processing (GlobalSIP), pp. 1154–1158,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] J.J. Dumford and W. Scheirer, “Backdooring convolutional neural networks
+    via targeted weight perturbations,” arXiv preprint arXiv:1812.03128, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] A. S. Rakin, Z. He, and D. Fan, “Tbt: Targeted neural network attack with
+    bit trojan,” in CVPR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] E. Bagdasaryan and V. Shmatikov, “Blind backdoors in deep learning models,”
+    arXiv preprint arXiv:2005.03823, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] T. Liu, W. Wen, and Y. Jin, “SIN 2: Stealth infection on neural network—a
+    low-cost agile neural trojan attack methodology,” 8 IEEE International Symposium
+    on Hardware Oriented Security and Trust (HOST), pp. 227–230, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] C. Guo, R. Wu, and K. Q. Weinberger, “Trojannet: Embedding hidden trojan
+    horse models in neural networks,” arXiv preprint arXiv:2002.10078, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] R. Tang, M. Du, N. Liu, F. Yang, and X. Hu, “An embarrassingly simple
+    approach for trojan attack in deep neural networks,” in KDD, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] W. Li, J. Yu, X. Ning, P. Wang, Q. Wei, Y. Wang, and H. Yang, “Hu-fu:
+    Hardware and software collaborative attack framework against neural networks,”
+    8 IEEE Computer Society Annual Symposium on VLSI (ISVLSI), pp. 482–487, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] A. Salem, M. Backes, and Y. Zhang, “Don’t Trigger Me! A Triggerless Backdoor
+    Attack Against Deep Neural Networks,” arXiv:2010.03282, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] X. Chen, C. Liu, B. Li, K. Lu, and D. Song, “Targeted Backdoor Attacks
+    on Deep Learning Systems Using Data Poisoning,” arXiv:1712.05526, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] E. Wenger and J. Passananti and A. Bhagoji and Y. Yao and H. Zheng and
+    B. Y. Zhao, “Backdoor Attacks Against Deep Learning Systems in the Physical World,”
+    arXiv: Computer Vision and Pattern Recognition, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] T. Gu, K. Liu, B. Dolan-Gavitt, and S. Garg, “Badnets: Evaluating backdooring
+    attacks on deep neural networks,” IEEE Access, , vol. 7, pp. 47230–-47244, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Y. Li, T. Zhai, B. Wu, Y. Jiang, Z. Li, and S. Xia, “Rethinking the trigger
+    of backdoor attack,” arXiv preprint arXiv:2004.04692, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] J. Dai, C. Chen, and Y. Li, “A backdoor attack against lstm-based text
+    classification systems,” IEEE Access, vol. 7, pp. 138872–138878, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] S. Wang, S. Nepal, C. Rudolph, M. Grobler, S. Chen, and T. Chen, “Backdoor
+    attacks against transfer learning with pre-trained deep learning models,” IEEE
+    Transactions on Services Computing, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] T. Gu, K. Liu, B. Dolan-Gavitt, and S. Garg, “BadNets: Evaluating Backdooring
+    Attacks on Deep Neural Networks,” . IEEE Access 7, pp. 47230–47244, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] T. J. L. Tan and R. Shokri, “Bypassing Backdoor Detection Algorithms in
+    Deep Learning,” arXiv preprint arXiv:1905.13409, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Y. Yao, H. Li, H. Zheng, and B. Y. Zhao, “ Latent Backdoor Attacks on
+    Deep Neural Networks,” 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Z. Zhang, J. Jia, B. Wang, and N. Z. Gong, “Backdoor attacks to graph
+    neural networks,” in NeurIPS Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Z. Xi, R. Pang, S. Ji, and T. Wang, “Graph backdoor,” arXiv preprintarXiv:2006.11890,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] P. Kiourti, K. Wardega, S. Jha, and W. Li, “Trojdrl: Trojan attacks on
+    deep reinforcement learning agents,” arXiv preprint arXiv:1903.06638, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Z. Yang, N. Iyer, J. Reimann, and N. Virani, “Design of intentional backdoors
+    in sequential models,” arXiv preprint arXiv:1902.09972, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Y. Wang, E. Sarkar, M. Maniatakos, and S. E. Jabari, “Stop-andgo: Exploring
+    backdoor attacks on deep reinforcement learning-based traffic congestion control
+    systems,” arXiv preprint arXiv:2003.07859, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] E. Bagdasaryan, A. Veit, Y. Hua, D. Estrin, and V. Shmatikov, “How to
+    backdoor federated learning,” in AISTATS, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] A. N. Bhagoji, S. Chakraborty, P. Mittal, and S. Calo, “Analyzing federated
+    learning through an adversarial lens,” in ICML, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] A. Salem, Y. Sautter, M. Backes, M. Humbert, and Y. Zhang, “BAAAN: Backdoor
+    Attacks Against Autoencoder and GAN-Based Machine Learning Models,” arXiv:2010.03007,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Y. Adi, C. Baum, M. Cisse, B. Pinkas, and J. Keshet, “Turning your weakness
+    into a strength: Watermarking deep neural networks by backdooring,” In 27th USENIX
+    Security Symposium (USENIX Security 18), pp. 1615–-1631, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] J. Guo and M. Potkonjak, “Watermarking deep neural networks for embedded
+    systems,” In 2018 IEEE/ACM International Conference on Computer-Aided Design (ICCAD),
+    pp. 1–8, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] D. M. Sommer, L. Song, S. Wagh, and P. Mittal, “Towards probabilistic
+    verification of machine unlearning,” arXiv preprint arXiv:2003.04247, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Y. Li, Z. Zhang, J. Bai, B. Wu, Y. Jiang, and S.-T. Xia, “Open-sourced
+    dataset protection via backdoor watermarking,” in NeurIPS Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] S. Zhao, X. Ma, Y. Wang, J. Bailey, B. Li, and Y.-G. Jiang, “What do deep
+    nets learn? class-wise patterns revealed in the input space,” arXiv preprint arXiv:2101.06898,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] Y. S. Lin, W. C. Lee, and Z. B. Celik, “What do you see? evaluation of
+    explainable artificial intelligence (xai) interpretability through neural backdoors,”
+    arXiv preprint arXiv:2009.10639, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] T. Baluta, S. Shen, S. Shinde, K. S. Meel, and P. Saxena, “ Quantitative
+    Verification of Neural Networks And its Security Applications,” arXiv preprint
+    arXiv:1906.10395, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Z. He, T. Zhang, and R. Lee, “Sensitive-Sample Fingerprinting of Deep
+    Neural Networks,” In Proceedings of the IEEE Conference on Computer Vision and
+    Pattern Recognition, pp. 4729–-4737, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] N. B. Erichson, D. Taylor, Q. Wu, and M. W. Mahoney, “Noise-Response Analysis
+    of Deep Neural Networks Quantifies Robustness and Fingerprints Structural Malware,”
+    arXiv arXiv:2008.00123 , 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] J. Clements and Y. Lao, “Hardware trojan attacks on neural networks,”
+    arXiv preprint arXiv:1806.05768, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] N. Baracaldo, B. Chen, H. Ludwig, A. Safavi, and R. Zhang, “Detecting
+    Poisoning Attacks on Machine Learning in IoT Environments,” In 2018 IEEE International
+    Congress on Internet of Things ICIOT), pp. 57–64, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] Y. Liu, W. Lee, G. Tao, S. Ma, Y. Aafer, and X. Zhang, “ABS: Scanning
+    Neural Networks for Back-doors by Artificial Brain Stimulation,” In Proceedings
+    of the 2019 ACM SIGSAC Conference on Computer and Communications Security. ACM,
+    pp. 1265–-1282, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] A. Chakarov, A. Nori, S. Rajamani, S. Sen, and D. Vijaykeerthy, “Debugging
+    Machine Learning Tasks,” arXiv:cs.LG/1603.07292, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] B. Nelson, M. Barreno, F. J. Chi, A. D. Joseph, B. I. P. Rubinstein, U.
+    Saini, C. Sutton, J. D. Tygar, and K. Xia, “Misleading Learners: Co-opting Your
+    Spam Filter,” pp. 17–-51, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] X. Xu, Q. Wang, H. Li, N. Borisov, C. A. Gunter, and B. Li, “ Detecting
+    AI Trojans Using Meta Neural Analysis,” arXiv preprint arXiv:1910.03137, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] H. Chen, C. Fu, J. Zhao, and F. Koushanfar, “ DeepInspect: A Black-box
+    Trojan Detection and Mitigation Framework for Deep Neural Networks,” AAAI Press,
+    pp. 4658–-4664, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] Y. Gao, Y.e Kim, B. G. Doan, Z. Zhang, G. Zhang, S. Nepal, D. C. Ranasinghe,
+    and H. Kim, “ Design and Evaluation of a Multi-Domain Trojan Detection Method
+    on Deep Neural Networks,” arXiv preprint arXiv:1911.10312 , 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] Z. Xiang, D. J. Miller, and G. Kesidis, “ Revealing Backdoors, Post-Training,
+    in DNN Classifiers via Novel Inference on Optimized Perturbations Inducing Group
+    Misclassification,” arXiv preprint arXiv:1908.10498 , 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] S. Kolouri, A. Saha, H. Pirsiavash, and H. Hoffmann, “ Universal Litmus
+    Patterns: Revealing Backdoor Attacks in CNNs,” aarXiv preprint arXiv:1906.10842
+    , 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] X. Huang, M. Alzantot, and M. Srivastava, “Neuroninspect: Detecting backdoors
+    in neural networks via output explanations,” arXiv preprint arXiv:1911.07399,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] S. Huang, W. Peng, Z. Jia, and Z. Tu, “One-pixel signature: Characterizing
+    cnn models for backdoor detection,” in ECCV, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] R. Wang, G. Zhang, S. Liu, P.-Y. Chen, J. Xiong, and M. Wang, “Practical
+    detection of trojan neural networks: Data-limited and datafree cases,” in ECCV,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] K. Yoshida and T. Fujino, “Disabling backdoor and identifying poison data
+    by using knowledge distillation in backdoor attacks on deep neural networks,”
+    in CCS Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] Y. Li, X. Lyu, N. Koren, L. Lyu, B. Li, and X. Ma, “Neural attention distillation:
+    Erasing backdoor triggers from deep neural networks,” in ICLR, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] X. Xu, Q. Wang, H. Li, N. Borisov, C. A. Gunter, and B. Li, “ Detecting
+    AI Trojans Using Meta Neural Analysis,” arXiv preprint arXiv:1910.03137, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] Y. Liu, Y. Xie, and A. Srivastava, “Neural trojans,” In 2017 IEEE International
+    Conference on Computer Design (ICCD), pp. 45–48, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] P. Zhao, P.-Y. Chen, P. Das, K. N. Ramamurthy, and X. Lin, “Bridging mode
+    connectivity in loss landscapes and adversarial robustness,” in ICLR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] K. Liu, B. Dolan-Gavitt, and S. Garg, “Fine-pruning: Defending against
+    backdooring attacks on deep neural networks,” in RAID, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] B. Wang, Y. Yao, S. Shan, H. Li, B. Viswanath, H. Zheng, and B. Y. Zhao,
+    “Neural cleanse: Identifying and mitigating backdoor attacks in neural networks,”
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] W. Guo, L. Wang, X. Xing, M. Du, and D. Song, “ TABOR: A Highly Accurate
+    Approach to Inspecting and Restoring Trojan Backdoors in AI Systems,” arXiv preprint
+    arXiv:1908.01763, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] X. Qiao, Y. Yang, and H. Li, “ Defending neural backdoors via generative
+    distribution modeling,” in NeurIPS, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] K. Davaslioglu and Y. E. Sagduyu, “ Trojan attacks on wireless signal
+    classification with adversarial machine learning,” in DySPAN, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] L. Zhu, R. Ning, C. Wang, C. Xin, and H. Wu, “ Gangsweep: Sweep out neural
+    backdoors by gan,” in ACM MM, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] B. Chen, W. Carvalho, N. Baracaldo, H. Ludwig, B. Edwards, T. Lee, I.
+    Molloy, and B. Srivastava, “ Detecting backdoor attacks on deep neural networks
+    by activation clustering,” arXiv preprint arXiv:1811.03728, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] G. Shen, Y. Liu, G. Tao, S. An, Q. Xu, S. Cheng, S. Ma, and X. Zhang,
+    “ Backdoor scanning for deep neural networks through karm optimization,” arXiv
+    preprint arXiv:2102.05123, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] A. K. Veldanda, K. Liu, B. Tan, P. Krishnamurthy, F. Khorrami, R. Karri,
+    B. Dolan-Gavitt, and S. Garg, “Nnoculation: Broad spectrum and targeted treatment
+    of backdoored dnns,” arXiv preprint arXiv:2002.08313, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] B. G. Doan, E. Abbasnejad, and D. Ranasinghe, “DeepCleanse: A Black-box
+    Input Sanitization Framework Against BackdoorAttacks on DeepNeural Networks,”
+    arXiv preprint arXiv:1908.03369 , 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] Y. Liu, Y. Xie, and A. Srivastava, “Neural trojans,” In 2017 IEEE International
+    Conference on Computer Design (ICCD), 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] S. Udeshi, S. Peng, Gerald Woo, L. Loh, L. Rawshan, and S. Chattopadhyay,
+    “Model Agnostic Defence against Backdoor Attacks in Machine Learning,” arXiv preprint
+    arXiv:1908.02203, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] M. Villarreal-Vasquez and B. Bhargava, “Confoc: Content-focus protection
+    against trojan attacks on neural networks,” arXiv preprint arXiv:2007.00711, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] Y. Li, T. Zhai, B. Wu, Y. Jiang, Z. Li, and S. Xia, “Rethinking the trigger
+    of backdoor attack,” arXiv preprint arXiv:2004.04692, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] Y. Zeng, H. Qiu, S. Guo, T. Zhang, M. Qiu, and B. Thuraisingham, “Deepsweep:
+    An evaluation framework for mitigating dnn backdoor attacks using data augmentation,”
+    arXiv preprint arXiv:2012.07006, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] M. Du, R. Jia, and D. Song, “Robust anomaly detection and backdoor attack
+    detection via differential privacy,” in ICLR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] S. Hong, V. Chandrasekaran, Y. Kaya, T. Dumitras¸, and N. Papernot, “On
+    the effectiveness of mitigating data poisoning attacks with gradient shaping,”
+    arXiv preprint arXiv:2002.11497, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] B. Tran, J. Li, and A. Madry, “Spectral signatures in backdoor attacks,”
+    in NeurIPS, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] B. Chen, W. Carvalho, N. Baracaldo, H. Ludwig, B. Edwards, T. Lee, I.
+    Molloy, and B. Srivastava, “Detecting backdoor attacks on deep neural networks
+    by activation clustering,” in AAAI Workshop, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] D. Tang, X. Wang, H. Tang, and K. Zhang, “Demon in the variant: Statistical
+    analysis of dnns for robust backdoor contamination detection,” in USENIX Security,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] E. Soremekun, S. Udeshi, S. Chattopadhyay, and A. Zeller, “Exposing backdoors
+    in robust machine learning models,” arXiv preprint arXiv:2003.00865, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] E. Chou, F. Tramer, and G. Pellegrino, “Sentinet: Detecting localized
+    universal attacks against deep learning systems,” in IEEE S&P Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] M. Subedar, N. Ahuja, R. Krishnan, I. J. Ndiour, and O. Tickoo, “Deep
+    probabilistic models to detect data poisoning attacks,” in NeurIPS Workshop, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] M. Du, R. Jia, and D. Song, “Robust anomaly detection and backdoor attack
+    detection via differential privacy,” in ICLR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] M. Javaheripi, M. Samragh, G. Fields, T. Javidi, and F. Koushanfar, “Cleann:
+    Accelerated trojan shield for embedded neural networks,” in ICCAD, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] B. Wang, X. Cao, N. Z. Gong et al., “On certifying robustness against
+    backdoor attacks via randomized smoothing,” in CVPR Workshop, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] M. Weber, X. Xu, B. Karlas, C. Zhang, and B. Li, “Rab: Provable robustness
+    against backdoor attacks,” arXiv preprint arXiv:2003.08904, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] Cybiant, “What is Deep Learning,” available: https://www.cybiant.com/resources/what-is-deep-learning/.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] A. Krizhevsky, I. Sutskever, and G. Hinton, “ImageNet classification with
+    deep convolutional neural networks,” in Proc. Advances in Neural Information Processing
+    Systems, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] J. Tompson, A. Jain, Y. LeCun, and C. Bregler, “Joint training of a convolutional
+    network and a graphical model for human pose estimation,” in Proc. Advances in
+    Neural Information Processing Systems, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] G. Hinton, “Deep neural networks for acoustic modeling in speech recognition,”
+    in IEEE Signal Processing Magazine, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] T. Mikolov, A. Deoras, D. Povey, L. Burget and J. Cernocky, “Strategies
+    for training large scale neural network language models,” in Proc. Automatic Speech
+    Recognition and Understanding, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Y. Bengio, R. Duncharme, and P. Vincent, “A neural probabilistic language
+    model,” in Proc. Advances in Neural Information Processing Systems, 2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] 3Blue1Brown, But what is a neural network? — Chapter 1, Deep learning,
+    Accessed on: 17\. 07, 2021\. [Video file]. Available: [https://www.youtube.com/watch?v=aircAruvnKk&t=588s](https://www.youtube.com/watch?v=aircAruvnKk&t=588s)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] Y. Liu, S. Ma, T. Aafer, W. Lee, J. Zhai, W. Wang, and X. Zhang, ”Trojaning
+    Attack on Neural Networks,” 2018, Available: https://www.ndss-symposium.org/wp-content/uploads/2018/03/NDSS2018_03A-5_Liu_Slides.pdf'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] R. J. Schalkoff, Artificial Neural Network, vol.1 New York, NY, USA:
+    McGraw-Hill, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] B. W. White and F. Rosenblatt, ”Principles of neurodynamics: Perceptrons
+    and the theory of brain mechanisms,” Amer. J. Psychol., vol. 76, no. 4, pp. 705,
+    1963.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] T. James, M. Ren, S. Manivasagam, M. Liang, B. Yang, R. Du, F. Cheng,
+    and R. Urtasun. “Physically Realizable Adversarial Examples for LiDAR Object Detection”.
+    In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition.
+    13716–13725, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] S. Sun, N. Akhtar, H. Song, A. Mian, and M. Shah. ”Deep affinity network
+    for multiple object tracking.” IEEE transactions on pattern analysis and machine
+    intelligence 43, no. 1 (2019): 104-119.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] N. Akhtar, A. Mian, N. Karda, and M. Shah. “Advances in adversarial attacks
+    and defenses in computer vision: A survey”, arXiv preprint, arXiv:2108.00401,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] C. Szegedy, W. Zaremba, I. Sutskever, J. Bruna, D. Erhan, I. Goodfellow,
+    and R. Fergus. ”Intriguing properties of neural networks.” arXiv preprint arXiv:1312.6199,
+    2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] N. Akhtar, and A. Mian, “Threat of adversarial attacks on deep learning
+    in computer vision: A survey”. IEEE Access, 6, pp.14410-14430, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] Y. Li, X. Lyu, N. Koren, L. Lyu, B. Li, and X. Ma, “Anti-Backdoor Learning:
+    Training Clean Models on Poisoned Data”, arXiv preprint, arXiv:2110.11571, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] D. Wu, and Y. Wang, ” Adversarial Neuron Pruning Purifies Backdoored
+    Deep Models”, arXiv preprint, arXiv:2110.14430, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] A. Boloor, T. Wu, P. Naughton, A. Chakrabarti, X. Zhang and Y. Vorobeychik,
+    ”Can Optical Trojans Assist Adversarial Perturbations?,” 2021 IEEE/CVF International
+    Conference on Computer Vision Workshops (ICCVW), 2021, pp. 122-131, doi: 10.1109/ICCVW54120.2021.00019,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] Y. Li, Y. Li, B. Wu, L. Li, R. He, and S. Lyu, ”Invisible Backdoor Attack
+    with Sample-Specific Triggers”, in ICCV, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] T. Huster and E. Ekwedike, ”TOP: Backdoor Detection in Neural Networks
+    via Transferability of Perturbation”, arXiv preprint, arXiv:2103.10274, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] S. Zheng, Y. Zhang, H. Wagner, M. Goswami, and C. Chen, ”Topological
+    Detection of Trojaned Neural Networks”, arXiv preprint, arXiv:2106.06469, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] K. Doan, Y. Lao, and P. Li, ” Backdoor Attack with Imperceptible Input
+    and Latent Modification”, NeurIPS 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] K. Doan, Y. Kao, W. Zhao, and P. Li, ”LIRA: Learnable, Imperceptible
+    and Robust Backdoor Attacks”, ICCV 2021, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] M. Xue, X. Wang, S. Sun, Y. Zhang, J. Wang, and W. Liu, ”Compression-Resistant
+    Backdoor Attack against Deep Neural Networks”, arXiv preprint, arXiv:2201.00672,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] A. Nguyen, and A. Tran, ”WaNet – Imperceptible Warping-based Backdoor
+    Attack”, In Proceedings of the 9th International Conference on Learning Representation
+    (ICLR), Virtual Event, Austria, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] S. Cheng, Y. Liu, S. Ma, and X. Zhang, ”Deep Feature Space Trojan Attack
+    of Neural Networks by Controlled Detoxification”, arXiv preprint, arXiv:2012.11212,
+    ICLR, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] T. Li, J. Hua, H. Wang, C. Chen, and Y. Liu, ”DeepPayload: Black-box
+    Backdoor Attack on Deep Learning Models through Neural Payload Injection”, arXiv
+    preprint, arXiv:2101.06896, ICSE 2021, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] H. Fu, A. K. Veldanda, P. Krishnamurthy, S. Garg and F. Khorrami, ”A
+    Feature-Based On-Line Detector to Remove Adversarial-Backdoors by Iterative Demarcation,”
+    in IEEE Access, doi: 10.1109/ACCESS.2022.3141077.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] B. Zhao, and Y. Lao, ”Towards Class-Oriented Poisoning Attacks Against
+    Neural Networks”, arXiv preprint, arXiv:2008.00047, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] H. Kwon, ”Multi-Model Selective Backdoor Attack with Different Trigger
+    Positions”, EICE TRANSACTIONS on Information and Systems Vol.E105-D No.1 pp.170-174,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] J.Hayase, W. Kong, R. Somani, and S. Oh, ”Proceedings of the 38th International
+    Conference on Machine Learning”, PMLR 139:4129-4139, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] M. Barni, K.Kallas, and B. Tondi, ”A new backdoor attack in CNNS by training
+    set corruption without label poisoning.”, In Proceedings of the 2019 IEEE International
+    Conference on Image Processing (ICIP), pages 101–105, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] ”CIFAR-10 and CIFAR-100 datasets”, Cs.toronto.edu, 2022\. [Online]. Available:
+    https://www.cs.toronto.edu/ kriz/cifar.html. [Accessed: 16- Jan- 2022].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] ”CIFAR-10 and CIFAR-100 datasets”, Cs.toronto.edu, 2022\. [Online]. Available:
+    https://www.cs.toronto.edu/ kriz/cifar.html. [Accessed: 16- Jan- 2022].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

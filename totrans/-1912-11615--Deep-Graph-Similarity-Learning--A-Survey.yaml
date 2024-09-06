@@ -1,0 +1,2819 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:03:25'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1912.11615] Deep Graph Similarity Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/1912.11615](https://ar5iv.labs.arxiv.org/html/1912.11615)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ∎
+  prefs: []
+  type: TYPE_NORMAL
+- en: '¹¹institutetext: G. Ma ²²institutetext: Intel Labs, Intel Corporation, Hillsboro,
+    OR 97124, USA'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '²²email: guixiang.ma@intel.com ³³institutetext: N. K. Ahmed ⁴⁴institutetext:
+    Intel Labs, Intel Corporation, Santa Clara, CA 95054, USA'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '⁴⁴email: nesreen.k.ahmed@intel.com ⁵⁵institutetext: T. Willke ⁶⁶institutetext:
+    Intel Labs, Intel Corporation, Hillsboro, OR 97124, USA'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '⁶⁶email: ted.willke@intel.com ⁷⁷institutetext: P. Yu ⁸⁸institutetext: Department
+    of Computer Science, University of Illinois at Chicago, IL 60607, USA'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '⁸⁸email: psyu@uic.edu'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Deep Graph Similarity Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Guixiang Ma    Nesreen K. Ahmed    Theodore L. Willke    Philip S. Yu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: In many domains where data are represented as graphs, learning a similarity
+    metric among graphs is considered a key problem, which can further facilitate
+    various learning tasks, such as classification, clustering, and similarity search.
+    Recently, there has been an increasing interest in deep graph similarity learning,
+    where the key idea is to learn a deep learning model that maps input graphs to
+    a target space such that the distance in the target space approximates the structural
+    distance in the input space. Here, we provide a comprehensive review of the existing
+    literature of deep graph similarity learning. We propose a systematic taxonomy
+    for the methods and applications. Finally, we discuss the challenges and future
+    directions for this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Keywords:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Metric learning, Similarity learning, Graph Neural Networks, Graph Convolutional
+    Networks, Higher-order Networks, Graph Similarity, Structural Similarity, Graph
+    Matching, Deep graph similarity learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Learning an adequate similarity measure on a feature space can significantly
+    determine the performance of machine learning methods. Learning such measures
+    automatically from data is the primary aim of similarity learning. Similarity/Metric
+    learning refers to learning a function to measure the distance or similarity between
+    objects, which is a critical step in many machine learning problems, such as classification,
+    clustering, ranking, etc. For example, in k-Nearest Neighbor (kNN) classification
+    [cover1967nearest](#bib.bib30) , a metric is needed for measuring the distance
+    between data points and identifying the nearest neighbors; in many clustering
+    algorithms, similarity measurements between data points are used to determine
+    the clusters. Although there are some general metrics like Euclidean distance
+    that can be used for getting similarity measure between objects represented as
+    vectors, these metrics often fail to capture the specific characteristics of the
+    data being studied, especially for structured data. Therefore, it is essential
+    to find or learn a metric for measuring the similarity of data points involved
+    in the specific task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Metric learning has been widely studied in many fields on various data types.
+    For instance, in computer vision, metric learning has been explored on images
+    or videos for image classification, object recognition, visual tracking, and other
+    learning tasks [mensink2012metric](#bib.bib85) ; [guillaumin2009you](#bib.bib52)
+    ; [jiang2012order](#bib.bib61) . In information retrieval, such as in search engines,
+    metric learning has been used to determine the ranking of relevant documents to
+    a given query [lee2008rank](#bib.bib71) ; [lim2013robust](#bib.bib74) . In this
+    paper, we survey the existing work in similarity learning for graphs, which encode
+    relational structures and are ubiquitous in various domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarity learning for graphs has been studied for many real applications,
+    such as molecular graph classification in chemoinformatics [horvath2004cyclic](#bib.bib56)
+    ; [frohlich2006kernel](#bib.bib42) , protein-protein interaction network analysis
+    for disease prediction [borgwardt2007graph](#bib.bib22) , binary function similarity
+    search in computer security [li2019graph](#bib.bib73) , multi-subject brain network
+    similarity learning for neurological disorder analysis [ktena2018metric](#bib.bib67)
+    , etc. In many of these application scenarios, the number of training samples
+    available is often very limited, making it a difficult problem to directly train
+    a classification or prediction model. With graph similarity learning strategies,
+    these applications benefit from pairwise learning that utilizes every pair of
+    training samples to learn a metric for mapping the input data to the target space,
+    which further facilitates the specific learning task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the past few decades, many techniques have emerged for studying the similarity
+    of graphs. Early on, multiple graph similarity metrics were defined, such as the
+    Graph Edit Distance [bunke1983inexact](#bib.bib26) , Maximum Common Subgraph [bunke1998graph](#bib.bib27)
+    ; [wallis2001graph](#bib.bib119) , and Graph Isomorphism [dijkman2009graph](#bib.bib36)
+    ; [berretti2001efficient](#bib.bib19) , to address the problem of graph similarity
+    search and graph matching. However, the computation of these metrics is an NP-complete
+    problem in general [zeng2009comparing](#bib.bib135) . Although some pruning strategies
+    and heuristic methods have been proposed to approximate the values and speed up
+    the computation, it is difficult to analyze the computational complexities of
+    the above heuristic algorithms and the sub-optimal solutions provided by them
+    are also unbounded [zeng2009comparing](#bib.bib135) . Therefore, these approaches
+    are feasible only for graphs of relatively small size and in practical applications
+    where these metrics are of primary interest. Thus it is hard to adapt these methods
+    to new tasks. In addition, for other methods that are relatively more efficient
+    like the Weisfeiler-Lehman method in [douglas2011weisfeiler](#bib.bib38) , since
+    it is developed specifically for isomorphism testing without mapping functions,
+    it cannot be applied for general graph similarity learning. More recently, researchers
+    have formulated similarity estimation as a learning problem where the goal is
+    to learn a model that maps a pair of graphs to a similarity score based on the
+    graph representations. For example, graph kernels, such as path-based kernels
+    [borgwardt2005shortest](#bib.bib21) and the subgraph matching kernel [yan2005substructure](#bib.bib129)
+    ; [yoshida2019learning](#bib.bib132) , were proposed for graph similarity learning.
+    Traditional graph embedding techniques, such as geometric embedding, are also
+    leveraged for graph similarity learning [johansson2015learning](#bib.bib62) .
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the emergence of deep learning techniques, graph neural networks (GNNs)
+    have become a powerful new tool for learning representations on graphs with various
+    structures for various tasks. The main distinction between GNNs and the traditional
+    graph embedding is that GNNs address graph-related tasks in an end-to-end manner,
+    where the representation learning and the target learning task are conducted jointly
+    [wu2020comprehensive](#bib.bib126) , while the graph embedding generally learns
+    graph representations in an isolated stage and the learned representations are
+    then used for the target task. Therefore, the GNN deep models can better leverage
+    the graph features for the specific learning task compared to the graph embedding
+    methods. Moreover, GNNs are easily adapted and extended for various graph related
+    tasks, including deep graph similarity learning tasks in different domains. For
+    instance, in brain connectivity network analysis in neuroscience, community structure
+    among the nodes (i.e. brain regions) within the brain network is an important
+    factor that should be considered when learning node representations for cross-subject
+    similarity analysis. However, none of the traditional graph embedding methods
+    are able to capture such special structure and jointly leverage the learned node
+    representations for similarity learning on brain networks. In [ma2019similarity](#bib.bib78)
+    , a higher-order GNN model is developed to encode the community-structure of brain
+    networks during the representation learning and leverage it for the similarity
+    learning task on these brain networks. Some more examples from other domains include
+    the GNN-based graph similarity predictive models introduced for chemical compound
+    queries in computational chemistry [bai2019simgnn](#bib.bib15) , and the deep
+    graph matching networks proposed for binary function similarity search and malware
+    detection in computer security [li2019graph](#bib.bib73) ; [ijcai2019-522](#bib.bib122)
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this survey paper, we provide a systematic review of the existing work in
+    deep graph similarity learning. Based on the different graph representation learning
+    strategies and how they are leveraged for the deep graph similarity learning task,
+    we propose to categorize deep graph similarity learning models into three groups:
+    Graph Embedding based-methods, GNN-based methods, and Deep Graph Kernel-based
+    methods. Additionally, we sub-categorize the models based on their properties.
+    Table  [2](#S3.T2 "Table 2 ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity Learning:
+    A Survey") shows our proposed taxonomy, with some example models for each category
+    as well as the relevant applications. In this survey, we will illustrate how these
+    different categories of models approach the graph similarity learning problem.
+    We will also discuss the loss functions used for the graph similarity learning
+    task.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scope and Contributions.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'This paper is focused on surveying the recently emerged deep models for graph
+    similarity learning, where the goal is to use deep strategies on graphs for learning
+    the similarity of given pairs of graphs, instead of computing similarity scores
+    based on predefined measures. We emphasize that this paper does not attempt to
+    survey the extensive literature on graph representation learning, graph neural
+    networks, and graph embedding. Prior work has focused on these topics (see [cai2018comprehensive](#bib.bib28)
+    ; [goyal2018graph](#bib.bib49) ; [lee2019attention](#bib.bib70) ; [wu2019comprehensive](#bib.bib127)
+    ; [rossi2019community](#bib.bib101) ; [cui2018survey](#bib.bib31) ; [zhang2018network](#bib.bib136)
+    for examples). Here instead, we focus on deep graph representation learning methods
+    that explicitly focus on modeling graph similarity. To the best of our knowledge,
+    this is the first survey paper on this problem. We summarize the main contributions
+    of this paper as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\circ$
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Two comprehensive taxonomies to categorize the literature of the emerging field
+    of deep graph similarity learning, based on the type of models and the type of
+    features adopted by the existing methods, respectively.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: $\circ$
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary and discussion of the key techniques and building blocks of the models
+    in each category.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: $\circ$
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary and comparison of the different deep graph similarity learning models
+    across the taxonomy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: $\circ$
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary and discussion of the real-world applications that can benefit from
+    deep graph similarity learning in a variety of domains.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: $\circ$
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary and discussion of the major challenges for deep graph similarity learning,
+    the future directions, and the open problems.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Organization.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The rest of the paper is organized as follows. In Section [2](#S2 "2 Notation
+    and Preliminaries ‣ Deep Graph Similarity Learning: A Survey"), we introduce notation,
+    preliminary concepts, and define the graph similarity learning problem. In Section
+    3, we introduce the taxonomy with detailed illustrations of the existing deep
+    models. In Section 4, we summarize the datasets and evaluations adopted in the
+    existing works. In Section [5](#S5 "5 Applications ‣ Deep Graph Similarity Learning:
+    A Survey"), we present the applications of deep graph similarity learning in various
+    domains. In Section [6](#S6 "6 Challenges ‣ Deep Graph Similarity Learning: A
+    Survey"), we discuss the remaining challenges in this area and highlight future
+    directions. Finally, we conclude in Section [7](#S7 "7 Conclusion ‣ Deep Graph
+    Similarity Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Notation and Preliminaries
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we provide the necessary notation and definitions of the fundamental
+    concepts pertaining to the graph similarity problem that will be used throughout
+    this survey. The notation is summarized in Table [1](#S2.T1 "Table 1 ‣ 2 Notation
+    and Preliminaries ‣ Deep Graph Similarity Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Summary of Notation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| $G$ |  |  |  | Input graph |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $V$ |  |  |  | The set of nodes in a graph $G$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $E$ |  |  |  | The set of edges in a graph $G$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $a,\mathbf{a},\mathbf{A}$ |  |  |  | Scalar, vector, matrix |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{G}$ |  |  |  | Graph set $\mathcal{G}=\{G_{1},G_{2},\cdots,G_{n}\}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{M}$ |  |  |  | Similarity function |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $s_{ij}$ |  |  |  | Similarity score between two graphs $G_{i},G_{j}\in\mathcal{G}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathbb{R}^{m\times m}$ |  |  |  | $m-$dimensional Euclidean space |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathbf{I}_{m}$ |  |  |  | Identity matrix of dimension $m$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathbf{A}^{T}$ |  |  |  | Matrix transpose |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathbf{L}$ |  |  |  | Laplacian matrix |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $g_{\theta}*\mathbf{x}$ |  |  |  | Convolution of $g_{\theta}$ and $\mathbf{x}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Let $G=(V,E,\mathbf{A})$ denote a graph, where $V$ is the set of nodes, $E\subseteq
+    V\times V$ is the set of edges, and $\mathbf{A}\in\mathbb{R}^{|V|\times|V|}$ is
+    the adjacency matrix of the graph. This is a general notation for graphs that
+    covers different types of graphs, including unweighted/weighted graphs, undirected/directed
+    graphs, and attributed/non-attributed graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are also assuming a set of graphs as input, $\mathcal{G}=\{G_{1},G_{2},\dots,G_{n}\}$,
+    and the goal is measure/model their pairwise similarity. This relates to the classical
+    problem of graph isomorphism and its variants. In graph isomorphism [miller1979graph](#bib.bib87)
+    , two graphs $G=(V_{G},E_{G})$ and $H=(V_{H},E_{H})$ are isomorphic (i.e., $G\cong
+    H$), if there is a mapping function $\pi\mathrel{\mathop{\mathchar 58\relax}}V_{G}\rightarrow
+    V_{H}$, such that $(u,v)\in E_{G}$ iff $(\pi(u),\pi(v))\in E_{H}$. The graph isomorphism
+    is an NP problem, and no efficient algorithms are known for it. Subgraph isomorphism
+    is a generalization of the graph isomorphism problem. In subgraph isomorphism,
+    the goal is to answer for two input graphs $G$ and $H$, if there is a subgraph
+    of $G$ ($G^{\prime}\subset G$) such that $G^{\prime}$ is isomorphic to $H$ (i.e.,
+    $G^{\prime}\cong H$). This is suitable in a setting in which the two graphs have
+    different sizes. The subgraph isomorphism problem has been proven to be NP-complete
+    (unlike the graph isomorphism problem) [Garey1978ComputersAI](#bib.bib47) . The
+    maximum common subgraph problem is another less-restrictive measure of graph similarity,
+    in which the similarity between two graphs is defined based on the size of the
+    largest common subgraph in the two input graphs. However, this problem is also
+    NP-complete [Garey1978ComputersAI](#bib.bib47) .
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 1 (Graph Similarity Learning)
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Let $\mathcal{G}$ be an input set of graphs, $\mathcal{G}=\{G_{1},G_{2},\cdots,G_{n}\}$
+    where $G_{i}=(V_{i},E_{i},\mathbf{A}_{i})$. Let $\mathcal{M}$ denote a learnable
+    similarity function, such that $\mathcal{M}\mathrel{\mathop{\mathchar 58\relax}}(G_{i},G_{j})\rightarrow\mathbb{R}$,
+    for any pair of graphs $G_{i},G_{j}\in\mathcal{G}$. Assume $s_{ij}\in\mathbb{R}$
+    denote the similarity score computed using $\mathcal{M}$ between pairs $G_{i}$
+    and $G_{j}$. Then $\mathcal{M}$ is symmetric if and only if $s_{ij}=s_{ji}$ for
+    any pair of graphs $G_{i},G_{j}\in\mathcal{G}$. $\mathcal{M}$ should satisfy the
+    property that: $s_{ii}>=s_{ij}$ for any pair of graphs $G_{i},G_{j}\in\mathcal{G}$.
+    And, $s_{ij}$ is minimum if $G_{i}$ is the complement of $G_{j}$, i.e, $G_{i}=\bar{G_{j}}$,
+    for any graph $G_{j}\in\mathcal{G}$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Clearly, graph isomorphism and its related variants (e.g., subgraph isomorphism,
+    maximum common subgraphs, etc.) are focused on measuring the topological equivalence
+    of graphs, which gives rise to a binary similarity measure that outputs $1$ if
+    two graphs are isomorphic and $0$ otherwise. While these methods may sound intuitive,
+    they are actually more restrictive and difficult to compute for large graphs.
+    Here instead, we focus on a relaxed notion of graph similarity that can be measured
+    using machine learning models, where the goal is to learn a model that quantifies
+    the degree of structural similarity and relatedness between two graphs. This is
+    slightly similar to the work done on modeling the structural similarity between
+    nodes in the same graph [ahmedrole2020](#bib.bib9) ; [rossi2014role](#bib.bib98)
+    ; [ahmed2018learning](#bib.bib10) . We formally state the definition of graph
+    similarity learning (GSL) in Definition [1](#Thmmydef1 "Definition 1 (Graph Similarity
+    Learning) ‣ 2 Notation and Preliminaries ‣ Deep Graph Similarity Learning: A Survey").
+    Note that in the case of deep graph similarity learning, the similarity function
+    $\mathcal{M}$ is a neural network model that can be trained in an end-to-end fashion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Taxonomy of Models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5419d39f6508d8370340273c8cfb91e2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/a210df13ffbacf67e730fc349912dc14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Proposed taxonomy for categorizing the literature of deep graph similarity
+    learning based on (a) Model architecture, (b) Type of features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: A Taxonomy of Deep Graph Similarity Learning Methods'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Category |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Methods &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124;  Weighted graphs  &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124;  Heterogeneous graphs  &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124;  Attributed graphs  &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124;  Feature propagation  &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124;  Cross-graph interaction  &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Applications |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Graph Embedding based GSL | Node-level Embedding | [tixier2019graph](#bib.bib111)
+    | ✗ | ✗ | ✓ | ✗ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Social Network Analysis &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Bioinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [nikolentzos2017matching](#bib.bib92) | ✗ | ✓ | ✗ | ✗ | ✗ | Chemoinformatics
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Graph-level Embedding &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [narayanan2017graph2vec](#bib.bib88) ; [atamna2019spi](#bib.bib13) ; [wu2018dgcnn](#bib.bib125)
+    | ✗ | ✓ | ✗ | ✗ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Chemoinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Bioinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | [anonymous2019_inductive](#bib.bib120) | ✗ | ✓ | ✗ | ✗ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Social Network Analysis &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Chemoinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | [xu2017neural](#bib.bib128) | ✗ | ✗ | ✓ | ✗ | ✗ | Binary Code Similarity
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | [liu2019n](#bib.bib77) | ✗ | ✗ | ✓ | ✗ | ✗ | Chemoinformatics |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GNN-based GSL | GNN-CNN Models | [bai2018convolutional](#bib.bib16) | ✗ |
+    ✓ | ✓ | ✓ | ✗ | Chemoinformatics |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [bai2019simgnn](#bib.bib15) | ✗ | ✓ | ✓ | ✓ | ✗ | Chemoinformatics |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Siamese GNNs | [ktena2018metric](#bib.bib67) ; [ma2019similarity](#bib.bib78)
+    ; [liu2019community](#bib.bib76) | ✓ | ✗ | ✓ | ✓ | ✗ | Brain Network Analysis
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [ijcai2019-522](#bib.bib122) | ✗ | ✓ | ✓ | ✓ | ✗ | Malware Detection |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | [chaudhuri2019siamese](#bib.bib29) | ✓ | ✗ | ✓ | ✓ | ✗ | Image Retrieval
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GNN-based Graph Matching Networks | [li2019graph](#bib.bib73) ; [anonymous2019](#bib.bib75)
+    | ✗ | ✗ | ✓ | ✓ | ✓ | Binary Code Similarity |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [anonymous2019_mcs](#bib.bib17) | ✗ | ✓ | ✓ | ✓ | ✓ | Chemoinformatics |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | [wang2019learning](#bib.bib121) ; [jiang2019glmnet](#bib.bib60) | ✗
+    | ✗ | ✓ | ✓ | ✓ | Image Matching |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | [guo2018neural](#bib.bib53) | ✓ | ✓ | ✓ | ✓ | ✗ | 3D Action Recognition
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Deep Graph Kernel based GSL |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Sub-structure based &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Deep Kernels &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [yanardag2015deep](#bib.bib130) | ✗ | ✓ | ✗ | ✗ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Chemoinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Bioinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Social Network Analysis &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Deep Neural Network &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; based Kernels &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [al2019ddgk](#bib.bib11) | ✗ | ✓ | ✓ | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Chemoinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Bioinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  |  | [du2019graph](#bib.bib39) | ✗ | ✓ | ✓ | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Social Network Analysis &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Chemoinformatics &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, we describe the taxonomy for the literature of deep graph
+    similarity learning. As shown in Fig.  [1](#S3.F1 "Figure 1 ‣ 3 Taxonomy of Models
+    ‣ Deep Graph Similarity Learning: A Survey"), we propose two intuitive taxonomies
+    for categorizing the various deep graph similarity learning methods based on the
+    model architecture and the type of features used in these methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, we start by discussing the categorization based on which model architecture
+    has been used. There are three main categories of deep graph similarity learning
+    methods (see Fig. [1(a)](#S3.F1.sf1 "In Figure 1 ‣ 3 Taxonomy of Models ‣ Deep
+    Graph Similarity Learning: A Survey")): (1) graph embedding based methods, which
+    apply graph embedding techniques to obtain node-level or graph-level representations
+    and further use the representations for similarity learning [tixier2019graph](#bib.bib111)
+    ; [nikolentzos2017matching](#bib.bib92) ; [narayanan2017graph2vec](#bib.bib88)
+    ; [atamna2019spi](#bib.bib13) ; [wu2018dgcnn](#bib.bib125) ; [anonymous2019_inductive](#bib.bib120)
+    ; [xu2017neural](#bib.bib128) ; [liu2019n](#bib.bib77) ; (2) graph neural network
+    (GNN) based models, which are based on using GNNs for similarity learning, including
+    GNN-CNNs [bai2018convolutional](#bib.bib16) ; [bai2019simgnn](#bib.bib15) , Siamese
+    GNNs [ktena2018metric](#bib.bib67) ; [ma2019similarity](#bib.bib78) ; [liu2019community](#bib.bib76)
+    ; [ijcai2019-522](#bib.bib122) ; [chaudhuri2019siamese](#bib.bib29) and GNN-based
+    graph matching networks [li2019graph](#bib.bib73) ; [anonymous2019](#bib.bib75)
+    ; [anonymous2019_mcs](#bib.bib17) ; [wang2019learning](#bib.bib121) ; [jiang2019glmnet](#bib.bib60)
+    ; [guo2018neural](#bib.bib53) ; and (3) deep graph kernels that first map graphs
+    into a new feature space, where kernel functions are defined for similarity learning
+    on graph pairs, including sub-structure based deep kernels [yanardag2015deep](#bib.bib130)
+    and deep neural network based kernels [al2019ddgk](#bib.bib11) ; [du2019graph](#bib.bib39)
+    . In the meantime, different methods may use different types of features in the
+    learning process.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Second, we discuss the categorization of methods based on the type of features
+    used in them. Existing GSL approaches can be generally grouped into two categories
+    (see Fig. [1(b)](#S3.F1.sf2 "In Figure 1 ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity
+    Learning: A Survey")): (1) methods that uses single-graph features  [ktena2018metric](#bib.bib67)
+    ; [ma2019similarity](#bib.bib78) ; [liu2019community](#bib.bib76) ; [ijcai2019-522](#bib.bib122)
+    ; [chaudhuri2019siamese](#bib.bib29) ; (2) methods that uses cross-graph features
+    for similarity learning [li2019graph](#bib.bib73) ; [anonymous2019](#bib.bib75)
+    ; [anonymous2019_mcs](#bib.bib17) ; [al2019ddgk](#bib.bib11) ; [wang2019learning](#bib.bib121)
+    ; [anonymous2019_mcs](#bib.bib17) . The main difference between these two categories
+    of methods is that for methods using single-graph features, the representation
+    of each graph is learned individually, while those methods that use cross-graph
+    features allow graphs to learn and propagate features from each other and the
+    cross-graph interaction is leveraged for pairs of graphs. The single-graph features
+    mainly includes graph embeddings at different granularity (i.e.,node-level, graph-level,
+    and subgraph-level), while the cross-graph features includes the cross-graph node-level
+    features and cross-graph graph-level features, which are usually obtained by node-level
+    attention and graph-level attention across the two graphs in each pair.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we detail the description of the methods based on the taxonomy in Figures [1(a)](#S3.F1.sf1
+    "In Figure 1 ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity Learning: A Survey")
+    and [1(b)](#S3.F1.sf2 "In Figure 1 ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity
+    Learning: A Survey"). We summarize the general characteristics and applications
+    of all the methods in Table [2](#S3.T2 "Table 2 ‣ 3 Taxonomy of Models ‣ Deep
+    Graph Similarity Learning: A Survey"), including the type of graphs they are developed
+    for, the type of features, and the domains/applications where they could be applied.
+    We describe these methods in the following order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Graph embedding based GSL
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Graph Neural Network based GSL
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Deep graph kernel based GSL
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 3.1 Graph Embedding based Graph Similarity Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Graph embedding has received considerable attention in the past decade [cui2018survey](#bib.bib31)
+    ; [zhang2018network](#bib.bib136) , and a variety of deep graph embedding models
+    have been proposed in recent years [huang2019learning](#bib.bib58) ; [narayanan2017graph2vec](#bib.bib88)
+    ; [gao2019graph1](#bib.bib45) , for example the popular DeepWalk model proposed
+    in [perozzi2014deepwalk](#bib.bib94) and the node2vec model from [grover2016node2vec](#bib.bib51)
+    . Similarity learning methods based on graph embedding seek to utilize node-level
+    or graph-level representations learned by these graph embedding techniques for
+    defining similarity functions or predicting similarity scores [tsitsulin2018verse](#bib.bib114)
+    ; [tixier2019graph](#bib.bib111) ; [narayanan2017graph2vec](#bib.bib88) . Given
+    a collection of graphs, these works first aim to convert each graph $G$ into a
+    $d-$dimensional space $(d\ll\|V\|)$, where the graph is represented as either
+    a set of $d-$dimensional vectors with each vector representing the embedding of
+    one node (i.e.,node-level embedding) or a $d-$dimensional vector for the whole
+    graph as the graph-level embedding [cai2018comprehensive](#bib.bib28) . The graph
+    embeddings are usually learned in an unsupervised manner in a separate stage prior
+    to the similarity learning stage, where the graph embeddings obtained are used
+    for estimating or predicting the similarity score between each pair of graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1 Node-level Embedding based Methods
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Node-level embedding based methods compare graphs using the node-level representations
+    learned from the graphs. The similarity scores obtained by these methods mainly
+    capture the similarity between the corresponding nodes in two graphs. Therefore
+    they focus on the local node-level information on graphs during the learning process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: node2vec-PCA.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [tixier2019graph](#bib.bib111) , the node2vec approach [grover2016node2vec](#bib.bib51)
+    is employed for obtaining the node-level embeddings of graphs. To make the embeddings
+    of all the graphs in the given collection comparable, they apply the principal
+    component analysis (PCA) on the embeddings to retain the first $d\ll D$ principal
+    components (where $D$ is the dimensionality of the original node embedding space).
+    Afterwards, the embedding matrix of each graph is split into $d/2$ 2D slices.
+    Suppose there are $n$ nodes in each graph $G$ and the embedding matrix for graph
+    $G$ is $F\in\mathbb{R}^{n\times d}$, then $d/2$ 2D slices each with $\mathbb{R}^{n\times
+    2}$ will be obtained, which are viewed as $d/2$ channels. Then each 2D slice from
+    the embedding space is turned into regular grids by discretizing them into a fixed
+    number of equallly-sized bins, where the value associate with each bin is the
+    count of the number of nodes falling into that bin. These bins can be viewed as
+    pixels. Then, the graph is represented as a stack of 2D histograms of its node
+    embeddings. The graphs are then compared in the grid space and input into a 2D
+    CNN as multi-channel image-like structures for a graph classification task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bag-of-Vectors.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [nikolentzos2017matching](#bib.bib92) , the nodes of the graphs are first
+    embedded in the Euclidean space using the eigenvectors of the adjacency matrices
+    of the graphs, and each graph is then represented as a bag-of-vectors. The similarity
+    between two graphs is then measured by computing a matching based on the Earth
+    Mover’s Distance [rubner2000earth](#bib.bib102) between the two sets of embeddings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although node embedding based graph similarity learning methods have been extensively
+    developed, a common problem with these methods is that, since the comparison is
+    based on node-level representations, the global structure of the graphs tends
+    to be ignored, which actually is very important for comparing two graphs in terms
+    of their structural patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2 Graph-level Embedding based Methods
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The graph-level embedding based methods aim to learn a vector representation
+    for each graph and then learn the similarity score between graphs based on their
+    vector representations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) graph2vec.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'In [narayanan2017graph2vec](#bib.bib88) , a graph2vec was proposed to learn
+    distributed representations of graphs, similar to Doc2vec [le2014distributed](#bib.bib68)
+    in natural language processing. In graph2vec each graph is viewed as a document
+    and the rooted subgraphs around every node in the graph are viewed as words that
+    compose the document. There are two main components in this method: first, a procedure
+    to extract rooted subgraphs around every node in a given graph following the Weisfeiler-Lehman
+    relabeling process and second, the procedure to learn embeddings of the given
+    graphs by skip-gram with negative sampling. The Weisfeiler-Lehman relabeling algorithm
+    takes the root node of the given graph and degree of the intended subgraph $d$
+    as inputs, and returns the intended subgraph. In the negative sampling phase,
+    given a graph and a set of rooted subgraphs in its context, a set of randomly
+    chosen subgraphs are selected as negative samples and only the embeddings of the
+    negative samples are updated in the training. After the graph embedding is obtained
+    for each graph, the similarity or distance between graphs are computed in the
+    embedding space for downstream prediction tasks (e.g., graph classification, clustering,
+    etc.).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Neural Networks with Structure2vec.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [xu2017neural](#bib.bib128) , a deep graph embedding approach is proposed
+    for cross-platform binary code similarity detection. A Siamese architecture is
+    applied to enable the pair-wise similarity learning, and the graph embedding network
+    based on Structure2vec [dai2016discriminative](#bib.bib32) is used for learning
+    graph representations in the twin networks, which share weights with each other.
+    The Structure2vec is a neural network approach inspired by graphical model inference
+    algorithms where node-specific features are aggregated recursively according to
+    graph topology. After a few steps of recursion, the network will produce a new
+    feature representation for each node which considers both graph characteristics
+    and long-range interaction between node features. Given is a set of $K$ pairs
+    of graphs $<G_{i},{G_{i}}^{\prime}>$, with ground truth pair label $y_{i}\in\{+1,-1\}$,
+    where $y_{i}=+1$ indicates that $G_{i}$ and ${G_{i}}^{\prime}$ are similar, and
+    $y_{i}=-1$ indicates they are dissimilar. With the Structure2vec embedding output
+    for $G_{i}$ and ${G_{i}}^{\prime}$, represented as $\mathbf{f}_{i}$ and ${\mathbf{f}_{i}}^{\prime}$
+    respectively, they define the Siamese network output for each pair as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle Sim(G_{i},{G_{i}}^{\prime})=\cos(\mathbf{f}_{i},{\mathbf{f}_{i}}^{\prime})=\frac{\langle\mathbf{f}_{i},{\mathbf{f}_{i}}^{\prime}\rangle}{\&#124;\mathbf{f}_{i}\&#124;\cdot\&#124;{\mathbf{f}_{i}}^{\prime}\&#124;}$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: and the following loss function is used for training the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L=\sum_{i=1}^{K}(Sim(G_{i},{G_{i}}^{\prime})-y_{i})^{2}$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: (3) Simple Permutation-Invariant GCN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [atamna2019spi](#bib.bib13) , a graph representation learning method based
+    on a simple permutation-invariant graph convolutional network is proposed for
+    the graph similarity and graph classification problem. A graph convolution module
+    is used to encode local graph structure and node features, after which a sum-pooling
+    layer is used to transform the substructure feature matrix computed by the graph
+    convolutions into a single feature vector representation of the input graphs.
+    The vector representation is then used as features for each graph, based on which
+    the graph similarity or graph classification task can be performed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(4) SEED: Sampling, Encoding, and Embedding Distributions.'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'In [anonymous2019_inductive](#bib.bib120) , an inductive and unsupervised graph
+    representation learning approach called SEED is proposed for graph similarity
+    learning. The proposed framework consists of three components: sampling, encoding,
+    and embedding distribution. In the sampling stage, a number of subgraphs called
+    WEAVE are sampled based on the random walk with earliest visit time. Then in the
+    encoding stage, an autoencoder [hinton2006reducing](#bib.bib55) is used to encode
+    the subgraphs into dense low-dimensional vectors. Given a set of k sampled WEAVEs
+    $\{X_{1},X_{2},X_{3},\cdots,X_{k}\}$, for each subgraph $X_{i}$ the autoencoder
+    works as follows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathbf{z}_{i}=f(X_{i};{\theta}_{e}),\quad\hat{X_{i}}=g(\mathbf{z}_{i};{\theta}_{d}),$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\mathbf{z}_{i}$ is the dense low-dimensional representation for the
+    input WEAVE subgraph $X_{i}$, $f(\cdot)$ is the encoding function implemented
+    with an Multi-layer Perceptron (MLP) with parameters ${\theta}_{e}$, and $g(\cdot)$
+    is the decoding function implemented by another MLP with parameters ${\theta}_{d}$.
+    A reconstruction loss is used to train the autoencoder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L=\mathinner{\!\left\lVert X-\hat{X}\right\rVert}_{2}^{2}$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'After the autoencoder is well trained, the final subgraph embedding vectors
+    ${\mathbf{z}_{1},\mathbf{z}_{2},\mathbf{z}_{3},\cdots,}$ and $\mathbf{z}_{k}$
+    can be obtained for each graph. Finally, in the embedding distribution stage,
+    the distance between the subgraph distributions of two input graphs $G$ and $H$
+    is evaluated using the maximum mean discrepancy (MMD) [gretton2012kernel](#bib.bib50)
+    on the embeddings. Assume the $k$ subgraphs sampled from $G$ are encoded into
+    embeddings ${\mathbf{z}_{1},\mathbf{z}_{2},\cdots,\mathbf{z}_{k}}$, and the $k$
+    subgraphs of $H$ are encoded into embeddings ${\mathbf{h}_{1},\mathbf{h}_{2},\cdots,\mathbf{h}_{k}}$,
+    the MMD distance between $G$ and $H$ is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\widehat{\text{MMD}}(G,H)=\mathinner{\!\left\lVert\hat{\mu}_{G}-\hat{\mu}_{H}\right\rVert}_{2}^{2}$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\hat{\mu}_{G}$ and $\hat{\mu}_{H}$ are empirical kernel embeddings of
+    the two distributions, which are defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\hat{\mu}_{G}=\frac{1}{k}\sum_{i=1}^{k}\phi(\mathbf{z}_{i}),\quad\hat{\mu}_{H}=\frac{1}{k}\sum_{i=1}^{k}\phi(\mathbf{h}_{i})$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\phi(\cdot)$ is the feature mapping function used for the kernel function
+    for graph similarity evaluation. An identity kernel is applied in this work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(5) DGCNN: Disordered Graph CNN.'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [wu2018dgcnn](#bib.bib125) , another graph-level representation learning
+    approach called DGCNN is introduced based on graph CNN and mixed Gaussian model,
+    where a set of key nodes are selected from each graph. Specifically, to ensure
+    the number of neighborhoods of the nodes in each graph is consistent, the same
+    number of key nodes are sampled for each graph in a key node selection stage.
+    Then a convolution operation is performed over the kernel parameter matrix and
+    the nodes in the neighborhood of the selected key nodes, after which the graph
+    CNN takes the output of the convolutional layer as the input data of the overall
+    connection layer. Finally, the output of the dense hidden layer is used as the
+    feature vector for each graph in the graph similarity retrieval task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (6) N-Gram Graph Embedding.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [liu2019n](#bib.bib77) , an unsupervised graph representation based method
+    called $N$-gram is proposed for similarity learning on molecule graphs. It first
+    views each node in the graph as one token and applies an analog of the CBOW (continuous
+    bag of words) [mikolov2013distributed](#bib.bib86) strategy and trains a neural
+    network to learn the node embeddings for each graph. Then it enumerates the walks
+    of length $n$ in each graph, where each walk is called an $n$-gram, and obtains
+    the embedding for each $n$-gram by assembling the embeddings of the nodes in the
+    $n$-gram using element-wise product. The embedding for the n-gram walk set is
+    defined as the sum of the embeddings for all n-grams. The final n-gram graph-level
+    representation up to lenght $T$ is then constructed by concatenating the embeddings
+    of all the $n$-gram sets for $n\in\{1,2,\cdots,T\}$ in the graph. Finally, the
+    graph-level embeddings are used for the similarity prediction or graph classification
+    task for molecule analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By summarizing the embedding based methods, we find the main advantage of these
+    methods is their speed and scalability, due to the fact that the graph representations
+    learned through these factorized models are developed on each single graph where
+    there is no feature interactions across graphs. This property makes these methods
+    a great option for graph similarity learning applications such as graph retrieval,
+    where similarity search becomes a nearest neighbor search in a database of the
+    precomputed graph representations by these factorized methods. Moreover, these
+    embedding based methods provide a variety of perspectives and strategies for learning
+    representations from graphs and demonstrate that these representations can be
+    used for graph similarity learning. However, there are also shortcomings in these
+    solutions, a common one being that the embeddings are learned independently on
+    the individual graphs in a separate stage from the similarity learning, therefore
+    the graph-graph proximity is not considered or utilized in the graph representation
+    learning process, and the representations learned by these models may not be suitable
+    for graph-graph similarity prediction compared to the methods that integrate the
+    similarity learning with the graph representation learning in an end-to-end framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 GNN-based Graph Similarity Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The similarity learning methods based on Graph Neural Networks (GNNs) seek
+    to learn graph representations by GNNs while doing the similarity learning task
+    in an end-to-end fashion. Fig. [2](#S3.F2 "Figure 2 ‣ GNN Preliminaries. ‣ 3.2
+    GNN-based Graph Similarity Learning ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity
+    Learning: A Survey") illustrates a general workflow of GNN-based graph similarity
+    learning models. Given pairs of input graphs $<G_{i},G_{j},y_{ij}>$, where $y_{ij}$
+    denotes the ground-truth similarity label or score of $<G_{i},G_{j}>$, the GNN-based
+    GSL methods first employ multi-layer GNNs with weights $W$ to learn the representations
+    for $G_{i}$ and $G_{j}$ in the encoding space, where the learning on each graph
+    in a pair could influence each other by some mechanisms such as weight sharing
+    and cross-graph interactions between the GNNs for the two graphs. A matrix or
+    vector representation will be output for each graph by the GNN layers, after which
+    a dot product layer or fully connected layers can be added to produce or predict
+    the similarity scores between two graphs. Finally, the similarity estimates for
+    all pairs of graphs and their ground-truth labels are used in a loss function
+    for training the model $M$ with parameters $W$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before introducing the methods in this category, we provide the necessary background
+    on GNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GNN Preliminaries.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Graph neural networks (GNNs) were first formulated in [gori2005new](#bib.bib48)
+    , which proposed to use a propagation process to learn node representations for
+    graphs. It has then been further extended by [scarselli2008graph](#bib.bib103)
+    ; [gallicchio2010graph](#bib.bib43) . Later, graph convolutional networks were
+    proposed which compute node updates by aggregating information in local neighborhoods
+    [bruna2013spectral](#bib.bib25) ; [defferrard2016convolutional](#bib.bib34) ;
+    [kipf2016semi](#bib.bib64) , and they have become the most popular graph neural
+    networks, which are widely used and extended for graph representation learning
+    in various domains [zhou2018graph](#bib.bib139) ; [zhang2018graph](#bib.bib137)
+    ; [gao2018large](#bib.bib46) ; [gao2019graph](#bib.bib44) ; [gao2019graph1](#bib.bib45)
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the development of graph neural networks, researchers began to build graph
+    similarity learning models based on GNNs. In this section, we will first introduce
+    the workflow of GCNs with the spectral GCN [shuman2013emerging](#bib.bib106) as
+    an example, and then describe the GNN-based graph similarity learning methods
+    covering three main categories.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a graph $G=(V,E,\mathbf{A})$, where $V$ is the set of vertices, $E\subset
+    V\times V$ is the set of edges, and $\mathbf{A}\in\mathbb{R}^{m\times m}$ is the
+    adjacency matrix, the diagonal degree matrix $\mathbf{D}$ will have elements $\mathbf{D}_{ii}=\sum_{j}\mathbf{A}_{ij}$.
+    The graph Laplacian matrix is $\mathbf{L}=\mathbf{D}-\mathbf{A}$, which can be
+    normalized as $\mathbf{L}=\mathbf{I}_{m}-\mathbf{D}^{-\frac{1}{2}}\mathbf{A}\mathbf{D}^{-\frac{1}{2}}$,
+    where $\mathbf{I}_{m}$ is the identity matrix. Assume the orthonormal eigenvectors
+    of $\mathbf{L}$ are represented as $\{u_{l}\}_{l=0}^{m-1}\in\mathbb{R}^{m\times
+    m}$, and their associated eigenvalues are $\{\lambda_{l}\}_{l=0}^{m-1}$, the Laplacian
+    is diagonalized by the Fourier basis $[u_{0},\cdots,u_{m-1}](=\mathbf{U})\in\mathbb{R}^{m\times
+    m}$ and $\mathbf{L}=\mathbf{U\Lambda U^{T}}$ where $\mathbf{\Lambda}=diag([\lambda_{0},\cdots,\lambda_{m-1}])\in\mathbb{R}^{m\times
+    m}$. The graph Fourier transform of a signal $x\in\mathbb{R}^{m}$ can then be
+    defined as $\hat{x}=\mathbf{U^{T}}x\in\mathbb{R}^{m}$[shuman2013emerging](#bib.bib106)
+    . Suppose a signal vector $\mathbf{x}\mathrel{\mathop{\mathchar 58\relax}}V\rightarrow\mathbb{R}$
+    is defined on the nodes of graph $G$, where $\mathbf{x}_{i}$ is the value of $\mathbf{x}$
+    at the $i^{th}$ node. Then the signal $\mathbf{x}$ can be filtered by $g_{\theta}$
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle y=g_{\theta}*\mathbf{x}=g_{\theta}(\mathbf{L})\mathbf{x}=g_{\theta}(\mathbf{U{\Lambda}U^{T}})\mathbf{x}=\mathbf{U}g_{\theta}(\Lambda)\mathbf{U^{T}}\mathbf{x}$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where the filter $g_{\theta}(\Lambda)$ can be defined as $g_{\theta}(\Lambda)=\sum_{k=0}^{K-1}{\theta_{k}}{\Lambda^{k}}$,
+    and the parameter $\theta\in{\mathbb{R}}^{K}$ is a vector of polynomial coefficients
+    [defferrard2016convolutional](#bib.bib34) . GCNs can be constructed by stacking
+    multiple convolutional layers in the form of Equation ([7](#S3.E7 "In GNN Preliminaries.
+    ‣ 3.2 GNN-based Graph Similarity Learning ‣ 3 Taxonomy of Models ‣ Deep Graph
+    Similarity Learning: A Survey")), with a non-linearity activation (ReLU) following
+    each layer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/980ab3e3039251bba75b6834775c81b1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Illustration of GNN-based Graph Similarity Learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Based on how graph-graph similarity/proximity is leveraged in the learning,
+    we summarize the existing GNN-based graph similarity learning work into three
+    main categories: 1) GNN-CNN mixed models for graph similarity prediction, 2) Siamese
+    GNNs for graph similarity prediction, and 3) GNN-based graph matching networks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 GNN-CNN Models for Graph Similarity Prediction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The works that use GNN-CNN mixed networks for graph similarity prediction mainly
+    employ GNNs to learn graph representations and leverage the learned representations
+    into CNNs for predicting similarity scores, which is approached as a classification
+    or regression problem. Fully connected layers are often added for the similarity
+    score prediction in an end-to-end learning framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) GSimCNN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [bai2018convolutional](#bib.bib16) , a method called GSimCNN is proposed
+    for pairwise graph similarity prediction, which consists of three stages. In Stage
+    1, node representations are first generated by multi-layer GCNs, where each layer
+    is defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle conv(\mathbf{x}_{i})=ReLU(\sum_{j\in N(i)}\frac{1}{\sqrt{d_{i}d_{j}}}\mathbf{x}_{j}\mathbf{W}^{(l)}+\mathbf{b}^{(l)})$
+    |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $N(i)$ is the set of first-order neighbors of node $i$ plus node $i$ itself,
+    $d_{i}$ is the degree of node $i$ plus $1$, $\mathbf{W}^{(l)}$ is the weight matrix
+    for the $l-$th GCN layer, $\mathbf{b}^{(l)}$ is the bias, and $ReLU(x)=max(0,x)$
+    is the activation function. In Stage 2, the inner products between all possible
+    pairs of node embeddings between two graphs from different GCN layers are calculated,
+    which results in multiple similarity matrices. Finally, the similarity matrices
+    from different layers are processed by multiple independent CNNs, where the output
+    of the CNNs are concatenated and fed into fully connected layers for predicting
+    the final similarity score $s_{ij}$ for each pair of graphs $G_{i}$ and $G_{j}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) SimGNN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [bai2019simgnn](#bib.bib15) , a SimGNN model is introduced based on the GSimCNN
+    from [bai2018convolutional](#bib.bib16) . In addition to pairwise node comparison
+    with node-level embeddings from the GCN output, neural tensor networks (NTN) [socher2013reasoning](#bib.bib107)
+    are utilized to model the relation between the graph-level embeddings of two input
+    graphs, whereas the graph embedding for each graph is generated via a weighted
+    sum of node embeddings, and a global context-aware attention is applied on each
+    node, such that nodes similar to the global context receive higher attention weights.
+    Finally, both the comparison between node-level embeddings and graph-level embeddings
+    are considered for the similarity score prediction in the CNN fully connected
+    layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Siamese GNN models for Graph Similarity Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'This category of works uses the Siamese network architecture with GNNs as twin
+    networks to simultaneously learn representations from two graphs, and then obtain
+    a similarity estimate based on the output representations of the GNNs. Fig. [3](#S3.F3
+    "Figure 3 ‣ 3.2.2 Siamese GNN models for Graph Similarity Learning ‣ 3.2 GNN-based
+    Graph Similarity Learning ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity Learning:
+    A Survey") shows an example of Siamese architecture with GCNs in the twin networks,
+    where the weights of the networks are shared with each other. The similarity estimate
+    is typically leveraged in a loss function for training the network.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/66ed3c9a6680edbe172b34074186f4d1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Siamese Architecture with Graph Convolutional Networks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (1) Siamese GCN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The work in [ktena2018metric](#bib.bib67) proposes to learn a graph similarity
+    metric using the Siamese graph convolutional neural network (S-GCN) in a supervised
+    setting. The S-GCN takes a pair of graphs as inputs and employs spectral GCN to
+    get graph embedding for each input graph, after which a dot product layer followed
+    by a fully connected layer is used to produce the similarity estimate between
+    the two graphs in the spectral domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (2) Higher-order Siamese GCN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Higher-order Siamese GCN (HS-GCN) is proposed in [ma2019similarity](#bib.bib78)
+    , which incorporates higher-order node-level proximity into graph convolutional
+    networks so as to perform higher-order convolutions on each of the input graphs
+    for the graph similarity learning task. A Siamese framework is employed with the
+    proposed higher-order GCN in each of the twin networks. Specifically, random walk
+    is used for capturing higher-order proximity from graphs and refining the graph
+    representations used in graph convolutions. Both this work and the S-GCN [ktena2018metric](#bib.bib67)
+    introduced above use the Hinge loss for training the Siamese similarity learning
+    models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L_{Hinge}=\frac{1}{K}\sum_{i=1}^{N}\sum_{j=i+1}^{N}max(0,1-{y_{ij}}{s_{ij}}),$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $N$ is the total number of graphs in the training set, $K=N(N-1)/2$ is
+    the total number of pairs from the training set, $y_{ij}$ is the ground-truth
+    label for the pair of graphs $G_{i}$ and $G_{j}$ where $y_{ij}=1$ for similar
+    pairs and $y_{ij}=-1$ for dissimilar pairs, and $s_{ij}$ is the similarity score
+    estimated by the model. More general forms of higher-order information (e.g.,
+    motifs [ahmed2015efficient](#bib.bib7) ; [ahmed2017graphlet](#bib.bib8) ) have
+    been used for learning graph representations [rossi2018higher](#bib.bib99) ; [rossi2020structural](#bib.bib100)
+    and would likely benefit the learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) Community-preserving Siamese GCN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'In [liu2019community](#bib.bib76) , another Siamese GCN based model called
+    SCP-GCN is proposed for the similarity learning in functional and structural joint
+    analysis of brain networks, where the graph structure used in the GCN is defined
+    from the structural connectivity network while the node features come from the
+    functional brain network. The contrastive loss (Equation ([10](#S3.E10 "In (3)
+    Community-preserving Siamese GCN. ‣ 3.2.2 Siamese GNN models for Graph Similarity
+    Learning ‣ 3.2 GNN-based Graph Similarity Learning ‣ 3 Taxonomy of Models ‣ Deep
+    Graph Similarity Learning: A Survey"))) along with a newly proposed community-preserving
+    loss (Equation ([11](#S3.E11 "In (3) Community-preserving Siamese GCN. ‣ 3.2.2
+    Siamese GNN models for Graph Similarity Learning ‣ 3.2 GNN-based Graph Similarity
+    Learning ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity Learning: A Survey")))
+    is used for training the model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L_{Contrastive}=\frac{y_{ij}}{2}\&#124;\mathbf{g}_{i}-\mathbf{g}_{j}\&#124;_{2}^{2}+(1-y_{ij})\frac{1}{2}\{max(0,m-\&#124;\mathbf{g}_{i}-\mathbf{g}_{j}\&#124;_{2})\}^{2}$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathbf{g}_{i}$ and $\mathbf{g}_{j}$ are the graph embeddings of graph
+    $G_{i}$ and graph $G_{j}$ computed from the GCN, $m$ is a margin value which is
+    greater than $0$. $y_{ij}=1$ if $G_{i}$ and $G_{j}$ are from the same class and
+    $y_{ij}=0$ if they are from different classes. By minimizing the contrastive loss,
+    the Euclidean distance between two graph embedding vectors will be minimized when
+    the two graphs are from the same class, and maximized when they belong to different
+    classes. The community-preserving loss is defined as follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L_{CP}=\alpha(\sum_{c}\frac{1}{&#124;S_{c}&#124;}\sum_{i\in S_{c}}\&#124;\mathbf{z}_{i}-\hat{\mathbf{z}}_{c}\&#124;_{2}^{2})-\beta\sum_{c,c^{\prime}}\&#124;\hat{\mathbf{z}}_{c}-\hat{\mathbf{z}}_{c^{\prime}}\&#124;_{2}^{2}$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $S_{c}$ contains the indexes of nodes belonging to community $c$, $\hat{\mathbf{z}}_{c}=\frac{1}{|S_{c}|}\sum_{i\in
+    S_{c}}\mathbf{z}_{i}$ is the community center embedding for each community $c$,
+    where $\mathbf{z}_{i}$ is the embedding of the $i^{th}$ node, i.e., the $i^{th}$
+    row in the node embedding $\mathbf{Z}$ of the GCN output, and $\alpha$ and $\beta$
+    are the weights balancing the intra/inter-community loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (4) Hierarchical Siamese GNN.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'In [ijcai2019-522](#bib.bib122) , a Siamese network with two hierarchical GNN
+    models is introduced for the similarity learning of heterogeneous graphs for unknown
+    malware detection. Specifically, they consider the path-relevant sets of neighbors
+    according to meta-paths and generate node embeddings by selectively aggregating
+    the entities in each path-relevant neighbor set. The loss function in Equation ([2](#S3.E2
+    "In (2) Neural Networks with Structure2vec. ‣ 3.1.2 Graph-level Embedding based
+    Methods ‣ 3.1 Graph Embedding based Graph Similarity Learning ‣ 3 Taxonomy of
+    Models ‣ Deep Graph Similarity Learning: A Survey")) is used for training the
+    model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (5) Siamese GCN for Image Retrieval.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [chaudhuri2019siamese](#bib.bib29) , Siamese GCNs are used for content based
+    remote sensing image retrieval, where each image is converted to a region adjacency
+    graph in which each node represents a region segmented from the image. The goal
+    is to learn an embedding space that pulls semantically coherent images closer
+    while pushing dissimilar samples far apart. Contrastive loss is used in the model
+    training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the twin GNNs in the Siamese network share the same weights, an advantage
+    of the Siamese GNN models is that the two input graphs are guaranteed to be processed
+    in the same manner by the networks. As such, similar input graphs would be embedded
+    similarly in the latent space. Therefore, the Siamese GNNs are good for differentiating
+    the two input graphs in the latent space or measuring the similarity between them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to choosing the appropriate GNN models in the twin networks, one
+    needs to choose a proper loss function. Another widely used loss function for
+    Siamese network is the triplet loss [schroff2015facenet](#bib.bib104) . For a
+    triplet $(G_{i},G_{p},G_{n})$, $G_{p}$ is from the same class as $G_{i}$, while
+    $G_{n}$ is from a different class from $G_{i}$. The triplet loss is defined as
+    follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $L_{Triplet}=\frac{1}{K}\sum_{K}max(d_{ip}-d_{in}+m,0)$ |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $K$ is the number of triplets used in the training, $d_{ip}$ represents
+    the distance between $G_{i}$ and $G_{p}$, $d_{in}$ represents the distance between
+    $G_{i}$ and $G_{n}$, and $m$ is a margin value which is greater than 0\. By minimizing
+    the triplet loss, the distance between graphs from same class (i.e., $d_{ip}$)
+    will be pushed to $0$, and the distance between graphs from different classes
+    (i.e.,$d_{in}$ will be pushed to be greater than $d_{ip}+m$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to consider which loss function would be suitable for the targeted
+    problem when applying these Siamese GNN models for the graph similarity learning
+    task in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.3 GNN-based Graph Matching Networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ad0b721705d044fb79a27348e83b410a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Siamese GNN
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/728b21a66d0eeb107dbeb491b5120547.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) GNN-based Graph Matching Network
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 4: Comparison of the Learning Process of Siamese GNN and GNN-based Graph
+    Matching Network'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The work in this category adapts Siamese GNNs by incorporating matching mechanisms
+    during the learning with GNNs, and cross-graph interactions are considered in
+    the graph representation learning process. Fig. [4](#S3.F4 "Figure 4 ‣ 3.2.3 GNN-based
+    Graph Matching Networks ‣ 3.2 GNN-based Graph Similarity Learning ‣ 3 Taxonomy
+    of Models ‣ Deep Graph Similarity Learning: A Survey") shows this difference between
+    the Siamese GNNs and the GNN-based graph matching networks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(1) GMN: Graph Matching Network.'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [li2019graph](#bib.bib73) , a GNN based architecture called Graph Matching
+    Network (GMN) is proposed, where the node update module in each propagation layer
+    takes into account both the aggregated messages on the edges for each graph and
+    a cross-graph matching vector which measures how well a node in one graph can
+    be matched to the nodes in the other graph. Given a pair of graphs as input, the
+    GMN jointly learns graph representations for the pair through the cross-graph
+    attention-based matching mechanism, which propagates node representations by using
+    both the neighborhood information within the same graph and cross-graph node information.
+    A similarity score between the two input graphs is computed in the latent vector
+    space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(2) NeuralMCS: Neural Maximum Common Subgraph GMN.'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Based on the graph matching network in [li2019graph](#bib.bib73) , [anonymous2019_mcs](#bib.bib17)
+    proposes a neural maximum common subgraph (MCS) detection approach for learning
+    graph similarity. The graph matching network is adapted to learn node representations
+    for two input graphs $G_{1}$ and $G_{2}$, after which a likelihood of matching
+    each node in $G_{1}$ to each node in $G_{2}$ is computed by a normalized dot product
+    between the node embeddings. The likelihood indicates which node pair is most
+    likely to be in the MCS, and the likelihood for all pairs of nodes constitutes
+    the matching matrix $\mathbf{Y}$ for $G_{1}$ and $G_{2}$. Then a guided subgraph
+    extraction process is applied, which starts by finding the most likely pair and
+    iteratively expands the extracted subgraphs by selecting one more pair at a time
+    until adding more pairs would lead to non-isomorphic subgraphs. To check the subgraph
+    isomorphism, subgraph-level embeddings are computed by aggregating the node embeddings
+    of the neighboring nodes that are included in the MCS, and Euclidean distance
+    between the subgraph embeddings are computed. Finally, a similarity/match score
+    is obtained based on the subgraphs extracted from $G_{1}$ and $G_{2}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (3) Hierarchical Graph Matching Network.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [anonymous2019](#bib.bib75) , a hierarchical graph matching network is proposed
+    for graph similarity learning, which consists of a Siamese GNN for learning global-level
+    interactions between two graphs and a multi-perspective node-graph matching network
+    for learning the cross-level node-graph interactions between parts of one graph
+    and one whole graph. Given two graphs $G_{1}$ and $G_{2}$ as inputs, a three-layer
+    GCN is utilized to generate embeddings for them, and aggregation layers are added
+    to generate the graph embedding vector for each graph. In particular, cross-graph
+    attention coefficients are calculated between each node in $G_{1}$ and all the
+    nodes in $G_{2}$, and between each node in $G_{2}$ and all the nodes in $G_{1}$.
+    Then the attentive graph-level embeddings are generated using the weighted average
+    of node embeddings of the other graph, and a multi-perspective matching function
+    is defined to compare the node embeddings of one graph with the attentive graph-level
+    embeddings of the other graph. Finally, the BiLSTM model [schuster1997bidirectional](#bib.bib105)
+    is used to aggregate the cross-level interaction feature matrix from the node-graph
+    matching layer, followed by the final prediction layers for the similarity score
+    learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '(4) NCMN: Neural Graph Matching Network.'
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [guo2018neural](#bib.bib53) , a Neural Graph Matching Network (NGMN) is proposed
+    for few-shot 3D action recognition, where 3D data are represented as interaction
+    graphs. A GCN is applied for updating node features in the graphs and an MLP is
+    employed for updating the edge strength. A graph matching metric is then defined
+    based on both node matching features and edge matching features. In the proposed
+    NGMN, edge generation and graph matching metric are learned jointly for the few-shot
+    learning task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recently, deep graph matching networks were introduced for the graph matching
+    problem for image matching [anonymous2019_matching](#bib.bib41) ; [zanfir2018deep](#bib.bib134)
+    ; [jiang2019glmnet](#bib.bib60) ; [wang2019learning](#bib.bib121) . Graph matching
+    aims to find node correspondence between graphs, such that the corresponding node
+    and edge’s affinity is maximized. Although the problem of graph matching is different
+    from the graph similarity learning problem we focus on in this survey and is beyond
+    the scope of this survey, some work on deep graph matching networks involves graph
+    similarity learning and thus we review some of this work below to provide some
+    insights into how deep similarity learning may be leveraged for graph matching
+    applications, such as image matching.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (5) GMNs for Image Matching.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In [jiang2019glmnet](#bib.bib60) , a Graph Learning-Matching Network is proposed
+    for image matching. A CNN is first utilized to extract feature descriptors of
+    all feature points for the input images, and graphs are then constructed based
+    on the features. Then the GCNs are used for learning node embeddings from the
+    graphs, in which both intra-graph convolutions and cross-graph convolutions are
+    conducted. The final matching prediction is formulated as node-to-node affinity
+    metric learning in the embedding space, and the constraint regularized loss along
+    with cross-entropy loss is used for the metric learning and the matching prediction.
+    In [wang2019learning](#bib.bib121) , another GNN-based graph matching network
+    is proposed for the image matching problem, which consists of a CNN image feature
+    extractor, a GNN-based graph embedding component, an affinity metric function
+    and a permutation prediction component, as an end-to-end learnable framework.
+    Specifically, GCNs are used to learn node-wise embeddings for intra-graph affinity,
+    where a cross-graph aggregation step is introduced to aggregate features of nodes
+    in the other graph for incorporating cross-graph affinity into the node embeddings.
+    The node embeddings are then used for building an affinity matrix which contains
+    the similarity scores at the node level between two graphs, and the affinity matrix
+    is further used for the matching prediction. The cross-entropy loss is used to
+    train the model end-to-end.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Deep Graph Kernels
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Graph kernels have become a standard tool for capturing the similarity between
+    graphs for tasks such as graph classification [vishwanathan2010graph](#bib.bib116)
+    . Given a collection of graphs, possibly with node or edge attributes, the work
+    in graph kernel aim to learn a kernel function that can capture the similarity
+    between any two graphs. Traditional graph kernels, such as random walk kernels,
+    subtree kernels, and shortest-path kernels have been widely used in the graph
+    classification task [giannis2019](#bib.bib93) . Recently, deep graph kernel models
+    have also emerged, which build kernels based on the graph representations learned
+    via deep neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1 Deep Graph Kernels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In [yanardag2015deep](#bib.bib130) , a Deep Graph Kernel approach is proposed.
+    For a given set of graphs, each graph is decomposed into its sub-structures. Then
+    the sub-structures are viewed as words and neural language models in the form
+    of CBOW (continuous bag-of-words) and Skip-gram are used to learn latent representations
+    of sub-structures from the graphs, where corpora are generated for the Shortest-path
+    graph and Weisfeiler-Lehman kernels in order to measure the co-occurrence relationship
+    between substructures. Finally, the kernel between two graphs is defined based
+    on the similarity of the sub-structure space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1c4dc7138d4af5b18aec60709f8337dc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: The Graph Representation Learning in the Deep Divergence Graph Kernels
+    [al2019ddgk](#bib.bib11) .'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 Deep Divergence Graph Kernels
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In [al2019ddgk](#bib.bib11) , a model called Deep Divergence Graph Kernels
+    (DDGK) is introduced to learn kernel functions for graph pairs. Given two graphs
+    $G_{1}$ and $G_{2}$, they aim to learn an embedding based kernel function $k()$
+    as a similarity metric for graph pairs, defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle k(G_{1},G_{2})=\&#124;\Psi(G_{1})-\Psi(G_{2})\&#124;^{2}$
+    |  | (13) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\Psi(G_{i})$ is a representation learned for $G_{i}$. This work proposes
+    to learn graph representation by measuring the divergence of the target graph
+    across a population of source graph encoders. Given a source graph collection
+    $\{G_{1},G_{2},$ $\cdots,G_{n}\}$, a graph encoder is first trained to learn the
+    structure of each graph in the source collection. Then, for a target graph $G_{T}$,
+    the divergence of $G_{T}$ from each source graph is measured, after which the
+    divergence scores are used to compose the vector representation of the target
+    graph $G_{T}$. Fig. [5](#S3.F5 "Figure 5 ‣ 3.3.1 Deep Graph Kernels ‣ 3.3 Deep
+    Graph Kernels ‣ 3 Taxonomy of Models ‣ Deep Graph Similarity Learning: A Survey")
+    illustrates the above graph representation learning process. Specifically, the
+    divergence score between a target graph $G_{T}=(V_{T},E_{T})$ and a source graph
+    $G_{S}=(V_{S},E_{S})$ is computed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathcal{D}^{\prime}(G_{T}\&#124;G_{S})=\sum_{v_{i}\in V_{T}}\sum_{\begin{subarray}{c}j\\
+    {e_{ij}\in E_{T}}\end{subarray}}-log\text{Pr}(v_{j}&#124;v_{i},H_{S})$ |  | (14)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: where $H_{S}$ is the encoder trained on graph $S$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.3 Graph Neural Tangent Kernel
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In [du2019graph](#bib.bib39) , a Graph Neural Tangent Kernel (GNTK) is proposed
+    for fusing GNNs with the neural tangent kernel, which is originally formulated
+    for fully-connected neural networks in [jacot2018neural](#bib.bib59) and later
+    introduced to CNNs in [arora2019exact](#bib.bib12) . Given a pair of graphs $<G,G^{\prime}>$,
+    they first apply GNNs on the graphs. Let $f(\theta,G)\in\mathbb{R}$ be the output
+    of the GNN under parameters $\theta\in\mathbb{R}^{m}$ on input Graph $G$, where
+    $m$ is the dimension of the parameters. To get the corresponding GNTK value, they
+    calculate the expected value of
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\Bigg{\langle}\frac{\partial f(\theta,G)}{\partial\theta},\frac{\partial
+    f(\theta,G^{\prime})}{\partial\theta}\bigg{\rangle}$ |  | (15) |'
+  prefs: []
+  type: TYPE_TB
+- en: in the limit that $m\rightarrow\infty$ and $\theta$ are all Gaussian random
+    variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Meanwhile, there are also some deep graph kernels proposed for the node representation
+    learning on graphs for node classification and node similarity learning. For instance,
+    in [tian2019rethinking](#bib.bib110) , a learnable kernel-based framework is proposed
+    for node classification, where the kernel function is decoupled into a feature
+    mapping function and a base kernel. An encoder-decoder function is introduced
+    to project each node into the embedding space and reconstructs pairwise similarity
+    measurements from the node embeddings. Since we focus on the similarity learning
+    between graphs in this survey, we will not discuss this work further.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Datasets and Evaluation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Table 3: Summary of Benchmark Datasets that are Frequently Used in Deep Graph
+    Similarity Learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Graph Type | Datasets | Source |  Number of Graphs  |  Number of Classes  |  Avg.
+    Number of Nodes  |  Avg. Number of Edges  | References |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Social Networks | COLLAB | [yanardag2015deep](#bib.bib130) | 5000 | 3 | 74.49
+    | 2457.78 | [yanardag2015deep](#bib.bib130) ; [tixier2019graph](#bib.bib111) ;
+    [wu2018dgcnn](#bib.bib125) ; [anonymous2019_inductive](#bib.bib120) ; [du2019graph](#bib.bib39)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| IMDB-BINARY | [yanardag2015deep](#bib.bib130) | 1000 | 2 | 19.77 | 96.53
+    | [yanardag2015deep](#bib.bib130) ; [atamna2019spi](#bib.bib13) ; [anonymous2019_inductive](#bib.bib120)
+    ; [du2019graph](#bib.bib39) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| IMDB-MULTI | [yanardag2015deep](#bib.bib130) | 1500 | 3 | 13.00 | 65.94 |
+    [yanardag2015deep](#bib.bib130) ; [atamna2019spi](#bib.bib13) ; [anonymous2019_inductive](#bib.bib120)
+    ; [bai2018convolutional](#bib.bib16) ; [bai2019simgnn](#bib.bib15) ; [du2019graph](#bib.bib39)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| REDDIT-BINARY | [yanardag2015deep](#bib.bib130) | 2000 | 2 | 429.63 | 497.75
+    | [yanardag2015deep](#bib.bib130) ; [tixier2019graph](#bib.bib111) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| REDDIT-MULTI-5K | [yanardag2015deep](#bib.bib130) | 4999 | 5 | 508.52 | 594.87
+    | [yanardag2015deep](#bib.bib130) ; [tixier2019graph](#bib.bib111) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| REDDIT-MULTI-12K | [yanardag2015deep](#bib.bib130) | 11929 | 11 | 391.41
+    | 456.89 | [yanardag2015deep](#bib.bib130) ; [tixier2019graph](#bib.bib111) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bioinformatics | D&D | [dobson2003distinguishing](#bib.bib37) | 1178 | 2
+    | 284.32 | 715.66 | [al2019ddgk](#bib.bib11) ; [nikolentzos2017matching](#bib.bib92)
+    ; [wu2018dgcnn](#bib.bib125) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ENZYMES | [borgwardt2005protein](#bib.bib23) | 600 | 6 | 32.63 | 62.14 |
+    [atamna2019spi](#bib.bib13) ; [nikolentzos2017matching](#bib.bib92) ; [yanardag2015deep](#bib.bib130)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PROTEINS | [borgwardt2005protein](#bib.bib23) | 1113 | 2 | 39.06 | 72.82
+    | [du2019graph](#bib.bib39) ; [narayanan2017graph2vec](#bib.bib88) ; [nikolentzos2017matching](#bib.bib92)
+    ; [yanardag2015deep](#bib.bib130) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chemoinformatics | AIDS | [riesen2008iam](#bib.bib95) | 2000 | 2 | 15.69
+    | 16.20 | [bai2018convolutional](#bib.bib16) ; [bai2019simgnn](#bib.bib15) ; [anonymous2019_matching](#bib.bib41)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MUTAG | [debnath1991structure](#bib.bib33) | 188 | 2 | 17.93 | 19.79 | [al2019ddgk](#bib.bib11)
+    ; [du2019graph](#bib.bib39) ; [atamna2019spi](#bib.bib13) ; [narayanan2017graph2vec](#bib.bib88)
+    ; [nikolentzos2017matching](#bib.bib92) ; [anonymous2019_inductive](#bib.bib120)
+    ; [yanardag2015deep](#bib.bib130) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NCI1 | [wale2008comparison](#bib.bib118) | 4110 | 2 | 29.87 | 32.30 | [al2019ddgk](#bib.bib11)
+    ; [atamna2019spi](#bib.bib13) ; [du2019graph](#bib.bib39) ; [nikolentzos2017matching](#bib.bib92)
+    ; [anonymous2019_inductive](#bib.bib120) ; [yanardag2015deep](#bib.bib130) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NCI109 | [wale2008comparison](#bib.bib118) | 4127 | 2 | 29.68 | 32.13 | [narayanan2017graph2vec](#bib.bib88)
+    ; [nikolentzos2017matching](#bib.bib92) ; [yanardag2015deep](#bib.bib130) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PTC_MR | [helma2001predictive](#bib.bib54) | 344 | 2 | 14.29 | 14.69 | [narayanan2017graph2vec](#bib.bib88)
+    ; [nikolentzos2017matching](#bib.bib92) ; [yanardag2015deep](#bib.bib130) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Brain Networks | ABIDE | [di2014autism](#bib.bib35) | 871 | 2 | 110 | - |
+    [ktena2018metric](#bib.bib67) ; [ma2019similarity](#bib.bib78) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UK Biobank | [biobank2014uk](#bib.bib20) | 2500 | 2 | 55 | - | [ktena2018metric](#bib.bib67)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HCP | [van2012human](#bib.bib115) | 1200 | 2 | 360 | - | [ma2019similarity](#bib.bib78)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Image Graphs | COIL-DEL | [riesen2008iam](#bib.bib95) | 3900 | 100 | 21.54
+    | 54.24 | [li2019graph](#bib.bib73) |'
+  prefs: []
+  type: TYPE_TB
+- en: In this section, we summarize the characteristics of the datasets that are frequently
+    used in deep graph similarity learning methods and the experimental evaluation
+    adopted by these methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Graph data from various domains have been used to evaluate graph similarity
+    learning methods [rossi2015network](#bib.bib97) , for example, protein-protein
+    graphs from bioinformatics, chemical compound graphs from chemoinformatics, and
+    brain networks from neuroscience, etc. We summarize the benchmark datasets that
+    are frequently used in deep graph similarity learning methods in Table [3](#S4.T3
+    "Table 3 ‣ 4 Datasets and Evaluation ‣ Deep Graph Similarity Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to these datasets, synthetic graph datasets or other domain-specific
+    datasets are also widely used in some graph similarity learning works. For example,
+    in [li2019graph](#bib.bib73) and [anonymous2019_matching](#bib.bib41) , control
+    flow graphs of binary functions are generated and used to evaluate graph matching
+    networks for binary code similarity search. In [ijcai2019-522](#bib.bib122) ,
+    attacks are conducted on testing machines to generate malware data, which are
+    then merged with normal data to evaluate the Siamese GNN model for malware detection.
+    In [jiang2019glmnet](#bib.bib60) , images are collected from multiple categories
+    and keypoints are annotated in the images to evaluate the proposed model for graph
+    matching.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Evaluation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: During evaluation, most GSL methods take pairs or triplets of graphs as input
+    during training with various objective functions used for various graph similarity
+    tasks. The existing evaluation tasks mainly include pair classification  [xu2017neural](#bib.bib128)
+    ; [ktena2018metric](#bib.bib67) ; [ma2019similarity](#bib.bib78) ; [li2019graph](#bib.bib73)
+    ; [anonymous2019_matching](#bib.bib41) , graph classification [tixier2019graph](#bib.bib111)
+    ; [nikolentzos2017matching](#bib.bib92) ; [narayanan2017graph2vec](#bib.bib88)
+    ; [atamna2019spi](#bib.bib13) ; [wu2018dgcnn](#bib.bib125) ; [anonymous2019_inductive](#bib.bib120)
+    ; [liu2019n](#bib.bib77) ; [yanardag2015deep](#bib.bib130) ; [al2019ddgk](#bib.bib11)
+    ; [du2019graph](#bib.bib39) , graph clustering [anonymous2019_inductive](#bib.bib120)
+    , graph distance prediction [bai2018convolutional](#bib.bib16) ; [bai2019simgnn](#bib.bib15)
+    ; [anonymous2019_matching](#bib.bib41) , and graph similarity search [ijcai2019-522](#bib.bib122)
+    . Classification AUC (i.e., Area Under the ROC Curve) or accuracy are used as
+    the most popular metric for the evaluation of graph-pair classification or graph
+    classification task [ma2019similarity](#bib.bib78) ; [li2019graph](#bib.bib73)
+    . Mean squared error (MSE) is used as evaluation metric for the regression task
+    in graph distance prediction [bai2018convolutional](#bib.bib16) ; [bai2019simgnn](#bib.bib15)
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to the evaluation results reported in the above works, the deep graph
+    similarity learning methods tend to outperform the traditional methods. For example,
+    [al2019ddgk](#bib.bib11) shows that the deep divergence graph kernel approach
+    achieves higher classification accuracy scores compared to traditional graph kernels
+    such as the shortest-path kernel [borgwardt2005shortest](#bib.bib21) and Weisfeiler-Lehman
+    kernel [kriege2016valid](#bib.bib66) in most cases for the graph classification
+    task. Meanwhile, among the deep methods, methods that allow for cross-graph feature
+    interaction tend to achieve a better performance compared to the factorized methods
+    that relies only on single graph features. For instance, the experimental evaluations
+    in [li2019graph](#bib.bib73) and [anonymous2019_matching](#bib.bib41) have demonstrated
+    that the GNN-based graph matching networks have a superior performance than the
+    Siamese GNNs in pair classification and graph edit distance prediction tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The efficiency of different methods are also analyzed and evaluated in some
+    of these works. In [bai2019simgnn](#bib.bib15) , some evaluations have been done
+    for comparing the efficiency of the GNN based graph similarity learning approach
+    SimGNN with traditional GED approximation methods including A*-Beamsearch [neuhaus2006fast](#bib.bib89)
+    , Hungarian [riesen2009approximate](#bib.bib96) and VJ [fankhauser2011speeding](#bib.bib40)
+    , where the core operation for GED approximation may take polynomial or sub-exponential
+    to the number of nodes in the graphs. For the GNN based model like SimGNN, to
+    compute similarity score for pairs of graphs, the time complexity mainly involves
+    two parts: (1) the node-level and graph-level embedding computation stages, where
+    the time complexity is $O(|E|)$, and $|E|$ is the number of edges of the graph
+    [kipf2016semi](#bib.bib64) ; and (2) the similarity score computation stage, where
+    the time complexity is $O(D^{2}K)$ ($D$ is the dimension of the graph-level embedding,
+    and $K$ is the feature map dimension used in the graph-graph interaction stage)
+    for the strategy of using graph-level embedding interaction, and the time complexity
+    is $O(DN^{2})$ ($N$ is the number of nodes in the larger graph). The experimental
+    evaluations in [bai2019simgnn](#bib.bib15) show that the GNN based models consistently
+    achieve the best results in efficiency and effectiveness for the pairwise GED
+    computation [bai2019simgnn](#bib.bib15) on multiple graph datasets, demonstrating
+    the benefit of using these deep models for the similarity learning tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Applications
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Graph similarity learning is a fundamental problem in domains where data are
+    represented as graph structures, and it has various applications in the real world.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Computational Chemistry and Biology
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: An important application of graph similarity learning in the chemistry and biology
+    domain is to learn the chemical similarity, which aims to learn the similarity
+    of chemical elements, molecules or chemical compounds with respect to their effect
+    on reaction partners in inorganic or biological settings [brown2009chemoinformatics](#bib.bib24)
+    . An example is the compounds query for in-silico drug screening, where searching
+    for similar compounds in a database is the key process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the literature of graph similarity learning, quite a number of models have
+    been proposed and applied to similarity learning for chemical compounds or molecules.
+    Among these work, the traditional models mainly employ sub-graph based search
+    strategies or graph kernels to solve the problem [zheng2013graph](#bib.bib138)
+    ; [zeng2009comparing](#bib.bib135) ; [swamidass2005kernels](#bib.bib108) ; [mahe2009graph](#bib.bib82)
+    . However, these methods tend to have high computational complexity and strongly
+    rely on the sub-graph or kernels defined, making it difficult to use them in real
+    applications. Recently, a deep graph similarity learning model SimGNN is proposed
+    in [bai2019simgnn](#bib.bib15) which also aims to learn similarity for chemical
+    compounds as one of the tasks. Instead of using sub-graphs or other explicit features,
+    the model adopts GCNs to learn node-level embeddings, which are fed into an attention
+    module after multiple layers of GCNs to generate the graph-level embeddings. Then
+    a neural tensor network (NTN) [socher2013reasoning](#bib.bib107) is used to model
+    the relation between two graph-level embeddings, and the output of the NTN is
+    used together with the pairwise node embedding comparison output in the fully
+    connected layers for predicting the graph edit distance between the two graphs.
+    This work has shown that the proposed deep learning model outperforms the traditional
+    methods for graph edit distance computation in prediction accuracy and with much
+    less running time, which indicates the promising application of the deep graph
+    similarity learning models in the chemo-informatics and bio-informatics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Neuroscience
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Many neuroscience studies have shown that structural and functional connectivity
+    of the human brain reflects the brain activity patterns that could be indicators
+    of the brain health status or cognitive ability level [badhwar2017resting](#bib.bib14)
+    ; [ma2017multi](#bib.bib80) ; [ma2017multib](#bib.bib81) . For example, the functional
+    brain connectivity networks derived from fMRI neuroimaging data can reflect the
+    functional activity across different brain regions, and people with brain disorder
+    like Alzheimer’s disease or bipolar disorder tend to have functional activity
+    patterns that differ from those of healthy people [badhwar2017resting](#bib.bib14)
+    ; [syan2018resting](#bib.bib109) ; [ma2016multi](#bib.bib79) . To investigate
+    the difference in brain connectivity patterns for these neuroscience problems,
+    researchers have started to study the similarity of brain networks among multiple
+    subjects with graph similarity learning methods [lee2020deep](#bib.bib69) ; [ktena2018metric](#bib.bib67)
+    ; [ma2019similarity](#bib.bib78) .
+  prefs: []
+  type: TYPE_NORMAL
+- en: The organization of functional brain networks is complicated and usually constrained
+    by various factors, such as the underlying brain anatomical network, which plays
+    an important role in shaping the activity across the brain. These constraints
+    make it a challenging task to characterize the structure and organization of brain
+    networks while performing similarity learning on them. Recent work in [ktena2018metric](#bib.bib67)
+    , [ma2019similarity](#bib.bib78) and [liu2019community](#bib.bib76) have shown
+    that the deep graph models based on graph convolutional networks have a superior
+    ability to capture brain connectivity features for the similarity analysis compared
+    to the traditional graph embedding based approaches. In particular, [ma2019similarity](#bib.bib78)
+    proposes a higher-order Siamese GCN framework that leverages higher-order connectivity
+    structure of functional brain networks for the similarity learning of brain networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In view of the work introduced above and the trending research problems in the
+    field of neuroscience, we believe that deep graph similarity learning will benefit
+    the clinical investigation of many brain diseases and other neuroscience applications.
+    Promising research directions include, but are not limited to, deep similarity
+    learning on resting-state or task-related fMRI brain networks for multi-subject
+    analysis with respect to brain health status or cognitive abilities, deep similarity
+    learning on the temporal or multi-task fMRI brain networks of individual subjects
+    for within-subject contrastive analysis over time or across tasks for neurological
+    disorder detection. Some example fMRI brain network datasets that can be used
+    for such analysis have been introduced in Table 3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Computer Security
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the field of computer security, graph similarity has also been studied for
+    various application scenarios, such as the hardware security problem [marc2019](#bib.bib84)
+    , the malware indexing problem based on function-call graphs [hu2009large](#bib.bib57)
+    , and the binary function similarity search for identifying vulnerable functions
+    [li2019graph](#bib.bib73) .
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [marc2019](#bib.bib84) , a graph similarity heuristic is proposed based on
+    spectral analysis of adjacency matrices for the hardware security problem, where
+    evaluations are done for three tasks, including gate-level netlist reverse engineering,
+    Trojan detection, and obfuscation assessment. The proposed method outperforms
+    the graph edit distance approximation algorithm proposed in [hu2009large](#bib.bib57)
+    and the neighbor matching approach [vujovsevic2013software](#bib.bib117) , which
+    matches neighboring vertices based on graph topology. [li2019graph](#bib.bib73)
+    is the work that introduced GNN-based deep graph similarity learning models to
+    the security field to solve the binary function similarity search problem. Compared
+    to previous models, the proposed deep model computes similarity scores jointly
+    on pairs of graphs rather than first independently mapping each graph to a vector,
+    and the node representation update process uses an attention-based module which
+    considers both within-graph and cross-graph information. Empirical evaluations
+    demonstrate the superior performance of the proposed deep graph matching networks
+    compared to the Google’s open source function similarity search tool [functionsim](#bib.bib1)
+    , the basic GNN models, and the Siamese GNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Computer Vision
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Graph similarity learning has also been explored for applications in computer
+    vision. In [wu2014human](#bib.bib124) , context-dependent graph kernels are proposed
+    to measure the similarity between graphs for human action recognition in video
+    sequences. Two directed and attributed graphs are constructed to describe the
+    local features with intra-frame relationships and inter-frame relationships, respectively.
+    The graphs are decomposed into a number of primary walk groups with different
+    walk lengths, and a generalized multiple kernel learning algorithm is applied
+    to combine all the context-dependent graph kernels, which further facilitates
+    human action classification. In [guo2018neural](#bib.bib53) , a deep model called
+    Neural Graph Matching Network is first introduced for the 3D action recognition
+    problem in the few-shot learning setting. Interaction graphs are constructed from
+    the 3D scenes, where the nodes represent physical entities in the scene and edges
+    represent interactions between the entities. The proposed NGM Networks jointly
+    learn a graph generator and a graph matching metric function in an end-to-end
+    fashion to directly optimize the few-shot learning objective. It has been shown
+    to significantly improve the few-shot 3D action recognition over the holistic
+    baselines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another emerging application of graph similarity learning in computer vision
+    is the image matching problem, where the goal is to find consistent correspondences
+    between the sets of features in two images. As introduced at the end of Section
+    3.2, recently some deep graph matching networks have been developed for the image
+    matching task [jiang2019glmnet](#bib.bib60) ; [wang2019learning](#bib.bib121)
+    , where images are first converted to graphs and the image matching problem is
+    then solved as a graph matching problem. In the graph converted from an image,
+    the nodes represent the unary descriptors of annotated feature points in images,
+    and edges encode the pairwise relationships among different feature points in
+    that image. Based on the new graph representation, the feature matching can be
+    reformulated as graph matching problem. However, it is worth noting that, this
+    graph matching is actually the graph node matching, as the goal is to match the
+    nodes between graphs instead of two entire graphs. Therefore, the graph based
+    image matching problem is a special case or a sub-problem of the general graph
+    matching problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two application problems discussed above are both promising directions of
+    applying deep graph similarity learning models for the practical learning tasks
+    in computer vision. A key advice we provide on applying graph similarity learning
+    methods for these image applications is to first find an appropriate mapping for
+    converting the images to graphs, so that the learning tasks on images can be formulated
+    as the graph similarity learning based tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Challenges
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 6.1 Various Graph Types
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In most of the work discussed above, the graphs involved consist of unlabeled
+    nodes/edges and undirected edges. However, there are many variants of graphs in
+    real world applications. How to build deep graph similarity learning models for
+    these various graph types is a challenging problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Directed Graphs.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In some application scenarios, the graphs are directed, which means all the
+    edges in the graph are directed from one vertex to another. For instance, in a
+    knowledge graph, edges go from one entity to another, where the relationship is
+    directed. In such cases, we should treat the information propagation process differently
+    according to the direction of the edge. Recently some GCN based graph models have
+    suggested some strategies for dealing with such directed graphs. In [kampffmeyer2019rethinking](#bib.bib63)
+    , a dense graph propagation strategy is proposed for the propagation on knowledge
+    graphs, where two kinds of weight matrices are introduced for the propagation
+    based on a node’s relationship to its ancestors and descendants respectively.
+    However, to the best of our knowledge, no work has been done on deep similarity
+    learning specifically for directed graphs, which arises as a challenging problem
+    for this community.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Labeled Graphs.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Labeled graphs are graphs where vertices or edges have labels. For example,
+    in chemical compound graphs where vertices denote the atoms and the edges represent
+    the chemical bonds between the atoms, each node and edge have labels representing
+    the atom type and bond type, respectively. These labels are important for characterizing
+    the node-node relationship in the graphs, therefore it is important to leverage
+    these label information for the similarity learning. In [bai2019simgnn](#bib.bib15)
+    ; [ahmed2018learning](#bib.bib10) , the node label information are used as the
+    initial node representations encoded by a one-hot vector and used in the node
+    embedding stage. In this case, the nodes with same type share the same one-hot
+    encoding vector. This should guarantee that even if the node ids are permuted,
+    the aggregation results would be the same. However, the label information is only
+    used for the node embedding process within each graph, and the comparison of the
+    node or edge labels across graphs is not considered during the similarity learning
+    stage. In [al2019ddgk](#bib.bib11) , both node labels and edge labels in the chemo-
+    and bio-informatic graphs have been used as attributes for learning better alignment
+    across graphs, which has been shown to lead to a better performance. Therefore,
+    how to leverage the node / edge attributes of the labeled graphs into the similarity
+    learning process is a critical problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dynamic and Streaming Graphs.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Another type of graphs is the dynamic graph, which has a static graph structure
+    and dynamic input signals/features. For example, the 3D human action or motion
+    data can be represented as graphs where the entities are represented as nodes
+    and the actions as edges connecting the entities. Then similarity learning on
+    these graphs is an important problem for action and motion recognition. Moreover,
+    another type of graph is the streaming graph, where both the structure and/or
+    features are continuously changing [ahmed2019temporal](#bib.bib4) ; [ahmed2019network](#bib.bib2)
+    . For example, online social networks [ahmed2017sampling](#bib.bib5) ; [ahmed2014graph](#bib.bib3)
+    ; [ahmed2014network](#bib.bib6) . The similarity learning would be important for
+    change/anomaly detection, link prediction, relationship strength prediction, etc.
+    Although some work has proposed variants of GNN models for spatio-temporal graphs
+    [yu2017spatio](#bib.bib133) ; [manessi2020dynamic](#bib.bib83) , and other learning
+    methods for dynamic graphs [nguyen2018continuous](#bib.bib91) ; [nguyen2018dynamic](#bib.bib90)
+    ; [tong2008colibri](#bib.bib112) ; [li2017attributed](#bib.bib72) , the similarity
+    learning problem on dynamic and streaming graphs has not been well studied. For
+    example, in the multi-subject analysis of task-related fMRI brain networks as
+    mentioned in Section [5.2](#S5.SS2 "5.2 Neuroscience ‣ 5 Applications ‣ Deep Graph
+    Similarity Learning: A Survey"), for each subject, a set of brain connectivity
+    networks can be collected for a give time period, which forms a spatio-temporal
+    graph. It would be interesting to conduct similarity learning on the spatio-temporal
+    graphs of different subjects to analyze their similarity in cognitive abilities,
+    which is an important problem in the neuroscience field. However, to the best
+    of our knowledge, none of the existing similarity learning methods is able to
+    deal with such spatio-temporal graphs. The main challenge in such problems is
+    how to leverage the temporal updates of the node-level representations and the
+    interactions between the nodes on these graphs while modeling their similarity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.2 Interpretability
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The deep graph models, such as GNNs, combine node feature information with graph
+    structure by recursively passing neural messages along edges of the graph, which
+    is a complex process and makes it challenging to explain the learning results
+    from these models. Recently, some work has started to explore the interpretability
+    of GNNs [ying2019gnn](#bib.bib131) ; [baldassarre2019explainability](#bib.bib18)
+    . In [ying2019gnn](#bib.bib131) , a GNNEXPLAINER is proposed for providing interpretable
+    explanations for predictions of GNN-based models. It first identifies a subgraph
+    structure and a subset of node features that are crucial in a prediction. Then
+    it formulates an optimization task that maximizes the mutual information between
+    a GNN’s prediction and the distribution of possible subgraph structures. [baldassarre2019explainability](#bib.bib18)
+    explores the explainability of GNNs using gradient-based and decomposition-based
+    methods, respectively, on a toy dataset and a chemistry task. Although these works
+    have provided some insights into the interpretability of GNNs, they are mainly
+    for node classification or link prediction tasks on a graph. To the best of our
+    knowledge, the explainability of GNN-based graph similarity models remains unexplored.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.3 Few-shot Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The task of few-shot learning is to learn classifiers for new classes with only
+    a few training examples per class. A big branch of work in this area is based
+    on metric learning [wang2019few](#bib.bib123) . However, most of the existing
+    work proposes few-shot learning problems on images, such as image recognition
+    [koch2015siamese](#bib.bib65) and image retrieval[triantafillou2017few](#bib.bib113)
+    . Little work has been done on metric learning for few-shot learning on graphs,
+    which is an important problem for areas in which data are represented as graphs
+    and data gathering is difficult, for example, brain connectivity network analysis
+    in neuroscience. Since graph data usually has complex structure, how to learn
+    a metric so that it can facilitate generalizing from a few graph examples is a
+    big challenge. Some recent work  [guo2018neural](#bib.bib53) has begun to explore
+    the few-shot 3D action recognition problem with graph-based similarity learning
+    strategies, where a neural graph matching network is proposed to jointly learn
+    a graph generator and a graph matching metric function to optimize the few-shot
+    learning objective of 3D action recognition. However, since the objective is defined
+    specifically based on the 3D action recognition task, the model can not be directly
+    used for other domains. The remaining problem is to design general deep graph
+    similarity learning models for the few-shot learning task for a multitude of applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Recently, there has been an increasing interest in deep neural network models
+    for learning graph similarity. In this survey paper, we provided a comprehensive
+    review of the existing work on deep graph similarity learning, and categorized
+    the literature into three main categories: (1) graph embedding based graph similarity
+    learning models, (2) GNN-based models, and (3) Deep graph kernels. We discussed
+    and summarized the various properties and applications of the existing literature.
+    Finally, we pointed out the key challenges and future research directions for
+    the deep graph similarity learning problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Acknowledgement
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Philip S. Yu is supported by NSF under grants III-1526499, III-1763325, III-1909323,
+    and SaTC-1930941.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] functionsimsearch. https://github.com/google/functionsimsearch, 2018. Accessed:
+    2018-05-14.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] Nesreen K Ahmed and Nick Duffield. Network shrinkage estimation. arXiv
+    preprint arXiv:1908.01087, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Nesreen K Ahmed, Nick Duffield, Jennifer Neville, and Ramana Kompella.
+    Graph sample and hold: A framework for big-graph analytics. In Proceedings of
+    the 20th ACM SIGKDD international conference on Knowledge discovery and data mining,
+    pages 1446–1455\. ACM, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Nesreen K Ahmed, Nick Duffield, and Ryan A Rossi. Temporal network sampling.
+    arXiv preprint arXiv:1910.08657, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Nesreen K Ahmed, Nick Duffield, Theodore L Willke, and Ryan A Rossi. On
+    sampling from massive graph streams. Proceedings of the VLDB Endowment, 10(11):1430–1441,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Nesreen K Ahmed, Jennifer Neville, and Ramana Kompella. Network sampling:
+    From static to streaming graphs. ACM Transactions on Knowledge Discovery from
+    Data (TKDD), 8(2):7, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Nesreen K Ahmed, Jennifer Neville, Ryan A Rossi, and Nick Duffield. Efficient
+    graphlet counting for large networks. In 2015 IEEE International Conference on
+    Data Mining, pages 1–10\. IEEE, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Nesreen K Ahmed, Jennifer Neville, Ryan A Rossi, Nick G Duffield, and Theodore L
+    Willke. Graphlet decomposition: Framework, algorithms, and applications. Knowledge
+    and Information Systems, 50(3):689–722, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Nesreen K Ahmed, Ryan Rossi, John Lee, Theodore Willke, Rong Zhou, Xiangnan
+    Kong, and Hoda Eldardiry. Role-based graph embeddings. IEEE Transactions on Knowledge
+    and Data Engineering, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Nesreen K Ahmed, Ryan Rossi, John Boaz Lee, Theodore L Willke, Rong Zhou,
+    Xiangnan Kong, and Hoda Eldardiry. Learning role-based graph embeddings. arXiv
+    preprint arXiv:1802.02896, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Rami Al-Rfou, Bryan Perozzi, and Dustin Zelle. Ddgk: Learning graph representations
+    for deep divergence graph kernels. In The World Wide Web Conference, pages 37–48\.
+    ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] Sanjeev Arora, Simon S Du, Wei Hu, Zhiyuan Li, Ruslan Salakhutdinov, and
+    Ruosong Wang. On exact computation with an infinitely wide neural net. arXiv preprint
+    arXiv:1904.11955, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Asma Atamna, Nataliya Sokolovska, and Jean-Claude Crivello. Spi-gcn: A
+    simple permutation-invariant graph convolutional network. 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] AmanPreet Badhwar, Angela Tam, Christian Dansereau, Pierre Orban, Felix
+    Hoffstaedter, and Pierre Bellec. Resting-state network dysfunction in alzheimer’s
+    disease: a systematic review and meta-analysis. Alzheimer’s & Dementia: Diagnosis,
+    Assessment & Disease Monitoring, 8:73–85, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Yunsheng Bai, Hao Ding, Song Bian, Ting Chen, Yizhou Sun, and Wei Wang.
+    Simgnn: A neural network approach to fast graph similarity computation. In Proceedings
+    of the Twelfth ACM International Conference on Web Search and Data Mining, pages
+    384–392\. ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Yunsheng Bai, Hao Ding, Yizhou Sun, and Wei Wang. Convolutional set matching
+    for graph similarity. arXiv preprint arXiv:1810.10866, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Yunsheng Bai, Derek Xu, Ken Gu, Xueqing Wu, Agustin Marinovic, Christopher
+    Ro, Yizhou Sun, and Wei Wang. Neural maximum common subgraph detection with guided
+    subgraph extraction. https://openreview.net/pdf?id=BJgcwh4FwS, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Federico Baldassarre and Hossein Azizpour. Explainability techniques for
+    graph convolutional networks. arXiv preprint arXiv:1905.13686, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Stefano Berretti, Alberto Del Bimbo, and Enrico Vicario. Efficient matching
+    and indexing of graph models in content-based retrieval. IEEE Transactions on
+    Pattern Analysis and Machine Intelligence, 23(10):1089–1105, 2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] UK Biobank. About uk biobank. Available at h ttps://www. ukbiobank. ac.
+    uk/a bout-biobank-uk, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Karsten M Borgwardt and Hans-Peter Kriegel. Shortest-path kernels on graphs.
+    In Fifth IEEE international conference on data mining (ICDM’05), pages 8–pp. IEEE,
+    2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Karsten M Borgwardt, Hans-Peter Kriegel, SVN Vishwanathan, and Nicol N
+    Schraudolph. Graph kernels for disease outcome prediction from protein-protein
+    interaction networks. In Biocomputing 2007, pages 4–15\. World Scientific, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Karsten M Borgwardt, Cheng Soon Ong, Stefan Schönauer, SVN Vishwanathan,
+    Alex J Smola, and Hans-Peter Kriegel. Protein function prediction via graph kernels.
+    Bioinformatics, 21(suppl_1):i47–i56, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Nathan Brown. Chemoinformatics—an introduction for computer scientists.
+    ACM Computing Surveys (CSUR), 41(2):8, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Joan Bruna, Wojciech Zaremba, Arthur Szlam, and Yann LeCun. Spectral networks
+    and locally connected networks on graphs. arXiv preprint arXiv:1312.6203, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Horst Bunke and Gudrun Allermann. Inexact graph matching for structural
+    pattern recognition. Pattern Recognition Letters, 1(4):245–253, 1983.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Horst Bunke and Kim Shearer. A graph distance metric based on the maximal
+    common subgraph. Pattern recognition letters, 19(3-4):255–259, 1998.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Hongyun Cai, Vincent W Zheng, and Kevin Chen-Chuan Chang. A comprehensive
+    survey of graph embedding: Problems, techniques, and applications. IEEE Transactions
+    on Knowledge and Data Engineering, 30(9):1616–1637, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Ushasi Chaudhuri, Biplab Banerjee, and Avik Bhattacharya. Siamese graph
+    convolutional network for content based remote sensing image retrieval. Computer
+    Vision and Image Understanding, 184:22–30, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] Thomas M Cover, Peter Hart, et al. Nearest neighbor pattern classification.
+    IEEE transactions on information theory, 13(1):21–27, 1967.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Peng Cui, Xiao Wang, Jian Pei, and Wenwu Zhu. A survey on network embedding.
+    IEEE Transactions on Knowledge and Data Engineering, 31(5):833–852, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Hanjun Dai, Bo Dai, and Le Song. Discriminative embeddings of latent variable
+    models for structured data. In International conference on machine learning, pages
+    2702–2711, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Asim Kumar Debnath, Rosa L Lopez de Compadre, Gargi Debnath, Alan J Shusterman,
+    and Corwin Hansch. Structure-activity relationship of mutagenic aromatic and heteroaromatic
+    nitro compounds. correlation with molecular orbital energies and hydrophobicity.
+    Journal of medicinal chemistry, 34(2):786–797, 1991.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Michaël Defferrard, Xavier Bresson, and Pierre Vandergheynst. Convolutional
+    neural networks on graphs with fast localized spectral filtering. In NeurIPS,
+    pages 3844–3852, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Adriana Di Martino, Chao-Gan Yan, Qingyang Li, Erin Denio, Francisco X
+    Castellanos, Kaat Alaerts, Jeffrey S Anderson, Michal Assaf, Susan Y Bookheimer,
+    Mirella Dapretto, et al. The autism brain imaging data exchange: towards a large-scale
+    evaluation of the intrinsic brain architecture in autism. Molecular psychiatry,
+    19(6):659–667, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Remco Dijkman, Marlon Dumas, and Luciano García-Bañuelos. Graph matching
+    algorithms for business process model similarity search. In International conference
+    on business process management, pages 48–63\. Springer, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Paul D Dobson and Andrew J Doig. Distinguishing enzyme structures from
+    non-enzymes without alignments. Journal of molecular biology, 330(4):771–783,
+    2003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Brendan L Douglas. The weisfeiler-lehman method and graph isomorphism
+    testing. arXiv preprint arXiv:1101.5211, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] Simon S Du, Kangcheng Hou, Russ R Salakhutdinov, Barnabas Poczos, Ruosong
+    Wang, and Keyulu Xu. Graph neural tangent kernel: Fusing graph neural networks
+    with graph kernels. In Advances in Neural Information Processing Systems, pages
+    5724–5734, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Stefan Fankhauser, Kaspar Riesen, and Horst Bunke. Speeding up graph edit
+    distance computation through fast bipartite matching. In International Workshop
+    on Graph-Based Representations in Pattern Recognition, pages 102–111\. Springer,
+    2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] Matthias Fey, Jan Lenssen, Christopher Morris, Jonathan Masci, and Nils
+    Kriege. Deep graph matching consensus. ICLR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Holger Fröhlich, Jörg K Wegner, Florian Sieker, and Andreas Zell. Kernel
+    functions for attributed molecular graphs–a new similarity-based approach to adme
+    prediction in classification and regression. QSAR & Combinatorial Science, 25(4):317–326,
+    2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Claudio Gallicchio and Alessio Micheli. Graph echo state networks. In
+    The 2010 International Joint Conference on Neural Networks (IJCNN), pages 1–8\.
+    IEEE, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] Hongyang Gao and Shuiwang Ji. Graph representation learning via hard and
+    channel-wise attention networks. In Proceedings of the 25th ACM SIGKDD International
+    Conference on Knowledge Discovery & Data Mining, pages 741–749\. ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Hongyang Gao and Shuiwang Ji. Graph u-nets. ICML, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] Hongyang Gao, Zhengyang Wang, and Shuiwang Ji. Large-scale learnable graph
+    convolutional networks. In Proceedings of the 24th ACM SIGKDD International Conference
+    on Knowledge Discovery & Data Mining, pages 1416–1424\. ACM, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] M. R. Garey and David S. Johnson. Computers and intractability: A guide
+    to the theory of np-completeness. 1978.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] Marco Gori, Gabriele Monfardini, and Franco Scarselli. A new model for
+    learning in graph domains. In Proceedings. 2005 IEEE International Joint Conference
+    on Neural Networks, 2005., volume 2, pages 729–734\. IEEE, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Palash Goyal and Emilio Ferrara. Graph embedding techniques, applications,
+    and performance: A survey. Knowledge-Based Systems, 151:78–94, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] Arthur Gretton, Karsten M Borgwardt, Malte J Rasch, Bernhard Schölkopf,
+    and Alexander Smola. A kernel two-sample test. Journal of Machine Learning Research,
+    13(Mar):723–773, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] Aditya Grover and Jure Leskovec. node2vec: Scalable feature learning for
+    networks. In Proceedings of the 22nd ACM SIGKDD international conference on Knowledge
+    discovery and data mining, pages 855–864\. ACM, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Matthieu Guillaumin, Jakob Verbeek, and Cordelia Schmid. Is that you?
+    metric learning approaches for face identification. In 2009 IEEE 12th international
+    conference on computer vision, pages 498–505\. IEEE, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] Michelle Guo, Edward Chou, De-An Huang, Shuran Song, Serena Yeung, and
+    Li Fei-Fei. Neural graph matching networks for fewshot 3d action recognition.
+    In Proceedings of the European Conference on Computer Vision (ECCV), pages 653–669,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] Christoph Helma, Ross D. King, Stefan Kramer, and Ashwin Srinivasan. The
+    predictive toxicology challenge 2000–2001. Bioinformatics, 17(1):107–108, 2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] Geoffrey E Hinton and Ruslan R Salakhutdinov. Reducing the dimensionality
+    of data with neural networks. science, 313(5786):504–507, 2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] Tamás Horváth, Thomas Gärtner, and Stefan Wrobel. Cyclic pattern kernels
+    for predictive graph mining. In Proceedings of the tenth ACM SIGKDD international
+    conference on Knowledge discovery and data mining, pages 158–167\. ACM, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] Xin Hu, Tzi-cker Chiueh, and Kang G Shin. Large-scale malware indexing
+    using function-call graphs. In Proceedings of the 16th ACM conference on Computer
+    and communications security, pages 611–620\. ACM, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] Xiao Huang, Peng Cui, Yuxiao Dong, Jundong Li, Huan Liu, Jian Pei, Le Song,
+    Jie Tang, Fei Wang, Hongxia Yang, et al. Learning from networks: Algorithms, theory,
+    and applications. In Proceedings of the 25th ACM SIGKDD International Conference
+    on Knowledge Discovery & Data Mining, pages 3221–3222\. ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] Arthur Jacot, Franck Gabriel, and Clément Hongler. Neural tangent kernel:
+    Convergence and generalization in neural networks. In Advances in neural information
+    processing systems, pages 8571–8580, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] Bo Jiang, Pengfei Sun, Jin Tang, and Bin Luo. Glmnet: Graph learning-matching
+    networks for feature matching. arXiv preprint arXiv:1911.07681, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] Nan Jiang, Wenyu Liu, and Ying Wu. Order determination and sparsity-regularized
+    metric learning adaptive visual tracking. In 2012 IEEE Conference on Computer
+    Vision and Pattern Recognition, pages 1956–1963\. IEEE, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] Fredrik D Johansson and Devdatt Dubhashi. Learning with similarity functions
+    on graphs using matchings of geometric embeddings. In Proceedings of the 21th
+    ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages
+    467–476\. ACM, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] Michael Kampffmeyer, Yinbo Chen, Xiaodan Liang, Hao Wang, Yujia Zhang,
+    and Eric P Xing. Rethinking knowledge graph propagation for zero-shot learning.
+    In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+    pages 11487–11496, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] Thomas N Kipf and Max Welling. Semi-supervised classification with graph
+    convolutional networks. arXiv preprint arXiv:1609.02907, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] Gregory Koch, Richard Zemel, and Ruslan Salakhutdinov. Siamese neural
+    networks for one-shot image recognition. In ICML deep learning workshop, volume 2,
+    2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] Nils M Kriege, Pierre-Louis Giscard, and Richard Wilson. On valid optimal
+    assignment kernels and applications to graph classification. In Advances in Neural
+    Information Processing Systems, pages 1623–1631, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] Sofia Ira Ktena, Sarah Parisot, Enzo Ferrante, Martin Rajchl, Matthew
+    Lee, Ben Glocker, and Daniel Rueckert. Metric learning with spectral graph convolutions
+    on brain connectivity networks. NeuroImage, 169:431–442, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] Quoc Le and Tomas Mikolov. Distributed representations of sentences and
+    documents. In International conference on machine learning, pages 1188–1196, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] John Boaz Lee, Xiangnan Kong, Constance M Moore, and Nesreen K Ahmed.
+    Deep parametric model for discovering group-cohesive functional brain regions.
+    In Proceedings of the 2020 SIAM International Conference on Data Mining, pages
+    631–639\. SIAM, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] John Boaz Lee, Ryan A Rossi, Sungchul Kim, Nesreen K Ahmed, and Eunyee
+    Koh. Attention models in graphs: A survey. ACM Transactions on Knowledge Discovery
+    from Data (TKDD), 13(6):62, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] Jung-Eun Lee, Rong Jin, and Anil K Jain. Rank-based distance metric learning:
+    An application to image retrieval. In 2008 IEEE Conference on Computer Vision
+    and Pattern Recognition, pages 1–8\. IEEE, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] Jundong Li, Harsh Dani, Xia Hu, Jiliang Tang, Yi Chang, and Huan Liu.
+    Attributed network embedding for learning in a dynamic environment. In Proceedings
+    of the 2017 ACM on Conference on Information and Knowledge Management, pages 387–396\.
+    ACM, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] Yujia Li, Chenjie Gu, Thomas Dullien, Oriol Vinyals, and Pushmeet Kohli.
+    Graph matching networks for learning the similarity of graph structured objects.
+    ICML, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] Daryl Lim, Gert Lanckriet, and Brian McFee. Robust structural metric learning.
+    In International conference on machine learning, pages 615–623, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] Xiang Ling, Lingfei Wu, Saizhuo Wang, Tengfei Ma, Fangli Xu, Chunming
+    Wu, and Shouling Ji. Hierarchical graph matching networks for deep graph similarity
+    learning. https://openreview.net/pdf?id=rkeqn1rtDH, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] Jiahao Liu, Guixiang Ma, Fei Jiang, Chun-Ta Lu, Philip S Yu, and Ann B
+    Ragin. Community-preserving graph convolutions for structural and functional joint
+    embedding of brain networks. arXiv preprint arXiv:1911.03583, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Shengchao Liu, Mehmet F Demirel, and Yingyu Liang. N-gram graph: Simple
+    unsupervised representation for graphs, with applications to molecules. In Advances
+    in Neural Information Processing Systems, pages 8464–8476, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] Guixiang Ma, Nesreen K Ahmed, Theodore L Willke, Dipanjan Sengupta, Michael W
+    Cole, Nicholas B Turk-Browne, and Philip S Yu. Deep graph similarity learning
+    for brain data analysis. In Proceedings of the 28th ACM International Conference
+    on Information and Knowledge Management, pages 2743–2751\. ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] Guixiang Ma, Lifang He, Bokai Cao, Jiawei Zhang, S Yu Philip, and Ann B
+    Ragin. Multi-graph clustering based on interior-node topology with applications
+    to brain networks. In Joint European Conference on Machine Learning and Knowledge
+    Discovery in Databases, pages 476–492\. Springer, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] Guixiang Ma, Lifang He, Chun-Ta Lu, Weixiang Shao, Philip S Yu, Alex D
+    Leow, and Ann B Ragin. Multi-view clustering with graph embedding for connectome
+    analysis. In Proceedings of the 2017 ACM on Conference on Information and Knowledge
+    Management, pages 127–136\. ACM, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] Guixiang Ma, Chun-Ta Lu, Lifang He, S Yu Philip, and Ann B Ragin. Multi-view
+    graph embedding with hub detection for brain network analysis. In 2017 IEEE International
+    Conference on Data Mining (ICDM), pages 967–972\. IEEE, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] Pierre Mahé and Jean-Philippe Vert. Graph kernels based on tree patterns
+    for molecules. Machine learning, 75(1):3–35, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] Franco Manessi, Alessandro Rozza, and Mario Manzo. Dynamic graph convolutional
+    networks. Pattern Recognition, 97:107000, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] Sascha Reinhard Nicolai Bissantz Christof Paar Marc Fyrbiak, Sebastian Wallat.
+    Graph similarity and its applications to hardware security. Cryptology ePrint
+    Archive, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] Thomas Mensink, Jakob Verbeek, Florent Perronnin, and Gabriela Csurka.
+    Metric learning for large scale image classification: Generalizing to new classes
+    at near-zero cost. In European Conference on Computer Vision, pages 488–501. Springer,
+    2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg S Corrado, and Jeff Dean.
+    Distributed representations of words and phrases and their compositionality. In
+    Advances in neural information processing systems, pages 3111–3119, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] Gary L Miller. Graph isomorphism, general remarks. Journal of Computer
+    and System Sciences, 18(2):128–142, 1979.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] Annamalai Narayanan, Mahinthan Chandramohan, Rajasekar Venkatesan, Lihui
+    Chen, Yang Liu, and Shantanu Jaiswal. graph2vec: Learning distributed representations
+    of graphs. arXiv preprint arXiv:1707.05005, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] Michel Neuhaus, Kaspar Riesen, and Horst Bunke. Fast suboptimal algorithms
+    for the computation of graph edit distance. In Joint IAPR International Workshops
+    on Statistical Techniques in Pattern Recognition (SPR) and Structural and Syntactic
+    Pattern Recognition (SSPR), pages 163–172\. Springer, 2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] Giang H Nguyen, John Boaz Lee, Ryan A Rossi, Nesreen K Ahmed, Eunyee Koh,
+    and Sungchul Kim. Dynamic network embeddings: From random walks to temporal random
+    walks. In 2018 IEEE International Conference on Big Data (Big Data), pages 1085–1092\.
+    IEEE, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] Giang Hoang Nguyen, John Boaz Lee, Ryan A Rossi, Nesreen K Ahmed, Eunyee
+    Koh, and Sungchul Kim. Continuous-time dynamic network embeddings. In Companion
+    Proceedings of The Web Conference 2018, pages 969–976\. International World Wide
+    Web Conferences Steering Committee, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] Giannis Nikolentzos, Polykarpos Meladianos, and Michalis Vazirgiannis.
+    Matching node embeddings for graph similarity. In Thirty-First AAAI Conference
+    on Artificial Intelligence, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] Giannis Nikolentzos, Giannis Siglidis, and Michalis Vazirgiannis. Graph
+    kernels: A survey. arXiv preprint arXiv:1904.12218, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] Bryan Perozzi, Rami Al-Rfou, and Steven Skiena. Deepwalk: Online learning
+    of social representations. In Proceedings of the 20th ACM SIGKDD international
+    conference on Knowledge discovery and data mining, pages 701–710\. ACM, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] Kaspar Riesen and Horst Bunke. Iam graph database repository for graph
+    based pattern recognition and machine learning. In Joint IAPR International Workshops
+    on Statistical Techniques in Pattern Recognition (SPR) and Structural and Syntactic
+    Pattern Recognition (SSPR), pages 287–297\. Springer, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] Kaspar Riesen and Horst Bunke. Approximate graph edit distance computation
+    by means of bipartite graph matching. Image and Vision computing, 27(7):950–959,
+    2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] Ryan Rossi and Nesreen Ahmed. The network data repository with interactive
+    graph analytics and visualization. In Twenty-Ninth AAAI Conference on Artificial
+    Intelligence, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] Ryan A Rossi and Nesreen K Ahmed. Role discovery in networks. IEEE Transactions
+    on Knowledge and Data Engineering, 27(4):1112–1131, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] Ryan A Rossi, Nesreen K Ahmed, and Eunyee Koh. Higher-order network representation
+    learning. In Companion Proceedings of the The Web Conference 2018, pages 3–4\.
+    International World Wide Web Conferences Steering Committee, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] Ryan A Rossi, Nesreen K Ahmed, Eunyee Koh, Sungchul Kim, Anup Rao, and
+    Yasin Abbasi-Yadkori. A structural graph representation learning framework. In
+    Proceedings of the 13th International Conference on Web Search and Data Mining,
+    pages 483–491, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Ryan A Rossi, Di Jin, Sungchul Kim, Nesreen K Ahmed, Danai Koutra, and
+    John Boaz Lee. On proximity and structural role-based embeddings in networks:
+    Misconceptions, techniques, and applications. ACM Transactions on Knowledge Discover
+    from Data, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] Yossi Rubner, Carlo Tomasi, and Leonidas J Guibas. The earth mover’s
+    distance as a metric for image retrieval. International journal of computer vision,
+    40(2):99–121, 2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] Franco Scarselli, Marco Gori, Ah Chung Tsoi, Markus Hagenbuchner, and
+    Gabriele Monfardini. The graph neural network model. IEEE Transactions on Neural
+    Networks, 20(1):61–80, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] Florian Schroff, Dmitry Kalenichenko, and James Philbin. Facenet: A unified
+    embedding for face recognition and clustering. In Proceedings of the IEEE conference
+    on computer vision and pattern recognition, pages 815–823, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] Mike Schuster and Kuldip K Paliwal. Bidirectional recurrent neural networks.
+    IEEE Transactions on Signal Processing, 45(11):2673–2681, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] David I Shuman, Sunil K Narang, Pascal Frossard, Antonio Ortega, and
+    Pierre Vandergheynst. The emerging field of signal processing on graphs: Extending
+    high-dimensional data analysis to networks and other irregular domains. IEEE Signal
+    Processing Magazine, 30(3):83–98, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] Richard Socher, Danqi Chen, Christopher D Manning, and Andrew Ng. Reasoning
+    with neural tensor networks for knowledge base completion. In Advances in neural
+    information processing systems, pages 926–934, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] S Joshua Swamidass, Jonathan Chen, Jocelyne Bruand, Peter Phung, Liva
+    Ralaivola, and Pierre Baldi. Kernels for small molecules and the prediction of
+    mutagenicity, toxicity and anti-cancer activity. Bioinformatics, 21(suppl_1):i359–i368,
+    2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] Sabrina K Syan, Mara Smith, Benicio N Frey, Raheem Remtulla, Flavio Kapczinski,
+    Geoffrey BC Hall, and Luciano Minuzzi. Resting-state functional connectivity in
+    individuals with bipolar disorder during clinical remission: a systematic review.
+    Journal of psychiatry & neuroscience: JPN, 43(5):298, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] Yu Tian, Long Zhao, Xi Peng, and Dimitris Metaxas. Rethinking kernel
+    methods for node representation learning on graphs. In Advances in Neural Information
+    Processing Systems, pages 11681–11692, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] Antoine J-P Tixier, Giannis Nikolentzos, Polykarpos Meladianos, and Michalis
+    Vazirgiannis. Graph classification with 2d convolutional neural networks. In International
+    Conference on Artificial Neural Networks, pages 578–593\. Springer, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] Hanghang Tong, Spiros Papadimitriou, Jimeng Sun, Philip S Yu, and Christos
+    Faloutsos. Colibri: fast mining of large static and dynamic graphs. In Proceedings
+    of the 14th ACM SIGKDD international conference on Knowledge discovery and data
+    mining, pages 686–694\. ACM, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] Eleni Triantafillou, Richard Zemel, and Raquel Urtasun. Few-shot learning
+    through an information retrieval lens. In Advances in Neural Information Processing
+    Systems, pages 2255–2265, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] Anton Tsitsulin, Davide Mottin, Panagiotis Karras, and Emmanuel Müller.
+    Verse: Versatile graph embeddings from similarity measures. In Proceedings of
+    the 2018 World Wide Web Conference, pages 539–548\. International World Wide Web
+    Conferences Steering Committee, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] David C Van Essen, Kamil Ugurbil, E Auerbach, D Barch, TEJ Behrens, R Bucholz,
+    Acer Chang, Liyong Chen, Maurizio Corbetta, Sandra W Curtiss, et al. The human
+    connectome project: a data acquisition perspective. Neuroimage, 62(4):2222–2231,
+    2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] S Vichy N Vishwanathan, Nicol N Schraudolph, Risi Kondor, and Karsten M
+    Borgwardt. Graph kernels. Journal of Machine Learning Research, 11(Apr):1201–1242,
+    2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] Milena Vujošević-Janičić, Mladen Nikolić, Dušan Tošić, and Viktor Kuncak.
+    Software verification and graph similarity for automated evaluation of students’
+    assignments. Information and Software Technology, 55(6):1004–1016, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] Nikil Wale, Ian A Watson, and George Karypis. Comparison of descriptor
+    spaces for chemical compound retrieval and classification. Knowledge and Information
+    Systems, 14(3):347–375, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] Walter D Wallis, Peter Shoubridge, M Kraetz, and D Ray. Graph distances
+    using graph union. Pattern Recognition Letters, 22(6-7):701–704, 2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] Lichen Wang, Bo Zong, Qianqian Ma, Wei Cheng, Jingchao Ni, Wenchao Yu,
+    Yanchi Liu, Dongjin Song, Haifeng Chen, and Yun Fu. Inductive and unsupervised
+    representation learning on graph structured objects. ICLR, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] Runzhong Wang, Junchi Yan, and Xiaokang Yang. Learning combinatorial
+    embedding networks for deep graph matching. arXiv preprint arXiv:1904.00597, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] Shen Wang, Zhengzhang Chen, Xiao Yu, Ding Li, Jingchao Ni, Lu-An Tang,
+    Jiaping Gui, Zhichun Li, Haifeng Chen, and Philip S. Yu. Heterogeneous graph matching
+    networks for unknown malware detection. In Proceedings of the Twenty-Eighth International
+    Joint Conference on Artificial Intelligence, IJCAI-19, pages 3762–3770. International
+    Joint Conferences on Artificial Intelligence Organization, 7 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] Yaqing Wang and Quanming Yao. Few-shot learning: A survey. arXiv preprint
+    arXiv:1904.05046, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] Baoxin Wu, Chunfeng Yuan, and Weiming Hu. Human action recognition based
+    on context-dependent graph kernels. In Proceedings of the IEEE conference on computer
+    vision and pattern recognition, pages 2609–2616, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] Bo Wu, Yang Liu, Bo Lang, and Lei Huang. Dgcnn: Disordered graph convolutional
+    neural network based on the gaussian mixture model. Neurocomputing, 321:346–356,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] Zonghan Wu, Shirui Pan, Fengwen Chen, Guodong Long, Chengqi Zhang, and
+    S Yu Philip. A comprehensive survey on graph neural networks. IEEE Transactions
+    on Neural Networks and Learning Systems, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] Zonghan Wu, Shirui Pan, Fengwen Chen, Guodong Long, Chengqi Zhang, and
+    Philip S Yu. A comprehensive survey on graph neural networks. arXiv preprint arXiv:1901.00596,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] Xiaojun Xu, Chang Liu, Qian Feng, Heng Yin, Le Song, and Dawn Song. Neural
+    network-based graph embedding for cross-platform binary code similarity detection.
+    In Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications
+    Security, pages 363–376\. ACM, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] Xifeng Yan, Philip S Yu, and Jiawei Han. Substructure similarity search
+    in graph databases. In Proceedings of the 2005 ACM SIGMOD international conference
+    on Management of data, pages 766–777\. ACM, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] Pinar Yanardag and SVN Vishwanathan. Deep graph kernels. In Proceedings
+    of the 21th ACM SIGKDD International Conference on Knowledge Discovery and Data
+    Mining, pages 1365–1374\. ACM, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] Rex Ying, Dylan Bourgeois, Jiaxuan You, Marinka Zitnik, and Jure Leskovec.
+    Gnn explainer: A tool for post-hoc explanation of graph neural networks. arXiv
+    preprint arXiv:1903.03894, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] Tomoki Yoshida, Ichiro Takeuchi, and Masayuki Karasuyama. Learning interpretable
+    metric between graphs: Convex formulation and computation with graph mining. In
+    Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery
+    & Data Mining, pages 1026–1036\. ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] Bing Yu, Haoteng Yin, and Zhanxing Zhu. Spatio-temporal graph convolutional
+    networks: A deep learning framework for traffic forecasting. arXiv preprint arXiv:1709.04875,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] Andrei Zanfir and Cristian Sminchisescu. Deep learning of graph matching.
+    In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+    pages 2684–2693, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] Zhiping Zeng, Anthony KH Tung, Jianyong Wang, Jianhua Feng, and Lizhu
+    Zhou. Comparing stars: On approximating graph edit distance. Proceedings of the
+    VLDB Endowment, 2(1):25–36, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] Daokun Zhang, Jie Yin, Xingquan Zhu, and Chengqi Zhang. Network representation
+    learning: A survey. IEEE transactions on Big Data, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] Si Zhang, Hanghang Tong, Jiejun Xu, and Ross Maciejewski. Graph convolutional
+    networks: Algorithms, applications and open challenges. In International Conference
+    on Computational Social Networks, pages 79–91\. Springer, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] Weiguo Zheng, Lei Zou, Xiang Lian, Dong Wang, and Dongyan Zhao. Graph
+    similarity search with edit distance constraint in large graph databases. In Proceedings
+    of the 22nd ACM international conference on Information & Knowledge Management,
+    pages 1595–1600\. ACM, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] Jie Zhou, Ganqu Cui, Zhengyan Zhang, Cheng Yang, Zhiyuan Liu, Lifeng
+    Wang, Changcheng Li, and Maosong Sun. Graph neural networks: A review of methods
+    and applications. arXiv preprint arXiv:1812.08434, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

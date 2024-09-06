@@ -1,0 +1,2764 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:42:57'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2211.15596] A survey of deep learning optimizers - first and second order
+    methods'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2211.15596](https://ar5iv.labs.arxiv.org/html/2211.15596)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A survey of deep learning optimizers - first and second order methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: ROHAN V KASHYAP [rohankashyap@iisc.ac.in](mailto:rohankashyap@iisc.ac.in) [1234-5678-9012](https://orcid.org/1234-5678-9012
+    "ORCID identifier") Indian Institute of ScienceBangaloreKarnatakaIndia560012(2023)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Deep Learning optimization involves minimizing a high-dimensional loss function
+    in the weight space which is often perceived as difficult due to its inherent
+    difficulties such as saddle points, local minima, ill-conditioning of the Hessian
+    and limited compute resources. In this paper, we provide a comprehensive review
+    of $14$ standard optimization methods successfully used in deep learning research
+    and a theoretical assessment of the difficulties in numerical optimization from
+    the optimization literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '^†^†copyright: acmcopyright^†^†journalyear: 2023^†^†journal: POMACS^†^†journalvolume:
+    37^†^†journalnumber: 4^†^†article: 111^†^†publicationmonth: 8'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/7efe3cf416cd586add043d4cf29ec4ca.png)![[Uncaptioned
+    image]](img/3ca43765c9553039b9d6af3278cdc6dd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Optimization encompasses a central role in machine learning ([b1,](#bib.bib1)
+    ), statistical physics, pure mathematics ([b11,](#bib.bib11) ; [b16,](#bib.bib16)
+    ; [b30,](#bib.bib30) ), random matrix theory and also scientific research. Deep
+    learning involves optimization of non-convex loss functions over continuous, high-dimensional
+    spaces. Neural network training involves solving a loss function that is differentiable
+    and continuous using gradient-based optimization techniques that utilize the first
+    order or second order information to update its weight parameters and thus seek
+    to find the critical point. Gradient descent ([b30,](#bib.bib30) ), quasi-Newton
+    ([b62,](#bib.bib62) ), BFGS ([b59,](#bib.bib59) ) and conjugate gradient ([b55,](#bib.bib55)
+    ) methods are commonly used to perform such minimizations and find the optimal
+    solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Definition 1. Given $K$ weight matrices $(\theta_{k})_{k\leq K}$ the output
+    $y$ of a deep neural network with a activation function $\phi$ is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (1) |  | $f(x)=\phi\left(\phi\left(\cdots\phi\left(x\cdot\theta_{1}\right)\cdots\right)\cdot\theta_{K-1}\right)\cdot\theta_{K},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $x\in R^{d}$ is the input to the model. Let $\left\{x_{i},y_{i}\right\}_{i=1}^{m}$
+    denote the set of training examples. In principle, the goal of a deep learning
+    algorithm is to reduce the expected generalization error $\mathbb{E}(L(f(x;\theta),y))$
+    where $L$ is the designated loss-function such as mean-squared error, and $f(x;\theta)$
+    is the function estimate for $y=f(x)$ with parameters $\theta$. The most common
+    estimator is the maximum likelihood estimation (MLE) for $\theta$ defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{\theta}_{\mathrm{ML}}=\underset{\boldsymbol{\theta}}{\arg\max}\hskip
+    1.99997pt\mathbb{E}_{\mathbf{x}\sim\hat{p}_{\text{data }}}\log p_{\text{model
+    }}(\boldsymbol{x};\boldsymbol{\theta})$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $p_{\text{model }}$ is the model distribution. This accounts to minimizing
+    the Kullback-Leibler (KL) divergence (a metric) between the empirical data distribution
+    $p_{model}$ and the true data distribution $\hat{p}_{\text{data}}$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $D_{\mathrm{KL}}\left(\hat{p}_{\text{data }}\&#124;p_{\text{model }}\right)=\mathbb{E}_{\mathbf{x}\sim\hat{p}_{\text{data
+    }}}\left[\log\hat{p}_{\text{data }}(\boldsymbol{x})-\log p_{\text{model }}(\boldsymbol{x})\right]$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Since the true data distribution is largely unknown, we minimize the expected
+    loss on the training set - a quantity called the empirical risk given as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathbb{E}_{\boldsymbol{x},\mathrm{y}\sim\hat{p}_{\mathrm{data}}(\boldsymbol{x},y)}[L(f(\boldsymbol{x};\boldsymbol{\theta}),y)]=\frac{1}{m}\sum_{i=1}^{m}L\left(f\left(\boldsymbol{x}^{(i)};\boldsymbol{\theta}\right),y^{(i)}\right)$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $L$ is the loss-function and $f(x;\theta)$ is the prediction output when
+    the input is $x$ and $\hat{p}_{data}$ is the empirical distribution. In a supervised
+    setting, $y$ is the target output and $p(y|x)$ is the probability distribution
+    to be estimated. MLE is the best estimator asymptotically and is consistent in
+    the sense that it converges ¹¹1We refer to converges in the sense of pointwise
+    and not in distribution i.e., $\hat{\theta}\rightarrow\theta^{*}$, as $m\rightarrow\infty$.
+    to the parameters of the true data distribution $\hat{p}_{\text{data }}$ as $m\rightarrow\infty$.
+    Although this method in theory, is highly prone to overfitting since models with
+    high capacity can simply memorize the training set, empirical results surprisingly
+    enough dictate the opposite and prove the model’s capability to achieve local
+    generalization power within its capacity and thus generalizes to unseen examples
+    in the test samples. The solution is to add a penalty term called the regularizer
+    to the empirical risk defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\tilde{L}(\boldsymbol{\theta})=\underbrace{\frac{1}{N}\sum_{i=1}^{N}L(y(\mathbf{x},\boldsymbol{\theta}),t)}_{\text{training
+    loss }}+\underbrace{\mathcal{R}(\boldsymbol{\theta})}_{\text{regularizer }}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathcal{R}(\boldsymbol{\theta})$ is the regularization term such as
+    $L1$ or $L2$ regularization as illustrated in Fig. LABEL:fig:regularization. However,
+    high-dimensional non-convex optimization techniques come at the cost of no theoretical
+    guarantees yet obtain state-of-the-art results on numerous tasks such as image
+    classification ([b64,](#bib.bib64) ), text processing ([b63,](#bib.bib63) ), and
+    representation learning ([b65,](#bib.bib65) ). Also, deep nets are composed of
+    layers of affine transformations followed by point-wise non-linear activations
+    such as RELU, sigmoid and tanh functions. Thus, the choice of the non-linear function
+    becomes more important to avoid vanishing and exploding gradients problems ([b33,](#bib.bib33)
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.1\. Mathematical Preliminaries and Notations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Let $({x^{(i)},y^{(i)}})$ denote the training examples and the corresponding
+    targets respectively. Let $f(.,.;\theta)$ denote a neural network with parameters
+    $\theta$ and a loss function $L$. For $R^{n}$-valued functions $\nabla$ corresponds
+    to the gradient operator. For all the optimization methods discussed in the paper,
+    $g$ corresponds to the computed gradient vector across multiple training samples,
+    $\epsilon$ is the learning rate and $\rho$ is the decay rate. For first order
+    methods, $r$ is the accumulated square gradient and $v$ is the velocity vector
+    respectively. For second order methods, we denote the Hessian matrix of the loss
+    function $L$ with respect to the model parameters $\theta$ by $H$ and $\lambda_{i}$’s
+    are the corresponding eigenvalues. Unless stated otherwise, the update rule is
+    given as $\theta=\theta-\Delta\theta$, where $\Delta\theta=\epsilon g$. We denote
+    the basic version of stochastic gradient descent algorithm in Algorithm [1](#algorithm1
+    "In 1.1\. Mathematical Preliminaries and Notations ‣ 1\. Introduction ‣ A survey
+    of deep learning optimizers - first and second order methods").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 Initialize: Initial parameter $\theta$, Learning rate $\epsilon$.2 while *stopping
+    criterion not met* do3       Sample $m$ training examples ${x^{(1)},...,x^{(m)}}$
+    and their corresponding targets $y^{(i)}s$.4       Compute gradient estimate:
+    $g\leftarrow\left[\frac{1}{m}\sum_{i=1}^{m}L\left(f\left(\boldsymbol{x}^{(i)};\boldsymbol{\theta}+\alpha\boldsymbol{v}\right),\boldsymbol{y}^{(i)}\right)\right]$5      
+    Apply update: $\theta\leftarrow\theta-\epsilon g$.6 end while'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 1 Stochastic Gradient Descent
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.2\. Literature Overview
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The most important algorithm for machine learning optimization is the stochastic
+    gradient descent method (SGD). This is a general extension to the gradient descent
+    method to handle large training sets without being computationally expensive as
+    discussed in Alg [1](#algorithm1 "In 1.1\. Mathematical Preliminaries and Notations
+    ‣ 1\. Introduction ‣ A survey of deep learning optimizers - first and second order
+    methods"). Since, we perform gradient updates at each step using a mini-batch
+    of examples the asymptotic cost for SGD is $O(1)$ as a function of $m$, where
+    m is the number of training examples. In this section, we provide a detailed discussion
+    of the various problems associated with this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c9ee0b51a55a63a0f20d3371e4d581e6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 1\. Illustration of flat and sharp minima. Source Keskar ([b46,](#bib.bib46)
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.3\. Flat Minima
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Hochreiter et al. ([b45,](#bib.bib45) ) conjectured that the generalization
+    of deepnets is related to the curvature of the loss at the converged solution.
+    Their algorithm the ”flat minima search” utilizes the Hessian information to find
+    a large region in the weight space called the ”flat minima” where all the solutions
+    lead to a small error function value. It is also noted that high error local minima
+    traps do not appear when the model is overparameterized, and Keskar et al. ([b46,](#bib.bib46)
+    ) demonstrated that the large batch methods always tend to converge to sharp minimizers
+    (large number of positive eigenvalues) and thus generalize a bit worse than the
+    small batch methods that are known to converge to flat minimizers which are characterized
+    by having numerous small eigenvalues though they have comparable training accuracies
+    ([b4,](#bib.bib4) ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is attributed to the empirical evidence as discussed in ([b13,](#bib.bib13)
+    ), ([b45,](#bib.bib45) ) and ([b46,](#bib.bib46) ) that large batch methods are
+    attracted to regions of sharp minima while the basins found by small batch methods
+    are wider, and since they are unable to escape these basins of attractions, they
+    generalize better. Although a larger batch size provides a more accurate approximation
+    of the true gradient with fewer fluctuations in the update step, it is computationally
+    very expensive and leads to fewer update steps, while a smaller batch size offers
+    a regularizing effect due to the noise they add during the learning process. However,
+    this might lead to high variance in the gradient estimate and thus requires a
+    smaller learning rate to maintain stability and converge to an optimal solution.
+    It turns out that most directions in the weight space have similar loss values
+    since the Hessian consists of a large number of eigenvalues close to zero, even
+    at random initialization points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/76bb7aa7409c943413efea0adde0327a.png)![Refer to caption](img/624cb4a7d1864bec84a696156483c9ba.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2\. a. The $2-D$ visualization of the SGD trajectory. Source: Shervine
+    ([b67,](#bib.bib67) ). b. Illustration of projected gradient descent where $w$
+    is the current parameter estimate, $w^{\prime}$ is the update after a gradient
+    step, and $PC(w^{\prime})$ projects this onto the constraint set $C$. Source:
+    Ian Kevin P. Murphy ([b44,](#bib.bib44) )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.4\. Linear Subspace
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Goodfellow et al. ([b47,](#bib.bib47) ) show the existence of a linear subspace
+    during neural network training with no barriers and a smooth path connecting initialization
+    and the final minima. Also, they show that poor conditioning of the Hessian and
+    variance in the gradient estimate are significant obstacles in the SGD training
+    process. These could deviate the algorithm completely from the desired basin of
+    attraction. Thus the final minima or the final region in the parameter space and
+    the width of the final minima that SGD converges to depend largely on the learning
+    rate, batch size, and gradient covariance, with different geometries and generalization
+    properties.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.5\. SGD Trajectory
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Felix et al. ([b13,](#bib.bib13) ) constructed continuous paths between minima
+    for recurrent neural networks and conjectured that the loss minima are not isolated
+    points but essentially form a continuous manifold. Also, since these paths are
+    flat, this implies the existence of a single connected manifold of low loss and
+    not a distinct basin of attraction. More precisely, the part of the parameter
+    space when the loss remains below a certain low threshold form a connected region
+    of low error valleys as shown in Figure [3](#S1.F3 "Figure 3 ‣ 1.6\. SGD Analysis
+    ‣ 1\. Introduction ‣ A survey of deep learning optimizers - first and second order
+    methods"). These reflect the generalization capabilities of the network since
+    this provides evidence that large neural nets have enough parameters to produce
+    accurate predictions even though they undergo huge structural changes. This is
+    quite a deviation from the current literature, where the minima are typically
+    depicted as points at the bottom of a strictly convex valley of a certain width
+    with network parameters given by the location of the minimum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.6\. SGD Analysis
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Stanislaw et al. ([b40,](#bib.bib40) ) conjectured that the SGD process depends
+    on the ratio of the learning rate to batch size, which thus determines the width
+    of the endpoint and its generalization capabilities. First, as we approach the
+    local minima, the loss surface can be approximated by a quadratic bowl, with the
+    minimum at zero loss. Thus, the training can be approximated by an Ornstein-Unhlenbeck
+    ²²2The Ornstein-Unhlenbeck $x_{t}$ process is a Gaussian process defined using
+    the following differential equation: $dx_{t}=-\theta x_{t}dt+\sigma dW_{t}$. process
+    as discussed in Section LABEL:Second-order_methods. Second, the covariance of
+    the gradients $C=\frac{1}{N}\sum_{i=1}^{N}\left(g_{i}-g\right)^{T}\left(g_{i}-g\right)$,
+    where $g_{i}$ is the gradient of the loss function $L$ with respect to the ($x_{i},y_{i}$)
+    training example, and the Hessian of the loss function $H$ are approximately equal,
+    and is possibly the reason SGD escapes the global minima. Since the loss functions
+    of deep neural networks are typically non-convex, with complex structure and potentially
+    multiple minima and saddle points, SGD generally converges to different regions
+    of parameter space, with different geometries and generalization properties ([b2,](#bib.bib2)
+    ; [b3,](#bib.bib3) ), depending on optimization hyper-parameters and initialization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e9c6dd202b75c2b401fdeae108757fb0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3\. Left: A slice through the one million-dimensional training loss
+    function of DenseNet-40-12 on CIFAR10 and the minimum energy path as discussed
+    in ([b13,](#bib.bib13) ). The plane is spanned by the two minima and the mean
+    of the path nodes. Source: Felix Draxler ([b13,](#bib.bib13) )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.7\. Curse of Dimensionality
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Finding a good descent direction in a high-dimensional space is a difficult
+    problem, but it is not nearly as difficult as navigating an error surface with
+    complicated obstacles within multiple low-dimensional subspaces. It is also highly
+    likely that the non-convex loss landscape is such that it contains regions of
+    local minima at high energies which full-batch methods couldn’t have possibly
+    avoided. But, the stochastic nature of SGD due to its inherent noise and a smaller
+    batch size doesn’t suffer from this problem and is not trapped in irrelevant basins
+    of attraction. With non-convex functions, such as neural nets, it is possible
+    to have many local minima. Indeed, nearly any deep model is guaranteed to have
+    an extremely large number of local minima. However, this is not necessarily a
+    major problem. It is empirically observed that as the dimensionality $N$ increases,
+    local minima with high error relative to the global minimum occur with a probability
+    that is exponentially small in $N$ ([b5,](#bib.bib5) ). This is mainly because
+    neural nets exhibit model identifiability problem, which results in an extremely
+    large amount of local minima, but all are equivalent in their cost function value.
+    They do not have very high error values relative to the global minima and are
+    thus good solutions that stochastic gradient descent often finds itself at during
+    the training process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.8\. Critical Points
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Critical points ³³3A critical point is a point whose first-order derivative
+    is zero i.e., $f^{\prime}(x)=0$. with high costs are far more likely to be saddle
+    points ([b5,](#bib.bib5) ). We are not exactly concerned with finding the exact
+    minimum of a function but seek only to reduce its value significantly to obtain
+    a good generalization error. In the gradient descent method, the main problem
+    is not the direction but its step size along each eigenvector because the update
+    step is directly proportional to the corresponding eigenvalue. Thus, we move towards
+    the optimal point if the eigenvalue is positive else; we move away from it if
+    it is negative along those directions, and this slows down the learning process
+    since now we might circumnavigate a tall mountain or a flat region of high error
+    or might simply take a very long time to move away from the saddle points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5c7a4e001b8633c1a9d7fed821a4568a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 4\. For two dimensions, the lines of constant of the error surface E
+    are oval in shape. The eigenvectors of H along the major and minor axes. The eigenvalues
+    measure the steepness of E along each eigendirection. Source:Yann LeCun ([b1,](#bib.bib1)
+    )
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a convex function, such a flat region corresponds to the global minima,
+    but in a non-convex optimization problem, it could correspond to a point which
+    a high value of the loss function. Although, Newton’s method solves this slowness
+    issue by rescaling the gradients in each direction with the inverse of Hessian,
+    it can often take the wrong direction and be applied iteratively as long as the
+    Hessian remains positive definite. Thus for a locally quadratic function, Newton’s
+    method jumps directly to the minimum, but if the eigenvalues are not all positive
+    (near a saddle point), then the update can lead us to move in the wrong direction.
+    Also, since second-order methods are computationally intensive, the computational
+    complexity of computing the Hessian is $O\left(N^{3}\right)$, and thus, practically
+    only networks with a small number of parameters can be trained via Newton’s method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Several methods such as BFGS and saddle-free newton method ([b5,](#bib.bib5)
+    ; [b53,](#bib.bib53) ; [b54,](#bib.bib54) ) are proposed to overcome this problem
+    in non-convex settings, specifically when the Hessian has negative eigenvalues.
+    This includes adding a constant along the Hessian diagonal, which largely offsets
+    the negative eigenvalues. Recently, Luke ([b48,](#bib.bib48) ) established the
+    connections between gradient explosion and the initialization point by measuring
+    the recurrent Jacobian. They found that with a random initialization, the neural
+    network’s policy is poorly behaved and has many eigenvalues with a norm greater
+    than length $1$, and thus the gradient norm grows. However, for a stable initialization
+    (shrinks the initialization by multiplying by $0.01$) which was picked specifically
+    to prevent the gradients from exploding, we find that many eigenvalues close to
+    $1$, and thus the gradients do not explode. Sutskever et al. ([b9,](#bib.bib9)
+    ) demonstrated that poorly initialized and the absence of momentum perform worse
+    than well-initialized networks with momentum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d569e215aa0fc74fb7f285f3c6738c5e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5\. The loss surface represented as a union of $n$-dimensional manifolds
+    called $n$-wedges. A model of the low-loss manifold comprising of $2$-wedges in
+    a $3$-dimensional space. Source: Stanislav ([b8,](#bib.bib8) )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1.9\. Difficulties in Neural Network Optimization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The main challenges for neural net optimization in these high-dimensional spaces
+    can be ill-conditioning of the Hessian, poor condition number, local minima, plateaus,
+    and flat regions, the proliferation of saddle points, and poor correspondence
+    between local and global structure. The existence of a large number of saddle
+    points can significantly slow down learning since they are regions of high error
+    plateaus and give the impression of the presence of a local minimum. Also, since
+    these critical points are surrounded by plateaus of small curvature, second-order
+    methods such as the Newton method are attracted to saddle points and thus slow
+    down the learning process ([b5,](#bib.bib5) ). Also, a common observation is that
+    at the end of training process, the norm of the gradients $\nabla f(x)$ is not
+    necessarily small i.e., $\nabla f(x)<\epsilon$, and the Hessian $H$ has negative
+    eigenvalues, indicating that the algorithm did not converge to the local minima
+    ([b23,](#bib.bib23) ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also possible that models with high capacity have a large number of local
+    minima which can increase the number of interactions and cause the Hessian to
+    be ill-conditioned. There are also wide, flat regions of constant value where
+    the gradients and Hessian are all zero. Such degenerate locations pose a significant
+    problem to optimization algorithms. We conjecture that large neural nets often
+    converge to local minima, most of which are equivalent and yield similar generalization
+    performance on the test set. Also, the probability of finding a high error local
+    minima is exponentially small in high-dimensional structures and decreases quickly
+    with network size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8090437743c3e7e08907a760fbbb566f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6\. a. Batch gradient descent moves directly downhill. b. SGD takes
+    steps in a noisy direction, but moves downhill on average. Source: Roger Grosse
+    ([b21,](#bib.bib21) )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. First Order Methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 2.1\. Momentum
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Polyak et al. ([b49,](#bib.bib49) ) introduced the momentum method to accelerate
+    the learning process of first-order gradient-based methods, especially in regions
+    of high curvature. It also addresses the poor conditioning of the Hessian matrix
+    and the variance in the stochastic gradient descent process. This algorithm computes
+    an update step by accumulating an exponentially decaying moving average of the
+    past gradients and continues to move in their direction. The momentum term increases
+    for dimensions whose gradients point in the same directions and reduces updates
+    for dimensions whose gradient change directions, and we gain a faster convergence.
+    Although it can be applied to both full-batch and mini-batch learning methods,
+    stochastic gradient descent combined with mini-batches and a momentum term has
+    been the golden rule in the deep learning community to get excellent results on
+    perception tasks. It dampens oscillations in directions of high curvature by combining
+    gradients of opposite signs and also yields a larger learning rate in regions
+    of low curvature. It builds but the speed in directions of consistent gradient
+    and thus traverses a lot faster than the steepest descent due to its accumulated
+    velocity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the momentum is close to $1$, this algorithm is a lot faster, and it is equally
+    essential to ensure a smaller momentum value (close to $0.5$) at the start of
+    the learning process. In the beginning, since the points are randomly initialized
+    in the weight space, there may be large gradients, and the velocity term ($v$)
+    can lead in not being entirely beneficial. Thus, once these large gradients disappear
+    and we find the desired basin of attraction, we can increase the momentum term
+    smoothly to its final value, which is $0.9$ to $0.99$, to ensure that learning
+    is not stuck and wastes computational time in traversing flat regions where the
+    gradients are almost zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{array}[]{l}\boldsymbol{v}\leftarrow\alpha\boldsymbol{v}-\epsilon\nabla_{\theta}\left(\frac{1}{m}\sum_{i=1}^{m}L\left(\boldsymbol{f}\left(\boldsymbol{x}^{(i)};\boldsymbol{\theta}\right),\boldsymbol{y}^{(i)}\right)\right)\\
+    \boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\boldsymbol{v}\end{array}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The momentum algorithm accelerated convergence to a local minimum, requiring
+    fewer iterations than the steepest descent method, precisely by $\sqrt{R}$ times
+    fewer iterations, where R is the condition number of the curvature at the local
+    minimum. The velocity term plays the role of velocity as in physical analogy in
+    which it accelerates the particle through the parameter space in reinforced directions,
+    and thus the velocity vector is also known as imparting momentum to the particle.
+    The hyperparameter determines how quickly the contributions of previous gradients
+    exponentially decay. Previously in gradient descent, the step size was proportional
+    to the norm of the gradient. Now, it depends on how large and aligned a sequence
+    of gradients are. The step size is largest when many gradients point in exactly
+    the same direction. We can think of the analogy of a ball rolling down a curved
+    hill, and whenever it descends a steep part of the surface, it gathers speed and
+    continues sliding in that direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2\. Nesterov Momentum
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b154551e56f6edb7719a500f62f7fffd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7\. Nesterov momentum first makes a big jump in the direction of the
+    previously accumulated gradient and then computes the gradient where you end up
+    and thus makes a correction. Source: Geoffrey Hinton ([b29,](#bib.bib29) )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sutskever ([b9,](#bib.bib9) ) introduced a variant of the classical momentum
+    (CM) that aligns in line with the work of Nesterov’s accelerated gradient (NAG)
+    method for optimizing convex functions. The update rule is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{v}\leftarrow\alpha\boldsymbol{v}-\epsilon\nabla_{\boldsymbol{\theta}}\left[\frac{1}{m}\sum_{i=1}^{m}L\left(f\left(\boldsymbol{x}^{(i)};\boldsymbol{\theta}+\alpha\boldsymbol{v}\right),\boldsymbol{y}^{(i)}\right)\right]$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\boldsymbol{\theta}\leftarrow\boldsymbol{\theta}+\boldsymbol{v}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\alpha\in[0,1]$ is a hyperparameter that determines the contributions
+    of previous gradients across multiple iterations. From the formula, it is clear
+    that NAG is similar to CM⁴⁴4CM is the abbreviation for Classical Momentum as discussed
+    in Section [2.1](#S2.SS1 "2.1\. Momentum ‣ 2\. First Order Methods ‣ A survey
+    of deep learning optimizers - first and second order methods"). except where the
+    gradient is evaluated. With Nesterov momentum, the gradient is evaluated after
+    the current velocity is applied. This means that in NAG we first make a big jump
+    in the direction of the previously accumulated gradient and then compute the gradient
+    where you end up and thus make a correction. This gradient-based correction factor
+    is vital for a stable gradient update, especially for higher values of µ. The
+    gradient correction to the velocity responds much quicker in NAG, and if $\mu
+    v_{t}$ is indeed a poor update and an inappropriate velocity, then NAG will point
+    back towards $\theta_{t}$ more strongly than $\nabla f\left(\theta_{t}\right)$
+    does, thus providing a larger and more timely correction to $v_{t}$ than CM. Therefore,
+    it can avoid oscillations and is much more effective than CM along high-curvature
+    vertical directions. Thus, it is more tolerant to larger values of µ than CM.
+    For convex functions, Nesterov momentum achieves a convergence rate of $O\left(1/K^{2}\right)$
+    where k is the number of steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/288e186b96b59874cd4d8fb7bba0a894.png)![Refer to caption](img/1977ca78da4ca03aa28ac35ffe935d2c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8\. The effect of different learning rate $\epsilon$ and the momentum
+    coefficients $\mu$ for various hyperparameters. (left) The plot represents the
+    norm of the residual of the parameter value after projecting the parameters into
+    a $1$-D subspace $\forall t$. (right) The divergence of SGD from the main linear
+    path when trained using a maxout network on MNIST. Source: Goodfellow ([b35,](#bib.bib35)
+    )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3\. Adaptive Learning Rates
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The delta-bar-delta algorithm ([b50,](#bib.bib50) ) introduced the concept of
+    having separate adaptive learning rates for each individual connection (weight)
+    which is set empirically by observing its gradient after each iteration. The idea
+    is that if the gradient stays consistent, i.e., remains the same sign, we tune
+    up the learning rate; else if the gradient sign reverses, we decrease its learning
+    rate. The intuition is that for deep neural nets, the appropriate learning rate
+    varies widely for each of its weights. The magnitude of the gradients is often
+    different for different layers, and if the weight initialization is small then
+    the gradients are small for early layers than the later ones for very deep neural
+    nets. We start with a local gain of $1$ for each weight and use small additive
+    increases or multiplicative decreases depending on the sign of the gradient (mini-batch).
+    This ensures that the big gains decay rapidly when the oscillations start. It
+    is essential to ensure that we limit the gains to lie within a reasonable range
+    and use bigger mini-batches to ensure that the sign of the gradient is not due
+    to the sampling error of the mini-batches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jacobs ([b50,](#bib.bib50) ) proposed a method for combining adaptive learning
+    rates with momentum. He conjectures that instead of using the sign agreement between
+    the current gradient and the previous gradient, we use the current gradient and
+    the velocity of the weight and thus combine the advantages of momentum and adaptive
+    learning rates. Since momentum doesn’t care about axis-aligned effects, it can
+    deal with diagonal ellipses and traverse in diagonal directions quickly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4\. Adagrad
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Adagrad ([b51,](#bib.bib51) ) algorithm individually adapts the learning
+    rates of all model parameters by scaling them inversely proportional to the square
+    root of the sum of the historical squared values of the gradient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{g}\leftarrow\frac{1}{m}\nabla_{\boldsymbol{\theta}}\sum_{i}L\left(f\left(\boldsymbol{x}^{(i)};\boldsymbol{\theta}\right),\boldsymbol{y}^{(i)}\right)$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\boldsymbol{r}\leftarrow\boldsymbol{r}+\boldsymbol{g}\odot\boldsymbol{g}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'For weight parameter with the largest gradient has the largest decrease in
+    its learning rate, while the parameter with the smallest gradient has the smallest
+    decrease in its learning rate. This results in faster progress in the more gently
+    sloped regions of parameter space and works well when the gradient is sparse.
+    For non-convex optimization problems, accumulating the squared gradients can result
+    in a premature and excessive decrease in the learning rate. The parameter update
+    is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Delta\boldsymbol{\theta}=-\frac{\epsilon}{\sqrt{\delta+\boldsymbol{r}}}\odot\boldsymbol{g}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 2.5\. RMSProp
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The RMSProp algorithm ([b29,](#bib.bib29) ) modifies the Adagrad by changing
+    the accumulated squared gradient into an exponentially weighted moving average.
+    In the non-convex setting, since Adagrad decreases the learning rate rapidly by
+    using the history of the squared gradient, it is possible that the learning halts
+    before arriving at the desired basin of attraction or locally convex bowl structure.
+    RMSProp uses an exponentially decaying average of the squared gradients to discard
+    the past history and can converge rapidly after finding a convex bowl it behaves
+    like an instance of the AdaGrad algorithm since the AdaGrad method is designed
+    to converge rapidly for a convex function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{r}\leftarrow\rho\boldsymbol{r}+(1-\rho)\boldsymbol{g}\odot\boldsymbol{g}\vspace{0.5em}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: If the eigenvectors of the Hessian are axis-aligned, then RMSprop can correct
+    the curvature. Since RMSProp lacks the bias-correction term, it can often lead
+    to large step sizes and divergence with sparse gradients. If the eigenvectors
+    of the Hessian are axis-aligned (dubious assumption), then RMSProp can correct
+    the curvature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.6\. Adam
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Adam ([b18,](#bib.bib18) ) (adaptive moments) aligns along the works of RMSProp
+    ([b29,](#bib.bib29) ) and momentum with a few distinctions, such as invariance
+    to the diagonal rescaling of the gradients. First, in Adam, we incorporate momentum
+    by computing the biased first-order moment of the gradient as an exponentially
+    decaying moving average. Second, similar to the RMSProp algorithm, we incorporate
+    the second-order moment of the gradient as an exponentially decaying average.
+    This combination has theoretical guarantees in convex settings. Since the moving
+    averages are initialized to a vector of all zeros, the moment estimates are biased
+    during zero during the initial steps especially when the biased first moment ($s$)
+    and and second moment ($r$) estimates are close to $1$. ⁵⁵5$\odot$ corresponds
+    to element-wise product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{s}\leftarrow\rho_{1}\boldsymbol{s}+\left(1-\rho_{1}\right)\boldsymbol{g};\hskip
+    10.00002pt\boldsymbol{r}\leftarrow\rho_{2}\boldsymbol{r}+\left(1-\rho_{2}\right)\boldsymbol{g}\vspace{0.5em}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Thus, we introduce bias corrections to these estimates to account for their
+    initialization for both the momentum term and the second-order moment (uncentered
+    variance).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\hat{\boldsymbol{s}}\leftarrow\frac{\boldsymbol{s}}{1-\rho_{1}^{t}};\hskip
+    10.00002pt\hat{\boldsymbol{r}}\leftarrow\frac{\boldsymbol{r}}{1-\rho_{r}^{t}}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Since RMSProp lacks the correction factor, it has a high-bias in the early stages
+    of training, while Adam is robust to the choice of hyperparameters. Since the
+    accumulated squared values of the gradients term are an approximation to the diagonal
+    of the Fisher information matrix, it is more adaptive and leads to faster convergence.
+    The parameter update is given as:⁶⁶6In Adam optimization, $\delta$ corresponds
+    to a small constant of the order of $10^{-6}$ to ensure numerical stability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Delta\boldsymbol{\theta}=-\epsilon\frac{\hat{\boldsymbol{s}}}{\sqrt{\hat{\boldsymbol{r}}}+\delta}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 3\. Second-order methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/bd1b5f2ffa57fd509664abf7405f8cbb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9\. Illustration of the gradient descent and Newton’s method for a quadratic
+    function. Newton’s method converges in a single step (direct route) by exploiting
+    the curvature information contained in the Hessian matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1\. Preliminaries and Motivation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For a scalar-valued function, the matrix containing the second-order derivatives
+    is the Hessian matrix ($H$). The Hessian $H$ is a measure of curvature or concavity
+    of the function as shown in Figure [10](#S3.F10 "Figure 10 ‣ 3.1\. Preliminaries
+    and Motivation ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers
+    - first and second order methods"). The matrix containing all the first-order
+    derivatives for vector-valued functions $f:R^{n}\rightarrow R^{m}$ is known as
+    the Jacobian matrix ($J$). Suppose $f:R^{n}\rightarrow R$ (input is a vector and
+    output is scalar), then the Hessian matrix $H$ and the Jacobian $J$ for $f$ is
+    given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | <math id="S3.Ex15.m1.5" class="ltx_Math" alttext="\mathbf{J}=\begin{bmatrix}\nabla^{\mathrm{T}}f_{1}\\
+    \vdots\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \nabla^{\mathrm{T}}f_{m}\end{bmatrix}=\begin{bmatrix}\frac{\partial f_{1}}{\partial
+    x_{1}}&amp;\cdots&amp;\frac{\partial f_{1}}{\partial x_{n}}\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \vdots&amp;\ddots&amp;\vdots\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \frac{\partial f_{m}}{\partial x_{1}}&amp;\cdots&amp;\frac{\partial f_{m}}{\partial
+    x_{n}}\end{bmatrix}\quad\mathbf{H}=\begin{bmatrix}\frac{\partial^{2}f}{\partial
+    x_{1}^{2}}&amp;\frac{\partial^{2}f}{\partial x_{1}\partial x_{2}}&amp;\cdots&amp;\frac{\partial^{2}f}{\partial
+    x_{1}\partial x_{n}}\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \frac{\partial^{2}f}{\partial x_{2}\partial x_{1}}&amp;\frac{\partial^{2}f}{\partial
+    x_{2}^{2}}&amp;\cdots&amp;\frac{\partial^{2}f}{\partial x_{2}\partial x_{n}}\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \vdots&amp;\vdots&amp;\ddots&amp;\vdots\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \frac{\partial^{2}f}{\partial x_{n}\partial x_{1}}&amp;\frac{\partial^{2}f}{\partial
+    x_{n}\partial x_{2}}&amp;\cdots&amp;\frac{\partial^{2}f}{\partial x_{n}^{2}}\end{bmatrix}\vspace{1em}"
+    display="block"><semantics id="S3.Ex15.m1.5a"><mrow id="S3.Ex15.m1.5.5.2" xref="S3.Ex15.m1.5.5.3.cmml"><mrow
+    id="S3.Ex15.m1.4.4.1.1" xref="S3.Ex15.m1.4.4.1.1.cmml"><mi id="S3.Ex15.m1.4.4.1.1.2"
+    xref="S3.Ex15.m1.4.4.1.1.2.cmml">𝐉</mi><mo id="S3.Ex15.m1.4.4.1.1.3" xref="S3.Ex15.m1.4.4.1.1.3.cmml">=</mo><mrow
+    id="S3.Ex15.m1.1.1.3" xref="S3.Ex15.m1.1.1.2.cmml"><mo id="S3.Ex15.m1.1.1.3.1"
+    xref="S3.Ex15.m1.1.1.2.1.cmml">[</mo><mtable displaystyle="true" rowspacing="0pt"
+    id="S3.Ex15.m1.1.1.1.1" xref="S3.Ex15.m1.1.1.1.1.cmml"><mtr id="S3.Ex15.m1.1.1.1.1a"
+    xref="S3.Ex15.m1.1.1.1.1.cmml"><mtd id="S3.Ex15.m1.1.1.1.1b" xref="S3.Ex15.m1.1.1.1.1.cmml"><mrow
+    id="S3.Ex15.m1.1.1.1.1.1.1.1" xref="S3.Ex15.m1.1.1.1.1.1.1.1.cmml"><msup id="S3.Ex15.m1.1.1.1.1.1.1.1.1"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.1.cmml"><mo id="S3.Ex15.m1.1.1.1.1.1.1.1.1.2" xref="S3.Ex15.m1.1.1.1.1.1.1.1.1.2.cmml">∇</mo><mi
+    mathvariant="normal" id="S3.Ex15.m1.1.1.1.1.1.1.1.1.3" xref="S3.Ex15.m1.1.1.1.1.1.1.1.1.3.cmml">T</mi></msup><msub
+    id="S3.Ex15.m1.1.1.1.1.1.1.1.2" xref="S3.Ex15.m1.1.1.1.1.1.1.1.2.cmml"><mi id="S3.Ex15.m1.1.1.1.1.1.1.1.2.2"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2.2.cmml">f</mi><mn id="S3.Ex15.m1.1.1.1.1.1.1.1.2.3"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2.3.cmml">1</mn></msub></mrow></mtd></mtr><mtr
+    id="S3.Ex15.m1.1.1.1.1c" xref="S3.Ex15.m1.1.1.1.1.cmml"><mtd id="S3.Ex15.m1.1.1.1.1d"
+    xref="S3.Ex15.m1.1.1.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.1.1.1.1.2.1.1"
+    xref="S3.Ex15.m1.1.1.1.1.2.1.1.cmml">⋮</mi></mtd></mtr><mtr id="S3.Ex15.m1.1.1.1.1e"
+    xref="S3.Ex15.m1.1.1.1.1.cmml"><mtd id="S3.Ex15.m1.1.1.1.1f" xref="S3.Ex15.m1.1.1.1.1.cmml"><mrow
+    id="S3.Ex15.m1.1.1.1.1.3.1.1" xref="S3.Ex15.m1.1.1.1.1.3.1.1.cmml"><msup id="S3.Ex15.m1.1.1.1.1.3.1.1.1"
+    xref="S3.Ex15.m1.1.1.1.1.3.1.1.1.cmml"><mo id="S3.Ex15.m1.1.1.1.1.3.1.1.1.2" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1.2.cmml">∇</mo><mi
+    mathvariant="normal" id="S3.Ex15.m1.1.1.1.1.3.1.1.1.3" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1.3.cmml">T</mi></msup><msub
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.2" xref="S3.Ex15.m1.1.1.1.1.3.1.1.2.cmml"><mi id="S3.Ex15.m1.1.1.1.1.3.1.1.2.2"
+    xref="S3.Ex15.m1.1.1.1.1.3.1.1.2.2.cmml">f</mi><mi id="S3.Ex15.m1.1.1.1.1.3.1.1.2.3"
+    xref="S3.Ex15.m1.1.1.1.1.3.1.1.2.3.cmml">m</mi></msub></mrow></mtd></mtr></mtable><mo
+    id="S3.Ex15.m1.1.1.3.2" xref="S3.Ex15.m1.1.1.2.1.cmml">]</mo></mrow><mo id="S3.Ex15.m1.4.4.1.1.4"
+    xref="S3.Ex15.m1.4.4.1.1.4.cmml">=</mo><mrow id="S3.Ex15.m1.2.2.3" xref="S3.Ex15.m1.2.2.2.cmml"><mo
+    id="S3.Ex15.m1.2.2.3.1" xref="S3.Ex15.m1.2.2.2.1.cmml">[</mo><mtable columnspacing="5pt"
+    displaystyle="true" rowspacing="0pt" id="S3.Ex15.m1.2.2.1.1" xref="S3.Ex15.m1.2.2.1.1.cmml"><mtr
+    id="S3.Ex15.m1.2.2.1.1a" xref="S3.Ex15.m1.2.2.1.1.cmml"><mtd id="S3.Ex15.m1.2.2.1.1b"
+    xref="S3.Ex15.m1.2.2.1.1.cmml"><mstyle displaystyle="false" id="S3.Ex15.m1.2.2.1.1.1.1.1"
+    xref="S3.Ex15.m1.2.2.1.1.1.1.1.cmml"><mfrac id="S3.Ex15.m1.2.2.1.1.1.1.1a" xref="S3.Ex15.m1.2.2.1.1.1.1.1.cmml"><mrow
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.1" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.2" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.2.cmml">f</mi><mn
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.3" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.3.cmml">1</mn></msub></mrow><mrow
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.1" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.2" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.3" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.3.cmml">1</mn></msub></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.2.2.1.1c" xref="S3.Ex15.m1.2.2.1.1.cmml"><mi mathvariant="normal"
+    id="S3.Ex15.m1.2.2.1.1.1.2.1" xref="S3.Ex15.m1.2.2.1.1.1.2.1.cmml">⋯</mi></mtd><mtd
+    id="S3.Ex15.m1.2.2.1.1d" xref="S3.Ex15.m1.2.2.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.2.2.1.1.1.3.1" xref="S3.Ex15.m1.2.2.1.1.1.3.1.cmml"><mfrac id="S3.Ex15.m1.2.2.1.1.1.3.1a"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.cmml"><mrow id="S3.Ex15.m1.2.2.1.1.1.3.1.2" xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.2.2.1.1.1.3.1.2.1" xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2" xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.2" xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.2.cmml">f</mi><mn
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.3" xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.3.cmml">1</mn></msub></mrow><mrow
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.3" xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.3.1" xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2" xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.2" xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.3" xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.3.cmml">n</mi></msub></mrow></mfrac></mstyle></mtd></mtr><mtr
+    id="S3.Ex15.m1.2.2.1.1e" xref="S3.Ex15.m1.2.2.1.1.cmml"><mtd id="S3.Ex15.m1.2.2.1.1f"
+    xref="S3.Ex15.m1.2.2.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.2.2.1.1.2.1.1"
+    xref="S3.Ex15.m1.2.2.1.1.2.1.1.cmml">⋮</mi></mtd><mtd id="S3.Ex15.m1.2.2.1.1g"
+    xref="S3.Ex15.m1.2.2.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.2.2.1.1.2.2.1"
+    xref="S3.Ex15.m1.2.2.1.1.2.2.1.cmml">⋱</mi></mtd><mtd id="S3.Ex15.m1.2.2.1.1h"
+    xref="S3.Ex15.m1.2.2.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.2.2.1.1.2.3.1"
+    xref="S3.Ex15.m1.2.2.1.1.2.3.1.cmml">⋮</mi></mtd></mtr><mtr id="S3.Ex15.m1.2.2.1.1i"
+    xref="S3.Ex15.m1.2.2.1.1.cmml"><mtd id="S3.Ex15.m1.2.2.1.1j" xref="S3.Ex15.m1.2.2.1.1.cmml"><mstyle
+    displaystyle="false" id="S3.Ex15.m1.2.2.1.1.3.1.1" xref="S3.Ex15.m1.2.2.1.1.3.1.1.cmml"><mfrac
+    id="S3.Ex15.m1.2.2.1.1.3.1.1a" xref="S3.Ex15.m1.2.2.1.1.3.1.1.cmml"><mrow id="S3.Ex15.m1.2.2.1.1.3.1.1.2"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.cmml"><mo rspace="0em" id="S3.Ex15.m1.2.2.1.1.3.1.1.2.1"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.1.cmml">∂</mo><msub id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.cmml"><mi id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.2"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.2.cmml">f</mi><mi id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.3"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.3.cmml">m</mi></msub></mrow><mrow id="S3.Ex15.m1.2.2.1.1.3.1.1.3"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.cmml"><mo rspace="0em" id="S3.Ex15.m1.2.2.1.1.3.1.1.3.1"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.1.cmml">∂</mo><msub id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.cmml"><mi id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.2"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.2.cmml">x</mi><mn id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.3"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.3.cmml">1</mn></msub></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.2.2.1.1k" xref="S3.Ex15.m1.2.2.1.1.cmml"><mi mathvariant="normal"
+    id="S3.Ex15.m1.2.2.1.1.3.2.1" xref="S3.Ex15.m1.2.2.1.1.3.2.1.cmml">⋯</mi></mtd><mtd
+    id="S3.Ex15.m1.2.2.1.1l" xref="S3.Ex15.m1.2.2.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.2.2.1.1.3.3.1" xref="S3.Ex15.m1.2.2.1.1.3.3.1.cmml"><mfrac id="S3.Ex15.m1.2.2.1.1.3.3.1a"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.cmml"><mrow id="S3.Ex15.m1.2.2.1.1.3.3.1.2" xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.2.2.1.1.3.3.1.2.1" xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2" xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.2" xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.2.cmml">f</mi><mi
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.3" xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.3.cmml">m</mi></msub></mrow><mrow
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.3" xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.3.1" xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2" xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.cmml"><mi
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.2" xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.3" xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.3.cmml">n</mi></msub></mrow></mfrac></mstyle></mtd></mtr></mtable><mo
+    id="S3.Ex15.m1.2.2.3.2" xref="S3.Ex15.m1.2.2.2.1.cmml">]</mo></mrow></mrow><mrow
+    id="S3.Ex15.m1.5.5.2.2" xref="S3.Ex15.m1.5.5.2.2.cmml"><mi id="S3.Ex15.m1.5.5.2.2.2"
+    xref="S3.Ex15.m1.5.5.2.2.2.cmml">𝐇</mi><mo id="S3.Ex15.m1.5.5.2.2.1" xref="S3.Ex15.m1.5.5.2.2.1.cmml">=</mo><mrow
+    id="S3.Ex15.m1.3.3.3" xref="S3.Ex15.m1.3.3.2.cmml"><mo id="S3.Ex15.m1.3.3.3.1"
+    xref="S3.Ex15.m1.3.3.2.1.cmml">[</mo><mtable columnspacing="5pt" displaystyle="true"
+    rowspacing="0pt" id="S3.Ex15.m1.3.3.1.1" xref="S3.Ex15.m1.3.3.1.1.cmml"><mtr id="S3.Ex15.m1.3.3.1.1a"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mtd id="S3.Ex15.m1.3.3.1.1b" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle
+    displaystyle="false" id="S3.Ex15.m1.3.3.1.1.1.1.1" xref="S3.Ex15.m1.3.3.1.1.1.1.1.cmml"><mfrac
+    id="S3.Ex15.m1.3.3.1.1.1.1.1a" xref="S3.Ex15.m1.3.3.1.1.1.1.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.1.1.1.2"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.cmml"><msup id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.cmml"><mo id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.2"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.2.cmml">∂</mo><mn id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.3.cmml">2</mn></msup><mi id="S3.Ex15.m1.3.3.1.1.1.1.1.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.2.cmml">f</mi></mrow><mrow id="S3.Ex15.m1.3.3.1.1.1.1.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.cmml"><mo rspace="0em" id="S3.Ex15.m1.3.3.1.1.1.1.1.3.1"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.1.cmml">∂</mo><msubsup id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.cmml"><mi id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.2.cmml">x</mi><mn id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.3"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.3.cmml">1</mn><mn id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.3"
+    xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.3.cmml">2</mn></msubsup></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1c" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.1.2.1" xref="S3.Ex15.m1.3.3.1.1.1.2.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.1.2.1a"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1" xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.2.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.1" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.1.cmml">∂</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.cmml"><msub
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.3.cmml">1</mn></msub><mo
+    lspace="0em" rspace="0em" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.3.cmml">2</mn></msub></mrow></mrow></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1d" xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal"
+    id="S3.Ex15.m1.3.3.1.1.1.3.1" xref="S3.Ex15.m1.3.3.1.1.1.3.1.cmml">⋯</mi></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1e" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.1.4.1" xref="S3.Ex15.m1.3.3.1.1.1.4.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.1.4.1a"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.1.4.1.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1" xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.2.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.1" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.1.cmml">∂</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.cmml"><msub
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.3.cmml">1</mn></msub><mo
+    lspace="0em" rspace="0em" id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.3.cmml">n</mi></msub></mrow></mrow></mrow></mfrac></mstyle></mtd></mtr><mtr
+    id="S3.Ex15.m1.3.3.1.1f" xref="S3.Ex15.m1.3.3.1.1.cmml"><mtd id="S3.Ex15.m1.3.3.1.1g"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false" id="S3.Ex15.m1.3.3.1.1.2.1.1"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.2.1.1a" xref="S3.Ex15.m1.3.3.1.1.2.1.1.cmml"><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.2" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.cmml"><msup id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.cmml"><mo id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.2"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.2.cmml">∂</mo><mn id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.3.cmml">2</mn></msup><mi id="S3.Ex15.m1.3.3.1.1.2.1.1.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.2.cmml">f</mi></mrow><mrow id="S3.Ex15.m1.3.3.1.1.2.1.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.cmml"><mo rspace="0em" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.1"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.1.cmml">∂</mo><mrow id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.cmml"><msub id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.cmml"><mi id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.2.cmml">x</mi><mn id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.3"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.3.cmml">2</mn></msub><mo lspace="0em" rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.3.cmml">1</mn></msub></mrow></mrow></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1h" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.2.2.1" xref="S3.Ex15.m1.3.3.1.1.2.2.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.2.2.1a"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.2.2.1.2" xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1" xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.2.2" xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3.1" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.1.cmml">∂</mo><msubsup
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.3.cmml">2</mn><mn
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.3.cmml">2</mn></msubsup></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1i" xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal"
+    id="S3.Ex15.m1.3.3.1.1.2.3.1" xref="S3.Ex15.m1.3.3.1.1.2.3.1.cmml">⋯</mi></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1j" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.2.4.1" xref="S3.Ex15.m1.3.3.1.1.2.4.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.2.4.1a"
+    xref="S3.Ex15.m1.3.3.1.1.2.4.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.2.4.1.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.1" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.1.cmml">∂</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.cmml"><msub
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.3.cmml">2</mn></msub><mo
+    lspace="0em" rspace="0em" id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.3.cmml">n</mi></msub></mrow></mrow></mrow></mfrac></mstyle></mtd></mtr><mtr
+    id="S3.Ex15.m1.3.3.1.1k" xref="S3.Ex15.m1.3.3.1.1.cmml"><mtd id="S3.Ex15.m1.3.3.1.1l"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.3.3.1.1.3.1.1"
+    xref="S3.Ex15.m1.3.3.1.1.3.1.1.cmml">⋮</mi></mtd><mtd id="S3.Ex15.m1.3.3.1.1m"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.3.3.1.1.3.2.1"
+    xref="S3.Ex15.m1.3.3.1.1.3.2.1.cmml">⋮</mi></mtd><mtd id="S3.Ex15.m1.3.3.1.1n"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.3.3.1.1.3.3.1"
+    xref="S3.Ex15.m1.3.3.1.1.3.3.1.cmml">⋱</mi></mtd><mtd id="S3.Ex15.m1.3.3.1.1o"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal" id="S3.Ex15.m1.3.3.1.1.3.4.1"
+    xref="S3.Ex15.m1.3.3.1.1.3.4.1.cmml">⋮</mi></mtd></mtr><mtr id="S3.Ex15.m1.3.3.1.1p"
+    xref="S3.Ex15.m1.3.3.1.1.cmml"><mtd id="S3.Ex15.m1.3.3.1.1q" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle
+    displaystyle="false" id="S3.Ex15.m1.3.3.1.1.4.1.1" xref="S3.Ex15.m1.3.3.1.1.4.1.1.cmml"><mfrac
+    id="S3.Ex15.m1.3.3.1.1.4.1.1a" xref="S3.Ex15.m1.3.3.1.1.4.1.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.4.1.1.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.cmml"><msup id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.cmml"><mo id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.2.cmml">∂</mo><mn id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.3.cmml">2</mn></msup><mi id="S3.Ex15.m1.3.3.1.1.4.1.1.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.2.cmml">f</mi></mrow><mrow id="S3.Ex15.m1.3.3.1.1.4.1.1.3"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.cmml"><mo rspace="0em" id="S3.Ex15.m1.3.3.1.1.4.1.1.3.1"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.1.cmml">∂</mo><mrow id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.cmml"><msub id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.cmml"><mi id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.2"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.2.cmml">x</mi><mi id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.3"
+    xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.3.cmml">n</mi></msub><mo lspace="0em" rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.3.cmml">1</mn></msub></mrow></mrow></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1r" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.4.2.1" xref="S3.Ex15.m1.3.3.1.1.4.2.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.4.2.1a"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.4.2.1.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1" xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.2.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.1" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.1.cmml">∂</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.cmml"><msub
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.3.cmml">n</mi></msub><mo
+    lspace="0em" rspace="0em" id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.1" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.1.cmml">​</mo><mrow
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.cmml"><mo
+    rspace="0em" id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.1" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.1.cmml">∂</mo><msub
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.2" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.2.cmml">x</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.3" xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.3.cmml">2</mn></msub></mrow></mrow></mrow></mfrac></mstyle></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1s" xref="S3.Ex15.m1.3.3.1.1.cmml"><mi mathvariant="normal"
+    id="S3.Ex15.m1.3.3.1.1.4.3.1" xref="S3.Ex15.m1.3.3.1.1.4.3.1.cmml">⋯</mi></mtd><mtd
+    id="S3.Ex15.m1.3.3.1.1t" xref="S3.Ex15.m1.3.3.1.1.cmml"><mstyle displaystyle="false"
+    id="S3.Ex15.m1.3.3.1.1.4.4.1" xref="S3.Ex15.m1.3.3.1.1.4.4.1.cmml"><mfrac id="S3.Ex15.m1.3.3.1.1.4.4.1a"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.cmml"><mrow id="S3.Ex15.m1.3.3.1.1.4.4.1.2" xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.cmml"><msup
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1" xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.cmml"><mo
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.2" xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.2.cmml">∂</mo><mn
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.3" xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.3.cmml">2</mn></msup><mi
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.2.2" xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.2.cmml">f</mi></mrow><mrow
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.cmml"><mo rspace="0em"
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3.1" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.1.cmml">∂</mo><msubsup
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.cmml"><mi
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.2" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.2.cmml">x</mi><mi
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.3" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.3.cmml">n</mi><mn
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.3" xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.3.cmml">2</mn></msubsup></mrow></mfrac></mstyle></mtd></mtr></mtable><mo
+    id="S3.Ex15.m1.3.3.3.2" xref="S3.Ex15.m1.3.3.2.1.cmml">]</mo></mrow></mrow></mrow><annotation-xml
+    encoding="MathML-Content" id="S3.Ex15.m1.5b"><apply id="S3.Ex15.m1.5.5.3.cmml"
+    xref="S3.Ex15.m1.5.5.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.5.5.3a.cmml" xref="S3.Ex15.m1.5.5.2.3">formulae-sequence</csymbol><apply
+    id="S3.Ex15.m1.4.4.1.1.cmml" xref="S3.Ex15.m1.4.4.1.1"><apply id="S3.Ex15.m1.4.4.1.1b.cmml"
+    xref="S3.Ex15.m1.4.4.1.1"><ci id="S3.Ex15.m1.4.4.1.1.2.cmml" xref="S3.Ex15.m1.4.4.1.1.2">𝐉</ci><apply
+    id="S3.Ex15.m1.1.1.2.cmml" xref="S3.Ex15.m1.1.1.3"><csymbol cd="latexml" id="S3.Ex15.m1.1.1.2.1.cmml"
+    xref="S3.Ex15.m1.1.1.3.1">matrix</csymbol><matrix id="S3.Ex15.m1.1.1.1.1.cmml"
+    xref="S3.Ex15.m1.1.1.1.1"><matrixrow id="S3.Ex15.m1.1.1.1.1a.cmml" xref="S3.Ex15.m1.1.1.1.1"><apply
+    id="S3.Ex15.m1.1.1.1.1.1.1.1.cmml" xref="S3.Ex15.m1.1.1.1.1.1.1.1"><apply id="S3.Ex15.m1.1.1.1.1.1.1.1.1.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.1.1.1.1.1.1.1.1.1.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.1">superscript</csymbol><ci id="S3.Ex15.m1.1.1.1.1.1.1.1.1.2.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.1.2">∇</ci><ci id="S3.Ex15.m1.1.1.1.1.1.1.1.1.3.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.1.3">T</ci></apply><apply id="S3.Ex15.m1.1.1.1.1.1.1.1.2.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.1.1.1.1.1.1.1.2.1.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2">subscript</csymbol><ci id="S3.Ex15.m1.1.1.1.1.1.1.1.2.2.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2.2">𝑓</ci><cn type="integer" id="S3.Ex15.m1.1.1.1.1.1.1.1.2.3.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.1.1.1.2.3">1</cn></apply></apply></matrixrow><matrixrow
+    id="S3.Ex15.m1.1.1.1.1b.cmml" xref="S3.Ex15.m1.1.1.1.1"><ci id="S3.Ex15.m1.1.1.1.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.1.1.1.1.2.1.1">⋮</ci></matrixrow><matrixrow id="S3.Ex15.m1.1.1.1.1c.cmml"
+    xref="S3.Ex15.m1.1.1.1.1"><apply id="S3.Ex15.m1.1.1.1.1.3.1.1.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1"><apply
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.1.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.1.1.1.1.3.1.1.1.1.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1">superscript</csymbol><ci
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.1.2.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1.2">∇</ci><ci
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.1.3.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.1.3">T</ci></apply><apply
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.2.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.1.1.1.1.3.1.1.2.1.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.2.2.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.2.2">𝑓</ci><ci
+    id="S3.Ex15.m1.1.1.1.1.3.1.1.2.3.cmml" xref="S3.Ex15.m1.1.1.1.1.3.1.1.2.3">𝑚</ci></apply></apply></matrixrow></matrix></apply></apply><apply
+    id="S3.Ex15.m1.4.4.1.1c.cmml" xref="S3.Ex15.m1.4.4.1.1"><apply id="S3.Ex15.m1.2.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.3"><csymbol cd="latexml" id="S3.Ex15.m1.2.2.2.1.cmml" xref="S3.Ex15.m1.2.2.3.1">matrix</csymbol><matrix
+    id="S3.Ex15.m1.2.2.1.1.cmml" xref="S3.Ex15.m1.2.2.1.1"><matrixrow id="S3.Ex15.m1.2.2.1.1a.cmml"
+    xref="S3.Ex15.m1.2.2.1.1"><apply id="S3.Ex15.m1.2.2.1.1.1.1.1.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1"><apply
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2"><apply
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.2">𝑓</ci><cn
+    type="integer" id="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.3.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.2.2.3">1</cn></apply></apply><apply
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3"><apply
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.3.cmml" xref="S3.Ex15.m1.2.2.1.1.1.1.1.3.2.3">1</cn></apply></apply></apply><ci
+    id="S3.Ex15.m1.2.2.1.1.1.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.1.2.1">⋯</ci><apply
+    id="S3.Ex15.m1.2.2.1.1.1.3.1.cmml" xref="S3.Ex15.m1.2.2.1.1.1.3.1"><apply id="S3.Ex15.m1.2.2.1.1.1.3.1.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.2"><apply id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2">subscript</csymbol><ci id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.2">𝑓</ci><cn type="integer" id="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.2.2.3">1</cn></apply></apply><apply id="S3.Ex15.m1.2.2.1.1.1.3.1.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.3"><apply id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2">subscript</csymbol><ci id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.2">𝑥</ci><ci id="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.1.3.1.3.2.3">𝑛</ci></apply></apply></apply></matrixrow><matrixrow
+    id="S3.Ex15.m1.2.2.1.1b.cmml" xref="S3.Ex15.m1.2.2.1.1"><ci id="S3.Ex15.m1.2.2.1.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.2.1.1">⋮</ci><ci id="S3.Ex15.m1.2.2.1.1.2.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.2.2.1">⋱</ci><ci
+    id="S3.Ex15.m1.2.2.1.1.2.3.1.cmml" xref="S3.Ex15.m1.2.2.1.1.2.3.1">⋮</ci></matrixrow><matrixrow
+    id="S3.Ex15.m1.2.2.1.1c.cmml" xref="S3.Ex15.m1.2.2.1.1"><apply id="S3.Ex15.m1.2.2.1.1.3.1.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.1.1"><apply id="S3.Ex15.m1.2.2.1.1.3.1.1.2.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.2"><apply
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.2">𝑓</ci><ci
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.3.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.2.2.3">𝑚</ci></apply></apply><apply
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.3.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.3"><apply
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.2.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.3.cmml" xref="S3.Ex15.m1.2.2.1.1.3.1.1.3.2.3">1</cn></apply></apply></apply><ci
+    id="S3.Ex15.m1.2.2.1.1.3.2.1.cmml" xref="S3.Ex15.m1.2.2.1.1.3.2.1">⋯</ci><apply
+    id="S3.Ex15.m1.2.2.1.1.3.3.1.cmml" xref="S3.Ex15.m1.2.2.1.1.3.3.1"><apply id="S3.Ex15.m1.2.2.1.1.3.3.1.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.2"><apply id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2">subscript</csymbol><ci id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.2">𝑓</ci><ci id="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.2.2.3">𝑚</ci></apply></apply><apply id="S3.Ex15.m1.2.2.1.1.3.3.1.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.3"><apply id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.1.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2">subscript</csymbol><ci id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.2">𝑥</ci><ci id="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.2.2.1.1.3.3.1.3.2.3">𝑛</ci></apply></apply></apply></matrixrow></matrix></apply></apply></apply><apply
+    id="S3.Ex15.m1.5.5.2.2.cmml" xref="S3.Ex15.m1.5.5.2.2"><ci id="S3.Ex15.m1.5.5.2.2.2.cmml"
+    xref="S3.Ex15.m1.5.5.2.2.2">𝐇</ci><apply id="S3.Ex15.m1.3.3.2.cmml" xref="S3.Ex15.m1.3.3.3"><csymbol
+    cd="latexml" id="S3.Ex15.m1.3.3.2.1.cmml" xref="S3.Ex15.m1.3.3.3.1">matrix</csymbol><matrix
+    id="S3.Ex15.m1.3.3.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1"><matrixrow id="S3.Ex15.m1.3.3.1.1a.cmml"
+    xref="S3.Ex15.m1.3.3.1.1"><apply id="S3.Ex15.m1.3.3.1.1.1.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1"><apply
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.2.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1">superscript</csymbol><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.1.3">2</cn></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.2.2">𝑓</ci></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2">superscript</csymbol><apply
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.2.3">1</cn></apply><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.1.1.1.3.2.3">2</cn></apply></apply></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.1.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.2.1"><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.2"><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1">superscript</csymbol><cn type="integer" id="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.1.3">2</cn></apply><ci id="S3.Ex15.m1.3.3.1.1.1.2.1.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.2.2">𝑓</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3"><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2"><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.2">𝑥</ci><cn type="integer" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.2.3">1</cn></apply><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3"><apply id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.2">𝑥</ci><cn type="integer" id="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.2.1.3.2.3.2.3">2</cn></apply></apply></apply></apply></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.1.3.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.3.1">⋯</ci><apply
+    id="S3.Ex15.m1.3.3.1.1.1.4.1.cmml" xref="S3.Ex15.m1.3.3.1.1.1.4.1"><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.2"><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1">superscript</csymbol><cn type="integer" id="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.1.3">2</cn></apply><ci id="S3.Ex15.m1.3.3.1.1.1.4.1.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.2.2">𝑓</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3"><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2"><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.2">𝑥</ci><cn type="integer" id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.2.3">1</cn></apply><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3"><apply id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.2">𝑥</ci><ci id="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.1.4.1.3.2.3.2.3">𝑛</ci></apply></apply></apply></apply></apply></matrixrow><matrixrow
+    id="S3.Ex15.m1.3.3.1.1b.cmml" xref="S3.Ex15.m1.3.3.1.1"><apply id="S3.Ex15.m1.3.3.1.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.1.1"><apply id="S3.Ex15.m1.3.3.1.1.2.1.1.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1">superscript</csymbol><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.1.3">2</cn></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.2.2">𝑓</ci></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.2.3">2</cn></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.1.1.3.2.3.2.3">1</cn></apply></apply></apply></apply></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.2.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.2.1"><apply id="S3.Ex15.m1.3.3.1.1.2.2.1.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.2"><apply id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1">superscript</csymbol><cn type="integer" id="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.1.3">2</cn></apply><ci id="S3.Ex15.m1.3.3.1.1.2.2.1.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.2.2">𝑓</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.2.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3"><apply id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2">superscript</csymbol><apply id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.2">𝑥</ci><cn type="integer" id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.2.3">2</cn></apply><cn type="integer" id="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.2.1.3.2.3">2</cn></apply></apply></apply><ci id="S3.Ex15.m1.3.3.1.1.2.3.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.3.1">⋯</ci><apply id="S3.Ex15.m1.3.3.1.1.2.4.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.2.4.1"><apply id="S3.Ex15.m1.3.3.1.1.2.4.1.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1">superscript</csymbol><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.1.3">2</cn></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.2.2">𝑓</ci></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.2.3">2</cn></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.2">𝑥</ci><ci
+    id="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.2.4.1.3.2.3.2.3">𝑛</ci></apply></apply></apply></apply></apply></matrixrow><matrixrow
+    id="S3.Ex15.m1.3.3.1.1c.cmml" xref="S3.Ex15.m1.3.3.1.1"><ci id="S3.Ex15.m1.3.3.1.1.3.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.3.1.1">⋮</ci><ci id="S3.Ex15.m1.3.3.1.1.3.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.3.2.1">⋮</ci><ci
+    id="S3.Ex15.m1.3.3.1.1.3.3.1.cmml" xref="S3.Ex15.m1.3.3.1.1.3.3.1">⋱</ci><ci id="S3.Ex15.m1.3.3.1.1.3.4.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.3.4.1">⋮</ci></matrixrow><matrixrow id="S3.Ex15.m1.3.3.1.1d.cmml"
+    xref="S3.Ex15.m1.3.3.1.1"><apply id="S3.Ex15.m1.3.3.1.1.4.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1"><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1">superscript</csymbol><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.1.3">2</cn></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.2.2">𝑓</ci></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2"><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.2">𝑥</ci><ci
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.2.3">𝑛</ci></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3"><apply
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2"><csymbol
+    cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2">subscript</csymbol><ci
+    id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.2.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.2">𝑥</ci><cn
+    type="integer" id="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.3.cmml" xref="S3.Ex15.m1.3.3.1.1.4.1.1.3.2.3.2.3">1</cn></apply></apply></apply></apply></apply><apply
+    id="S3.Ex15.m1.3.3.1.1.4.2.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.2.1"><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.2"><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1">superscript</csymbol><cn type="integer" id="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.1.3">2</cn></apply><ci id="S3.Ex15.m1.3.3.1.1.4.2.1.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.2.2">𝑓</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3"><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2"><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.2">𝑥</ci><ci id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.2.3">𝑛</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3"><apply id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.2">𝑥</ci><cn type="integer" id="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.2.1.3.2.3.2.3">2</cn></apply></apply></apply></apply></apply><ci
+    id="S3.Ex15.m1.3.3.1.1.4.3.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.3.1">⋯</ci><apply
+    id="S3.Ex15.m1.3.3.1.1.4.4.1.cmml" xref="S3.Ex15.m1.3.3.1.1.4.4.1"><apply id="S3.Ex15.m1.3.3.1.1.4.4.1.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.2"><apply id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1">superscript</csymbol><cn type="integer" id="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.1.3">2</cn></apply><ci id="S3.Ex15.m1.3.3.1.1.4.4.1.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.2.2">𝑓</ci></apply><apply id="S3.Ex15.m1.3.3.1.1.4.4.1.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3"><apply id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2">superscript</csymbol><apply id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2"><csymbol cd="ambiguous" id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.1.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2">subscript</csymbol><ci id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.2.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.2">𝑥</ci><ci id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.2.3">𝑛</ci></apply><cn type="integer" id="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.3.cmml"
+    xref="S3.Ex15.m1.3.3.1.1.4.4.1.3.2.3">2</cn></apply></apply></apply></matrixrow></matrix></apply></apply></apply></annotation-xml><annotation
+    encoding="application/x-tex" id="S3.Ex15.m1.5c">\mathbf{J}=\begin{bmatrix}\nabla^{\mathrm{T}}f_{1}\\
+    \vdots\\ \nabla^{\mathrm{T}}f_{m}\end{bmatrix}=\begin{bmatrix}\frac{\partial f_{1}}{\partial
+    x_{1}}&\cdots&\frac{\partial f_{1}}{\partial x_{n}}\\ \vdots&\ddots&\vdots\\ \frac{\partial
+    f_{m}}{\partial x_{1}}&\cdots&\frac{\partial f_{m}}{\partial x_{n}}\end{bmatrix}\quad\mathbf{H}=\begin{bmatrix}\frac{\partial^{2}f}{\partial
+    x_{1}^{2}}&\frac{\partial^{2}f}{\partial x_{1}\partial x_{2}}&\cdots&\frac{\partial^{2}f}{\partial
+    x_{1}\partial x_{n}}\\ \frac{\partial^{2}f}{\partial x_{2}\partial x_{1}}&\frac{\partial^{2}f}{\partial
+    x_{2}^{2}}&\cdots&\frac{\partial^{2}f}{\partial x_{2}\partial x_{n}}\\ \vdots&\vdots&\ddots&\vdots\\
+    \frac{\partial^{2}f}{\partial x_{n}\partial x_{1}}&\frac{\partial^{2}f}{\partial
+    x_{n}\partial x_{2}}&\cdots&\frac{\partial^{2}f}{\partial x_{n}^{2}}\end{bmatrix}\vspace{1em}</annotation></semantics></math>
+    |  |
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Hessian matrix $H$ is real and symmetric with $H_{ij}=H_{ji}$. Likewise,
+    the condition number of the Hessian is defined as the ratio of the largest eigenvalue
+    to the smallest eigenvalue, i.e., is the ratio of the steepest ridge’s steepness
+    to the shallowest ridge’s steepness. Since the Hessian is symmetric with real
+    eigenvalues, and the eigenvectors have an orthogonal basis its eigendecomposition
+    of the matrix is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{H}=\boldsymbol{Q}\operatorname{diag}(\boldsymbol{\lambda})\boldsymbol{Q}^{-1}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $Q$ is an orthogonal matrix ($Q^{T}Q=I$) with one eigenvector per column
+    and $\lambda$ is a diagonal matrix. In higher dimensions, the eigendecomposition
+    of the Hessian can be used to test the critical point. The point is a local minimum
+    when $H$ is positive definite (all $\lambda_{i}>0$). Likewise, when $H$ is negative
+    definite (all $\lambda_{i}$ ¡ 0), the point is a local maximum. A saddle point
+    has both positive and negative eigenvalues, where it is a local minima across
+    one cross-section and a local maxima within another cross-section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Second-order optimization methods ([b30,](#bib.bib30) ; [b34,](#bib.bib34)
+    ; [b52,](#bib.bib52) ) utilize the second derivatives for weight update. Newton’s
+    method arises naturally from the second-order Taylor series approximation of the
+    function $f$, ignoring the higher-order derivatives is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $f(x)\approx f(x_{0})+(x-x_{0}^{\top})\nabla_{x}f(x_{0})+\frac{1}{2}(x-x_{0})^{\top}H(x-x_{0})$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $H$ is the Hessian of $f$ with respect to $x$ evaluated at $x_{0}$. Solving
+    for the critical point $x^{*}$ we get the Newton update rule:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $x^{*}=x_{0}-H(f)(x_{0})^{-1}\nabla_{x}f(x_{0})$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '![Refer to caption](img/deccfc2c2e9777062d436d84334436c3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10\. A quadratic function with various curvature. The dashed line indicates
+    the expected descent direction and the value of the cost function downhill performed
+    by gradient descent. With negative curvature, the cost function decreases faster
+    than the gradient predicts, while with positive curvature, the function decreases
+    much more slowly than expected and thus begins to increase. With no curvature,
+    the gradient correctly predicts the decrease. Source: Ian Goodfellow ([b23,](#bib.bib23)
+    )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convex functions have strong theoretical guarantees because they are well-behaved
+    and have nice properties. They lack saddle points, and all their local minima
+    correspond to the global minima specifically because the Hessian $H$ is positive
+    semi-definite. For a quadratic function, the Hessian $H$ is constant and thus
+    well-conditioned. A detailed analysis for a quadratic convex function is discussed
+    in Section [3.2](#S3.SS2 "3.2\. Quadratic Function Optimization ‣ 3\. Second-order
+    methods ‣ A survey of deep learning optimizers - first and second order methods").
+    However, for non-convex functions, the Hessian matrix $\nabla^{2}f_{k}$ may not
+    always be positive-definite, eq. [3.1](#S3.Ex18 "3.1\. Preliminaries and Motivation
+    ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers - first and
+    second order methods") may not be a descent direction. Also, Hessian being ill-conditioned
+    matters more near the minima since if the Hessian changes too fast we may follow
+    a zig-zag path leading to sub-optimal performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To understand the ill-conditioned problem, we consider a convex quadratic objective
+    given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{J}(\theta)=\frac{1}{2}\theta^{T}A\theta$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $A$ is a positive semi-definite symmetric matrix. If the Hessian of the
+    objective i.e., $\nabla^{2}\mathcal{J}(\theta)=A$ is ill-conditioned then gradient
+    also changing rapidly and the update using gradient descent is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <math id="S3.SS1.p5.1.m1.6" class="ltx_Math" alttext="\begin{array}[]{rlr}\theta_{k+1}&amp;\leftarrow\theta_{k}-\alpha\nabla\mathcal{J}\left(\theta_{k}\right)&amp;\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&amp;=\theta_{k}-\alpha A\theta_{k}&amp;\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&amp;=(I-\alpha A)\theta_{k}&amp;\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \Longrightarrow\theta_{k}&amp;=(I-\alpha A)^{k}\theta_{0}&amp;\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&amp;=\left(I-\alpha Q\Lambda Q^{T}\right)^{k}\theta_{0}&amp;\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&amp;=\left[Q(I-\alpha\Lambda)Q^{T}\right]^{k}\theta_{0}&amp;\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&amp;=Q(I-\alpha\Lambda)^{k}Q^{T}\theta_{0}&amp;\end{array}" display="inline"><semantics
+    id="S3.SS1.p5.1.m1.6a"><mtable columnspacing="5pt" rowspacing="0pt" id="S3.SS1.p5.1.m1.6.6"
+    xref="S3.SS1.p5.1.m1.6.6.cmml"><mtr id="S3.SS1.p5.1.m1.6.6a" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd
+    class="ltx_align_right" columnalign="right" id="S3.SS1.p5.1.m1.6.6b" xref="S3.SS1.p5.1.m1.6.6.cmml"><msub
+    id="S3.SS1.p5.1.m1.1.1.1.2.1" xref="S3.SS1.p5.1.m1.1.1.1.2.1.cmml"><mi id="S3.SS1.p5.1.m1.1.1.1.2.1.2"
+    xref="S3.SS1.p5.1.m1.1.1.1.2.1.2.cmml">θ</mi><mrow id="S3.SS1.p5.1.m1.1.1.1.2.1.3"
+    xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.cmml"><mi id="S3.SS1.p5.1.m1.1.1.1.2.1.3.2" xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.2.cmml">k</mi><mo
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.3.1" xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.1.cmml">+</mo><mn
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.3.3" xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.3.cmml">1</mn></mrow></msub></mtd><mtd
+    class="ltx_align_left" columnalign="left" id="S3.SS1.p5.1.m1.6.6c" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.1.1.1.1.1.cmml"><mo stretchy="false"
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.1.1.1.1.1.2.cmml">←</mo><mrow
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.cmml"><msub id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.cmml"><mi id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.2"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.2.cmml">θ</mi><mi id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.3"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.3.cmml">k</mi></msub><mo id="S3.SS1.p5.1.m1.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.2.cmml">−</mo><mrow id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.3.cmml">α</mi><mo lspace="0.167em" rspace="0em"
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.2.cmml">​</mo><mrow
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.cmml"><mo
+    rspace="0.167em" id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.1" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.1.cmml">∇</mo><mi
+    class="ltx_font_mathcaligraphic" id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.2" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.2.cmml">𝒥</mi></mrow><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.2a" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.2.cmml">​</mo><mrow
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.cmml"><mo
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.cmml">(</mo><msub
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.cmml"><mi
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.2.cmml">θ</mi><mi
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.3.cmml">k</mi></msub><mo
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.cmml">)</mo></mrow></mrow></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6e" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6g" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.6.6.7.2.1" xref="S3.SS1.p5.1.m1.6.6.7.2.1.cmml"><mo id="S3.SS1.p5.1.m1.6.6.7.2.1.1"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.1.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.6.6.7.2.1.3"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.cmml"><msub id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.cmml"><mi id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.2"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.2.cmml">θ</mi><mi id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.3"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.3.cmml">k</mi></msub><mo id="S3.SS1.p5.1.m1.6.6.7.2.1.3.1"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.1.cmml">−</mo><mrow id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.cmml"><mi id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.2"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.2.cmml">α</mi><mo lspace="0em" rspace="0em"
+    id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.1" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.1.cmml">​</mo><mi
+    id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.3" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.3.cmml">A</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.1a" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.1.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.cmml"><mi
+    id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.2" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.2.cmml">θ</mi><mi
+    id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.3" xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.3.cmml">k</mi></msub></mrow></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6i" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6k" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.2.2.2.1.1" xref="S3.SS1.p5.1.m1.2.2.2.1.1.cmml"><mo id="S3.SS1.p5.1.m1.2.2.2.1.1.2"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.2.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.2.2.2.1.1.1"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.cmml"><mrow id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.cmml"><mo stretchy="false" id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.cmml">(</mo><mrow id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.2.cmml">I</mi><mo id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.1.cmml">−</mo><mrow id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.cmml"><mi id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.2"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.2.cmml">α</mi><mo lspace="0em" rspace="0em"
+    id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.1" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.3" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.3.cmml">A</mi></mrow></mrow><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.cmml">)</mo></mrow><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.2.2.2.1.1.1.2" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.2.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.2" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.2.cmml">θ</mi><mi
+    id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.3" xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.3.cmml">k</mi></msub></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6m" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_right"
+    columnalign="right" id="S3.SS1.p5.1.m1.6.6n" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.3.3.3.2.1" xref="S3.SS1.p5.1.m1.3.3.3.2.1.cmml"><mo stretchy="false"
+    id="S3.SS1.p5.1.m1.3.3.3.2.1.1" xref="S3.SS1.p5.1.m1.3.3.3.2.1.1.cmml">⟹</mo><msub
+    id="S3.SS1.p5.1.m1.3.3.3.2.1.3" xref="S3.SS1.p5.1.m1.3.3.3.2.1.3.cmml"><mi id="S3.SS1.p5.1.m1.3.3.3.2.1.3.2"
+    xref="S3.SS1.p5.1.m1.3.3.3.2.1.3.2.cmml">θ</mi><mi id="S3.SS1.p5.1.m1.3.3.3.2.1.3.3"
+    xref="S3.SS1.p5.1.m1.3.3.3.2.1.3.3.cmml">k</mi></msub></mrow></mtd><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6o" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.3.3.3.1.1" xref="S3.SS1.p5.1.m1.3.3.3.1.1.cmml"><mo id="S3.SS1.p5.1.m1.3.3.3.1.1.2"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.2.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.3.3.3.1.1.1"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.cmml"><msup id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.cmml"><mrow id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.cmml"><mo stretchy="false" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.cmml">(</mo><mrow id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.2.cmml">I</mi><mo id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.1.cmml">−</mo><mrow id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.cmml"><mi id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.2"
+    xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.2.cmml">α</mi><mo lspace="0em" rspace="0em"
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.1" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.3" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.3.cmml">A</mi></mrow></mrow><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.cmml">)</mo></mrow><mi
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.3" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.3.cmml">k</mi></msup><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.2" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.2.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.2" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.2.cmml">θ</mi><mn
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.3" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.3.cmml">0</mn></msub></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6q" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6s" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.4.4.4.1.1" xref="S3.SS1.p5.1.m1.4.4.4.1.1.cmml"><mo id="S3.SS1.p5.1.m1.4.4.4.1.1.2"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.2.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.4.4.4.1.1.1"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.cmml"><msup id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.cmml"><mrow id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.cmml"><mo id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.cmml">(</mo><mrow id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.2.cmml">I</mi><mo id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.1.cmml">−</mo><mrow id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.cmml"><mi id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.2"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.2.cmml">α</mi><mo lspace="0em" rspace="0em"
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.3.cmml">Q</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1a" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    mathvariant="normal" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.4" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.4.cmml">Λ</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1b" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.1.cmml">​</mo><msup
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.cmml"><mi
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.2" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.2.cmml">Q</mi><mi
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.3.cmml">T</mi></msup></mrow></mrow><mo
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.cmml">)</mo></mrow><mi
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.3.cmml">k</mi></msup><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.2" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.2.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.2" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.2.cmml">θ</mi><mn
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.3" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.3.cmml">0</mn></msub></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6u" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6w" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.5.5.5.1.1" xref="S3.SS1.p5.1.m1.5.5.5.1.1.cmml"><mo id="S3.SS1.p5.1.m1.5.5.5.1.1.2"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.2.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.5.5.5.1.1.1"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.cmml"><msup id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.cmml"><mrow id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.2.cmml"><mo id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.2"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.2.1.cmml">[</mo><mrow id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.3"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.3.cmml">Q</mi><mo lspace="0em" rspace="0em"
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.2.cmml">​</mo><mrow
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.cmml"><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.cmml">(</mo><mrow
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.cmml"><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.2.cmml">I</mi><mo
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.1.cmml">−</mo><mrow
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.2.cmml">α</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.1" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    mathvariant="normal" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.3.cmml">Λ</mi></mrow></mrow><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.cmml">)</mo></mrow><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.2a" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.2.cmml">​</mo><msup
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.cmml"><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.2.cmml">Q</mi><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.3.cmml">T</mi></msup></mrow><mo
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.2.1.cmml">]</mo></mrow><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.3.cmml">k</mi></msup><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.2.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.2" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.2.cmml">θ</mi><mn
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.3" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.3.cmml">0</mn></msub></mrow></mrow></mtd></mtr><mtr
+    id="S3.SS1.p5.1.m1.6.6y" xref="S3.SS1.p5.1.m1.6.6.cmml"><mtd class="ltx_align_left"
+    columnalign="left" id="S3.SS1.p5.1.m1.6.6aa" xref="S3.SS1.p5.1.m1.6.6.cmml"><mrow
+    id="S3.SS1.p5.1.m1.6.6.6.1.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.cmml"><mo id="S3.SS1.p5.1.m1.6.6.6.1.1.2"
+    xref="S3.SS1.p5.1.m1.6.6.6.1.1.2.cmml">=</mo><mrow id="S3.SS1.p5.1.m1.6.6.6.1.1.1"
+    xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.cmml"><mi id="S3.SS1.p5.1.m1.6.6.6.1.1.1.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.3.cmml">Q</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.2.cmml">​</mo><msup
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.cmml"><mrow
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.cmml"><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.cmml">(</mo><mrow
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.cmml"><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.2.cmml">I</mi><mo
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.1.cmml">−</mo><mrow
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.cmml"><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.2.cmml">α</mi><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.1" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.1.cmml">​</mo><mi
+    mathvariant="normal" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.3.cmml">Λ</mi></mrow></mrow><mo
+    stretchy="false" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.cmml">)</mo></mrow><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.3.cmml">k</mi></msup><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.2a" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.2.cmml">​</mo><msup
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.cmml"><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.2.cmml">Q</mi><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.3.cmml">T</mi></msup><mo
+    lspace="0em" rspace="0em" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.2b" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.2.cmml">​</mo><msub
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.cmml"><mi
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.2" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.2.cmml">θ</mi><mn
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.3" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.3.cmml">0</mn></msub></mrow></mrow></mtd></mtr></mtable><annotation-xml
+    encoding="MathML-Content" id="S3.SS1.p5.1.m1.6b"><matrix id="S3.SS1.p5.1.m1.6.6.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><matrixrow id="S3.SS1.p5.1.m1.6.6a.cmml" xref="S3.SS1.p5.1.m1.6.6"><apply
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.2.1"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.2.1">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.2.cmml" xref="S3.SS1.p5.1.m1.1.1.1.2.1.2">𝜃</ci><apply
+    id="S3.SS1.p5.1.m1.1.1.1.2.1.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.2.1.3"><ci id="S3.SS1.p5.1.m1.1.1.1.2.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.2">𝑘</ci><cn type="integer" id="S3.SS1.p5.1.m1.1.1.1.2.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.1.1.1.2.1.3.3">1</cn></apply></apply><apply id="S3.SS1.p5.1.m1.1.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.1.1.1.1.1"><ci id="S3.SS1.p5.1.m1.1.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.2">←</ci><csymbol
+    cd="latexml" id="S3.SS1.p5.1.m1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.3">absent</csymbol><apply
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1"><apply
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.2">𝜃</ci><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.3.3">𝑘</ci></apply><apply
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1"><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.3">𝛼</ci><apply
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4"><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.1">∇</ci><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.2.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.4.2">𝒥</ci></apply><apply
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.2">𝜃</ci><ci
+    id="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.1.1.1.1.1.1.1.1.1.1.3">𝑘</ci></apply></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6b.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6c.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6d.cmml" xref="S3.SS1.p5.1.m1.6.6"><cerror id="S3.SS1.p5.1.m1.6.6e.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6f.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror><apply id="S3.SS1.p5.1.m1.6.6.7.2.1.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.6.6.7.2.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.2">absent</csymbol><apply id="S3.SS1.p5.1.m1.6.6.7.2.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3"><apply id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.1.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2">subscript</csymbol><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.2.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.2">𝜃</ci><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.2.3">𝑘</ci></apply><apply id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3"><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.2">𝛼</ci><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.3">𝐴</ci><apply id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.1.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4">subscript</csymbol><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.2.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.2">𝜃</ci><ci id="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.7.2.1.3.3.4.3">𝑘</ci></apply></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6g.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6h.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6i.cmml" xref="S3.SS1.p5.1.m1.6.6"><cerror id="S3.SS1.p5.1.m1.6.6j.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6k.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror><apply id="S3.SS1.p5.1.m1.2.2.2.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.2.2.2.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.3">absent</csymbol><apply id="S3.SS1.p5.1.m1.2.2.2.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1"><apply id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1"><ci id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.2">𝐼</ci><apply id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3"><ci id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.2">𝛼</ci><ci id="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.1.1.1.3.3">𝐴</ci></apply></apply><apply id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.1.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3">subscript</csymbol><ci id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.2">𝜃</ci><ci id="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.2.2.2.1.1.1.3.3">𝑘</ci></apply></apply></apply><cerror id="S3.SS1.p5.1.m1.6.6l.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6m.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6n.cmml" xref="S3.SS1.p5.1.m1.6.6"><apply id="S3.SS1.p5.1.m1.3.3.3.2.1.cmml"
+    xref="S3.SS1.p5.1.m1.3.3.3.2.1"><ci id="S3.SS1.p5.1.m1.3.3.3.2.1.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.1">⟹</ci><csymbol
+    cd="latexml" id="S3.SS1.p5.1.m1.3.3.3.2.1.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.2">absent</csymbol><apply
+    id="S3.SS1.p5.1.m1.3.3.3.2.1.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.3"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.3.3.3.2.1.3.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.3">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.3.3.3.2.1.3.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.3.2">𝜃</ci><ci
+    id="S3.SS1.p5.1.m1.3.3.3.2.1.3.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.2.1.3.3">𝑘</ci></apply></apply><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1"><csymbol cd="latexml"
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.3">absent</csymbol><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1"><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1">superscript</csymbol><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1"><ci
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.2">𝐼</ci><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3"><ci
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.2">𝛼</ci><ci
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.1.1.1.3.3">𝐴</ci></apply></apply><ci
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.1.3">𝑘</ci></apply><apply
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.1.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.2">𝜃</ci><cn
+    type="integer" id="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.3.3.3.1.1.1.3.3">0</cn></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6o.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6p.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6q.cmml" xref="S3.SS1.p5.1.m1.6.6"><cerror id="S3.SS1.p5.1.m1.6.6r.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6s.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.4.4.4.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.3">absent</csymbol><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1"><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1">superscript</csymbol><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1"><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.2">𝐼</ci><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3"><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.2">𝛼</ci><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.3">𝑄</ci><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.4.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.4">Λ</ci><apply id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.1.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5">superscript</csymbol><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.2.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.2">𝑄</ci><ci id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.3.cmml"
+    xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.1.1.1.3.5.3">𝑇</ci></apply></apply></apply><ci
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.1.3">𝑘</ci></apply><apply
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.1.cmml" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.2">𝜃</ci><cn
+    type="integer" id="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.4.4.4.1.1.1.3.3">0</cn></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6t.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6u.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6v.cmml" xref="S3.SS1.p5.1.m1.6.6"><cerror id="S3.SS1.p5.1.m1.6.6w.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6x.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.5.5.5.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.3">absent</csymbol><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1"><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1">superscript</csymbol><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.2.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.2">delimited-[]</csymbol><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1"><ci id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.3">𝑄</ci><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1"><ci id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.2.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.2">𝐼</ci><apply id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3"><ci id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.2.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.2">𝛼</ci><ci id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.3.cmml"
+    xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.1.1.1.3.3">Λ</ci></apply></apply><apply
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.1.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4">superscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.2.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.2">𝑄</ci><ci
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.3.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.1.1.1.4.3">𝑇</ci></apply></apply></apply><ci
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.1.3">𝑘</ci></apply><apply
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.1.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.2">𝜃</ci><cn
+    type="integer" id="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.5.5.5.1.1.1.3.3">0</cn></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6y.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6z.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow><matrixrow
+    id="S3.SS1.p5.1.m1.6.6aa.cmml" xref="S3.SS1.p5.1.m1.6.6"><cerror id="S3.SS1.p5.1.m1.6.6ab.cmml"
+    xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous" id="S3.SS1.p5.1.m1.6.6ac.cmml"
+    xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror><apply id="S3.SS1.p5.1.m1.6.6.6.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.6.1.1"><csymbol cd="latexml" id="S3.SS1.p5.1.m1.6.6.6.1.1.3.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.6.1.1.3">absent</csymbol><apply id="S3.SS1.p5.1.m1.6.6.6.1.1.1.cmml"
+    xref="S3.SS1.p5.1.m1.6.6.6.1.1.1"><ci id="S3.SS1.p5.1.m1.6.6.6.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.3">𝑄</ci><apply
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1">superscript</csymbol><apply
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1"><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.2.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.2">𝐼</ci><apply
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3"><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.2.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.2">𝛼</ci><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.1.1.1.3.3">Λ</ci></apply></apply><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.1.3">𝑘</ci></apply><apply
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.1.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4">superscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.2.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.2">𝑄</ci><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.4.3">𝑇</ci></apply><apply
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5"><csymbol
+    cd="ambiguous" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.1.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5">subscript</csymbol><ci
+    id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.2.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.2">𝜃</ci><cn
+    type="integer" id="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.3.cmml" xref="S3.SS1.p5.1.m1.6.6.6.1.1.1.5.3">0</cn></apply></apply></apply><cerror
+    id="S3.SS1.p5.1.m1.6.6ad.cmml" xref="S3.SS1.p5.1.m1.6.6"><csymbol cd="ambiguous"
+    id="S3.SS1.p5.1.m1.6.6ae.cmml" xref="S3.SS1.p5.1.m1.6.6">missing-subexpression</csymbol></cerror></matrixrow></matrix></annotation-xml><annotation
+    encoding="application/x-tex" id="S3.SS1.p5.1.m1.6c">\begin{array}[]{rlr}\theta_{k+1}&\leftarrow\theta_{k}-\alpha\nabla\mathcal{J}\left(\theta_{k}\right)&\\
+    &=\theta_{k}-\alpha A\theta_{k}&\\ &=(I-\alpha A)\theta_{k}&\\ \Longrightarrow\theta_{k}&=(I-\alpha
+    A)^{k}\theta_{0}&\\ &=\left(I-\alpha Q\Lambda Q^{T}\right)^{k}\theta_{0}&\\ &=\left[Q(I-\alpha\Lambda)Q^{T}\right]^{k}\theta_{0}&\\
+    &=Q(I-\alpha\Lambda)^{k}Q^{T}\theta_{0}&\end{array}</annotation></semantics></math>'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'where $Q\Lambda Q^{T}$ is the eigendecomposition of $A$ as discussed in eq.
+    [3.1](#S3.Ex16 "3.1\. Preliminaries and Motivation ‣ 3\. Second-order methods
+    ‣ A survey of deep learning optimizers - first and second order methods"). The
+    stability conditions is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. $0<\alpha\lambda_{i}\leq 1:$ decays to $0$ at a rate that depends on $\alpha\lambda_{i}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. $1<\alpha\lambda_{i}\leq 2:$ oscillates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. $\alpha\lambda_{i}>2:$ unstable (diverges).
+  prefs: []
+  type: TYPE_NORMAL
+- en: where $\alpha$ is the learning-rate of the algorithm and $\lambda_{i}$ are the
+    eigenvalues. Hence, we need the learning rate to be bound by $\alpha<2/\lambda_{\max}$
+    to prevent instability. This ensures that we avoid overshooting the minima and
+    not going uphill in directions with strong positive curvature. This also bounds
+    the rate of progress in other directions given as $\alpha\lambda_{i}<2\lambda_{i}/\lambda_{\max}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a starting point $x_{i}$, one could construct a local quadratic approximation
+    to the objective function ($\mathcal{J}(q)$) that matches the first and second
+    derivative values at that point. We then minimize the approximate (quadratic function)
+    instead of the original objective function. The minimizer of the approximate function
+    is used as the starting point in the next step, and repeat the procedure iteratively.
+    This ensures that the search direction accounts for the curvature information
+    along almost all directions, for all iterations as shown in Figure [12](#S3.F12
+    "Figure 12 ‣ 3.3\. Newton’s Method ‣ 3\. Second-order methods ‣ A survey of deep
+    learning optimizers - first and second order methods").
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case, where the loss surface is the shape of an elongated quadratic function
+    or an ellipsoid as shown in Figure [11](#S3.F11 "Figure 11 ‣ 3.1\. Preliminaries
+    and Motivation ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers
+    - first and second order methods"), we can transform it into a spherical shape
+    using a whitening transform since the Hessian inverse $H^{-1}$ spheres out of
+    the error surface locally, and we can now perform gradient descent in the new
+    coordinate system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/90c4e89830bdb51fe2be6d3236341048.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11\. The first-order gradient descent method fails to exploit the curvature
+    information contained in the Hessian matrix. The condition number greatly influences
+    the SGD trajectory, and we illustrate it using a quadratic function f(x) whose
+    Hessian has a condition number 5\. This means that the direction of the most curvature
+    has five times more curvature than that of the least curvature. In this case,
+    the most curvature is in the direction $[1,1]$, and the least curvature is in
+    the direction $[1,-1]$. The red lines indicate the path followed by gradient descent.
+    This results in an ellipsoidal quadratic function, and gradient descent follows
+    a zig-zag path, often bouncing off the canyon walls (since the gradient is perpendicular
+    to the surface), and we observe that it spends a lot of descending the canyon
+    walls because they are the steepest feature. It indicates that gradient descent
+    takes a larger number of steps to converge, and near the minima, it oscillates
+    back and forth until it converges to the local minima. If the step size is large,
+    it can overshoot and reach the opposite canyon wall on the next iteration, hence
+    not the best search direction. The large positive eigenvalue of the Hessian corresponding
+    to the eigenvector pointed in this direction indicates that this directional derivative
+    is rapidly increasing, so an optimization algorithm based on the Hessian could
+    predict the steepest direction is not actually a promising search direction in
+    this context. Source: Ian Goodfellow ([b23,](#bib.bib23) ).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2\. Quadratic Function Optimization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For a locally quadratic function, by rescaling the gradients with the inverse
+    of the Hessian, Newton’s method jumps directly to the minimum and thus converges
+    in a single step. If the function is nearly quadratic, then this is a very good
+    estimate of the minimizer of $f$. Since $f$ is twice differentiable, the quadratic
+    model of $f$ will be very accurate when $x$ is near the local minima. When $f$
+    is not quadratic but can be locally approximated as a positive definite quadratic,
+    and the Newton’s method is updated iteratively using eq. [3.3](#S3.Ex21 "3.3\.
+    Newton’s Method ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers
+    - first and second order methods") with quadratic rate of convergence. The following
+    result as stated in ([b30,](#bib.bib30) ) asserts the rate of converge for the
+    Newton’s method and is given below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'THEOREM 1\. Suppose that $f$ is twice differentiable and that the Hessian $\nabla^{2}f(x)$
+    is Lipschitz continuous in a neighborhood of a solution $x^{*}$ at which the sufficient
+    conditions are satisfied. Consider the iteration $x_{k+1}=x_{k}+p_{k}$, where
+    $p_{k}$ is given by $-\nabla^{2}f_{k}^{-1}\nabla f_{k}$. Then:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (i) if the starting point $x_{0}$ is sufficiently close to $x^{*}$, the sequence
+    of iterates converges to $x^{*}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (ii) the rate of convergence of $\left\{x_{k}\right\}$ is quadratic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: (iii) the sequence of gradient norms $\left\{\left\|\nabla f_{k}\right\|\right\}$
+    converges quadratically to zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 Initialize: Initial point $x_{0}$.2 for *$k=0,1,2,\ldots$* do3       Factorize
+    the matrix $B_{k}=\nabla^{2}f\left(x_{k}\right)+E_{k}$, where $E_{k}=0$ if $\nabla^{2}f\left(x_{k}\right)$
+    is sufficiently positive definite4       otherwise, $E_{k}$ is chosen to ensure
+    that $B_{k}$ is sufficiently positive definite.5       Solve $B_{k}p_{k}=-\nabla
+    f\left(x_{k}\right)$.6       $x_{k+1}\leftarrow x_{k}+\alpha_{k}p_{k}$7 end for'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 2 Newton’s Method with Hessian Modification
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3\. Newton’s Method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Newton’s optimization algorithm, to find the local minimum $x^{*}$ with iteration
+    sequence of $x_{0}\rightarrow x_{1}\rightarrow x_{2}\rightarrow\ldots\ldots..\rightarrow
+    x_{k}$ the Hessian $\nabla f^{2}\left(x_{k}\right)$ must be positive definite
+    $\forall k$ iteration steps else the search direction might not correspond to
+    an actual the descent direction i.e., $\nabla f_{k}^{T}p_{k}<0$, where $p_{k}$
+    is the Newton search direction. If $f$ is strongly convex then f converges quadratically
+    fast to $x^{*}=\arg\min_{x}f(x)$ i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\&#124;x_{k+1}-x_{*}\right\&#124;\leq\frac{1}{2}\left\&#124;x_{k}-x_{*}\right\&#124;^{2},\quad\forall
+    k\geq 0.$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The update rule is given as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\boldsymbol{H^{-1}g}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $H$ is the Hessian matrix of the loss function $L$ with respect to $\theta$.
+    Since the Hessian ($H=\nabla f^{2}(x_{k})$) is symmetric, we can determine the
+    Newton update using Cholesky⁷⁷7Every symmetric positive definite matrix $A$ can
+    be written as $A=LDL^{T}$ where $L$ is a lower triangular matrix with unit diagonal
+    elements and $D$ is a diagonal matrix with positive elements on the diagonal algorithm.
+    An essential feature of Newton’s method is that it is independent of linear changes
+    in coordinates. If $H$ is positive semi-definite, then there is nothing that confirms
+    that the iterator has converged to a minimizer since the higher derivatives of
+    $f(x)$ are unknown. The algorithm will diverge if the Hessian is not positive
+    definite ($\lambda_{i}\leq 0$ indicates flat regions or directions of negative
+    curvature).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, alternative methods to ensure that eq. [3.3](#S3.Ex21 "3.3\. Newton’s
+    Method ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers - first
+    and second order methods") corresponds to a descent direction while retaining
+    the second-order information in $\nabla^{2}f_{k}$ with superlinear rate of convergence
+    is described in the following sections. In particular, the computation of the
+    Hessian $H$ is computationally expensive and error-prone. For example, in Quasi-Newton
+    methods an approximation to the inverse of the Hessian $B_{k}$ is computed at
+    each step using a low-rank formula while a trust region approach, in which $\nabla^{2}f_{k}$
+    is used to form a quadratic model that is minimized in a ball around the current
+    iterate $x_{k}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0c30a96cd2664ff51131dfa71ed5886b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12\. Newton method constructs a local quadratic approximation of the
+    function about the current point, moves towards the minimizer of this quadratic
+    model, and then iteratively progress towards the global minima. Source: Nicholas
+    Vieau Alger ([b17,](#bib.bib17) ).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4\. Dynamics of Optimization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As discussed in Section [3.3](#S3.SS3 "3.3\. Newton’s Method ‣ 3\. Second-order
+    methods ‣ A survey of deep learning optimizers - first and second order methods"),
+    the major drawback of the Newton method is that the update step can result in
+    the wrong direction if the eigenvalue $\lambda_{i}$ of the Hessian $H$ is negative
+    i.e., it moves along the eigenvector in a direction opposite to the gradient descent
+    step and thus moves in the direction of increasing error towards $\theta^{*}$.
+    To address this issue, generalized trust region ([b30,](#bib.bib30) ), saddle-free
+    Newton ([b5,](#bib.bib5) ) and natural gradient descent method are used and is
+    discussed briefly as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the trust region method, a damping constant $\alpha$ is added along the diagonal
+    of the Hessian to offset the direction of negative curvature, which is equivalent
+    to $\lambda_{i}+\alpha$. However, to ensure that this is a descent direction,
+    one must ensure that $\lambda_{i}+\alpha>0$, and can result in small step size
+    along the eigen-directions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Although, the truncated Newton method ignores directions of negative curvature
+    it can get struck at saddle points. However, since the natural gradient descent
+    relies on the Fisher information matrix $F$ to incorporate the curvature information
+    of the parameter manifold where the update rule is given as:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $w_{t+1}=w_{t}-\eta F\left(w_{t}\right)^{-1}g_{t}$ |  |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'However, ([b5,](#bib.bib5) ) argue that natural gradient descent method can
+    also suffer from negative curvature and can converge to a non-stationary point
+    when the Fisher matrix is rank-deficient. The saddle-free Newton method provides
+    a elegant solution to this, where the update rule is given as:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $\Delta\theta=-\nabla f&#124;\mathbf{H}&#124;^{-1}$ |  |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Since, it does not utilize the second-order Taylor-series approximation to leverage
+    the information, as in classical methods, it can move further in direction of
+    low curvature and escape saddle points as shown in Figure [14](#S3.F14 "Figure
+    14 ‣ 3.6\. Conjugate Gradients ‣ 3\. Second-order methods ‣ A survey of deep learning
+    optimizers - first and second order methods").
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 3.5\. Gauss-Newton and Levenberg-Marquardt algorithm
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Following [1.1](#S1.SS1 "1.1\. Mathematical Preliminaries and Notations ‣ 1\.
+    Introduction ‣ A survey of deep learning optimizers - first and second order methods"),
+    we define the non-linear least square consider a set of m points $(x_{i},y_{i})$
+    and the curve $y=f(x,\theta)$, where $\theta\in R^{n}$ denotes the model parameters
+    and $i\in[m]$, with $m\geq n$. We define the non-linear least square problem as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\min_{\theta}\&#124;y_{i}-f(x_{i},\theta)\&#124;_{2}^{2}=\min_{\theta}\sum_{i=1}^{m}\&#124;r_{i}\&#124;_{2}^{2}\vspace{0.3em}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $r_{i}=y_{i}-f(x_{i},\theta)$ are the residuals $\forall i=1,2,...,m$.
+    The Gauss-Newton ([b10,](#bib.bib10) ; [b52,](#bib.bib52) ) method utilizes the
+    square of the Jacobian (not the Hessian) and is used to minimize non-linear least
+    square problems. It can be viewed as a modified Newton’s method with line search
+    where we approximate the Hessian as $\bigtriangledown f_{k}\approx J_{k}^{T}J_{k}$
+    and has $O\left(N^{3}\right)$ complexity. The update rule is given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Delta\theta=-(J_{k}^{T}J_{k})J_{k}^{T}r_{i}\vspace{0.4em}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $J_{i}(x)=\left[\begin{array}[]{c}\nabla r_{1}(x)^{T},\nabla r_{2}(x)^{T},\ldots,\nabla
+    r_{m}(x)^{T}\end{array}\right]^{T}$ is Jacobian of the residual. Note that, the
+    Gauss-Newton method does not require the computation of the individual residual
+    Hessians $\bigtriangledown^{2}r_{i}$ and saves significant computational time.
+    Also, near the minimum since the residuals are significantly smaller i.e., $\|r_{i}|\
+    \leq\epsilon$, this leads to rapid-convergence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Levenberg-Marquardt ([b53,](#bib.bib53) ; [b54,](#bib.bib54) ) algorithm
+    is an approximation to Gauss-Newton method that uses a diagonal approximation
+    to the Hessian and takes care of extreme directions of curvature, thus preventing
+    the update from moving in the wrong direction. This addresses the issue namely,
+    when the Jacobian $J(x)$ is rank-deficient (i.e., the columns are not linearly
+    independent) while maintaining similar local convergence properties since we only
+    replace the line search with a trust-region method. The new update rule is given
+    as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Delta\theta=-(J_{k}^{T}J_{k}+\lambda I)J_{k}^{T}r_{i}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mu$ is the regularization parameter and $I$ is the Identity matrix.
+    The regularization parameter is used to address the issue when the Hessian is
+    not positive definite and has directions that correspond to small negative eigenvalues.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/754bc662b0ebe9d2bc5604e405ad9276.png)![Refer to caption](img/d294179d76c1f857b0fdb4b1c13f1cd6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 13\. Eigenvalue spectrum in a 4 layer shared weights network. Source:Yann
+    LeCun ([b1,](#bib.bib1) )
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.6\. Conjugate Gradients
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The conjugate gradient ([b55,](#bib.bib55) ; [b56,](#bib.bib56) ) optimization
+    is an iterative method that utilizes the conjugate directions i.e. orthogonal
+    directions to perform a gradient update step and thus avoids the explicit computation
+    of the inverse of the Hessian. This approach is used to overcome the weakness
+    of the gradient descent method by aligning the current search direction along
+    the current gradient step with a memory component given by the linear combination
+    of previous directions. For a quadratic function, the gradient descent method
+    fails to exploit the curvature information present in the Hessian matrix, wherein
+    it descends down the canyon iteratively by following a zig-zag pattern and wastes
+    most of its time by repeatedly hitting the canyon walls and makes no significant
+    progress. This happens because each line search direction is orthogonal to the
+    previous direction since the minimum of the objective along a given direction
+    corresponds to the steepest descent direction at that point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, this descent direction does not preserve the progress in the previous
+    direction and will undo the progress in that direction, and we need to reiterate
+    to minimize the progress made in the previous direction. Thus, we obtain an ineffective
+    zig-zag pattern of progress towards the optimum, and because of the large step
+    size, it often overshoots the minima. The conjugate gradients address this problem
+    by making the search directions orthogonal, i.e., the current search direction
+    is conjugate to the previous line search direction, and it will not spoil the
+    progress made in the previous iteration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method is only suitable for solving positive definite systems, i.e. when
+    the Hessian has all positive eigenvalues. The orthogonality condition rightly
+    finds the minimum along the direction $d_{i}$ since the eigenvector $e_{i+1}$
+    is orthogonal to $d_{i}$. Two directions $d_{t-1}$ and $d_{t}$ are defined as
+    conjugate if it satisfies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{d}_{t}^{\top}\boldsymbol{H}\boldsymbol{d}_{t-1}=0$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $H$ is the Hessian matrix. Thus, this method is an example of Gram-Schmidt
+    ortho-normalization, converging in atmost $k$ line searches. At training iteration
+    $t$, the current search direction $d_{t}$ is computed as discussed in Algorithm
+    [4](#algorithm4 "In 3.7\. BFGS ‣ 3\. Second-order methods ‣ A survey of deep learning
+    optimizers - first and second order methods").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 Initialize: Initial point $x_{0}$. $r_{0}=d_{0}$.2 while *$r_{k}\neq 0$* do3      
+    Set $r_{0}\leftarrow Ax_{0}-b_{0}$.4       $\alpha_{i}\leftarrow\frac{r_{i}^{T}r_{i}}{d_{i}^{T}Ad_{i}}$.5      
+    $x_{i+1}\leftarrow x_{i}+\alpha_{i}d_{i}$.6       $r_{i+1}\leftarrow r_{i}-\alpha_{i}Ad_{i}$.7      
+    $\beta_{i+1}\leftarrow\frac{r_{i+1}^{T}r_{i+1}}{r_{i}^{T}r_{i}}$.8       $d_{i+1}\leftarrow
+    r_{i+1}+\beta_{i+1}d_{i}$9 end while'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 3 Conjugate Gradient Method
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The parameter $\beta_{t}$ controls how much of the previous direction should
+    contribute to the current search direction. Since, this line search method utilizes
+    the eigenvectors of H to choose $\beta_{t}$ which could be computationally expensive,
+    we mainly use two popular methods ([b57,](#bib.bib57) ; [b58,](#bib.bib58) ) for
+    computing $\beta_{t}$ and they are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1\. The Fletcher-Reeves:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\beta_{t}=\frac{\nabla_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}_{t}\right)^{\top}\nabla_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}_{t}\right)}{\nabla_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}_{t-1}\right)^{\top}\nabla_{\boldsymbol{\theta}}J\left(\boldsymbol{\theta}_{t-1}\right)}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '2\. The Polak-Ribiere:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\beta_{t}=\frac{\left(\nabla_{\theta}J\left(\theta_{t}\right)-\nabla_{\theta}J\left(\theta_{t-1}\right)\right)^{\top}\nabla_{\theta}J\left(\theta_{t}\right)}{\nabla_{\theta}J\left(\theta_{t-1}\right)^{\top}\nabla_{\theta}J\left(\theta_{t-1}\right)}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: For non-linear conjugate gradient method, we set $\beta_{t}$ to zero i.e., it
+    restarts at each step by forgetting the past search directions with the current
+    direction given by the unaltered gradient at that point, to ensure that it is
+    locally optimal and ensures faster convergence. Also, the initial point has a
+    strong influence on the number of the steps taken for convergence, and it is observed
+    that the Fletcher-Reeves method converges only if the initial point is sufficiently
+    close to the desired minima and thus, the Polak-Ribiere method converges much
+    more quickly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d98feb082827234df552400249fe2e11.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 14\. Illustration of various optimization methods for various quadratic
+    functions. The yellow dot indicates the starting point. Source Pascanu ([b5,](#bib.bib5)
+    ).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.7\. BFGS
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Quasi-Newton Broyden-Fletcher-Goldfarb-Shanno (BFGS) ([b59,](#bib.bib59)
+    ) method iteratively builds an approximation of the inverse of the Hessian at
+    each step. The BFGS incorporates the second-order information using a low-rank
+    approximation of the Hessian and is thus similar to the method of conjugate gradients
+    without the computational burden. Here the explicit calculation of the Hessian
+    is not required since we now use the secant equation to construct the approximation
+    matrix by successively analyzing the gradient vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1 Initialize: Initial point $x_{0}$, inverse Hessian approximation $B_{0}$,
+    where $B_{0}$ is positive definite.2 for *$k=0,1,2,\ldots$* do3       Determine
+    the search direction $p_{k}$ by solving $B_{k}\mathbf{p}_{k}=-\nabla f\left(\mathbf{x}_{k}\right)$.4      
+    A line search is performed in this direction to determine the step size $\varepsilon_{k}^{*}$,
+    satisfying the Wolfe5       conditions.6       Define $s_{k}=x_{k+1}-x_{k}$ and
+    $y_{k}=\nabla f(x_{k+1})-\nabla f(x_{k})$.7       Apply Update $x_{k+1}\leftarrow
+    x_{k}+s_{k}$.8       $B_{k+1}=\left(I-\rho_{k}s_{k}y_{k}^{T}\right)B_{k}\left(I-\rho_{k}y_{k}s_{k}^{T}\right)+\rho_{k}s_{k}s_{k}^{T}$,
+    where $\rho_{k}=\frac{1}{y_{k}^{T}s_{k}}$.9 end for'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithm 4 BFGS Method
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We perform a series of line searches along this direction, and since it takes
+    more steps to converge due to the lack of precision in the approximation of the
+    true inverse Hessian i.e., $H_{k}=B_{k}^{-1}$, as illustrated in Algorithm [3](#algorithm3
+    "In 3.6\. Conjugate Gradients ‣ 3\. Second-order methods ‣ A survey of deep learning
+    optimizers - first and second order methods"). The computational complexity for
+    the BFGS method is a $O\left(N^{2}\right)$ since matrix inversion is not required.
+    The rank-two approximation in Alg [3](#algorithm3 "In 3.6\. Conjugate Gradients
+    ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers - first and
+    second order methods") can be considered as a diagonal and a low-rank approximation
+    to the Hessian $H_{k}$. Since it does not utilize only second-order information,
+    it is sometimes more efficient than the Newton’s method for non-quadratic functions
+    with super-linear rate of convergence and the cost per iteration is usually lower.
+    Moreover, it is estimated that BFGS has self-correcting properties, i.e., when
+    the previous estimate is bad and slows down the convergence, then BFGS will correct
+    itself in the next few steps. We mainly compute the approximation to the Hessian
+    matrix $H_{k}$ using: 1\. Finite difference method 2\. Hessian-vector products.
+    3\. Diagonal Computation. 4\. Square Jacobian approximation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d0a5426910ebb34995b416ef6f566e0e.png)![Refer to caption](img/c827e7063fc090bb5386218d378a7024.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15\. An example of a radial transformation on a 2-dimensional space
+    to illustrate the effect of a local perturbation on the relative flatness between
+    the minima. We can see that only the area in blue and red, i.e. inside the ball
+    $B_{2}(\hat{\theta},\delta)$, are affected. Here, $\psi(r,\hat{r},\delta,\rho)=\mathbb{1}(r\notin[0,\delta])r+\mathbb{1}(r\in[0,\hat{r}])\rho\frac{r}{\hat{r}}+\mathbb{1}(r\in]\hat{r},\delta])\left((\rho-\delta)\frac{r-\delta}{\hat{r}-\delta}+\delta\right)$
+    represents the function under consideration $g^{-1}(\theta)=\frac{\psi\left(\|\theta-\hat{\theta}\|_{2},\hat{r},\delta,\rho\right)}{\|\theta-\hat{\theta}\|_{2}}(\theta-\hat{\theta})+\hat{\theta}$
+    $ is the radial-basis transformation respectively. B. Source: Dinh ([b4,](#bib.bib4)
+    )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.8\. L-BFGS
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since the memory costs of storing and manipulating the inverse of the Hessian
+    is prohibitively large for deep neural nets, we utilize the L-BFGS ([b60,](#bib.bib60)
+    ) method to circumvent this issue. It maintains a simple and compact approximation
+    of the Hessian matrices by constructing an Hessian approximation by using only
+    the $m$ most recent iteration to incorporate the curvature information, where
+    typically $3<m<20$. Thus, instead of storing the fully dense $n^{*}n$ approximators,
+    we modify $H_{k}$ by implicitly storing only a certain number of correction pairs
+    ($m$) and thus include the curvature information from only the $m$ recent iteration
+    (we store only a set of $n$ length vectors). Thus, we add and delete information
+    at each stage, discard the past $m$ correction pairs, and start the process with
+    the new $s_{k},y_{k}$ pairs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This ensures to an optimal rate of convergence and may also outperform Hessian-free
+    methods, since we only maintain a fixed memory system that iteratively discards
+    the curvature information from the past since it is not likely to influence the
+    behavior of the Hessian in the current iteration, thus saving computational storage.
+    The update rule is exactly similar to the BFGS method as discussed in Algorithm
+    [4](#algorithm4 "In 3.7\. BFGS ‣ 3\. Second-order methods ‣ A survey of deep learning
+    optimizers - first and second order methods"). The only modification is that we
+    discard the vector pair $\left\{s_{k-m},y_{k-m}\right\}$ from storage and the
+    $s_{k},y_{k}$ and $x_{k}$ updates follows from Algorithm [4](#algorithm4 "In 3.7\.
+    BFGS ‣ 3\. Second-order methods ‣ A survey of deep learning optimizers - first
+    and second order methods"). The main weakness of L-BFGS is that it converges slowly
+    for functions, where the Hessian is ill-conditioned and contains a wide distribution
+    of eigenvalues.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.9\. ADAHESSIAN
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c1eab69a6073c1cf1fc5703815fe0537.png)![Refer to caption](img/df569cec0092eee54301cc6efd92aa32.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 16\. Illustration of the local and global curvature wherein the local
+    curvature information is avoided using an exponential moving average. Adahessian
+    converges in $1000$ iterations without a moving average, while it takes only seven
+    iterations with the moving average enabled. Source: Zhewei Yao ([b34,](#bib.bib34)
+    )'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Adahessian ([b34,](#bib.bib34) ) is a second-order stochastic approximation
+    method that incorporates the curvature information present in the Hessian for
+    faster convergence and reduced memory overhead using:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Hessian diagonal approximation using Hutchinson’s method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2\. RMSE exponential moving average to reduce the variations in the diagonal
+    approximation of the Hessian.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Block diagonal averaging to reduce the variance of Hessian diagonal elements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As discussed earlier, second-order methods involve preconditioning the gradient
+    with the inverse of the Hessian, which is designed to accelerate learning for
+    ill-conditioned problems i.e., flat curvatures in some directions and sharp curvature
+    in other directions by rescaling the gradient vector along each of its directions.
+    It handles extreme curvature directions by appropriate gradient rotation and scaling
+    and ensures convergence to a critical point of any sort (local minima). It is
+    thus more reliable than other adaptive first-order methods. But this comes at
+    a prohibitive cost since it is computationally infeasible to compute the Hessian
+    at each iteration and not scalable for modern neural network architectures. Thus,
+    we approximate the Hessian matrix as a diagonal operator given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Delta w=\operatorname{diag}(\mathbf{H})^{-k}\mathbf{g}$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\Delta w$ is the weight update and $0\leq k\leq 1$ is the Hessian power.
+    The Hessian diagonal denoted as $D=\operatorname{diag}(\mathrm{H})$ is computed
+    using Hutchinson’s method. To obtain the Hessian matrix $H$ without explicit computation,
+    they utilize the Hessian-free approximation method given as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\frac{\partial\mathbf{g}^{T}z}{\partial\theta}=\frac{\partial\mathbf{g}^{T}}{\partial\theta}z+\mathbf{g}^{T}\frac{\partial
+    z}{\partial\theta}=\frac{\partial\mathbf{g}^{T}}{\partial\theta}z=\mathbf{H}z$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $z$ is a random vector with Rademacher distribution. The Hessian diagonal
+    is given as the expectation of $z\odot Hz$ which corresponds to optimal performance
+    on various tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\boldsymbol{D}=\operatorname{diag}(\mathbf{H})=\mathbb{E}[z\odot(\mathbf{H}z)]$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: This has the computational overhead equivalent to a gradient backpropagation
+    step. They employ a moving-average term (spatial averaging) and Hessian momentum
+    (the update rule is similar to Adam) to smooth out stochastic variations in the
+    curvature information per iteration. This leads to faster convergence for strict
+    and smooth convex functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $D^{(s)}[ib+j]=\frac{\sum_{k=1}^{b}D[ib+k]}{b},\text{ for }1\leq j\leq
+    b,0\leq i\leq\frac{d}{b}-1$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $D^{(s)}$ is spatially averaged Hessian diagonal and $b$ is the block
+    size. We implement momentum for the Hessian diagonal $H$ with spatial averaging
+    as shown in Table [1](#S3.T1 "Table 1 ‣ 3.9\. ADAHESSIAN ‣ 3\. Second-order methods
+    ‣ A survey of deep learning optimizers - first and second order methods").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Term | Equation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\overline{\boldsymbol{D}}_{t}$ | $\sqrt{\frac{\left(1-\beta_{2}\right)\sum_{i=1}^{t}\beta_{2}^{t-i}\boldsymbol{D}_{i}^{(s)}\boldsymbol{D}_{i}^{(s)}}{1-\beta_{2}^{t}}}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $m_{t}$ | $\frac{\left(1-\beta_{1}\right)\sum_{i=1}^{t}\beta_{1}^{t-i}\mathbf{g}_{i}}{1-\beta_{1}^{t}}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $v_{t}$ | $\left(\overline{\boldsymbol{D}}_{t}\right)^{k}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: Table 1\. Update Rule
+  prefs: []
+  type: TYPE_NORMAL
+- en: The parameter update rule is given as, $\theta_{t+1}=\theta_{t}-\eta m_{t}/v_{t}$,
+    where $m_{t}$ and $v_{t}$ are the first and second order moments for AdaHessian
+    with $0<\beta_{1}<\beta_{2}<1$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Optimizer | CIFAR-10 | CIFAR-100 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SGD | $94.33\pm 0.1$ | $79.12\pm 0.54$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Polyak | $95.62\pm 0.07$ | $78.11\pm 0.37$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adam | $94.76\pm 0.23$ | $77.24\pm 0.12$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LOOKAHEAD | $\textbf{95.63}\pm\textbf{0.03}$ | $\textbf{79.42}\pm\textbf{0.05}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Dataset | Cifar10 | ImageNet |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ResNet20 | ResNet32 | ResNet18 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SGD | 93.01 $\pm$ 0.05 | $\mathbf{94.23}\pm\mathbf{0.17}$ | 70.01 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adam | 90.73 $\pm$ 0.23 | 91.53 $\pm$ 0.1 | 65.42 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AdamW | 91.96 $\pm$ 0.15 | 92.82 $\pm$ 0.1 | 67.82 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADAHESSIAN | $\mathbf{93.11}\pm\mathbf{0.25}$ | 93.08 $\pm$ 0.10 | $\mathbf{70.12}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Figure 17\. (left) We report the test accuracy (+ standard deviation) across
+    $10$ trails using different optimizers on the CIFAR-$10/100$ dataset using the
+    ResNet$18$ and architecture. (right) We report the model accuracy (+ standard
+    deviation) across $10$ trails using different optimizers on the CIFAR-$10/100$
+    and ImageNet dataset using the ResNet$20$ and ResNet$32$ architecture. We train
+    all our models for $200$ epochs with a batch size of $128$ and an initial learning
+    rate of $0.1/0.001/0.01$ for SGD/Adam/AdamW respectively. For Adahessian we set
+    block size equal to $9$, $k=1$ and a learning rate of $0.15$; while for Lookahead
+    we set $k=5$ and use a learning rate of $0.1$. The exact training details as mentioned
+    in ([b34,](#bib.bib34) ; [b61,](#bib.bib61) ) was used for model training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.10\. Newton-CG method
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The line search Newton-CG ([b30,](#bib.bib30) ) method utilizes the Hessian-vector
+    products ($\nabla^{2}f_{k}$) has attractive global convergence properties with
+    super-linear convergence, and results in optimal search directions when the Hessian
+    is indefinite. This Hessian-free (HF) method does not require explicit knowledge
+    of the Hessian but uses the finite-difference method to access the actual Hessian
+    at each point. Here, we compute the product of the Hessian ($\nabla^{2}f_{k}$)
+    and the vector $d$ using a finite-differencing technique to get the approximation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\nabla^{2}f_{k}d\approx\frac{\nabla f\left(x_{k}+hd\right)-\nabla f\left(x_{k}\right)}{h}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some small differencing interval h. Also, using the Gauss-Newton matrix
+    instead of the Hessian results in better search directions since $G$ is always
+    positive definite and thus avoids the problem of negative curvature. CG is designed
+    for positive-definite systems, and the Hessian is indefinite for points far away
+    from the solution; we can terminate early or use negative directions when they
+    are detected to account for this. Since the HF approach has no access to the true
+    Hessian, we may run across directions of extremely low curvatures or even negative
+    curvatures. Thus, the search directions can only result in small function reductions
+    even after many function evaluations in line search. If we are not careful, such
+    a direction could result in a very large CG step, possibly taking the outside
+    of the region where the Newton approximation is even valid. One solution is to
+    add a damping parameter to the Hessian given as $\mathrm{B}=\mathrm{H}+\lambda\mathrm{I}$,
+    where $I$ is the Identity matrix. This reconditions $H$ and controls the length
+    of each CG step, mimicking a trust region method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\rho_{k}=\frac{f\left(x_{k}+p_{k}\right)-f\left(x_{k}\right)}{q_{k}\left(p_{k}\right)-q_{k}(0)}.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\text{ If }\rho_{k}<\frac{1}{4},\text{ then }\lambda\leftarrow\alpha\lambda.\hskip
+    3.99994pt\text{ If}\hskip 5.0pt\rho_{k}>\frac{3}{4},\text{ then }\lambda\leftarrow\alpha^{-1}\lambda.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The main drawback of this method is when $\nabla f(x_{k})$ is nearly singular,
+    and thus requiring many function evaluations without significant reduction in
+    the function values. To alleviate this difficulty, trust-region Newton-CG method
+    and Newton-Lanczos method can be used respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.11\. Lookahead
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Lookahead ([b61,](#bib.bib61) ) optimizer is orthogonal to the previous approaches
+    and proposes a distinct way for weight updates in which it maintains two sets
+    of weights namely, slow weights ($\phi$) and fast weights ($\theta)$. It maintains
+    an inner loop of optimization for $k$ steps using standard methods such as the
+    SGD or Adam for iterative fast weights update and follows it up with a linear
+    interpolation of the slow weights along the direction given as $\theta-\phi$ in
+    the weight space. Thus, after each slow weights update, we reset it as the new
+    fast weights, making rapid progress in low curvature directions with reduced oscillations
+    and quicker convergence. The slow weights trajectory is characterized as an exponential
+    moving average i.e., Polyak averaging has strong theoretical guarantees of the
+    fast weights. After $k$ inner-loop steps, the slow weights is updated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\phi_{t+1}$ | $\displaystyle=\phi_{t}+\alpha\left(\theta_{t,k}-\phi_{t}\right)$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=\alpha\left[\theta_{t,k}+(1-\alpha)\theta_{t-1,k}+\ldots+(1-\alpha)^{t-1}\theta_{0,k}\right]+(1-\alpha)^{t}\phi_{0}$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\alpha$ is the learning rate for slow weights $\phi$. For a choice of
+    optimizer $A$ and a mini-batch of $d$ data points the update rule for fast weights
+    is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\theta_{t,i+1}=\theta_{t,i}+A\left(L,\theta_{t,i-1},d\right)$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 4\. Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We summarize first-order and second-order optimization methods from a theoretical
+    viewpoint using the optimization literature. Since high error, local minima traps
+    do not appear when the model is overparameterized, and local minima with high
+    error relative to the global minimum occur with an exponentially small probability
+    in $N$. Critical points with high cost are far more likely to be saddle points.
+    Also, since second-order methods are computationally intensive, the computational
+    complexity of computing the Hessian is $O(N^{3})$, and thus practically only networks
+    with a small number of parameters can be trained via Newton’s method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5\. Acknowledgments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We thank the anonymous reviewers for their review and suggestions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '(1) LeCun, Y. A., Bottou, L., Orr, G. B., and Muller, K. R. (2012). Efficient
+    backprop. In Neural networks: Tricks of the trade (pp. 9-48). Springer, Berlin,
+    Heidelberg.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (2) Lee, J. D., Simchowitz, M., Jordan, M. I., and Recht, B. (2016, June). Gradient
+    descent only converges to minimizers. In Conference on learning theory (pp. 1246-1257).
+    PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (3) Sagun, L., Guney, V. U., Arous, G. B., and LeCun, Y. (2014). Explorations
+    on high dimensional landscapes. arXiv preprint arXiv:1412.6615.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (4) Dinh, L., Pascanu, R., Bengio, S., and Bengio, Y. (2017, July). Sharp minima
+    can generalize for deep nets. In International Conference on Machine Learning
+    (pp. 1019-1028). PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (5) Dauphin, Y. N., Pascanu, R., Gulcehre, C., Cho, K., Ganguli, S., and Bengio,
+    Y. (2014). Identifying and attacking the saddle point problem in high-dimensional
+    non-convex optimization. Advances in neural information processing systems, 27.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (6) Martens, James. ”Deep learning via hessian-free optimization.” ICML. Vol.
+    27\. 2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (7) Pascanu, Razvan, et al. ”On the saddle point problem for non-convex optimization.”
+    arXiv preprint arXiv:1405.4604 (2014).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (8) Fort, Stanislav, and Stanislaw Jastrzebski. ”Large scale structure of neural
+    network loss landscapes.” Advances in Neural Information Processing Systems 32
+    (2019).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (9) Sutskever, Ilya, et al. ”On the importance of initialization and momentum
+    in deep learning.” International conference on machine learning. PMLR, 2013.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (10) Moré, Jorge J., and Danny C. Sorensen. Newton’s method. No. ANL-82-8\.
+    Argonne National Lab., IL (USA), 1982\.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (11) Fletcher, Roger. Practical methods of optimization. John Wiley and Sons,
+    2013.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (12) Choromanska, Anna, et al. ”The loss surfaces of multilayer networks.” Artificial
+    intelligence and statistics. PMLR, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (13) Draxler, F., Veschgini, K., Salmhofer, M., and Hamprecht, F. (2018, July).
+    Essentially no barriers in neural network energy landscape. In International conference
+    on machine learning (pp. 1309-1318). PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (14) Li, Chunyuan, et al. ”Measuring the intrinsic dimension of objective landscapes.”
+    arXiv preprint arXiv:1804.08838 (2018).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (15) Jastrzębski, Stanisław, et al. ”Three factors influencing minima in sgd.”
+    arXiv preprint arXiv:1711.04623 (2017).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(16) Yurii, Nesterov. ”Introductory lectures on convex optimization: a basic
+    course.” (2004).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (17) Alger, Nicholas Vieau. Data-scalable Hessian preconditioning for distributed
+    parameter PDE-constrained inverse problems. Diss. 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(18) Kingma, Diederik P., and Jimmy Ba. ”Adam: A method for stochastic optimization.”
+    arXiv preprint arXiv:1412.6980 (2014).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(19) Shewchuk, Jonathan Richard. ”An introduction to the conjugate gradient
+    method without the agonizing pain.” (1994): 1.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(20) Gill, Philip E., and Walter Murray. ”Newton-type methods for unconstrained
+    and linearly constrained optimization.” Mathematical Programming 7.1 (1974): 311-350.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(21) Roger Grosse and Jimmy Ba. ”CSC 421/2516 Lectures 7–8: Optimization”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (22) Boyd, Stephen, Stephen P. Boyd, and Lieven Vandenberghe. Convex optimization.
+    Cambridge university press, 2004.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (23) Ian Goodfellow, Yoshua Bengio, Aaron Courville. ”Deep Learning”, (2016).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(24) Luenberger, David G., and Yinyu Ye. Linear and nonlinear programming.
+    Vol. 2\. Reading, MA: Addison-wesley, 1984.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(25) Moré, Jorge J., and Danny C. Sorensen. ”On the use of directions of negative
+    curvature in a modified Newton method.” Mathematical Programming 16.1 (1979):
+    1-20.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(26) Gill, Philip E., and Walter Murray. ”Newton-type methods for unconstrained
+    and linearly constrained optimization.” Mathematical Programming 7.1 (1974): 311-350.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (27) Nesterov, Yu E. ”A method for solving the convex programming problem with
+    convergence rate $Obigl(frac{1}{k^{2}}bigr)$.” Dokl. Akad. Nauk SSSR,. Vol. 269\.
+    1983.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(28) Nesterov, Yurii. Introductory lectures on convex optimization: A basic
+    course. Vol. 87\. Springer Science and Business Media, 2003.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(29) Hinton, Geoffrey, Nitish Srivastava, and Kevin Swersky. ”Neural networks
+    for machine learning lecture 6a overview of mini-batch gradient descent.” Cited
+    on 14.8 (2012): 2.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(30) Nocedal, Jorge, and Stephen J. Wright, eds. Numerical optimization. New
+    York, NY: Springer New York, 1999.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(31) Bengio, Yoshua, Aaron Courville, and Pascal Vincent. ”Representation learning:
+    A review and new perspectives.” IEEE transactions on pattern analysis and machine
+    intelligence 35.8 (2013): 1798-1828.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (32) Pascanu, Razvan, Tomas Mikolov, and Yoshua Bengio. ”On the difficulty of
+    training recurrent neural networks.” International conference on machine learning.
+    PMLR, 2013.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(33) Bengio, Yoshua, Patrice Simard, and Paolo Frasconi. ”Learning long-term
+    dependencies with gradient descent is difficult.” IEEE transactions on neural
+    networks 5.2 (1994): 157-166.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(34) Yao, Zhewei, et al. ”Adahessian: An adaptive second order optimizer for
+    machine learning.” Proceedings of the AAAI Conference on Artificial Intelligence.
+    Vol. 35\. No. 12\. 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (35) Goodfellow, Ian J., Oriol Vinyals, and Andrew M. Saxe. ”Qualitatively characterizing
+    neural network optimization problems.” arXiv preprint arXiv:1412.6544 (2014).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(36) Tan, Hong Hui, and King Hann Lim. ”Review of second-order optimization
+    techniques in artificial neural networks backpropagation.” IOP conference series:
+    materials science and engineering. Vol. 495\. No. 1\. IOP Publishing, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (37) Yinyu Ye. ”Second Order Optimization Algorithms I Lecture Notes 13”.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(38) Battiti, Roberto. ”First-and second-order methods for learning: between
+    steepest descent and Newton’s method.” Neural computation 4.2 (1992): 141-166.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (39) Balestriero, Randall, Jerome Pesenti, and Yann LeCun. ”Learning in high
+    dimension always amounts to extrapolation.” arXiv preprint arXiv:2110.09485 (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (40) Jastrzebski, Stanislaw, et al. ”The break-even point on optimization trajectories
+    of deep neural networks.” arXiv preprint arXiv:2002.09572 (2020).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(41) Fort, Stanislav, and Adam Scherlis. ”The goldilocks zone: Towards better
+    understanding of neural network loss landscapes.” Proceedings of the AAAI Conference
+    on Artificial Intelligence. Vol. 33\. No. 01\. 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (42) Schmidt, Robin M., Frank Schneider, and Philipp Hennig. ”Descending through
+    a crowded valley-benchmarking deep learning optimizers.” International Conference
+    on Machine Learning. PMLR, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(43) Xia, Lin, et al. ”Positive-definite sparse precision matrix estimation.”
+    Advances in Pure Mathematics 7.1 (2017): 21-30.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(44) Murphy, Kevin P. Probabilistic machine learning: an introduction. MIT
+    press, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(45) Hochreiter, Sepp, and Jürgen Schmidhuber. ”Flat minima.” Neural computation
+    9.1 (1997): 1-42.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(46) Keskar, Nitish Shirish, et al. ”On large-batch training for deep learning:
+    Generalization gap and sharp minima.” arXiv preprint arXiv:1609.04836 (2016).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (47) Goodfellow, Ian J., Oriol Vinyals, and Andrew M. Saxe. ”Qualitatively characterizing
+    neural network optimization problems.” arXiv preprint arXiv:1412.6544 (2014).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (48) Metz, Luke, et al. ”Gradients are not all you need.” arXiv preprint arXiv:2111.05803
+    (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(49) Polyak, Boris T. ”Some methods of speeding up the convergence of iteration
+    methods.” Ussr computational mathematics and mathematical physics 4.5 (1964):
+    1-17.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(50) Jacobs, Robert A. ”Increased rates of convergence through learning rate
+    adaptation.” Neural networks 1.4 (1988): 295-307.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (51) Duchi, John, Elad Hazan, and Yoram Singer. ”Adaptive subgradient methods
+    for online learning and stochastic optimization.” Journal of machine learning
+    research 12.7 (2011).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (52) Gauss, Carl Friedrich. Theoria motus corporum coelestium in sectionibus
+    conicis solem ambientium auctore Carolo Friderico Gauss. sumtibus Frid. Perthes
+    et IH Besser, 1809.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(53) Levenberg, Kenneth. ”A method for the solution of certain non-linear problems
+    in least squares.” Quarterly of applied mathematics 2.2 (1944): 164-168.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(54) Marquardt, Donald W. ”An algorithm for least-squares estimation of nonlinear
+    parameters.” Journal of the society for Industrial and Applied Mathematics 11.2
+    (1963): 431-441.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(55) Hestenes, Magnus R., and Eduard Stiefel. ”Methods of conjugate gradients
+    for solving.” Journal of research of the National Bureau of Standards 49.6 (1952):
+    409.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (56) Straeter, Terry Anthony. On the extension of the davidon-broyden class
+    of rank one, quasi-newton minimization methods to an infinite dimensional hilbert
+    space with applications to optimal control problems. No. NASA-CR-111975\. 1971.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(57) Fletcher, Reeves, and Colin M. Reeves. ”Function minimization by conjugate
+    gradients.” The computer journal 7.2 (1964): 149-154.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(58) Polak, Elijah, and Gerard Ribiere. ”Note sur la convergence de méthodes
+    de directions conjuguées.” Revue française d’informatique et de recherche opérationnelle.
+    Série rouge 3.16 (1969): 35-43.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(59) Broyden, Charles George. ”The convergence of a class of double-rank minimization
+    algorithms 1\. general considerations.” IMA Journal of Applied Mathematics 6.1
+    (1970): 76-90.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(60) Liu, Dong C., and Jorge Nocedal. ”On the limited memory BFGS method for
+    large scale optimization.” Mathematical programming 45.1 (1989): 503-528.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(61) Zhang, Michael, et al. ”Lookahead optimizer: k steps forward, 1 step back.”
+    Advances in neural information processing systems 32 (2019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(62) Gill, Philip E., and Walter Murray. ”Quasi-Newton methods for unconstrained
+    optimization.” IMA Journal of Applied Mathematics 9.1 (1972): 91-108.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (63) Vaswani, Ashish, et al. ”Attention is all you need.” Advances in neural
+    information processing systems 30 (2017).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(64) Nichol, Alex, et al. ”Glide: Towards photorealistic image generation and
+    editing with text-guided diffusion models.” (2021).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (65) Goodfellow, Ian, et al. ”Generative adversarial nets.” Advances in neural
+    information processing systems 27 (2014).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(66) Rojas, Raul, and Raúl Rojas. ”The backpropagation algorithm.” Neural networks:
+    a systematic introduction (1996).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(67) Shervine Amidi. ”CS-229: Machine Learning”.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

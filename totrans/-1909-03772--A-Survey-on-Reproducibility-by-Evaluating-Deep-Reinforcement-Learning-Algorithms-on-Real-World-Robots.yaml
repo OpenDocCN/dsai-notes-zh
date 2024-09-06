@@ -1,0 +1,2433 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:04:56'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[1909.03772] A Survey on Reproducibility by Evaluating Deep Reinforcement Learning
+    Algorithms on Real-World Robots'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/1909.03772](https://ar5iv.labs.arxiv.org/html/1909.03772)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Nicolai A. Lynnerup^(1,2,†,∗)
+  prefs: []
+  type: TYPE_NORMAL
+- en: nily@dti.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: nia@mmmi.sdu.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&Laura Nolling^(1,2,∗)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: lauj@dti.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: lnj@mmmi.sdu.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: \ANDRasmus Hasle¹
+  prefs: []
+  type: TYPE_NORMAL
+- en: raha@dti.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&John Hallam²'
+  prefs: []
+  type: TYPE_NORMAL
+- en: john@mmmi.sdu.dk
+  prefs: []
+  type: TYPE_NORMAL
+- en: \AND¹Robot Technology, Danish Technological Institute (DTI)
+  prefs: []
+  type: TYPE_NORMAL
+- en: ²Embodied Systems for Robot Learning, University of Southern Denmark (SDU)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '^†Correspondence: nily@dti.dk; Tel.: +45-7220 2713'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ^∗Equal contributions
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: As reinforcement learning (RL) achieves more success in solving complex tasks,
+    more care is needed to ensure that RL research is reproducible and that algorithms
+    therein can be compared easily and fairly with minimal bias. RL results are, however,
+    notoriously hard to reproduce due to the algorithms’ intrinsic variance, the environments’
+    stochasticity, and numerous (potentially unreported) hyper-parameters. In this
+    work we investigate the many issues leading to irreproducible research and how
+    to manage those. We further show how to utilise a rigorous and standardised evaluation
+    approach for easing the process of documentation, evaluation and fair comparison
+    of different algorithms, where we emphasise the importance of choosing the right
+    measurement metrics and conducting proper statistics on the results, for unbiased
+    reporting of the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Keywords: CoRL, Robots, Learning, Reinforcement Learning, Reproducibility,
+    Statistics'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The ability critically to assess and evaluate the claims made by other scientists
+    in published research is fundamental and a cornerstone of science. The impartial
+    and independent verification of others’ research serves the purpose of credibility-confirmation
+    and allows for building on top of a “body of knowledge,” referred to as extensible
+    research. Research in robotics and machine learning (ML) is not excluded from
+    this strict scientific requirement, even though it is notoriously hard to ensure
+    reproducibility in computational studies of this nature [[1](#bib.bibx1)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the domain of robotic RL, algorithms such as trust region policy optimization
+    (TRPO) [[2](#bib.bibx2)], proximal policy optimization (PPO) [[3](#bib.bibx3)],
+    deep deterministic policy gradients (DDPG) [[4](#bib.bibx4)] and Soft Q-Learning
+    (Soft-Q) [[5](#bib.bibx5)] have gained popularity due to their success in simulated
+    robotic tasks [[6](#bib.bibx6)]; but as Mahmood *et al*. [[7](#bib.bibx7), [8](#bib.bibx8)]
+    shows, setting up tasks and evaluating RL algorithms on real-world robots is seldom
+    straightforward and requires many practical considerations in order to ensure
+    reproducibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One of the most common issues when replicating ML research is omission of one
+    or more hyper-parameter choices in the manuscript. Often hyper-parameters have
+    significant impacts on how the algorithm performs so it is critical to report
+    their values including how they were obtained [[9](#bib.bibx9), [10](#bib.bibx10)].
+    One reason for neglecting to report hyper-parameters is that they are simply forgotten,
+    which may be due to multiple reasons, e.g.; a) they are not considered important
+    or b) their value is simply the default value, specified by the underlying implementation
+    used. Both reasons are obviously important challenges to handle but are often
+    hard to discover and subsequently enforce.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To add to the complexity, real-world robotic RL methods require large amounts
+    of data. Results from the real world are thus expensive to obtain. Further, many
+    industrial researchers are forced by their company’s legal department to omit
+    specific details to remain in front of their competitors. In combination with
+    the “publish or perish” pressure on academic researchers, this seems to result
+    in deviations from the standards of good science [[9](#bib.bibx9)]. To maintain
+    progress in deep reinforcement learning (DRL), research must be reproducible and
+    comparable so that improvements can be verified and built upon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Differences in evaluation metrics and the lack of significance testing in the
+    field of DRL potentially cause misleading reporting of results [[11](#bib.bibx11)].
+    With no statistical evaluation of the results, it is difficult to conclude if
+    there are meaningful improvements. If results are to be trusted, complete and
+    statistically correct evaluations of proposed methods are needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We find inspiration from a pipeline proposed by Khetarpal *et al*. [[11](#bib.bibx11)],
+    which provides common interfaces for both environments, algorithms, and evaluation
+    schemes. We build on this idea by adding experiment configuration files, to create
+    a unified experiment framework. The configuration file contains all (hyper-)parameters
+    related to specific experiments. With the configuration files, we aim to ease
+    the process of a) running new experiments with new hyper-parameters during the
+    tuning process, b) keeping track of past experiments and their hyper-parameters,
+    and c) reporting all the hyper-parameters in the scientific paper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We evaluate our pipeline on the SenseAct framework¹¹1[https://github.com/kindredresearch/SenseAct/](https://github.com/kindredresearch/SenseAct/)
+    which provides an interface letting RL agents interact with the real world through
+    Universal Robots (UR)’ 6 DoF robotic manipulators [[8](#bib.bibx8)]. We utilise
+    the proposed benchmarking task UR-Reacher-2D in which the agent is to reach arbitrarily
+    chosen target points in a 2D plane with its wrist joint (end-effector).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our key contributions to the field are the demonstration of a rigorous method
+    for easy documentation of parameters; reproducing RL results and determining significance
+    by a statistics-based evaluation of common RL baseline algorithms on real-world
+    robots; and our suggestions on ways to ensure correct choices of measurement metrics
+    based on the task at hand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 A Reproducibility Taxonomy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The taxonomy of reproducible research is widely discussed [[12](#bib.bibx12),
+    [13](#bib.bibx13)]. Here we present the terminology that we conform to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Repeatability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (same team, same experimental setup) refers to the same team with the same experimental
+    setup re-running the experiment. This procedure is needed when wanting to report
+    statistically sound results. The procedure implies the exact same team and the
+    same code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reproducibility
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (different team, same experimental setup) refers to a different team conducting
+    the same experiment with the same setup, achieving results within marginals of
+    experimental error. The setup includes both library code, experimental code, data
+    and environments. This procedure can be viewed as software testing at the level
+    of a complete study.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replicability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (different team, different experimental setup) refers to teams, attempting to
+    obtain the same (or similar enough) results as reported in the original work,
+    who do not have access to either code, data, environment or all of them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the Claerbout, Donoho, Peng [[12](#bib.bibx12), [14](#bib.bibx14),
+    [15](#bib.bibx15), [16](#bib.bibx16)] convention omits the repeatability term,
+    but as we show in appendix [A1](#A1 "Appendix A1 A Brief Overview of a Confused
+    Taxonomy ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning
+    Algorithms on Real-World Robots"), the ACM, Drummond convention’s take on this
+    term is applicable, as it is not contradictory. In our work we conform to the
+    Claerbout, Donoho, Peng Convention [[14](#bib.bibx14), [15](#bib.bibx15), [16](#bib.bibx16)]
+    and add the repeatability term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to the taxonomy, we present a practical view of reproducibility
+    in appendix [A2](#A2 "Appendix A2 Practicalities for Ensuring Reproducibility
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We propose a simple method for uniformly configuring RL experiments by collecting
+    all (hyper-)parameters in a configuration file using an open data format, in our
+    case YAML. These configuration files contain the comprehensive list of parameters
+    used for the specific experiments ranging from environment and agent specifics,
+    such as robot kinematics, to algorithm specifics such as number of hidden layers
+    in the function approximator²²2For a complete example of a configuration file,
+    see: [https://github.com/dti-research/SenseActExperiments/blob/master/code/experiments/ur5/trpo_kindred_example.yaml](https://github.com/dti-research/SenseActExperiments/blob/master/code/experiments/ur5/trpo_kindred_example.yaml)
+    .'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We additionally separate the algorithms from the environments and metric collection
+    routines to ease the evaluation of additional algorithms, as proposed by Khetarpal
+    *et al*. [[11](#bib.bibx11)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, the configuration files contain module specifications for each
+    of the aforementioned, meaning that changing out e.g. the algorithm can be done
+    directly by changing the module path in the YAML file. The same applies to environments
+    and logging routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Reporting the Evaluation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The most common way of reporting results obtained by RL is to present a plot
+    of the average cumulative reward (average returns). However, the performance of
+    an algorithm can vary to a great extent due to the stochasticity of the algorithms
+    and environments, and the average returns alone will not depict an algorithm’s
+    range of performance. Instead, a proper evaluation requires multiple runs with
+    different preset randomisation seeds [[9](#bib.bibx9)]. Further, proper statistics
+    are needed to determine if a higher return in fact does represent better performance,
+    such as confidence intervals (CIs) on the mean or probability values of obtaining
+    a certain threshold performance value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, the more trials, the easier it will be to support the conclusions
+    with the proper statistics. However, as in life sciences, robotics suffers from
+    the fact that samples are expensive to obtain so cost-effective methods such as
+    bootstrapping are of particular interest. Bootstrapping is a method used for estimating
+    a population distribution from a small sample by sampling with replacement. The
+    empirical distribution obtained by bootstrapping allows for statistical inference.
+    Utilising this can further verify that no errors have occurred across trials.
+    We conduct multiple trials to obtain a statistical significance measure of our
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the context of reporting the evaluation, we acknowledge that some cases are
+    so time-consuming that multiple runs are not an option, not even for the small
+    number of samples needed for bootstrapping. We encourage researchers who find
+    themselves in such cases to state why they could not conduct proper statistics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Experimental Protocol
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 4.1 Task Description
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To evaluate our proposed method we use the task by Mahmood *et al*. [[7](#bib.bibx7)],
+    the UR-Reacher-2D. In this task, the agent’s objective is to reach arbitrary target
+    positions by low-level control where the real-world UR5 (figure [1](#S4.F1 "Figure
+    1 ‣ 4.1 Task Description ‣ 4 Experimental Protocol ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots")) is
+    restricted to only move its \nth2 and \nth3 axis. The reward function is defined
+    as $R_{t}=-d_{t}+\exp\left(-100d_{t}^{2}\right)$, where $d_{t}$ is the Euclidean
+    distance between the point target and flange pose of the robot. The observation
+    vector consists of the robot joint angles, joint velocities, its previous action,
+    and the vector difference between the target and the flange coordinates. We keep
+    the episodes to be 4 seconds, as in [[8](#bib.bibx8)]. A list of all hyper-parameter
+    values used to conduct our evaluation is in appendix [A3](#A3 "Appendix A3 Comprehensive
+    List of Hyper-parameter Ranges and Values ‣ A Survey on Reproducibility by Evaluating
+    Deep Reinforcement Learning Algorithms on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: <svg id="S4.F1.pic1" class="ltx_picture ltx_centering" height="242.48" overflow="visible"
+    version="1.1" width="302.43"><g transform="translate(0,242.48) matrix(1 0 0 -1
+    0 0) translate(3.15,0) translate(0,4.21)" fill="#000000" stroke="#000000"><g stroke-width="0.4pt"><g
+    transform="matrix(1.0 0.0 0.0 1.0 0.28 0.28)" fill="#000000" stroke="#000000"><foreignobject
+    width="299" height="238" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">![Refer
+    to caption](img/0412b7c10600b64a1e4a793fd9d9d771.png)</foreignobject></g></g></g></svg>
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Robot used for evaluation: The 6 DOF robotic manipulator used for
+    evaluating our proposed methodology is the UR5 robot. For the UR-Reacher-2D task,
+    the robot is limited to actuate its second and third joints to reach the arbitrary
+    points (red circle) with its tool.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 RL Algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As in [[8](#bib.bibx8)] we use the OpenAI Baselines implementations for the
+    two model-free policy-gradient algorithms TRPO and PPO, to ensure that the code-base
+    used is not a source of difference [[9](#bib.bibx9)]. It should be noted that
+    the work by Mahmood *et al*. [[8](#bib.bibx8)] benchmarks two additional algorithms,
+    DDPG [[4](#bib.bibx4)] and Soft Q-learning [[5](#bib.bibx5)], which are not included
+    in our work as they require inline modifications to the underlying code-bases
+    (for extracting the evaluation metrics) which were not made publicly available
+    by [[8](#bib.bibx8)] for legal reasons³³3Based on correspondence with the lead
+    author. The choice of RL algorithm has received little attention through this
+    work, as it is beyond the scope of our study.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Evaluation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We evaluate the RL algorithms on the UR-Reacher-2D task partly to investigate
+    our proposed methodology, and partly the reproducibility of the original authors
+    work [[8](#bib.bibx8)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: We take the top 5 performing hyper-parameter configurations, shown in appendix
+    [A3](#A3 "Appendix A3 Comprehensive List of Hyper-parameter Ranges and Values
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots"), from the 30 randomly selected ones in [[8](#bib.bibx8)]
+    for each of the two RL algorithms and evaluate their performance on the UR-Reacher-2D
+    task. We repeat each of the experiments (1 hyper-parameter configuration of 1
+    algorithm) 10 times to determine the statistical significance of the performance
+    of each hyper-parameter configuration, which means running the experiments with
+    different randomisation seeds that result in different network initialisations,
+    target positions, and action selections. We approximate the empirical distribution
+    function (EDF) using bootstrapping, to which we fit theoretical distributions.
+    From the theoretical distributions we determine the probability of obtaining at
+    least the performance reported in the original work [[8](#bib.bibx8)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evaluation metrics are computed the same way as in [[8](#bib.bibx8)] to allow
+    for comparison. The computations consist of a rolling average using a window size
+    of $5,000$ steps, calculated every $1,000$ steps. The metrics are collected during
+    training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Processing the results: first, the average returns for each of the ten runs
+    using the same configuration are calculated. Then we perform bootstrapping using
+    10k resamples on the ten average return values to find the EDF. We then test for
+    normality, which appears to be a common assumption in the field, and further explore
+    a general approach for when normality cannot be assumed: fitting a theoretical
+    distribution to the EDF. In section [5](#S5 "5 Results ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots") we
+    show the results of fitting 100 theoretical distributions⁴⁴4For the comprehensive
+    list see: [https://docs.scipy.org/doc/scipy/reference/stats.html](https://docs.scipy.org/doc/scipy/reference/stats.html)
+    to our EDFs, while the plots are presented in appendix [A4](#A4 "Appendix A4 Fitting
+    of Theoretical Distributions ‣ A Survey on Reproducibility by Evaluating Deep
+    Reinforcement Learning Algorithms on Real-World Robots"). Using a significance
+    level of $\alpha=0.05$, we determine if we successfully replicated the results
+    reported in [[8](#bib.bibx8)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 5.1 Repeatability of Code Base
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To verify that our changes to the code bases did not interfere with the ability
+    to repeat experiments reported in [[8](#bib.bibx8)], we performed ten runs of
+    TRPO on the real-world robot using the same seed and same experiment configuration.
+    Initial results were promising but, after the first seven runs, something unknown
+    happens and the last (bottom) three runs diverge from the seven previous. We speculate
+    that the deviations on the real-world robot might suggest physical issues, such
+    as delayed sensor readings, rather than stochasticity in the code-base. Therefore
+    we decided to run the same experiment using the simulator to exclude the stochasticity
+    of the real world. We can use the simulator provided by UR as it uses the exact
+    same robot controller, code base, inverse kinematics solver, etc. We find that
+    the resulting learning curves are in close proximity to one another. Thus we conclude
+    that the ability to repeat experiments is upheld. The results are visualised in
+    figure [5](#footnote5 "footnote 5 ‣ Figure 2 ‣ 5.1 Repeatability of Code Base
+    ‣ 5 Results ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning
+    Algorithms on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0679ace5c99d65266316d8851fe03cfb.png)![Refer to caption](img/40b8753df846cd4fbb894da362e0cfc3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Repeatability of learning: The plots show the average return obtained
+    over time during training, computed as a rolling average with a window size of
+    5.000 steps, calculated every 1.000 steps. (left) Ten runs of hyperparameter configuration
+    1 for TRPO using same seed and evaluated on the real world robot, (right) Ten
+    runs using the same RL algorithm with same code base using the same seed but evaluated
+    in UR’s simulator: URSim v. 3.9.1⁵⁵5Available for download here: [https://www.universal-robots.com/download/?option=51823](https://www.universal-robots.com/download/?option=51823).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Evaluation of Baseline Algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The resulting learning curves from evaluating the top 5 configurations are plotted
+    in figure [3](#S5.F3 "Figure 3 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots"), which consists of the mean rewards and their standard
+    error (SE). Through the evaluation of TRPO, we observed that the worst performing
+    configuration was configuration 4, which is different from the original work [[8](#bib.bibx8)].
+    Our evaluation of PPO results in better performance for configurations 1 and 4\.
+    Note that for PPO, the second last run of configuration 4 failed. Figure [4](#S5.F4
+    "Figure 4 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots") shows
+    the return over time for this run. We assume it is an outlier, not representative
+    of the true population, and exclude it from the statistical analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/109c2e4b3bf4dbbc827a0639326502d3.png)![Refer to caption](img/2f7fd75197ada20002cf596cd615642d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Top-5 hyperparameter configurations from the random search: The mean
+    average reward is plotted with its SE, computed from the ten runs conducted for
+    each of the five hyperparameter configurations for each of the two algorithms;
+    (left) TRPO and (right) PPO. The average return is computed by a rolling average
+    with a window size of 5000, and computed every 1.000 steps.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8e78fce7707b89aee63488bef72bf541.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: The failed run of PPO: The \nth9 run of the \nth4 configuration for
+    PPO failed for some unknown reason. We assume that this run is an outlier and
+    not part of the true population. Thus, we exclude it from the statistical analysis.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To test the significance of our results we perform bootstrapping on the original
+    10 observations for each configuration. The resulting sample statistics (means
+    and CIs) are presented in table [1](#S5.T1 "Table 1 ‣ 5.2 Evaluation of Baseline
+    Algorithms ‣ 5 Results ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement
+    Learning Algorithms on Real-World Robots"), where we obtain a different order
+    of performance for the five configurations from that originally reported in [[8](#bib.bibx8)].
+    For TRPO, we find that even though configuration 1 appears to show the best performance
+    in figure [3](#S5.F3 "Figure 3 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots"), the mean performance of configuration 2 is higher, suggesting
+    a faster increase in performance. For PPO, we obtain the largest mean values from
+    configurations 1 and 4\. While it appears that the CIs are large for PPO, suggesting
+    a greater range of performance, we recall that Henderson *et al*. [[9](#bib.bibx9)]
+    speculates that exceedingly large confidence bounds might suggest an insufficient
+    sample size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Hyper-parameter configuration | Algorithms |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TRPO | PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| [[8](#bib.bibx8)] | Ours | [[8](#bib.bibx8)] | Ours |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\hat{\mu}$ | $\bar{\mu}$ | $95\%$ CI | $\hat{\mu}$ | $\bar{\mu}$ | $95\%$
+    CI |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c1 | 158.56 | $135.78$ | $(127.31,144.78)$ | 176.62 | $137.08$ | $(116.64,157.73)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c2 | 138.58 | $139.65$ | $(128.04,153.28)$ | 150.25 | $86.51$ | $(58.48,115.48)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c3 | 131.35 | $112.37$ | $(91.38,134.72)$ | 137.92 | $90.12$ | $(64.28,118.38)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c4 | 123.45 | $98.03$ | $(93.34,103.18)$ | 137.26 | $119.43$ | $(107.98,130.31)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c5 | 122.60 | $106.62$ | $(95.57,118.60)$ | 136.09 | $82.42$ | $(62.58,104.15)$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Overall performance achieved by the two baselines: The mean and 95%
+    CI for each hyper-parameter configuration is computed from the 10k samples obtained
+    by bootstrapping from our original ten samples. All trials are conducted using
+    the UR environment which corresponds to 300 hours of robot wall time. The reported
+    average return by [[8](#bib.bibx8)] is denoted $\hat{\mu}$, while $\bar{\mu}$
+    denotes the empirical mean we obtained from bootstrapping.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The empirical distributions we obtain from bootstrapping are presented in appendix
+    [A5](#A5 "Appendix A5 Normality Test of Empirical Distributions ‣ A Survey on
+    Reproducibility by Evaluating Deep Reinforcement Learning Algorithms on Real-World
+    Robots"), with a theoretical normal distribution fitted to the EDF. To determine
+    if the data was normally distributed we performed a normality test and, even though
+    our data initially appears normally distributed, we found that 8 of 10 configurations
+    would reject our null-hypothesis using a significance level of $\alpha=0.05$.
+    Thus the data cannot be assumed normally distributed and other theoretical distributions
+    must be considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fitting theoretical distributions to the EDFs is performed to determine which
+    distribution fits the empirical data best. We tested 100 theoretical distributions,
+    of which 52 converged successfully. On these 52, we compute a goodness of fit
+    by performing a Kolmogorow-Smirnow (KS) test (see appendix [A4](#A4 "Appendix
+    A4 Fitting of Theoretical Distributions ‣ A Survey on Reproducibility by Evaluating
+    Deep Reinforcement Learning Algorithms on Real-World Robots")) from which we choose
+    the most promising distributions determined from their $p$-values. This results
+    in the six distributions presented in appendix [A4](#A4 "Appendix A4 Fitting of
+    Theoretical Distributions ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement
+    Learning Algorithms on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Verifying reproducibility. To verify the claims made by the original authors,
+    we compute the probability that we would obtain a mean performance at least as
+    good as the originally reported average rewards (shown in appendix [A3](#A3 "Appendix
+    A3 Comprehensive List of Hyper-parameter Ranges and Values ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots")).
+    We do this for each of the best-fit distributions and the results are shown in
+    table [2](#S5.T2 "Table 2 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots"). If we have the probabilities $P_{d}$ that the distributions
+    match the underlying EDFs (reported in appendix [A4](#A4 "Appendix A4 Fitting
+    of Theoretical Distributions ‣ A Survey on Reproducibility by Evaluating Deep
+    Reinforcement Learning Algorithms on Real-World Robots")) described as $P\{\mathrm{dist}=d|\mathrm{data}\}=P_{d}$,
+    and the probability $P_{v}$ that we can get a value, $v$, at least as good (from
+    that specific distribution), then we have $P\{v\geq\hat{\mu}|\mathrm{dist}=d,\mathrm{data}\}=P_{v}$.
+    Thus $P\{v\geq\hat{\mu}|\mathrm{data}\}=P_{d}\cdot P_{v}$, where $\hat{\mu}$ denotes
+    the single value of average return reported in [[8](#bib.bibx8)] and table [1](#S5.T1
+    "Table 1 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Distributions | Algorithms |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TRPO | PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| c1 | c2 | c3 | c4 | c5 | c1 | c2 | c3 | c4 | c5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| beta | 0.0000 | 0.5990$\star$ | 0.0436 | 0.0000 | 0.0022 | 0.0000 | 0.0000
+    | 0.0000 | 0.0015 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0000 | 0.5985$\star$ | 0.0246 | 0.0000 | 0.0022 | 0.0000 |
+    0.0000 | 0.0000 | 0.0015 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0000 | 0.3749$\star$ | 0.0417 | 0.0000 | 0.0015 | 0.0000 |
+    0.0000 | 0.0000 | 0.0011 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0000 | 0.3894$\star$ | 0.0424 | 0.0000 | 0.0015 | 0.0000 | 0.0000
+    | 0.0000 | 0.0004 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0000 | 0.2798$\star$ | 0.0407 | 0.0000 | 0.0013 | 0.0000 |
+    0.0000 | 0.0000 | 0.0012 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0000 | 0.2518$\star$ | 0.0411 | 0.0000 | 0.0014 | 0.0000 | 0.0000
+    | 0.0000 | 0.0010 | 0.0000 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2: Verification of reproducibility: The table depicts the probabilities
+    of obtaining a new sample at least as good as the one reported in [[8](#bib.bibx8)]
+    under the distributions listed. A failure to reject our hypothesis is indicated
+    by $\star$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Discussions and Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Experimental Conclusions
+  prefs: []
+  type: TYPE_NORMAL
+- en: From table [2](#S5.T2 "Table 2 ‣ 5.2 Evaluation of Baseline Algorithms ‣ 5 Results
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots") we reject 55 out of 60 of our hypotheses stating that it
+    would be possible to obtain a single sample at least as good as the one reported
+    in [[8](#bib.bibx8)]. Our probability values conclude that the values reported
+    in [[8](#bib.bibx8)] do not depict the range of performance very well. From the
+    $p$-values we conclude that one run is not a representative sample of the underlying
+    distribution, rather than dismissing the original work as irreproducible. The
+    ideal way to compare results is to compare the resulting EDFs from statistical
+    analysis, which was not possible in our case as [[8](#bib.bibx8)] only reports
+    one value of average return per configuration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The key takeaway is that it is – indeed – very challenging to create reproducible
+    robotic RL research, and that having systems of uniform testing and ways to describe
+    experiments can assist researchers in reporting their results without missing
+    those important hyperparameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which recommendations can we draw from the experiments?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reproducing RL results on a real-world robot is not trivial and introduces many
+    practical issues. The main issue we encountered was that the robot systematically
+    stopped every four runs as UR’s controller interface (PolyScope) lost its connection
+    to the real-time controller. It was challenging to figure out where and why the
+    error occurred, and we never found the cause, but eventually worked around it
+    by shutting down and restarting the robot controller after each trial. We conclude
+    that physical issues are difficult to debug since it is hard to predict and solve
+    bugs in the internal software of the physical robot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing software dependencies is essential to creating reproducible experiments.
+    We encourage reducing the number of dependencies to the minimum necessary to run
+    the experimental code. Further, dependencies should be easy to install and use,
+    which means that authors should, as a bare minimum, provide a list of dependencies
+    and versions used to carry out their experimental work. We used the software container
+    platform Docker⁶⁶6[https://www.docker.com/](https://www.docker.com/) to manage
+    our dependencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Presetting and reporting the random seeds used is key for ensuring that results
+    are reproducible. However, when dealing with real-world robotics, where the sensor
+    readings can be delayed and contain real measurement error, stochasticity will
+    prevail. From our experiments, we found that if the PC used cannot process the
+    traffic across the TCP socket fast enough, the sensor readings will not occur
+    at the same time across different runs, leading to continuous stochasticity even
+    if all parts of the software are seeded. This is visualised in Fig. [5](#footnote5
+    "footnote 5 ‣ Figure 2 ‣ 5.1 Repeatability of Code Base ‣ 5 Results ‣ A Survey
+    on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms on Real-World
+    Robots"). We argue that presetting (and reporting) the random seeds should be
+    considered good practice, and we admit that we did not preset the random seeds
+    for obtaining the results presented in this work. Not presetting and reporting
+    the random seeds is an error we wish to highlight for others to avoid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distinguishing between experimental code and library code helps others to run
+    the code more easily. One of our initial discoveries when attempting to reproduce
+    the work of Mahmood *et al*. [[8](#bib.bibx8)] was that the experimental code
+    they used for obtaining the reported results was not available. The open-sourced
+    code⁷⁷7[https://github.com/kindredresearch/SenseAct](https://github.com/kindredresearch/SenseAct)
+    was library code and example code. We reached out to the lead author multiple
+    times requesting both missing hyperparameters and experimental code, but did not
+    obtain the code due to legal reasons. This restriction meant that we were forced
+    to replicate, rather than reproduce, the original work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logging of return values is done by using the callback interface provided by
+    the OpenAI implementations [[17](#bib.bibx17)], where return values are only available
+    at the end of each iteration which, in turn, is dependent on the algorithm’s batch
+    size. In order to obtain comparable results, all computed rewards during training
+    should be logged and used for statistical inference. We did not do this as it
+    would require us to diverge more significantly from the original code-base.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hyper-parameters have a significantly different effect across algorithms and
+    environments, as shown in [[9](#bib.bibx9)]. Reporting both how the selected parameters
+    were obtained, and all parameters themselves, is essential for allowing others
+    to replicate work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which general recommendations can we draw from our work?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Separating evaluation from training as highlighted by Khetarpal *et al*. [[11](#bib.bibx11)]
+    is significant as RL agents are shown to overfit quite robustly to training instances
+    [[18](#bib.bibx18)]. The use of different preset seeds for training and evaluation
+    also is to be encouraged. While we wished to follow and extend the pipeline in
+    [[11](#bib.bibx11)], the current states of the proposed pipeline and OpenAI Baselines
+    are incompatible and are thus subject for future work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thorough documentation is essential to ensure reproducibility and comparability,
+    as even small details of an experiment can be critical. One may argue that documentation
+    can become very time consuming and take valuable time away from potential progress.
+    We believe that it is a question of establishing a culture in the field where
+    the documentation of the experimental work is an integrated part of conducting
+    research. Many tools can be utilised to ease the process. Our proposed method,
+    including the configuration files, presents an attempt to ease the documentation
+    process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Measurement metrics are one of the key issues when comparing RL algorithms.
+    Often, how and when performance is recorded remains unreported [[11](#bib.bibx11)].
+    Different implementations of algorithms collect, process and store the performance
+    metrics differently, making comparisons difficult if not impossible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When choosing the right metric when reporting the results of conducted experiments,
+    the designer must first make clear what makes an algorithm good. Next, the designer
+    must determine how to measure that. In general, there are two aspects to consider:
+    1) Good performance describes how well the algorithm works in the specific task
+    addressed, and 2) Efficient use describes the cost of achieving a satisfactory
+    performance and might include the time spent optimising hyper-parameter choices,
+    the effort required to compute the algorithm’s output, and/or the cost of the
+    data obtained during training. Metrics can measure either of these, and it is
+    the designer’s choice according to what problem is sought solved, but in order
+    to ensure comparability in scientific papers the authors should check which standard
+    metrics are reported and report those, as well as potential additional ones selected
+    by the authors. Further, the metrics chosen should be reported, explained, and
+    argued for, including how they are computed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Open-Source Research Through this work we advocate for open-sourcing all aspects
+    of research, including source code, as we believe it to be paramount to ensure
+    the continued progress of the scientific fields. As a bare minimum, a study or
+    experiment should be advertised with enough details so any third-party scientist,
+    with sufficient skills, can obtain the same results within the marginals of experimental
+    error [[12](#bib.bibx12)]. Many researchers fail even to meet these simple though
+    crucial requirements due to all sorts of reasons [[1](#bib.bibx1)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The idea of a trade-off between fast continued progress and rigorous analysis
+    is one we have met from multiple sources. We believe that irreproducible research
+    is not actually research, merely data – and poor quality of data at that – and
+    that there is not really a trade-off between going somewhere carefully and possibly
+    nowhere fast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Supplementary Materials: All library code, hence adaptations to the SenseAct
+    framework, is publicly available at: [https://github.com/dti-research/SenseAct](https://github.com/dti-research/SenseAct)
+    and the docker image we have used throughout this work is available at: [https://hub.docker.com/r/dtiresearch/senseact](https://hub.docker.com/r/dtiresearch/senseact).
+    All the experimental code and data to regenerate the figures in this manuscript
+    is available at [https://github.com/dti-research/SenseActExperiments](https://github.com/dti-research/SenseActExperiments).
+    If you find something missing or not working, please feel free to contact the
+    lead author.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Author Contributions: All authors have made substantial contributions to the
+    conception and design of the work. Nicolai A. Lynnerup and Laura Nolling wrote
+    the original draft of this manuscript while John Hallam and Rasmus Hasle have
+    substantively revised it. Laura Nolling made the changes to the SenseAct framework
+    in order to make it callable by external programs and added logging functionality.
+    Further, Laura Nolling devised the bootstrapping and evaluation scripts, while
+    Nicolai A. Lynnerup programmed the distribution-fitting script and reviewed and
+    edited evaluation and bootstrapping scripts. Nicolai A. Lynnerup created the Docker
+    images and adapted the SenseAct framework to work with all versions of the CB-series
+    UR robots, based on the work of Oliver Limoyo⁸⁸8[https://github.com/kindredresearch/SenseAct/pull/29](https://github.com/kindredresearch/SenseAct/pull/29),
+    Ph.D. Student at the University of Toronto. Further, Nicolai A. Lynnerup conducted
+    the literature review on reproducibility. Rasmus Hasle and John Hallam provided
+    critical feedback and helped shape the research and analyses. Nicolai A. Lynnerup,
+    Rasmus Hasle, and John Hallam secured the research funding, while all authors
+    have approved the submitted version.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Funding: The work presented in this paper is partially funded by the Danish
+    Technological Institute and partially Innovation Fund Denmark through their Industrial
+    Researcher Program, grant 8053-00057B.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Acknowledgements: This work benefited from the help of many people beyond the
+    authors. We want to show our gratitude to Jens-Jakob Bentsen, and Thomas Mosgaard
+    Giselsson, specialists at Danish Technological Institute (DTI) for numerous discussions
+    on different aspects of the reproducibility terminology. We further thank Jens-Jakob
+    Bentsen for all his help debugging the UR robot’s communication interface and
+    underlying controller functionality. Next, we would like to thank Rasmus Lunding
+    Henriksen, specialist at DTI, for his comments that significantly improved the
+    manuscript. Additionally, we would like to show our gratitude to Kasper Stoy,
+    Professor at ITU Copenhagen, for his comments on our work, which helped us see
+    more perspectives on reproducibility and reporting in science. We would also like
+    to show our gratitude to the two anonymous reviewers for their insights and constructive
+    comments. Any errors are our own and should not tarnish the reputations of these
+    persons nor the institutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Conflicts of Interest: The authors declare no conflict of interest. The funding
+    sponsors had no role in the design of the research; in the collection, analyses
+    or interpretation of data; in the writing of this manuscript, nor in the decision
+    to, or where to, publish the results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Geir Kjetil Sandve, Anton Nekrutenko, James Taylor and Eivind Hovig “Ten
+    simple rules for reproducible computational research” In *PLoS computational biology*
+    9.10 Public Library of Science, 2013, pp. e1003285'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] John Schulman et al. “Trust region policy optimization” In *International
+    Conference on Machine Learning*, 2015, pp. 1889–1897'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] John Schulman et al. “Proximal policy optimization algorithms” In *arXiv
+    preprint arXiv:1707.06347*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Timothy P Lillicrap et al. “Continuous control with deep reinforcement
+    learning” In *arXiv preprint arXiv:1509.02971*, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Tuomas Haarnoja, Haoran Tang, Pieter Abbeel and Sergey Levine “Reinforcement
+    learning with deep energy-based policies” In *Proceedings of the 34th International
+    Conference on Machine Learning-Volume 70*, 2017, pp. 1352–1361 JMLR. org'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Yan Duan et al. “Benchmarking deep reinforcement learning for continuous
+    control” In *International Conference on Machine Learning*, 2016, pp. 1329–1338'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] A Rupam Mahmood, Dmytro Korenkevych, Brent J Komer and James Bergstra “Setting
+    up a Reinforcement Learning Task with a Real-World Robot” In *arXiv preprint arXiv:1803.07067*,
+    2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] A Rupam Mahmood et al. “Benchmarking Reinforcement Learning Algorithms
+    on Real-World Robots” In *arXiv preprint arXiv:1809.07731*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Peter Henderson et al. “Deep reinforcement learning that matters” In *Thirty-Second
+    AAAI Conference on Artificial Intelligence*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Riashat Islam, Peter Henderson, Maziar Gomrokchi and Doina Precup “Reproducibility
+    of benchmarked deep reinforcement learning tasks for continuous control” In *arXiv
+    preprint arXiv:1708.04133*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Khimya Khetarpal et al. “Re-evaluate: Reproducibility in evaluating reinforcement
+    learning algorithms” In *International Conference on Machine Learning*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] Hans E Plesser “Reproducibility vs. replicability: a brief history of
+    a confused terminology” In *Frontiers in neuroinformatics* 11 Frontiers, 2018,
+    pp. 76'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Lorena A Barba “Terminologies for reproducible research” In *arXiv preprint
+    arXiv:1802.03311*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Jon F Claerbout and Martin Karrenbach “Electronic documents give reproducible
+    research a new meaning” In *SEG Technical Program Expanded Abstracts 1992* Society
+    of Exploration Geophysicists, 1992, pp. 601–604'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Jonathan B Buckheit and David L Donoho “Wavelab and reproducible research”
+    In *Wavelets and statistics* Springer, 1995, pp. 55–81'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Roger D Peng, Francesca Dominici and Scott L Zeger “Reproducible epidemiologic
+    research” In *American journal of epidemiology* 163.9 Oxford University Press,
+    2006, pp. 783–789'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Greg Brockman et al. “Openai gym” In *arXiv preprint arXiv:1606.01540*,
+    2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Chiyuan Zhang, Oriol Vinyals, Remi Munos and Samy Bengio “A study on overfitting
+    in deep reinforcement learning” In *arXiv preprint arXiv:1804.06893*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Matthias Schwab, N Karrenbach and Jon Claerbout “Making scientific computations
+    reproducible” In *Computing in Science & Engineering* 2.6 IEEE, 2000, pp. 61–67'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] David L Donoho et al. “Reproducible research in computational harmonic
+    analysis” In *Computing in Science & Engineering* 11.1 IEEE, 2009'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Roger D Peng “Reproducible research in computational science” In *Science*
+    334.6060 American Association for the Advancement of Science, 2011, pp. 1226–1227'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Chris Drummond “Replicability is not reproducibility: nor is it good science”,
+    2009'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Mark Liberman “Replicability vs. reproducibility - or is it the other
+    way around?”, 2015 URL: [http://languagelog.ldc.upenn.edu/nll/?p=21956](http://languagelog.ldc.upenn.edu/nll/?p=21956)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Arturo Casadevall and Ferric C Fang “Reproducible science” Am Soc Microbiol,
+    2010'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Thilo Mende “Replication of defect prediction studies: problems, pitfalls
+    and recommendations” In *Proceedings of the 6th International Conference on Predictive
+    Models in Software Engineering*, 2010, pp. 5 ACM'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] ACM Result “Artifact Review and Badging”, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Steven N Goodman, Daniele Fanelli and John PA Ioannidis “What does research
+    reproducibility mean?” In *Science translational medicine* 8.341 American Association
+    for the Advancement of Science, 2016, pp. 341ps12–341ps12'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Daniel T Gilbert, Gary King, Stephen Pettigrew and Timothy D Wilson “Comment
+    on “Estimating the reproducibility of psychological science”” In *Science* 351.6277
+    American Association for the Advancement of Science, 2016, pp. 1037–1037'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] Rachael Tatman, Jake VanderPlas and Sohier Dane “A Practical Taxonomy
+    of Reproducibility for Machine Learning Research”, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] Randall J LeVeque “Top ten reasons to not share your code (and why you
+    should anyway)” In *Siam News* 46.3, 2013'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Ralph B d’Agostino “An omnibus test of normality for moderate and large
+    size samples” In *Biometrika* 58.2 Oxford University Press, 1971, pp. 341–348'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] RALPH D’AGOSTINO and Egon S Pearson “Tests for departure from normality”
+    In *Biometrika* 60.3 Oxford University Press, 1973, pp. 613–622'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Xavier Glorot and Yoshua Bengio “Understanding the difficulty of training
+    deep feedforward neural networks” In *Proceedings of the thirteenth international
+    conference on artificial intelligence and statistics*, 2010, pp. 249–256'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Kaiming He, Xiangyu Zhang, Shaoqing Ren and Jian Sun “Delving deep into
+    rectifiers: Surpassing human-level performance on imagenet classification” In
+    *Proceedings of the IEEE international conference on computer vision*, 2015, pp.
+    1026–1034'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Nitish Srivastava et al. “Dropout: a simple way to prevent neural networks
+    from overfitting” In *The Journal of Machine Learning Research* 15.1 JMLR. org,
+    2014, pp. 1929–1958'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Tom Schaul, John Quan, Ioannis Antonoglou and David Silver “Prioritized
+    experience replay” In *arXiv preprint arXiv:1511.05952*, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Appendices
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Appendix A1 A Brief Overview of a Confused Taxonomy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A1.1 Two Perspectives on Terminology
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Unfortunately there exists some confusion on the meaning of repeatability, reproducibility
+    and replicability which in turn negatively affects the overall development of
+    science. Barba [[13](#bib.bibx13)] group a series of papers into 2 groups; A.
+    Those who do not distinguish between the words; reproducibility and replicability,
+    and B. Those who do distinguish between the two words. Group B is then divided
+    into two additional groups who’s contradicting conventions are shown below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: B.1\. The Claerbout, Donoho, Peng Convention
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: From the pioneering work of Claerbout [[14](#bib.bibx14)] Buckheit and Donoho
+    [[15](#bib.bibx15)] and Peng *et al*. [[16](#bib.bibx16)] the following convention
+    has been derived, but as the papers are somewhat dated it might be beneficial
+    to read the more recent work by Schwab *et al*. [[19](#bib.bibx19)], Donoho [[20](#bib.bibx20)]
+    and Peng *et al*. [[21](#bib.bibx21)] instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reproducibility
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: describes a study where the original authors has provided all the necessary
+    observations and potentially computer code to run the method again, allowing a
+    third party scientist to reproduce the same results. Hence; different team with
+    same experimental setup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replicability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: is used to describe a third party study that arrives at the same conclusions
+    as an original study, where new observations are collected and the method is implemented
+    based on the published paper. Hence; different team with different experimental
+    setup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: B.2\. The ACM, Drummond Convention
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Drummond [[22](#bib.bibx22)] published his article at the International Conference
+    on Machine Learning (ICML) in 2006 where he unfortunately switched the definitions
+    of reproducibility and replicability around, which according to Professor of Linguistics
+    Mark Liberman should be rejected [[23](#bib.bibx23)] as the term was coined much
+    earlier by Claerbout [[14](#bib.bibx14)]. Prior to the suggestion of rejecting
+    the re-coining of terms, Drummond’s “new definitions” spread through several scientific
+    papers. Fang *et al*. [[24](#bib.bibx24)] and Mende *et al*. [[25](#bib.bibx25)]
+    seems to have picked up the confusion of the terms from Drummond. Further the
+    Association for Computing Machinery (ACM) is also using the terms wrong in their
+    badging of artifacts system [[26](#bib.bibx26)], and they seem to stick with the
+    definition, as it apparently is revised latest in 2017, two years after Mark Liberman
+    published his findings. The ACM, Drummond convention is as follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Repeatability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (same team, same experimental setup) The observations can be obtained with the
+    stated precision by the same researchers using the same method and the same hardware
+    under the same conditions in the same location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replicability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (different team, same experimental setup) The observations can be obtained with
+    the stated precision by third party researchers using the same method, the same
+    hardware under the same conditions in the same or different location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reproducibility
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: (different team, different experimental setup) The observations can be obtained
+    with the stated precision by third party researchers using different hardware
+    on a different location.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We advocate that all researchers refrain from using the terms the ACM, Drummond
+    way as the re-coining of the terms is not justified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The conflicting terminologies
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: are annoying at least and at worst a blockade for the progress of science.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A1.2 Expanding the Terminologies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to re-coining terms, there exists various papers suggesting coining
+    new more descriptive terms as a way out of the heated discussions regarding repeatability,
+    reproducibility and replicability. As the number of papers re-coining the terms
+    are very large we present only a few of them here as a complete review is beyond
+    the scope of this work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Goodman *et al*. [[27](#bib.bibx27)] proposes a lexicon for reproducibility
+    by differentiating between methods reproducibility, results reproducibility and
+    inferential reproducibility to solve the terminology confusion. The three new
+    reproducibility terms are defined below, where Goodmann *et al*. [[27](#bib.bibx27)]
+    argues that the definitions should be clear in principle but operationally elusive,
+    why they provide many operational examples specific to certain scientific fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Methods reproducibility: provide enough detail about study procedures and data
+    so the same procedures could, in theory or in actuality, be exactly repeated.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Results reproducibility: obtain same results from the conduct of an independent
+    study whose procedures are as closely matched to the original experiment as possible.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Inferential reproducibility: draw similar conclusions from either an independent
+    study replication or a a reanalysis of the original study. See Gilbert *et al*. [[28](#bib.bibx28)]
+    for a debate on the difference between results and inferential reproducibility.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The coining of these three terms is an attempt to make it more specific what
+    aspects of “trustworthiness” we focus on, when analysing a study. Thus avoiding
+    the ambiguity caused by everyday language’s indifferent use of the words; repeatable,
+    reproducible and replicable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tatman *et al*. [[29](#bib.bibx29)] proposes a practically oriented taxonomy
+    for reproducibility more or less specific for ML research. As Goodman *et al*. [[27](#bib.bibx27)],
+    they are attempting to make the principally clear definitions of the terms less
+    operationally elusive by comprehensive descriptions of to what extend details,
+    code and data are shared. While we applaud the author’s take on a simple and practical
+    taxonomy we discourage the seemingly indifferent use of the term reproducibility
+    [[29](#bib.bibx29)] as it contradicts the Claerbout, Donoho, Peng convention,
+    which could have been easily avoided.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Low reproducibility: Finished paper only is essentially replicability in the
+    Claerbout, Donoho, Peng convention where a well-written publication – in theory
+    – should be enough for a third party scientist to replicate the study or experiment.
+    However, as the authors argue, this is often impractical and even impossible given
+    time constraints and/or missing information.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Medium reproducibility: Code and data, no environment relates to reproducibility
+    in the Claerbout, Donoho, Peng convention. The original paper from Claerbout [[14](#bib.bibx14)]
+    does not explicitly describe whether the environment should be a part of the scholarship
+    or not as the tools making this possible simply weren’t available at the time.
+    With today’s tools such as Docker, we argue that it should be a part of it. LeVeque
+    [[30](#bib.bibx30)], argues that as long as the code is present alongside the
+    publication then it is not critical whether the code runs or not, as the code
+    itself contains a wealth of details that may not appear in the description. The
+    bare minimum requirement should hold that information regarding the environment
+    – versions, etc. – should be a critical part of the publication.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'High reproducibility: Code, data and environment also relates to reproducibility
+    in the Claerbout, Donoho, Peng convention where, as discussed above, the environment
+    is included, making the reproducibility process easier for the reviewer or reader
+    as this researcher does not have to mess around with installing all kinds of libraries
+    in certain versions on top of his/hers functioning system.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A1.3 Discussion & Conclusion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Firstly, we believe that we should honor the often cited quote from Buckheit
+    & Donoho [[15](#bib.bibx15)] paraphrasing Jon Claerbout [[14](#bib.bibx14)] and
+    submit our code alongside our publications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: “An article about computational science in a scientific publication is not the
+    scholarship itself, it is merely advertising of the scholarship. The actual scholarship
+    is the complete software development environment and the complete set of instructions
+    which generated the figures.”
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Secondly we encourage the community to find some common ground regarding the
+    terminology, so focus once again can be on evolving the scientific field instead
+    of terminology. The bare minimum requirement is that researchers at least state
+    what they mean when they use the terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We wish to highlight that reproducibility is not a “free-pass” for the readers
+    to use without properly investigating the submitted code. Consider the case where
+    a researcher is to reproduce the results of a published scientific paper and has
+    hence obtained the original code and data. This third-party researcher can now
+    re-run the code and (hopefully) obtain the same results. The problem occurs when
+    the code is run without it being understood, making it possible for the third-party
+    researcher to obtain the results without him finding the potential bugs in the
+    code from the original author. This is likewise the case when someone commits
+    fraud and makes the fraud reproducible. Our claim is that when other researchers
+    tries to build on top of faulted experiments and thus transfer the methodologies
+    to other domains the fraud or bugs will – often, if not always – become apparent.
+    This, as we assume that it must take some significant hand-engineering to make
+    the fraud reproducible to the specific problem, making it non-generic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A2 Practicalities for Ensuring Reproducibility
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As discussed in [[7](#bib.bibx7)] there exists many practical issues when setting
+    up RL tasks on real-world robots, especially when attempting to ensure reproducibility.
+    Below we outline some of the most important practices that should be encouraged
+    in order to ensure reproducibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Seed the Random Number Generator
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A simple, yet effective, approach is to seed the random number generator, with
+    a set of predefined seeds, so experiments can be repeated and reproduced. For
+    an overview of the different sources of non-determinism in ML see appendix [A6](#A6
+    "Appendix A6 Sources of Non-Determinism in Machine Learning ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Avoiding the Dependency Hell
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To avoid (most of) the problems related to the colloquial term dependency hell,
+    researchers can advantageously utilise tools such as Docker. For this work, we
+    adapted the SenseAct framework so we could build it into a Docker image.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code Reviews
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: considers how to ensure the integrity of code by letting others review it prior
+    to conducting experiments. This indirectly enforces developers to write understandable
+    code (including comments). This might take a little longer than simply throwing
+    pieces of code together, but the benefits of code reviewing prior to testing should
+    motivate most development teams to conform to this practice. One of the largest
+    benefits is the increased probability for avoiding bad experiments due to bugs
+    in the code, as two sets of eyes are commonly known to be better than one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Open-Sourcing Gathered Artefacts
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Gathered data should, as well as code, be open-sourced. This helps verifying
+    reproductions and potential replications. All data used for describing the methods
+    shown in this work is available at our GitHub repository⁹⁹9[https://github.com/dti-research/SenseActExperiments](https://github.com/dti-research/SenseActExperiments)
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A3 Comprehensive List of Hyper-parameter Ranges and Values
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This appendix presents all hyper-parameter values that we have used to conduct
+    our experiments. The hyper-parameter configurations used in this work are presented
+    in table [3](#A3.T3 "Table 3 ‣ Appendix A3 Comprehensive List of Hyper-parameter
+    Ranges and Values ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement
+    Learning Algorithms on Real-World Robots") and table [4](#A3.T4 "Table 4 ‣ Appendix
+    A3 Comprehensive List of Hyper-parameter Ranges and Values ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots"). The
+    hyperparameters that the authors of the original work chose not to tune have been
+    kept fixed throughout our experiments and are presented in table [5](#A3.T5 "Table
+    5 ‣ Appendix A3 Comprehensive List of Hyper-parameter Ranges and Values ‣ A Survey
+    on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms on Real-World
+    Robots"). We wish to highlight that for; a) TRPO the step-size is denoted vf_stepsize,
+    b) PPO the step-size is denoted optim_stepsize. This information is obtained through
+    correspondence with the original authors of [[8](#bib.bibx8)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| TRPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| # | Average Return | Hidden Layers | Hidden Size | Batch Size | Step Size
+    | $\gamma$ | $\lambda$ | $\delta_{KL}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 158.56 | 2 | 64 | 4096 | 0.00472 | 0.96833 | 0.99874 | 0.02437 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 138.58 | 1 | 128 | 2048 | 0.00475 | 0.99924 | 0.99003 | 0.01909 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | 131.35 | 4 | 64 | 8192 | 0.00037 | 0.97433 | 0.99647 | 0.31222 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | 123.45 | 4 | 128 | 4096 | 0.00036 | 0.99799 | 0.92958 | 0.01952 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | 122.60 | 4 | 32 | 2048 | 0.00163 | 0.96801 | 0.96893 | 0.00510 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 3: Hyper-parameter configurations found by random search: The table presents
+    the top-5 configurations found for TRPO in [[8](#bib.bibx8)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| # | Average Return | Hidden Layers | Hidden Size | Batch Size | Step Size
+    | $\gamma$ | $\lambda$ | Opt. Batch Size |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 176.62 | 3 | 64 | 512 | 0.00005 | 0.96836 | 0.99944 | 16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 150.25 | 1 | 16 | 256 | 0.00050 | 0.99926 | 0.98226 | 64 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | 137.92 | 1 | 2048 | 512 | 0.00011 | 0.99402 | 0.90185 | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | 137.26 | 4 | 32 | 2048 | 0.00163 | 0.96801 | 0.96893 | 1024 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | 136.09 | 1 | 128 | 2048 | 0.00280 | 0.99924 | 0.99003 | 32 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4: Hyper-parameter configurations found by random search: The table presents
+    the top-5 configurations found for PPO in [[8](#bib.bibx8)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Hyperparameter | Fixed Values |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | TRPO | PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Max. Timesteps | $150,000$ | $150,000$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Entropy Coef. | 0.0 | 0.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CG Iterations | 10 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CG Damping | 1e-2 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| VF Iterations | 3 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Clip Parameter | - | 0.2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Optim. Epochs | - | 10 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adam $\epsilon$ | - | 1e-5 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 5: Fixed hyperparameter values: The table shows the fixed hyperparameter
+    values that are not included in the random search.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A4 Fitting of Theoretical Distributions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We fit 100 theoretical distributions^(10)^(10)10For the comprehensive list
+    see: [https://docs.scipy.org/doc/scipy/reference/stats.html](https://docs.scipy.org/doc/scipy/reference/stats.html)
+    to our EDFs and use the KS test to determine the goodness of fit. From this, we
+    can determine which statistic to use in order to conduct the hypothesis testing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e8eea743cda3a970fbc2605f9c6d98f8.png)![Refer to caption](img/dd7ed137ee399984a6029ee4da197683.png)![Refer
+    to caption](img/8a6276463e160b8e70a423f1e56b0576.png)![Refer to caption](img/03e331f736fafe983db050def9985ba3.png)![Refer
+    to caption](img/44c88d4f554c55d14efb2b42bf5af266.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Theoretical distribution fitting on empirical data from TRPO: (top)
+    52 theoretical distributions fitted to the empirical data of the \nth1 configuration
+    of TRPO, (left) top-6 theoretical distributions (chosen based on $p$-value), (right)
+    best fitted theoretical distributions, each row corresponds to the hyperparameter
+    configuration. (figure continues on next page)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/fd42301fe68728b178f6dbda695e2796.png)![Refer to caption](img/fbe7eda7e43c833b310065218784afed.png)![Refer
+    to caption](img/2e8f783b42ceeede4a6ff523e8e44e5f.png)![Refer to caption](img/48563f64dd342ab837c09e3f5469dc79.png)![Refer
+    to caption](img/31804273e4f47bd2dae830c3216fdb4f.png)![Refer to caption](img/5ad61e5657badc6a3d3b9f93ed1030cc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Theoretical distribution fitting on empirical data from TRPO: (top)
+    52 theoretical distributions fitted to the empirical data of the \nth1 configuration
+    of TRPO, (left) top-6 theoretical distributions (chosen based on $p$-value), (right)
+    best fitted theoretical distributions, each row corresponds to the hyperparameter
+    configuration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0cc18e25dd28521bd89300eaef05954a.png)![Refer to caption](img/9266e5a52b6ef56e9e140df67b46f6c9.png)![Refer
+    to caption](img/8a79c09cbd3c7e993a48b48afc4ff8bb.png)![Refer to caption](img/6d6fc2005e2a00918a490545c239b9bd.png)![Refer
+    to caption](img/cd68a7f8b057078b4a0da16e146571bc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Theoretical distribution fitting on empirical data from PPO: (top)
+    52 theoretical distributions fitted to the empirical data of the \nth1 configuration
+    of PPO, (left) top-6 theoretical distributions (chosen based on $p$-value), (right)
+    best fitted theoretical distributions, each row corresponds to the hyperparameter
+    configuration. (figure continues on next page)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ae45a1278f5eaf6407b6315bc4ddda1d.png)![Refer to caption](img/df878a3a55e04d31f0c734255004b494.png)![Refer
+    to caption](img/2a55e0de9bbdc39b1c6fc0f5f5664da0.png)![Refer to caption](img/aca4cc37355aa983edf1d8fa6726325b.png)![Refer
+    to caption](img/be7cdc802314bc3476ad191e96bae52e.png)![Refer to caption](img/e31345171831d1a8903c56c380670f0e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Theoretical distribution fitting on empirical data from PPO: (top)
+    52 theoretical distributions fitted to the empirical data of the \nth1 configuration
+    of PPO, (left) top-6 theoretical distributions (chosen based on $p$-value), (right)
+    best fitted theoretical distributions, each row corresponds to the hyperparameter
+    configuration.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| KS Test on TRPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Distribution | Statistics | $p$-value | Distribution Parameters |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 1 | beta | 0.0082 | \collectcell <svg id="A4.T6.2.2.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .5188\endcollectcell | (824.65, 167.66, -175.37, 374.38) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0082 | \collectcell <svg id="A4.T6.3.3.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5087\endcollectcell | (-7.13,
+    9.58, 3.31, 195.55) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0079 | \collectcell <svg id="A4.T6.4.4.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5644\endcollectcell | (10.94,
+    15.94, 178.02, 56.88) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0080 | \collectcell <svg id="A4.T6.5.5.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5406\endcollectcell | (79.15,
+    -36.56, 39.48) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0075 | \collectcell <svg id="A4.T6.6.6.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6235\endcollectcell | (1.77,
+    138.22, 5.22) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0075 | \collectcell <svg id="A4.T6.7.7.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6189\endcollectcell | (-0.92,
+    138.62, 5.29) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 2 | beta | 0.0044 | \collectcell <svg id="A4.T6.8.8.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .9911\endcollectcell | (18.83, 8.83, 89.22, 74.13) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0044 | \collectcell <svg id="A4.T6.9.9.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9903\endcollectcell | (-1.62,
+    2.71, 89.67, 78.02) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0075 | \collectcell <svg id="A4.T6.10.10.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6204\endcollectcell | (12.79,
+    8.57, 189.57, 23.46) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0074 | \collectcell <svg id="A4.T6.11.11.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6443\endcollectcell | (10.59,
+    92.24, 20.53) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0085 | \collectcell <svg id="A4.T6.12.12.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4630\endcollectcell | (5.39,
+    151.53, 9.81) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0088 | \collectcell <svg id="A4.T6.13.13.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4167\endcollectcell | (-1.53,
+    145.51, 8.69) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 3 | beta | 0.0058 | \collectcell <svg id="A4.T6.14.14.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .8847\endcollectcell | (456.27, 282.03, -269.74, 618.35) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0083 | \collectcell <svg id="A4.T6.15.15.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4996\endcollectcell | (12132.2,
+    16581.66, -270975.92, 834554.97) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0061 | \collectcell <svg id="A4.T6.16.16.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8466\endcollectcell | (13.44,
+    32.78, 253.12, 333.52) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0060 | \collectcell <svg id="A4.T6.17.17.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8605\endcollectcell | (645.48,
+    -1703.51, 280.7) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0063 | \collectcell <svg id="A4.T6.18.18.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8245\endcollectcell | (1.2, 114.22,
+    11.64) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0062 | \collectcell <svg id="A4.T6.19.19.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8343\endcollectcell | (-0.58,
+    117.21, 12.05) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 4 | beta | 0.0064 | \collectcell <svg id="A4.T6.20.20.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .8108\endcollectcell | (22.36, 12.28, 77.62, 31.58) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0064 | \collectcell <svg id="A4.T6.21.21.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8028\endcollectcell | (-1.5,
+    3.17, 76.79, 34.56) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0071 | \collectcell <svg id="A4.T6.22.22.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6874\endcollectcell | (14.6,
+    11.91, 123.33, 16.21) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0073 | \collectcell <svg id="A4.T6.23.23.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6683\endcollectcell | (22.52,
+    61.28, 11.88) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0079 | \collectcell <svg id="A4.T6.24.24.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5575\endcollectcell | (2.92,
+    100.79, 3.36) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0134 | \collectcell <svg id="A4.T6.25.25.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .0555\endcollectcell | (0.0, 98.01,
+    2.53) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 5 | beta | 0.0053 | \collectcell <svg id="A4.T6.26.26.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .9402\endcollectcell | (41.71, 27.17, 45.53, 100.9) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0053 | \collectcell <svg id="A4.T6.27.27.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9391\endcollectcell | (-1.53,
+    4.6, 41.09, 112.69) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0073 | \collectcell <svg id="A4.T6.28.28.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6597\endcollectcell | (18.73,
+    20.62, 194.25, 84.29) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0073 | \collectcell <svg id="A4.T6.29.29.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6580\endcollectcell | (88.61,
+    -141.39, 55.38) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0078 | \collectcell <svg id="A4.T6.30.30.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5762\endcollectcell | (1.67,
+    109.54, 6.81) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0077 | \collectcell <svg id="A4.T6.31.31.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5887\endcollectcell | (-0.87,
+    110.27, 6.93) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 6: Probability values obtained by KS test: The table shows the $p$-values
+    from fitting six theoretical distributions to our EDFs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| KS Test on PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Distribution | Statistics | $p$-value | Distribution Parameters |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 1 | beta | 0.0032 | \collectcell <svg id="A4.T7.2.2.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="24.08"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">1</text></g></g></g></g></g></svg>
+    .0000\endcollectcell | (33.33, 26.22, 46.19, 162.37) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0031 | \collectcell <svg id="A4.T7.3.3.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="24.08"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">1</text></g></g></g></g></g></svg> .0000\endcollectcell | (-0.83,
+    4.37, 35.88, 185.12) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0045 | \collectcell <svg id="A4.T7.4.4.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9886\endcollectcell | (17.75,
+    27.5, 299.04, 234.23) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0043 | \collectcell <svg id="A4.T7.5.5.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9925\endcollectcell | (240.56,
+    -742.66, 160.51) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0047 | \collectcell <svg id="A4.T7.6.6.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9782\endcollectcell | (1.35,
+    139.96, 11.29) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0048 | \collectcell <svg id="A4.T7.7.7.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9762\endcollectcell | (-0.7,
+    142.42, 11.66) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 2 | beta | 0.0058 | \collectcell <svg id="A4.T7.8.8.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .8880\endcollectcell | (27.36, 24.02, -26.37, 211.93) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0058 | \collectcell <svg id="A4.T7.9.9.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8937\endcollectcell | (-0.42,
+    4.05, -40.1, 240.88) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0082 | \collectcell <svg id="A4.T7.10.10.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5115\endcollectcell | (18.66,
+    37.94, 339.16, 493.35) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0082 | \collectcell <svg id="A4.T7.11.11.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5114\endcollectcell | (637.2,
+    -2293.83, 368.68) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0086 | \collectcell <svg id="A4.T7.12.12.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4428\endcollectcell | (1.17,
+    88.64, 15.31) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0086 | \collectcell <svg id="A4.T7.13.13.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4487\endcollectcell | (-0.55,
+    92.63, 15.85) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 3 | beta | 0.0067 | \collectcell <svg id="A4.T7.14.14.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .7663\endcollectcell | (53.3, 20.5, -104.13, 268.91) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0068 | \collectcell <svg id="A4.T7.15.15.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .7434\endcollectcell | (-3.04,
+    4.28, -91.49, 271.58) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0079 | \collectcell <svg id="A4.T7.16.16.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .5618\endcollectcell | (13.09,
+    10.61, 214.53, 78.87) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0076 | \collectcell <svg id="A4.T7.17.17.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6067\endcollectcell | (18.11,
+    -77.65, 58.47) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0084 | \collectcell <svg id="A4.T7.18.18.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4859\endcollectcell | (3.43,
+    108.01, 19.21) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0086 | \collectcell <svg id="A4.T7.19.19.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .4449\endcollectcell | (-1.3,
+    101.47, 17.99) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 4 | beta | 0.0049 | \collectcell <svg id="A4.T7.20.20.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .9699\endcollectcell | (20.79, 29.82, 84.78, 84.4) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0048 | \collectcell <svg id="A4.T7.21.21.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .9733\endcollectcell | (1.12,
+    3.95, 78.74, 94.5) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0068 | \collectcell <svg id="A4.T7.22.22.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .7430\endcollectcell | (-15.88,
+    19.61, 43.62, 84.03) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0101 | \collectcell <svg id="A4.T7.23.23.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .2577\endcollectcell | (877.15,
+    -1051.47, 172.8) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0063 | \collectcell <svg id="A4.T7.24.24.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8236\endcollectcell | (0.57,
+    116.73, 4.84) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0074 | \collectcell <svg id="A4.T7.25.25.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6364\endcollectcell | (0.86,
+    115.92, 6.77) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Configuration 5 | beta | 0.0067 | \collectcell <svg id="A4.T7.26.26.1.pic1"
+    class="ltx_picture" height="18.69" overflow="visible" version="1.1" width="23.8"><g
+    transform="translate(0,18.69) matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)"
+    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 0)" fill="#000000" stroke="#000000"><g class="ltx_tikzmatrix"
+    transform="matrix(1 0 0 -1 0 4.46)"><g class="ltx_tikzmatrix_row" transform="matrix(1
+    0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col ltx_nopad_l ltx_nopad_r" transform="matrix(1
+    0 0 -1 0 0)"><text transform="matrix(1 0 0 -1 0 0)">0</text></g></g></g></g></g></svg>
+    .7584\endcollectcell | (42.62, 20.27, -42.17, 183.85) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsb | 0.0067 | \collectcell <svg id="A4.T7.27.27.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .7532\endcollectcell | (-2.49,
+    4.28, -46.6, 201.73) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| johnsonsu | 0.0063 | \collectcell <svg id="A4.T7.28.28.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8247\endcollectcell | (13.87,
+    12.67, 191.14, 81.67) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loggamma | 0.0064 | \collectcell <svg id="A4.T7.29.29.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .8040\endcollectcell | (27.53,
+    -101.83, 55.89) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| powernorm | 0.0072 | \collectcell <svg id="A4.T7.30.30.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6841\endcollectcell | (2.61,
+    92.9, 13.91) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| skewnorm | 0.0071 | \collectcell <svg id="A4.T7.31.31.1.pic1" class="ltx_picture"
+    height="18.69" overflow="visible" version="1.1" width="23.8"><g transform="translate(0,18.69)
+    matrix(1 0 0 -1 0 0) translate(12.04,0) translate(0,4.89)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 0)" fill="#000000"
+    stroke="#000000"><g class="ltx_tikzmatrix" transform="matrix(1 0 0 -1 0 4.46)"><g
+    class="ltx_tikzmatrix_row" transform="matrix(1 0 0 1 0 8.92)"><g class="ltx_tikzmatrix_col
+    ltx_nopad_l ltx_nopad_r" transform="matrix(1 0 0 -1 0 0)"><text transform="matrix(1
+    0 0 -1 0 0)">0</text></g></g></g></g></g></svg> .6902\endcollectcell | (-1.15,
+    90.53, 13.46) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 7: Probability values obtained by KS test: The table shows the $p$-values
+    from fitting six theoretical distributions to our EDFs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A5 Normality Test of Empirical Distributions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To test if the empirical distributions, created by bootstrapping, are normally
+    distributed we conduct a normality test (based on D’Agostino and Pearson’s test
+    [[31](#bib.bibx31), [32](#bib.bibx32)]) which rejects 8/10 of our null–hypothesis,
+    $\mathcal{H}_{0}$. Thus we cannot assume that the empirical distributions in figure
+    [10](#A5.F10 "Figure 10 ‣ Appendix A5 Normality Test of Empirical Distributions
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots"). The resulting $p$-values from the normality test is presented
+    in table [8](#A5.T8 "Table 8 ‣ Appendix A5 Normality Test of Empirical Distributions
+    ‣ A Survey on Reproducibility by Evaluating Deep Reinforcement Learning Algorithms
+    on Real-World Robots").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6a073b40c97639a273d576d5aa3cb42b.png)![Refer to caption](img/509b460c7205e344c88e579844262d2d.png)![Refer
+    to caption](img/e383e49a6db19a3a5e4ca629cc85b293.png)![Refer to caption](img/44716947917e8b2eb884834e2dcac843.png)![Refer
+    to caption](img/b9a3397686580775172b654807188960.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Empirical distributions obtained by bootstrapping: (top) TRPO and
+    (bottom) PPO. All ten hyper-parameter configurations are represented in the histograms
+    with a normal distribution fitted to it. Note that even though the data appears
+    normally distributed, our normality test rejects 8/10 of our null–hypothesis,
+    meaning that the samples were not normally distributed. See table [8](#A5.T8 "Table
+    8 ‣ Appendix A5 Normality Test of Empirical Distributions ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots") for
+    corresponding $p$–values. (figure continues on next page)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/856c2f6d9d71eb15f1038bd99af3aec0.png)![Refer to caption](img/2672432581d17950316c631d932ebb77.png)![Refer
+    to caption](img/6df7adf45cc161207cdceb2af758e05d.png)![Refer to caption](img/85a17510400ea6fdb34f0842f148cbf9.png)![Refer
+    to caption](img/573730c63435491d04a5ba798b8976fb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Empirical distributions obtained by bootstrapping: (top) TRPO and
+    (bottom) PPO. All ten hyper-parameter configurations are represented in the histograms
+    with a normal distribution fitted to it. Note that even though the data appears
+    normally distributed, our normality test rejects 8/10 of our null–hypothesis,
+    meaning that the samples were not normally distributed. See table [8](#A5.T8 "Table
+    8 ‣ Appendix A5 Normality Test of Empirical Distributions ‣ A Survey on Reproducibility
+    by Evaluating Deep Reinforcement Learning Algorithms on Real-World Robots") for
+    corresponding $p$–values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Hyper-parameter configuration | Algorithms |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TRPO | PPO |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.0002)}$ | Failed to reject |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.1604)}$ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p={5.17}\mathrm{e}{-}33)}$ | Failed to reject |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.1212)}$ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.0034)}$ | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p={7.24}\mathrm{e}{-}17)}$ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p={1.41}\mathrm{e}{-}6)}$ | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.0012)}$ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p=0.0005)}$ | Rejected |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ${\scriptstyle(p={4.69}\mathrm{e}{-}09)}$ |  |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 8: Hypothesis testing for normality: The table depicts the decision based
+    on the normality test and the resulting $p$–values to support those decisions.
+    Formally, the test rejects 8 out of 10 hypotheses, thus failing to reject 2 of
+    them. From this we derive that none of the 10 empirical distributions are normally
+    distributed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A6 Sources of Non-Determinism in Machine Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In ML, in contrast to studies in e.g. chemistry and social sciences, we have
+    the ability to create code (methods) and datasets (observations) that, if open-sourced,
+    other scientists can use to reproduce the results from the original published
+    research. From this overly simplified statement it should seem that reproducibility
+    shouldn’t be a problem in ML. There do, however, exists a reproducibility crisis
+    in the field of ML. This crisis is often caused by the nature of ML but also non-rigorous
+    testing approaches and sparsely documented hyperparameters have part in the crisis
+    [[1](#bib.bibx1), [9](#bib.bibx9)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: A6.1 Common Causes of Non-Determinism
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some of the most important causes for general non-determinism in ML are listed
+    below. It should be noted that this list assumes that we are attempting to reproduce
+    an ML experiment, hence these problems can occur even when we have obtained the
+    original code and data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'GPU: GPU floating point calculations – made through Nvidia’s neural network
+    library; CuDNN – are not guaranteed to generate the bit-wise reproducibility across
+    different GPU versions and architectures, but should generate the same bit-wise
+    results across runs when executed on GPUs with the same architecture and number
+    of SMs^(11)^(11)11[https://docs.nvidia.com/deeplearning/sdk/cudnn-developer-guide/index.html#reproducibility](https://docs.nvidia.com/deeplearning/sdk/cudnn-developer-guide/index.html#reproducibility).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Third-Party Libraries Often, the libraries used are using other libraries which
+    might in turn use stochastic processes needing a seed to a different random number
+    generator.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A6.2 Non-Determinism in Deep Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the general sources of non-determinism we here present sources
+    specific for deep learning (DL).
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Random Initialization of Weights: Often, the layer weights of a neural network
+    is initialized by sampling from a particular distribution to aspire faster convergence
+    [[33](#bib.bibx33), [34](#bib.bibx34)]. The initialization must be the same from
+    run-to-run in order to expect same results and not similar results.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shuffling of the Datasets: To avoid the optimization functions getting stuck
+    in local minima, the training of neural networks often occurs by dividing the
+    dataset into mini-batches. It is also shown that shuffling the data after each
+    epoch reduces the bias between gradient updates making the model more general
+    as it tends to overfit less.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Random Sampling: If we are in that luxurious position that we have to much
+    data to reasonably work with we draw a random subsample from the dataset to train
+    our model with.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Random Train/Test/Validation Splits: When data availability is low the go-to
+    validation method is $k$–fold cross validation where the dataset is stochastically
+    split into two or three sets of data.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Stochastic Attributes of the Hidden Layers: One of the most often used techniques
+    for preventing overfitting is dropout [[35](#bib.bibx35)] which is inherently
+    random during the training process. To reproduce or repeat the training process
+    of a certain neural network originally trained with dropout one must know which
+    neurons are excluded at what times through the original training process.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A6.3 Non-Determinism in (Deep) Reinforcement Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here we describe the sources of non-determinism related to both RL and DRL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Environment: Especially when dealing with real-world robotic RL, sensor delays,
+    etc. supports the statement that our world is stochastic.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Network initialisation: As in DL the initialisation of the neural networks’
+    weights are a stochastic process and must thus be controlled for to ensure reproducibility.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Minibatch sampling: Several algorithms within DRL includes sampling randomly
+    from the training data and from replay buffers [[36](#bib.bibx36)].'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Although some of the aforementioned sources of non-determinism can be successfully
+    managed, many researchers does not control, or report how they have controlled
+    for the non-determinism in their experiments. We find it necessary to advocate
+    for presetting seeds for the random processes in the code, in order to remove
+    or at least reduce the stochasticity of the reported experiments.
+  prefs: []
+  type: TYPE_NORMAL

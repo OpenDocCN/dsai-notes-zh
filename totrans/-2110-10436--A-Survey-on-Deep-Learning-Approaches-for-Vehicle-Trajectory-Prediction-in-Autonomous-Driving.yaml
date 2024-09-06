@@ -1,0 +1,965 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:50:23'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2110.10436] A Survey on Deep-Learning Approaches for Vehicle Trajectory Prediction
+    in Autonomous Driving'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2110.10436](https://ar5iv.labs.arxiv.org/html/2110.10436)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey on Deep-Learning Approaches for Vehicle Trajectory Prediction in Autonomous
+    Driving
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Jianbang Liu^(∗1), Xinyu Mao^(∗1), Yuqi Fang², Delong Zhu¹, and Max Q.-H. Meng^(†3),
+    Fellow, IEEE $*$Equal contribution. $\dagger$The corresponding author.¹Jianbang
+    Liu, Xinyu Mao and Delong Zhu are with the Department of Electronic Engineering,
+    The Chinese University of Hong Kong, Hong Kong. ({henryliu, maoxinyu, zhudelong}@link.cuhk.edu.hk)²Yuqi
+    Fang is with the Department of Biomedical Engineering, The Chinese University
+    of Hong Kong, Hong Kong. (fangyuqi@link.cuhk.edu.hk) ³Max Q.-H. Meng is with the
+    Department of Electronic and Electrical Engineering of the Southern University
+    of Science and Technology in Shenzhen, China, on leave from the Department of
+    Electronic Engineering, The Chinese University of Hong Kong, Hong Kong, and also
+    with the Shenzhen Research Institute of the Chinese University of Hong Kong in
+    Shenzhen, China. (max.meng@ieee.org.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: With the rapid development of machine learning, autonomous driving has become
+    a hot issue, making urgent demands for more intelligent perception and planning
+    systems. Self-driving cars can avoid traffic crashes with precisely predicted
+    future trajectories of surrounding vehicles. In this work, we review and categorize
+    existing learning-based trajectory forecasting methods from perspectives of representation,
+    modeling, and learning. Moreover, we make our implementation of Target-driveN
+    Trajectory Prediction publicly available at [https://github.com/Henry1iu/TNT-Trajectory-Predition](https://github.com/Henry1iu/TNT-Trajectory-Predition),
+    demonstrating its outstanding performance whereas its original codes are withheld.
+    Enlightenment is expected for researchers seeking to improve trajectory prediction
+    performance based on the achievement we have made.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Human depends increasingly on the autonomous system to be freed from tedious
+    tasks, a typical instance of which is autonomous driving. In the self-driving
+    scenario, safety is the first concern. Predicting the future trajectories of participants
+    helps the autonomous system find the most promising local path planning solution
+    and prevent possible collision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pioneers have predicted the motion of dynamic objects with Kalman filter[[1](#bib.bib1)],
+    linear trajectory avoidance model[[2](#bib.bib2)], and social force model[[3](#bib.bib3)].
+    Compared to these traditional modeling techniques based on hand-crafted features,
+    deep learning algorithms that learn features automatically via optimizing loss
+    functions have recently attracted researchers’ attention. In this work, we survey
+    some recent approaches for vehicle trajectory prediction and present some innovative
+    ideas. We implement the approach presented by Zhao et al. in [[4](#bib.bib4)]
+    since its vectorized representation is innovative and efficient. By publishing
+    this survey along with our code, we hope that new breakthroughs can be made in
+    this rapidly expanding research field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The two main contributions are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recent deep-learning approaches tackling trajectory prediction problems in driving
+    scenarios are reviewed and discussed.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We implement the prediction model introduced by Zhao et al. [[4](#bib.bib4)]
+    and release our code to the research community.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: II Problem Formulation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A self-driving system is assumed to be equipped with detection and tracking
+    modules that observe state $\displaystyle{\mathbb{S}}$ accurately for all the
+    involved agents $\displaystyle{\mathbb{A}}$. Given a scene, the prediction target
+    is denoted as $\displaystyle{\bm{a}}_{tar}$ and the surrounding agents are denoted
+    as $\displaystyle{\mathbb{A}}_{nbrs}=\{{\bm{a}}_{1},{\bm{a}}_{2},...,{\bm{a}}_{m}\}$.
+    The state of agent $\displaystyle{\bm{a}}_{i}\in{\mathbb{A}}$ at frame $t$ is
+    denoted as $\displaystyle s^{t}_{i}$, including features such as position, velocity,
+    heading angle, actor type, and $\displaystyle{\bm{s}}_{i}=\{s^{-T_{obs}+1}_{i},s^{-T_{obs}+2}_{i},...,s^{0}_{i}\}$
+    denote the sequence of states sampled at different timestamps throughout the observation
+    period $\displaystyle T_{obs}$. The objective of a predictive framework is to
+    predict future trajectories $\uptau_{tar}=\{\tau_{i}|i=1,2,...,K\}$ of the target
+    agent $\displaystyle{\bm{a}}_{tar}$, where $\displaystyle\tau_{i}=\{(x^{1}_{i},y^{1}_{i}),(x^{2}_{i},y^{2}_{i}),...,(x^{T_{pred}}_{i},y^{T_{pred}}_{i})\}$
+    denotes the predicted trajectories for the target agent up to the prediction horizon
+    $\displaystyle T_{pred}$. Besides, the predicted trajectories $\displaystyle\tau_{i}\in\uptau_{tar}$
+    need to satisfy the no-collision constraint and target agent’s kinematic constraints.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Methods
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we review the data representation, model structure, learning
+    techniques, and objective functions of some representative approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table I: Comparison of Modality and Modeling: $\displaystyle CSDTS_{multi}$,
+    $\vec{Polyline}$, $\Delta_{dist}$, $\mathcal{G}_{Lane}$, $\uptau_{cond}$, $Anchor_{T}$,
+    $\Delta$, $State\_Map^{F}$, and $\mathcal{L}$ denote CSDTS containing position
+    under multiple coordinate system, the vectorized polyline, the relative distance,
+    the lane connectivity graph, the conditioned future trajectory, the trajectory
+    anchors, the offset, the future state map, and the Laplacian distribution, respectively.
+    S-Pool indicates the social pooling[[5](#bib.bib5), [6](#bib.bib6)], Spatial&Temporal
+    indicates the spatial and temporal learning[[7](#bib.bib7)], SA and DPA indicate
+    the self-attention and the dot-product attention. XFMR is the abbreviation of
+    transformer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Input Modality | Output Modality | Modeling |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Model | $\displaystyle{\mathbb{S}}$ Repre. | Scene Repre. | Extra | Output
+    | $\displaystyle{\mathbb{S}}$ Enc. | Scene Enc. | Interaction |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DESIRE[[8](#bib.bib8)] | CSDTS | BEV | - | $\uptau_{tar}$, $\Delta$, Score
+    | GRU, CVAE | ConvNet | S-Pool |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MTP[[9](#bib.bib9)] | BEV | State | $\uptau_{tar}$, $\Pr(\cdot)$ | MobileNetV2[[10](#bib.bib10)]
+    | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MultiPath[[11](#bib.bib11)] | BEV | - | $\uptau_{tar}$, $\Pr(\cdot)$, $\mu$,
+    $\sigma$ | ResNet[[12](#bib.bib12)] | CNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CoverNet[[13](#bib.bib13)] | BEV | State | $\uptau_{tar}$, $\Pr(\cdot)$ |
+    ResNet[[12](#bib.bib12)] | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| VectorNet[[14](#bib.bib14)] | $\vec{Polyline}$ | - | $\uptau_{tar}$ | PointNet[[15](#bib.bib15)]
+    | SA-GNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TPNet[[16](#bib.bib16)] | BEV | - | $P(t)$, $\Delta$, $\Pr(\cdot)$ | ResNet[[12](#bib.bib12)]
+    | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAMMP[[17](#bib.bib17)] | CSDTS | - | - | $\uptau_{tar}$ | LSTM | - | SA,
+    RNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Luo[[18](#bib.bib18)] | CSDTS | Lanes, Points | - | Lanes, $\mu$, $\sigma$
+    | LSTM | 1D-Conv, MLP | DPA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BaiduUS[[19](#bib.bib19)] | CSDTS | Lanes, Points | $\Delta_{dist}$ | Lanes,
+    $\mu$, $\sigma$ | LSTM | LSTM | ST-G |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LaneGCN[[20](#bib.bib20)] | CSDTS | $\vec{Polyline}$ | $\mathcal{G}_{Lane}$
+    | $\uptau_{tar}$, Score | 1D-Conv | LaneGCN | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DATF[[21](#bib.bib21)] | CSDTS | BEV | - | $\uptau_{tar}$ | LSTM | ConvNet
+    | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SMART[[22](#bib.bib22)] | BEV | - | $State\_Map^{F}$ | U-Net, CVAE | S-Pool
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PiP[[23](#bib.bib23)] | CSDTS | - | $\uptau_{cond}$ | $\uptau_{tar}$ | LSTM
+    | - | S-Pool |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TNT[[4](#bib.bib4)] | $\vec{Polyline}$ | - | $\uptau_{tar}$, Score | PointNet[[15](#bib.bib15)]
+    | SA-GNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WIMP[[24](#bib.bib24)] | CSDTS | $\vec{Polyline}$ | - | $\uptau_{tar}$ |
+    RNN | SA | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HOME[[25](#bib.bib25)] | CSDTS | BEV | - | Heatmap, $\uptau_{tar}$ | 1D-Conv,
+    RNN | CNN | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TPCN[[7](#bib.bib7)] | CSDTS | Points | Tables | $\uptau_{tar}$, $\Delta$
+    | PointNet++, Spatial&Temporal | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LaPred[[26](#bib.bib26)] | CSDTS | Points | - | $\uptau_{tar}$ | 1D-Conv,
+    LSTM, MLP | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MMTrans[[27](#bib.bib27)] | CSDTS | $\vec{Polyline}$ | - | $\uptau_{tar}$
+    | XFMR | VectorNet | XFMR |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ALAN[[28](#bib.bib28)] | $\displaystyle CSDTS_{multi}$ | Points, BEV | -
+    | $\uptau_{tar}$ | MLP, LSTM | 1D-Conv | S-Pool |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LaneRCNN[[29](#bib.bib29)] | CSDTS | Points, $\mathcal{G}_{Lane}$ | LaneRoI
+    | $\Pr(\cdot)$, $\Delta$, $\Delta\theta$ | LaneConv, LanePool | LaneRoI |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PRIME[[30](#bib.bib30)] | $\displaystyle CSDTS_{multi}$ | $\mathcal{G}_{Lane}$
+    | $Anchor_{T}$ | Score | 1D-Conv, RNN | bi-LSTM | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SceneTrans[[31](#bib.bib31)] | CSDTS | $\vec{Polyline}$ | - | $\uptau_{tar}$,
+    $\mathcal{L}$, $\theta$ | XFMR, PointNet[[15](#bib.bib15)] | SA |'
+  prefs: []
+  type: TYPE_TB
+- en: III-A Representations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are mainly two types of representation, i.e., image and continuous-space
+    samples, to describe the historical observation and future prediction in each
+    vehicle trajectory prediction case. Images are commonly used to carry the agents
+    and road observations [[8](#bib.bib8), [9](#bib.bib9), [11](#bib.bib11), [13](#bib.bib13),
+    [16](#bib.bib16), [21](#bib.bib21), [22](#bib.bib22), [25](#bib.bib25), [28](#bib.bib28)]
+    due to its dense characteristic. Some researchers [[14](#bib.bib14), [4](#bib.bib4),
+    [7](#bib.bib7), [26](#bib.bib26)] prefer utilizing sparse points or polylines
+    when describing the historical trajectories or the scene context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A1 Agent State Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Due to the limitation of practical detection and tracking system, the agent
+    state can only be recorded periodically. It’s natural to represent the agent state
+    with continuous-space discrete-time samples (CSDTS), which are vectors (or arrays)
+    containing the agent state features. In [[8](#bib.bib8), [14](#bib.bib14), [17](#bib.bib17),
+    [18](#bib.bib18), [19](#bib.bib19), [21](#bib.bib21), [23](#bib.bib23), [4](#bib.bib4),
+    [24](#bib.bib24), [25](#bib.bib25), [7](#bib.bib7), [26](#bib.bib26), [27](#bib.bib27),
+    [28](#bib.bib28), [29](#bib.bib29), [30](#bib.bib30), [31](#bib.bib31)], features
+    mainly include the timestamp, the position of the agent under a bird-eye-view
+    (BEV) coordinate system, the displacement to the last timestamp, the velocity
+    of the agent, and the relative heading angle. Nevertheless, researchers also explore
+    sketching the trajectories on a rasterized BEV image in [[9](#bib.bib9), [11](#bib.bib11),
+    [13](#bib.bib13), [16](#bib.bib16), [22](#bib.bib22)]. The image representation
+    is not widely adopted to describe agent states in recent papers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A2 Scene Context Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In contrast with the continuous-space sample, image is the most straightforward
+    representation to carry the scene context and has been studied in many works [[8](#bib.bib8),
+    [9](#bib.bib9), [11](#bib.bib11), [13](#bib.bib13), [16](#bib.bib16), [21](#bib.bib21),
+    [22](#bib.bib22), [25](#bib.bib25), [28](#bib.bib28)]. The shape and status of
+    the roads are visualized on the BEV image as detailedly as possible. Sometimes,
+    this kind of rasterized image is also called the high definition (HD) map in the
+    paper [[14](#bib.bib14), [4](#bib.bib4)]. Gao et al. [[14](#bib.bib14)] propose
+    to discretize the scene context and represent it by the vectors. This novel idea
+    is quickly appreciated and adopted by other researchers [[4](#bib.bib4), [24](#bib.bib24),
+    [27](#bib.bib27), [31](#bib.bib31)] because it provides a unified representation
+    and the computation cost of vectorized representation is less expensive. In advance,
+    some works[[20](#bib.bib20), [7](#bib.bib7), [29](#bib.bib29)] construct extra
+    tables or graphs to indicate the temporal and spatial correspondence of the vectorized
+    scene context, which assist the feature extraction and interaction modeling in
+    their prediction model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A3 Output Representations
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Some approaches focus on improving the input data representation[[14](#bib.bib14)],
+    the modeling [[18](#bib.bib18), [23](#bib.bib23), [26](#bib.bib26), [27](#bib.bib27)]
+    as well as the objective function [[28](#bib.bib28)], and merely output future
+    trajectory represented by single modality, which denotes sets of future position
+    $\uptau_{tar}$ . In order to produce a promising result, approaches estimate additional
+    modalities, such as the offset of the predicted trajectories from the ground truth
+    [[8](#bib.bib8), [16](#bib.bib16), [29](#bib.bib29)], the score of the prediction
+    according to a pre-defined scoring metric [[8](#bib.bib8), [20](#bib.bib20), [4](#bib.bib4),
+    [30](#bib.bib30)], the probability $\Pr(\cdot)$ of each trajectory prediction
+    or anchor [[9](#bib.bib9), [11](#bib.bib11), [13](#bib.bib13), [16](#bib.bib16),
+    [29](#bib.bib29)], the probability heat-map of final position[[25](#bib.bib25)],
+    and the heading $\theta$ or the angular offset $\Delta\theta$ of the target agent
+    at the destination[[29](#bib.bib29), [31](#bib.bib31)]. MultiPath[[11](#bib.bib11)]
+    models the control uncertainty with the Gaussian mixture model (GMM) and predicts
+    the mean $\mu$ and variance $\sigma$ of the GMM as the model output. TPNet[[16](#bib.bib16)]
+    and PRIME[[30](#bib.bib30)] decide to express the trajectory anchors or the output
+    trajectories in the form of polynomials $P(t)$ other than the usual point sets
+    $\uptau_{tar}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Modeling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To achieve better prediction performance, researchers propose novel models with
+    various architectures, such as Multi-Layer Perception (MLP), Convolution Neural
+    Network (CNN), Recurrent Neural Network (RNN), Graph Neural Network (GNN). We
+    summarise some common design choices and their differences regarding feature encoding,
+    interaction modeling, and prediction head. Some approaches that adopt the generative
+    model are also reviewed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B1 Feature Encoding
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Taking the trajectory as sequential data, plenty of papers [[8](#bib.bib8),
+    [17](#bib.bib17), [18](#bib.bib18), [19](#bib.bib19), [21](#bib.bib21), [23](#bib.bib23),
+    [24](#bib.bib24)] propose feature encoder consisting of RNN units, like the gate
+    recurrent unit (GRU)[[32](#bib.bib32)] and the long short-term memory. Some combine
+    MLP or 1D-Conv with RNN unit to extract hidden space features of the trajectory
+    input[[25](#bib.bib25), [26](#bib.bib26), [28](#bib.bib28), [30](#bib.bib30)]
+    or the scene context input[[26](#bib.bib26)]. The great success of transformer
+    in natural language processing attracts some researchers’ attention and they apply
+    the transformer module in feature extraction[[24](#bib.bib24), [27](#bib.bib27),
+    [31](#bib.bib31)]. To handle the rasterized input, some work[[8](#bib.bib8), [9](#bib.bib9),
+    [11](#bib.bib11), [13](#bib.bib13), [21](#bib.bib21), [22](#bib.bib22), [25](#bib.bib25)]
+    directly borrow convolutional feature encoder from object detection [[12](#bib.bib12),
+    [10](#bib.bib10)] and image segmentation tasks[[33](#bib.bib33)]. VectorNet[[14](#bib.bib14)]
+    follows the idea of PointNet[[15](#bib.bib15)] and extracts instant-level features
+    for the vectorized input. TNT [[4](#bib.bib4)] directly inherits the feature extraction
+    backbone of VectorNet. Ye et al. take the discrete input as the point cloud and
+    mimic the point cloud encoding in their work[[7](#bib.bib7)]. LaneGCN [[20](#bib.bib20)]
+    and LaneRCNN[[29](#bib.bib29)] introduce graph convolution modules at the encoding
+    stage and aggregate the features across the graph constructed based on the road
+    connectivity or temporal sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B2 Interaction Modeling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The interaction among vehicles, pedestrians and road elements is extremely important
+    yet complicated. To model the agent-to-agent interaction and agent-to-scene interaction
+    at the same time, researchers enhance the social pooling mechanism proposed in
+    [[5](#bib.bib5), [6](#bib.bib6)] by including the scene context feature maps[[8](#bib.bib8),
+    [22](#bib.bib22), [28](#bib.bib28)]. A variety of researchers[[14](#bib.bib14),
+    [17](#bib.bib17), [18](#bib.bib18), [20](#bib.bib20), [21](#bib.bib21), [24](#bib.bib24),
+    [25](#bib.bib25), [26](#bib.bib26), [30](#bib.bib30)] motivated by the success
+    of the attention mechanism design the interaction modeling module. Furthermore,
+    Liu et al.[[27](#bib.bib27)] and Ngiam et al.[[31](#bib.bib31)] build the entire
+    interaction module with the multi-head attention. The graph modeling and the GNN
+    layers are also frequently involved because the message passing of GNN can fuse
+    the features of different agents (and road elements). We believe the feature fusion
+    behavior is essentially the same as the interaction between agents and the road
+    elements. There exists an exception that TPCN[[7](#bib.bib7)] doesn’t explicitly
+    consider modeling the interaction but still achieves a good performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B3 Prediction Head
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Some researchers characterise the prediction by hidden Markov model and generate
+    the trajectory prediction with RNN [[8](#bib.bib8), [17](#bib.bib17), [18](#bib.bib18),
+    [21](#bib.bib21), [23](#bib.bib23), [24](#bib.bib24)]. Other researchers take
+    the prediction as a regression process and decode the features with MLP in [[14](#bib.bib14),
+    [9](#bib.bib9), [19](#bib.bib19), [20](#bib.bib20), [4](#bib.bib4), [25](#bib.bib25),
+    [26](#bib.bib26), [27](#bib.bib27), [29](#bib.bib29), [30](#bib.bib30), [31](#bib.bib31)].
+    Significantly influenced by the concept of anchor proposal[[34](#bib.bib34), [35](#bib.bib35)]
+    in the computer vision field, many researchers add a classification branch in
+    their prediction head to predict a probability or a confidence score for each
+    proposed trajectory anchor [[11](#bib.bib11), [16](#bib.bib16), [18](#bib.bib18),
+    [20](#bib.bib20), [23](#bib.bib23), [4](#bib.bib4), [26](#bib.bib26), [27](#bib.bib27),
+    [31](#bib.bib31), [29](#bib.bib29)]. Motivated by the prediction uncertainty of
+    the deep-learning model against the unseen cases, CoverNet[[13](#bib.bib13)] and
+    PRIME[[30](#bib.bib30)] further deploy a model-based planner to propose trajectory
+    anchors that satisfy the constraints imposed by the kinematics of the vehicle
+    and the scene context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B4 Generative Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: DESIRE[[8](#bib.bib8)] and SMART[[22](#bib.bib22)] treat the trajectory prediction
+    as the conditional sampling and selection process. The recognition module firstly
+    projects the trajectory observation and prediction ground truth to the latent
+    space. The latent variables $z$ are assumed to satisfy a distribution prior parameterized
+    by the encoding of the recognition module. Then, the conditional decoder recovers
+    the future trajectory from the given conditional input and the latent variable
+    $z$. However, one cannot obtain the likelihood of each trajectory sampled from
+    the generative model. DESIRE designs the ranking and refinement module to evaluate
+    the trajectories generated from the CVAE module.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Learning and Objective Functions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most of the proposed deep-learning models are trained in a supervised manner.
+    The cross-entropy (CE) loss, smooth-L1 (Huber) loss, negative log-likelihood (NLL)
+    loss and mean-square-error (MSE) loss are all commonly adopted as the objective
+    function during the training process. Researchers use some training skills and
+    propose new techniques or objective functions so that the model can converge to
+    a better optimal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MultiPath[[11](#bib.bib11)] adopts an unsupervised learning method to find the
+    appropriate trajectory anchors and teaches their model with imitation learning.
+    VectorNet[[14](#bib.bib14)] designs an auxiliary graph completion loss to encourage
+    the interaction module to capture a better insight. TNT[[4](#bib.bib4)] trains
+    the trajectory regressor by a teacher-forcing technique[[36](#bib.bib36)] based
+    on their uni-modal assumption.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Models which label the ground truth as one certain trajectory while predicting
+    diverse outputs suffer from mode collapse problem [[37](#bib.bib37), [38](#bib.bib38)],
+    resulting in the failure of making the multi-modal predictions. To overcome this
+    problem, some researchers deploy a novel objective function or introduce new functions.
+    MTP[[9](#bib.bib9)] targets at minimizing the multiple-trajectory prediction loss,
+    which can be regarded as a variant of winner-takes-all (WTA) loss proposed in
+    [[39](#bib.bib39)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{L}^{MTP}=-\sum_{i=1}^{K}I_{i^{*}}\log{p_{i}}+\alpha\sum_{i=1}^{K}I_{i^{*}}L(\tau_{gt},\tau_{i}),$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $I_{i^{*}}$ is a binary indicator equal to 1 if the $i^{*}$ mode is closest
+    to the GT trajectory according to an arbitrary trajectory distance function or
+    0 otherwise, $p_{i}$ is the probability of the best mode $i^{*}$, $L(\cdot,\cdot)$
+    indicates an arbitrary displacement error function, and $\alpha$ is a coefficient
+    weighting the regression loss. Some followers also incorporate the WTA loss in
+    their work[[20](#bib.bib20), [24](#bib.bib24), [31](#bib.bib31)]. Narayanan et
+    al.[[28](#bib.bib28)] propose a divide-and-conquer (DAC) initialization technique
+    for stabilizing the training with WTA loss. The model trained with DAC beats other
+    competitors in their work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Implementation of TNT Approach
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: TNT[[4](#bib.bib4)], as the extension of VectorNet[[14](#bib.bib14)], draws
+    our interest with its good model interpretability and outstanding performance.
+    However, the official code is disclosed to the public due to the intellectual
+    property issue. Aiming at facilitating the exploration of using the vector and
+    graph representation in vehicle trajectory prediction, we implement our version
+    of TNT[[4](#bib.bib4)] with our understanding of the TNT[[4](#bib.bib4)] approach
+    and make our implementation publicly available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our code is implemented with Pytorch and Pytorch Geometric libraries. Strictly
+    following the details in [[14](#bib.bib14), [4](#bib.bib4)], we implement the
+    VectorNet feature extraction backbone and TNT prediction heads. The three prediction
+    heads, target candidate prediction head, target-conditioned trajectory prediction
+    head, and scoring head are modeled by 2-layer MLPs. The target candidate prediction
+    module consists of two 2-layer MLPs, one for predicting the discrete distribution
+    over target locations, the other one for predicting the most likely offset corresponding
+    to each target candidate. In our design, the target-conditioned trajectory prediction
+    module is implemented by a 2-layer MLP, but it is involved twice at the loss computation
+    of each batch. For the first time, the MLP predicts the trajectories given the
+    ground truth final position regarded as the teacher-forcing training. Then, the
+    MLP predicts M trajectories, which will be scored by the scoring module, given
+    the M-selected target candidates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'During the implementation of TNT[[4](#bib.bib4)], we found the descriptions
+    of several design choices and hyper-parameters are vague or missing. We propose
+    proper solutions to fill in these gaps and introduce them briefly in the remaining
+    of this section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Data Normalization: As mentioned in [[14](#bib.bib14)], we centralize the coordinates
+    at the last observed position of the target agent for each data sequence. Additionally,
+    we apply the heading normalization as described in [[17](#bib.bib17), [29](#bib.bib29),
+    [31](#bib.bib31)]. The trajectories and scene context representations are rotated
+    to ensure that the heading of the target agent at the last observed position is
+    aligned with the x-axis.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Target Candidates: According to the description in [[4](#bib.bib4)], TNT deploys
+    an equal-distance target candidate sampling along with the candidate center lines.
+    The authors take $1000$ target candidates as an example. It’s worth noting that
+    the number of target candidates can vary across the sequences since the possible
+    travel distance and area of the target agent in the future can be diverse. A unified
+    number of candidates can fail to cover a sufficient area for predicting the future
+    target. In our code, we implement the equal-distance sampling strategy and sample
+    different numbers of target candidates for each sequence.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Non-Maximum Suppression (NMS): Inspired by object detection, TNT[[4](#bib.bib4)]
+    filters M multi-modal predictions concerning the predicted score and their distance
+    to the selected ones. The M trajectories are sorted by the predicted score firstly
+    then picked greedily if their distances to the selected ones exceed a certain
+    threshold. However, the exact distance threshold that determines the near-duplicate
+    trajectories is not given in their paper. Here we implement a hard-threshold strategy.
+    Specifically, only trajectories that exceed the distance threshold are selected
+    and all-zero trajectories are padded to the remaining slots if no more trajectory
+    is distant enough from all the selected ones.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although exactly the same results as [[4](#bib.bib4)] have not yet been achieved,
+    our implementation still demonstrates outstanding performance. The results achieved
+    so far are shown in Section [V](#S5 "V Experiments ‣ A Survey on Deep-Learning
+    Approaches for Vehicle Trajectory Prediction in Autonomous Driving").
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Experiments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section is organized as follows. Firstly, several frequently used datasets
+    are introduced. Secondly, we present existing metrics that the experiments are
+    evaluated with. In addition, we list the commonly adopted preprocessing tricks
+    and data augmentation strategies. Finally, a detailed comparison of recently proposed
+    methods is demonstrated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table II: Trajectory Prediction Performance on Argoverse Dataset'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Validation Set Test Set k=1 k=6 k=1 k=6 Model minADE^† minFDE^† MR^‡ minADE
+    minFDE MR minADE minFDE MR minADE minFDE MR DAC VectorNet[[14](#bib.bib14)] 1.66
+    3.67 - - - - 1.81 4.01 - - - - - TPNet[[16](#bib.bib16)] 1.75 3.88 - - - - 2.23
+    4.70 - 1.61 3.28 - 0.96 Luo[[18](#bib.bib18)] 1.60 3.64 - 1.35 2.68 - 1.91 4.31
+    0.66 0.99 1.71 0.19 0.98 LaneGCN[[20](#bib.bib20)] 1.35 2.97 - 0.71 1.08 - 1.71
+    3.78 0.59 0.87 1.36 0.16 - SMART[[22](#bib.bib22)] - - - 1.44 2.47 - - - - - -
+    - - TNT[[4](#bib.bib4)] - - - 0.73 1.29 0.09 - - - 0.94 1.54 0.13 - WIMP[[24](#bib.bib24)]
+    1.45 3.19 - 0.75 1.14 0.12 1.82 4.03 - 0.90 1.42 0.17 - HOME[[25](#bib.bib25)]
+    - 3.02 0.51 - 1.28 0.07 1.73 3.73 0.58 0.94 1.45 0.10 - TPCN[[7](#bib.bib7)] 1.34
+    2.95 0.50 0.73 1.15 0.11 1.66 3.69 0.59 0.87 1.38 0.16 - LaPred[[26](#bib.bib26)]
+    1.48 3.29 - 0.71 1.44 - - - - - - - - MMTrans[[27](#bib.bib27)] - - - 0.71 1.15
+    0.11 - - - 0.84 1.34 0.15 - LaneRCNN[[29](#bib.bib29)] 1.33 2.85 - 0.77 1.19 0.08
+    1.69 3.69 0.57 0.90 1.45 0.12 - PRIME[[30](#bib.bib30)] - - - - - - 1.91 3.82
+    0.59 1.22 1.56 0.12 - SceneTrans[[31](#bib.bib31)] - - - - - - - - - 0.80 1.23
+    0.13 - Ours - - - 1.11 2.12 0.31 - - - - - - - $\star$ minADE/ minFDE: in meters
+    $\ddagger$ MR: the threshold for endpoint error is 2m'
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-A Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Argoverse The Argoverse Dataset[[40](#bib.bib40)] is the most frequently used
+    dataset for motion forecasting experiments. It contains over 300K scenarios in
+    Pittsburgh and Miami. Each scenario contains a 2D birds-eye-view centroid of different
+    objects at 10 Hz. The task of motion forecasting is to predict the trajectories
+    of the sole agent type object in the next 3 seconds, given the preceding 2-second
+    long trajectories together with HD map features which can be accessed through
+    Argoverse API. The whole dataset can be split into 208,272 training sequences,
+    40,127 validation sequences, and 79,391 testing sequences. For training and validation,
+    full 5-second trajectories are provided. While for testing, only the first 2 seconds
+    trajectories are given.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NuScenes NuScenes is a public large-scale dataset for autonomous driving[[41](#bib.bib41)].
+    The trajectories are represented in the x-y coordinate system at 2 Hz. The original
+    driving scenarios are collected in Boston and Singapore, where right-hand and
+    left-hand traffic rules apply respectively. Up to 2 seconds of past history can
+    be utilized to predict 6-second long future trajectories for each agent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NGSIM Next Generation SIMulation[[42](#bib.bib42)] dataset is extracted from
+    real-world highway driving scenarios using high mounted digital video cameras.
+    The precise location of each vehicle is recorded at 10 Hz. Since the dataset is
+    not published purely for trajectory prediction, the length of past observations
+    and predictions can be customized.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-B Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some commonly used metrics are as follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: FDE(K) Minimum Final Displacement Error over K refers to the L2 distance between
+    the endpoint of predicted trajectory and that of ground truth over the best K
+    predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ADE(K) Minimum Average Displacement Error over K denotes the average pointwise
+    L2 distance between the whole forecasted trajectory and the ground truth over
+    the best K predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MR Miss Rate evaluates the proportion of unacceptable outputs in all proposed
+    solutions. One scenario is usually defined as a miss when the endpoint error for
+    the best trajectory is greater than 2.0m.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some papers have proposed several specific metrics corresponding to their innovative
+    methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: DAC Drivable Area Compliance[[16](#bib.bib16), [18](#bib.bib18), [21](#bib.bib21)]
+    equals to the count of future trajectories within the drivable area divided by
+    the number of all possible trajectories. DAC evaluates the feasibility of proposed
+    solutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-C Preprocessing and Augmentation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Centralization Aiming at reducing the complexity of prediction, the origin of
+    the coordinate system to represent trajectories is chosen to be the position of
+    the predicted agent at the last observed timestamp[[13](#bib.bib13), [14](#bib.bib14),
+    [17](#bib.bib17), [29](#bib.bib29), [31](#bib.bib31)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heading Normalization Heading normalization means that the coordinate system
+    where trajectories are represented is rotated[[13](#bib.bib13), [17](#bib.bib17),
+    [29](#bib.bib29), [31](#bib.bib31)], such that the orientation of the predicted
+    agent at the last observed timestamp is aligned with the x-axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scene Rotation In order to combat overfitting and improve generalization capability,
+    random rotation[[8](#bib.bib8), [25](#bib.bib25), [29](#bib.bib29), [31](#bib.bib31)]
+    is frequently applied to the whole scenario and the trajectory coordinates following
+    centralization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Agent Dropout As is often the case, there are excessive agents in one scenario,
+    some of which are not worthy of attention. In [[31](#bib.bib31)], non-predicted
+    agents are artificially removed with probability of 0.1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-D Results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section makes a comparison among the results of the fore-mentioned methods.
+    Since Argoverse is the most frequently used data set, for a fair comparison we
+    only compare experimental results in Argoverse. All data is collected originally
+    from the published papers and listed in TABLE [II](#S5.T2 "Table II ‣ V Experiments
+    ‣ A Survey on Deep-Learning Approaches for Vehicle Trajectory Prediction in Autonomous
+    Driving").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scene Transformer[[31](#bib.bib31)] ranks first when sorting results by minADE(K=6)
+    and minFDE(K=6), while the first prize belongs to [[25](#bib.bib25)] when ranked
+    by MR(K=6). Both methods use the attention module to model the interaction between
+    agents and environments, which provides a promising solution to interaction representation.
+    A performance drop is usually observed among other approaches (TNT[[4](#bib.bib4)],
+    WIMP[[24](#bib.bib24)], HOME[[25](#bib.bib25)], TPCN[[7](#bib.bib7)], MMTrans[[27](#bib.bib27)],
+    annd laneRCNN[[29](#bib.bib29)]) when applying them on the test set. We evaluate
+    our TNT implementation on the validation set of Argoverse. Compared with the state-of-the-art,
+    our performance is 0.4 meter worse in minADE, 1.04 meters in minFDE, 0.24 in MR.
+    Improvement is expected by introducing the WTA loss or the lane attention strategy
+    in our design.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this work, we make a thorough review of existing methods on trajectory prediction
+    for vehicles. Starting from the mathematical formulation of the prediction problem,
+    we divide the complicated forecasting task into three components: representation,
+    modeling as well as learning and objective functions. Modules varying from MLP
+    to CNN, RNN, GNN form constituent parts of prediction networks, namely feature
+    encoding, interaction modeling, and prediction header. We additionally make our
+    version of TNT publicly available and present the implementation in detail. A
+    fair comparison of results on Argoverse Dataset alongside with list of metrics
+    and preprocessing tricks are illustrated at the end of this work. Further improvement
+    of trajectory prediction, e.g., accuracy or efficiency, is expected with the assistance
+    of our work.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgment
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This work is partially supported by Shenzhen Key Laboratory of Robotics Perception
+    and Intelligence, Southern University of Science and Technology, Shenzhen 518055,
+    China, Hong Kong RGC CRF grant C4063-18G, Hong Kong RGC GRF grant #14200618.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] A. Ess, K. Schindler, B. Leibe, and L. Van Gool, “Object detection and
+    tracking for autonomous navigation in dynamic environments,” *The International
+    Journal of Robotics Research*, vol. 29, no. 14, pp. 1707–1725, 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] S. Pellegrini, A. Ess, and L. Van Gool, “Predicting pedestrian trajectories,”
+    in *Visual Analysis of Humans*.   Springer, 2011, pp. 473–491.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] M. Luber, J. A. Stork, G. D. Tipaldi, and K. O. Arras, “People tracking
+    with human motion predictions from social forces,” in *2010 IEEE International
+    Conference on Robotics and Automation*.   IEEE, 2010, pp. 464–469.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] H. Zhao, J. Gao, T. Lan, C. Sun, B. Sapp, B. Varadarajan, Y. Shen, Y. Shen,
+    Y. Chai, C. Schmid *et al.*, “Tnt: Target-driven trajectory prediction,” *arXiv
+    preprint arXiv:2008.08294*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] A. Alahi, K. Goel, V. Ramanathan, A. Robicquet, L. Fei-Fei, and S. Savarese,
+    “Social lstm: Human trajectory prediction in crowded spaces,” in *Proceedings
+    of the IEEE conference on computer vision and pattern recognition*, 2016, pp.
+    961–971.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] A. Gupta, J. Johnson, L. Fei-Fei, S. Savarese, and A. Alahi, “Social gan:
+    Socially acceptable trajectories with generative adversarial networks,” in *Proceedings
+    of the IEEE Conference on Computer Vision and Pattern Recognition*, 2018, pp.
+    2255–2264.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] M. Ye, T. Cao, and Q. Chen, “Tpcn: Temporal point cloud networks for motion
+    forecasting,” in *Proceedings of the IEEE/CVF Conference on Computer Vision and
+    Pattern Recognition*, 2021, pp. 11 318–11 327.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] N. Lee, W. Choi, P. Vernaza, C. B. Choy, P. H. Torr, and M. Chandraker,
+    “Desire: Distant future prediction in dynamic scenes with interacting agents,”
+    in *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*,
+    2017, pp. 336–345.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] H. Cui, V. Radosavljevic, F.-C. Chou, T.-H. Lin, T. Nguyen, T.-K. Huang,
+    J. Schneider, and N. Djuric, “Multimodal trajectory predictions for autonomous
+    driving using deep convolutional networks,” in *2019 International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2019, pp. 2090–2096.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] M. Sandler, A. Howard, M. Zhu, A. Zhmoginov, and L.-C. Chen, “Mobilenetv2:
+    Inverted residuals and linear bottlenecks,” in *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, 2018, pp. 4510–4520.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Y. Chai, B. Sapp, M. Bansal, and D. Anguelov, “Multipath: Multiple probabilistic
+    anchor trajectory hypotheses for behavior prediction,” *arXiv preprint arXiv:1910.05449*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image
+    recognition,” in *Proceedings of the IEEE conference on computer vision and pattern
+    recognition*, 2016, pp. 770–778.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] T. Phan-Minh, E. C. Grigore, F. A. Boulton, O. Beijbom, and E. M. Wolff,
+    “Covernet: Multimodal behavior prediction using trajectory sets,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2020,
+    pp. 14 074–14 083.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] J. Gao, C. Sun, H. Zhao, Y. Shen, D. Anguelov, C. Li, and C. Schmid, “Vectornet:
+    Encoding hd maps and agent dynamics from vectorized representation,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2020,
+    pp. 11 525–11 533.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] C. R. Qi, H. Su, K. Mo, and L. J. Guibas, “Pointnet: Deep learning on
+    point sets for 3d classification and segmentation,” in *Proceedings of the IEEE
+    conference on computer vision and pattern recognition*, 2017, pp. 652–660.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] L. Fang, Q. Jiang, J. Shi, and B. Zhou, “Tpnet: Trajectory proposal network
+    for motion prediction,” in *Proceedings of the IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition*, 2020, pp. 6797–6806.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] J. Mercat, T. Gilles, N. El Zoghby, G. Sandou, D. Beauvois, and G. P.
+    Gil, “Multi-head attention for multi-modal joint vehicle motion forecasting,”
+    in *2020 IEEE International Conference on Robotics and Automation (ICRA)*.   IEEE,
+    2020, pp. 9638–9644.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] C. Luo, L. Sun, D. Dabiri, and A. Yuille, “Probabilistic multi-modal trajectory
+    prediction with lane attention for autonomous vehicles,” in *2020 IEEE/RSJ International
+    Conference on Intelligent Robots and Systems (IROS)*.   IEEE, 2020, pp. 2370–2376.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] J. Pan, H. Sun, K. Xu, Y. Jiang, X. Xiao, J. Hu, and J. Miao, “Lane-attention:
+    Predicting vehicles’ moving trajectories by learning their attention over lanes,”
+    in *2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2020, pp. 7949–7956.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] M. Liang, B. Yang, R. Hu, Y. Chen, R. Liao, S. Feng, and R. Urtasun, “Learning
+    lane graph representations for motion forecasting,” in *European Conference on
+    Computer Vision*.   Springer, 2020, pp. 541–556.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] S. H. Park, G. Lee, J. Seo, M. Bhat, M. Kang, J. Francis, A. Jadhav, P. P.
+    Liang, and L.-P. Morency, “Diverse and admissible trajectory forecasting through
+    multimodal context understanding,” in *European Conference on Computer Vision*.   Springer,
+    2020, pp. 282–298.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] N. Sriram, B. Liu, F. Pittaluga, and M. Chandraker, “Smart: Simultaneous
+    multi-agent recurrent trajectory prediction,” in *European Conference on Computer
+    Vision*.   Springer, 2020, pp. 463–479.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] H. Song, W. Ding, Y. Chen, S. Shen, M. Y. Wang, and Q. Chen, “Pip: Planning-informed
+    trajectory prediction for autonomous driving,” in *European Conference on Computer
+    Vision*.   Springer, 2020, pp. 598–614.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] S. Khandelwal, W. Qi, J. Singh, A. Hartnett, and D. Ramanan, “What-if
+    motion prediction for autonomous driving,” *arXiv preprint arXiv:2008.10587*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] T. Gilles, S. Sabatini, D. Tsishkou, B. Stanciulescu, and F. Moutarde,
+    “Home: Heatmap output for future motion estimation,” *arXiv preprint arXiv:2105.10968*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] B. Kim, S. H. Park, S. Lee, E. Khoshimjonov, D. Kum, J. Kim, J. S. Kim,
+    and J. W. Choi, “Lapred: Lane-aware prediction of multi-modal future trajectories
+    of dynamic agents,” in *Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition*, 2021, pp. 14 636–14 645.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Y. Liu, J. Zhang, L. Fang, Q. Jiang, and B. Zhou, “Multimodal motion prediction
+    with stacked transformers,” in *Proceedings of the IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition*, 2021, pp. 7577–7586.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] S. Narayanan, R. Moslemi, F. Pittaluga, B. Liu, and M. Chandraker, “Divide-and-conquer
+    for lane-aware diverse trajectory prediction,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2021, pp. 15 799–15 808.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] W. Zeng, M. Liang, R. Liao, and R. Urtasun, “Lanercnn: Distributed representations
+    for graph-centric motion forecasting,” *arXiv preprint arXiv:2101.06653*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] H. Song, D. Luan, W. Ding, M. Y. Wang, and Q. Chen, “Learning to predict
+    vehicle trajectories with model-based planning,” *arXiv preprint arXiv:2103.04027*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] J. Ngiam, B. Caine, V. Vasudevan, Z. Zhang, H.-T. L. Chiang, J. Ling,
+    R. Roelofs, A. Bewley, C. Liu, A. Venugopal *et al.*, “Scene transformer: A unified
+    multi-task model for behavior prediction and planning,” *arXiv preprint arXiv:2106.08417*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] K. Cho, B. Van Merriënboer, C. Gulcehre, D. Bahdanau, F. Bougares, H. Schwenk,
+    and Y. Bengio, “Learning phrase representations using rnn encoder-decoder for
+    statistical machine translation,” *arXiv preprint arXiv:1406.1078*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks
+    for biomedical image segmentation,” in *International Conference on Medical image
+    computing and computer-assisted intervention*.   Springer, 2015, pp. 234–241.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] D. Erhan, C. Szegedy, A. Toshev, and D. Anguelov, “Scalable object detection
+    using deep neural networks,” in *Proceedings of the IEEE conference on computer
+    vision and pattern recognition*, 2014, pp. 2147–2154.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] S. Ren, K. He, R. Girshick, and J. Sun, “Faster r-cnn: Towards real-time
+    object detection with region proposal networks,” *Advances in neural information
+    processing systems*, vol. 28, pp. 91–99, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] R. J. Williams and D. Zipser, “A learning algorithm for continually running
+    fully recurrent neural networks,” *Neural computation*, vol. 1, no. 2, pp. 270–280,
+    1989.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] N. Rhinehart, K. M. Kitani, and P. Vernaza, “R2p2: A reparameterized pushforward
+    policy for diverse, precise generative path forecasting,” in *Proceedings of the
+    European Conference on Computer Vision (ECCV)*, 2018, pp. 772–788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] J. Hong, B. Sapp, and J. Philbin, “Rules of the road: Predicting driving
+    behavior with a convolutional model of semantic interactions,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2019,
+    pp. 8454–8462.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] S. Lee, S. P. S. Prakash, M. Cogswell, V. Ranjan, D. Crandall, and D. Batra,
+    “Stochastic multiple choice learning for training diverse deep ensembles,” in
+    *Advances in Neural Information Processing Systems*, 2016, pp. 2119–2127.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] M.-F. Chang, J. W. Lambert, P. Sangkloy, J. Singh, S. Bak, A. Hartnett,
+    D. Wang, P. Carr, S. Lucey, D. Ramanan, and J. Hays, “Argoverse: 3d tracking and
+    forecasting with rich maps,” in *Conference on Computer Vision and Pattern Recognition
+    (CVPR)*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] H. Caesar, V. Bankiti, A. H. Lang, S. Vora, V. E. Liong, Q. Xu, A. Krishnan,
+    Y. Pan, G. Baldan, and O. Beijbom, “nuscenes: A multimodal dataset for autonomous
+    driving,” in *Proceedings of the IEEE/CVF conference on computer vision and pattern
+    recognition*, 2020, pp. 11 621–11 631.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] J. C. John Halkias, “Next generation simulation fact sheet,” Federal Highway
+    Administration (FHWA), 2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,3413 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:30:46'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2408.04380] Deep Generative Models in Robotics: A Survey on Learning from
+    Multimodal Demonstrations'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2408.04380](https://ar5iv.labs.arxiv.org/html/2408.04380)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Deep Generative Models in Robotics:'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A Survey on Learning from Multimodal Demonstrations
+  prefs: []
+  type: TYPE_NORMAL
+- en: Julen Urain¹, Ajay Mandlekar², Yilun Du³, Nur Muhammad Mahi Shafiullah⁴, Danfei
+    Xu^(52), Katerina Fragkiadaki⁶, Georgia Chalvatzaki⁷, Jan Peters^(718) ¹German
+    Research Center for AI, ²Nvidia, ³Massachusetts Institute of Technology, ⁴New
+    York University, ⁵Georgia Institute of Technology, ⁶Carnegie Mellon University,
+    ⁷Technische Universität Darmstadt, ⁸Hessian.AI
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Learning from Demonstrations, the field that proposes to learn robot behavior
+    models from data, is gaining popularity with the emergence of deep generative
+    models. Although the problem has been studied for years under names such as Imitation
+    Learning, Behavioral Cloning, or Inverse Reinforcement Learning, classical methods
+    have relied on models that don’t capture complex data distributions well or don’t
+    scale well to large numbers of demonstrations. In recent years, the robot learning
+    community has shown increasing interest in using deep generative models to capture
+    the complexity of large datasets. In this survey, we aim to provide a unified
+    and comprehensive review of the last year’s progress in the use of deep generative
+    models in robotics. We present the different types of models that the community
+    has explored, such as energy-based models, diffusion models, action value maps,
+    or generative adversarial networks. We also present the different types of applications
+    in which deep generative models have been used, from grasp generation to trajectory
+    generation or cost learning. One of the most important elements of generative
+    models is the generalization out of distributions. In our survey, we review the
+    different decisions the community has made to improve the generalization of the
+    learned models. Finally, we highlight the research challenges and propose a number
+    of future directions for learning deep generative models in robotics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'robotics, generative models, decision making, control, imitation learning,
+    behavioral cloning, learning from demonstrations^†^†publicationid: pubid:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[Learning from Demonstration (LfD)](#glo.main.lfd) [[1](#bib.bib1), [2](#bib.bib2)],
+    also known as Imitation Learning [[3](#bib.bib3), [4](#bib.bib4)], is the field
+    that proposes to learn the desired robot behavior by observing and imitating a
+    set of expert demonstrations. Conditioned on observations of the scene and the
+    desired task to be solved, the model, commonly known as policy, is trained to
+    generate actions that emulate the behavior in the expert demonstrations. Depending
+    on the task, these actions may represent desirable end-effector poses [[5](#bib.bib5),
+    [6](#bib.bib6)], robot trajectories [[7](#bib.bib7), [8](#bib.bib8)] or desirable
+    scene arrangements [[9](#bib.bib9), [10](#bib.bib10)], to name a few.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[LfD](#glo.main.lfd) includes several approaches to tackle this problem. [Behavioural
+    Cloning (BC)](#glo.main.bc) methods [[1](#bib.bib1)] fit a conditional generative
+    model to the actions conditioned on the observations. Despite its shortcomings
+    in sequential decision-making problems (e.g., compounding errors leading to covariate
+    shift [[11](#bib.bib11)]), in practice, it has shown some of the most impressive
+    results [[6](#bib.bib6), [12](#bib.bib12), [7](#bib.bib7), [13](#bib.bib13)] in
+    part due to its stable and efficient training algorithms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, [Inverse Reinforcement Learning (IRL)](#glo.main.irl) [[14](#bib.bib14),
+    [15](#bib.bib15)] or variations such as [[16](#bib.bib16), [17](#bib.bib17)] combine
+    the demonstrations with trial-and-error in the environment (i.e. [Reinforcement
+    Learning (RL)](#glo.main.rl)), resulting in policies that are more robust than
+    [BC](#glo.main.bc), but limited by less stable training algorithms. Unlike [BC](#glo.main.bc),
+    which directly mimics the actions from the demonstrations, [IRL](#glo.main.irl)
+    focuses on inferring the underlying reward functions that the demonstrated behaviors
+    aim to optimize, and applies [RL](#glo.main.rl) to infer the policy. A key advantage
+    of [IRL](#glo.main.irl) is its ability to learn from mere observations [[18](#bib.bib18),
+    [19](#bib.bib19)], without explicit information about the actions taken during
+    the demonstrations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [LfD](#glo.main.lfd), the inherent characteristics of the demonstrations
+    pose significant challenges. Typically, the collected data is suboptimal, noisy,
+    conditioned on high-dimensional observations, and includes multiple modes of behavior [[20](#bib.bib20),
+    [21](#bib.bib21), [22](#bib.bib22)]. This diversity can be observed in the multiple
+    ways to grasp a given object, the preferences of the experts in providing the
+    demonstrations, or the divergences between experts. These inherent properties
+    of the data lead the researchers to find models that can properly capture its
+    distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditionally, before deep learning became standard, [LfD](#glo.main.lfd) methods
+    often used [Gaussian Process (GP)](#glo.main.gp) [[23](#bib.bib23), [24](#bib.bib24)],
+    [Hidden Markov Model (HMM)](#glo.main.hmm) [[25](#bib.bib25), [26](#bib.bib26)],
+    or [Gaussian Mixture Models (GMM)](#glo.main.gmm) [[27](#bib.bib27)] to represent
+    the generative models. However, these models were not scalable to large datasets
+    and were unable to represent conditioned distributions in high-dimensional contexts
+    such as images. Neural network-based models allowed for conditioning in high-dimensional
+    variables such as images [[28](#bib.bib28), [29](#bib.bib29)] or text [[30](#bib.bib30),
+    [31](#bib.bib31)], but they were typically trained as unimodal models. These types
+    of models are at odds with the nature of the collected demonstrations. The inability
+    of these models to capture the inherent diversity and multiple modes in the data
+    led researchers to limit themselves to smaller [[32](#bib.bib32)] or highly curated
+    datasets to ensure unimodality and thus simplify the modeling process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Recent successes of [Deep Generative Models (DGM)](#glo.main.dgm) in image [[33](#bib.bib33)]
+    and text generation [[34](#bib.bib34)] have demonstrated their ability to capture
+    highly multimodal data distributions. In recent years, these expressive models
+    have garnered attention in the field of robotics for Imitation Learning applications
+    (see [Figure 1](#S1.F1 "In I Introduction ‣ Deep Generative Models in Robotics:
+    A Survey on Learning from Multimodal Demonstrations")). For example, [Diffusion
+    Models (DM)](#glo.main.dm) [[35](#bib.bib35), [33](#bib.bib33)] have been effectively
+    used to learn high-dimensional trajectory distributions [[36](#bib.bib36), [7](#bib.bib7),
+    [8](#bib.bib8)]; Language and image-based policies have been developed using GPT-style
+    models representing categorical distributions in the action space [[37](#bib.bib37)];
+    and [Variational Autoencoders (VAE)](#glo.main.vae) [[38](#bib.bib38)] were applied
+    to generate 6-DoF grasping poses for arbitrary objects [[5](#bib.bib5)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This article presents a unified and comprehensive review of the various approaches
+    explored by the robotics community to learn [DGM](#glo.main.dgm) from demonstrations
+    to capture the inherent multimodality of the data. While some of these models
+    are borrowed from other areas of machine learning, such as [DM](#glo.main.dm),
+    we also highlight approaches that have been particularly influential in representing
+    action distributions in robotics, such as Action Value Maps [[39](#bib.bib39),
+    [40](#bib.bib40), [41](#bib.bib41)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The survey focuses mainly on approaches that consider offline data, i.e., no
+    additional data collected online or interactively, and offline supervision, i.e.,
+    no additional supervision other than expert actions. Although learning [DGM](#glo.main.dgm)
+    from offline datasets has been widely studied in various fields from vision to
+    text generation, there are inherent challenges in robotics that require careful
+    design choices. To motivate the specific design choices for robotics applications,
+    in [Section I-A](#S1.SS1 "I-A Challenges in Learning from Offline Demonstrations
+    ‣ I Introduction ‣ Deep Generative Models in Robotics: A Survey on Learning from
+    Multimodal Demonstrations"), we present the fundamental challenges of learning
+    policies from demonstrations in robotics.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8ae2332a7cefbe9f160b87105ae05fbc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Selected publications for this survey per year. Different colors
+    indicate different types of [DGM](#glo.main.dgm). We categorize [DGM](#glo.main.dgm)
+    into five classes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We divide the survey into six sections (see LABEL:fig:main):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Section II](#S2 "II Problem Formulation ‣ Deep Generative Models in Robotics:
+    A Survey on Learning from Multimodal Demonstrations"), we formalize the problem
+    and provide the nomenclature that we will use throughout the survey.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Section III](#S3 "III Density Estimation Models ‣ Deep Generative Models
+    in Robotics: A Survey on Learning from Multimodal Demonstrations"), we introduce
+    the most commonly used [DGM](#glo.main.dgm) in robotics, present their inherent
+    properties, briefly list various works that have applied these methods to robotics,
+    and present the training and sampling algorithms for each model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Section IV](#S4 "IV Integrating Generative Models into Robotics ‣ Deep
+    Generative Models in Robotics: A Survey on Learning from Multimodal Demonstrations"),
+    we present the different types of applications in which deep generative models
+    have been applied highlighting the type of data that the models generate and the
+    type of conditioning variables that are considered.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In [Section V](#S5 "V Generalizing outside data distributions ‣ Deep Generative
+    Models in Robotics: A Survey on Learning from Multimodal Demonstrations"), we
+    present a range of design and algorithmic inductive biases to improve the generalization
+    out of the data distribution of the learned models. How can we guarantee the generation
+    of useful actions given as context observations that were not in the demonstrations?
+    Among the options we present are the modular composition of generative models,
+    the extraction of informative features from the observations, and the exploitation
+    of symmetries between the observations and the actions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, in [Section VI](#S6 "VI Future Research Directions ‣ Deep Generative
+    Models in Robotics: A Survey on Learning from Multimodal Demonstrations"), we
+    highlight the current research challenges in the field and suggest future directions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-A Challenges in Learning from Offline Demonstrations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Learning robot policies from offline demonstrations presents several challenges.
+    While many of these challenges (e.g., multiple modes in the demonstrations) are
+    shared with other research areas, such as image generation or text generation,
+    there are robotics-specific challenges that we should consider. Below, we present
+    the main challenges in learning robot policies from offline data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Demonstration Diversity. One of the main challenges is the inherent variability
+    within the demonstrations themselves [[42](#bib.bib42)]. Different demonstrators
+    may have different skill levels, preferences, and strategies for accomplishing
+    the same task, resulting in a wide range of approaches encapsulated in the dataset.
+    Unimodal distributions lack the expressiveness to capture this variability in
+    the demonstrations, resulting in poor performance. [DGM](#glo.main.dgm) are a
+    promising approach to address this challenge. Being able to capture complex multimodal
+    distributions, these models can learn to represent the different strategies and
+    behaviors exhibited in the demonstrations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heterogeneous Action and State Spaces. Unlike computer vision, where the data
+    space is well defined, in robotics, there is no a single state-action space. Robot
+    actions can range from torque commands, to desired target positions or desired
+    trajectories. In addition, robot behavior can be modeled in both the robot’s configuration
+    space and the task space. This variability leads to heterogeneous datasets and
+    heterogeneous solutions for learning robot policies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Partially Observable Demonstrations. When a human performs a demonstration,
+    his actions are not based solely on observable elements; they are driven by internal
+    states influenced by the demonstrator’s knowledge of the task and a history of
+    observations. In addition, humans can incorporate information from the environment
+    that may not be readily available or observable by a robot’s sensors, such as
+    peripheral details captured by human vision but missed by the robot’s cameras.
+    This mismatch often results in demonstrations that only partially represent the
+    context of the task, leading to ambiguities in the policies learned by the robot.
+    The issue of partial observability has been studied extensively in the literature [[43](#bib.bib43)].
+    A common practical approach is to encode the history of observations as contexts
+    rather than a single observation, allowing the model to extract internal states
+    that could reduce the ambiguity [[44](#bib.bib44)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Temporal Dependencies and Long-Horizon Planning. Robotic tasks often involve
+    sequential decision-making, where actions are interrelated over time. This sequential
+    nature can result in compounding errors that lead the robot into situations not
+    encountered in the training demonstrations. This problem has been addressed in
+    several ways. Some works propose learning short-horizon skills that can then be
+    concatenated with a high-level planner. In another direction, a number of works [[36](#bib.bib36),
+    [13](#bib.bib13)] propose learning policies that generate trajectories of actions
+    rather than single-step actions, thus reducing the sequentially compounded errors.
+    In addition, other options are to inject noise while generating the demonstrations [[45](#bib.bib45)]
+    or to interactively grow the dataset [[11](#bib.bib11)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mismatch between training and evaluation objectives. Learning from offline demonstrations
+    is typically framed as a density estimation problem. The learned model is trained
+    to produce samples that resemble the training dataset. However, the learned models
+    are used to solve a given task, where the metric to be maximized is the task success
+    rate. This mismatch between the training objective and the evaluation objective
+    can lead to poor performance when the robot is used to solve a particular task.
+    One possible direction to address this problem is to combine a behavioral cloning
+    phase with a posterior reinforcement learning fine-tuning [[46](#bib.bib46)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Distribution Shifts and Generalization. A fundamental challenge in learning
+    from offline demonstrations is the distribution shift between the demonstration
+    data and the real-world scenarios in which the learned policies are deployed.
+    Demonstrations are typically collected in controlled environments or specific
+    contexts, but the robot must operate in potentially novel situations not covered
+    by the demonstrations. This mismatch can lead to generalization failures and performance
+    degradation when the learned policies are applied outside the scope of the training
+    data. Addressing this challenge requires techniques that can extrapolate from
+    the given demonstrations and adapt to new, unseen environments. We dedicate [Section V](#S5
+    "V Generalizing outside data distributions ‣ Deep Generative Models in Robotics:
+    A Survey on Learning from Multimodal Demonstrations") to explore different approaches
+    to improve generalization in robotics applications.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0e423cf566fd083e5a268c3d3cf7494b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Left: A visual representation of Sampling Models. Given a latent
+    sample ${\bm{z}}$, usually sampled from a normal distribution, Sampling Models
+    generate an action sample through a learned decoder ${\bm{a}}={\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})$.
+    Right: A representation of common applications for Sampling Models: as sampling
+    distribution [[47](#bib.bib47)], as behavior prior [[48](#bib.bib48)] and, as
+    generative model [[5](#bib.bib5)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-B Related Surveys
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The field of [LfD](#glo.main.lfd) has a long history that has been explored
+    in several surveys.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before deep learning-based approaches became standard, several surveys [[49](#bib.bib49),
+    [50](#bib.bib50), [51](#bib.bib51), [52](#bib.bib52)] explored the basic problem
+    of Imitation Learning. These surveys address questions such as How should we acquire
+    data?, What model should we learn?, or How should we learn a policy?.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recent works [[53](#bib.bib53), [3](#bib.bib3), [54](#bib.bib54)] updated
+    the reviews to the new state of the art where deep learning-based models were
+    beginning to be integrated into [LfD](#glo.main.lfd) problems. In particular,
+    [[3](#bib.bib3)] presented an algorithmic perspective on Imitation Learning, allowing
+    the comparison of different algorithms from an information-theoretic point of
+    view.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The current stage of the robot learning community, with the increasing availability
+    of large-scale robot demonstrations both in simulation and in the real world,
+    the growing importance of imitation-based approaches, and the increasing availability
+    of cheap robot hardware, makes it timely to provide a survey covering the research
+    of the last years and focusing on the challenges the field is currently facing
+    (multimodality, generalization, heterogeneous datasets …).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recently, a few surveys [[55](#bib.bib55), [56](#bib.bib56)] have explored the
+    problem of learning foundational models for robotics, which mainly focused on
+    integrating Internet-scale vision and language foundation models into robotics
+    problems. Despite the potential of applying vision-language foundational models
+    to robotics problems, our survey focuses on a different problem. The interest
+    in this survey is in exploring approaches for learning policies directly from
+    embodied robotics data (in part, due to the growing availability of large datasets [[22](#bib.bib22),
+    [57](#bib.bib57)]), rather than adapting vision-language models to robotics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Problem Formulation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The primary goal of [BC](#glo.main.bc) is to learn a conditioned probability
+    density model (generative model) $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$, that
+    accurately captures the underlying probability distribution of the data, denoted
+    as $\rho_{\mathcal{{\mathcal{D}}}}({\bm{a}}|{\bm{c}})$, where ${\bm{a}}$ is the
+    data variable we want to generate and ${\bm{c}}$ is the conditioning variable.
+    The central idea is to ensure that the samples generated by the model ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$
+    are indistinguishable from the real data samples ${\bm{a}}\sim\rho_{\mathcal{{\mathcal{D}}}}({\bm{a}}|{\bm{c}})$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the context of decision-making and control, ${\bm{a}}$ represents the action,
+    which range from end-effector poses [[58](#bib.bib58)], displacements [[59](#bib.bib59)],
+    trajectories [[36](#bib.bib36)], desired scene arrangement [[60](#bib.bib60)],
+    to robot configurations [[61](#bib.bib61)]. The conditioning variable ${\bm{c}}:({\bm{o}},{\bm{g}})$
+    is usually decoupled between ${\bm{o}}$ the observations of the scene and ${\bm{g}}$
+    the goal definition. Observations may include visual data [[62](#bib.bib62)],
+    3D spatial data [[63](#bib.bib63)], or robot proprioception, providing information
+    about the state of the environment. Depending on the task, it is also common to
+    provide a history of the last $t$ observations rather than a single-step observation.
+    The goal variable ${\bm{g}}$ defines the desired behavior or task that the robot
+    should accomplish. This goal can be specified in a variety of ways, including
+    language commands [[64](#bib.bib64)], desired goal states [[65](#bib.bib65)],
+    or goal images [[66](#bib.bib66)]; each provides a different approach to directing
+    the robot’s actions toward achieving specific outcomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn the model $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$, we operate under
+    the assumption that the true data distribution $\rho_{\mathcal{{\mathcal{D}}}}({\bm{a}}|{\bm{c}})$
+    is unknown and that we only have access to a finite set of samples drawn from
+    that distribution. These samples form a dataset ${\mathcal{D}}:\{{\bm{a}}_{n},{\bm{c}}_{n}\}_{n=1}^{N}$
+    where $N$ is the number of samples. The task of learning the generative model
+    is then formulated as an optimization problem, where the objective is to minimize
+    the divergence between the learned distribution $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$
+    and the true data distribution $\rho_{{\mathcal{D}}}({\bm{a}}|{\bm{c}})$
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\bm{\theta}}^{*}=\operatorname*{arg\,min}_{{\bm{\theta}}}{\mathbb{E}}_{{\bm{a}},{\bm{c}}\sim{\mathcal{D}}}\left[{\mathbb{D}}(\rho_{{\mathcal{D}}}({\bm{a}}&#124;{\bm{c}}),\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}}))\right],$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where ${\mathbb{D}}$ is the divergence distance. Despite the general representation
+    in ([1](#S2.E1 "Equation 1 ‣ II Problem Formulation ‣ Deep Generative Models in
+    Robotics: A Survey on Learning from Multimodal Demonstrations")), the training
+    algorithm is modified depending on the selected model $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$
+    (Gaussian, [Energy Based Models (EBM)](#glo.main.ebm) [[67](#bib.bib67), [68](#bib.bib68)],
+    [DM](#glo.main.dm) [[69](#bib.bib69), [33](#bib.bib33)]).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Density Estimation Models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The central idea of this survey is to present in a unified way the different
+    types of models that have been used in robotics to properly capture the multimodality
+    in the demonstrations. Thus, this survey does not include works that have used
+    unimodal models to represent the policies, and focuses on models that are able
+    to generate samples from multimodal distributions. We categorize these models
+    into five groups:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sampling Models. Given a noise sample, these models generate the action directly.
+    They tend to have very fast inference times. [DGM](#glo.main.dgm) like [VAE](#glo.main.vae),
+    [Generative Adversarial Networks (GAN)](#glo.main.gan), or [Normalizing Flows
+    (NFlow)](#glo.main.nf) fall into this category.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Energy-based Models. Given an action candidate as input, [EBM](#glo.main.ebm)
+    returns a scalar value representing the energy of that action candidate. Sampling
+    from a [EBM](#glo.main.ebm) usually requires [Markov Chain Monte Carlo (MCMC)](#glo.main.mcmc)
+    strategies. We also consider as [EBM](#glo.main.ebm), models that define the energy
+    as the distance between feature descriptors [[70](#bib.bib70)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diffusion Models. [DM](#glo.main.dm) are a type of generative model that learns
+    to generate data by reversing a gradual corruption process. These types of models
+    are able to generate high quality samples due to the iterative denoising process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Categorical Models. Given a context variable, categorical models represent the
+    action distribution as a discrete distribution of $k$ bins. We group both GPT-inspired
+    action models [[37](#bib.bib37)] and action value maps [[62](#bib.bib62)] into
+    this category. Note that despite the categorical distributions represent both
+    types of models, action value maps directly inpaint the categorical distribution
+    in the visual observations. In contrast, in GPT-inspired models, observations
+    and action distributions are represented in different spaces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixture Density Models. Given a context variable, [Mixture Density Models (MDM)](#glo.main.mdm)
+    returns the parameters of a mixture density function representing the action distribution.
+    Common choices are models that return the means, standard deviations, and weights
+    of a [GMM](#glo.main.gmm) or a mixture of logistic distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The classification presented is not rigid or definitive. For example, Normalizing
+    Flows [[71](#bib.bib71)] operates as a sampling model in the generation, but it
+    also facilitates the calculation of the likelihood of a sample in a manner akin
+    to [EBM](#glo.main.ebm). Furthermore, we cluster inside Categorical models to
+    both GPT-style autoregressive models [[37](#bib.bib37), [72](#bib.bib72)] and
+    Action Value Maps [[73](#bib.bib73), [74](#bib.bib74)]. While both models express
+    the distribution via a categorical distribution, they diverge conceptually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following, we present in five distinct subsection each model type, its
+    inherent properties and the type of problems in which it has been applied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Sampling Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We call sampling models to the set of deep generative models that allow explicit
+    sample generation. Given a context variable ${\bm{c}}\in\mathbb{R}^{c}$ and a
+    latent variable ${\bm{z}}\in\mathbb{R}^{z}$, the network decodes the latent variable
+    into a sample ${\bm{a}}={\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})$. To generate
+    an action sample from our model ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$,
+    we first sample a latent variable from an easy-to-sample from distribution ${\bm{z}}\sim{\mathcal{N}}({\bm{0}},{\bm{I}})$
+    (e.g., a normal distribution) and decode it into an action ${\bm{a}}={\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})$
+    (see [Figure 2](#S1.F2 "In I-A Challenges in Learning from Offline Demonstrations
+    ‣ I Introduction ‣ Deep Generative Models in Robotics: A Survey on Learning from
+    Multimodal Demonstrations")). There are several generative models that fall into
+    this category: [GAN](#glo.main.gan) [[75](#bib.bib75)], [VAE](#glo.main.vae) [[38](#bib.bib38)],
+    or [NFlow](#glo.main.nf) [[71](#bib.bib71)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A1 Main applications
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the field of robotics, these types of models have been used in several contexts
+    and applications (see [Figure 2](#S1.F2 "In I-A Challenges in Learning from Offline
+    Demonstrations ‣ I Introduction ‣ Deep Generative Models in Robotics: A Survey
+    on Learning from Multimodal Demonstrations")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an Initial Sampling Distribution. Due to their fast sampling time, they have
+    been used as initial sampling distributions for motion planning and optimization
+    problems [[47](#bib.bib47), [76](#bib.bib76), [77](#bib.bib77), [78](#bib.bib78),
+    [79](#bib.bib79)]. In [[47](#bib.bib47)], conditioned [VAE](#glo.main.vae) were
+    used to sample initial collision-free guided states for sampling-based motion
+    planning problems [[80](#bib.bib80), [81](#bib.bib81)]. In [[77](#bib.bib77)],
+    [GAN](#glo.main.gan) were used to generate initial states for long-horizon tasks
+    and motion planning problems. The output of the [GAN](#glo.main.gan) was later
+    optimized to satisfy a set of constraints.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As Exploration Guiding Models. A common problem in [RL](#glo.main.rl) is the
+    exploration. Given the large state-action space, deciding which regions are meaningful
+    to explore is usually a hard problem. To guide this exploration, several works [[82](#bib.bib82),
+    [48](#bib.bib48), [83](#bib.bib83), [84](#bib.bib84), [85](#bib.bib85)] have explored
+    learning a sampling model that encodes all the possible behaviors in a dataset.
+    This model can be used integrated into a [RL](#glo.main.rl) problem, by running
+    a policy in the latent space. Given that the model will generate solutions from
+    the dataset, the policy learns to search in the latent space to maximize a given
+    reward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As Explicit Sampling Models. The most straightforward application is to use
+    the model as a generative model. In this context, sampling models have been used
+    to generate grasp poses [[5](#bib.bib5), [86](#bib.bib86)], inverse kinematic
+    solutions [[61](#bib.bib61), [65](#bib.bib65)], or directly sample actions in
+    a policy [[87](#bib.bib87), [88](#bib.bib88)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A2 Training Sampling Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '[GAN](#glo.main.gan), [VAE](#glo.main.vae), and [NFlow](#glo.main.nf) share
+    the same sampling process. However, each model is trained using a different algorithm.
+    In the following, we briefly present the training pipelines for the three models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Variational Autoencoders. The [VAE](#glo.main.vae) model, introduced in [[38](#bib.bib38)],
+    consists of two networks: an encoder and a decoder. Given an action ${\bm{a}}$,
+    the encoder maps it to the parameters of a latent normal distribution ${\bm{\mu}}_{z},{\bm{\sigma}}_{z}={\mathcal{E}}_{{\bm{\psi}}}({\bm{a}})$.
+    Given a sample from the latent space ${\bm{z}}\sim{\mathcal{N}}({\bm{\mu}}_{z},{\bm{\sigma}}_{z}{\bm{I}})$,
+    the decoder maps the latent variable to the action space $\hat{{\bm{a}}}={\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})$,
+    conditioned on the context variable ${\bm{c}}$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The training loss consists of two parts: a reconstruction loss and a KL divergence.
+    Given a dataset ${\mathcal{D}}:\{{\bm{a}}_{n},{\bm{c}}_{n}\}_{n=1}^{N}$, the [VAE](#glo.main.vae)
+    loss is given by'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}},{\bm{\psi}})=$ | $\displaystyle{\mathbb{E}}_{{\bm{a}},{\bm{c}}\sim{\mathcal{D}}}[{\mathbb{D}}_{\text{KL}}(\rho({\bm{z}}&#124;{\bm{a}}),\rho({\bm{z}}))$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle+{\mathbb{E}}_{{\bm{z}}\sim\rho({\bm{z}}&#124;{\bm{a}})}[&#124;&#124;{\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})-{\bm{a}}&#124;&#124;_{2}^{2}]]$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\rho({\bm{z}}|{\bm{a}})={\mathcal{N}}({\bm{z}}|{\mathcal{E}}({\bm{a}}))$
+    is a Gaussian whose parameters are the encoder outputs. $\rho({\bm{z}})={\mathcal{N}}({\bm{0}},{\bm{I}})$
+    is a Gaussian around zero. While the KL divergence term encourages the encoder
+    to generate distributions close to $\rho({\bm{z}})$, the reconstruction loss aims
+    to decode a latent sample to look as similar as possible to the input ${\bm{a}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generative Adversarial Networks. Unlike [VAE](#glo.main.vae), [GAN](#glo.main.gan)
+    [[75](#bib.bib75)] suggests having a discriminator $p=C_{{\bm{\psi}}}({\bm{a}},{\bm{c}})$
+    instead of an encoder. Given a sample generated by the model ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$,
+    the discriminator is trained to discriminate between samples generated by our
+    model and samples coming from the dataset, while the generator is trained to make
+    the generated samples as similar as possible to the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a dataset ${\mathcal{D}}:\{{\bm{a}}_{n},{\bm{c}}_{n}\}_{n=1}^{N}$, the
+    [GAN](#glo.main.gan) objective is represented by the binary cross-entropy loss
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{J}}({\bm{\theta}},{\bm{\psi}})=$ | $\displaystyle{\mathbb{E}}_{{\bm{a}},{\bm{c}}\sim{\mathcal{D}}}[\log
+    C_{{\bm{\psi}}}({\bm{a}},{\bm{c}})+$ |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle{\mathbb{E}}_{{\bm{z}}\sim{\mathcal{N}}({\bm{0}},{\bm{I}})}\left[\log(1-C_{{\bm{\psi}}}({\bm{D}}_{{\bm{\theta}}}({\bm{z}},{\bm{c}})),{\bm{c}})\right]].$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Then, the optimization problem is solved by a minimization-maximization problem,
+    where we aim to minimize the objective with respect to ${\bm{\psi}}$ (the discriminator)
+    and maximize it with respect to ${\bm{\theta}}$ (the generator). The discriminator
+    aims to discriminate between real data samples and the fake samples produced by
+    the generator, while the generator aims to produce samples that are indistinguishable
+    from real data to the discriminator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normalizing Flows. The generator ${\bm{D}}_{{\bm{\theta}}}$ in [NFlow](#glo.main.nf)
+    is different from those in [VAE](#glo.main.vae) or [GAN](#glo.main.gan). While
+    in [GAN](#glo.main.gan) or [VAE](#glo.main.vae) it is represented by an arbitrary
+    network, in [NFlow](#glo.main.nf) we are required to have an invertible network [[71](#bib.bib71),
+    [89](#bib.bib89), [90](#bib.bib90)] as generator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the generator ${\bm{D}}_{{\bm{\theta}}}$ is invertible, [NFlow](#glo.main.nf)
+    allows the exact calculation of the likelihood [[71](#bib.bib71)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\log\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}})=\log\rho_{z}\left({\bm{D}}_{{\bm{\theta}}}^{-1}({\bm{a}},{\bm{c}})\right)+\log&#124;\det{\bm{J}}_{{\bm{D}}_{{\bm{\theta}}}}({\bm{a}},{\bm{c}})&#124;,$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\rho_{z}={\mathcal{N}}({\bm{0}},{\bm{I}})$ is the latent space normal
+    distribution and ${\bm{J}}_{{\bm{D}}_{{\bm{\theta}}}}$ is the Jacobian of the
+    decoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, given a dataset ${\mathcal{D}}:\{{\bm{a}}_{n},{\bm{c}}_{n}\}_{n=1}^{N}$,
+    [NFlow](#glo.main.nf) are trained by minimizing the negative log-likelihood
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}})$ | $\displaystyle=-{\mathbb{E}}_{{\bm{a}},{\bm{c}}\sim{\mathcal{D}}}\left[\log\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}})\right].$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: Note that unlike [VAE](#glo.main.vae) and [GAN](#glo.main.gan), [NFlow](#glo.main.nf)
+    does not require to training an additional model. Additionally, since the generator
+    is invertible, we can compute the likelihood of a sample in our model, similar
+    to [EBM](#glo.main.ebm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Energy-Based Models.
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We call [EBM](#glo.main.ebm) to the set of deep generative models that, given
+    an action ${\bm{a}}$, output a scalar value ${\bm{e}}\in\mathbb{R}$, ${\bm{e}}=E_{{\bm{\theta}}}({\bm{a}},{\bm{c}})$,
+    where ${\bm{c}}$ denotes the conditioning context variable ([Figure 3](#S3.F3
+    "In III-B Energy-Based Models. ‣ III Density Estimation Models ‣ Deep Generative
+    Models in Robotics: A Survey on Learning from Multimodal Demonstrations")). In
+    [EBM](#glo.main.ebm), the probability density model $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$
+    is represented by a Boltzmann distribution'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}})\propto\exp\left(-E_{{\bm{\theta}}}({\bm{a}},{\bm{c}})\right),$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $E_{{\bm{\theta}}}({\bm{a}},{\bm{c}})$ is the energy of the distribution,
+    i.e., the unnormalized log-likelihood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/45cb2783312e6ba81fc2a3611bd41cdd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Left: A visual representation of an [EBM](#glo.main.ebm). Given as
+    input an action variable ${\bm{a}}$, [EBM](#glo.main.ebm) output the unnormalized
+    log probability of the input action $e={\bm{E}}_{{\bm{\theta}}}({\bm{a}},{\bm{c}})$.
+    Right: A visual representation of the different strategies to train or represent
+    an [EBM](#glo.main.ebm): Contrastive Divergence [[91](#bib.bib91)], Supervised
+    Learning [[92](#bib.bib92)] and, Neural Descriptor Fields [[70](#bib.bib70)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sampling from an [EBM](#glo.main.ebm) ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$
+    is not direct due to the implicit nature of the model. [EBM](#glo.main.ebm) define
+    a probability distribution over the data by an energy function, and sampling requires
+    methods like [MCMC](#glo.main.mcmc) to approximate the distribution. A common
+    sampling algorithm is Langevin Monte Carlo. Given an initial sample ${\bm{a}}_{0}\sim\rho_{0}({\bm{a}}_{0})$
+    generated from a simple prior distribution, the samples are generated by iteratively
+    updating the sample by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\bm{a}}_{k+1}={\bm{a}}_{k}-\frac{\epsilon}{2}\nabla_{{\bm{a}}}E_{{\bm{\theta}}}({\bm{a}}_{k},{\bm{c}})+\sqrt{\epsilon}{\mathcal{N}}({\bm{0}},{\bm{I}}),$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\epsilon>0$ is a small constant. This process can be computationally
+    intensive and slower than direct sampling methods used in models such as [VAE](#glo.main.vae)
+    or [GAN](#glo.main.gan). Alternatively, given the implicit nature of the [EBM](#glo.main.ebm),
+    some works [[93](#bib.bib93), [94](#bib.bib94)] search for the most likely sample
+    by solving an optimization problem
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\bm{a}}^{*}=\arg\min_{{\bm{a}}}E_{{\bm{\theta}}}({\bm{a}},{\bm{c}}).$
+    |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: Because of their implicit nature, [EBM](#glo.main.ebm) contain several interesting
+    properties. As explored in [[95](#bib.bib95), [93](#bib.bib93), [96](#bib.bib96)],
+    [EBM](#glo.main.ebm) allow a modular composition of different [EBM](#glo.main.ebm).
+    This modular approach allows separate [EBM](#glo.main.ebm) to be trained to represent
+    different behaviors or aspects of the data, and then these models can be combined.
+    The result is a composite model in which the variable ${\bm{a}}$ has a high probability
+    under all the component models, effectively integrating different features or
+    patterns captured by each individual [EBM](#glo.main.ebm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another interesting property is the energy mapping [[58](#bib.bib58), [96](#bib.bib96)].
+    [EBM](#glo.main.ebm), due to its implicit nature, allows to generate samples in
+    a space different from their training space. This is especially useful in robotics.
+    For example, [EBM](#glo.main.ebm) trained in the task space ${\bm{E}}_{{\bm{\theta}}}({\bm{x}}|{\bm{c}})$
+    can effectively guide the selection of robot joint configurations ${\bm{q}}$,
+    if we have access to the forward kinematics mapping ${\bm{x}}=\phi_{\text{FK}}({\bm{q}})$.
+    By composing the map and the energy ${\bm{E}}_{{\bm{\theta}}}({\bm{q}}|{\bm{c}})={\bm{E}}_{{\bm{\theta}}}(\phi_{\text{FK}}({\bm{q}})|{\bm{c}})$,
+    we can represent an [EBM](#glo.main.ebm) in the configuration space that sets
+    low energy to those configurations that lead to low energy in the task space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B1 Main Application
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The main applications of [EBM](#glo.main.ebm) in robotics range from cost/reward
+    functions for sequential decision making problems to direct generative models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a cost/reward function. Learning [EBM](#glo.main.ebm) to represent cost or
+    reward functions has been widely studied in [Inverse Optimal Control (IOC)](#glo.main.ioc) [[97](#bib.bib97),
+    [98](#bib.bib98)] or [IRL](#glo.main.irl) [[14](#bib.bib14), [15](#bib.bib15)].
+    Some training algorithms such as [Contrastive Divergence (CD)](#glo.main.cd) loss,
+    require the generation of samples from the learned [EBM](#glo.main.ebm) during
+    the training process. Different [IRL](#glo.main.irl) and [IOC](#glo.main.ioc)
+    methods propose different approaches to sample from the learned [EBM](#glo.main.ebm).
+    [[98](#bib.bib98)] proposes solving a maximum entropy trajectory optimization
+    to generate the samples, [[99](#bib.bib99)] proposes generating the samples using
+    Langevin dynamics, while [[14](#bib.bib14), [15](#bib.bib15)], propose generating
+    the samples from a policy trained with [RL](#glo.main.rl), given the learned [EBM](#glo.main.ebm)
+    is the reward function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a generative model. Besides [IRL](#glo.main.irl) and [IOC](#glo.main.ioc)
+    approaches, which focus on sequential decision-making problems, several works
+    have explored learning [EBM](#glo.main.ebm) for direct action generation. In [[92](#bib.bib92)],
+    an [EBM](#glo.main.ebm) is learned to generate grasping poses for arbitrary objects.
+    Unlike most of the approaches to learning [EBM](#glo.main.ebm) s, the model is
+    learned to fit a 6-DoF [Signed Distance Field (SDF)](#glo.main.sdf). Similarly,
+    [[100](#bib.bib100)] generates end-effector poses. However, their work focuses
+    on a broader set of tasks beyond grasping, such as opening drawers or pressing
+    buttons. In [[94](#bib.bib94)], an [EBM](#glo.main.ebm) is trained as a visuomotor
+    policy. The authors claim that a [EBM](#glo.main.ebm)-based policy captures the
+    discontinuities in the data better than a deterministic or Gaussian policy. In
+    [[101](#bib.bib101)], an [EBM](#glo.main.ebm) is trained as a transition dynamics
+    model. In [[102](#bib.bib102)], a cost function for state estimation is learned.
+    The learned [EBM](#glo.main.ebm) represents the joint probability of the state
+    given an observation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B2 Training Energy-Based Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: One of the most popular algorithms for training [EBM](#glo.main.ebm) is [CD](#glo.main.cd)
+    [[103](#bib.bib103), [99](#bib.bib99)]. This method involves a contrastive game
+    between negative samples, generated from a given distribution and positive samples,
+    obtained from the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast to [CD](#glo.main.cd), it has been popular in robotics to train
+    models with supervised learning losses such as occupancy loss or [SDF](#glo.main.sdf).
+    Despite not being common, given their popularity in robotics, we introduce them
+    as additional approaches to fitting [EBM](#glo.main.ebm) (see [Figure 3](#S3.F3
+    "In III-B Energy-Based Models. ‣ III Density Estimation Models ‣ Deep Generative
+    Models in Robotics: A Survey on Learning from Multimodal Demonstrations")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrastive Divergence. A common approach to learning density models is to minimize
+    the negative log-likelihood of the data. However, computing the log-likelihood
+    requires access to the model’s normalization constant, which is intractable in
+    [EBM](#glo.main.ebm). To adapt the negative log-likelihood loss to [EBM](#glo.main.ebm),
+    [[103](#bib.bib103)] approximates the calculation by samples. Given $\nabla_{{\bm{\theta}}}\log
+    Z_{{\bm{\theta}}}=-{\mathbb{E}}_{{\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}})}\left[\nabla_{{\bm{\theta}}}E_{{\bm{\theta}}}({\bm{a}})\right]$,
+    we can approximate the gradient of the negative log-likelihood
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\nabla_{{\bm{\theta}}}{\mathcal{L}}({\bm{\theta}})={\mathbb{E}}_{{\color[rgb]{0.5234375,0.6484375,0.06640625}{\bm{a}}}\sim{\mathcal{D}}}\left[\nabla_{{\bm{\theta}}}E_{{\bm{\theta}}}({\color[rgb]{0.5234375,0.6484375,0.06640625}{\bm{a}}})\right]-{\mathbb{E}}_{{\color[rgb]{0.94921875,0.55859375,0.171875}{\bm{a}}}\sim\rho_{{\bm{\theta}}}}\left[\nabla_{{\bm{\theta}}}E_{{\bm{\theta}}}({\color[rgb]{0.94921875,0.55859375,0.171875}{\bm{a}}})\right].$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'In [Equation 9](#S3.E9 "In III-B2 Training Energy-Based Model ‣ III-B Energy-Based
+    Models. ‣ III Density Estimation Models ‣ Deep Generative Models in Robotics:
+    A Survey on Learning from Multimodal Demonstrations"), the energy is pushed down
+    for the samples in the dataset (positive samples) and pushed up for the rest of
+    the samples that are not part of the dataset. On each iteration, we sample a set
+    of points from the current energy model ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}})$
+    (negative samples) to evaluate the model. However, if the dimension of ${\bm{a}}$
+    is large, it may be difficult to sample ${\bm{a}}\sim\rho_{{\bm{\theta}}}({\bm{a}})$
+    properly. To mitigate this difficulty, techniques such as using the gradient of
+    the energy function  [[99](#bib.bib99)] or minimizing the KL divergence between
+    samples  [[104](#bib.bib104)] are common approaches.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/18d1264f2cafb6b3b6f832f2c8e90d99.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Left: A visual representation of a [DM](#glo.main.dm). Given an action
+    ${\bm{a}}$ and a scalar $k$ informing on the diffusion step, the model ${\bm{s}}={\bm{S}}_{{\bm{\theta}}}({\bm{a}},{\bm{c}},k)$
+    outputs a vector ${\bm{s}}$ conditioned on ${\bm{c}}$. The output ${\bm{s}}$ is
+    related to the score of a distribution $\rho({\bm{a}}_{k})$. Right: A visualization
+    of the denoising process [[36](#bib.bib36)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Supervised Learning. A few works in robotics [[92](#bib.bib92), [105](#bib.bib105)]
+    have explored training [SDF](#glo.main.sdf), occupancy fields, or binary classifiers
+    to represent scalar fields. Although not explicitly trained as a generative model,
+    the learned model is architecturally equivalent to an [EBM](#glo.main.ebm). The
+    model takes an action variable ${\bm{a}}$ as input and outputs a scalar value
+    ${\bm{e}}$ that informs about the quality of the sample. After the training, this
+    model can be used to generate samples. For example, in [[92](#bib.bib92)] a [SDF](#glo.main.sdf)
+    model is trained to generate 6 DoF grasp poses, while in [[105](#bib.bib105)]
+    an occupancy network is trained to generate grasp poses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural Descriptor Fields. A set of works [[70](#bib.bib70), [106](#bib.bib106)]
+    represent an [EBM](#glo.main.ebm) as the Euclidean distance to a target action
+    ${\bm{a}}^{*}$ in a learned latent space $E({\bm{a}}|{\bm{a}}^{*})=||{\bm{\phi}}_{{\bm{\theta}}}({\bm{a}}^{*})-{\bm{\phi}}_{{\bm{\theta}}}({\bm{a}})||$,
+    where ${\bm{z}}={\bm{\phi}}_{{\bm{\theta}}}({\bm{a}})$, maps an action to a latent
+    vector ${\bm{z}}\in\mathbb{R}^{d}$ of dimension $d$. In contrast to learning the
+    [EBM](#glo.main.ebm) directly, these methods propose learning a feature encoder
+    ${\bm{\phi}}_{{\bm{\theta}}}$, which computes a latent vector for a given input
+    ${\bm{a}}$. In [[70](#bib.bib70), [106](#bib.bib106)], the feature encoder is
+    trained by reconstructing the [SDF](#glo.main.sdf) of an object. The feature encoder
+    is conditioned on the pointcloud of the object ${\bm{\phi}}_{{\bm{\theta}}}({\bm{a}},{\bm{c}})$,
+    where ${\bm{c}}$ is the pointcloud. In [[107](#bib.bib107)], the CLIP [[108](#bib.bib108)]
+    features are used to learn the feature encoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Diffusion Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[DM](#glo.main.dm) [[109](#bib.bib109), [33](#bib.bib33)] frame the data generation
+    process as an iterative denoising process. Given a prior sampling distribution
+    ${\bm{a}}_{N}\sim\rho({\bm{a}}_{N})$, typically a Gaussian distribution, an iterative
+    denoising process $\rho_{{\bm{\theta}}}({\bm{a}}_{k-1}|{\bm{a}}_{k})$ moves the
+    noisy samples from the prior to the data distribution'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho({\bm{a}}_{0})=\int\rho({\bm{a}}_{N})\prod_{k=1}^{N}\rho_{{\bm{\theta}}}({\bm{a}}_{k-1}&#124;{\bm{a}}_{k}){\textrm{d}}{\bm{a}}_{1:N},$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\rho({\bm{a}}_{0})\equiv\rho_{{\mathcal{D}}}({\bm{a}}_{0})$ is equivalent
+    to the data distribution. The denoising process $\rho_{{\bm{\theta}}}({\bm{a}}_{k-1}|{\bm{a}}_{k})$
+    is the inverse of a forward diffusion process $q({\bm{a}}_{k+1}|{\bm{a}}_{k})$
+    that gradually adds noise to the dataset samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, [DM](#glo.main.dm) are closely related to [EBM](#glo.main.ebm),
+    where the denoising prediction estimates the gradient field of an energy function
+     [[110](#bib.bib110), [111](#bib.bib111), [112](#bib.bib112)]. Given as input
+    an action ${\bm{a}}$, outputs a vector ${\bm{s}}$, ${\bm{s}}={\bm{S}}_{{\bm{\theta}}}({\bm{a}},{\bm{c}},k)$,
+    where ${\bm{c}}$ denotes the context variable and $k$ is a scalar value informing
+    about the diffusion step, each step of the diffusion process can be seen as a
+    step of Langevin dynamics sampling using an [EBM](#glo.main.ebm). Due to the iterative
+    sampling process, [DM](#glo.main.dm) have slower inference times compared to other
+    [DGM](#glo.main.dgm). Recent research, such as Consistency Policies [[113](#bib.bib113)],
+    explores how to make [DM](#glo.main.dm) sampling faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[DM](#glo.main.dm) have become particularly popular in the last year because
+    of several important properties for generative modeling. [DM](#glo.main.dm) are
+    capable of representing high-dimensional continuous space distributions and have
+    a stable training pipeline. Due to its connection to [EBM](#glo.main.ebm), [DM](#glo.main.dm)
+    implicitly parameterizes the actions, allowing the composition of diffusion models.
+    Several works have explored the modular composition of [DM](#glo.main.dm) with
+    additional objectives [[36](#bib.bib36), [58](#bib.bib58), [114](#bib.bib114),
+    [115](#bib.bib115)] or other [DM](#glo.main.dm) [[116](#bib.bib116), [117](#bib.bib117)].
+    Although not applied to robotics, composition is particularly popular in image
+    generation. Classifier Guidance [[118](#bib.bib118)] proposes to combine the output
+    of an unconditional [DM](#glo.main.dm) with the gradient of a classifier in the
+    generation process. Classifier-free guidance [[119](#bib.bib119)] proposes instead
+    to combine an unconditional [DM](#glo.main.dm) with a conditioned [DM](#glo.main.dm).
+    In [[111](#bib.bib111), [120](#bib.bib120)], several conditioned [DM](#glo.main.dm)
+    were combined for modular generation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C1 Main Applications
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Due to their high expressiveness and flexibility, [DM](#glo.main.dm) have been
+    widely integrated into many robotics tasks. We decouple the applications into
+    three main clusters: papers that aim to directly learn robot trajectories, papers
+    that explore the modularity and composability of [DM](#glo.main.dm), and papers
+    that generate other types of variables, beyond trajectories.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Trajectory Generation. The generation of robot trajectories is an essential
+    element for solving any robot task. Traditionally, these trajectory generators
+    have been represented with simpler models, such as policies that generate the
+    trajectories autoregressively, or structured models, such as task and motion planning
+    algorithms. However, the expressiveness of [DM](#glo.main.dm) has allowed the
+    robotics community to directly generate the trajectories without the need for
+    these models. In [[36](#bib.bib36), [114](#bib.bib114)], [Denoising Diffusion
+    Probabilistic Models (DDPM)](#glo.main.ddpm) was used to learn trajectory generators
+    from demonstrations. The generation of the robot trajectories is similar to a
+    receding horizon control loop [[121](#bib.bib121)], which allows reactive generation.
+    In [[8](#bib.bib8), [7](#bib.bib7)] the trajectory [DM](#glo.main.dm) was introduced
+    conditioned on visual input and in [[64](#bib.bib64), [122](#bib.bib122)] it was
+    conditioned on both language and vision. [[115](#bib.bib115), [123](#bib.bib123)]
+    explored the integration of [DM](#glo.main.dm) for motion planning problems, both
+    for collision-free trajectory generation and navigation tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generation beyond trajectories. Besides trajectories, [DM](#glo.main.dm) have
+    been used to generate several types of data for robotics tasks. Several works [[58](#bib.bib58),
+    [10](#bib.bib10), [124](#bib.bib124)] have explored using [DM](#glo.main.dm) to
+    generate SE(3) poses, both for generating robot grasp poses [[58](#bib.bib58)]
+    or object placement poses [[10](#bib.bib10), [116](#bib.bib116)] for pick and
+    place tasks. Some works [[9](#bib.bib9), [125](#bib.bib125), [117](#bib.bib117)]
+    have used [DM](#glo.main.dm) to generate scene arrangements. This information
+    is used to define a high-level goal plan for a motion planner to rearrange a scene.
+    Some works [[126](#bib.bib126), [127](#bib.bib127), [128](#bib.bib128)] have explored
+    learning video [DM](#glo.main.dm), which are used to have a general representation
+    plan of the desired behavior. Then an inverse dynamics model generates actions
+    in the robot to match the video behavior. While [[129](#bib.bib129)], [DM](#glo.main.dm)
+    were used to generate realistic tactile images from images; in [[130](#bib.bib130)]
+    movement primitive weights are generated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modular Composition. Several of the papers cited above have explored modular
+    composition of [DM](#glo.main.dm) in various forms. In [[36](#bib.bib36), [114](#bib.bib114)],
+    the learned [DM](#glo.main.dm) is combined with a reward function to condition
+    the generation towards high-reward regions. In [[115](#bib.bib115)], a trajectory
+    [DM](#glo.main.dm) is combined with the [SDF](#glo.main.sdf) of the scene to perform
+    collision free trajectory generation. In [[58](#bib.bib58)], a generative grasping
+    model was integrated into a motion planning problem to generate trajectories for
+    pick and place tasks. [[117](#bib.bib117)] composes multiple object relations
+    to generate scene arrangements with local models. In [[124](#bib.bib124)], the
+    placement generative model is combined with a feasibility score to adapt to feasible
+    placement poses. In [[116](#bib.bib116)], instead, a set of [DM](#glo.main.dm)
+    are temporally composed to solve long horizon planning tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C2 Training Diffusion Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An interesting property of [DM](#glo.main.dm) is their stable training process.
+    Unlike [CD](#glo.main.cd) for training [EBM](#glo.main.ebm), [DM](#glo.main.dm)
+    are learned with stable target signals, which leads to more robust training, but
+    can still be seen as a parameterization of an implicit energy landscape. Below
+    we describe the training of the diffusion models and their connection to [EBM](#glo.main.ebm).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To train a diffusion model, we learn to model the inverse transition function
+    $\rho_{{\bm{\theta}}}({\bm{a}}_{k-1}|{\bm{a}}_{k})$ at each time step $k$. This
+    transition kernel is parameterized by a Gaussian distribution corresponding to
+    the sampling process
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | ${\bm{a}}_{k-1}=B_{k}({\bm{a}}_{k}-C_{k}{\bm{S}}_{{\bm{\theta}}}({\bm{a}}_{k},k)+D_{k}\mathbf{\xi}),\quad\mathbf{\xi}\sim\mathcal{N}(\mathbf{0},\mathbf{I})$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $B_{k}$, $C_{k}$, and $D_{k}$ are fixed (unlearned) constants in the diffusion
+    process. To learn the above transition distributions, we only need to learn and
+    model the score function ${\bm{S}}_{{\bm{\theta}}}({\bm{a}},k)$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The score function ${\bm{S}}_{{\bm{\theta}}}({\bm{a}}_{k},k)$ corresponds to
+    the gradient of an [EBM](#glo.main.ebm) ${\bm{S}}_{{\bm{\theta}}}({\bm{a}},k)=\nabla_{{\bm{a}}}E_{\theta}({\bm{a}},k)$,
+    where the [EBM](#glo.main.ebm) models the noise convolved action distribution
+    $p_{k}({\bm{a}})\;\propto\;e^{-E_{\theta}({\bm{a}},k)}$, where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $p_{k}({\bm{a}})=\int_{{\bm{a}}^{*}}p({\bm{a}}^{*})\cdot\mathcal{N}({\bm{a}};\sqrt{1-\sigma_{k}^{2}}{\bm{a}}^{*},\sigma^{2}_{k}\mathbf{I}).$
+    |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: We can directly learn this [EBM](#glo.main.ebm) $E_{\theta}({\bm{a}},k)$ implicitly
+    by directly training the ${\bm{S}}_{{\bm{\theta}}}({\bm{a}},k)$ to denoise actions
+    through denoising score matching  [[110](#bib.bib110)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{L}_{\text{MSE}}(\theta)=\&#124;{\bm{S}}_{{\bm{\theta}}}({\bm{a}}_{k}+\epsilon,k)-\epsilon\&#124;^{2},\quad\epsilon\sim\mathcal{N}(0,1).$
+    |  | (13) |'
+  prefs: []
+  type: TYPE_TB
+- en: In comparison to methods for training [EBM](#glo.main.ebm), this objective to
+    learn the score is both faster and more stable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By learning this score function ${\bm{S}}_{{\bm{\theta}}}({\bm{a}}_{k},k)$
+    and corresponding implicit landscape $E_{\theta}({\bm{a}},k)$ in a diffusion model,
+    each reverse transition kernel in the diffusion process in [Equation 11](#S3.E11
+    "In III-C2 Training Diffusion Models ‣ III-C Diffusion Models ‣ III Density Estimation
+    Models ‣ Deep Generative Models in Robotics: A Survey on Learning from Multimodal
+    Demonstrations") corresponds to Langevin sampling on a sequence of noise convolved
+    [EBM](#glo.main.ebm) $E_{\theta}({\bm{a}},k)$, where an added contraction term
+    $B_{k}$ is used to transition between separate successive energy landscape. This
+    implicit view of sampling in diffusion models allows us to combine multiple diffusion
+    models together [[112](#bib.bib112)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Categorical Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We refer to Categorical Models as the set of generative models that, given a
+    context variable ${\bm{c}}$ as input, output the probability of K different categories,
+    where K is finite. In practice, it is common for the network to output K logits.
+    Given the logits, a Softmax function converts the logits into probability values
+    for each action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6135dbb53bdd3434ba0f7ac638aa768b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: A visual representation of Action Value Maps and Autoregressive models.
+    Given a visual observation ${\bm{o}}$ as input, Action Value Maps ${\bm{H}}=Q_{{\bm{\theta}}}({\bm{o}})$
+    output an observation shape probability map ${\bm{H}}$, where each pixel is a
+    projection of a possible action. Autoregressive models output K'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In robotics, categorical models are mainly used to represent policies. There
+    are two main types of architectures in which categorical distributions have been
+    used: Action Value Maps and Autoregressive Models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Action Value Maps
+  prefs: []
+  type: TYPE_NORMAL
+- en: Action Value Maps are a set of generative models that, given a visual observation
+    ${\bm{o}}$ as input, output a value map ${\bm{H}}$ of the same form as the input,
+    ${\bm{H}}=Q_{{\bm{\theta}}}({\bm{o}})$, similar to attention maps. The visual
+    observation ${\bm{o}}$ can be images [[40](#bib.bib40), [131](#bib.bib131)], point
+    clouds [[63](#bib.bib63)], or voxels [[132](#bib.bib132), [6](#bib.bib6)]. The
+    generated value map ${\bm{H}}$ assigns a probabilistic value to each distinct
+    location or ‘pixel’ within the visual observation ${\bm{o}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The core principle behind action value maps is the interpretation of each ‘pixel’
+    location in the visual input as representative of a potential action that a robot
+    could perform. Consider, for example, a robot picking task. In this scenario,
+    each individual pixel in an image could represent a potential target point for
+    moving the robot arm to perform a pick. The resulting value map is then analyzed
+    as a categorical distribution encompassing the full range of potential actions.
+    Interestingly, the approach is easily extended to multiple primitives, where each
+    pixel represents the geometrically grounded parameters of each primitive. For
+    example, in [[73](#bib.bib73)] two value maps are generated, one for the grasping
+    primitive and another for the pushing primitive. Then the selected action is the
+    one with the highest energy among all possible pixels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A number of works [[133](#bib.bib133), [6](#bib.bib6), [131](#bib.bib131)] have
+    extended action value maps to also be conditioned on language commands, defining
+    the goal ${\bm{g}}$ of the learned policy $Q_{{\bm{\theta}}}({\bm{o}},{\bm{g}})$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autoregressive Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autoregressive models are a set of generative models that generate long-horizon
+    data by iteratively invoking the model while conditioning on past data. For example,
+    given an action trajectory ${\bm{\tau}}=({\bm{a}}_{0},{\bm{a}}_{1},\dots,{\bm{a}}_{T})$,
+    an autoregressive model represents the distribution over the trajectory
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho({\bm{\tau}})=\rho({\bm{a}}_{0})\prod_{i=1}^{T}\rho({\bm{a}}_{i}&#124;{\bm{a}}_{0:i-1}),$
+    |  | (14) |'
+  prefs: []
+  type: TYPE_TB
+- en: as the product of the conditioned action distribution on the previous data.
+    To generate a trajectory, we first sample an initial sample ${\bm{a}}_{0}\sim\rho({\bm{a}}_{0})$
+    and then iteratively call the generative model conditioned on the previously generated
+    actions. This type of model has become particularly popular for language generation.
+    Models such as BERT [[34](#bib.bib34)] or GPT-3 [[134](#bib.bib134)] build on
+    Transformer models [[135](#bib.bib135)] to generate autoregressive long text data.
+    Some generative models in image generation are also based on autoregressive generative
+    models, where the pixels of the image are generated iteratively [[136](#bib.bib136)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In robotics, it has been common to refer to autoregressive models as policies
+    that use GPT-like structures to generate robot actions [[137](#bib.bib137), [37](#bib.bib37),
+    [72](#bib.bib72), [12](#bib.bib12), [138](#bib.bib138), [139](#bib.bib139), [140](#bib.bib140)].
+    Several of these models represent the action distribution (i.e., policy) as a
+    categorical distribution and generate action trajectories autoregressively, similar
+    to language models. However, in certain cases, the action distribution is represented
+    by [DM](#glo.main.dm) [[141](#bib.bib141), [142](#bib.bib142)] or by adapting
+    the means of the categorical distribution [[59](#bib.bib59), [143](#bib.bib143),
+    [144](#bib.bib144)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D1 Training Categorical Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To fit a Categorical distribution to a dataset, two factors are important:
+    finding the right prediction space and the right training loss.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Discrete Tokenization in Action Modeling. Frequently, robotic actions are continuous
+    while categorical distributions predict distribution over discrete values. As
+    a result, models with categorical distributions require “tokenizing” the continuous
+    actions into discrete “action tokens”. Often, this is done with an ad-hoc tokenizer
+    binning every axis values into a certain number of bins, such as in [[140](#bib.bib140),
+    [37](#bib.bib37), [72](#bib.bib72)]. Some models use a non-parametric algorithms
+    such as k-means to tokenize the actions [[59](#bib.bib59), [143](#bib.bib143),
+    [145](#bib.bib145)]. Later models [[144](#bib.bib144)] use more advanced generative
+    methods, such as a VQ-VAE [[146](#bib.bib146)], to tokenize the actions into discrete
+    tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Losses for Training. Quite frequently, Categorical models are trained with the
+    [Cross-Entropy (CE)](#glo.main.ce) loss. Given a dataset ${\mathcal{D}}:({\bm{a}}_{i},{\bm{c}}_{i})_{i=0}^{N}$,
+    the [CE](#glo.main.ce) loss
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}})=-{\mathbb{E}}_{j,{\bm{c}}}\left[\log{\bm{C}}_{{\bm{\theta}}}({\bm{c}})_{j}\right],$
+    |  | (15) |'
+  prefs: []
+  type: TYPE_TB
+- en: is represented as the negative log-likelihood, where $j$ is class related the
+    action in the dataset. However, given the imbalance between different classes,
+    some recent models [[59](#bib.bib59), [143](#bib.bib143), [144](#bib.bib144)]
+    use Focal loss [[147](#bib.bib147)] instead
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}})=-{\mathbb{E}}_{j,{\bm{c}}}\left[(1-{\bm{C}}_{{\bm{\theta}}}({\bm{c}})_{j})^{\gamma}\log{\bm{C}}_{{\bm{\theta}}}({\bm{c}})_{j}\right],$
+    |  | (16) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\gamma$ is a balancing hyperparameter. Focal loss is less sensitive for
+    outliers and class imbalance, which can be important for tokenized action datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On Action Value Maps. In the particular case of Action Value Maps, the action
+    classes are projected to the pixel space of the input observation. The actions
+    in the dataset ${\bm{a}}_{j}$ are first projected to a one-hot pixel map $H_{j}$
+    of the same shape of the visual observation ${\bm{o}}_{j}$. The one-hot pixel
+    map $H_{j}$ will set to one the pixel that relates to the action and zero otherwise.
+    Then, the [CE](#glo.main.ce) loss is represented as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}})=-{\mathbb{E}}_{h,{\bm{o}}\in{\mathcal{D}}}[\log
+    Q_{{\bm{\theta}}}(h&#124;{\bm{o}})],$ |  | (17) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $h$ denotes the positive pixel in the pixel map $H$. Despite using only
+    the positive samples, the Softmax propagates the gradients to all the pixel-space,
+    pushing the probability down to any pixel not being the positive one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ceda7d85faf7d2386f2ee8ff92f055cb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: A visual representation of [MDM](#glo.main.mdm). Given the context
+    ${\bm{c}}$ as input, [MDM](#glo.main.mdm) $H,\Omega={\bm{M}}_{{\bm{\theta}}}({\bm{c}})$
+    outputs the parameters of a mixture density model, with $H:({\bm{\mu}}_{0},{\bm{\sigma}}_{0}\dots,{\bm{\mu}}_{N},{\bm{\sigma}}_{N})$
+    the parameters of the models and $\Omega:(\omega_{0},\dots,\omega_{N})$ the weights
+    for each model in the mixture.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E Mixture Density Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We call [MDM](#glo.main.mdm) [[148](#bib.bib148), [149](#bib.bib149)] to the
+    set of generative models $H,\Omega={\bm{M}}_{{\bm{\theta}}}({\bm{c}})$ that take
+    as input a context variable ${\bm{c}}$ and output the parameters $H:({\bm{\eta}}_{0},\dots,{\bm{\eta}}_{N})$
+    and the weights $\omega:(\omega_{0},\dots,\omega_{N})$ of a mixture density function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}})=\sum_{k=0}^{N}\omega_{k}\rho({\bm{a}};{\bm{\eta}}_{k}),$
+    |  | (18) |'
+  prefs: []
+  type: TYPE_TB
+- en: where each vector ${\bm{\eta}}_{k}$ and scalar value $\omega_{k}>0$ represent
+    the parameters and weight of the $k$ density model. In practice, it is common
+    to use [GMM](#glo.main.gmm) [[66](#bib.bib66), [44](#bib.bib44), [150](#bib.bib150),
+    [151](#bib.bib151), [152](#bib.bib152)] or Mixture of Logistic Models [[149](#bib.bib149),
+    [84](#bib.bib84), [153](#bib.bib153)] to represent the mixture model. Then the
+    parameters ${\bm{\eta}}_{k}=({\bm{\mu}}_{k},{\bm{\sigma}}_{k})$ typically represent
+    the mean ${\bm{\mu}}_{k}$, the standard deviation ${\bm{\sigma}}_{k}$, and $\omega_{k}$,
+    the weight of each mode in the mixture model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the robotics literature, it is common to combine [MDM](#glo.main.mdm) with
+    additional generative models. In [[84](#bib.bib84), [44](#bib.bib44), [153](#bib.bib153)],
+    [VAE](#glo.main.vae) is combined with [MDM](#glo.main.mdm). Given a latent variable
+    ${\bm{z}}$ representing the high-level plan, a [VAE](#glo.main.vae) decoder is
+    trained to generate the parameters of a [MDM](#glo.main.mdm) for the action space
+    distribution. This differs from the classical use of [VAE](#glo.main.vae), where
+    the output directly generates the action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E1 Main Application
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A few works [[44](#bib.bib44), [150](#bib.bib150), [151](#bib.bib151), [153](#bib.bib153),
+    [84](#bib.bib84)] proposed representing visuomotor policies with [MDM](#glo.main.mdm),
+    usually representing the action space as displacements in the end-effector. Several
+    of these works motivate the use of a mixture density model rather than an unimodal
+    model in the representation of the policy to better capture the inherent multimodality
+    in the demonstrations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E2 Training Mixture Density Model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Given a dataset ${\mathcal{D}}:({\bm{a}}_{i},{\bm{c}}_{i})_{i=0}^{N}$, [MDM](#glo.main.mdm)
+    are trained by minimizing the negative log-likelihood of the learned model
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle{\mathcal{L}}({\bm{\theta}})=-{\mathbb{E}}_{{\bm{a}},{\bm{c}}\sim{\mathcal{D}}}\left[\log\rho_{{\bm{\theta}}}({\bm{a}}&#124;{\bm{c}})\right]$
+    |  | (19) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'with $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$ (See [Equation 18](#S3.E18 "In
+    III-E Mixture Density Models ‣ III Density Estimation Models ‣ Deep Generative
+    Models in Robotics: A Survey on Learning from Multimodal Demonstrations")) being
+    the density model parameterized with the output of the learned model $H,\Omega={\bm{M}}_{{\bm{\theta}}}({\bm{c}})$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Integrating Generative Models into Robotics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9221624bfb11780273f3913a4c1ad76e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Visual representation of different approaches to apply [DGM](#glo.main.dgm)
+    in robotics tasks. Colored: Learned models, Grey: Predefined models. (a) Cloth
+    Manipulation. Given a set of motion primitives, an Action Value Map selects the
+    primitive and the parameters of the primitive [[41](#bib.bib41)]. (b) Object Picking.
+    An SE(3) pose generative model generates a target pose to grasp an object and
+    a motion planner generates the path to reach the grasp [[5](#bib.bib5)]. (c) Visuo-Motor
+    Policy. Given an image as input, a visuomotor policy generates end-effector actions.
+    Then, an Operational Space Controller maps the action to the configuration space [[150](#bib.bib150)].
+    (d) Video Planning. A [LLM](#glo.main.llm) generates a plan in text. The text
+    generates a video of the substeps. Then, a goal-conditioned policy generates robot
+    actions conditioned on generated images [[128](#bib.bib128)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we look at different design strategies for integrating [DGM](#glo.main.dgm)
+    into robotics. The number of robotic tasks in which [DGM](#glo.main.dgm) has been
+    applied is vast; pick and place tasks [[154](#bib.bib154), [92](#bib.bib92), [58](#bib.bib58)],
+    cloth manipulation [[155](#bib.bib155), [41](#bib.bib41)], scene rearrangement [[60](#bib.bib60),
+    [9](#bib.bib9)], food preparation [[7](#bib.bib7), [150](#bib.bib150), [13](#bib.bib13)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: A common strategy for using [DGM](#glo.main.dgm) in this wide range of tasks
+    is to integrate the learned [DGM](#glo.main.dgm) into a larger framework. The
+    learned model is typically combined with other predefined or learned components,
+    such as perception modules, motion primitives, task and motion planners, or controllers,
+    creating a synergy that exploits the strengths of both learned and predefined
+    components. The [DGM](#glo.main.dgm) s are tasked with addressing the components
+    of the problem that are difficult to model conventionally, while the predefined
+    elements handle aspects that are easier to define. This combination enhances the
+    system’s ability to tackle complex tasks by leveraging the predictive power and
+    adaptability of the [DGM](#glo.main.dgm) s.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Due to the variety of tasks and the flexibility in which [DGM](#glo.main.dgm)
+    can be combined with other components, there are a wide variety of ways in which
+    [DGM](#glo.main.dgm) have been integrated into robotics problems. We present some
+    possible combinations in [Figure 7](#S4.F7 "In IV Integrating Generative Models
+    into Robotics ‣ Deep Generative Models in Robotics: A Survey on Learning from
+    Multimodal Demonstrations"). In the following, we present some of the most common
+    strategies that the robotics community has used to integrate [DGM](#glo.main.dgm)
+    to solve robotics tasks. We classify the strategies based on the element that
+    [DGM](#glo.main.dgm) generates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-A Generating End Effector Target Poses
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: End-effector 6D (position and orientation) poses are among the most common elements
+    generated with [DGM](#glo.main.dgm) [[5](#bib.bib5), [6](#bib.bib6), [100](#bib.bib100),
+    [58](#bib.bib58), [154](#bib.bib154), [132](#bib.bib132), [131](#bib.bib131),
+    [70](#bib.bib70), [10](#bib.bib10)]. The generated poses were used as target grasping
+    poses of an object in the scene [[5](#bib.bib5), [154](#bib.bib154), [70](#bib.bib70),
+    [58](#bib.bib58)], as target placing poses for the objects [[10](#bib.bib10)],
+    or as an action of a policy [[6](#bib.bib6), [100](#bib.bib100), [131](#bib.bib131)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: When to use. SE(3) pose-based [DGM](#glo.main.dgm) have been particularly successful
+    in capturing particularly relevant target locations in robot tasks. For example,
+    in a pick and place task, the SE(3) pose model will inform the desirable grasping
+    pose and the desirable placing pose. In a drawer opening task, the SE(3) pose
+    might inform the desirable pose for grasping the drawer handle and where to move
+    to properly open the drawer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'How to use. The SE(3) pose generative models typically exploit the symmetries
+    between the scene and the poses, leading to improved generalization in novel scenarios.
+    More details can be found in [Section V](#S5 "V Generalizing outside data distributions
+    ‣ Deep Generative Models in Robotics: A Survey on Learning from Multimodal Demonstrations").
+    The integration of the output of the [DGM](#glo.main.dgm) in robotics applications
+    depends on the task.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In offline tasks, where the robot behavior is computed offline and executed
+    in open-loop, it is common to combine the [DGM](#glo.main.dgm) with motion planning
+    modules. In [[5](#bib.bib5), [154](#bib.bib154), [105](#bib.bib105), [156](#bib.bib156)],
+    the generated SE(3) pose is used as the target pose in a motion planning problem.
+    Then, sampling-based [[81](#bib.bib81), [80](#bib.bib80)] or optimization-based [[157](#bib.bib157),
+    [158](#bib.bib158)] motion planners are used to generate the configuration space
+    trajectories. In [[58](#bib.bib58), [92](#bib.bib92)], the learned [DGM](#glo.main.dgm)
+    is integrated directly into the motion planning problem. Instead of sampling a
+    pose, since the learned model is a [EBM](#glo.main.ebm), the model is integrated
+    as an additional cost function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In online tasks, where the generative model is used as a policy, the proposed
+    solutions depend on the horizon of the output. In [[6](#bib.bib6), [100](#bib.bib100),
+    [131](#bib.bib131), [159](#bib.bib159), [160](#bib.bib160)], the generated SE(3)
+    pose is used as a target pose in a motion planning problem. Then, since the problem
+    to be solved is sequential, the system sequentially generates new trajectories
+    as the robot reaches the previous target pose. Some recent works [[161](#bib.bib161),
+    [162](#bib.bib162)], have proposed to replace the motion planner with a trajectory
+    diffusion model conditioned on the generated SE(3) pose. To have a higher control
+    frequency, some works [[163](#bib.bib163)] have proposed using operational space
+    controllers [[164](#bib.bib164), [165](#bib.bib165)] instead of a motion planner,
+    usually considering a shorter horizon SE(3) target pose.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-B Trajectories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In recent years, [DGM](#glo.main.dgm) have shown the ability to generate high-dimensional
+    data. This has led the research community to learn [DGM](#glo.main.dgm) that generate
+    complete trajectories [[36](#bib.bib36), [7](#bib.bib7), [115](#bib.bib115), [8](#bib.bib8),
+    [13](#bib.bib13), [166](#bib.bib166), [123](#bib.bib123)], rather than single-step
+    actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When to use. Directly generating the entire trajectory can have several advantages
+    over generating single target poses. First, trajectory generation allows the generation
+    of complex dynamic motions (pouring tomato into a pizza [[7](#bib.bib7)], inserting
+    a battery [[13](#bib.bib13)]) in contrast to motion planning based methods that
+    are usually limited to reaching tasks. Second, trajectory generation may lead
+    to smaller covariate shift errors in contrast to single step generation. Because
+    we generate trajectories, the execution of a long-horizon task might require fewer
+    sequential decision steps, leading to smaller accumulated errors [[13](#bib.bib13)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use. The most common applications of trajectory [DGM](#glo.main.dgm)
+    are integrated into offline motion planners [[157](#bib.bib157), [167](#bib.bib167)]
+    or used as receding horizon controllers [[168](#bib.bib168), [169](#bib.bib169),
+    [170](#bib.bib170)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In offline motion planning, a number of works [[36](#bib.bib36), [115](#bib.bib115),
+    [123](#bib.bib123)] compose the trajectory [DGM](#glo.main.dgm) with heuristic
+    cost or reward functions. Since the generative model is a [DM](#glo.main.dm),
+    the sampling process is conditioned on additional reward/cost functions to generate
+    trajectories that satisfy additional objectives such as reaching a goal [[36](#bib.bib36)]
+    or avoiding obstacles [[115](#bib.bib115)]. This approach is similar to classifier-guided
+    generation [[118](#bib.bib118)], where a diffusion model for image generation
+    is conditioned with additional classifiers. Other works have composed multiple
+    trajectory [DGM](#glo.main.dgm) to generate long horizon trajectories [[116](#bib.bib116)]
+    by sequential composition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In receding horizon control problems, a trajectory [DGM](#glo.main.dgm) iteratively
+    generates new trajectories adapted to changes in the scene. In [[7](#bib.bib7)],
+    a [DM](#glo.main.dm) is used to generate future action trajectories. The authors
+    assert the importance of predicting a sequence of actions to overcome possible
+    latency gaps caused by image processing, policy inference, and network delays.
+    Instead of using [DM](#glo.main.dm), [[13](#bib.bib13)] uses a [VAE](#glo.main.vae)
+    to generate action trajectories. To generate the whole trajectory, they use an
+    autoregressive generation approach, in which the action for a single step is generated
+    at each step. To ensure smooth behavior, the authors propose a temporal ensemble
+    of the generated actions with weighted averaging.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the desired trajectories are computed, a trajectory tracking controller
+    is applied to move the robot along the generated path.
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-C Generating End-Effector Displacement
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the most common action spaces for policy learning is end-effector displacement [[44](#bib.bib44),
+    [153](#bib.bib153), [37](#bib.bib37), [150](#bib.bib150), [141](#bib.bib141)].
+    End Effector Displacements refer to 6 DoF changes in both the position and orientation
+    of the robot’s end effector that are directly related to the velocity in the end
+    effector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When to use. Displacement [DGM](#glo.main.dgm) have been commonly used as control
+    policies. The low dimension of the generated variable allows a high frequency
+    generation in contrast to trajectory [DGM](#glo.main.dgm). This allows the robot
+    to adapt quickly to changes in the environment, leading to highly reactive policies.
+    Additionally, in combination with an in-hand camera, we can build policies that
+    act locally, providing a high degree of generalization. For example, if the in-hand
+    camera observes an apple to be picked, given the actions are generated wrt. the
+    end-effector, the robot uses only relative information and adapts its behavior
+    to novel situations as long as the relative position of the end-effector and the
+    apple remains the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use. End-effector displacement [DGM](#glo.main.dgm) are integrated into
+    feedback controllers. The output of the [DGM](#glo.main.dgm) can be integrated
+    into impedance controllers informing on the desirable motion direction. In visuomotor
+    policies, it is common to represent the displacement in the robot’s wrist camera
+    frame. Given as observation the camera images, this allows representing local
+    policies that could generalize its performance to scenes in which the scene looks
+    similar locally from the camera view [[153](#bib.bib153)]. Rather than conditioning
+    the policy on the last observation, several works [[44](#bib.bib44), [59](#bib.bib59),
+    [153](#bib.bib153)] have found it useful to condition the model on a history of
+    observations by using LSTM or RNN networks. This allows the policy to encode relevant
+    features that might not be possible to extract from the last observation. Different
+    [DGM](#glo.main.dgm) have been applied to capture end-effector displacements,
+    from [MDM](#glo.main.mdm) [[44](#bib.bib44), [150](#bib.bib150), [153](#bib.bib153)],
+    categorical distributions [[37](#bib.bib37), [72](#bib.bib72)], [EBM](#glo.main.ebm) [[94](#bib.bib94)]
+    to [DM](#glo.main.dm) [[141](#bib.bib141)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV-D Scene Arrangements
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A set of works proposes generating desirable target scenes [[60](#bib.bib60),
+    [9](#bib.bib9), [124](#bib.bib124), [125](#bib.bib125), [10](#bib.bib10), [117](#bib.bib117),
+    [96](#bib.bib96)]. The target scene is represented as a set of SE(3) poses for
+    different objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When to use. Scene arrangement [DGM](#glo.main.dgm) are commonly applied to
+    generate desirable placing poses for a set of objects in a scene. Given, we know
+    the different objects in the scene, a set of works considers the generation of
+    the placing poses of those objects given text commands informing on the desirable
+    scene arrangement [[60](#bib.bib60), [96](#bib.bib96), [125](#bib.bib125), [9](#bib.bib9),
+    [124](#bib.bib124)]. For example, given a text command ”Set the table for dinner”,
+    the scene arrangement [DGM](#glo.main.dgm) will generate a set of placing poses
+    for dishes, glasses, and cutlery.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use. Scene arrangement [DGM](#glo.main.dgm) are commonly integrated into
+    robot tasks with task and motion planners. Given a generated set of placing poses
+    for a set of objects in the scene, the task and motion planner decides the order
+    in which each object should be placed and the robot motion to pick and place each
+    object. This type of model assumes access to some form of object representation.
+    In [[96](#bib.bib96)], the bounding box of the different object’s of interest
+    is extracted from an image. In [[125](#bib.bib125)], semantic masking is applied
+    with Mask R-CNN [[171](#bib.bib171)]. In [[9](#bib.bib9)], the pointcloud of the
+    object’s in the scene is cropped to represent the different objects. Several works
+    have explored composing multiple scene arranging models to generate complex arrangements [[96](#bib.bib96),
+    [117](#bib.bib117)]. In [[96](#bib.bib96)] multiple [EBM](#glo.main.ebm) are composed
+    with different objectives (such as place the fruit in circle [EBM](#glo.main.ebm)
+    and place the fruits on the plate [EBM](#glo.main.ebm)). In [[117](#bib.bib117)],
+    the arrangement of a set of objects in the scene is framed as a constraint satisfaction
+    problem. The work composes a set of [DM](#glo.main.dm) representing the relative
+    pose of the objects between each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Generalizing outside data distributions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The problem of generalization in generative modeling refers to the ability of
+    a [DGM](#glo.main.dgm) to produce high-quality, meaningful samples beyond the
+    training dataset. In the particular case of robotics, given a generative model
+    $\rho_{{\bm{\theta}}}({\bm{a}}|{\bm{c}})$ trained on a dataset ${\mathcal{D}}:\{{\bm{a}}_{n},{\bm{c}}_{n}\}_{n=1}^{N}$,
+    the goal is to generate useful actions ${\bm{a}}$ for contexts ${\bm{c}}\notin{\mathcal{D}}$
+    that are not part of the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Achieving high generalization capabilities requires the selection of smart
+    architectural choices that enhance the agent’s generalization capabilities. We
+    group the strategies in three main categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Composition. Rather than learning a monolithic policy, several researchers have
+    explored learning individual behavior modules that can later be composed to generate
+    complex behaviors. This composition can be both parallel (combining the behaviors
+    together) and sequential (for generating long-horizon tasks). The composition
+    of simple modules allows the formation of complex models that can generalize to
+    new tasks not seen in the demonstrations [[172](#bib.bib172)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feature Selection from Observations. With a small dataset, the robot is expected
+    to learn spurious correlations between observations and actions, in part due to
+    the high dimensionality of the observations (images, tactile signals). To alleviate
+    this problem, several researchers have explored the problem of reducing the observations
+    to informative features, thus improving the system’s ability to learn meaningful
+    correlations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Observation-Action Symmetries. In visuomotor policies, visual observations and
+    actions are typically represented in different spaces. Given this mismatch, it
+    is difficult for the policy to learn the correct relations between observations
+    and actions, leading to poor generalization when observations are changed. To
+    reduce this mismatch, a large line of research explores the problem of representing
+    both visual observations and actions in a common space. In this context, some
+    approaches propose mapping actions to pixel space or representing both visual
+    observations and actions in 3D space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following, we elaborate on these three approaches and show how they have
+    been useful for robotics problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/51b376474a32e29c84d0a22efae8caf2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Visual representation of energy composition. Due to the implicit
+    nature of [EBM](#glo.main.ebm), the distribution of the models can be composed
+    to satisfy multiple objectives.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8a72ddfdd4603797951d14423d95323c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Given the high-dimensionality of the visual contexts, different works
+    explore how to extract informative features from the context by an information
+    bottleneck. Among the options, we can extract the pose of the relevant objects,
+    extract relevant keypoints or extract the regions of interest in the image.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-A Composition
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Many robot tasks can be decomposed into a composition of simpler subtasks.
+    Consider, for instance, the problem of selecting a grasping pose to pick an object.
+    The selection of the pose can be decomposed into the satisfaction of multiple
+    simpler objectives: satisfying the robot’s joint limits, avoiding collisions in
+    the scene, and constructing a geometrically consistent grasp pose on an object.
+    While learning a monolithic [DGM](#glo.main.dgm) to take into consideration all
+    the objectives would require gathering a set of demonstrations satisfying these
+    constraints, we can solve this task in a zero-shot manner by directly combining
+    simpler models that capture each simpler objective. This modular approach allows
+    us to learn a set of simple objectives that can combined at test-time to solve
+    complex new unseen tasks [[172](#bib.bib172)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Formally, given a generative model $\rho({\bm{a}}|{\bm{c}}_{1})$ which generates
+    actions conditioned on a objective ${\bm{c}}_{1}$ and another generative model
+    $\rho({\bm{a}}|{\bm{c}}_{2})$ which generates actions conditioned on a objective
+    ${\bm{c}}_{2}$, the composition
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho({\bm{a}}&#124;{\bm{c}}_{1},{\bm{c}}_{2})\propto\rho({\bm{a}}&#124;{\bm{c}}_{1})\rho({\bm{a}}&#124;{\bm{c}}_{2}),$
+    |  | (20) |'
+  prefs: []
+  type: TYPE_TB
+- en: leads to a generative model $\rho({\bm{a}}|{\bm{c}}_{1},{\bm{c}}_{2})$ that
+    will generate actions that are likely for both ${\bm{c}}_{1}$ and ${\bm{c}}_{2}$
+    objective [[173](#bib.bib173)]. Alternatively, given a discriminative model $\rho({\bm{c}}_{2}|{\bm{a}})$,
+    the composition
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\rho({\bm{a}}&#124;{\bm{c}}_{1},{\bm{c}}_{2})\propto\rho({\bm{a}}&#124;{\bm{c}}_{1})\rho({\bm{c}}_{2}&#124;{\bm{a}}),$
+    |  | (21) |'
+  prefs: []
+  type: TYPE_TB
+- en: also allows us to construct a generative model $\rho({\bm{a}}|{\bm{c}}_{1},{\bm{c}}_{2})$
+    through Bayes rule. Thus, composing multiple probabilistic models allows for the
+    construction of samples that satisfy multiple objectives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [[154](#bib.bib154)], two models are composed to generate grasp poses that
+    are both valid to grasp any object and also collision-free. First, a [VAE](#glo.main.vae)-based
+    grasp pose generative model [[5](#bib.bib5)] generates a set of grasp candidates.
+    Then, a discriminative model evaluates collisions in the scene for the grasp candidates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Due to their implicit nature, [EBM](#glo.main.ebm) s and [DM](#glo.main.dm)
+    s have been extensively integrated for composable sampling. One early example
+    in [EBM](#glo.main.ebm) s is in [[101](#bib.bib101)] which illustrates how combining
+    a trajectory-level EBM with a reward function can implement model-based planning
+    and generate high-reward trajectories. In [[36](#bib.bib36)], this approach is
+    applied to diffusion models, where a generalistic trajectory-level diffusion model
+    is combined with a reward function to generate high-reward samples among the demonstrations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A set of works [[58](#bib.bib58), [174](#bib.bib174), [115](#bib.bib115), [117](#bib.bib117),
+    [175](#bib.bib175)] have illustrated in various forms how multiple cost or constraint
+    functions are combined to define an optimization problem over trajectories. For
+    example, in [[58](#bib.bib58)], a diffusion in SE(3) representing valid grasp
+    poses is combined with collision-avoidance, trajectory smoothness, or robot joint
+    limits cost to generate collision-free pick and place trajectories.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compositionality can also be applied sequentially along a temporal axis to generate
+    trajectories for solving long-horizon tasks. In [[116](#bib.bib116), [176](#bib.bib176),
+    [126](#bib.bib126)], diffusion models are composed sequentially to solve long-horizon
+    manipulation tasks. The authors propose learning diffusion models for individual
+    skills and then sample trajectories by chaining skills and sampling from the joint
+    distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Composability have been also explored to induce generalization in the object
+    class [[177](#bib.bib177)] or among sensor modalities [[178](#bib.bib178)]. In
+    [[177](#bib.bib177)], the motion of the tools to solve a given task is generated
+    by diffusion models. The work proposed segmenting the tool into different sections (handle,
+    body, rim) and composing the diffusion models defined for the different parts.
+    This decoupling induces a generalization to novel objects with different shapes
+    and sizes. In [[178](#bib.bib178)], several learned models are combined in which
+    each model might depend on a different sensor modality from images, tactile or
+    pointcloud. This composition allows the policy to learn sensor-specialized skills
+    and combine them afterwards.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, composability can be applied to foundation models trained on separate
+    sources of Internet knowledge [[128](#bib.bib128), [126](#bib.bib126)] to combine
+    information across each model. In  [[128](#bib.bib128)], a large language model
+    capturing high-level information is combined with a video model capturing low-level
+    information and an egocentric action model capturing action information. By composing
+    all three models together, the model can in a zero-shot manner solve long-horizon
+    tasks by integrating the knowledge across all three models. This composition is
+    extended in [[126](#bib.bib126)], where planning between a vision-language and
+    video model is used to construct long horizon plans.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-B Extracting the informative features from the perception
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Given the high amount of information in the visual observations ${\bm{c}}$,
+    to properly solve a robotics task, we might require to apply some form of representation
+    learning to focus on the meaningful features to solve the tasks. For example,
+    due to the limited training data, end-to-end visuomotor policies are likely to
+    falsely associate actions with task-irrelevant visual factors, leading to poor
+    generalization in new situations [[150](#bib.bib150), [179](#bib.bib179)]. In
+    contrast, with a proper representation learning approach, the robot might learn
+    meaningful features for generalization beyond the demonstrations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider a language-conditioned policy trained on demonstrations that include
+    specific text commands, such as ”open a drawer”. Crucially, the ability of these
+    models to generalize to semantically similar but lexically distinct commands,
+    such as ”pull-out a drawer” without direct training on such commands, represents
+    a significant advancement in generalization. Another example might be in an image-conditioned
+    policy. Given a learned model, the robot should be able to generalize its behavior
+    to scenes in which distractors might appear or objects are located in novel places.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This generalization is facilitated by learning an encoder ${\bm{z}}={\mathcal{E}}({\bm{c}})$
+    that is capable of producing latent representations ${\bm{z}}$ that capture the
+    relevant features to solve the robotics tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Related to visual contexts, a common approach is to extract some form of object-centric
+    features from the images, usually related to the location of the objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A classical approach is to pre-train a pose estimation model, that will transform
+    a visual input into the position ${\bm{p}}\in\mathbb{R}^{3}$ and orientation $R\in
+    SO(3)$ of the object of interest [[180](#bib.bib180), [181](#bib.bib181), [182](#bib.bib182)].
+    Nevertheless, as pointed out in [[183](#bib.bib183)], a category-level pose estimation
+    can be ambiguous under large intra-category shape variations. For example, knowing
+    the pose of a coffee mug might not be enough to successfully hang it on a rack,
+    as different coffee mugs might have different handles shapes or handle locations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alternatively, a set of works has proposed extracting a set of key points from
+    the image [[28](#bib.bib28), [183](#bib.bib183), [184](#bib.bib184), [185](#bib.bib185),
+    [186](#bib.bib186), [187](#bib.bib187), [179](#bib.bib179)]. For example, in [[183](#bib.bib183)],
+    a 3D keypoint detection network transforms an RGB-D image into a set of 3D keypoints
+    ${\bm{P}}=\{{\bm{p}}_{i}\}_{i=1}^{N}\in\mathbb{R}^{N\times 3}$, where $N$ is the
+    number of keypoints. In contrast with only extracting the pose, several key points
+    could inform about the shape of the object of interest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A more general approach is to extract a set of cropped images through bounding
+    boxes [[188](#bib.bib188), [189](#bib.bib189), [150](#bib.bib150)]. Given an RGB
+    image as input, the encoder outputs a set of Regions of Interest (RoI) represented
+    by bounding box locations ${\bm{p}}_{i}\in\mathbb{R}^{4}$ (pixel locations to
+    construct the bounding box) and the cropped images ${\bm{I}}_{i}^{\text{crop}}$
+    by the given pixel locations. While [[188](#bib.bib188), [189](#bib.bib189)] consider
+    a category-level training to extract the bounding boxes, in [[150](#bib.bib150)],
+    a general pre-trained Region Proposal Network (RPN) [[190](#bib.bib190)] is used
+    to extract the cropped images. Then, a Transformed policy, sets the attention
+    on task-relevant cropped images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative approach to get the cropper images is through segmentation masks [[191](#bib.bib191),
+    [192](#bib.bib192), [193](#bib.bib193)]. For example, in [[191](#bib.bib191)],
+    Slot Attention [[194](#bib.bib194)] is applied to extract the different segmentation
+    masks of the objects in the scene unsupervised. In [[192](#bib.bib192)], it is
+    proposed to provide both demonstrations and scribbles on the important objects
+    to pay attention to. Then, an interactive segmentation model [[195](#bib.bib195)]
+    generates the segmentation mask of the desirable objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A recent line of research explores using language conditioned semantic features
+    from images [[107](#bib.bib107), [196](#bib.bib196), [133](#bib.bib133), [197](#bib.bib197)].
+    Given a language command, the model highlights the semantically most aligned features
+    allowing the robot’s behavior to focus mostly on them. This relation between language
+    and vision inputs is commonly obtained by computing the cosine distance between
+    the CLIP features [[108](#bib.bib108)]. This approach is particularly relevant
+    for robotics as it allows to exploit the pre-trained vision language models in
+    an efficient way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a different direction, a few works have explored how to integrate tactile
+    information for robot manipulation. A common strategy has been to reconstruct
+    3D shapes from tactile [[198](#bib.bib198), [199](#bib.bib199), [200](#bib.bib200),
+    [201](#bib.bib201), [202](#bib.bib202), [203](#bib.bib203)]. In [[198](#bib.bib198)],
+    a vision-based predicted 3D shape, represented by a voxel-grid is updated with
+    multiple touches on the object. The tactile information in combination with the
+    location of the sensor is converted into occupied voxel information to ground
+    it the 3D space. In [[199](#bib.bib199)], the shape of the object is reconstructed
+    into a Neural SDF, while manipulating the object. Given the object’s orientation
+    and pose is changed, the work combines a pose estimation with a shape reconstruction
+    objective. In [[203](#bib.bib203)], the tactile signals are represented as a 3D
+    pointcloud. Given binary sensors, the authors transform the signal into a 3D pointcloud
+    if the sensor is in contact with an object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-C Exploiting Symmetries between Perception and Action
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Multiple robot tasks have inherent symmetries. Consider, for instance, a top-view
+    picking problem. Given a demonstration of the desired grasp pose to pick an apple;
+    if the apple is moved 10 centimeters, the desired grasp pose should similarly
+    move 10 centimeters. Thus, building policies that exploit this symmetry will induce
+    important generalization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Representing both perception and action in a shared space has shown important
+    results in this direction [[204](#bib.bib204), [40](#bib.bib40)]. Given both (action
+    and observation) are represented in the same space, the generative model exploits
+    the spatial structure and allows building architectures that contain spatial symmetries,
+    such as translation equivariance [[39](#bib.bib39), [62](#bib.bib62)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A common policy architecture to ground the actions into the perception is known
+    as Action Value Map [[39](#bib.bib39), [41](#bib.bib41)] or Affordance Map [[40](#bib.bib40),
+    [133](#bib.bib133)] (See [Figure 5](#S3.F5 "In III-D Categorical Models ‣ III
+    Density Estimation Models ‣ Deep Generative Models in Robotics: A Survey on Learning
+    from Multimodal Demonstrations")). Consider, the top-view picking problem. Given
+    a visual observation ${\bm{o}}$ of the apple to pick, an Action Value Map $\rho({\bm{a}}|{\bm{o}})$
+    will learn to place a high probability on the pixels around the apple (given the
+    action is grounded in the pixel space) and a low probability on the rest of the
+    space. Then, in inference time, even if the apple is translated, the action distribution
+    will similarly translate to the region where the apple is. We visualize it [Figure 10](#S5.F10
+    "In V-C Exploiting Symmetries between Perception and Action ‣ V Generalizing outside
+    data distributions ‣ Deep Generative Models in Robotics: A Survey on Learning
+    from Multimodal Demonstrations").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9080776569f97248dd5bfa4e02a5b084.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Action Value Maps contain spatial symmetries by projecting the action
+    to the pixel space. Given the value map ${\bm{H}}$ is computed by local features
+    in the input image ${\bm{o}}$, a translation of the pixels, leads to a translation
+    in the value map. Figure inspired by [[62](#bib.bib62)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This model type has been particularly successful on top-view manipulation tasks.
+    One of the first applications of Affordance Models was for grasp pose generation
+    in bin-picking problems [[40](#bib.bib40)]. Given an image as input, the model
+    outputs a value map in the pixel space, representing the quality of all 2D locations
+    to pick an object via suction. To consider the orientation of a parallel gripper,
+    [[40](#bib.bib40)] rotates the observation image by 16 different angles and generate
+    16 value maps, one per rotated image. Each rotated value map is used as a possible
+    orientation candidate for the grasp. [[204](#bib.bib204)] instead, generates an
+    additional value map informing about the optimal orientation per pixel. In [[205](#bib.bib205),
+    [62](#bib.bib62), [133](#bib.bib133)], Affordance models are extended to pick
+    and place problems. In [[205](#bib.bib205)], the correlation between the picking
+    and the placing actions is induced through a matching module that infers the correspondence
+    between possible picking objects and possible placing locations. In [[62](#bib.bib62)],
+    the placing value map is conditioned on a crop image along a selected picking
+    pixel. In [[133](#bib.bib133)], Transporter Networks [[62](#bib.bib62)] are extended
+    to consider language goal ${\bm{g}}$ in addition to the visual observations $Q_{{\bm{\theta}}}({\bm{o}},{\bm{g}})$.
+    In [[206](#bib.bib206)], Transporter Networks are extended with Equivariant networks.
+    This leads to not only translation equivariance but also rotation equivariance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This type of models have been particularly useful for deformable objects [[207](#bib.bib207),
+    [41](#bib.bib41), [208](#bib.bib208), [155](#bib.bib155)]. In [[207](#bib.bib207)]
+    the problem of rearranging a deformable object is solved as a sequence of pick
+    and place actions. In their work, Transporter Networks are extended to learn a
+    goal-conditioned pick and place policy. In [[41](#bib.bib41)], a bimanual robot
+    is trained for cloth manipulation. The Affordance Model is trained to select the
+    parameters of a Flinging policy. Similarly to [[40](#bib.bib40)] the image is
+    rotated to consider different possible grasping orientations. Addtionally, the
+    image is scaled to different sizes to parameterize the distance between both manipulators
+    when flinging.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Beyond Pick and Place or deformable object manipulation, in [[74](#bib.bib74)],
+    an Affordance model is trained to throw objects. An Affordance model first selects
+    the place to pick an object, then a throwing velocity module assign a desirable
+    throwing velocity to that pixel. In [[73](#bib.bib73)], a policy is learned to
+    tidy up a table. Given two primitives (push and pick), an Affordance Model is
+    trained per each primitive and the most likely action is selected among all value
+    maps. Finally, in [[39](#bib.bib39)], Affordance models were applied in a mobile
+    navigation task, in which the robot needs to manipulate a set of objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Grounding perception and action have been also explored for 6-DoF manipulation.
+    In [[209](#bib.bib209), [6](#bib.bib6), [210](#bib.bib210)], Action Value Maps
+    are extended to a voxel grid space. Given as input a voxel representing a 3D space,
+    the action space is defined as a categorical distribution along the voxels, where
+    each voxel represents a target 3D location to move the end-effector. To generate
+    the voxel-grid with meaningful semantic information, [[159](#bib.bib159)] propose
+    constructing the voxel-grid combining Neural Radiance Fields [[211](#bib.bib211)]
+    and Stable Diffusion [[212](#bib.bib212)]. Voxel-based network are usually computationally
+    demanding. To tackle it, RVT [[131](#bib.bib131), [213](#bib.bib213)] instead
+    proposes projecting the problem into multiple image-level Action Value Maps. Given
+    multiple viewpoints, RVT proposes generating an Action Value Map for each view
+    and then, sample the action through an optimization over all views. Similarly
+    [[214](#bib.bib214)] also projects the 6-DoF manipulation problem to an image
+    Action Value Map. In this case, the authors solve an optimization problem among
+    multiple viewpoints to select the one that provides the best top view for solving
+    the task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of using a voxel grid, a set of works have explored using point cloud
+    representations in which the action is directly projected in the point cloud itself [[63](#bib.bib63),
+    [215](#bib.bib215), [216](#bib.bib216), [217](#bib.bib217), [218](#bib.bib218),
+    [219](#bib.bib219)]. Similar to image-based value maps, these approaches represent
+    a categorical distribution along the points in the pointcloud, where each point
+    is a possible action and the model outputs a probability over all the points.
+    A particular case can be found in [[100](#bib.bib100)], where the action can be
+    represented in any point in the 3D space, given a pointcloud as observation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A limitation of Action Value Maps is that do not scale to large action spaces
+    such as trajectories. To represent higher dimensional action spaces, several works
+    have explored integrating observation-action symmetries in [DM](#glo.main.dm).
+    [[220](#bib.bib220), [221](#bib.bib221)] compute the denoising step by projecting
+    the action candidate to a set of camera views. Alternatively, [[161](#bib.bib161),
+    [160](#bib.bib160)] first build a featurized 3D pointcloud scene and denoise the
+    actions directly in the 3D space by computing the relative distance between observations
+    and actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Future Research Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Despite the successful deployment of [LfD](#glo.main.lfd) in several robot
+    tasks, there are several open research challenges. We consider three main pillars
+    will drive the future research in [LfD](#glo.main.lfd):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How do we solve long-horizon tasks?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How do we obtain large amounts of data to train [DGM](#glo.main.dgm)?, and how
+    do we learn from them?
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How do we guarantee policies to generalize to novel goals and novel scenes?.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In the following, we present a set of future research directions to apply [LfD](#glo.main.lfd)
+    methods to solve robotics tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Robot policies for long horizon tasks. Long-horizon tasks are usually solved
+    through task and motion planning algorithms. These approaches are usually crafted
+    for specific applications and do not generalize to any possible task. On the other
+    hand, learning-based policies are usually limited to short-horizon skills. Learning
+    policies that are able to solve any type of long-horizon task is an open research
+    question. A promising direction is the combination of [LLM](#glo.main.llm) for
+    high-level task planning with low-level, short-horizon robot skills [[128](#bib.bib128),
+    [137](#bib.bib137)]. Nevertheless, properly exploiting the outputs of the [LLM](#glo.main.llm)
+    for task generation will require a proper grounding of the language commands with
+    robot actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning from video demonstrations. Teleoperation data is one of the most common
+    approaches to demonstrate to the robots how to behave. Nevertheless, collecting
+    large amounts of teleoperated data is costly. On the contrary, the internet is
+    full of videos of humans performing all sorts of tasks. These videos are an important
+    source of data to teach robots the desirable behavior to solve any sort of task.
+    Several strategies have been explored, from extracting informative features from
+    video [[222](#bib.bib222), [223](#bib.bib223)], learning directly rewards from
+    the videos [[224](#bib.bib224), [225](#bib.bib225)], or learning video generative
+    models [[126](#bib.bib126), [127](#bib.bib127)]. Among the different challenges
+    to properly learn from videos are solving the embodiment mismatch between the
+    human and the robot, lack of direct action data, or the mismatch between training
+    and testing environments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning from synthetic data. Given the difficulty of collecting real robot
+    data, physics simulators emerge as a possible approach to generate large amounts
+    of data. In this direction, there have been several works [[226](#bib.bib226),
+    [227](#bib.bib227), [228](#bib.bib228), [229](#bib.bib229), [230](#bib.bib230)]
+    that built benchmarks in simulation and provide pipelines for synthetic data generation.
+    Nevertheless, deploying real robot policies trained on synthetic data requires
+    properly addressing the sim-to-real gap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning from online interaction. Given the high variability of the possible
+    scenes a robot could encounter, learning a generalist single policy from an offline
+    dataset for all possible tasks is unfeasible. Instead, an important research direction
+    proposes training policies for new tasks by allowing the robot to interact with
+    the environment in which it will be deployed [[231](#bib.bib231)]. This requires
+    the robot to explore different possible behaviors to find those that are most
+    suitable for the task in deployment. However, the way the robot explores and learns
+    to solve new tasks is critical for efficient learning of new policies and is an
+    important direction of future research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Generalization. Even if the models are trained on large amounts of data, the
+    robot will likely encounter situations that were not in the dataset. Thus, the
+    generative model should be capable of generalization, generating good actions
+    in unseen situations. As shown in [Section V](#S5 "V Generalizing outside data
+    distributions ‣ Deep Generative Models in Robotics: A Survey on Learning from
+    Multimodal Demonstrations"), a proper selection of inductive biases can promote
+    generalization capabilities. Despite some interesting properties, current generative
+    models have not shown yet powerful generalization capabilities and additional
+    exploration on structured priors for generalization is an important direction
+    of future work. In addition, integrating internet knowledge can be additional
+    source of generalization performance. Existing foundation models capture rich
+    sources of information from the internet that a robot policy can exploit to generalize
+    to new settings. Finally, structure in terms of 3D geometry can further help in
+    the grounding and aggregating of semantic information for robot policies, leading
+    to better generalization. In this regard, 3D Feature fields [[100](#bib.bib100),
+    [107](#bib.bib107), [196](#bib.bib196)] are a direction to represent semantic
+    information and the robot actions in common space.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] D. A. Pomerleau, “Alvinn: An autonomous land vehicle in a neural network,”
+    *Advances in Neural Information Processing Systems*, 1988.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] S. Schaal, “Learning from demonstration,” in *Advances in Neural Information
+    Processing Systems*, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] T. Osa, J. Pajarinen, G. Neumann, J. A. Bagnell, P. Abbeel, J. Peters *et al.*,
+    “An algorithmic perspective on imitation learning,” *Foundations and Trends® in
+    Robotics*, vol. 7, no. 1-2, pp. 1–179, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] S. Schaal, “Is imitation learning the route to humanoid robots,” *Trends
+    in cognitive sciences*, 1999.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] A. Mousavian, C. Eppner, and D. Fox, “6-dof graspnet: Variational grasp
+    generation for object manipulation,” in *Proceedings of the IEEE/CVF International
+    Conference on Computer Vision*, 2019, pp. 2901–2910.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] M. Shridhar, L. Manuelli, and D. Fox, “Perceiver-actor: A multi-task transformer
+    for robotic manipulation,” in *Conference on Robot Learning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song,
+    “Diffusion policy: Visuomotor policy learning via action diffusion,” *Proceedings
+    of Robotics: Science and Systems (R:SS)*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] M. Reuss, M. Li, X. Jia, and R. Lioutikov, “Goal-conditioned imitation
+    learning using score-based diffusion policies,” *arXiv preprint arXiv:2304.02532*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] W. Liu, T. Hermans, S. Chernova, and C. Paxton, “Structdiffusion: Object-centric
+    diffusion for semantic rearrangement of novel objects,” *Proceedings of Robotics:
+    Science and Systems (R:SS)*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] A. Simeonov, A. Goyal, L. Manuelli, Y.-C. Lin, A. Sarmiento, A. R. Garcia,
+    P. Agrawal, and D. Fox, “Shelving, stacking, hanging: Relational pose diffusion
+    for multi-modal rearrangement,” in *Conference on Robot Learning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] S. Ross, G. Gordon, and D. Bagnell, “A reduction of imitation learning
+    and structured prediction to no-regret online learning,” in *Proceedings of the
+    fourteenth international conference on artificial intelligence and statistics*.   JMLR
+    Workshop and Conference Proceedings, 2011, pp. 627–635.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] D. Driess, F. Xia, M. S. Sajjadi, C. Lynch, A. Chowdhery, B. Ichter, A. Wahid,
+    J. Tompson, Q. Vuong, T. Yu *et al.*, “Palm-e: An embodied multimodal language
+    model,” *arXiv preprint arXiv:2303.03378*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained bimanual
+    manipulation with low-cost hardware,” *arXiv preprint arXiv:2304.13705*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] B. D. Ziebart, A. L. Maas, J. A. Bagnell, A. K. Dey *et al.*, “Maximum
+    entropy inverse reinforcement learning.” in *AAAI*, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] J. Fu, K. Luo, and S. Levine, “Learning robust rewards with adverserial
+    inverse reinforcement learning,” in *International Conference on Learning Representations*,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] J. Ho and S. Ermon, “Generative adversarial imitation learning,” in *Advances
+    in Neural Information Processing Systems*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] F. Torabi, G. Warnell, and P. Stone, “Generative adversarial imitation
+    from observation,” *arXiv preprint arXiv:1807.06158*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] P. Sermanet, C. Lynch, Y. Chebotar, J. Hsu, E. Jang, S. Schaal, S. Levine,
+    and G. Brain, “Time-contrastive networks: Self-supervised learning from video,”
+    in *2018 IEEE international conference on robotics and automation (ICRA)*.   IEEE,
+    2018, pp. 1134–1141.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] F. Torabi, G. Warnell, and P. Stone, “Recent advances in imitation learning
+    from observation,” *arXiv preprint arXiv:1905.13566*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] A. Mandlekar, Y. Zhu, A. Garg, J. Booher, M. Spero, A. Tung, J. Gao, J. Emmons,
+    A. Gupta, E. Orbay *et al.*, “Roboturk: A crowdsourcing platform for robotic skill
+    learning through imitation,” in *Conference on Robot Learning*.   PMLR, 2018,
+    pp. 879–893.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] A. Mandlekar, J. Booher, M. Spero, A. Tung, A. Gupta, Y. Zhu, A. Garg,
+    S. Savarese, and L. Fei-Fei, “Scaling robot supervision to hundreds of hours with
+    roboturk: Robotic manipulation dataset through human reasoning and dexterity,”
+    in *2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2019, pp. 1048–1055.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] A. Padalkar, A. Pooley, A. Jain, A. Bewley, A. Herzog, A. Irpan, A. Khazatsky,
+    A. Rai, A. Singh, A. Brohan *et al.*, “Open x-embodiment: Robotic learning datasets
+    and rt-x models,” *arXiv preprint arXiv:2310.08864*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] K. Grochow, S. L. Martin, A. Hertzmann, and Z. Popović, “Style-based inverse
+    kinematics,” in *ACM SIGGRAPH 2004 Papers*, 2004, pp. 522–531.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] A. P. Shon, K. Grochow, and R. P. Rao, “Robotic imitation from human motion
+    capture using gaussian processes,” in *5th IEEE-RAS International Conference on
+    Humanoid Robots, 2005.*   IEEE, 2005, pp. 129–134.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] S. Tso and K. Liu, “Hidden markov model for intelligent extraction of
+    robot trajectory command from demonstrated trajectories,” in *Proceedings of the
+    IEEE International Conference on Industrial Technology (ICIT’96)*.   IEEE, 1996,
+    pp. 294–298.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] J. Yang, Y. Xu, and C. S. Chen, “Human action learning via hidden markov
+    model,” *IEEE Transactions on Systems, Man, and Cybernetics-Part A: Systems and
+    Humans*, vol. 27, no. 1, pp. 34–44, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] S. Calinon, F. Guenter, and A. Billard, “On learning, representing, and
+    generalizing a task in a humanoid robot,” *IEEE Transactions on Systems, Man,
+    and Cybernetics, Part B (Cybernetics)*, vol. 37, no. 2, pp. 286–298, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] S. Levine, C. Finn, T. Darrell, and P. Abbeel, “End-to-end training of
+    deep visuomotor policies,” *The Journal of Machine Learning Research*, vol. 17,
+    no. 1, pp. 1334–1373, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] S. James, M. Bloesch, and A. J. Davison, “Task-embedded control networks
+    for few-shot imitation learning,” in *Conference on robot learning*.   PMLR, 2018,
+    pp. 783–795.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] C. Lynch and P. Sermanet, “Grounding language in play,” *arXiv preprint
+    arXiv:2005.07648*, vol. 3, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] E. Jang, A. Irpan, M. Khansari, D. Kappler, F. Ebert, C. Lynch, S. Levine,
+    and C. Finn, “Bc-z: Zero-shot task generalization with robotic imitation learning,”
+    in *Conference on Robot Learning*.   PMLR, 2022, pp. 991–1002.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] S. M. Khansari-Zadeh and A. Billard, “Learning stable nonlinear dynamical
+    systems with gaussian mixture models,” *IEEE Transactions on Robotics*, vol. 27,
+    no. 5, pp. 943–957, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,”
+    *Advances in Neural Information Processing Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] J. D. M.-W. C. Kenton and L. K. Toutanova, “Bert: Pre-training of deep
+    bidirectional transformers for language understanding,” in *Proceedings of NAACL-HLT*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole,
+    “Score-based generative modeling through stochastic differential equations,” *arXiv
+    preprint arXiv:2011.13456*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] M. Janner, Y. Du, J. Tenenbaum, and S. Levine, “Planning with diffusion
+    for flexible behavior synthesis,” in *International Conference on Machine Learning*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan,
+    K. Hausman, A. Herzog, J. Hsu *et al.*, “Rt-1: Robotics transformer for real-world
+    control at scale,” *arXiv preprint arXiv:2212.06817*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] D. P. Kingma and M. Welling, “Auto-encoding variational bayes,” in *Conference
+    on Learning Representations, ICLR 2014*, Y. Bengio and Y. LeCun, Eds., 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] J. Wu, X. Sun, A. Zeng, S. Song, J. Lee, S. Rusinkiewicz, and T. Funkhouser,
+    “Spatial action maps for mobile manipulation,” in *16th Robotics: Science and
+    Systems, RSS 2020*.   MIT Press Journals, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] A. Zeng, S. Song, K.-T. Yu, E. Donlon, F. R. Hogan, M. Bauza, D. Ma, O. Taylor,
+    M. Liu, E. Romo *et al.*, “Robotic pick-and-place of novel objects in clutter
+    with multi-affordance grasping and cross-domain image matching,” *The International
+    Journal of Robotics Research*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] H. Ha and S. Song, “Flingbot: The unreasonable effectiveness of dynamic
+    manipulation for cloth unfolding,” in *Conference on Robot Learning*.   PMLR,
+    2022, pp. 24–33.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] X. Jia, D. Blessing, X. Jiang, M. Reuss, A. Donat, R. Lioutikov, and G. Neumann,
+    “Towards diverse behaviors: A benchmark for imitation learning with human demonstrations,”
+    *International Conference on Learning Representations (ICLR)*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] M. T. Spaan, “Partially observable markov decision processes,” in *Reinforcement
+    learning: State-of-the-art*.   Springer, 2012, pp. 387–414.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang, R. Kulkarni, L. Fei-Fei,
+    S. Savarese, Y. Zhu, and R. Martín-Martín, “What matters in learning from offline
+    human demonstrations for robot manipulation,” in *Conference on Robot Learning*.   PMLR,
+    2022, pp. 1678–1690.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] M. Laskey, J. Lee, R. Fox, A. Dragan, and K. Goldberg, “Dart: Noise injection
+    for robust imitation learning,” in *Conference on robot learning*.   PMLR, 2017,
+    pp. 143–156.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] J. Kober, B. Mohler, and J. Peters, “Imitation and reinforcement learning
+    for motor primitives with perceptual coupling,” in *From motor learning to interaction
+    learning in robots*.   Springer, 2010, pp. 209–225.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] B. Ichter, J. Harrison, and M. Pavone, “Learning sampling distributions
+    for robot motion planning,” in *2018 IEEE International Conference on Robotics
+    and Automation (ICRA)*.   IEEE, 2018, pp. 7087–7094.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] A. Singh, H. Liu, G. Zhou, A. Yu, N. Rhinehart, and S. Levine, “Parrot:
+    Data-driven behavioral priors for reinforcement learning,” *International Conference
+    on Learning Representations*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] A. Billard, S. Calinon, R. Dillmann, and S. Schaal, “Survey: Robot programming
+    by demonstration,” Springrer, Tech. Rep., 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] B. D. Argall, S. Chernova, M. Veloso, and B. Browning, “A survey of robot
+    learning from demonstration,” *Robotics and autonomous systems*, vol. 57, no. 5,
+    pp. 469–483, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] S. Chernova and A. L. Thomaz, *Robot learning from human teachers*.   Morgan
+    & Claypool Publishers, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] A. G. Billard, S. Calinon, and R. Dillmann, “Learning from humans,” *Springer
+    handbook of robotics*, pp. 1995–2014, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] A. Hussein, M. M. Gaber, E. Elyan, and C. Jayne, “Imitation learning:
+    A survey of learning methods,” *ACM Computing Surveys (CSUR)*, vol. 50, no. 2,
+    pp. 1–35, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] H. Ravichandar, A. S. Polydoros, S. Chernova, and A. Billard, “Recent
+    advances in robot learning from demonstration,” *Annual review of control, robotics,
+    and autonomous systems*, vol. 3, pp. 297–330, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] R. Firoozi, J. Tucker, S. Tian, A. Majumdar, J. Sun, W. Liu, Y. Zhu, S. Song,
+    A. Kapoor, K. Hausman *et al.*, “Foundation models in robotics: Applications,
+    challenges, and the future,” *arXiv preprint arXiv:2312.07843*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] Y. Hu, Q. Xie, V. Jain, J. Francis, J. Patrikar, N. Keetha, S. Kim, Y. Xie,
+    T. Zhang, Z. Zhao *et al.*, “Toward general-purpose robots via foundation models:
+    A survey and meta-analysis,” *arXiv preprint arXiv:2312.08782*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] C. Eppner, A. Mousavian, and D. Fox, “Acronym: A large-scale grasp dataset
+    based on simulation,” in *2021 IEEE International Conference on Robotics and Automation
+    (ICRA)*.   IEEE, 2021, pp. 6222–6227.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] J. Urain, N. Funk, G. Chalvatzaki, and J. Peters, “Se(3)-diffusionfields:
+    Learning cost functions for joint grasp and motion optimization through diffusion,”
+    *IEEE International Conference on Robotics and Automation (ICRA)*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] N. M. Shafiullah, Z. Cui, A. A. Altanzaya, and L. Pinto, “Behavior transformers:
+    Cloning $k$ modes with one stone,” *Advances in neural information processing
+    systems*, vol. 35, pp. 22 955–22 968, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] W. Liu, C. Paxton, T. Hermans, and D. Fox, “Structformer: Learning spatial
+    structure for language-guided semantic rearrangement of novel objects,” in *2022
+    International Conference on Robotics and Automation (ICRA)*.   IEEE, 2022, pp.
+    6322–6329.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] T. S. Lembono, E. Pignat, J. Jankowski, and S. Calinon, “Generative adversarial
+    network to learn valid distributions of robot configurations for inverse kinematics
+    and constrained motion planning,” *CoRR, abs/2011.05717*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] A. Zeng, P. Florence, J. Tompson, S. Welker, J. Chien, M. Attarian, T. Armstrong,
+    I. Krasin, D. Duong, V. Sindhwani *et al.*, “Transporter networks: Rearranging
+    the visual world for robotic manipulation,” in *Conference on Robot Learning*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] K. Mo, L. J. Guibas, M. Mukadam, A. Gupta, and S. Tulsiani, “Where2act:
+    From pixels to actions for articulated 3d objects,” in *Proceedings of the IEEE/CVF
+    International Conference on Computer Vision*, 2021, pp. 6813–6823.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] H. Ha, P. Florence, and S. Song, “Scaling up and distilling down: Language-guided
+    robot skill acquisition,” in *Conference on Robot Learning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] B. Ames, J. Morgan, and G. Konidaris, “Ikflow: Generating diverse inverse
+    kinematics solutions,” *IEEE Robotics and Automation Letters*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] A. Mandlekar, D. Xu, R. Martín-Martín, S. Savarese, and L. Fei-Fei, “Learning
+    to generalize across long-horizon tasks from human demonstrations,” *arXiv preprint
+    arXiv:2003.06085*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] Y. LeCun, S. Chopra, R. Hadsell, M. Ranzato, and F. Huang, “A tutorial
+    on energy-based learning,” *Predicting structured data*, vol. 1, no. 0, 2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] Y. Song and D. P. Kingma, “How to train your energy-based models,” *arXiv
+    preprint arXiv:2101.03288*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] Y. Song and S. Ermon, “Generative modeling by estimating gradients of
+    the data distribution,” *Advances in Neural Information Processing Systems*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] A. Simeonov, Y. Du, A. Tagliasacchi, J. B. Tenenbaum, A. Rodriguez, P. Agrawal,
+    and V. Sitzmann, “Neural descriptor fields: Se(3)-equivariant object representations
+    for manipulation,” in *International Conference on Robotics and Automation*.   IEEE,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] D. Rezende and S. Mohamed, “Variational inference with normalizing flows,”
+    in *International Conference on Machine Learning*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen, K. Choromanski,
+    T. Ding, D. Driess, A. Dubey, C. Finn *et al.*, “Rt-2: Vision-language-action
+    models transfer web knowledge to robotic control,” *arXiv preprint arXiv:2307.15818*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] A. Zeng, S. Song, S. Welker, J. Lee, A. Rodriguez, and T. Funkhouser,
+    “Learning synergies between pushing and grasping with self-supervised deep reinforcement
+    learning,” in *2018 IEEE/RSJ International Conference on Intelligent Robots and
+    Systems (IROS)*.   IEEE, 2018, pp. 4238–4245.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] A. Zeng, S. Song, J. Lee, A. Rodriguez, and T. Funkhouser, “Tossingbot:
+    Learning to throw arbitrary objects with residual physics,” *IEEE Transactions
+    on Robotics*, vol. 36, no. 4, pp. 1307–1319, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair,
+    A. Courville, and Y. Bengio, “Generative adversarial nets,” in *Advances in Neural
+    Information Processing Systems*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] M. Mohammadi, A. Al-Fuqaha, and J.-S. Oh, “Path planning in support of
+    smart mobility applications using generative adversarial networks,” in *IEEE International
+    Conference on Internet of Things*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] J. Ortiz-Haro, J.-S. Ha, D. Driess, and M. Toussaint, “Structured deep
+    generative models for sampling on constraint manifolds in sequential manipulation,”
+    in *Conference on Robot Learning*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] T. Lai and F. Ramos, “Plannerflows: Learning motion samplers with normalising
+    flows,” in *IEEE/RSJ International Conference on Intelligent Robots and Systems
+    (IROS)*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] T. Lai, W. Zhi, T. Hermans, and F. Ramos, “Parallelised diffeomorphic
+    sampling-based motion planning,” in *Conference on Robot Learning*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] S. LaValle, “Rapidly-exploring random trees: A new tool for path planning,”
+    *Research Report 9811*, 1998.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] L. E. Kavraki, P. Svestka, J.-C. Latombe, and M. H. Overmars, “Probabilistic
+    roadmaps for path planning in high-dimensional configuration spaces,” *IEEE transactions
+    on Robotics and Automation*, vol. 12, no. 4, pp. 566–580, 1996.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] H. Van Hoof, N. Chen, M. Karl, P. van der Smagt, and J. Peters, “Stable
+    reinforcement learning with autoencoders for tactile and visual data,” in *2016
+    IEEE/RSJ international conference on intelligent robots and systems (IROS)*.   IEEE,
+    2016, pp. 3928–3934.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] K. Pertsch, Y. Lee, and J. Lim, “Accelerating reinforcement learning with
+    learned skill priors,” in *Conference on Robot Learning*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] C. Lynch, M. Khansari, T. Xiao, V. Kumar, J. Tompson, S. Levine, and P. Sermanet,
+    “Learning latent plans from play,” in *Conference on robot learning*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] A. Mandlekar, F. Ramos, B. Boots, S. Savarese, L. Fei-Fei, A. Garg, and
+    D. Fox, “Iris: Implicit reinforcement without interaction at scale for learning
+    control from offline robot manipulation data,” in *2020 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2020, pp. 4414–4420.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] M. Yan, A. Li, M. Kalakrishnan, and P. Pastor, “Learning probabilistic
+    multi-modal actor models for vision-based robotic grasping,” in *2019 International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2019, pp. 4804–4810.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] J. Urain, M. Ginesi, D. Tateo, and J. Peters, “Imitationflows: Learning
+    deep stable stochastic dynamic systems by normalizing flows,” in *IEEE/RSJ International
+    Conference on Intelligent Robots and Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] M. A. Rana, A. Li, D. Fox, B. Boots, F. Ramos, and N. Ratliff, “Euclideanizing
+    flows: Diffeomorphic reduction for learning stable dynamical systems,” in *Learning
+    for Dynamics and Control*.   PMLR, 2020, pp. 630–639.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] G. Papamakarios, E. Nalisnick, D. J. Rezende, S. Mohamed, and B. Lakshminarayanan,
+    “Normalizing flows for probabilistic modeling and inference,” *arXiv preprint
+    arXiv:1912.02762*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] R. T. Chen, Y. Rubanova, J. Bettencourt, and D. K. Duvenaud, “Neural ordinary
+    differential equations,” in *Advances in Neural Information Processing Systems*,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] C. Finn, X. Y. Tan, Y. Duan, T. Darrell, S. Levine, and P. Abbeel, “Deep
+    spatial autoencoders for visuomotor learning,” in *2016 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2016, pp. 512–519.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] T. Weng, D. Held, F. Meier, and M. Mukadam, “Neural grasp distance fields
+    for robot manipulation,” in *2023 IEEE International Conference on Robotics and
+    Automation (ICRA)*.   IEEE, 2023, pp. 1814–1821.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] J. Urain, A. Li, P. Liu, C. D’Eramo, and J. Peters, “Composable energy
+    policies for reactive motion generation and reinforcement learning,” *The International
+    Journal of Robotics Research (IJRR)*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] P. Florence, C. Lynch, A. Zeng, O. A. Ramirez, A. Wahid, L. Downs, A. Wong,
+    J. Lee, I. Mordatch, and J. Tompson, “Implicit behavioral cloning,” in *Conference
+    on Robot Learning*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] Y. Du, S. Li, and I. Mordatch, “Compositional visual generation and inference
+    with energy based models,” in *Advances in Neural Information Processing Systems*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] N. Gkanatsios, A. Jain, Z. Xian, Y. Zhang, C. G. Atkeson, and K. Fragkiadaki,
+    “Energy-based models are zero-shot planners for compositional scene rearrangement,”
+    in *RSS 2023 Workshop on Learning for Task and Motion Planning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] M. Kalakrishnan, P. Pastor, L. Righetti, and S. Schaal, “Learning objective
+    functions for manipulation,” in *2013 IEEE International Conference on Robotics
+    and Automation*.   IEEE, 2013, pp. 1331–1336.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] C. Finn, S. Levine, and P. Abbeel, “Guided cost learning: Deep inverse
+    optimal control via policy optimization,” in *International Conference on Machine
+    Learning*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] Y. Du and I. Mordatch, “Implicit generation and modeling with energy based
+    models,” *Advances in Neural Information Processing Systems*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] T. Gervet, Z. Xian, N. Gkanatsios, and K. Fragkiadaki, “Act3d: Infinite
+    resolution action detection transformer for robotic manipulation,” *arXiv preprint
+    arXiv:2306.17817*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Y. Du, T. Lin, and I. Mordatch, “Model based planning with energy based
+    models,” *CORL*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] P. Sodhi, E. Dexheimer, M. Mukadam, S. Anderson, and M. Kaess, “Leo:
+    Learning energy-based models in factor graph optimization,” in *Conference on
+    Robot Learning*.   PMLR, 2022, pp. 234–244.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] G. E. Hinton, “Training products of experts by minimizing contrastive
+    divergence,” *Neural computation*, vol. 14, no. 8, pp. 1771–1800, 2002.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] Y. Du, S. Li, J. Tenenbaum, and I. Mordatch, “Improved contrastive divergence
+    training of energy based models,” *arXiv preprint arXiv:2012.01316*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] Z. Jiang, Y. Zhu, M. Svetlik, K. Fang, and Y. Zhu, “Synergies between
+    affordance and geometry: 6-dof grasp detection via implicit representations,”
+    *Proceedings of Robotics: Science and Systems (R:SS)*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] A. Simeonov, Y. Du, Y.-C. Lin, A. R. Garcia, L. P. Kaelbling, T. Lozano-Pérez,
+    and P. Agrawal, “Se (3)-equivariant relational rearrangement with neural descriptor
+    fields,” in *Conference on Robot Learning*.   PMLR, 2023, pp. 835–846.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] N. M. M. Shafiullah, C. Paxton, L. Pinto, S. Chintala, and A. Szlam,
+    “Clip-fields: Weakly supervised semantic fields for robotic memory,” *arXiv preprint
+    arXiv:2210.05663*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+    A. Askell, P. Mishkin, J. Clark *et al.*, “Learning transferable visual models
+    from natural language supervision,” in *International Conference on Machine Learning*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] J. Sohl-Dickstein, E. Weiss, N. Maheswaranathan, and S. Ganguli, “Deep
+    unsupervised learning using nonequilibrium thermodynamics,” in *International
+    Conference on Machine Learning*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] P. Vincent, “A connection between score matching and denoising autoencoders,”
+    *Neural computation*, vol. 23, no. 7, pp. 1661–1674, 2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] N. Liu, S. Li, Y. Du, A. Torralba, and J. B. Tenenbaum, “Compositional
+    visual generation with composable diffusion models,” in *European Conference on
+    Computer Vision*.   Springer, 2022, pp. 423–439.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] Y. Du, C. Durkan, R. Strudel, J. B. Tenenbaum, S. Dieleman, R. Fergus,
+    J. Sohl-Dickstein, A. Doucet, and W. S. Grathwohl, “Reduce, reuse, recycle: Compositional
+    generation with energy-based diffusion models and mcmc,” in *International Conference
+    on Machine Learning*.   PMLR, 2023, pp. 8489–8510.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] A. Prasad, K. Lin, J. Wu, L. Zhou, and J. Bohg, “Consistency policy:
+    Accelerated visuomotor policies via consistency distillation,” *arXiv preprint
+    arXiv:2405.07503*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] A. Ajay, Y. Du, A. Gupta, J. B. Tenenbaum, T. S. Jaakkola, and P. Agrawal,
+    “Is conditional generative modeling all you need for decision making?” in *International
+    Conference on Learning Representations*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] J. Carvalho, A. T. Le, M. Baierl, D. Koert, and J. Peters, “Motion planning
+    diffusion: Learning and planning of robot motions with diffusion models,” *arXiv
+    preprint arXiv:2308.01557*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] U. Mishra, S. Xue, Y. Chen, and D. Xu, “Generative skill chaining: Long-horizon
+    skill planning with diffusion models,” in *CoRL 2023 Workshop on Learning Effective
+    Abstractions for Planning (LEAP)*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] Z. Yang, J. Mao, Y. Du, J. Wu, J. B. Tenenbaum, T. Lozano-Pérez, and
+    L. P. Kaelbling, “Compositional diffusion-based continuous constraint solvers,”
+    *arXiv preprint arXiv:2309.00966*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] P. Dhariwal and A. Nichol, “Diffusion models beat gans on image synthesis,”
+    *Advances in neural information processing systems*, vol. 34, pp. 8780–8794, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] J. Ho and T. Salimans, “Classifier-free diffusion guidance,” in *NeurIPS
+    2021 Workshop on Deep Generative Models and Downstream Applications*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] L. Huang, D. Chen, Y. Liu, Y. Shen, D. Zhao, and J. Zhou, “Composer:
+    Creative and controllable image synthesis with composable conditions,” *arXiv
+    preprint arXiv:2302.09778*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] W. H. Kwon and S. H. Han, *Receding horizon control: model predictive
+    control for state models*.   Springer Science & Business Media, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] M. Reuss and R. Lioutikov, “Multimodal diffusion transformer for learning
+    from play,” in *2nd Workshop on Language and Robot Learning: Language as Grounding*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] S. Huang, Z. Wang, P. Li, B. Jia, T. Liu, Y. Zhu, W. Liang, and S.-C.
+    Zhu, “Diffusion-based generation, optimization, and planning in 3d scenes,” in
+    *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*,
+    2023, pp. 16 750–16 761.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] U. A. Mishra and Y. Chen, “Reorientdiff: Diffusion model based reorientation
+    for object manipulation,” *arXiv preprint arXiv:2303.12700*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] I. Kapelyukh, V. Vosylius, and E. Johns, “Dall-e-bot: Introducing web-scale
+    diffusion models to robotics,” *IEEE Robotics and Automation Letters*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] Y. Du, M. Yang, P. Florence, F. Xia, A. Wahid, B. Ichter, P. Sermanet,
+    T. Yu, P. Abbeel, J. B. Tenenbaum *et al.*, “Video language planning,” *arXiv
+    preprint arXiv:2310.10625*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] Y. Du, S. Yang, B. Dai, H. Dai, O. Nachum, J. B. Tenenbaum, D. Schuurmans,
+    and P. Abbeel, “Learning universal policies via text-guided video generation,”
+    in *Thirty-seventh Conference on Neural Information Processing Systems*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] A. Ajay, S. Han, Y. Du, S. Li, A. Gupta, T. Jaakkola, J. Tenenbaum, L. Kaelbling,
+    A. Srivastava, and P. Agrawal, “Compositional foundation models for hierarchical
+    planning,” *arXiv preprint arXiv:2309.08587*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] C. Higuera, B. Boots, and M. Mukadam, “Learning to read braille: Bridging
+    the tactile reality gap with diffusion models,” *arXiv preprint arXiv:2304.01182*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] P. M. Scheikl, N. Schreiber, C. Haas, N. Freymuth, G. Neumann, R. Lioutikov,
+    and F. Mathis-Ullrich, “Movement primitive diffusion: Learning gentle robotic
+    manipulation of deformable objects,” *IEEE Robotics and Automation Letters*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] A. Goyal, J. Xu, Y. Guo, V. Blukis, Y.-W. Chao, and D. Fox, “Rvt: Robotic
+    view transformer for 3d object manipulation,” *arXiv preprint arXiv:2306.14896*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] M. Breyer, J. J. Chung, L. Ott, R. Siegwart, and J. Nieto, “Volumetric
+    grasping network: Real-time 6 dof grasp detection in clutter,” *arXiv preprint
+    arXiv:2101.01132*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] M. Shridhar, L. Manuelli, and D. Fox, “Cliport: What and where pathways
+    for robotic manipulation,” in *Conference on Robot Learning*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal, A. Neelakantan,
+    P. Shyam, G. Sastry, A. Askell *et al.*, “Language models are few-shot learners,”
+    *Advances in Neural Information Processing Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+    Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” *Advances in Neural
+    Information Processing Systems*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] A. Van den Oord, N. Kalchbrenner, L. Espeholt, O. Vinyals, A. Graves
+    *et al.*, “Conditional image generation with pixelcnn decoders,” *Advances in
+    neural information processing systems*, vol. 29, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] M. Ahn, A. Brohan, N. Brown, Y. Chebotar, O. Cortes, B. David, C. Finn,
+    C. Fu, K. Gopalakrishnan, K. Hausman *et al.*, “Do as i can, not as i say: Grounding
+    language in robotic affordances,” *arXiv preprint arXiv:2204.01691*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] K.-H. Lee, O. Nachum, M. S. Yang, L. Lee, D. Freeman, S. Guadarrama,
+    I. Fischer, W. Xu, E. Jang, H. Michalewski *et al.*, “Multi-game decision transformers,”
+    *Advances in Neural Information Processing Systems*, vol. 35, pp. 27 921–27 936,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] S. Reed, K. Zolna, E. Parisotto, S. G. Colmenarejo, A. Novikov, G. Barth-Maron,
+    M. Gimenez, Y. Sulsky, J. Kay, J. T. Springenberg *et al.*, “A generalist agent,”
+    *arXiv preprint arXiv:2205.06175*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] M. Janner, Q. Li, and S. Levine, “Offline reinforcement learning as one
+    big sequence modeling problem,” *Advances in neural information processing systems*,
+    vol. 34, pp. 1273–1286, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] O. M. Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari,
+    J. Hejna, C. Xu, J. Luo *et al.*, “Octo: An open-source generalist robot policy,”
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] X. Jia, Q. Wang, A. Donat, B. Xing, G. Li, H. Zhou, O. Celik, D. Blessing,
+    R. Lioutikov, and G. Neumann, “Mail: Improving imitation learning with mamba,”
+    *arXiv preprint arXiv:2406.08234*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] Z. J. Cui, Y. Wang, N. M. M. Shafiullah, and L. Pinto, “From play to
+    policy: Conditional behavior generation from uncurated robot data,” *arXiv preprint
+    arXiv:2210.10047*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] S. Lee, Y. Wang, H. Etukuru, H. J. Kim, N. M. M. Shafiullah, and L. Pinto,
+    “Behavior generation with latent actions,” *arXiv preprint arXiv:2403.03181*,
+    2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] R. Dadashi, L. Hussenot, D. Vincent, S. Girgin, A. Raichuk, M. Geist,
+    and O. Pietquin, “Continuous control with action quantization from demonstrations,”
+    *arXiv preprint arXiv:2110.10149*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] A. Van Den Oord, O. Vinyals *et al.*, “Neural discrete representation
+    learning,” *Advances in neural information processing systems*, vol. 30, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] T.-Y. Lin, P. Goyal, R. Girshick, K. He, and P. Dollár, “Focal loss for
+    dense object detection,” in *Proceedings of the IEEE international conference
+    on computer vision*, 2017, pp. 2980–2988.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] C. M. Bishop, “Mixture density networks,” 1994.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] T. Salimans, A. Karpathy, X. Chen, and D. P. Kingma, “Pixelcnn++: Improving
+    the pixelcnn with discretized logistic mixture likelihood and other modifications,”
+    *arXiv preprint arXiv:1701.05517*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] Y. Zhu, A. Joshi, P. Stone, and Y. Zhu, “Viola: Imitation learning for
+    vision-based manipulation with object proposal priors,” in *Proceedings of The
+    6th Conference on Robot Learning*, ser. Proceedings of Machine Learning Research,
+    K. Liu, D. Kulic, and J. Ichnowski, Eds., vol. 205.   PMLR, 14–18 Dec 2023, pp.
+    1199–1210\. [Online]. Available: [https://proceedings.mlr.press/v205/zhu23a.html](https://proceedings.mlr.press/v205/zhu23a.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] W. Wan, Y. Zhu, R. Shah, and Y. Zhu, “Lotus: Continual imitation learning
+    for robot manipulation through unsupervised skill discovery,” *arXiv preprint
+    arXiv:2311.02058*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] C. Wang, L. Fan, J. Sun, R. Zhang, L. Fei-Fei, D. Xu, Y. Zhu, and A. Anandkumar,
+    “Mimicplay: Long-horizon imitation learning by watching human play,” *arXiv preprint
+    arXiv:2302.12422*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[153] O. Mees, L. Hermann, and W. Burgard, “What matters in language conditioned
+    robotic imitation learning over unstructured data,” *IEEE Robotics and Automation
+    Letters*, vol. 7, no. 4, pp. 11 205–11 212, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[154] A. Murali, A. Mousavian, C. Eppner, C. Paxton, and D. Fox, “6-dof grasping
+    for target-driven object manipulation in clutter,” in *2020 IEEE International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2020, pp. 6232–6238.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[155] T. Weng, S. M. Bajracharya, Y. Wang, K. Agrawal, and D. Held, “Fabricflownet:
+    Bimanual cloth manipulation with a flow-based policy,” in *Conference on Robot
+    Learning*.   PMLR, 2022, pp. 192–202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] S. Jauhri, I. Lunawat, and G. Chalvatzaki, “Learning any-view 6dof robotic
+    grasping in cluttered scenes via neural surface rendering,” *arXiv preprint arXiv:2306.07392*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[157] N. Ratliff, M. Zucker, J. A. Bagnell, and S. Srinivasa, “Chomp: Gradient
+    optimization techniques for efficient motion planning,” in *2009 IEEE International
+    Conference on Robotics and Automation*.   IEEE, 2009, pp. 489–494.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[158] M. Kalakrishnan, S. Chitta, E. Theodorou, P. Pastor, and S. Schaal, “Stomp:
+    Stochastic trajectory optimization for motion planning,” in *IEEE international
+    conference on robotics and automation*.   IEEE, 2011, pp. 4569–4574.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[159] Y. Ze, G. Yan, Y.-H. Wu, A. Macaluso, Y. Ge, J. Ye, N. Hansen, L. E.
+    Li, and X. Wang, “Gnfactor: Multi-task real robot learning with generalizable
+    neural feature fields,” in *Conference on Robot Learning*.   PMLR, 2023, pp. 284–301.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[160] T.-W. Ke, N. Gkanatsios, and K. Fragkiadaki, “3d diffuser actor: Policy
+    diffusion with 3d scene representations,” *arXiv preprint arXiv:2402.10885*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[161] Z. Xian, N. Gkanatsios, T. Gervet, T.-W. Ke, and K. Fragkiadaki, “Chaineddiffuser:
+    Unifying trajectory diffusion and keypose prediction for robotic manipulation,”
+    in *7th Annual Conference on Robot Learning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[162] X. Ma, S. Patidar, I. Haughton, and S. James, “Hierarchical diffusion
+    policy for kinematics-aware multi-task robotic manipulation,” *arXiv preprint
+    arXiv:2403.03890*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[163] J. Urain, D. Tateo, and J. Peters, “Learning stable vector fields on
+    lie groups,” in *Robotics and Automation Letters (RA-L)*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[164] J. Nakanishi, R. Cory, M. Mistry, J. Peters, and S. Schaal, “Operational
+    space control: A theoretical and empirical comparison,” *The International Journal
+    of Robotics Research*, vol. 27, no. 6, pp. 737–757, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[165] O. Khatib, “A unified approach for motion and force control of robot
+    manipulators: The operational space formulation,” *IEEE Journal on Robotics and
+    Automation*, vol. 3, no. 1, pp. 43–53, 1987.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[166] C. Jiang, A. Cornman, C. Park, B. Sapp, Y. Zhou, D. Anguelov *et al.*,
+    “Motiondiffuser: Controllable multi-agent motion prediction using diffusion,”
+    in *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*,
+    2023, pp. 9644–9653.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[167] M. Mukadam, X. Yan, and B. Boots, “Gaussian process motion planning,”
+    in *2016 IEEE international conference on robotics and automation (ICRA)*.   IEEE,
+    2016, pp. 9–15.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[168] D. Q. Mayne and H. Michalska, “Receding horizon control of nonlinear
+    systems,” in *Proceedings of the 27th IEEE Conference on Decision and Control*.   IEEE,
+    1988, pp. 464–465.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[169] G. Williams, A. Aldrich, and E. A. Theodorou, “Model predictive path
+    integral control: From theory to parallel computation,” *Journal of Guidance,
+    Control, and Dynamics*, vol. 40, no. 2, pp. 344–357, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[170] K. Chua, R. Calandra, R. McAllister, and S. Levine, “Deep reinforcement
+    learning in a handful of trials using probabilistic dynamics models,” *Advances
+    in Neural Information Processing Systems*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[171] K. He, G. Gkioxari, P. Dollár, and R. Girshick, “Mask r-cnn,” in *Proceedings
+    of the IEEE international conference on computer vision*, 2017, pp. 2961–2969.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[172] Y. Du and L. Kaelbling, “Compositional generative modeling: A single
+    model is not all you need,” *arXiv preprint arXiv:2402.01103*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[173] Y. Du, S. Li, and I. Mordatch, “Compositional visual generation with
+    energy based models,” *Advances in Neural Information Processing Systems*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[174] K. Saha, V. Mandadi, J. Reddy, A. Srikanth, A. Agarwal, B. Sen, A. Singh,
+    and M. Krishna, “Edmp: Ensemble-of-costs-guided diffusion for motion planning,”
+    *arXiv preprint arXiv:2309.11414*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[175] Y. Luo, C. Sun, J. B. Tenenbaum, and Y. Du, “Potential based diffusion
+    motion planning,” *arXiv preprint arXiv:2407.06169*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[176] U. A. Mishra, Y. Chen, and D. Xu, “Generative factor chaining: Coordinated
+    manipulation with diffusion-based factor graph,” in *ICRA Workshop $\{$$\backslash$textemdash$\}$
+    Back to the Future: Robot Learning Going Probabilistic*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[177] W. Liu, J. Mao, J. Hsu, T. Hermans, A. Garg, and J. Wu, “Composable part-based
+    manipulation,” in *7th Annual Conference on Robot Learning*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[178] L. Wang, J. Zhao, Y. Du, E. H. Adelson, and R. Tedrake, “Poco: Policy
+    composition from and for heterogeneous robot learning,” *arXiv preprint arXiv:2402.02511*,
+    2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[179] C. Wang, R. Wang, A. Mandlekar, L. Fei-Fei, S. Savarese, and D. Xu, “Generalization
+    through hand-eye coordination: An action space for learning spatially-invariant
+    visuomotor control,” in *2021 IEEE/RSJ International Conference on Intelligent
+    Robots and Systems (IROS)*.   IEEE, 2021, pp. 8913–8920.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[180] Y. Yoon, G. N. DeSouza, and A. C. Kak, “Real-time tracking and pose estimation
+    for industrial objects using geometric features,” in *2003 IEEE International
+    conference on robotics and automation (cat. no. 03CH37422)*, vol. 3.   IEEE, 2003,
+    pp. 3473–3478.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[181] C. Sahin and T.-K. Kim, “Category-level 6d object pose recovery in depth
+    images,” in *Proceedings of the European Conference on Computer Vision (ECCV)
+    Workshops*, 2018, pp. 0–0.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[182] X. Deng, Y. Xiang, A. Mousavian, C. Eppner, T. Bretl, and D. Fox, “Self-supervised
+    6d object pose estimation for robot manipulation,” in *2020 IEEE International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2020, pp. 3665–3671.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[183] L. Manuelli, W. Gao, P. Florence, and R. Tedrake, “kpam: Keypoint affordances
+    for category-level robotic manipulation,” in *The International Symposium of Robotics
+    Research*.   Springer, 2019, pp. 132–157.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[184] L. Manuelli, Y. Li, P. Florence, and R. Tedrake, “Keypoints into the
+    future: Self-supervised correspondence in model-based reinforcement learning,”
+    *arXiv preprint arXiv:2009.05085*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[185] M. Sieb, Z. Xian, A. Huang, O. Kroemer, and K. Fragkiadaki, “Graph-structured
+    visual imitation,” in *Conference on Robot Learning*.   PMLR, 2020, pp. 979–989.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[186] T. D. Kulkarni, A. Gupta, C. Ionescu, S. Borgeaud, M. Reynolds, A. Zisserman,
+    and V. Mnih, “Unsupervised learning of object keypoints for perception and control,”
+    *Advances in neural information processing systems*, vol. 32, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[187] Z. Qin, K. Fang, Y. Zhu, L. Fei-Fei, and S. Savarese, “Keto: Learning
+    keypoint representations for tool manipulation,” in *2020 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2020, pp. 7278–7285.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[188] C. Devin, P. Abbeel, T. Darrell, and S. Levine, “Deep object-centric
+    representations for generalizable robot learning,” in *2018 IEEE International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2018, pp. 7111–7118.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[189] D. Wang, C. Devin, Q.-Z. Cai, F. Yu, and T. Darrell, “Deep object-centric
+    policies for autonomous driving,” in *2019 International Conference on Robotics
+    and Automation (ICRA)*.   IEEE, 2019, pp. 8853–8859.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[190] S. Ren, K. He, R. Girshick, and J. Sun, “Faster r-cnn: Towards real-time
+    object detection with region proposal networks,” *Advances in neural information
+    processing systems*, vol. 28, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[191] N. Heravi, A. Wahid, C. Lynch, P. Florence, T. Armstrong, J. Tompson,
+    P. Sermanet, J. Bohg, and D. Dwibedi, “Visuomotor control in multi-object scenes
+    using object-aware representations,” in *2023 IEEE International Conference on
+    Robotics and Automation (ICRA)*.   IEEE, 2023, pp. 9515–9522.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[192] Y. Zhu, Z. Jiang, P. Stone, and Y. Zhu, “Learning generalizable manipulation
+    policies with object-centric 3d representations,” *arXiv preprint arXiv:2310.14386*,
+    2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[193] Y. Wu, O. P. Jones, M. Engelcke, and I. Posner, “Apex: Unsupervised,
+    object-centric scene segmentation and tracking for robot manipulation,” in *2021
+    IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2021, pp. 3375–3382.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[194] F. Locatello, D. Weissenborn, T. Unterthiner, A. Mahendran, G. Heigold,
+    J. Uszkoreit, A. Dosovitskiy, and T. Kipf, “Object-centric learning with slot
+    attention,” *Advances in Neural Information Processing Systems*, vol. 33, pp.
+    11 525–11 538, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[195] H. K. Cheng, Y.-W. Tai, and C.-K. Tang, “Modular interactive video object
+    segmentation: Interaction-to-mask, propagation and difference-aware fusion,” in
+    *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*,
+    2021, pp. 5559–5568.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[196] W. Shen, G. Yang, A. Yu, J. Wong, L. P. Kaelbling, and P. Isola, “Distilled
+    feature fields enable few-shot language-guided manipulation,” *arXiv preprint
+    arXiv:2308.07931*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[197] C. Huang, O. Mees, A. Zeng, and W. Burgard, “Visual language maps for
+    robot navigation,” in *2023 IEEE International Conference on Robotics and Automation
+    (ICRA)*.   IEEE, 2023, pp. 10 608–10 615.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[198] S. Wang, J. Wu, X. Sun, W. Yuan, W. T. Freeman, J. B. Tenenbaum, and
+    E. H. Adelson, “3d shape perception from monocular vision, touch, and shape priors,”
+    in *2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2018, pp. 1606–1613.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[199] S. Suresh, H. Qi, T. Wu, T. Fan, L. Pineda, M. Lambeta, J. Malik, M. Kalakrishnan,
+    R. Calandra, M. Kaess *et al.*, “Neural feels with neural fields: Visuo-tactile
+    perception for in-hand manipulation,” *arXiv preprint arXiv:2312.13469*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[200] E. Smith, R. Calandra, A. Romero, G. Gkioxari, D. Meger, J. Malik, and
+    M. Drozdzal, “3d shape reconstruction from vision and touch,” *Advances in Neural
+    Information Processing Systems*, vol. 33, pp. 14 193–14 206, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[201] S. Suresh, Z. Si, J. G. Mangelson, W. Yuan, and M. Kaess, “Shapemap 3-d:
+    Efficient shape mapping through dense touch and vision,” in *2022 International
+    Conference on Robotics and Automation (ICRA)*.   IEEE, 2022, pp. 7073–7080.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[202] Y. Chen, A. E. Tekden, M. P. Deisenroth, and Y. Bekiroglu, “Sliding touch-based
+    exploration for modeling unknown object shape with multi-fingered hands,” in *2023
+    IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)*.   IEEE,
+    2023, pp. 8943–8950.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[203] Y. Yuan, H. Che, Y. Qin, B. Huang, Z.-H. Yin, K.-W. Lee, Y. Wu, S.-C.
+    Lim, and X. Wang, “Robot synesthesia: In-hand manipulation with visuotactile sensing,”
+    *arXiv preprint arXiv:2312.01853*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[204] D. Morrison, P. Corke, and J. Leitner, “Closing the loop for robotic
+    grasping: A real-time, generative grasp synthesis approach,” *arXiv preprint arXiv:1804.05172*,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[205] K. Zakka, A. Zeng, J. Lee, and S. Song, “Form2fit: Learning shape priors
+    for generalizable assembly from disassembly,” in *2020 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2020, pp. 9404–9410.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[206] H. Huang, D. Wang, R. Walters, and R. Platt, “Equivariant transporter
+    network,” *arXiv preprint arXiv:2202.09400*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[207] D. Seita, P. Florence, J. Tompson, E. Coumans, V. Sindhwani, K. Goldberg,
+    and A. Zeng, “Learning to rearrange deformable cables, fabrics, and bags with
+    goal-conditioned transporter networks,” in *2021 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2021, pp. 4568–4575.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[208] Y. Avigal, L. Berscheid, T. Asfour, T. Kröger, and K. Goldberg, “Speedfolding:
+    Learning efficient bimanual folding of garments,” in *2022 IEEE/RSJ International
+    Conference on Intelligent Robots and Systems (IROS)*.   IEEE, 2022, pp. 1–8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[209] S. James, K. Wada, T. Laidlow, and A. J. Davison, “Coarse-to-fine q-attention:
+    Efficient learning for visual robotic manipulation via discretisation,” in *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*, 2022,
+    pp. 13 739–13 748.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[210] M. Grotz, M. Shridhar, T. Asfour, and D. Fox, “Peract2: A perceiver actor
+    framework for bimanual manipulation tasks,” *arXiv preprint arXiv:2407.00278*,
+    2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[211] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoorthi,
+    and R. Ng, “Nerf: Representing scenes as neural radiance fields for view synthesis,”
+    *Communications of the ACM*, vol. 65, no. 1, pp. 99–106, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[212] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, “High-resolution
+    image synthesis with latent diffusion models,” in *Proceedings of the IEEE/CVF
+    conference on computer vision and pattern recognition*, 2022, pp. 10 684–10 695.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[213] A. Goyal, V. Blukis, J. Xu, Y. Guo, Y.-W. Chao, and D. Fox, “Rvt-2: Learning
+    precise manipulation from few demonstrations,” *arXiv preprint arXiv:2406.08545*,
+    2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[214] Y.-C. Lin, P. Florence, A. Zeng, J. T. Barron, Y. Du, W.-C. Ma, A. Simeonov,
+    A. R. Garcia, and P. Isola, “Mira: Mental imagery for robotic affordances,” in
+    *Conference on Robot Learning*.   PMLR, 2023, pp. 1916–1927.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[215] R. Wu, Y. Zhao, K. Mo, Z. Guo, Y. Wang, T. Wu, Q. Fan, X. Chen, L. Guibas,
+    and H. Dong, “Vat-mart: Learning visual action trajectory proposals for manipulating
+    3d articulated objects,” *arXiv preprint arXiv:2106.14440*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[216] Y. Geng, B. An, H. Geng, Y. Chen, Y. Yang, and H. Dong, “Rlafford: End-to-end
+    affordance learning for robotic manipulation,” in *2023 IEEE International Conference
+    on Robotics and Automation (ICRA)*.   IEEE, 2023, pp. 5880–5886.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[217] Y. Wang, R. Wu, K. Mo, J. Ke, Q. Fan, L. J. Guibas, and H. Dong, “Adaafford:
+    Learning to adapt manipulation affordance for 3d articulated objects via few-shot
+    interactions,” in *European Conference on Computer Vision*.   Springer, 2022,
+    pp. 90–107.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[218] Y. Zhao, R. Wu, Z. Chen, Y. Zhang, Q. Fan, K. Mo, and H. Dong, “Dualafford:
+    Learning collaborative visual affordance for dual-gripper manipulation,” in *The
+    Eleventh International Conference on Learning Representations*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[219] K. Mo, Y. Qin, F. Xiang, H. Su, and L. Guibas, “O2o-afford: Annotation-free
+    large-scale object-object affordance learning,” in *Conference on Robot Learning*.   PMLR,
+    2022, pp. 1666–1677.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[220] V. Vosylius, Y. Seo, J. Uruç, and S. James, “Render and diffuse: Aligning
+    image and action spaces for diffusion-based behaviour cloning,” *arXiv preprint
+    arXiv:2405.18196*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[221] M. Shridhar, Y. L. Lo, and S. James, “Generative image as action models,”
+    *arXiv preprint arXiv:2407.07875*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[222] X. B. Peng, E. Coumans, T. Zhang, T.-W. Lee, J. Tan, and S. Levine, “Learning
+    agile robotic locomotion skills by imitating animals,” *arXiv preprint arXiv:2004.00784*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[223] C. Qian, J. Urain, K. Zakka, and J. Peters, “Pianomime: Learning a generalist,
+    dexterous piano player from internet demonstrations,” *arXiv preprint arXiv:2407.18178*,
+    2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[224] L. Fan, G. Wang, Y. Jiang, A. Mandlekar, Y. Yang, H. Zhu, A. Tang, D.-A.
+    Huang, Y. Zhu, and A. Anandkumar, “Minedojo: Building open-ended embodied agents
+    with internet-scale knowledge,” *Advances in Neural Information Processing Systems*,
+    vol. 35, pp. 18 343–18 362, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[225] Y. J. Ma, S. Sodhani, D. Jayaraman, O. Bastani, V. Kumar, and A. Zhang,
+    “Vip: Towards universal visual reward and representation via value-implicit pre-training,”
+    *arXiv preprint arXiv:2210.00030*, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[226] S. James, Z. Ma, D. R. Arrojo, and A. J. Davison, “Rlbench: The robot
+    learning benchmark & learning environment,” *IEEE Robotics and Automation Letters*,
+    vol. 5, no. 2, pp. 3019–3026, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[227] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone, “Libero:
+    Benchmarking knowledge transfer for lifelong robot learning,” *Advances in Neural
+    Information Processing Systems*, vol. 36, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[228] J. Gu, F. Xiang, X. Li, Z. Ling, X. Liu, T. Mu, Y. Tang, S. Tao, X. Wei,
+    Y. Yao *et al.*, “Maniskill2: A unified benchmark for generalizable manipulation
+    skills,” *arXiv preprint arXiv:2302.04659*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[229] A. Mandlekar, S. Nasiriany, B. Wen, I. Akinola, Y. Narang, L. Fan, Y. Zhu,
+    and D. Fox, “Mimicgen: A data generation system for scalable robot learning using
+    human demonstrations,” *arXiv preprint arXiv:2310.17596*, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[230] S. Nasiriany, A. Maddukuri, L. Zhang, A. Parikh, A. Lo, A. Joshi, A. Mandlekar,
+    and Y. Zhu, “Robocasa: Large-scale simulation of everyday tasks for generalist
+    robots,” *arXiv preprint arXiv:2406.02523*, 2024.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[231] C. Celemin, R. Pérez-Dattari, E. Chisari, G. Franzese, L. de Souza Rosa,
+    R. Prakash, Z. Ajanović, M. Ferraz, A. Valada, J. Kober *et al.*, “Interactive
+    imitation learning in robotics: A survey,” *Foundations and Trends® in Robotics*,
+    vol. 10, no. 1-2, pp. 1–197, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Glossary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: BC
+  prefs: []
+  type: TYPE_NORMAL
+- en: Behavioural Cloning
+  prefs: []
+  type: TYPE_NORMAL
+- en: CD
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrastive Divergence
+  prefs: []
+  type: TYPE_NORMAL
+- en: CE
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-Entropy
+  prefs: []
+  type: TYPE_NORMAL
+- en: DDPM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Denoising Diffusion Probabilistic Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: DGM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Generative Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: DM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diffusion Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: EBM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Energy Based Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: GAN
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generative Adversarial Networks
+  prefs: []
+  type: TYPE_NORMAL
+- en: GMM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gaussian Mixture Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: GP
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gaussian Process
+  prefs: []
+  type: TYPE_NORMAL
+- en: HMM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hidden Markov Model
+  prefs: []
+  type: TYPE_NORMAL
+- en: IOC
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inverse Optimal Control
+  prefs: []
+  type: TYPE_NORMAL
+- en: IRL
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inverse Reinforcement Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: LfD
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning from Demonstration
+  prefs: []
+  type: TYPE_NORMAL
+- en: LLM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Large Language Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: MCMC
+  prefs: []
+  type: TYPE_NORMAL
+- en: Markov Chain Monte Carlo
+  prefs: []
+  type: TYPE_NORMAL
+- en: MDM
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixture Density Models
+  prefs: []
+  type: TYPE_NORMAL
+- en: NFlow
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normalizing Flows
+  prefs: []
+  type: TYPE_NORMAL
+- en: RL
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reinforcement Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: SDF
+  prefs: []
+  type: TYPE_NORMAL
+- en: Signed Distance Field
+  prefs: []
+  type: TYPE_NORMAL
+- en: VAE
+  prefs: []
+  type: TYPE_NORMAL
+- en: Variational Autoencoders
+  prefs: []
+  type: TYPE_NORMAL

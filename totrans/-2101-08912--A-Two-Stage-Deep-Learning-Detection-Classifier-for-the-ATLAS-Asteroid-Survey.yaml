@@ -1,0 +1,1109 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:57:05'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2101.08912] A Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid
+    Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2101.08912](https://ar5iv.labs.arxiv.org/html/2101.08912)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid Survey
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Amandin Chyba Rabeendran Applied Mathematics, Colorado School of Mines, 1500
+    Illinois St, Golden, CO 80401, amandinchyba@gmail.com Larry Denneau Institute
+    for Astronomy, University of Hawai‘i, 2680 Woodlawn Drive, Honolulu, HI 96822,
+    denneau@hawaii.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: In this paper we present a two-step neural network model to separate detections
+    of solar system objects from optical and electronic artifacts in data obtained
+    with the “Asteroid Terrestrial-impact Last Alert System”(ATLAS), a near-Earth
+    asteroid sky survey system (Tonry et al., [2018](#bib.bib21)). A convolutional
+    neural network (Lieu et al., [2019](#bib.bib14)) is used to classify small “postage-stamp”
+    images of candidate detections of astronomical sources into eight classes, followed
+    by a multi-layered perceptron that provides a probability that a temporal sequence
+    of four candidate detections represents a real astronomical source. The goal of
+    this work is to reduce the time delay between Near-Earth Object (NEO) detections
+    and submission to the Minor Planet Center. Due to the rare and hazardous nature
+    of NEOs (Harris and D’Abramo, [2015](#bib.bib8)), a low false negative rate is
+    a priority for the model. We show that the model reaches 99.6% accuracy on real
+    asteroids in ATLAS data with a 0.4% false negative rate. Deployment of this model
+    on ATLAS has reduced the amount of NEO candidates that astronomers must screen
+    by 90%, thereby bringing ATLAS one step closer to full autonomy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Keywords: Convolutional neural networks, Asteroids, Sky surveys'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: From the Tunguska impactor in 1908 (Foschini et al., [2018](#bib.bib7)) to the
+    realization by Alvarez et al. that the $\sim$30 km Chicxulub impactor was the
+    likely cause of the K-T extinction event (Alvarez et al., [1980](#bib.bib2)),
+    the possibility of an asteroid impact with Earth has been deemed a dangerous threat.
+    In 1998, recognizing such threats, the United States Congress mandated that NASA
+    develop a plan to catalog 90% of asteroids 1 km and larger whose orbits bring
+    them within 1 AU of the Earth’s orbit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The “Asteroid Terrestrial-impact Last Alert System” (ATLAS) is a sky-survey
+    system that was made operational in 2016 with the specific goal of detecting Near-Earth
+    Objects (NEOs) with a performant, cost-effective system (Tonry et al., [2018](#bib.bib21)).
+    By balancing unit cost, processing power, and autonomous operation, ATLAS is able
+    to consistently detect more NEOs within a 0.01 AU distance from Earth than any
+    other asteroid surveys (Heinze et al., [2020, in prep](#bib.bib10)). Candidate
+    new NEOs detected by the ATLAS system are reviewed and confirmed through human
+    screening before being sent to the IAU Minor Planet Center (MPC) for additional
+    followup observations by other facilities. Within the past four years, ATLAS has
+    discovered more than 500 NEOs and submitted over 50,000 NEO observations to the
+    MPC.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ATLAS identifies asteroids by looking for moving sources over four or more survey
+    exposures acquired at the same approximate location on the sky. The coordinates
+    and metadata for a moving object over these exposures form a “tracklet”, the fundamental
+    unit of information in ATLAS asteroid processing. The ATLAS system detects tens
+    of thousands of known asteroids per night but also generates many hundreds of
+    false tracklets caused by various image contaminants such as variable stars, or
+    optical and electronic artifacts. Candidate unknown tracklets (of NEOs usually)
+    must be screened such that contaminants are not propagated through the global
+    NEO discovery system. Improved automatic identification of bogus tracklets can
+    lead to greater automation within ATLAS and reduce delays in obtaining followup
+    observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our objective is to train a neural network to separate false tracklets detected
+    as NEO candidates from real NEOs. A primary constraint to the automatic process
+    is retention of all real NEOs. If the number of false tracklets can be substantially
+    reduced, we hope to eventually automatically submit NEO candidates to the MPC,
+    reducing the latency between observation and reporting to the MPC, thereby eliminating
+    most of the need for human screening.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep learning has provided astronomers with new tools to autonomously analyze
+    astronomical sources through predictions based on a trained neural network (Baron,
+    [2019](#bib.bib3)). Convolutional Neural Networks (CNN) represent state of the
+    art accuracy when it comes to image classification (Khan et al., [2020](#bib.bib12)).
+    We decided to employ a CNN over other deep learning architectures based on its
+    excellent feature extraction capability. Additionally, most other deep learning
+    models that work with 2D imagery such as GANs, R-CNNs, and YOLO use CNNs as a
+    classifier (e.g. the discriminator in GANs) (Schawinski et al., [2017](#bib.bib19);
+    Ren et al., [2015](#bib.bib17); Redmon et al., [2016](#bib.bib16)). Therefore
+    a CNN provides a flexible backbone that we can use as a baseline or starting point
+    for future image classification work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We tested the model on a month of ATLAS tracklets from June 5th to July 5th
+    2020\. We have deployed the model on ATLAS and it is currently being used by astronomers
+    to screen NEO candidates on a daily basis. The deployed model is showing positive
+    results while being improved upon based on astronomer feedback.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 ATLAS
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: ATLAS telescopes have been in operation since 2017 on two mountaintops in Hawai‘i
+    (Haleakalā and Maunaloa). Two additional ATLAS telescopes are under construction
+    in the southern hemisphere, in South Africa and Chile. The current two-telescope
+    ATLAS system gathers new data every night on the order of $10^{7}$ images resulting
+    in over 0.5 TB of raw uncompressed data (Tonry et al., [2018](#bib.bib21)). Approximately
+    $10^{4}$ full sized images are classified by the ATLAS processing system every
+    night.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every night when permitted by weather, each ATLAS telescope surveys a set of
+    $\sim 200$ pre-defined locations that raster the night sky (each called a “footprint”)
+    and takes four 30-second exposures at each footprint over a span of $\sim 30$
+    minutes. The ATLAS image reduction pipeline (Tonry et al., [2018](#bib.bib21))
+    subtracts a static-sky “template” image from each reduced image. The template
+    image is created from thousands of historical ATLAS observations and represents
+    the non-varying sky. When the static sky is subtracted, what remains are transient
+    phenomena such as variable stars, supernovae, and most importantly for ATLAS,
+    moving objects — asteroids and comets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After subtraction of the static sky template image, the ATLAS pipeline searches
+    the subtracted image for astronomical sources with signal-to-noise ratio $>5$
+    and stores their coordinates and other metadata in per-exposure catalogs. The
+    ATLAS moving object processing system (MOPS) (Denneau et al., [2013](#bib.bib5))
+    examines the catalogs of sources in the subtracted images and creates groupings
+    of detections consistent with linear motion across the sky. A composition of four
+    detections by MOPS, assumed to be a real moving object, then makes a tracklet,
+    the fundamental information block used by ATLAS to report asteroid observations.
+    A visualization of the ATLAS processing pipeline can be found in Figure [2](#S2.F2
+    "Figure 2 ‣ 2 ATLAS ‣ A Two-Stage Deep Learning Detection Classifier for the ATLAS
+    Asteroid Survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our model classifies tracklets using small $100\times 100$ “postage stamp” images
+    of source detections from subtracted images. The MOPS pipeline works in celestial
+    coordinate space and normally does not examine image data due to the computational
+    costs of retrieving pixels for the $\sim 10^{7}$ nightly detections. To integrate
+    our model, we retrieve postage stamps for all tracklets that have been created;
+    this produces a much smaller number ($\sim 10^{4}$) of postage stamps that must
+    be retrieved and classified since most detections in an image do not form a tracklet.
+    Most asteroids are faint and span a small amount of the 16-bit range of allowed
+    pixel values, and therefore the postage stamps are image-equalized for maximum
+    contrast so that relevant features are amplified for the classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples tracklets produced by MOPS can be seen in Figure [1](#S2.F1 "Figure
+    1 ‣ 2 ATLAS ‣ A Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid
+    Survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/d7cb8136ee30a14328553015d094f16c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: The first row shows streaked NEO 2020 NK1 representing a real tracklet.
+    The second row shows another real tracklet containing asteroid (4700) Carusi.
+    The third and fourth rows are false tracklets caused by bright pixels from optical
+    diffraction spikes and readout optical artifacts respectively. Black pixels represent
+    saturated pixels caused by bright objects.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6799e657e9d6fb9b43cb7a183cea91a6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: High-level diagram of ATLAS processing. For each image, the reference
+    sky is registered and subtracted from the source image, leaving moving objects
+    and other transient features. Then the pipeline identifies sources in each subtracted
+    image and saves a catalog of candidate moving object locations. MOPS then links
+    sources from exposure catalogs together to form tracklets. Image subtraction allows
+    ATLAS to detect asteroids very close to bright stars and in the galactic plane.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Methodology
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 3.1 Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Real astronomical objects are either a solar system object, a variable star,
+    or a point source that is indistinguishable from a slow moving object. Tracklets
+    can be categorized as real or bogus depending on whether or not the tracklet corresponds
+    to a moving real astronomical object in the solar system. The bogus category can
+    be divided into sub-categories which represent the majority of sources that cause
+    a bogus tracklet. ATLAS produces its own metrics for every detection in a subtracted
+    image; these metrics are used to cull the set of detections into probable real
+    astronomical objects. This culling process still leaks many false detections to
+    the MOPS asteroid processing which then can turn into bogus tracklets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To achieve the highest classification accuracy with a neural network, we used
+    data spanning a wide variety of image types that are captured by the asteroid
+    processing system every night. Types of images that contribute to a real or bogus
+    category, and used to train the neural network, are called classes, shown in Figure
+    [3](#S3.F3 "Figure 3 ‣ 3.1.1 Curated Data Set ‣ 3.1 Data ‣ 3 Methodology ‣ A Two-Stage
+    Deep Learning Detection Classifier for the ATLAS Asteroid Survey") and in Table
+    [2](#S3.T2 "Table 2 ‣ 3.1.1 Curated Data Set ‣ 3.1 Data ‣ 3 Methodology ‣ A Two-Stage
+    Deep Learning Detection Classifier for the ATLAS Asteroid Survey"). There are
+    additional classes that contribute to bogus tracklets, such as optical ghosts
+    (reflected bright sources) and glints (reflections from internal optical elements),
+    or effects from clouds; these have been excluded due to their rarity and difficulty
+    of establishing training data based on their non-uniform appearances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [1](#S3.T1 "Table 1 ‣ 3.1 Data ‣ 3 Methodology ‣ A Two-Stage Deep Learning
+    Detection Classifier for the ATLAS Asteroid Survey") summarizes each of the data
+    sets used to train and test our two step deep learning detection classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Data Set | Images | Tracklets | Training |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Curated | $3,500$ | $No$ | $Yes$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Evaluation | $250,000$ | $Yes$ | $Yes$ |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Two different data sets consisting of ATLAS images were used to train
+    and evaluate the network. Both data sets were used for training, however, the
+    main goal of the evaluation data set was to test the model’s robustness and consistency.
+    The curated data set did not have access to each postage stamp’s parent tracklet
+    label as listed in the Tracklets column. Therefore the curated data set cannot
+    be used to train a network to classify tracklets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1 Curated Data Set
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The ATLAS database containing images from real and bogus asteroid tracklets
+    was used to generate a curated data set for neural network training. Images were
+    selected based on an internal non-machine learning software called vartest05  (A.
+    et al., [2020, in prep](#bib.bib1)) that pre-classifies detected sources as one
+    of the classes from Figure [3](#S3.F3 "Figure 3 ‣ 3.1.1 Curated Data Set ‣ 3.1
+    Data ‣ 3 Methodology ‣ A Two-Stage Deep Learning Detection Classifier for the
+    ATLAS Asteroid Survey"). Even though large amounts of bogus tracklets are parsed
+    everyday, the vartest05 classifications are not preserved in the processing and
+    therefore it is not trivial to separate detections into their subclasses for training.
+    Additionally, the various subclasses do not occur equally — STREAK is much less
+    common than SPIKE – so building a clean data set for these classes with uniform
+    representation has resulted in a possibly smaller data set than ideal (see work
+    in (Duev et al., [2019](#bib.bib6)) for a CNN trained on a similar task with over
+    35,000 images).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The complete curated data set consisted of 3500 images each associated with
+    one of seven classes. Furthermore, we balanced the data set so that 500 images
+    were associated with each class. The training set consisted of 470 of the 500
+    images associated with each class while the rest of the images were used for validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Class | label | Category | Description | Appearance |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Burn | BURN | bogus | vertical electronic readout artifacts caused by bright
+    sources on the detector. | long vertical lines. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cosmic Ray | CR | bogus | bright spots in the charged-coupled device (CCD)
+    in the ATLAS camera due to electrons released in the detector silicon by a collision
+    with a high-energy particle. CR artifacts are often very sharp because they only
+    affect a region on the CCD much smaller than a point source imaged through the
+    optical system. | small, sharp, and often non-circular shapes. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noise | NOISE | bogus | detected as a source due to Poisson and readout noise
+    distributions. | no distinguishable object at the position of detection (center
+    of the image) compared to the area around it. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Scar | SCAR | bogus | residual bright pixels left over from an imperfect
+    subtraction of a bright star from the sky template image. | clearly identifiable
+    spots with high contrasting color. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Diffraction Spike | SPIKE | bogus | caused by bright stars diffracted through
+    the optical path. | dispersing lines appearing near extremely bright sources at
+    predetermined angles (usually 45 degrees). |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Astronomical Object | AST | real | a real astronomical object; mainly asteroids,
+    variable stars, and satellites but can also contain comets. | brighter than NOISE
+    but usually fainter than CRs and circularly shaped. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Streak | STREAK | real | real objects (asteroids or artificial satellites),
+    that leave a linear trail on the image due to its motion during a $\approx 30$
+    second exposure. | stretch an asteroid sized footprint across part of the image.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Bright Comet | COMET | real | comets much wider than the comets in the AST
+    class. | take up a large portion of the image due to their brightness with a shape
+    similar to AST and have some kind of faint trail. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2: Each class has a corresponding Label and Category which represents
+    what kind of tracklet, real or bogus, each class contributes to. A short description
+    of each class’s origin and visual appearance in postage stamps can be found in
+    columns 4 and 5.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The goal of this data set is to identify the class causing the ATLAS detection
+    rather than the largest or most commonly appearing class. Images containing multiple
+    different classes were manually removed from the training data to see if the network
+    could learn the unique features of each class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We separated the curated data set into a training set (94% of the data set)
+    and a validation set (6% of the data set). The order of each set was randomly
+    shuffled and due to the small size of this curated data set, some minor data augmentation
+    was used to increase class generalization. However, since object shape, sharpness,
+    and magnitude are such a key part of class separation, image augmentations such
+    as random blurring, resizing, and brightness jitters were not used. Instead we
+    used random horizontal/vertical image flipping, rotations, and cropping.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6610467e0415b471171d1d3791fc292d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: After considerable historical analysis of ATLAS detections, seven
+    classes were chosen to represent all possible types of postage stamps in the curated
+    data set. Each class has unique visual cues but some variations make it indistinguishable
+    from another class. For example, some faint AST can be impossible to distinguish
+    from background noise without additional information.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2 Evaluation Data Set
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Multiple ATLAS completed nights form an evaluation data set of real known, real
+    unknown, and bogus tracklets. Known tracklets contain a pre-identified object
+    that ATLAS has been following with Inter-Night linking (Denneau et al., [2013](#bib.bib5)).
+    Unknown tracklets are made of objects that ATLAS cannot match with a known object.
+    Real unknown and bogus tracklets were labeled by human experts while the known
+    tracklets are classified by Inter-night linking. Known tracklets do not require
+    human confirmation but they are still useful as a reference for comparing the
+    performance of the non-machine learning pipeline to the deep learning approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though real and known tracklets share similar features, known tracklets
+    have been successfully classified by the current non-machine-learning ATLAS pipeline
+    while unknowns have not. However, they are not necessarily visually different
+    since known tracklets are identified by more than just their postage stamp (tracked
+    from previous nights based on position, size, rate of motion).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This data set consisted of two lunations of ATLAS observations from May 7-July
+    5 2020\. The first lunation was used for training, and the second for validation.
+    The training and validation data consisted of pre-labeled real and bogus tracklets.
+    The real tracklets were further labeled as “known”, meaning that a tracklet matched
+    the position of an asteroid in the MPC catalog, and “unknown”, meaning that the
+    tracklet could not be matched to a catalogued object at the time of detection.
+    ATLAS detects about 1000 times more known objects than unknown objects. The orbits
+    for known objects are accurate enough that tracklets can be automatically assigned
+    to a known object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each lunation of unknowns consisted of $\approx 27,600$ tracklets (over 110,400
+    images), approximately 98% of which are bogus tracklets and 2% are real unknown
+    tracklets. On the other hand, each lunation of knowns consisted of $\approx 200,000$
+    tracklets (over 800,000 images) all of which are real known tracklets. No image
+    augmentations were applied to the tracklet postage stamps during training due
+    to the larger size of the data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/66cb98ffefa6f287209f1cf40229f814.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: In a convolutional neural network such as resnet-18, filters are
+    applied to the original image (convolution layer) and resized (pool layer) multiple
+    times. The feature maps produced by the final pooling layer are flattened into
+    a 1 dimensional tensor and passed into a dense layer (linear layer) which results
+    in an output for each class. The output for each class is a singular number between
+    zero and one which represents a confidence measurement of the detection being
+    that class (the sum of all the output values is equal to one).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Network Architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since each tracklet can contain detections of different classes, we designed
+    a two-step model consisting of an Image Classification Network (ICN) and Tracklet
+    Classification Network (TCN) to tackle image and tracklet classifications respectively.
+    Due to the high visual similarities between some class variations and faint asteroids,
+    see Figure [5](#S3.F5 "Figure 5 ‣ 3.2 Network Architecture ‣ 3 Methodology ‣ A
+    Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid Survey"),
+    this two step model was prioritized over a single fully connected neural network.
+    By having the network classify in terms of all eight classes, we can better understand
+    how the network is separating each class and which ones it commonly misclassifies
+    as another class. Unknown tracklets removed before human screening are essentially
+    unobserved by ATLAS and could remain undetected to other asteroid surveys. For
+    this reason, we prioritized the preservation of real tracklets over a lower false
+    positive rate while designing and training the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/763420af18b65fbf0b82bf773960cfcd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Image A and B show an example of two different classes that are visually
+    indistinguishable from another. Image A shows a faint main belt asteroid (117708)
+    and image B shows a false detection caused by noise. By classifying each postage
+    stamp in a tracklet with eight different classes, the network can associate error
+    margins for each class based on the result of all the other classes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The PyTorch library (Paszke et al., [2019](#bib.bib15)) was used to generate
+    the neural networks and training was done with a single CUDA enabled GPU to decrease
+    training times. Each network’s training parameters are summarized in Table [3](#S3.T3
+    "Table 3 ‣ 3.2 Network Architecture ‣ 3 Methodology ‣ A Two-Stage Deep Learning
+    Detection Classifier for the ATLAS Asteroid Survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Parameters | ICN | TCN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Optimizer | Adam | SGD |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Criterion | CE | MSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Learning Rate | 0.01 | 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Data Set | Curated | Evaluation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Batch Size | 15 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 3: The data set row represents the inputs used to train the model and
+    the criterions or loss column used either Cross Entropy Loss (CE) or Mean Squared
+    Error Loss (MSE). A decaying learning rate was used alongside early stopping to
+    reduce over-fitting and training runtime.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Image Classification Network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For the image classifier, we created a convolutional neural network (CNN) that
+    takes an individual image and returns a set of eight confidence scores, one for
+    each class. At first, we attempted to train a custom CNN but simple tests with
+    the curated data set showed limited performance when compared to a pre-trained
+    resnet-18 network (He et al., [2015](#bib.bib9)). It is likely that the pre-trained
+    filters and convolutional layers (Figure [4](#S3.F4 "Figure 4 ‣ 3.1.2 Evaluation
+    Data Set ‣ 3.1 Data ‣ 3 Methodology ‣ A Two-Stage Deep Learning Detection Classifier
+    for the ATLAS Asteroid Survey")) on ImageNet contributed to the higher class accuracy
+    (Russakovsky et al., [2014](#bib.bib18)). We fine-tuned the pre-trained resnet-18
+    by training it on the curated data set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important that the classification runtime be kept as low as possible so
+    that we can minimize the latency for processing time. Therefore, we decided to
+    employ a shallower network with less layers over a deeper network to help decrease
+    computation time. Also, we theorized that the seemingly low visual complexity
+    of the classes and small number of classes would not be able to reap the benefits
+    of deeper networks. One reason for this assumption is a deep network’s likelihood
+    to over-fit much faster during training than a simple neural network. This approach
+    has been used with success in recent research similar to this one (Duev et al.,
+    [2019](#bib.bib6)). Furthermore, training on the curated data set with multiple
+    deep network architectures such as vgg-19, resnet-101, densenet-121 among others
+    showed no accuracy gains (Simonyan and Zisserman, [2014](#bib.bib20))  (He et al.,
+    [2015](#bib.bib9))  (Huang et al., [2016](#bib.bib11)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/04590ce90ed301b4bb37aa4f71f327a2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Four postage stamps from a tracklet are passed into a CNN one by
+    one and a total of 32 confidence scores are generated. These 32 values are passed
+    into the Multi-Layered Perceptron (MLP) in the same order for each tracklet so
+    that the network can learn the optimal weights for each input. A single value
+    between zero and one is produced by the MLP where 1 represents a real tracklet
+    and 0 represents a bogus tracklet. This type of model structure allows us to train
+    an MLP that takes in more or less than 4 postage stamps for uncommon tracklets
+    as long as a training data set is provided.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Tracklet Classification Network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To classify tracklets, we used a multi-layered perceptron (MLP) that takes the
+    outputs of the ICN as inputs. MLPs are well known among feed forward neural network
+    architectures and represent one of the simplest deep learning architectures commonly
+    used. By stacking deeper layers of perceptrons (takes multiple inputs and spits
+    out one output) more complex details and features can be extracted from the input.
+    The MLP returns a new set of confidence scores for the tracklets as bogus or real,
+    see Figure [6](#S3.F6 "Figure 6 ‣ 3.2.1 Image Classification Network ‣ 3.2 Network
+    Architecture ‣ 3 Methodology ‣ A Two-Stage Deep Learning Detection Classifier
+    for the ATLAS Asteroid Survey"). Since an MLP takes an input of fixed size only
+    the class confidence scores of the first four postage stamps in a tracklet are
+    provided to the TCN as inputs. Approximately 90% of tracklets contain at least
+    four detections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MLP cannot be trained with the curated data set since the postage stamps
+    in the data set are not linked to a tracklet label. Instead, we used the evaluation
+    data set which only provided real and bogus as ground truth labels for each tracklet.
+    The use of the evaluation data set for training will remove the MLP’s potential
+    to classify tracklets as a class rather than a category.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The confidence scores of some classes for a postage stamp will be more competitive
+    than others (when the standard deviation of all the confidence scores is small).
+    This is simply due to the fact that some class cases are practically indistinguishable
+    from another class and an image can contain several different classes. Additionally,
+    we expect most postage stamps in a tracklet to return similar confidence outputs
+    when passed through the ICN. However, it is possible for tracklets to contain
+    radically different postage stamps with unique features respective to another.
+    This could cause different confidence outputs for postage stamps in the same tracklet.
+    Therefore, the goal of the TCN is to determine a set of rules with the confidence
+    scores that would maximize correct tracklet classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To ensure a low false negative rate, we designed the neural network with a real
+    tracklet bias using a simple weighted loss scheme. By assigning weights ($\alpha_{1},\alpha_{2}$)
+    to both the real and bogus category in the MSE Loss function ($\tilde{L}$) which
+    takes in the networks predictions ($x$) and the ground truth ($y$), we can generate
+    an imbalance/bias for real tracklets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\alpha(y)=\left\{\begin{array}[]{cc}\alpha_{1}\;{\rm if}\;y\;{\rm
+    is\;bogus}\\ \alpha_{2}\;{\rm if}\;y\;{\rm is\;real}\end{array}\right.$ |  | (3)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle L(x,y)=\alpha(y)\tilde{L}(x,y)$ |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: with $\alpha_{1}<\alpha_{2}$ and where $L$ is the weighted loss function. These
+    adjustments come at the cost of a lower accuracy on bogus tracklet classification.
+    Multiple tests were required to identify an optimal balance in minimizing both
+    the false negative and false positive rate. We found that $\alpha_{1}=1$ and $\alpha_{2}=4$
+    provided the best results for increasing real tracklet classification accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/df2fa44d4ad23705677c159881d28a32.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Each class was tested on 30 standalone validation images from the
+    curated data set. A confusion matrix using the validation images was generated
+    at every epoch. The matrix seen above corresponds to the last epoch used to train
+    the official model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will first address the capability of the ICN by generating a confusion matrix
+    based on its performance on the validation images in the curated data set, see
+    Figure [7](#S4.F7 "Figure 7 ‣ 4 Results ‣ A Two-Stage Deep Learning Detection
+    Classifier for the ATLAS Asteroid Survey"). It can be observed that the ICN does
+    best separation for SCAR and SPIKEs. The primary issue of our ICN, highlighted
+    by the confusion matrix, is that about 13% of images in the STREAK class are misclassified
+    as AST. Given that STREAKs consists of NEOs and small STREAKs are barely distinguishable
+    from comets and other asteroids, it is expected that the ICN has difficulty differentiating
+    between the two. However, since both STREAK and AST classes represent image types
+    from a real tracklet it should not affect the overall accuracy of the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We trained the TCN on a month of ATLAS tracklets from May 5 to June 4 2020\.
+    From Figure [8](#S4.F8 "Figure 8 ‣ 4 Results ‣ A Two-Stage Deep Learning Detection
+    Classifier for the ATLAS Asteroid Survey") it can be deduced that about 99.6%
+    of real tracklets were correctly classified, while 90.8% of bogus tracklets were
+    correctly classified. The bogus tracklet accuracy is lower than the real tracklet
+    accuracy due to the weighted loss scheme highlighted in section 3.2.2\. Additionally,
+    the ICN was trained on the curated data set which contained more distinguishable
+    artifacts and image types than the images in the evaluation data set. This issue
+    is not as impactful for postage stamps from real tracklets since the evaluation
+    data set is heavily represented by tracklets the ATLAS detection pipeline classified
+    as real and are therefore similar to the AST, STREAK, and COMET type images in
+    the curated data sets. Also, there is generally more variation in the postage
+    stamps from bogus tracklets than the postage stamps from real tracklets containing
+    asteroids and comets. All of these effects result in a lower bogus tracklet accuracy
+    when compared to the real tracklets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/3ffe713fc687a7ddf52f37d0353d3e0c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: The TCN was tested on 30 nights of ATLAS data from June 5 to July
+    5 2020\. A total of 212,686 tracklets were classified from the evaluation data
+    set. Our priority was to minimize the false-negative rate which are tracklets
+    the model deems bogus but are in reality real NEO.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Receiver Operating Characteristic (ROC) shown in Figure [9](#S4.F9 "Figure
+    9 ‣ 4 Results ‣ A Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid
+    Survey") helps us understand the cost of a higher true positive rate versus an
+    increase in false positive rate. The ROC curve shows that for a threshold of 0.15
+    false positive rate we can reach a 0.97-0.99 true positive rate. The ROC curve
+    also shows that optimizing the false positive threshold above 0.1 gives diminishing
+    returns for the true positive rate. On the other hand, a threshold of 0.02 or
+    smaller will drastically reduce the true positive rate of the model which is a
+    higher priority to ATLAS than a slightly lower false positive rate. Finally, the
+    91% fraction of correctly predicted bogus tracklets leads to significant reduction
+    in human workload of tracklet review, at a cost of 0.4% incorrectly classified
+    real objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/6fc70e15750437f21b80ad290b17d452.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: The Receiver Operating Characteristic (ROC) curve of the TCN’s performance
+    on the evaluation data. When the model clearly distinguishes between true positives
+    and false positives the curve will converge to 1 faster which means the Area Under
+    the Curve (AUC) will approach 1). The AUC for real tracklets is 0.992 which indicates
+    that the model does a good job at separating real tracklets from bogus tracklets.
+    The AUC for bogus tracklets is equivalent to the AUC for real tracklets because
+    it is a binary classification problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The high accuracy of the trained ICN and TCN was reproduced multiple times on
+    the curated and evaluation data set respectively in case any parts of the model
+    are permanently lost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Tracklet | I | Score | II | Score | III | Score | IV | Score | Pred | Score
+    | Truth |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | ST | 0.99 | ST | 1.0 | ST | 1.0 | ST | 1.0 | real | 0.904 | real |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | AS | 0.99 | AS | 0.90 | AS | 0.99 | AS | 0.99 | real | 0.999 | real |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | SP | 0.66 | SP | 0.80 | SP | 0.71 | SP | 0.94 | bogus | 0.058 | bogus
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | BU | 0.78 | BU | 0.91 | BU | 0.48 | BU | 0.63 | bogus | 0.129 | bogus
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | NO | 0.63 | AS | 0.82 | NO | 0.92 | AS | 0.98 | bogus | 0.740 | real
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 6 | AS | 0.96 | NO | 0.99 | AS | 0.85 | AS | 0.98 | real | 0.982 | bogus
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4: Each row shows the ICN’s highest scoring class on each individual
+    image and the TCN’s prediction for the tracklet. The output scores for each classification
+    can be found to the right of its label. Also, the ground truth for each tracklet
+    is shown in the last column. Note that the prediction score differs from the other
+    scores by indicating a bogus tracklet if the score is closer to zero and indicating
+    a real tracklet if the score is closer to one. A threshold tracklet score of 0.8
+    is used to determine real versus bogus classification (e.g. score of 0.6 is real).
+    The class labels were simplified to BU, CR, NO, SC, SP, ST, AS, CO.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A qualitative analysis of the TCN’s predictions show that although it consistently
+    identifies more prominent artifacts, it has some trouble with subtle cases involving
+    noise as seen in Figure [10](#S4.F10 "Figure 10 ‣ 4 Results ‣ A Two-Stage Deep
+    Learning Detection Classifier for the ATLAS Asteroid Survey") and Table [4](#S4.T4
+    "Table 4 ‣ 4 Results ‣ A Two-Stage Deep Learning Detection Classifier for the
+    ATLAS Asteroid Survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[Uncaptioned image]](img/d596f86cfdd2384e6237189c2c82c91e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Several example tracklets are shown above and their corresponding
+    model predictions are listed in Table [4](#S4.T4 "Table 4 ‣ 4 Results ‣ A Two-Stage
+    Deep Learning Detection Classifier for the ATLAS Asteroid Survey"). The first
+    four tracklets are the same as the ones from Figure [1](#S2.F1 "Figure 1 ‣ 2 ATLAS
+    ‣ A Two-Stage Deep Learning Detection Classifier for the ATLAS Asteroid Survey").
+    Tracklet 5 is main belt asteroid (17710) and Tracklet 6 consists of false detections
+    caused by noise. Both of these tracklets were handpicked from the evaluation data
+    set to show example tracklets that the deep learning model struggles to correctly
+    classify.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the unknown evaluation data set results, the two-step model never failed
+    to classify tracklets such as tracklet 1 and 2 as real. Additionally, the model
+    consistently classified prominent SPIKEs and BURNs as displayed in tracklet 3
+    and 4\. Most of the false negative results came from the ICN’s inability to consistently
+    differentiate NOISE from AST. In tracklet 5 an extremely faint astronomical object
+    is positioned at the center of each image while surrounded by subtraction artifacts
+    (SCAR type artifacts). The ICN classifies most of the images as NOISE with high
+    confidence scores which results in the TCN classifying the tracklet as bogus.
+    In tracklet 6 the ICN classifies most of the postage stamps as AST even though
+    the detections are indistinguishable from Poisson noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two-stage deep learning model is currently deployed on ATLAS as a primary
+    filter prior to NEO screening before submission to the MPC. The model is currently
+    undergoing preliminary inspection as it is compared to the NEO candidate list
+    generated by ATLAS before the deep learning removes bogus tracklets. Several weeks
+    of deployment have shown encouraging results as it reduces the NEO candidate list
+    by $\approx$ 95% without losing any real tracklets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [5](#S5.T5 "Table 5 ‣ 5 Discussion ‣ A Two-Stage Deep Learning Detection
+    Classifier for the ATLAS Asteroid Survey") shows the real-world performance of
+    the TCN against unknown asteroid candidates that must be reviewed prior to submission
+    to the MPC. The false positives (column FP) are dominated by a single type of
+    artifact (a bright horizontal optical effect caused by visible planets close to
+    the field) that was unknown to the ICN for this work. Training the ICN on this
+    additional image type would effectively remove this type of false tracklet, resulting
+    in FP rates near 1% or less.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparison of the TCN with human screening is somewhat delicate. Because of
+    the comprehensive job the human must perform, the TCN cannot screen as accurately
+    as its human counterpart. By definition, human-screened tracklets are 100% correct
+    since they form the basis for the training sets. But for visual screening only,
+    we find that the TCN performs very accurately for image types where the ICN has
+    been trained,
+  prefs: []
+  type: TYPE_NORMAL
+- en: The human screening process also evaluates criteria beyond what the TCN was
+    designed for. The TCN filters tracklets purely based on visual appearance, i.e.
+    imagery only, while humans screen both on visual appearance and on dynamical parameters
+    of a tracklet. Typical scenarios are a tracklet composed of detections from multiple
+    variable stars, or two different real asteroids mis-linked into a single tracklet.
+    In these cases a “fit” to the motion may produce plausible values, but further
+    inspection of positional residuals against the fitted motion would show that at
+    least one of the sources shows no actual motion and is consistent with a variable
+    star. To a human, this is a bogus but “real-looking” tracklet, while the TCN simply
+    (and correctly) considers this “good”, since the images show detections that are
+    indistinguishable from asteroids.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A natural extension of our model would be the inclusion of these additional
+    non-image parameters, or metadata, into an additional machine-learning network
+    that complements the ICN and TCN. ATLAS provides numerous parameters about every
+    detection that would be suitable: X, Y location on the detector, proximity to
+    bright stars and planets, proximity to known electronic artifacts, and so on.
+    The flexibility of the model could allow us to feed image specific metadata along
+    the images in the ICN while tracklet specific metadata would be fed along the
+    outputs of the ICN into the TCN. However, we have chosen not to explore this avenue
+    in this work for two reasons: a) the number of available metadata parameters is
+    large (on the order of dozens) and the effort to train and understand a metadata
+    model would distract from the core of this work; and b) ATLAS already performs
+    non-machine-learning classifications of detections with the metadata parameters
+    using a code called vartest05, and it is our opinion that vartest05 is effective
+    enough at pre-classifying detections so that the available performance gains are
+    minimal. vartest05 employs its own internal model of how a bright source can create
+    a burn or diffraction spike, or what a cosmic ray might look like, and provides
+    a score for likelihood of being one of its known detection types. The set of detections
+    that is seen by a human reviewer is thus pre-screened by vartest05; this screened
+    set still contains many false detections, and that is our motivation for the ICN
+    and TCN created for this work.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '| Night | Unknown | Real | FP (%) | FN (%) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59090 | 188 | 26 | 6.4 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59091 | 11 | 7 | 9.1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59092 | 79 | 8 | 1.3 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59093 | 637 | 8 | 4.1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59094 | 185 | 11 | 3.3 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59095 | 971 | 22 | 4.1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59096 | 47 | 16 | 2.1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59097 | 413 | 12 | 0.2 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59098 | 29 | 16 | 3.4 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59099 | 67 | 25 | 1.5 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59100 | 134 | 63 | 2.2 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 59101 | 314 | 75 | 2.5 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 5: The deployed model’s results were recorded from August 29, 2020 (MJD
+    59090) to September 9, 2020 (MJD 59101) using production ATLAS data to assess
+    its performance. “Unknown” is the number of tracklets that could not be automatically
+    matched with a known object, and “Real” is the number of these that were real
+    astronomical objects based on visual inspection. “FP” is the false positive rate
+    (bogus scored as real) and “FN” the number of real scored as bogus. The variation
+    in the number of tracklets each night is due to sky coverage, weather conditions,
+    and the presence of sky features that can produce false tracklets (bright stars,
+    planets). The false negative rate over this interval was zero, meaning no real
+    tracklets were lost due to misclassification.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While a real-bogus threshold of $0.5$ is a natural and sensible threshold to
+    separate real and bogus tracklets, practical considerations related to the endeavor
+    of NEO discovery lead to asymmetric priorities that can inform the selection of
+    a rejection threshold. Unknown NEOs detected by ATLAS are by definition possibly
+    dangerous to Earth, and therefore the loss of even a single NEO due to a false
+    negative assessment can have major consequences. Asteroid 2019 OK, a dangerous
+    100 m diameter NEA discovered by the SONEAR survey in 2019, passed within 70,000
+    km of the Earth one day later (Center, [2019 OK, MPEC 2019-O56](#bib.bib4)). 2019 OK
+    was imaged three days prior to the SONEAR observations by ATLAS, but the tracklet
+    was moving very slowly on the sky, resembling a stationary object, and the tracklet
+    did not pass other quality cuts in the system so it was not reported to the MPC
+    immediately and three days of warning time was lost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversely, the costs of a false positive assessment by the system are a) the
+    expenditure of costly human and telescope resources to chase nonexistent objects,
+    and b) the contamination of the discovery stream of data from bogus objects and
+    gradual reduction in confidence in the NEO discovery system. For ATLAS, human
+    review of tracklets prior to submission is the backstop against submission of
+    bogus tracklets to the MPC. Preservation of detected NEOs outweighs other considerations,
+    and therefore in this work we have biased our model toward keeping as many real
+    tracklets as possible instead of biasing toward minimization of false positives.
+    Adjustments to the weighted loss function and training data for both the ICN and
+    TCN are required to adapt the model to different priorities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We selected a confidence score threshold of 0.8 on the TCN’s output to discriminate
+    real from bogus tracklets. This threshold was chosen based on the model’s results
+    on the evaluation data set. A more quantitative analysis of the testing may provide
+    insight towards a new threshold that would decrease the false positive rate without
+    increasing the false negative rate. Theoretically, a lower threshold should allow
+    more real tracklets to be correctly classified but will allow more bogus tracklets
+    to be incorrectly classified. Similarly, if the threshold is increased more bogus
+    tracklets will be correctly classified while more real tracklets will be incorrectly
+    classified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: During our deployment, we found that bright comets were often incorrectly classified
+    as burns (BU). To address this issue we created a curated comet class, which removed
+    the problem. Another common type of misclassification came from asteroids detected
+    near the edge of the CCD. The postage stamp images for these detections have a
+    horizontal or vertical linear feature (due to the CCD edge) that looks like a
+    burn to the classifier. We have not yet retrained the model against these edge
+    artifacts, but they are detectable in downstream processing that has access to
+    the CCD coordinates of a tracklet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Among the evaluation data set there are false tracklets composed of variable
+    stars whose brightness has increased against their average brightness and therefore
+    appear as a new astronomical source in an ATLAS exposure. Even though the detections
+    are real astronomical sources (stars), these tracklets are labeled as bogus because
+    they are not asteroids. Variable stars are visually indistinguishable from an
+    asteroid if images are classified one at a time (e.g. step one of our two step
+    model) because most asteroids resemble a star in a single 30-second ATLAS exposure,
+    but the model (correctly) classifies them real. A random sampling of our input
+    training set suggests that the bogus tracklets from the evaluation data set consists
+    of 5-10% variable stars. Ignoring these would result in a much higher false positive
+    rate than shown in the results section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we recognize that the curated data set is small compared to some data
+    sets used to train CNNs, such as ImageNet (Krizhevsky et al., [2012](#bib.bib13))  (Russakovsky
+    et al., [2014](#bib.bib18)). ImageNet, a large data set containing hundreds of
+    classes and millions of images, has been used to train several state of the art
+    neural networks due to the quantity of training data it presents. It is likely
+    that a larger training pool would result in better performance decreasing the
+    false positive rate while keeping the true positive rate equal or above the current
+    response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have designed and deployed a lightweight machine classification model that
+    can accurately discriminate between real and bogus tracklets in the ATLAS asteroid
+    detection pipeline. This model achieves a $\sim$90% reduction in the workload
+    of false tracklets to review each night at a cost of 0.4% in real objects. This
+    improved accuracy is an essential step toward immediate, automatic submission
+    of dangerous asteroids to the MPC after they are detected by ATLAS. The reduced
+    latency between detection and reporting increases the ability of follow-up telescopes
+    to track inbound asteroids because their positions will be closer to their discovery
+    positions and therefore easier to observe. Perhaps more importantly, reduced latency
+    provides greater warning time for civil defense purposes in the case of an actual
+    impact.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model’s performance is still being monitored with the goal of identifying
+    specific areas (types of incoming ATLAS data) in which the deep learning model
+    fails to be advantageous over full human screening. We identified eight dominant
+    image types that appear in ATLAS tracklets, and unsurprisingly the model performs
+    poorly classifying tracklets with image types that the ICN was not trained on.
+    Since the model was deployed, we have identified and started creating training
+    sets for new classes to improve the model’s accuracy. One of these new classes
+    will address horizontal line artifacts generated by very-bright astronomical sources
+    such as the visible planets. Early training results on these bright horizontal
+    features show that they can be effectively removed completely, but this capability
+    was not integrated in time for this work. Future user feedback on the screening
+    lists will allow us to iteratively improve the accuracy and overall robustness
+    of the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Acknowledgements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This work has made use of data from the Asteroid Terrestrial-impact Last Alert
+    System (ATLAS) project. LD and ATLAS are primarily funded by NASA grants NN12AR55G,
+    80NSSC18K0284, and 80NSSC18K1575; byproducts of the ATLAS NEO search include images
+    and catalogs from the survey area. The ATLAS science products have been made possible
+    through the contributions of the University of Hawaii Institute for Astronomy,
+    the Queen’s University Belfast, the Space Telescope Science Institute, and the
+    South African Astronomical Observatory. This work was supported in part by a National
+    Science Foundation Research Experience for Undergraduate grant (6104374) to the
+    Institute for Astronomy at the University of Hawaii-Manoa. We would like to thank
+    Dr. Michael Bottom, Dr. Robert Jedicke, and Dr. Ben Shappee for their insightful
+    comments and feedback.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A. et al. [2020, in prep] Heinze A., Denneau L., and Tonry J.L. Algorithms for
+    real/bogus filtering of atlas asteroid and transient detections, 2020, in prep.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alvarez et al. [1980] Luis W. Alvarez, Walter Alvarez, Frank Asaro, Helen V.
+    Michel, Luis W. Alvarez, Walter Alvarez, Frank Asaro, and Helen V. Michel. Extraterrestrial
+    cause for the cretaceous-tertiary extinction. *Science*, 208:1095–1108, 1980.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Baron [2019] Dalya Baron. Machine learning in astronomy: a practical overview,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Center [2019 OK, MPEC 2019-O56] Minor Planet Center. https://minorplanetcenter.net/mpec/K19/K19O56.html,
+    2019 OK, MPEC 2019-O56. Online; accessed 29 January 2014.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Denneau et al. [2013] Larry Denneau, Robert Jedicke, Tommy Grav, Mikael Granvik,
+    Jeremy Kubica, Andrea Milani, Peter Vereš, Richard Wainscoat, Daniel Chang, Francesco
+    Pierfederici, and et al. The pan-starrs moving object processing system. *Publications
+    of the Astronomical Society of the Pacific*, 125(926):357–395, Apr 2013. ISSN
+    1538-3873. doi: 10.1086/670337. URL http://dx.doi.org/10.1086/670337.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Duev et al. [2019] Dmitry A Duev, Ashish Mahabal, Quanzhi Ye, Kushal Tirumala,
+    Justin Belicki, Richard Dekany, Sara Frederick, Matthew J Graham, Russ R Laher,
+    Frank J Masci, Thomas A Prince, Reed Riddle, Philippe Rosnet, and Maayane T Soumagnac.
+    Deepstreaks: identifying fast-moving objects in the zwicky transient facility
+    data with deep learning. *Monthly Notices of the Royal Astronomical Society*,
+    486(3):4158–4165, 04 2019. ISSN 0035-8711. doi: 10.1093/mnras/stz1096. URL https://doi.org/10.1093/mnras/stz1096.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Foschini et al. [2018] L. Foschini, L. Gasperini, C. Stanghellini, R. Serra,
+    A. Polonia, and G. Stanghellini. The atmospheric fragmentation of the 1908 tunguska
+    cosmic body: reconsidering the possibility of a ground impact, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Harris and D’Abramo [2015] Alan W. Harris and Germano D’Abramo. The population
+    of near-Earth asteroids. *icarus*, 257:302–312, September 2015. URL https://ui.adsabs.harvard.edu/abs/2015Icar..257..302H.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. [2015] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep
+    residual learning for image recognition, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Heinze et al. [2020, in prep] A. N. Heinze, L. Denneau, J. L. Tonry, H. Weiland,
+    B. Stalder, A. Rest, K. W. Smith, and S. J. Smartt. Neo population, velocity bias,
+    and impact risk from an atlas analysis, 2020, in prep.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. [2016] Gao Huang, Zhuang Liu, Laurens van der Maaten, and Kilian Q.
+    Weinberger. Densely connected convolutional networks, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Khan et al. [2020] Asifullah Khan, Anabia Sohail, Umme Zahoora, and Aqsa Saeed
+    Qureshi. A survey of the recent architectures of deep convolutional neural networks.
+    *Artificial Intelligence Review*, Apr 2020. ISSN 1573-7462. doi: 10.1007/s10462-020-09825-6.
+    URL http://dx.doi.org/10.1007/s10462-020-09825-6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krizhevsky et al. [2012] Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton.
+    Imagenet classification with deep convolutional neural networks. In F. Pereira,
+    C. J. C. Burges, L. Bottou, and K. Q. Weinberger, editors, *Advances in Neural
+    Information Processing Systems 25*, pages 1097–1105\. Curran Associates, Inc.,
+    2012. URL http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lieu et al. [2019] Maggie Lieu, Luca Conversi, Bruno Altieri, and Benoît Carry.
+    Detecting solar system objects with convolutional neural networks. *Monthly Notices
+    of the Royal Astronomical Society*, 485(4):5831–5842, Mar 2019. ISSN 1365-2966.
+    doi: 10.1093/mnras/stz761. URL http://dx.doi.org/10.1093/mnras/stz761.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Paszke et al. [2019] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James
+    Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca
+    Antiga, Alban Desmaison, Andreas Kopf, Edward Yang, Zachary DeVito, Martin Raison,
+    Alykhan Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu Fang, Junjie Bai, and
+    Soumith Chintala. Pytorch: An imperative style, high-performance deep learning
+    library. In H. Wallach, H. Larochelle, A. Beygelzimer, F. d''Alché-Buc, E. Fox,
+    and R. Garnett, editors, *Advances in Neural Information Processing Systems 32*,
+    pages 8024–8035\. Curran Associates, Inc., 2019. URL http://papers.neurips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon et al. [2016] Joseph Redmon, Santosh Divvala, Ross Girshick, and Ali
+    Farhadi. You only look once: Unified, real-time object detection, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ren et al. [2015] Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. Faster
+    r-cnn: Towards real-time object detection with region proposal networks. In C. Cortes,
+    N. D. Lawrence, D. D. Lee, M. Sugiyama, and R. Garnett, editors, *Advances in
+    Neural Information Processing Systems 28*, pages 91–99\. Curran Associates, Inc.,
+    2015. URL http://papers.nips.cc/paper/5638-faster-r-cnn-towards-real-time-object-detection-with-region-proposal-networks.pdf.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Russakovsky et al. [2014] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause,
+    Sanjeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael
+    Bernstein, Alexander C. Berg, and Li Fei-Fei. Imagenet large scale visual recognition
+    challenge, 2014.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Schawinski et al. [2017] Kevin Schawinski, Ce Zhang, Hantian Zhang, Lucas Fowler,
+    and Gokula Krishnan Santhanam. Generative adversarial networks recover features
+    in astrophysical images of galaxies beyond the deconvolution limit. *Monthly Notices
+    of the Royal Astronomical Society: Letters*, page slx008, Jan 2017. ISSN 1745-3933.
+    doi: 10.1093/mnrasl/slx008. URL http://dx.doi.org/10.1093/mnrasl/slx008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simonyan and Zisserman [2014] Karen Simonyan and Andrew Zisserman. Very deep
+    convolutional networks for large-scale image recognition, 2014.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tonry et al. [2018] J. L. Tonry, L. Denneau, A. N. Heinze, B. Stalder, K. W.
+    Smith, S. J. Smartt, C. W. Stubbs, H. J. Weiland, and A. Rest. Atlas: A high-cadence
+    all-sky survey system. *Publications of the Astronomical Society of the Pacific*,
+    130(988):064505, May 2018. ISSN 1538-3873. doi: 10.1088/1538-3873/aabadf. URL
+    http://dx.doi.org/10.1088/1538-3873/aabadf.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

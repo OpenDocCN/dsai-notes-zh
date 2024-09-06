@@ -1,0 +1,2971 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:50:09'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2111.04731] Survey of Deep Learning Methods for Inverse Problems'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2111.04731](https://ar5iv.labs.arxiv.org/html/2111.04731)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: September 2020
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Survey of Deep Learning Methods for Inverse Problems
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Shima Kamyab Dept. of Comp. Sci. and Eng., Shiraz University, Shiraz, Iran [sh.kamyab@cse.shirazu.ac.ir](mailto:sh.kamyab@cse.shirazu.ac.ir)
+       Zohreh Azimifar Dept. of Comp. Sci. and Eng., Shiraz University, Shiraz, Iran
+    [azimifar@cse.shirazu.ac.ir](mailto:azimifar@cse.shirazu.ac.ir)    Rasool Sabzi
+    Dept. of Comp. Sci. and Eng., Shiraz University, Shiraz, Iran [sabzi@cse.shirazu.ac.ir](mailto:sabzi@cse.shirazu.ac.ir)
+       Paul Fieguth Dept. of Systems Design Engineering, University of Waterloo, Waterloo,
+    Canada [pfieguth@uwaterloo.ca](mailto:pfieguth@uwaterloo.ca)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: In this paper we investigate a variety of deep learning strategies for solving
+    inverse problems. We classify existing deep learning solutions for inverse problems
+    into three categories of Direct Mapping, Data Consistency Optimizer, and Deep
+    Regularizer. We choose a sample of each inverse problem type, so as to compare
+    the robustness of the three categories, and report a statistical analysis of their
+    differences. We perform extensive experiments on the classic problem of linear
+    regression and three well-known inverse problems in computer vision, namely image
+    denoising, 3D human face inverse rendering, and object tracking, selected as representative
+    prototypes for each class of inverse problems. The overall results and the statistical
+    analyses show that the solution categories have a robustness behaviour dependent
+    on the type of inverse problem domain, and specifically dependent on whether or
+    not the problem includes measurement outliers. Based on our experimental results,
+    we conclude by proposing the most robust solution category for each inverse problem
+    class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: An inverse problem [[1](#bib.bib1), [2](#bib.bib2), [3](#bib.bib3)] seeks to
+    formulate the solution to estimating the unknown state underlying a measured system.
+    Specifically, a forward function $F(\cdot)$ describes the relationship of the
+    measured output
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}=F(\underline{z})+\underline{\nu}$ |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: as a function of the system state $\underline{z}$, subject to a measurement
+    noise $\underline{\nu}$. The objective of the inverse problem is to estimate $\underline{z}$
+    as a function of given measurement $\underline{m}$, assuming a detailed knowledge
+    of the system, $F(\cdot)$, where if $F(\cdot)$ is not known or is partially known
+    the problem becomes blind or semi-blind [[4](#bib.bib4)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Different perspectives lead to different types of inverse problems. From the
+    perspective of data type, two classes of inverse problems are restoration and
+    reconstruction [[5](#bib.bib5)], where restoration problems have the same domain
+    for measurement and state (e.g., signal or image denoising), while reconstruction
+    has different domains (e.g., 3D shape inference). Next, from the perspective of
+    modeling, inverse problems are classified into static and dynamic problems, where
+    the static case seeks a single estimate $\underline{\hat{z}}$, consistent with
+    some prior model on $\underline{z}$ and the forward model $F(\underline{z})$,
+    whereas the dynamic case seeks estimates $\underline{\hat{z}}(t)$ over time, consistent
+    with an initial prior and a dynamic model. In this paper we will examine each
+    of these inverse problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Existing analytical methods for solving inverse problems take advantage of
+    domain knowledge to regularize and constrain the problem to obtain numerically-stable
+    solutions. These methods are classified into four categories [[5](#bib.bib5)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Analytic inversion, having the objective of finding a closed form, possibly
+    approximate, of $F^{-1}$. This category of solutions will be highly problem dependent.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Iterative methods, which optimize the data inconsistency term
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $\min_{\underline{z}}\,&#124;&#124;\underline{m}-F(\underline{z})&#124;&#124;.$
+    |  | (2) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: Because of the ill-posed nature of most inverse problems, the iteration tends
+    to have a semi-convergent behaviour, with the reconstruction error decreasing
+    until some point and then diverging, necessitating appropriate stopping criteria.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Discretization as regularization, including projection methods searching for
+    an approximate solution of an inverse problems in a predefined subspace. Choosing
+    an appropriate subspace has high impact on finding stable solutions.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Variational methods, with the idea of minimizing data consistency penalized
+    using some regularizer $R$ parameterized by $\theta$:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | $\min_{\underline{z}}\,&#124;&#124;\underline{m}-F(\underline{z})&#124;&#124;+R(\underline{z},\theta)$
+    |  | (3) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: This is a generic adaptable framework where $F(\cdot),R(\cdot,\cdot)$ are chosen
+    to fit a specific problem, of which well-known classical examples include Tikhonov
+    [[6](#bib.bib6)] and total variation [[7](#bib.bib7)] regularization.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: These approaches have weaknesses in requiring explicitly identified prior knowledge,
+    selected regularizers, some shortcomings in handling noise, computational complexity
+    in inference due to the optimization-based mechanisms, and most significantly
+    limited applicability, in the sense that each inverse problem needs to be solved
+    one-off.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a result, we are highly motivated to consider the roles of Deep Neural Networks
+    (DNNs), which have the advantages of being generic data driven methods, are adaptable
+    to a wide variety of different problems, and can learn prior models implicitly
+    through examples. DNNs are currently in widespread use to solve a vast range of
+    problems in machine learning [[8](#bib.bib8)], artificial intelligence [[9](#bib.bib9)],
+    and computer vision [[10](#bib.bib10)]. Strong advantages of using such structures
+    include their near-universal applicability, their real-time inference [[11](#bib.bib11),
+    [12](#bib.bib12)], and their superiority in handling sensor and/or measurement
+    noise [[13](#bib.bib13)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: A variety of studies [[14](#bib.bib14), [4](#bib.bib4)] have shown that planned,
+    systematic DNNs will tend to have fewer parameters and better generalization power
+    compared to generic architectures, which motivates us to consider systematic strategies
+    in addressing complex inverse problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In principle, every deep learning framework could be interpreted as solving
+    some sort of inverse problem, in the sense that the network is trained to take
+    measurements and to infer, from given ground truth, the desired unknown state.
+    For example, for the common DNN application to image classification, the input
+    is a (measured) image, and the network output is a (unknown state) label, describing
+    the object or scene appearing in the image. The network parameters then implicitly
+    learn the inverse of the forward model, which had been the generation of an image
+    from a label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using DNNs for solving inverse problems aims to approximate the inverse of the
+    forward model [[2](#bib.bib2)]. In some cases, the forward model may be explicitly
+    defined [[15](#bib.bib15), [16](#bib.bib16), [14](#bib.bib14)], whereas in other
+    cases it may be implicitly defined in the form of the training data [[17](#bib.bib17),
+    [18](#bib.bib18), [19](#bib.bib19), [20](#bib.bib20), [15](#bib.bib15), [21](#bib.bib21),
+    [22](#bib.bib22)]. In this paper our focus is on solving non-blind inverse problems,
+    with the forward model known. Analytical approaches to inverse problems, whether
+    deterministic or stochastic, take advantage of the explicit forward model and
+    prior knowledge in formulating the solution; in contrast, DNNs cannot take advantage
+    of such information, and must instead learn implicitly from large datasets of
+    training data in a black-box approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inspired by the above techniques, there are indeed a number of proposed deep
+    frameworks in the literature with the aim of bringing regularization techniques
+    or prior knowledge into the DNN learning process for solving inverse problems [[14](#bib.bib14),
+    [16](#bib.bib16), [23](#bib.bib23), [24](#bib.bib24), [25](#bib.bib25), [26](#bib.bib26)].
+    In this paper, we classify deep solutions for inverse problems into three categories
+    based on their objective criteria, and compare them in solving different types
+    of inverse problems. The focus of this paper is comparing the robustness of different
+    deep learning structures based on their optimization criterion associated with
+    the training scheme; that is, the main objective of this research is to provide
+    insight into the choice of appropriate framework, particularly with regards to
+    performance robustness. It is worth noticing here that our goal is not to outperform
+    the state-of-the-art performance in different problems, rather to examine different
+    frameworks with fair parameter settings and performing at least as well as existing
+    analytical approaches. Using these frameworks, we select a prototype inverse problem
+    from each category and evaluate the performance and the robustness of the designed
+    frameworks. We believe the results obtained in this way give insight into the
+    strength of each solution category in addressing different categories of inverse
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rest of this paper is organized as follows: Section [2](#S2 "2 Literature
+    Review ‣ Survey of Deep Learning Methods for Inverse Problems") includes a review
+    of the most recent deep approaches to solving inverse problems; Section [3](#S3
+    "3 Problem Definition ‣ Survey of Deep Learning Methods for Inverse Problems")
+    describes the problem definition, introducing three main categories for deep solutions
+    for inverse problems; Section [4](#S4 "4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems") explains the experimental results including robustness
+    analysis; finally Section [6](#S6 "6 Conclusions ‣ Survey of Deep Learning Methods
+    for Inverse Problems") concludes the paper, proposing the best approach based
+    on our experiments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Literature Review
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Inverse problems have had a long history [[27](#bib.bib27), [2](#bib.bib2),
+    [3](#bib.bib3)] in a wide variety of fields. In our context, since imaging involves
+    the observing of a scene or phenomenon of interest, through a lens and spatial
+    sensor, where the goal is to infer some aspect of the observed scene, essentially
+    all imaging is an inverse problem, widely explored in the literature [[1](#bib.bib1),
+    [28](#bib.bib28), [29](#bib.bib29)]. Imaging-related inverse problems may fall
+    under any of image recovery, restoration, deconvolution, pansharpening, concealment,
+    inpainting, deblocking, demosaicking, super-resolution, reconstruction from projections,
+    compressive sensing, among many others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inverse problems are ultimately the deducing of some function $G(\cdot)$ which
+    inverts the forward problem,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}=F(\underline{z})+\underline{\nu}\qquad\longrightarrow\qquad\hat{\underline{z}}=G(\underline{m})$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: where some objective criterion obviously needs to be specified in order to select
+    $G(\cdot)$. Since $G(\cdot)$ is very large (an input image has many pixels), unknown,
+    and frequently nonlinear, it has become increasingly attractive to consider the
+    role of DNNs, in their role as universal function approximators, in deducing $G(\cdot)$,
+    and a number of approaches have been recently proposed in this fashion [[4](#bib.bib4),
+    [5](#bib.bib5), [30](#bib.bib30)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most common approach when using DNNs for inverse problem solving includes
+    optimizing the squared-error criterion $||\underline{z}-G(\underline{m})||_{2}^{2}$,
+    with $G(\cdot)$ a DNN to be learned [[17](#bib.bib17), [18](#bib.bib18), [19](#bib.bib19),
+    [20](#bib.bib20), [15](#bib.bib15), [21](#bib.bib21), [22](#bib.bib22)]. This
+    strategy implicitly finds a direct mapping from $\underline{m}$ to $\hat{\underline{z}}$
+    using pairs $(\underline{z},\underline{m})$ as the training data in the learning
+    phase, which seeks to solve
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\hat{W}=\arg_{W}\min\,&#124;&#124;\underline{z}-G(\underline{m},W)&#124;&#124;_{2}^{2}$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: for $W$ the network weights in the DNN. Such supervised training needs a large
+    number of data samples, which in some cases may be generated from the forward
+    function $F(\cdot)$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recent work in direct mapping includes [[31](#bib.bib31)], in which an encoder-decoder
+    structure is proposed to directly solve clinical positron emission tomography
+    (PET) image reconstruction. Similarly [[32](#bib.bib32)] proposes a direct mapping
+    deep learning framework to identify the impact load conditions of shell structures
+    based on their final state of damage, an inverse problem of engineering failure
+    analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recent research investigates the incorporation of prior knowledge into DNN solutions
+    for inverse problems. In particular, the use of intelligent initialization of
+    DNN weights and analytical regularization techniques form the main classes of
+    existing work in this domain [[4](#bib.bib4)]. In [[15](#bib.bib15)], an unsupervised
+    deep framework is proposed for solving inverse problems using a Generative Adversarial
+    Network (GAN) to learn a prior without any information about the measurement process.
+    In [[33](#bib.bib33)], a variational autoencoder (VAE) is used to solve electrical
+    impedance tomography (EIT), a nonlinear ill-posed inverse problem. The VAE uses
+    a variety of training data sets to generate a low dimensional manifold of approximate
+    solutions, which allows the ill-posed problem to be converted to a well-posed
+    one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The forward model provides knowledge regarding data generation, based on the
+    physics of the system. In [[16](#bib.bib16)] an iterative variational framework
+    is proposed to solve linear computer vision inverse problems of denoising, impainting,
+    and super-resolution. It proposes a general regularizer $R$ for linear inverse
+    problems which is first learned by a huge collection of images, and which is then
+    incorporated into an Alternating Direction Method of Multipliers (ADMM) algorithm
+    for optimizing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $min_{\underline{\hat{z}}}\;\tfrac{1}{2}&#124;&#124;\underline{m}-F\underline{\hat{z}}&#124;&#124;_{2}^{2}+\lambda
+    R(\underline{\hat{z}},W)$ |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: Here regularizer $R(\cdot)$ was learned from image datasets and $W$ is the network
+    weight matrix, as before. Here $F$ is a matrix, the (assumed to be) linear forward
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equivalent approach for a non-linear forward model is considered in [[34](#bib.bib34)],
+    in which a data consistency term $D(F(\underline{\hat{z}}),\underline{m})$ as
+    a training objective incorporates the forward model into the problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $min_{\underline{\hat{z}}}\;\{D(F(\underline{\hat{z}}),\underline{m})+\lambda
+    R(\underline{\hat{z}},W)\}$ |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: In [[35](#bib.bib35)], a self-supervised deep learning framework is proposed
+    for solving inverse problems in medical imaging using only the measurements and
+    forward model in training the DNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Further DNN methods for inverse problems are explored in [[14](#bib.bib14)],
+    where the forward model is explicitly used in an iterative deep learning framework,
+    requiring fewer parameters compared to direct mapping approaches. In [[36](#bib.bib36)],
+    an iterative deep learning framework is proposed for MRI image reconstruction.
+    The work in [[37](#bib.bib37)] proposes an unsupervised framework for solving
+    forward and inverse problems in EIT. In [[38](#bib.bib38)] the analytical forward
+    model is directly used in determining a DNN loss function, yielding an unsupervised
+    framework utilizing knowledge about data generation. Other methods optimize data
+    consistency using an estimate of the forward model, learned from training data [[39](#bib.bib39)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The approach presented in [[40](#bib.bib40)] is closely related to ours, and
+    aims at analysing deep learning structures for solving inverse problems, seeking
+    to understand neural networks for solving small inverse problems. Our goal in
+    this paper is to categorize deep learning frameworks for different inverse problems,
+    based on their objectives and training schemes, investigating the power of each
+    in solving certain types of inverse problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Problem Definition
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let us consider a forward model
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}=F(\underline{z})+\underline{\nu}\qquad\underline{\nu}\sim
+    N(0,I)$ |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'with given noise process $\underline{\nu}$, assumed to be white. There are
+    two fundamental classes of inverse problems to solve:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Static Estimation Problems, in which the system state $\underline{z}$ is static,
+    without any evolution over time [[2](#bib.bib2)]. We will consider the following
+    static problems:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Image Restoration, part of a class of inverse problems in which the state and
+    measurement spaces coincide (same number of pixels). Typically the measurements
+    are a corrupted version of the unknown state, and the problem is to recover an
+    estimate of the true signal from its corrupted version knowing the (forward) distortion
+    model. Robustness and outlier detection are the main requirements for this class
+    of inverse problems.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Image Reconstruction, to find a projection from some measurement space to a
+    differently sized state, such as 3D shape reconstruction from 2D scenes. These
+    problems need careful regularization to find feasible solutions.
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dynamic Estimation Problems, in which $\underline{z}$ is subject to dynamics
+    and measurements over time [[2](#bib.bib2)], such as in object tracking.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Our focus is on DNNs as data-driven models for solving inverse problems, so
+    we wish to redefine inverse problems to the context of learning from examples
+    in statistical learning theory [[41](#bib.bib41)]. We need two sets of variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{Inputs~{}~{}}\underline{m}\in M\qquad\text{Outputs~{}~{}}\underline{z}\in
+    Z$ |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: The relation between input and output is described by a probability distribution
+    $p(\underline{m},\underline{z})\in M\times Z$, where the distribution is known
+    only through a finite set of samples, the training set
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $S=\{\underline{m}_{i},\underline{z}_{i}\}\qquad 1\leq i\leq N$ |  | (10)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: assumed to have been drawn independently and identically distributed (i.i.d.)
+    from $p$. The learning objective is to find a function $G(\underline{m})$ to be
+    an appropriate approximation of output $\underline{z}$ in the case of a given
+    input $\underline{m}$. That is,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{True}\;\underline{z}\;\approx\;\text{Estimated}\;\hat{\underline{z}}\;=\;G(\underline{m}&#124;S),$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: such that $G(\cdot|S)$ was learned on the basis of $S$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In order to measure the effectiveness of estimator function $G$ in inferring
+    the desired relationship described by $p$, the expected conditional error can
+    be used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $I(G)=\int_{M\times Z}D\bigl{(}G(\underline{m}),\underline{z}\bigr{)}\,dp(\underline{z},\underline{m})$
+    |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $D(G(\underline{m}),\underline{z})$ is the cost or loss function, measuring
+    the cost associated with approximating true value $\underline{z}$ with an estimate
+    $G(\underline{m})$. Choosing a squared loss $(G(\underline{m})-\underline{z})^{2}$
+    and allows us to derive
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $G(\underline{m})=\int_{Z}\underline{z}\,dp(\underline{z}&#124;\underline{m})=E_{p}[\underline{z}],$
+    |  | (13) |'
+  prefs: []
+  type: TYPE_TB
+- en: the classic optimal Bayesian least-squares estimator [[2](#bib.bib2)]. In the
+    case of learning from examples, ([13](#S3.E13 "In 3 Problem Definition ‣ Survey
+    of Deep Learning Methods for Inverse Problems")) cannot be reconstructed exactly
+    since only a finite set of examples $S$ is given; therefore a regularized least
+    squares algorithm may be used as an alternative [[42](#bib.bib42), [43](#bib.bib43)],
+    where the hypothesis space $H$ is fixed and the estimate $G_{S}^{\lambda}$ is
+    obtained as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $G_{S}^{\lambda}=\arg_{G\in H}\min\left\{\sum_{i=1}^{N}D\bigl{(}G(\underline{m}_{i}),\underline{z}_{i}\bigr{)}+\lambda
+    R\bigl{(}G(\underline{m}_{i})\bigr{)}\right\},$ |  | (14) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $R(\cdot)$ is a penalty term and $\lambda$ a regularization parameter.
+    We may choose $\lambda$ to minimize the discrepancy
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left&#124;I[G_{S}^{\lambda}]-\inf_{G\in H}I[G]\right&#124;,$ |  | (15)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: however in general it is much simpler, and sufficient, to select $\lambda$ via
+    cross-validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given that $H$ is the hypothesis space of possible inverse functions, in this
+    paper it is quite reasonable to understand $H$ to be the space of functions which
+    can be learned by a deep neural network, on the basis of optimizing its weight
+    matrix $W$. Based on the optimization criterion ([14](#S3.E14 "In 3 Problem Definition
+    ‣ Survey of Deep Learning Methods for Inverse Problems")), which is actually the
+    variational framework in functional analytic regularization theory [[44](#bib.bib44)],
+    and which forms the basis for inverse-function DNN learning, we classify deep
+    learning frameworks for solving inverse problems into three categories, based
+    on optimization criteria and training schemes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Direct Mapping
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data Consistency Optimizer
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deep Regularizer
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Each of these is developed and defined, as follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Direct Mapping
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The direct mapping category is used as the objective criterion in a large body
+    of research in deep learning based inverse problems [[17](#bib.bib17), [18](#bib.bib18),
+    [19](#bib.bib19), [20](#bib.bib20), [15](#bib.bib15), [21](#bib.bib21), [22](#bib.bib22)].
+    These methods seek to find end-to-end solutions for
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\min_{W_{1}}\left\{\sum_{i=1}^{N}D\bigl{(}\underline{z},G(\underline{m},W_{1})\bigr{)}+\lambda
+    R\bigl{(}G(\underline{m},W_{1})\bigr{)}\right\}$ |  | (16) |'
+  prefs: []
+  type: TYPE_TB
+- en: whereby $D(\cdot,\cdot)$ is the cost function to be minimized by a DNN $G(\underline{m},W_{1})$,
+    on the basis of optimizing DNN weights $W_{1}$. $R\bigl{(}G(\underline{m},W_{1})\bigr{)}$
+    specifies a generic analytical regularizer, to restrict the estimator to feasible
+    solutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Direct Mapping category approximates an estimator $G$ as an inverse to the
+    forward model $F$, requiring a dataset of pairs $\{(\underline{m}_{i},\underline{z}_{i})\}_{i}$
+    of observed measurements and corresponding target system parameters, as illustrated
+    in Figure [1](#S3.F1 "Figure 1 ‣ 3.1 Direct Mapping ‣ 3 Problem Definition ‣ Survey
+    of Deep Learning Methods for Inverse Problems").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f397e0b36cb87b5bcf926a95d710492c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Direct mapping of deep learning inverse problems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This category of DNN is typically used in those cases where we have a model-based
+    imaging system having a linear forward model $\underline{m}=F\underline{z}$, where
+    $z$ is an image, so that convolution networks (CNNs) are nearly always used. As
+    discussed earlier, for Image Restoration problems the measurements themselves
+    are already images, however in more general contexts we may choose to project
+    the measurements as $F^{H}\underline{m}$, back into the domain of $\underline{z}$,
+    such that the CNN is trained to learn the estimator
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{\hat{z}}=G(F^{H}\underline{m},W_{1})$ |  | (17) |'
+  prefs: []
+  type: TYPE_TB
+- en: The translation invariance of $F^{H}F$, relatively common in imaging inverse
+    problems, makes the convolutional-kernel nature of CNNs particularly suitable
+    for serving as the estimator for these problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, the performance of direct inversion is remarkable [[4](#bib.bib4)].
+    However the receptive field (i.e., the size of the field of view the unit has
+    over its input layer) of the CNN should be matched to the support of the point
+    spread function [[14](#bib.bib14)]. Therefore, large CNNs with many parameters
+    and accordingly extensive amount of training time and data are often needed for
+    the methods in this category. These DNNs are highly problem dependent and for
+    different forward models (e.g., with different matrix sizes, resolutions, etc.)
+    a new DNN will need to be learned.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Data Consistency Optimizer
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Data Consistency Optimizer category of deep learning aims to optimize data
+    consistency as an unsupervised criterion within a variational framework [[14](#bib.bib14),
+    [38](#bib.bib38)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\min_{W_{2}}\left\{\sum_{i=1}^{N}D\Bigl{(}\underline{m},F\bigl{(}G(\underline{m},W_{2})\bigr{)}\Bigr{)}+\lambda
+    R\bigl{(}G(\underline{m},W_{2})\bigr{)}\right\}$ |  | (18) |'
+  prefs: []
+  type: TYPE_TB
+- en: where, as in ([16](#S3.E16 "In 3.1 Direct Mapping ‣ 3 Problem Definition ‣ Survey
+    of Deep Learning Methods for Inverse Problems")), $D(\cdot,\cdot)$ is the cost
+    function to be minimized by DNN $G(\underline{m},W_{2})$, parameterized by weights
+    $W_{2}$, subject to regularizer $R\bigl{(}G(\underline{m},W_{1})\bigr{)}$. The
+    overall picture is summarized in Figure [2](#S3.F2 "Figure 2 ‣ 3.2 Data Consistency
+    Optimizer ‣ 3 Problem Definition ‣ Survey of Deep Learning Methods for Inverse
+    Problems").
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to ([16](#S3.E16 "In 3.1 Direct Mapping ‣ 3 Problem Definition ‣
+    Survey of Deep Learning Methods for Inverse Problems")), where the network cost
+    function $D$ is expressed in the space of unknowns $\underline{z}$, here ([18](#S3.E18
+    "In 3.2 Data Consistency Optimizer ‣ 3 Problem Definition ‣ Survey of Deep Learning
+    Methods for Inverse Problems")) expresses the cost in the space of measurements
+    $\underline{m}$, based on forward model $F(\cdot)$. That is, the data consistency
+    term is no longer learning from supervised examples, rather from the forward model
+    we obtain an unsupervised data consistency term, not needing data labels, whereby
+    the forward model provides some form of implicit supervision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compared to the direct mapping category, the use of the forward model in ([18](#S3.E18
+    "In 3.2 Data Consistency Optimizer ‣ 3 Problem Definition ‣ Survey of Deep Learning
+    Methods for Inverse Problems")) leads to a network with relatively few parameters,
+    in part because the receptive field of the DNN need not be matched to the support
+    of the point spread function. However, the ill-posedness of the inverse problem
+    causes a semi-convergent behaviour [[5](#bib.bib5)] using this criterion, therefore
+    an early stopping regularization needs to be adopted in the learning process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/43887a1d66637e1446576a0ca166c95b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Data consistency optimization, where the forward model is incorporated
+    in the loss function of the DNN and is utilized during DNN training.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Deep Regularizer
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Finally the Deep Regularizer category of deep learning methods continues to
+    optimize the data consistency term, however the overall optimization process is
+    undertaken in the form of an analytical variational framework and uses a DNN as
+    the regularizer [[16](#bib.bib16), [34](#bib.bib34)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\min_{\underline{\hat{z}}}\left\{\sum_{i=1}^{N}D\bigl{(}\underline{m},F(\underline{\hat{z}})\bigr{)}+\lambda
+    R(\underline{\hat{z}},W_{3})\right\}$ |  | (19) |'
+  prefs: []
+  type: TYPE_TB
+- en: Here $R(\underline{\hat{z}},W_{3})$ is a pre-trained deep regularizer, based
+    on weight matrix $W_{3}$, usually chosen as a deep classifier [[16](#bib.bib16),
+    [34](#bib.bib34)], discriminating the feasible solutions from non-feasible ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This category usually includes an analytical variational framework consisting
+    of a data consistency term and a learned DNN to capture the redundancy in parameter
+    space (see Figure [3](#S3.F3 "Figure 3 ‣ 3.3 Deep Regularizer ‣ 3 Problem Definition
+    ‣ Survey of Deep Learning Methods for Inverse Problems")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/36246b955cffa87f1cdf3cc125a5ace0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Deep regularized category of inverse problems, in which a DNN is
+    used only as the regularizer as part of an analytical variational framework.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this category, an iterative algorithm (deep or analytical) is used to actually
+    perform the optimization of ([19](#S3.E19 "In 3.3 Deep Regularizer ‣ 3 Problem
+    Definition ‣ Survey of Deep Learning Methods for Inverse Problems")). The regularizer
+    network itself is trained using the data of a specific domain. The Deep Regularizer
+    category needs the fewest parameter settings, compared to the earlier categories;
+    however because of the optimization based inference step it is computationally
+    demanding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Experiments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Our focus in this paper is to study solution robustness in the presence of
+    noise and outliers during inference. This section explores experimental results,
+    for each of the the fundamental inverse-problem classes (restoration, reconstruction,
+    dynamic estimation) for each of the categories of solution (direct mapping (DM),
+    data consistency optimizer (DC), deep regularizer (DR)), as discussed in Section [3](#S3
+    "3 Problem Definition ‣ Survey of Deep Learning Methods for Inverse Problems").
+    Our study is based on a statistical analysis via the Wilcoxon signed rank test [[45](#bib.bib45)],
+    a well-known tool for analysing deep learning frameworks. The null hypothesis
+    is that the result of each pairwise combination of DM, DC, and DR are from the
+    same distribution, i.e., that the results are not significantly different. The
+    experimental results are based on the following problems:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Linear Regression: a reconstruction problem, with the aim of finding line parameters
+    from the noisy / outlier sample points drawn from that line.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Image Denoising: a restoration problem, with the objective of recovering a
+    clean image from noisy observations. We use both synthetic texture images and
+    real images.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Single View 3D Shape Inverse Rendering: a reconstruction problem, for which
+    the domains of the measurements and system parameters are different. The measurements
+    include a limited number of 2D points (input image landmarks) with the unknown
+    state, to be recovered, a 3D Morphable Model (3DMM). We use a 3D model of the
+    human face, based on eigen-faces obtained from principal component analysis.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Single Object Tracking: a dynamic estimation problem, for which the goal is
+    to predict the location (system parameter) of a moving object based on its (noisy)
+    locations, measured in preceding frames. While this problem seems to belong to
+    the class of restoration problems, the embedded state in this problem requires
+    additional assumptions regarding the time-dynamics, and thus additional search
+    strategies.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: All DNNs were implemented using the KERAS library [[46](#bib.bib46)] and ADAM
+    optimizer [[47](#bib.bib47)] on an NVIDIA GeForce GTX 1080 Ti. The DNN structures
+    and the details of each trained DNN can be found in the corresponding subsection.
+    Table [1](#S4.T1 "Table 1 ‣ 4 Experiments ‣ Survey of Deep Learning Methods for
+    Inverse Problems") summarizes the overall experimental setup for all problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Inverse Problem | Measurements | Unknown parameters | Forward Model | Training
+    Data |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Linear Regression &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Reconstruction) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 2D coordinates of &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; N drawn samples &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; from the line &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Slope, Intercept |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Straight line &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; plus noise &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Synthetic: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\{(y_{i},x_{i})\}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; including Gaussian noise &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; with heavy-tailed outliers &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Image Denoising &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Restoration) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy Image &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Clean Image &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image plus noise |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Synthetic: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 5000 gray scale &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; texture images ($64\times 64$) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; from stationary random process [[2](#bib.bib2)] &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; including exponential &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; number of pixel outliers &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; with heavy tailed &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; distribution &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 3D Shape Rendering &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Reconstruction) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Standard $2D$ landmarks &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; on input face image &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Parameters of a &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; BFM 3D model &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy projection &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; from 3D to 2D &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Synthetic: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 72 landmarks on 2D &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; input image of a 3D human &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; face generated by a Besel &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Face Model(BFM) [[48](#bib.bib48)] &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; including $5\%$ outliers &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; in input 2D landmarks &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Single Object Tracking &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Dynamic Estimation) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy location of a ball &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; in a board &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; from $n$ previous time step to current step &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; True Location of the ball &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; True object locations &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; plus noise &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Synthetic: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Sequences &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; of a moving ball location &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; with different random initial states and variable speeds &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; including Gaussian noise &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; for all measurements. &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: The four inverse problems considered in our experiments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Linear Regression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We begin with an exceptionally simple inverse problem. Consider a set of one
+    dimensional samples $\{(x^{(i)},m_{y}^{(i)})\}_{i=1}^{N}$, subject to noise, with
+    some number of the training data subject to more extreme outliers, as illustrated
+    in Figure [4](#S4.F4 "Figure 4 ‣ 4.1 Linear Regression ‣ 4 Experiments ‣ Survey
+    of Deep Learning Methods for Inverse Problems").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9e7da7e5c5be2a2158932c577398cc5a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: 1D sample points for linear regression, with Gaussian noise and occasional
+    large outliers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an inverse problem, we need to define the forward model, which for linear
+    regression is simply
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}_{y}=\alpha\underline{x}+\beta+\underline{\nu}.$ |  | (20)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Since our interest is in assessing the robustness of the resulting inverse solver,
+    the number and behaviour of outliers should be quite irregular, to make it challenging
+    for a network to generalize from the training data. As a result, the noise $\underline{\nu}$
+    is random variance, plus heavy-tailed (power law) outliers, where the number of
+    outliers is exponentially distributed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this inverse problem, the unknown state is comprised of the system parameters
+    $\underline{z}^{T}=[\alpha,\beta]$. Thus linear regression leads to a reconstruction
+    problem, for which the goal is to recover the line parameters from a sample set
+    including noisy and outlier data points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the problem defined, we next need to formulate an approach for each of
+    the three solution categories. For direct mapping (DM) and data consistency (DC),
+    the training data and DNN structures are the same, shown in Figure [5](#S4.F5
+    "Figure 5 ‣ 4.1 Linear Regression ‣ 4 Experiments ‣ Survey of Deep Learning Methods
+    for Inverse Problems"), where the DC approach includes an additional layer which
+    applies the given forward model of ([20](#S4.E20 "In 4.1 Linear Regression ‣ 4
+    Experiments ‣ Survey of Deep Learning Methods for Inverse Problems")). We used
+    the KERAS library, in which a Lambda layer is designed for this forward operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the problem is one-dimensional with limited spatial structure, the network
+    contains only dense feed-forward layers. Residual blocks are used in order to
+    allow gradient flow through the DNN and to improve training. Network training
+    was based on 1000 records, each of $N=500$ noisy sample points.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b06ded19987ec20cb099c5696ad214a9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: DNN structure for DM and DC solutions to linear regression. The layer
+    type and number of neurons are reported below each layer. Note that in the DC
+    case, there is an additional Lambda layer, which computes the forward function
+    from the predicted line parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Deep Regularizer (DR) category needs a different problem modeling scheme,
+    since there is not a learning phase as in DM and DC. Instead, only a DNN (usually
+    a classifier) is trained to be used as the regularizer in a variational optimization
+    framework. The DNN regularizer is given the system parameters $(\alpha,\beta)$
+    and determines whether they account for a feasible line. Here, we define the feasible
+    line as a line having a tangent in some specified range. We generate a synthetic
+    set of system parameters with associated labels for training a fully connected
+    DNN as the regularizer for this category. Since our interest is in the DNN solution
+    of the inverse problem, and not the details of the optimization, we have chosen
+    two fairly standard optimization approaches, a simplex / Nelder-Mead approach [[49](#bib.bib49)]
+    and a Genetic Algorithm (GA) strategy, both based on their respective Matlab implementations.
+    Because GA solutions may be different over multiple runs, we report the results
+    averaged over ten independent runs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [2](#S4.T2 "Table 2 ‣ 4.1 Linear Regression ‣ 4 Experiments ‣ Survey of
+    Deep Learning Methods for Inverse Problems") shows the average solution found
+    by each category over 10 independent trainings for DM and DC, and 10 independent
+    inferences for DR. The table also reports Least-Squares (LS) results as a point
+    of reference method, particularly to show the improvement that deep learning methods
+    have to offer for robustness in solving inverse problems. Observe the significant
+    difference when the DNN methods are trained with noise-free as opposed to noisy
+    data, such that the noisy training data force the network to acquire a robustness
+    to outliers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For DR we trained a 5 layer MLP with dense layers of sizes $5,4,3,2,1$, as the
+    regularizer, using the generated synthetic data including feasible line parameters
+    (in the specific range) as the positive training samples and invalid line parameters
+    as the negative training samples. The average test accuracy of the trained regularizer
+    is $95.70\%$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: The error of estimated lines, with parameters averaged over 10 independent
+    training / inference runs, obtained by the three DNN categories compared with
+    least-squares.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Training Data | Measure &#124; Method | DM | DC | DR-GA | DR-NM ($z_{0}=[0,0]$)
+    | LS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | Error (Slope) | $\mathbf{0.23\pm 1.37}$ | $0.30\pm 1.27$
+    | $0.96\pm 0.03$ | $0.90\pm 0$ | $0.61\pm 2.10$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Error (Intercept) | $0.15\pm 1.68$ | $\mathbf{0.06\pm 1.59}$ | $1.13\pm 0.04$
+    | $1.09\pm 0$ | $0.22\pm 3.00$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noise-Free | Error (Slope) | $1.50\pm 2.08$ | $1.26\pm 1.45$ | $0.96\pm 0.03$
+    | $0.90\pm 0$ | $\mathbf{0.61\pm 2.09}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Error (Intercept) | $0.32\pm 1.85$ | $0.32\pm 1.38$ | $1.13\pm 0.04$ | $1.09\pm
+    0$ | $\mathbf{0.21\pm 3.00}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: We performed the Wilcoxon signed rank test, for both cases of training with
+    noisy data (Table [3](#S4.T3 "Table 3 ‣ 4.1 Linear Regression ‣ 4 Experiments
+    ‣ Survey of Deep Learning Methods for Inverse Problems")) and noise-free training
+    (Table  [4](#S4.T4 "Table 4 ‣ 4.1 Linear Regression ‣ 4 Experiments ‣ Survey of
+    Deep Learning Methods for Inverse Problems")). The tables show the pairwise p-values
+    over the 10 independent runs. A $p-value$ in excess of $0.05$ implies that the
+    two methods are likely to stem from the same distribution; in particular, the
+    Wilcoxon test computes the probability that the difference between the results
+    of two methods are from a distribution with median equal to zero. Clearly all
+    of the DNN methods are statistically significantly different from the least-squares
+    (LS) results. For noisy training data, the statistical results in Table [3](#S4.T3
+    "Table 3 ‣ 4.1 Linear Regression ‣ 4 Experiments ‣ Survey of Deep Learning Methods
+    for Inverse Problems") show similar performance for DM and DC, and for DR-NM and
+    DR-GA, the latter similarity suggesting that the specific choice of optimization
+    methodology does not significantly affect the DR performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 3: Wilcoxon signed rank test p-values obtained for the linear regression
+    problem, using noisy and outlier data for both training and testing. We used 500
+    test samples to perform the statistical analysis over 10 independent training/inference
+    steps of each method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; p-value &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Wilcoxon Test) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| DM | DC | DR-GA | DR-NM | LS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DM | - | 0.695 | 0.002 | 0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.695 | - | 0.002 | 0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.002 | 0.002 | - | 0.781 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-NM | 0.002 | 0.002 | 0.781 | - | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LS | 0.002 | 0.002 | 0.002 | 0.002 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: The results in Table [2](#S4.T2 "Table 2 ‣ 4.1 Linear Regression ‣ 4 Experiments
+    ‣ Survey of Deep Learning Methods for Inverse Problems") show that DM and DC significantly
+    improve in robustness when trained with noisy data, relative to training with
+    noise-free data. The principal difference between DM/DC versus DR is the learning
+    phase for DM/DC, allowing us to conclude that, at least for reconstruction problems,
+    a learning phase using noisy samples in training significantly improves the robustness
+    of the solution. A further observation is that whereas DM and DC achieve similar
+    performance, DC is unsupervised and DM is supervised. Thus it would appear that
+    the forward model knowledge and the data consistency term as objective criterion
+    for DC provide an equal degree of robustness compared to the supervised learning
+    in DM.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; p-value &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (Wilcoxon Test) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| DM | DC | DR-GA | DR-NM | LS |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DM | - | 0.002 | 0.002 | 0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.002 | - | 0.002 | 0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.002 | 0.002 | - | 0.781 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-NM | 0.002 | 0.002 | 0.781 | - | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LS | 0.002 | 0.002 | 0.002 | 0.002 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4: Like Table [3](#S4.T3 "Table 3 ‣ 4.1 Linear Regression ‣ 4 Experiments
+    ‣ Survey of Deep Learning Methods for Inverse Problems"), but now using noise-free
+    data, i.e., without any noise or outliers, for method training. Noisy and outlier
+    data remain in place for testing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For this reconstruction problem, we conclude that both DC and DM perform well,
+    with the unsupervised DC showing strong performance both with noisy and noise-free
+    training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Image Denoising (Restoration)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We now consider an image denoising problem, following the steps described in
+    Section [4.1](#S4.SS1 "4.1 Linear Regression ‣ 4 Experiments ‣ Survey of Deep
+    Learning Methods for Inverse Problems") for regression. We consider real and synthetic
+    images, including 5 classes and 1200 training images, 400 test images per class,
+    from the Linnaeus dataset [[50](#bib.bib50)] as real data, and synthesized 5000
+    texture images generated by sampling from stationary periodic kernels, as synthetic
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The synthetic images are generated using an FFT method [[2](#bib.bib2)], based
+    on a thin-plate second-order Gauss-Markov random field kernel
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | <math id="S4.E21.m1.1" class="ltx_Math" alttext="{\cal P}=\left[\begin{array}[]{ccccc}0&amp;0&amp;1&amp;0&amp;0\\
+    0&amp;2&amp;-8&amp;2&amp;0\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1&amp;-8&amp;20+\alpha^{2}&amp;-8&amp;1\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0&amp;2&amp;-8&amp;2&amp;0\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0&amp;0&amp;1&amp;0&amp;0\\
+  prefs: []
+  type: TYPE_NORMAL
+- en: \end{array}\right]" display="block"><semantics id="S4.E21.m1.1a"><mrow id="S4.E21.m1.1.2"
+    xref="S4.E21.m1.1.2.cmml"><mi class="ltx_font_mathcaligraphic" id="S4.E21.m1.1.2.2"
+    xref="S4.E21.m1.1.2.2.cmml">𝒫</mi><mo id="S4.E21.m1.1.2.1" xref="S4.E21.m1.1.2.1.cmml">=</mo><mrow
+    id="S4.E21.m1.1.2.3.2" xref="S4.E21.m1.1.2.3.1.cmml"><mo id="S4.E21.m1.1.2.3.2.1"
+    xref="S4.E21.m1.1.2.3.1.1.cmml">[</mo><mtable columnspacing="5pt" displaystyle="true"
+    rowspacing="0pt" id="S4.E21.m1.1.1" xref="S4.E21.m1.1.1.cmml"><mtr id="S4.E21.m1.1.1a"
+    xref="S4.E21.m1.1.1.cmml"><mtd id="S4.E21.m1.1.1b" xref="S4.E21.m1.1.1.cmml"><mn
+    id="S4.E21.m1.1.1.1.1.1" xref="S4.E21.m1.1.1.1.1.1.cmml">0</mn></mtd><mtd id="S4.E21.m1.1.1c"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.1.2.1" xref="S4.E21.m1.1.1.1.2.1.cmml">0</mn></mtd><mtd
+    id="S4.E21.m1.1.1d" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.1.3.1" xref="S4.E21.m1.1.1.1.3.1.cmml">1</mn></mtd><mtd
+    id="S4.E21.m1.1.1e" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.1.4.1" xref="S4.E21.m1.1.1.1.4.1.cmml">0</mn></mtd><mtd
+    id="S4.E21.m1.1.1f" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.1.5.1" xref="S4.E21.m1.1.1.1.5.1.cmml">0</mn></mtd></mtr><mtr
+    id="S4.E21.m1.1.1g" xref="S4.E21.m1.1.1.cmml"><mtd id="S4.E21.m1.1.1h" xref="S4.E21.m1.1.1.cmml"><mn
+    id="S4.E21.m1.1.1.2.1.1" xref="S4.E21.m1.1.1.2.1.1.cmml">0</mn></mtd><mtd id="S4.E21.m1.1.1i"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.2.2.1" xref="S4.E21.m1.1.1.2.2.1.cmml">2</mn></mtd><mtd
+    id="S4.E21.m1.1.1j" xref="S4.E21.m1.1.1.cmml"><mrow id="S4.E21.m1.1.1.2.3.1" xref="S4.E21.m1.1.1.2.3.1.cmml"><mo
+    id="S4.E21.m1.1.1.2.3.1a" xref="S4.E21.m1.1.1.2.3.1.cmml">−</mo><mn id="S4.E21.m1.1.1.2.3.1.2"
+    xref="S4.E21.m1.1.1.2.3.1.2.cmml">8</mn></mrow></mtd><mtd id="S4.E21.m1.1.1k"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.2.4.1" xref="S4.E21.m1.1.1.2.4.1.cmml">2</mn></mtd><mtd
+    id="S4.E21.m1.1.1l" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.2.5.1" xref="S4.E21.m1.1.1.2.5.1.cmml">0</mn></mtd></mtr><mtr
+    id="S4.E21.m1.1.1m" xref="S4.E21.m1.1.1.cmml"><mtd id="S4.E21.m1.1.1n" xref="S4.E21.m1.1.1.cmml"><mn
+    id="S4.E21.m1.1.1.3.1.1" xref="S4.E21.m1.1.1.3.1.1.cmml">1</mn></mtd><mtd id="S4.E21.m1.1.1o"
+    xref="S4.E21.m1.1.1.cmml"><mrow id="S4.E21.m1.1.1.3.2.1" xref="S4.E21.m1.1.1.3.2.1.cmml"><mo
+    id="S4.E21.m1.1.1.3.2.1a" xref="S4.E21.m1.1.1.3.2.1.cmml">−</mo><mn id="S4.E21.m1.1.1.3.2.1.2"
+    xref="S4.E21.m1.1.1.3.2.1.2.cmml">8</mn></mrow></mtd><mtd id="S4.E21.m1.1.1p"
+    xref="S4.E21.m1.1.1.cmml"><mrow id="S4.E21.m1.1.1.3.3.1" xref="S4.E21.m1.1.1.3.3.1.cmml"><mn
+    id="S4.E21.m1.1.1.3.3.1.2" xref="S4.E21.m1.1.1.3.3.1.2.cmml">20</mn><mo id="S4.E21.m1.1.1.3.3.1.1"
+    xref="S4.E21.m1.1.1.3.3.1.1.cmml">+</mo><msup id="S4.E21.m1.1.1.3.3.1.3" xref="S4.E21.m1.1.1.3.3.1.3.cmml"><mi
+    id="S4.E21.m1.1.1.3.3.1.3.2" xref="S4.E21.m1.1.1.3.3.1.3.2.cmml">α</mi><mn id="S4.E21.m1.1.1.3.3.1.3.3"
+    xref="S4.E21.m1.1.1.3.3.1.3.3.cmml">2</mn></msup></mrow></mtd><mtd id="S4.E21.m1.1.1q"
+    xref="S4.E21.m1.1.1.cmml"><mrow id="S4.E21.m1.1.1.3.4.1" xref="S4.E21.m1.1.1.3.4.1.cmml"><mo
+    id="S4.E21.m1.1.1.3.4.1a" xref="S4.E21.m1.1.1.3.4.1.cmml">−</mo><mn id="S4.E21.m1.1.1.3.4.1.2"
+    xref="S4.E21.m1.1.1.3.4.1.2.cmml">8</mn></mrow></mtd><mtd id="S4.E21.m1.1.1r"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.3.5.1" xref="S4.E21.m1.1.1.3.5.1.cmml">1</mn></mtd></mtr><mtr
+    id="S4.E21.m1.1.1s" xref="S4.E21.m1.1.1.cmml"><mtd id="S4.E21.m1.1.1t" xref="S4.E21.m1.1.1.cmml"><mn
+    id="S4.E21.m1.1.1.4.1.1" xref="S4.E21.m1.1.1.4.1.1.cmml">0</mn></mtd><mtd id="S4.E21.m1.1.1u"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.4.2.1" xref="S4.E21.m1.1.1.4.2.1.cmml">2</mn></mtd><mtd
+    id="S4.E21.m1.1.1v" xref="S4.E21.m1.1.1.cmml"><mrow id="S4.E21.m1.1.1.4.3.1" xref="S4.E21.m1.1.1.4.3.1.cmml"><mo
+    id="S4.E21.m1.1.1.4.3.1a" xref="S4.E21.m1.1.1.4.3.1.cmml">−</mo><mn id="S4.E21.m1.1.1.4.3.1.2"
+    xref="S4.E21.m1.1.1.4.3.1.2.cmml">8</mn></mrow></mtd><mtd id="S4.E21.m1.1.1w"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.4.4.1" xref="S4.E21.m1.1.1.4.4.1.cmml">2</mn></mtd><mtd
+    id="S4.E21.m1.1.1x" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.4.5.1" xref="S4.E21.m1.1.1.4.5.1.cmml">0</mn></mtd></mtr><mtr
+    id="S4.E21.m1.1.1y" xref="S4.E21.m1.1.1.cmml"><mtd id="S4.E21.m1.1.1z" xref="S4.E21.m1.1.1.cmml"><mn
+    id="S4.E21.m1.1.1.5.1.1" xref="S4.E21.m1.1.1.5.1.1.cmml">0</mn></mtd><mtd id="S4.E21.m1.1.1aa"
+    xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.5.2.1" xref="S4.E21.m1.1.1.5.2.1.cmml">0</mn></mtd><mtd
+    id="S4.E21.m1.1.1ab" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.5.3.1" xref="S4.E21.m1.1.1.5.3.1.cmml">1</mn></mtd><mtd
+    id="S4.E21.m1.1.1ac" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.5.4.1" xref="S4.E21.m1.1.1.5.4.1.cmml">0</mn></mtd><mtd
+    id="S4.E21.m1.1.1ad" xref="S4.E21.m1.1.1.cmml"><mn id="S4.E21.m1.1.1.5.5.1" xref="S4.E21.m1.1.1.5.5.1.cmml">0</mn></mtd></mtr></mtable><mo
+    id="S4.E21.m1.1.2.3.2.2" xref="S4.E21.m1.1.2.3.1.1.cmml">]</mo></mrow></mrow><annotation-xml
+    encoding="MathML-Content" id="S4.E21.m1.1b"><apply id="S4.E21.m1.1.2.cmml" xref="S4.E21.m1.1.2"><ci
+    id="S4.E21.m1.1.2.2.cmml" xref="S4.E21.m1.1.2.2">𝒫</ci><apply id="S4.E21.m1.1.2.3.1.cmml"
+    xref="S4.E21.m1.1.2.3.2"><csymbol cd="latexml" id="S4.E21.m1.1.2.3.1.1.cmml" xref="S4.E21.m1.1.2.3.2.1">delimited-[]</csymbol><matrix
+    id="S4.E21.m1.1.1.cmml" xref="S4.E21.m1.1.1"><matrixrow id="S4.E21.m1.1.1a.cmml"
+    xref="S4.E21.m1.1.1"><cn type="integer" id="S4.E21.m1.1.1.1.1.1.cmml" xref="S4.E21.m1.1.1.1.1.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.1.2.1.cmml" xref="S4.E21.m1.1.1.1.2.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.1.3.1.cmml" xref="S4.E21.m1.1.1.1.3.1">1</cn><cn
+    type="integer" id="S4.E21.m1.1.1.1.4.1.cmml" xref="S4.E21.m1.1.1.1.4.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.1.5.1.cmml" xref="S4.E21.m1.1.1.1.5.1">0</cn></matrixrow><matrixrow
+    id="S4.E21.m1.1.1b.cmml" xref="S4.E21.m1.1.1"><cn type="integer" id="S4.E21.m1.1.1.2.1.1.cmml"
+    xref="S4.E21.m1.1.1.2.1.1">0</cn><cn type="integer" id="S4.E21.m1.1.1.2.2.1.cmml"
+    xref="S4.E21.m1.1.1.2.2.1">2</cn><apply id="S4.E21.m1.1.1.2.3.1.cmml" xref="S4.E21.m1.1.1.2.3.1"><cn
+    type="integer" id="S4.E21.m1.1.1.2.3.1.2.cmml" xref="S4.E21.m1.1.1.2.3.1.2">8</cn></apply><cn
+    type="integer" id="S4.E21.m1.1.1.2.4.1.cmml" xref="S4.E21.m1.1.1.2.4.1">2</cn><cn
+    type="integer" id="S4.E21.m1.1.1.2.5.1.cmml" xref="S4.E21.m1.1.1.2.5.1">0</cn></matrixrow><matrixrow
+    id="S4.E21.m1.1.1c.cmml" xref="S4.E21.m1.1.1"><cn type="integer" id="S4.E21.m1.1.1.3.1.1.cmml"
+    xref="S4.E21.m1.1.1.3.1.1">1</cn><apply id="S4.E21.m1.1.1.3.2.1.cmml" xref="S4.E21.m1.1.1.3.2.1"><cn
+    type="integer" id="S4.E21.m1.1.1.3.2.1.2.cmml" xref="S4.E21.m1.1.1.3.2.1.2">8</cn></apply><apply
+    id="S4.E21.m1.1.1.3.3.1.cmml" xref="S4.E21.m1.1.1.3.3.1"><cn type="integer" id="S4.E21.m1.1.1.3.3.1.2.cmml"
+    xref="S4.E21.m1.1.1.3.3.1.2">20</cn><apply id="S4.E21.m1.1.1.3.3.1.3.cmml" xref="S4.E21.m1.1.1.3.3.1.3"><csymbol
+    cd="ambiguous" id="S4.E21.m1.1.1.3.3.1.3.1.cmml" xref="S4.E21.m1.1.1.3.3.1.3">superscript</csymbol><ci
+    id="S4.E21.m1.1.1.3.3.1.3.2.cmml" xref="S4.E21.m1.1.1.3.3.1.3.2">𝛼</ci><cn type="integer"
+    id="S4.E21.m1.1.1.3.3.1.3.3.cmml" xref="S4.E21.m1.1.1.3.3.1.3.3">2</cn></apply></apply><apply
+    id="S4.E21.m1.1.1.3.4.1.cmml" xref="S4.E21.m1.1.1.3.4.1"><cn type="integer" id="S4.E21.m1.1.1.3.4.1.2.cmml"
+    xref="S4.E21.m1.1.1.3.4.1.2">8</cn></apply><cn type="integer" id="S4.E21.m1.1.1.3.5.1.cmml"
+    xref="S4.E21.m1.1.1.3.5.1">1</cn></matrixrow><matrixrow id="S4.E21.m1.1.1d.cmml"
+    xref="S4.E21.m1.1.1"><cn type="integer" id="S4.E21.m1.1.1.4.1.1.cmml" xref="S4.E21.m1.1.1.4.1.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.4.2.1.cmml" xref="S4.E21.m1.1.1.4.2.1">2</cn><apply
+    id="S4.E21.m1.1.1.4.3.1.cmml" xref="S4.E21.m1.1.1.4.3.1"><cn type="integer" id="S4.E21.m1.1.1.4.3.1.2.cmml"
+    xref="S4.E21.m1.1.1.4.3.1.2">8</cn></apply><cn type="integer" id="S4.E21.m1.1.1.4.4.1.cmml"
+    xref="S4.E21.m1.1.1.4.4.1">2</cn><cn type="integer" id="S4.E21.m1.1.1.4.5.1.cmml"
+    xref="S4.E21.m1.1.1.4.5.1">0</cn></matrixrow><matrixrow id="S4.E21.m1.1.1e.cmml"
+    xref="S4.E21.m1.1.1"><cn type="integer" id="S4.E21.m1.1.1.5.1.1.cmml" xref="S4.E21.m1.1.1.5.1.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.5.2.1.cmml" xref="S4.E21.m1.1.1.5.2.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.5.3.1.cmml" xref="S4.E21.m1.1.1.5.3.1">1</cn><cn
+    type="integer" id="S4.E21.m1.1.1.5.4.1.cmml" xref="S4.E21.m1.1.1.5.4.1">0</cn><cn
+    type="integer" id="S4.E21.m1.1.1.5.5.1.cmml" xref="S4.E21.m1.1.1.5.5.1">0</cn></matrixrow></matrix></apply></apply></annotation-xml><annotation
+    encoding="application/x-tex" id="S4.E21.m1.1c">{\cal P}=\left[\begin{array}[]{ccccc}0&0&1&0&0\\
+    0&2&-8&2&0\\ 1&-8&20+\alpha^{2}&-8&1\\ 0&2&-8&2&0\\ 0&0&1&0&0\\ \end{array}\right]</annotation></semantics></math>
+    |  | (21) |
+  prefs: []
+  type: TYPE_NORMAL
+- en: such that a texture $T$ is found by inverting the kernel in the frequency domain,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $T=FFT^{-1}_{2}\left(\sqrt{1\oslash FFT_{2}({\cal P})}\odot FFT_{2}(W)\right),$
+    |  | (22) |'
+  prefs: []
+  type: TYPE_TB
+- en: with $\odot,\oslash$ as element-by-element multiplication and division, $W$
+    as unit-variance white noise, and with the kernel ${\cal P}$ zero-padded to the
+    intended size of $T$. Further details about this approach can be found in [[2](#bib.bib2)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parameter $\alpha^{2}$, affecting the central element of the kernel $\cal P$,
+    effectively determines the texture spatial correlation-length in $T$, as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\alpha^{2}=10^{4-log_{10}u}$ |  | (23) |'
+  prefs: []
+  type: TYPE_TB
+- en: for process correlation length, $u$, measured in pixels. We set $u$ to be a
+    random integer in the range $[10,200]$ in our experiments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All images are set to be $64\times 64$ in size, with pixel values normalized
+    to $[0,1]$. Pixels are corrupted by additive Gaussian noise, with an exponentially
+    distributed number of outliers. The inverse problem is a restoration problem,
+    having the objective of restoring the original image from its noisy/outlier observation.
+    The linear forward model is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}=\underline{z}+\underline{\nu}$ |  | (24) |'
+  prefs: []
+  type: TYPE_TB
+- en: for measured, original, and added noise, respectively. The Gaussian noise $\nu$
+    has zero mean and random variance, and an exponential number of pixels become
+    outliers, their values replaced with a uniformly distributed random intensity
+    value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We used 5000 training samples and 500 test samples for the learning and evaluation
+    phases of the DM and DC approaches. The DNN structure for both DM and DC is the
+    same and is shown in Figure [6](#S4.F6 "Figure 6 ‣ 4.2 Image Denoising (Restoration)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems"). In the
+    case of DC, we design a DNN layer to compute the forward function. Since we are
+    dealing with input images, both as measurements and system state, we design a
+    fully convolutional DNN in an encoder-decoder structure, finding the main structures
+    in the image through encoding and recovering the image via decoding. Since there
+    may be information loss during encoding, we introduce skip connections to help
+    preserve desirable information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d745db3704fbd60620ba387b4ee9ced5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: DNN for the DM and DC solutions. We have a fully convolutional DNN
+    with an encoder-decoder structure, where the values in parentheses indicate the
+    stride value of the corresponding convolutional layer. The skip connection helps
+    to recover desirable information which may be lost during encoding.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The DR category needs a pre-trained regularizer which determines whether the
+    prediction is a feasible texture image. We trained a classifier for texture discrimination,
+    generated using ([22](#S4.E22 "In 4.2 Image Denoising (Restoration) ‣ 4 Experiments
+    ‣ Survey of Deep Learning Methods for Inverse Problems")), from ordinary images
+    gathered from the web, as the regularizer. Both GA and Nelder-Mead optimizers
+    are used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use peak signal to noise ratio (PSNR) as the evaluation criterion, computed
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\text{PSNR}(I^{\text{pred}},I^{\text{GT}})=20\cdot log_{10}\max(I^{\text{pred}})-10\cdot
+    log_{10}\text{MSE},$ |  | (25) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle\text{MSE}=\frac{1}{n}\sum_{i,j}(I^{\text{GT}}_{i,j}-I^{\text{pred}}_{i,j})^{2}$
+    |  | (26) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $I^{\text{GT}}_{i,j}$, $I^{\text{pred}}_{i,j}$ are the $(i,j)^{th}$ pixel
+    in the ground-truth and predicted images, respectively. Note that in the DR case,
+    since the input and output of the model are $64*64=4096$ images, the GA optimization
+    routine was unable to find the solution in a reasonable time, therefore we do
+    not avoid report any DR-GA results for this problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a reference point, we also report results obtained by the non-local means
+    (NLM) filter [[51](#bib.bib51)], to give insight into the amount of improvement
+    of deep learning inverse methods over a well-established standard in image denoising.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [7](#S4.F7 "Figure 7 ‣ 4.2 Image Denoising (Restoration) ‣ 4 Experiments
+    ‣ Survey of Deep Learning Methods for Inverse Problems") shows results based on
+    synthetic textures. Each row in the figure shows a sample image associated with
+    a particular correlation length noise standard deviation. The DM approach offers
+    by far the best reconstruction among the DNN methods, and outperforms NLM in terms
+    of PSNR. The time complexity of GA in DR-GA makes it inapplicable to problems
+    of significant size (even though the images were still quite modest in size).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| u | $\sigma$ | Clean Image | Input Image (Noisy) | DM | DC | DR-NM | NLM
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $10$ | $0.2$ | ![Refer to caption](img/b09ffa28ebcbb8460bf338aa828738a0.png)
+    | ![Refer to caption](img/1d73171621a7c67304d0db1baf428208.png) | ![Refer to caption](img/cf0d53b99aa08c3afbec98ffc9b757d1.png)
+    | ![Refer to caption](img/e7d763516bd31be66fec273638115eb4.png) | ![Refer to caption](img/5c584b8cf89026c9e04aab55a60b83c2.png)
+    | ![Refer to caption](img/bc25dddb7f7d31572c15796350207f6f.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $50$ | $0.2$ | ![Refer to caption](img/2e3ce76234326a6c1307b5906ba2539c.png)
+    | ![Refer to caption](img/bd32421428c106e07564ddf186a26ee0.png) | ![Refer to caption](img/b68320b6ee1ab235afd130bca744b9ce.png)
+    | ![Refer to caption](img/d09c29c6ae031e392396a138172b2686.png) | ![Refer to caption](img/9317990e874a2c96f3a35460a0524f90.png)
+    | ![Refer to caption](img/a8c51f16c7978aad82025107c9d890c0.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $150$ | $0.2$ | ![Refer to caption](img/fca900dd031980d095172129a70a4a38.png)
+    | ![Refer to caption](img/f816e68b23286ab9a4d496d51a457496.png) | ![Refer to caption](img/ba5c54e3f58e06b1a8575777e7e1f2d4.png)
+    | ![Refer to caption](img/59d62e6ecb6856f03291a4ac51839de5.png) | ![Refer to caption](img/65791a6f4e7cdf69436df3f274b4a0f0.png)
+    | ![Refer to caption](img/8d93f61f7e1eda5bb45cc58e675a42ae.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $200$ | $0.2$ | ![Refer to caption](img/25a67d6d302f03af83060fde22dbe873.png)
+    | ![Refer to caption](img/65db94af3cdad35dd78ec41b43d4916a.png) | ![Refer to caption](img/1cb94aaaed022b0d9e390ea2bec34f77.png)
+    | ![Refer to caption](img/47c51b1ba8fb31427b15d2d8402b62ce.png) | ![Refer to caption](img/34db1aa9be6df9e9cd71dda2c65d140c.png)
+    | ![Refer to caption](img/beccd926b64fa88b6f2e8dd5fccfa8b1.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $100$ | $0.1$ | ![Refer to caption](img/ab71fe912d8b79c123d83e1b04fb313a.png)
+    | ![Refer to caption](img/2de8c016be4592d71d5347f08eaef8c8.png) | ![Refer to caption](img/50eb1f8544cb73dd6b52647cf37ba1cf.png)
+    | ![Refer to caption](img/65148f1d62e890a8272560505e8339c5.png) | ![Refer to caption](img/adc2081639a7978b7df1946ebe9b1f17.png)
+    | ![Refer to caption](img/ada842c5e84d5a008c86ec1754286ab6.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $100$ | $0.2$ | ![Refer to caption](img/ca2dc1cb1867d5281cf94a10317d8612.png)
+    | ![Refer to caption](img/ec19e66aa6294b49945d4c854decb2ec.png) | ![Refer to caption](img/bcb8ae0c2cab427378ebbfea943c2a19.png)
+    | ![Refer to caption](img/62cd1414c6fb241e3b8768a9a6168cfe.png) | ![Refer to caption](img/fd1fb9fa8eb68f7d7a4337fd5d3e316e.png)
+    | ![Refer to caption](img/89d52c0a32293d952479b3fdffb1f8be.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $100$ | $0.3$ | ![Refer to caption](img/5a7def1b47d4a008a3f4abaf192dbd45.png)
+    | ![Refer to caption](img/0ea1d05dcc7056495997d5d2f22d9525.png) | ![Refer to caption](img/bbbdda3c95ec128340a347ea5bf23544.png)
+    | ![Refer to caption](img/07bab4c0bfe358ed3c0e721ac4b38e65.png) | ![Refer to caption](img/4fbcb593e8606c5c544e6ca1ff334df5.png)
+    | ![Refer to caption](img/5778aca8a03a0a55eb6fa9abaf4938ca.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | Average PSNR |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $19.75$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $(\pm 9.52)$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{29.24}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{(\pm 2.25)}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $19.81$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $(\pm 7.71)$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $19.75$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; ($\pm 9.52$) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $28.48$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; ($\pm 5.42$) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 7: Image denoinsing results on synthetic textures. Only a single image
+    is shown in each case, however the reported average PSNR at the bottom is computed
+    over the entire test set. The given noisy image is subject to both additive noise
+    and outliers. NLM, in the rightmost column, is the non-local means filter, a standard
+    approach from image processing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Wilcoxon signed rank test was performed on the DM, DC and DR-(Nelder-Mead)
+    results. The statistical analysis of the obtained results gave a $p$ value of
+    0.002 for each pairwise comparison, implying a statistically significant difference,
+    thus the very strong performance of DM in Figure [7](#S4.F7 "Figure 7 ‣ 4.2 Image
+    Denoising (Restoration) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for
+    Inverse Problems") is validated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of real images, Figure [8](#S4.F8 "Figure 8 ‣ 4.2 Image Denoising
+    (Restoration) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems")
+    shows the visual results obtained by DM, DC and DR-NM for seven test samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Clean Image | Input Image (Noisy) | DM | DC | DR-NM | NLM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/3f75bf5b5f8435fda2d846acca52941c.png) | ![Refer to
+    caption](img/be5fd40878e805776c295c0d8d433768.png) | ![Refer to caption](img/2ac71b7907acd2097052898cb9ea2cbe.png)
+    | ![Refer to caption](img/4756bbf6ddea49561dac5c8c849245a6.png) | ![Refer to caption](img/83dfd7abefe3524b25477a8cdbe5e428.png)
+    | ![Refer to caption](img/af735d0d0ebab87e8b336c33f3512a0f.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/60d9b0d277668f55e5706cf92bae6b0b.png) | ![Refer to
+    caption](img/0c9eddfba201c2069e2c08406ddeb6bc.png) | ![Refer to caption](img/555e4e3a29ab3e70dd5a41a54812243a.png)
+    | ![Refer to caption](img/685ba51f4b3226e29df3dbd4bff35687.png) | ![Refer to caption](img/fd9d73daa28d7cf47f9308ea779cd807.png)
+    | ![Refer to caption](img/3f04207892d7712f10ad625aced66df7.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/5753ca9b8fc1189100492f29c89b8167.png) | ![Refer to
+    caption](img/9bd2de73e8ed8fee667f15b08836094a.png) | ![Refer to caption](img/435c2654849c31b0acbf8e49699f42b1.png)
+    | ![Refer to caption](img/609b7c9a29190268ffa4e1e11de69edb.png) | ![Refer to caption](img/bd6563268a2d15b238aa9fd7cb593a80.png)
+    | ![Refer to caption](img/d4d2819195e5854b31dbd2ab7902a7aa.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/0a8e915c3963f7b70d5163ee5a1bfc10.png) | ![Refer to
+    caption](img/490d998f1157642c04e4da844d5df84e.png) | ![Refer to caption](img/7c276031c733f0615061d75c31baaa3f.png)
+    | ![Refer to caption](img/f7dc61fca1ff672b5aabdc86b95e596b.png) | ![Refer to caption](img/7a01ae0e321684c3f8b531ddf983edf0.png)
+    | ![Refer to caption](img/52f962688f637498b5b33bd40c7ec2fd.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/e96d05ccaca983b7a7f06e5017d25ee5.png) | ![Refer to
+    caption](img/e8295b76aee5ab184fc1e9fc753da808.png) | ![Refer to caption](img/0114ebdb07da9f162484ba460668ef82.png)
+    | ![Refer to caption](img/11bda8219c6e914e1d8da33cd77e49a9.png) | ![Refer to caption](img/b8ced6579baff1f67d3d99c88865eb39.png)
+    | ![Refer to caption](img/6b32b69355eee15660ba1bce28cfd63a.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/938676cedd23a391c600bca33114fbfb.png) | ![Refer to
+    caption](img/87e85a3d488fb17bc8af0cf8039a6a1e.png) | ![Refer to caption](img/d179db6b5b4d751354039aaed95a3bb4.png)
+    | ![Refer to caption](img/a11cd247db9e5ea17f78d18816d58392.png) | ![Refer to caption](img/7ad533be83f7980a6337d2b48e28aaf9.png)
+    | ![Refer to caption](img/8996197c42146d9b30be235fa3ddf814.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/88db92d64bf2540be5b1af8cfba3ec26.png) | ![Refer to
+    caption](img/f52a5d73794b64c4f8ac206d3be19694.png) | ![Refer to caption](img/50559fe5f2e58f10d516b864dab7b720.png)
+    | ![Refer to caption](img/5b9a1b14bc6a0e2d1e796fd3610f8863.png) | ![Refer to caption](img/df1a6f79a81679e1986249ae9d0a405f.png)
+    | ![Refer to caption](img/e0340ca642c6016772d6d08235d45e8f.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Average PSNR |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $19.75$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $(\pm 8.20)$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{24.70}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{(\pm 2.41)}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $23.86$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $(\pm 5.30)$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $19.75$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; ($\pm 8.20$) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $24.38$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; ($\pm 4.93$) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 8: As in Figure [7](#S4.F7 "Figure 7 ‣ 4.2 Image Denoising (Restoration)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems"), but
+    here for denoising results on the Linnaeus dataset. The reported average PSNR
+    in the last row is computed over all test images. As in Figure [7](#S4.F7 "Figure
+    7 ‣ 4.2 Image Denoising (Restoration) ‣ 4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems"), the DM results significantly outperform other
+    DNN inverse solvers and also non-local means (NLM).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The statistical analysis is consistent with the results from the synthetic texture
+    case, which is that all pairwise Wilcoxon tests led to a conclusion of statistically
+    significant differences, with $p$ values well below $0.05$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'From the results in Figures [7](#S4.F7 "Figure 7 ‣ 4.2 Image Denoising (Restoration)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems") and [8](#S4.F8
+    "Figure 8 ‣ 4.2 Image Denoising (Restoration) ‣ 4 Experiments ‣ Survey of Deep
+    Learning Methods for Inverse Problems") and their respective statistical analyses,
+    we conclude that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For image denoising as a prototype for restoration problems, which have the
+    same measurement and system parameter spaces, the concentration of the loss function
+    on the true parameters (as in DM) provides better information and leads to a more
+    effective estimator having greater robustness than the measurements themselves
+    (as in DC).
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: DR-(Nelder-Mead) performed poorly, even though it optimizes data consistency,
+    like DC, however we believe that the learning phase in DC, compared to DR, provides
+    knowledge for its inference and allows DC to be more robust than DR for restoration
+    inverse problems.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 4.3 3D shape Inverse Rendering (Reconstruction)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We now wish to test a 3D shape inverse rendering (IR) [[48](#bib.bib48)] problem,
+    for which a 3D morphable model (3DMM) [[52](#bib.bib52)] describes the 3D shape
+    of a human face $\underline{s}$. This model is based on extracting eigenfaces
+    $\underline{s}_{i}$, usually using PCA, from a set of 3D face shapes as the training
+    data, then to obtain new faces as a weighted combination $z_{i}$ of the eigenfaces.
+    The 3D shape model reconstructs a 3D face in homogeneous coordinates as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{s}=\underline{\bar{s}}+\sum_{i=1}^{n}z_{i}\underline{s}_{i},$
+    |  | (27) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\underline{\bar{s}}$ is the mean shape of the 3DMM, and $z_{i}$ the weight
+    of eigenface $\underline{s}_{i}$. We use the Besel Face Model [[48](#bib.bib48)]
+    as the 3DMM in this experiment for which there are $N=54390$ 3D points in each
+    face shape and 199 eigenfaces. We can therefore rewrite ([27](#S4.E27 "In 4.3
+    3D shape Inverse Rendering (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems")) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{s}_{N}=\underline{\bar{s}}_{N}+\underline{z}^{T}*S_{N}$ |  |
+    (28) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $S$ is the tensor of $199$ eigenfaces. In our experiments each face is
+    characterized by 72 standard landmarks, shown in Figure [9](#S4.F9 "Figure 9 ‣
+    4.3 3D shape Inverse Rendering (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep
+    Learning Methods for Inverse Problems"), which are normalized and then presented
+    to the system as the measurements. Therefore we actually only care about $L=72$
+    out of $N=54390$ 3D points in the 3DMM. This experiment tackles the reconstruction
+    of a 3D human face by finding the weights $\underline{z}$ of the 3DMM from its
+    input 2D landmarks. We generated training data from the 3DMM by assigning random
+    values to the 3DMM weights, resulting in a 3D human face, and rendered the obtained
+    3D shape into a 2D image using orthographic projection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/c4136602744e5fdb88aaf05da4fce07d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Location and order of 72 standard landmarks on a 2D image of a sample
+    human face.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The measurement noise consists of small perturbations of the 2D landmarks, with
+    outliers as much larger landmark perturbations. We add zero-mean Gaussian noise
+    having a standard deviation of $3\times 10^{3}$ in the training data and $5\times
+    10^{3}$ in the test data. Outliers are much larger, with a standard deviation
+    of $5\times 10^{4}$ added to 10 of the 72 landmarks in $10\%$ of the training
+    data and $20\%$ of the test data. Landmark point coordinates are in the range
+    $[-8\times 10^{4},8\times 10^{4}]$, so the outlier magnitudes are very large.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let subscript [L] represent the the set of landmark point indices, in which
+    case the forward model is the orthographic projection
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | <math id="S4.E29.m1.3" class="ltx_Math" alttext="\underline{m}=C\underline{s}_{L}+\underline{\nu}\qquad
+    C=\left[\begin{array}[]{cccc}1&amp;0&amp;0&amp;0\\ 0&amp;1&amp;0&amp;0\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 0&amp;0&amp;0&amp;0\end{array}\right]" display="block"><semantics id="S4.E29.m1.3a"><mrow
+    id="S4.E29.m1.3.3.2" xref="S4.E29.m1.3.3.3.cmml"><mrow id="S4.E29.m1.2.2.1.1"
+    xref="S4.E29.m1.2.2.1.1.cmml"><munder accentunder="true" id="S4.E29.m1.2.2.1.1.2"
+    xref="S4.E29.m1.2.2.1.1.2.cmml"><mi id="S4.E29.m1.2.2.1.1.2.2" xref="S4.E29.m1.2.2.1.1.2.2.cmml">m</mi><mo
+    id="S4.E29.m1.2.2.1.1.2.1" xref="S4.E29.m1.2.2.1.1.2.1.cmml">¯</mo></munder><mo
+    id="S4.E29.m1.2.2.1.1.1" xref="S4.E29.m1.2.2.1.1.1.cmml">=</mo><mrow id="S4.E29.m1.2.2.1.1.3"
+    xref="S4.E29.m1.2.2.1.1.3.cmml"><mrow id="S4.E29.m1.2.2.1.1.3.2" xref="S4.E29.m1.2.2.1.1.3.2.cmml"><mi
+    id="S4.E29.m1.2.2.1.1.3.2.2" xref="S4.E29.m1.2.2.1.1.3.2.2.cmml">C</mi><mo lspace="0em"
+    rspace="0em" id="S4.E29.m1.2.2.1.1.3.2.1" xref="S4.E29.m1.2.2.1.1.3.2.1.cmml">​</mo><msub
+    id="S4.E29.m1.2.2.1.1.3.2.3" xref="S4.E29.m1.2.2.1.1.3.2.3.cmml"><munder accentunder="true"
+    id="S4.E29.m1.2.2.1.1.3.2.3.2" xref="S4.E29.m1.2.2.1.1.3.2.3.2.cmml"><mi id="S4.E29.m1.2.2.1.1.3.2.3.2.2"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.2.2.cmml">s</mi><mo id="S4.E29.m1.2.2.1.1.3.2.3.2.1"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.2.1.cmml">¯</mo></munder><mi id="S4.E29.m1.2.2.1.1.3.2.3.3"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.3.cmml">L</mi></msub></mrow><mo id="S4.E29.m1.2.2.1.1.3.1"
+    xref="S4.E29.m1.2.2.1.1.3.1.cmml">+</mo><munder accentunder="true" id="S4.E29.m1.2.2.1.1.3.3"
+    xref="S4.E29.m1.2.2.1.1.3.3.cmml"><mi id="S4.E29.m1.2.2.1.1.3.3.2" xref="S4.E29.m1.2.2.1.1.3.3.2.cmml">ν</mi><mo
+    id="S4.E29.m1.2.2.1.1.3.3.1" xref="S4.E29.m1.2.2.1.1.3.3.1.cmml">¯</mo></munder></mrow></mrow><mrow
+    id="S4.E29.m1.3.3.2.2" xref="S4.E29.m1.3.3.2.2.cmml"><mi id="S4.E29.m1.3.3.2.2.2"
+    xref="S4.E29.m1.3.3.2.2.2.cmml">C</mi><mo id="S4.E29.m1.3.3.2.2.1" xref="S4.E29.m1.3.3.2.2.1.cmml">=</mo><mrow
+    id="S4.E29.m1.3.3.2.2.3.2" xref="S4.E29.m1.3.3.2.2.3.1.cmml"><mo id="S4.E29.m1.3.3.2.2.3.2.1"
+    xref="S4.E29.m1.3.3.2.2.3.1.1.cmml">[</mo><mtable columnspacing="5pt" displaystyle="true"
+    rowspacing="0pt" id="S4.E29.m1.1.1" xref="S4.E29.m1.1.1.cmml"><mtr id="S4.E29.m1.1.1a"
+    xref="S4.E29.m1.1.1.cmml"><mtd id="S4.E29.m1.1.1b" xref="S4.E29.m1.1.1.cmml"><mn
+    id="S4.E29.m1.1.1.1.1.1" xref="S4.E29.m1.1.1.1.1.1.cmml">1</mn></mtd><mtd id="S4.E29.m1.1.1c"
+    xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.1.2.1" xref="S4.E29.m1.1.1.1.2.1.cmml">0</mn></mtd><mtd
+    id="S4.E29.m1.1.1d" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.1.3.1" xref="S4.E29.m1.1.1.1.3.1.cmml">0</mn></mtd><mtd
+    id="S4.E29.m1.1.1e" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.1.4.1" xref="S4.E29.m1.1.1.1.4.1.cmml">0</mn></mtd></mtr><mtr
+    id="S4.E29.m1.1.1f" xref="S4.E29.m1.1.1.cmml"><mtd id="S4.E29.m1.1.1g" xref="S4.E29.m1.1.1.cmml"><mn
+    id="S4.E29.m1.1.1.2.1.1" xref="S4.E29.m1.1.1.2.1.1.cmml">0</mn></mtd><mtd id="S4.E29.m1.1.1h"
+    xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.2.2.1" xref="S4.E29.m1.1.1.2.2.1.cmml">1</mn></mtd><mtd
+    id="S4.E29.m1.1.1i" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.2.3.1" xref="S4.E29.m1.1.1.2.3.1.cmml">0</mn></mtd><mtd
+    id="S4.E29.m1.1.1j" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.2.4.1" xref="S4.E29.m1.1.1.2.4.1.cmml">0</mn></mtd></mtr><mtr
+    id="S4.E29.m1.1.1k" xref="S4.E29.m1.1.1.cmml"><mtd id="S4.E29.m1.1.1l" xref="S4.E29.m1.1.1.cmml"><mn
+    id="S4.E29.m1.1.1.3.1.1" xref="S4.E29.m1.1.1.3.1.1.cmml">0</mn></mtd><mtd id="S4.E29.m1.1.1m"
+    xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.3.2.1" xref="S4.E29.m1.1.1.3.2.1.cmml">0</mn></mtd><mtd
+    id="S4.E29.m1.1.1n" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.3.3.1" xref="S4.E29.m1.1.1.3.3.1.cmml">0</mn></mtd><mtd
+    id="S4.E29.m1.1.1o" xref="S4.E29.m1.1.1.cmml"><mn id="S4.E29.m1.1.1.3.4.1" xref="S4.E29.m1.1.1.3.4.1.cmml">0</mn></mtd></mtr></mtable><mo
+    id="S4.E29.m1.3.3.2.2.3.2.2" xref="S4.E29.m1.3.3.2.2.3.1.1.cmml">]</mo></mrow></mrow></mrow><annotation-xml
+    encoding="MathML-Content" id="S4.E29.m1.3b"><apply id="S4.E29.m1.3.3.3.cmml" xref="S4.E29.m1.3.3.2"><csymbol
+    cd="ambiguous" id="S4.E29.m1.3.3.3a.cmml" xref="S4.E29.m1.3.3.2.3">formulae-sequence</csymbol><apply
+    id="S4.E29.m1.2.2.1.1.cmml" xref="S4.E29.m1.2.2.1.1"><apply id="S4.E29.m1.2.2.1.1.2.cmml"
+    xref="S4.E29.m1.2.2.1.1.2"><ci id="S4.E29.m1.2.2.1.1.2.1.cmml" xref="S4.E29.m1.2.2.1.1.2.1">¯</ci><ci
+    id="S4.E29.m1.2.2.1.1.2.2.cmml" xref="S4.E29.m1.2.2.1.1.2.2">𝑚</ci></apply><apply
+    id="S4.E29.m1.2.2.1.1.3.cmml" xref="S4.E29.m1.2.2.1.1.3"><apply id="S4.E29.m1.2.2.1.1.3.2.cmml"
+    xref="S4.E29.m1.2.2.1.1.3.2"><ci id="S4.E29.m1.2.2.1.1.3.2.2.cmml" xref="S4.E29.m1.2.2.1.1.3.2.2">𝐶</ci><apply
+    id="S4.E29.m1.2.2.1.1.3.2.3.cmml" xref="S4.E29.m1.2.2.1.1.3.2.3"><csymbol cd="ambiguous"
+    id="S4.E29.m1.2.2.1.1.3.2.3.1.cmml" xref="S4.E29.m1.2.2.1.1.3.2.3">subscript</csymbol><apply
+    id="S4.E29.m1.2.2.1.1.3.2.3.2.cmml" xref="S4.E29.m1.2.2.1.1.3.2.3.2"><ci id="S4.E29.m1.2.2.1.1.3.2.3.2.1.cmml"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.2.1">¯</ci><ci id="S4.E29.m1.2.2.1.1.3.2.3.2.2.cmml"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.2.2">𝑠</ci></apply><ci id="S4.E29.m1.2.2.1.1.3.2.3.3.cmml"
+    xref="S4.E29.m1.2.2.1.1.3.2.3.3">𝐿</ci></apply></apply><apply id="S4.E29.m1.2.2.1.1.3.3.cmml"
+    xref="S4.E29.m1.2.2.1.1.3.3"><ci id="S4.E29.m1.2.2.1.1.3.3.1.cmml" xref="S4.E29.m1.2.2.1.1.3.3.1">¯</ci><ci
+    id="S4.E29.m1.2.2.1.1.3.3.2.cmml" xref="S4.E29.m1.2.2.1.1.3.3.2">𝜈</ci></apply></apply></apply><apply
+    id="S4.E29.m1.3.3.2.2.cmml" xref="S4.E29.m1.3.3.2.2"><ci id="S4.E29.m1.3.3.2.2.2.cmml"
+    xref="S4.E29.m1.3.3.2.2.2">𝐶</ci><apply id="S4.E29.m1.3.3.2.2.3.1.cmml" xref="S4.E29.m1.3.3.2.2.3.2"><csymbol
+    cd="latexml" id="S4.E29.m1.3.3.2.2.3.1.1.cmml" xref="S4.E29.m1.3.3.2.2.3.2.1">delimited-[]</csymbol><matrix
+    id="S4.E29.m1.1.1.cmml" xref="S4.E29.m1.1.1"><matrixrow id="S4.E29.m1.1.1a.cmml"
+    xref="S4.E29.m1.1.1"><cn type="integer" id="S4.E29.m1.1.1.1.1.1.cmml" xref="S4.E29.m1.1.1.1.1.1">1</cn><cn
+    type="integer" id="S4.E29.m1.1.1.1.2.1.cmml" xref="S4.E29.m1.1.1.1.2.1">0</cn><cn
+    type="integer" id="S4.E29.m1.1.1.1.3.1.cmml" xref="S4.E29.m1.1.1.1.3.1">0</cn><cn
+    type="integer" id="S4.E29.m1.1.1.1.4.1.cmml" xref="S4.E29.m1.1.1.1.4.1">0</cn></matrixrow><matrixrow
+    id="S4.E29.m1.1.1b.cmml" xref="S4.E29.m1.1.1"><cn type="integer" id="S4.E29.m1.1.1.2.1.1.cmml"
+    xref="S4.E29.m1.1.1.2.1.1">0</cn><cn type="integer" id="S4.E29.m1.1.1.2.2.1.cmml"
+    xref="S4.E29.m1.1.1.2.2.1">1</cn><cn type="integer" id="S4.E29.m1.1.1.2.3.1.cmml"
+    xref="S4.E29.m1.1.1.2.3.1">0</cn><cn type="integer" id="S4.E29.m1.1.1.2.4.1.cmml"
+    xref="S4.E29.m1.1.1.2.4.1">0</cn></matrixrow><matrixrow id="S4.E29.m1.1.1c.cmml"
+    xref="S4.E29.m1.1.1"><cn type="integer" id="S4.E29.m1.1.1.3.1.1.cmml" xref="S4.E29.m1.1.1.3.1.1">0</cn><cn
+    type="integer" id="S4.E29.m1.1.1.3.2.1.cmml" xref="S4.E29.m1.1.1.3.2.1">0</cn><cn
+    type="integer" id="S4.E29.m1.1.1.3.3.1.cmml" xref="S4.E29.m1.1.1.3.3.1">0</cn><cn
+    type="integer" id="S4.E29.m1.1.1.3.4.1.cmml" xref="S4.E29.m1.1.1.3.4.1">0</cn></matrixrow></matrix></apply></apply></apply></annotation-xml><annotation
+    encoding="application/x-tex" id="S4.E29.m1.3c">\underline{m}=C\underline{s}_{L}+\underline{\nu}\qquad
+    C=\left[\begin{array}[]{cccc}1&0&0&0\\ 0&1&0&0\\ 0&0&0&0\end{array}\right]</annotation></semantics></math>
+    |  | (29) |
+  prefs: []
+  type: TYPE_NORMAL
+- en: such that $C$ converts from homogeneous 3D to homogeneous 2D coordinates, and
+    the measurement noise is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{\nu}\sim 0.9N(0,3\times 10^{3}I)+0.1N(0,5\times 10^{4}I)$
+    |  | (30) |'
+  prefs: []
+  type: TYPE_TB
+- en: as noise and outliers associated with the projection operator. Since the goal
+    of this inverse problem is to estimate $\underline{z}$ in the 3DMM for a given
+    3D shape, we write ([29](#S4.E29 "In 4.3 3D shape Inverse Rendering (Reconstruction)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems")) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}=C(\underline{\bar{s}}_{L}+\underline{z}^{T}*S_{L})+\underline{\nu}$
+    |  | (31) |'
+  prefs: []
+  type: TYPE_TB
+- en: For the DM and DC solutions we generated 4000 sample faces as training data,
+    using the Besel face model [[48](#bib.bib48)] as the 3DMM. The DR regularizer
+    is a pre-trained classifier which discriminates a feasible 3D shape from random
+    distorted versions of it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In DC we implemented the forward function layer as described in [[48](#bib.bib48)],
+    with the resulting DM and DC DNN shown in Figure [10](#S4.F10 "Figure 10 ‣ 4.3
+    3D shape Inverse Rendering (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems"), where we used feed-forward layers because the
+    system input is the vectorized $72$ 2D homogeneous coordinates and its output
+    a weight vector. We design an encoder-decoder structure for DNNs, so as to map
+    the 2D coordinates to a low dimensional space and to recover the parameters from
+    that low dimensional representation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5c2e2e518c209392a2f3cbec1a0599ee.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: DNN structure for DM and DC for 3D shape inverse rendering.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the DR regularizer we trained a five layer MLP classifier to discriminate
+    between a 3D face shape, generated by BFM, and randomly generated 3D point clouds
+    as negative examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [11](#S4.F11 "Figure 11 ‣ 4.3 3D shape Inverse Rendering (Reconstruction)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems") shows
+    visual results obtained by each solution category, where heat maps visualize the
+    point-wise error magnitude relative to the ground truth. The visual results show
+    that the DM and DC methods can capture the main features in the face (including
+    eye, nose, mouth) better than the DR variants, however the differences between
+    DM and DC seem to be negligible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To validate our observations, the numerical results and respective statistical
+    analyses are shown in Tables [5](#S4.T5 "Table 5 ‣ 4.3 3D shape Inverse Rendering
+    (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse
+    Problems") and [6](#S4.T6 "Table 6 ‣ 4.3 3D shape Inverse Rendering (Reconstruction)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems"). Table [5](#S4.T5
+    "Table 5 ‣ 4.3 3D shape Inverse Rendering (Reconstruction) ‣ 4 Experiments ‣ Survey
+    of Deep Learning Methods for Inverse Problems") lists the RMSE values for each
+    solution category. We used 10 out of sample faces in the BFM model as test cases
+    for reporting the results. In the case of DR (Nelder-Mead) we set the start point,
+    i.e., $z_{0}$, as a random value and report the averaged result over 10 independent
+    runs. Note that the RMSE values are expected to be relatively large, since each
+    3D face shape provided by BFM is a point cloud of $53490$ 3D coordinates in the
+    range $[-8\times 10^{4},8\times 10^{4}]$. As a point of comparison, we computed
+    the average RMSE between a set of 500 generated 3D faces and 1000 random generated
+    faces, to have a sense of RMSE normalization to random prediction. The average
+    RMSE for random prediction is $1.28\times 10^{4}$, a factor of two to four times
+    larger than the RMSE values reported in Table [5](#S4.T5 "Table 5 ‣ 4.3 3D shape
+    Inverse Rendering (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep Learning Methods
+    for Inverse Problems").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Refer to caption](img/7a6fcdf60b1fdc16ba2bea1322788baf.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![Refer to caption](img/611221ac4be6729937fe5a899bce2648.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Figure 11: Qualitative Results for 3D inverse rendering. Each result is shown
+    as two faces, an upper with the actual 3D result, and a lower as a heat map showing
+    the error magnitude in each point of predicted face are shown in the form of heat
+    map for each prediction. For the DR method, the average error magnitude over 20
+    runs is reported. We use the Besel Face Model (BFM) [[48](#bib.bib48)] which is
+    based on a 3D mean face and compensates for outliers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| <svg version="1.1" height="10.87" width="85.56" overflow="visible"><g transform="translate(0,10.87)
+    scale(1,-1)"><g class="ltx_svg_fog" transform="translate(0,0)"><g transform="translate(0,6.07)
+    scale(1, -1)"><foreignobject width="42.78" height="6.07" overflow="visible">Training
+    Data</foreignobject></g></g> <g class="ltx_svg_fog" transform="translate(62.11,6.07)"><g
+    transform="translate(0,4.8) scale(1, -1)"><foreignobject width="23.45" height="4.8"
+    overflow="visible">Method</foreignobject></g></g></g></svg> | Noisy Test Cases
+    ($\times 10^{3}$) | Noisy + Outlier Test Cases ($\times 10^{3}$) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DM | DC | DR-GA | DR-NM | DM | DC | DR-GA | DR-NM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noise-free | $\mathbf{3.8\pm 2.0}$ | $4.2\pm 1.8$ | $3.9\pm 0.7$ | $4.2\pm
+    2.2$ | $5.9\pm 2.4$ | $\mathbf{5.5\pm 2.2}$ | $5.7\pm 1.2$ | $5.8\pm 3.3$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy | $\mathbf{3.5\pm 1.6}$ | $4.2\pm 2.1$ | $3.9\pm 0.7$ | $4.2\pm 2.2$
+    | $\mathbf{5.4\pm 3.5}$ | $5.7\pm 3.6$ | $5.7\pm 1.2$ | $5.8\pm 3.3$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | $\mathbf{3.3\pm 1.4}$ | $3.9\pm 1.8$ | $3.9\pm 0.7$ | $4.2\pm
+    2.2$ | $\mathbf{5.4\pm 2.9}$ | $\mathbf{5.4\pm 3.0}$ | $5.7\pm 1.2$ | $5.8\pm
+    3.3$ |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 5: Average test RMSE with standard deviation values (over 10 out-of-sample
+    faces of the BFM [[48](#bib.bib48)]) for 3D shape inverse rendering.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| <svg version="1.1" height="10.8" width="85.56" overflow="visible"><g transform="translate(0,10.8)
+    scale(1,-1)"><g class="ltx_svg_fog" transform="translate(0,0)"><g transform="translate(0,6.07)
+    scale(1, -1)"><foreignobject width="42.78" height="6.07" overflow="visible">Training
+    Data</foreignobject></g></g> <g class="ltx_svg_fog" transform="translate(55.45,6.07)"><g
+    transform="translate(0,4.73) scale(1, -1)"><foreignobject width="30.11" height="4.73"
+    overflow="visible">Test Data</foreignobject></g></g></g></svg> | Noisy | Noisy
+    + Outlier |'
+  prefs: []
+  type: TYPE_TB
+- en: '| p-value | DM | DC | DR-GA | DR-NM | DM | DC | DR-GA | DR-NM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noise-free | DM | - | 0.19 | 0.43 | 0.30 | - | 0.06 | 0.06 | 0.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.19 | - | 0.43 | 0.30 | 0.06 | - | 0.06 | 0.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.43 | 0.43 | - | 0.78 | 0.06 | 0.06 | - | 0.78 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DR-NM | 0.30 | 0.30 | 0.78 | - | 0.06 | 0.06 | 0.78 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy | DM | - | 0.19 | 0.19 | 0.30 | - | 0.06 | 0.06 | 0.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.19 | - | 0.30 | 0.30 | 0.06 | - | 0.12 | 0.30 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.19 | 0.30 | - | 0.78 | 0.06 | 0.12 | - | 0.78 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DR-NM | 0.30 | 0.30 | 0.78 | - | 0.06 | 0.30 | 0.78 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | DM | - | 0.06 | 0.06 | 0.06 | - | 1 | 0.06 | 0.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.06 | - | 0.06 | 0.06 | 1 | - | 0.06 | 0.06 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.06 | 0.06 | - | 0.78 | 0.06 | 0.06 | - | 0.78 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | DR-NM | 0.06 | 0.06 | 0.78 | - | 0.06 | 0.06 | 0.78 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 6: Wilcoxon signed rank test $p$ values for the 3D shape inverse rendering
+    problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [6](#S4.T6 "Table 6 ‣ 4.3 3D shape Inverse Rendering (Reconstruction)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems") shows
+    the results of the Wilcoxon $p$ values for statistical significance in the difference
+    between reported values in Table [5](#S4.T5 "Table 5 ‣ 4.3 3D shape Inverse Rendering
+    (Reconstruction) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse
+    Problems"), where we consider a $p$ value threshold of $0.07$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Based on the preceding numerical results and statistical analysis, we claim
+    the following about each solution category facing with Reconstruction inverse
+    problems:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Broadly, for training and test data not involving outliers, the overall performance
+    of the methods is similar, with DM outperforming. This observation shows that
+    the learning phase is not crucial in the presence of noise, and methods which
+    concentrate on the test data can achieve equal performance compared to trainable
+    frameworks.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In cases involving outliers the performance of the methods is more distinct,
+    but with the DM and DC methods, having a learning phase for optimizing their main
+    objective term, outperforming the DR variants. We conclude that a learning phase
+    is important to make methods robust to outliers.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of DR, the results show similar performance of the GA and NM optimization
+    schemes, with GA outperforming NM. This observation encourages the reader to use
+    optimization methods with more exploration power [[53](#bib.bib53)], the ability
+    of an optimization method to search broadly across the whole solution space, for
+    DR solutions to reconstruction problems.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In all cases, we can observe that although DC is unsupervised, its performance
+    when solving reconstruction inverse problems is near to that of DM, even outperforming
+    DM in the case of outliers. Therefore, it is possible to solve reconstruction
+    problems even without label information in the training phase.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: One interesting observation is that while 3D shape inverse rendering is a complex
+    reconstruction problem, the results for each solution category are qualitatively
+    similar to the very different and far simpler inverse problem of linear regression,
+    where DC similarly outperformed training data containing noisy and outlier samples.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 4.4 Single Object Tracking (Dynamic Estimation)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Up to this point we have investigated deep learning approaches applied to static
+    problems. We would now like to examine a dynamic inverse problem, that of single-object
+    tracking.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The classical approach for tracking is the Kalman Filter (KF) [[2](#bib.bib2)]
+    and its many variations, all based on a predictor-corrector framework, meaning
+    that the filter alternates between prediction (asserting the time-dynamics) and
+    correcting (asserting information based on the measurements). For the inverse
+    problem under study, we consider the current location estimation (filtering) in
+    a two dimensional environment. Synthetic object tracking problems, as considered
+    here, are studied in a variety of object tracking papers [[54](#bib.bib54), [55](#bib.bib55),
+    [56](#bib.bib56), [57](#bib.bib57)], where the specific tracking problem in this
+    section is inspired from the approach of [[39](#bib.bib39), [58](#bib.bib58)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: The inverse problem task is to estimate the current ball location, given the
+    noisy measurement in the corresponding time step and the previous state of the
+    ball. Formally, we denote the measured ball location by $\underline{m}^{t}$, and
+    the system state, the current location of the ball, as $\underline{z}^{t}$. The
+    graphical model in Figure [12](#S4.F12 "Figure 12 ‣ 4.4 Single Object Tracking
+    (Dynamic Estimation) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse
+    Problems") illustrates the problem definition of the tracking problem, where the
+    objective of the inverse problem is to address the dashed line, the inference
+    of system state from corresponding measurement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4d82f2f6afb149cd0fd6b671dd72d211.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: Graphical model for single object tracking: the goal is to estimate
+    the location of a moving ball in the current frame in a bounded 2D environment.
+    $\underline{m}^{t}$ denotes the current measured location and $\underline{z}^{t}$
+    is the current state.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To perform the experiments, we generate the training and test sets similar to
+    [[39](#bib.bib39)] except that we assume that our measurements are received from
+    a detection algorithm, which detects the ball location from input images having
+    a size of $32\times 32$ pixels, and that the movement of the ball is non-linear.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In each training and test sequence the ball starts from a random location in
+    the 2D environment, with a random speed and direction, and then moving for 30
+    time steps. The dynamic of the generated data includes changing the ball location
+    $\underline{z}^{t}$ and its velocity $\underline{v}^{t}$ as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{z}^{t}=\underline{v}^{(t-1)}\Delta t+\underline{z}^{(t-1)}$
+    |  | (32) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\underline{v}^{t}=\underline{v}^{(t-1)}-(c(\underline{v}^{(t-1)})^{2}\text{sign}(\underline{v}^{t}))$
+    |  | (33) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $c$ is a constant and is set to $0.001$. In our data, collisions with
+    walls are fully elastic and the velocity decreases exponentially over time. In
+    this simulation, the training and testing data-sets contain 10000 and 3000 sequences
+    of 30-time steps, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The training measurement noise is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\underline{\nu}\sim 0.95N(0,0.2I)+0.05N(0,10I),$ |  | (34)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: a mixture model of Gaussian noise with 5% outliers. The testing noise is similar,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\underline{\nu}\sim 0.85N(0,0.4I)+0.15N(0,10I)$ |  | (35)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: with a higher likelihood of outliers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The inverse problem is single-target tracking for which the dynamic of the model
+    is unknown. The inverse problem of interest is to find $\underline{z}^{t}$ in
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{z}^{t}=G(\underline{z}^{(t-1)},m_{t})$ |  | (36) |'
+  prefs: []
+  type: TYPE_TB
+- en: As shown in Figure [12](#S4.F12 "Figure 12 ‣ 4.4 Single Object Tracking (Dynamic
+    Estimation) ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems"),
+    we can model our problem as a first order Markov model where the current measurement
+    is independent of others given the current system state. The forward model is
+    then defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\underline{m}^{t}=F(\underline{z}^{t})=C\underline{z}^{t}+\underline{\nu},\quad
+    C=I,\quad\underline{\nu}\sim N(0,\sigma)$ |  | (37) |'
+  prefs: []
+  type: TYPE_TB
+- en: We can model Markov models using Recurrent Neural Networks (RNN) [[59](#bib.bib59),
+    [60](#bib.bib60), [61](#bib.bib61), [62](#bib.bib62)]. The DNN structure for DM
+    and DC solution categories is shown in Figure [13](#S4.F13 "Figure 13 ‣ 4.4 Single
+    Object Tracking (Dynamic Estimation) ‣ 4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems"), in which the LSTM layers lead the learning process
+    to capture the time state and dynamic information in the data sequences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/01c96bd69e113111878506a153f57481.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13: DNN structure for DM and DC solution categories in the case of single
+    object tracking problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We design the regularizer of the DR category as a classifier to classify location
+    feasibility — those locations lying within the border of the 2D environment. Figure [14](#S4.F14
+    "Figure 14 ‣ 4.4 Single Object Tracking (Dynamic Estimation) ‣ 4 Experiments ‣
+    Survey of Deep Learning Methods for Inverse Problems") shows the positive and
+    negative samples which we used to train the DR regularizer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1d3af5df986012f2b3b179de48d17000.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14: The positive and negative samples used for training the DR regularizer,
+    where the black and gray samples are in the positive and negative classes, respectively.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As before, we used GA (DR-GA) and Nelder-Mead (DR-NM) algorithms as optimizers
+    for DR. In the case of using Nelder-Mead, the results vary as a function of starting
+    point $\underline{z}_{0}$, and found that using the last sequence measurement
+    as the starting point empirically gave the best result for DR-NM.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.4.1 Visual and Numerical Results and Statistical Analysis
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Table [7](#S4.T7 "Table 7 ‣ 4.4.1 Visual and Numerical Results and Statistical
+    Analysis ‣ 4.4 Single Object Tracking (Dynamic Estimation) ‣ 4 Experiments ‣ Survey
+    of Deep Learning Methods for Inverse Problems") includes the numerical results
+    obtained by each method in our experiments, where we report the average RMSE between
+    reference and predicted points on the test trajectory as the evaluation criterion
+    for each method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Training Data |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Noise-free &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy + Outlier &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | DM | DC | DR-GA | DR-NM | DM | DC | DR-GA | DR-NM | DM | DC | DR-GA
+    | DR-NM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RMSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; $\mathbf{1.70}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{\pm 0.05}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $1.79$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.21$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $2.05$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $1.85$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{1.72}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{\pm 0.08}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $2.04$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.28$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $2.05$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $1.85$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{0.39}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\mathbf{\pm 0.03}$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $1.94$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.02$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $2.05$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $1.85$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; $\pm 0.00$ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 7: RMSE obtained by deep learning solution categories for tracking. The
+    test data include both noise and outliers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| p-value (Wilcoxon Test) |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Training Data: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noise-free &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Training Data: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Training Data: &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Noisy + Outlier &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| DM | DC | DR-GA | DR-NM | DM | DC | DR-GA | DR-NM | DM | DC | DR-GA | DR-NM
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DM | - | 0.160 | 0.002 | 0.002 | - | 0.002 | 0.002 | 0.002 | - | 0.002 |
+    0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DC | 0.160 | - | 0.013 | 0.130 | 0.002 | - | 0.322 | 0.027 | 0.002 | - |
+    0.002 | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-GA | 0.002 | 0.013 | - | 0.002 | 0.002 | 0.322 | - | 0.002 | 0.002 | 0.002
+    | - | 0.002 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DR-NM | 0.002 | 0.130 | 0.002 | - | 0.027 | 0.002 | 0.002 | - | 0.002 | 0.002
+    | 0.002 | - |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 8: Pairwise p values for tracking: the Wilcoxon signed rank test checks
+    whether the obtained results are significantly different.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The obtained results and their statistical analysis are shown in Tables [7](#S4.T7
+    "Table 7 ‣ 4.4.1 Visual and Numerical Results and Statistical Analysis ‣ 4.4 Single
+    Object Tracking (Dynamic Estimation) ‣ 4 Experiments ‣ Survey of Deep Learning
+    Methods for Inverse Problems") and [8](#S4.T8 "Table 8 ‣ 4.4.1 Visual and Numerical
+    Results and Statistical Analysis ‣ 4.4 Single Object Tracking (Dynamic Estimation)
+    ‣ 4 Experiments ‣ Survey of Deep Learning Methods for Inverse Problems"), based
+    on which we conclude that
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of single object tracking, for which system parameters are permitted
+    to evolve and be measured over time [[2](#bib.bib2)], the DM category achieves
+    the best performance using all types of training data. The results are improved
+    when the training data contain representative noise and outliers.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When the training does not include outliers, the DR-NM category achieves the
+    second rank after DM; note that DR-NM is an unsupervised framework without a learning
+    phase, showing that a learning phase is not necessarily required, and that looking
+    only into test cases can give reasonable results.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When the training data include noisy and outlier samples, the solutions’ behaviour
+    for single object tracking is similar to that of restoration problems. In particular,
+    in single object tracking the measurements and system parameters are in the same
+    space, like restoration problems.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of DR solution category for dynamic estimation problems, it is observable
+    that, unlike reconstruction problems, the NM optimization scheme performs better
+    than the GA approach, emphasizing the importance of exploitation power [[53](#bib.bib53),
+    [63](#bib.bib63)], referring to the ability of an optimization method to concentrate
+    on a specific region of the solution space.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 5 Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Based on the statistical analyses adopted for robustness evaluation for each
+    case, Table [9](#S5.T9 "Table 9 ‣ 5 Discussion ‣ Survey of Deep Learning Methods
+    for Inverse Problems") summarizes the overall findings, for linear regression
+    and 3D shape inverse rendering as reconstruction, image denoising as restoration,
+    and single object tracking as dynamic estimation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Inverse Problem | Problem Type | Training Data | Test Data | Score (Larger
+    is better) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Linear Regression | Reconstruction | Noise-free | Noisy + Outlier | DC >
+    (DR-GA=DR-NM) > DM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | Noisy + Outlier | (DM = DC) > (DR-GA=DR-NM) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3D Shape Inverse Rendering | Reconstruction | Noise-free | Noisy | DM = DC
+    = DR-GA = DR-NM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noise-free | Noisy + Outlier | DC > (DR-GA=DR-NM) > DM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy | Noisy | DM = DC = DR-GA = DR-NM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy | Noisy + Outlier | DM > (DC = DR-GA = DR-NM) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | Noisy | DM > DC > (DR-GA = DR-NM) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | Noisy+ Outlier | (DM = DC) > (DR-GA=DR-NM) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Image &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Denoising &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Restoration | Noisy + Outlier | Noisy+ Outlier | DM > DC > (DR-GA = DR-NM)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Single Object Tracking | Dynamic Estimation | Noise-free | Noisy + Outlier
+    | (DM = DC) > DR-NM > DR-GA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy | Noisy + Outlier | DM > DR-NM > (DC = DR-GA) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Noisy + Outlier | Noisy + Outlier | DM > DC > DR-NM > DR-GA |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 9: Performance comparison by solution category and inverse problem types.
+    Note that $a>b$ means that method $a$ is statistically significantly better than
+    method $b$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'From Table [9](#S5.T9 "Table 9 ‣ 5 Discussion ‣ Survey of Deep Learning Methods
+    for Inverse Problems") we conclude the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of reconstruction inverse problems, the presence of outliers in
+    the training phase leads to distinct differences in robustness. Typically, DM
+    will be the best method when the training data include outliers, and DC will outperform
+    other methods based on having a data consistency term in its objective.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In reconstruction problems, comparing GA and NM optimization approaches in DR
+    shows that GA achieves better performance indicating the importance of exploration
+    power in optimization for this class of problems.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The restoration inverse problems, which recover the system parameters from some
+    measurements from the same space, need label information (as in DM) to be robust
+    against noise and outliers.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of restoration problems in static estimation, DM has the highest
+    rank among tested methods. We believe this is because, in the process of finding
+    a mapping from one space to itself, the exploitation of accurate solution matters
+    and this property is achieved using label information in the process of training
+    the framework.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the case of dynamic estimation problems, the DR solution performs well when
+    the training data do not include outlier samples. Therefore we conclude that this
+    class of problems could be solved without needing a learning phase and that solely
+    the test case is sufficient to find a robust solution.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The dynamic estimation problems have additional challenges stemming from the
+    time-dependent state information to be captured, an attribute which leads the
+    solution to have different behavior from other problem types. We observed that
+    there are similarities, based on the measurement and system parameter spaces,
+    between the robustness power of the solution categories’ performance in a dynamic
+    estimation problem and a static estimation problems with the same measurement
+    and system parameter spaces.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 6 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This paper investigated deep learning strategies to explicitly solve inverse
+    problems. The literature on deep learning methods for solving inverse problems
+    was classified into three categories, each of which was evaluated on sample inverse
+    problems of different types. Our focus is on the robustness of different categories,
+    particularly with respect to their handling of noise and outliers. The results
+    show that each solution category has different behaviours, in the sense of strengths
+    and weaknesses with regards to problem assumptions, such that the problem characteristics
+    need to be considered in selecting an appropriate solution mechanism for a given
+    inverse problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Typically, reconstruction problems need more exploration power and the existence
+    of outliers in their training data makes the DM category the most robust among
+    deep learning solution categories. Otherwise, when the training data do not include
+    outliers for reconstruction problems, DC achieves the best performance, although
+    not using label information in their training phase. The restoration problems
+    need a greater degree of exploitation power for which the DM methods are best
+    suited. In the case of dynamic estimation problems, when the training data do
+    not include outliers, DR achieves second rank, indicating that dynamic estimation
+    problems can be solved with reasonable robustness without a need for learning
+    in the presence of noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Bertero M and Boccacci P 1998 Introduction to inverse problems in imaging
+    (CRC press)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] Fieguth P 2010 Statistical image processing and multidimensional modeling
+    (Springer Science & Business Media)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] Stuart A M 2010 Inverse problems: a bayesian perspective Acta numerica  19
+    451–559'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] Lucas A, Iliadis M, Molina R and Katsaggelos A K 2018 Using deep neural
+    networks for inverse problems in imaging: beyond analytical methods IEEE Signal
+    Processing Magazine  35 20–36'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] Arridge S, Maass P, Öktem O and Schönlieb C B 2019 Solving inverse problems
+    using data-driven models Acta Numerica  28 1–174'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] Groetsch C 1984 The theory of tikhonov regularization for fredholm equations
+    104p, Boston Pitman Publication'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] Makovetskii A, Voronin S and Kober V 2015 Explicit solutions of one-dimensional
+    total variation problem Applications of Digital Image Processing XXXVIII vol 9599
+    (International Society for Optics and Photonics) p 959926'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] Balas V E, Roy S S, Sharma D and Samui P 2019 Handbook of deep learning
+    applications vol 136 (Springer)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] Samek W, Wiegand T and Müller K R 2017 Explainable artificial intelligence:
+    Understanding, visualizing and interpreting deep learning models arXiv preprint
+    arXiv:1708.08296'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] Kim H, Zollhöfer M, Tewari A, Thies J, Richardt C and Theobalt C 2018
+    Inversefacenet: Deep monocular inverse face rendering Proceedings of the IEEE
+    Conference on Computer Vision and Pattern Recognition pp 4625–4634'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] Canziani A, Paszke A and Culurciello E 2016 An analysis of deep neural
+    network models for practical applications arXiv preprint arXiv:1605.07678'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] Khan M, Lunnikivi H, Huttunen H and Boutellier J 2019 Comparing optimization
+    methods of neural networks for real-time inference 2019 27th European Signal Processing
+    Conference (EUSIPCO) (IEEE) pp 1–5'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] Han B, Yao Q, Yu X, Niu G, Xu M, Hu W, Tsang I and Sugiyama M 2018 Co-teaching:
+    Robust training of deep neural networks with extremely noisy labels Advances in
+    Neural Information Processing Systems pp 8527–8537'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] Aggarwal H K, Mani M P and Jacob M 2018 Modl: Model-based deep learning
+    architecture for inverse problems IEEE Transactions on Medical Imaging  38 394–405'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] Anirudh R, Thiagarajan J J, Kailkhura B and Bremer T 2018 An unsupervised
+    approach to solving inverse problems using generative adversarial networks arXiv
+    preprint arXiv:1805.07281'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] Chang, JH Rick, Chun-Liang, Li, Barnabas, Poczos, BVK, Vijaya Kumar and
+    Aswin, C Sankaranarayanan 2017 One network to solve them all–solving linear inverse
+    problems using deep projection models Proceedings of the IEEE International Conference
+    on Computer Vision pp 5888–5897'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] Adler J and Öktem O 2017 Solving ill-posed inverse problems using iterative
+    deep neural networks Inverse Problems  33 124007'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] Antholzer S, Haltmeier M and Schwab J 2019 Deep learning for photoacoustic
+    tomography from sparse data Inverse Problems in Science and Engineering  27 987–1005'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] Jin K H, McCann M T, Froustey E and Unser M 2017 Deep convolutional neural
+    network for inverse problems in imaging IEEE Transactions on Image Processing  26
+    4509–4522'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] Kelly B, Matthews T P and Anastasio M A 2017 Deep learning-guided image
+    reconstruction from incomplete data arXiv preprint arXiv:1709.00584'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] Zhang J and Ghanem B 2018 Ista-net: Interpretable optimization-inspired
+    deep network for image compressive sensing Proceedings of the IEEE Conference
+    on Computer Vision and Pattern Recognition pp 1828–1837'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Fan K, Wei Q, Wang W, Chakraborty A and Heller K 2017 Inversenet: Solving
+    inverse problems with splitting networks arXiv preprint arXiv:1712.00202'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Dosovitskiy A, Fischer P, Ilg E, Hausser P, Hazirbas C, Golkov V, Van
+    Der Smagt P, Cremers D and Brox T 2015 Flownet: Learning optical flow with convolutional
+    networks Proceedings of the IEEE International Conference on Computer Vision pp
+    2758–2766'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] Wang Z, Liu D, Yang J, Han W and Huang T 2015 Deep networks for image
+    super-resolution with sparse prior Proceedings of the IEEE International Conference
+    on Computer Vision pp 370–378'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] Xu L, Ren J S, Liu C and Jia J 2014 Deep convolutional neural network
+    for image deconvolution Advances in neural information processing systems pp 1790–1798'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] Schuler C J, Hirsch M, Harmeling S and Schölkopf B 2015 Learning to deblur
+    IEEE t Transactions on Pattern Analysis and Machine Intelligence  38 1439–1451'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] Engl H W, Hanke M and Neubauer A 1996 Regularization of inverse problems
+    vol 375 (Springer Science & Business Media)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] Mousavi A and Baraniuk R G 2017 Learning to invert: Signal recovery via
+    deep convolutional networks 2017 IEEE International Conference on Acoustics, Speech
+    and Signal Processing (ICASSP) pp 2272–2276'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] De los Reyes J C, Schönlieb C B and Valkonen T 2016 The structure of optimal
+    parameters for image restoration problems Journal of Mathematical Analysis and
+    Applications  434 464–500'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] McCann M T and Unser M 2019 Algorithms for biomedical image reconstruction
+    arXiv preprint arXiv:1901.03565'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] Häggström I, Schmidtlein C R, Campanella G and Fuchs T J 2019 Deeppet:
+    A deep encoder–decoder network for directly solving the pet image reconstruction
+    inverse problem Medical Image Analysis  54 253–262'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] Chen G, Li T, Chen Q, Ren S, Wang C and Li S 2019 Application of deep
+    learning neural network to identify collision load conditions based on permanent
+    plastic deformation of shell structures Computational Mechanics  64 435–449'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] Dittmer S, Kluth T, Maass P and Baguer D O 2019 Regularization by architecture:
+    A deep prior approach for inverse problems Journal of Mathematical Imaging and
+    Vision 1–15'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] Li H, Schwab J, Antholzer S and Haltmeier M 2018 Nett: Solving inverse
+    problems with deep neural networks arXiv preprint arXiv:1803.00092'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] Senouf O, Vedula S, Weiss T, Bronstein A, Michailovich O and Zibulevsky
+    M 2019 Self-supervised learning of inverse problem solvers in medical imaging
+    Domain Adaptation and Representation Transfer and Medical Image Learning with
+    Less Labels and Imperfect Data (Springer) pp 111–119'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] Yaman B, Hosseini S A H, Moeller S, Ellermann J, Uǧurbil K and Akçakaya
+    M 2019 Self-supervised physics-based deep learning mri reconstruction without
+    fully-sampled data arXiv preprint arXiv:1910.09116'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] Bar L and Sochen N 2019 Unsupervised deep learning algorithm for pde-based
+    forward and inverse problems arXiv preprint arXiv:1904.05417'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] Cha G, Lee M and Oh S 2019 Unsupervised 3d reconstruction networks Proceedings
+    of the IEEE International Conference on Computer Vision pp 3849–3858'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] Fraccaro M, Kamronn S, Paquet U and Winther O 2017 A disentangled recognition
+    and nonlinear dynamics model for unsupervised learning Advances in Neural Information
+    Processing Systems pp 3601–3610'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Maass P 2019 Deep learning for trivial inverse problems Compressed Sensing
+    and Its Applications (Springer) pp 195–209'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] Vito E D, Rosasco L, Caponnetto A, Giovannini U D and Odone F 2005 Learning
+    from examples as an inverse problem Journal of Machine Learning Research  6 883–904'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] Poggio T and Girosi F 1989 A theory of networks for approximation and
+    learning Tech. rep. Massachusetts Inst. of Tech Cambridge Artificial Intelligence
+    Lab'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] Cucker F and Smale S 2002 On the mathematical foundations of learning
+    Bulletin of the American Mathematical Society  39 1–49'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] Poggio T, Torre V and Koch C 1985 Computational vision and regularization
+    theory nature  317 314–319'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Lathuilière S, Mesejo P, Alameda-Pineda X and Horaud R 2019 A comprehensive
+    analysis of deep regression IEEE Transactions on Pattern Analysis and Machine
+    Intelligence'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] Chollet F et al. 2015 Keras [https://github.com/fchollet/keras](https://github.com/fchollet/keras)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] Kingma D P and Ba J 2014 Adam: A method for stochastic optimization arXiv
+    preprint arXiv:1412.6980'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] Aldrian O and Smith W A 2012 Inverse rendering of faces with a 3d morphable
+    model IEEE Transactions on Pattern Analysis and Machine Intelligence  35 1080–1093'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] Singer S and Nelder J 2009 Nelder-mead algorithm Scholarpedia  4 2928'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] Chaladze G and Kalatozishvili L 2017 Linnaeus 5 dataset for machine learning
+    Tech. rep. Tech. Rep'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] Buades A, Coll B and Morel J M 2011 Non-local means denoising Image Processing
+    On Line  1 208–212'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Blanz V, Vetter T et al. 1999 A morphable model for the synthesis of 3d
+    faces. Siggraph vol 99 pp 187–194'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] Eftimov T and Korošec P 2019 A novel statistical approach for comparing
+    meta-heuristic stochastic optimization algorithms according to the distribution
+    of solutions in the search space Information Sciences  489 255–273'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] Kim D Y, Vo B N, Vo B T and Jeon M 2019 A labeled random finite set online
+    multi-object tracker for video data Pattern Recognition  90 377–389'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] Choi C and Christensen H I 2013 Rgb-d object tracking: A particle filter
+    approach on gpu 2013 IEEE/RSJ International Conference on Intelligent Robots and
+    Systems (IEEE) pp 1084–1091'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] Black J, Ellis T, Rosin P et al. 2003 A novel method for video tracking
+    performance evaluation Proceedings of the IEEE InternationalWorkshop on Visual
+    Surveillance and Performance Evaluation of Tracking and Surveillance (VS-PETS
+    03) 125–132'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] Lyons D M and Benjamin D P 2009 Locating and tracking objects by efficient
+    comparison of real and predicted synthetic video imagery Intelligent Robots and
+    Computer Vision XXVI: Algorithms and Techniques vol 7252 (International Society
+    for Optics and Photonics) p 72520L'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] Vermaak J, Lawrence N D and Pérez P 2003 Variational inference for visual
+    tracking 2003 IEEE Computer Society Conference on Computer Vision and Pattern
+    Recognition, 2003\. Proceedings. vol 1 (IEEE) pp I–I'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] Krishnan R G, Shalit U and Sontag D 2017 Structured inference networks
+    for nonlinear state space models AAAI'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] Hafner D, Lillicrap T, Fischer I, Villegas R, Ha D, Lee H and Davidson
+    J 2019 Learning latent dynamics for planning from pixels International Conference
+    on Machine Learning (PMLR) pp 2555–2565'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] Rangapuram S S, Seeger M, Gasthaus J, Stella L, Wang Y and Januschowski
+    T 2018 Deep state space models for time series forecasting Proceedings of the
+    32nd international conference on neural information processing systems pp 7796–7805'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] Coskun H, Achilles F, DiPietro R, Navab N and Tombari F 2017 Long short-term
+    memory kalman filters: Recurrent neural estimators for pose regularization Proceedings
+    of the IEEE International Conference on Computer Vision pp 5524–5532'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] Xu J and Zhang J 2014 Exploration-exploitation tradeoffs in metaheuristics:
+    Survey and analysis Proceedings of the 33rd Chinese control conference (IEEE)
+    pp 8633–8638'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

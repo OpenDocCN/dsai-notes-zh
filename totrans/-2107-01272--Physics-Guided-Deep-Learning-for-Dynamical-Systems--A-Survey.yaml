@@ -1,0 +1,2835 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:53:25'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2107.01272] Physics-Guided Deep Learning for Dynamical Systems: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2107.01272](https://ar5iv.labs.arxiv.org/html/2107.01272)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Physics-Guided Deep Learning for Dynamical Systems: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Rui (Ray) Wang
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computer Science and Engineering
+  prefs: []
+  type: TYPE_NORMAL
+- en: University of California, San Diego
+  prefs: []
+  type: TYPE_NORMAL
+- en: ruw020@ucsd.edu &Rose Yu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computer Science and Engineering
+  prefs: []
+  type: TYPE_NORMAL
+- en: University of California, San Diego
+  prefs: []
+  type: TYPE_NORMAL
+- en: roseyu@ucsd.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Modeling complex physical dynamics is a fundamental task in science and engineering.
+    Traditional physics-based models are sample efficient, and interpretable but often
+    rely on rigid assumptions. Furthermore, direct numerical approximation is usually
+    computationally intensive, requiring significant computational resources and expertise,
+    and many real-world systems do not have fully-known governing laws. While deep
+    learning (DL) provides novel alternatives for efficiently recognizing complex
+    patterns and emulating nonlinear dynamics, its predictions do not necessarily
+    obey the governing laws of physical systems, nor do they generalize well across
+    different systems. Thus, the study of physics-guided DL emerged and has gained
+    great progress. Physics-guided DL aims to take the best from both physics-based
+    modeling and state-of-the-art DL models to better solve scientific problems. In
+    this paper, we provide a structured overview of existing methodologies of integrating
+    prior physical knowledge or physics-based modeling into DL, with a special emphasis
+    on learning dynamical systems. We also discuss the fundamental challenges and
+    emerging opportunities in the area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Modeling complex physical dynamics over a wide range of spatial and temporal
+    scales is a fundamental task in a wide range of fields including, for example,
+    fluid dynamics [[147](#bib.bib147)], cosmology [[156](#bib.bib156)], economics[[36](#bib.bib36)],
+    and neuroscience [[69](#bib.bib69)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dynamical systems are mathematical objects that are used to describe the evolution
+    of phenomena over time and space occurring in nature. Dynamical systems are commonly
+    described with differential equations which are equations related to one or more
+    unknown functions and their derivatives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 1.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Fix an integer $k\geq 1$ and let $U$ denote an open subset of $\mathbb{R}^{n}$.
+    Let $u:U\mapsto\mathbb{R}^{m}$ and we write $\bm{u}=(u^{1},...,u^{m})$, where
+    $x\in U$. Then an expression of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{F}(D^{k}\bm{u}(x),D^{k-1}\bm{u}(x),...,D\bm{u}(x),\bm{u}(x),x)=0$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: is called a $k^{\text{-th}}$-order system of partial differential equation (or
+    ordinary differential equation when $n=1$), where $\mathcal{F}:\mathbb{R}^{mn^{k}}\times\mathbb{R}^{mn^{k-1}}\times...\times\mathbb{R}^{mn}\times\mathbb{R}^{m}\times
+    U\mapsto\mathbb{R}^{m}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '$\mathcal{F}$ models the dynamics of a $n$-dimensional state $x\in\mathbb{R}^{n}$
+    and it can be either a linear or non-linear operator. Since most dynamics evolve
+    over time, one of the variables of $u$ is usually the time dimension. In general,
+    one must specify appropriate boundary and initial conditions of Equ.[1](#S1.E1
+    "In Definition 1\. ‣ 1 Introduction ‣ Physics-Guided Deep Learning for Dynamical
+    Systems: A Survey") to ensure the existence of a solution. Learning dynamical
+    systems is to search for a model $\mathcal{F}$ that can accurately describe the
+    behavior of the physical process insofar as we are interested.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Physics as a discipline has a long tradition of using first principles to describe
+    spatiotemporal dynamics. The laws of physics have greatly improved our understanding
+    of the physical world. Many physics laws are described by systems of highly nonlinear
+    differential equations that have direct implications for understanding and predicting
+    physical dynamics. However, these equations are usually too complicated to be
+    solvable. The current paradigm of numerical methods for solution approximation
+    is purely physics-based: known physical laws encoded in systems of coupled differential
+    equations are solved over space and time via numerical differentiation and integration
+    schemes [[66](#bib.bib66), [67](#bib.bib67), [100](#bib.bib100), [70](#bib.bib70),
+    [112](#bib.bib112), [131](#bib.bib131)]. However, these methods are tremendously
+    computationally intensive, requiring significant computational resources and expertise.
+    An alternative is seeking simplified models that are based on certain assumptions
+    and roughly can describe the dynamics, such as Reynolds-averaged Navier-stokes
+    equations for turbulent flows and Euler equations for gas dynamics [[25](#bib.bib25),
+    [88](#bib.bib88), [153](#bib.bib153)]. But it is highly nontrivial to obtain a
+    simplified model that can describe a phenomenon with satisfactory accuracy. More
+    importantly, for many complex real-world phenomena, only partial knowledge of
+    their dynamics is known. The equations may not fully represent the true system
+    states.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep Learning (DL) provides efficient alternatives to learn high-dimensional
+    spatiotemporal dynamics from massive datasets. It achieves so by directly predicting
+    the input-output mapping and bypassing numerical integration. Recent works have
+    shown that DL can generate realistic predictions and significantly accelerate
+    the simulation of physical dynamics relative to numerical solvers, from turbulence
+    modeling to weather prediction [[159](#bib.bib159), [81](#bib.bib81), [77](#bib.bib77),
+    [76](#bib.bib76), [79](#bib.bib79)]. This opens up new opportunities at the intersection
+    of DL and physical sciences, such as molecular dynamics[[142](#bib.bib142), [144](#bib.bib144)],
+    epidemiology[[170](#bib.bib170)], cardiology[[99](#bib.bib99), [158](#bib.bib158)]
+    and material science [[101](#bib.bib101), [22](#bib.bib22)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Despite the tremendous progress, DL is purely data-driven by nature, which
+    has many limitations. DL models still adhere to the fundamental rules of statistical
+    inference. The nonlinear and chaotic nature of real-world dynamics poses significant
+    challenges to existing DL frameworks. Without explicit constraints, DL models
+    are prone to make physically implausible forecasts, violating the governing laws
+    of physical systems. Additionally, DL models often struggle with generalization:
+    models trained on one dataset cannot adapt properly to unseen scenarios with different
+    distributions, known as distribution shift. For dynamics learning, the distribution
+    shift occurs not only because the dynamics are non-stationary and nonlinear, but
+    also due to the changes in system parameters, such as external forces and boundary
+    conditions. In a word, the current limitation of DL models for learning complex
+    dynamics is their lack of ability to understand the system solely from data and
+    cope with the distributional shifts that naturally occur.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neither DL alone nor purely physics-based approaches can be considered sufficient
+    for learning complex dynamical systems in scientific domains. Therefore, there
+    is a growing need for integrating traditional physics-based approaches with DL
+    models so that we can make the best of both types of approaches. There is already
+    a vast amount of work about physics-guided DL [[168](#bib.bib168), [46](#bib.bib46),
+    [17](#bib.bib17), [86](#bib.bib86), [76](#bib.bib76), [127](#bib.bib127), [18](#bib.bib18)],
+    but the focus on deep learning for dynamical systems is still nascent. Physics-guided
+    DL offers a set of tools to blend these physical concepts such as differential
+    equations and symmetry with deep neural networks. On one hand, these DL models
+    offer great computational benefits over traditional numerical solvers. On the
+    other hand, the physical constraints impose appropriate inductive biases on the
+    DL models, leading to accurate simulation, scientifically valid predictions, reduced
+    sample complexity, and guaranteed improvement in generalization to unknown environments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This survey paper aims to provide a structured overview of existing methodologies
+    of incorporating prior physical knowledge into DL models for learning dynamical
+    systems. The paper is organized as below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [2](#S2 "2 Significance of Physics-Guided Deep Learning ‣ Physics-Guided
+    Deep Learning for Dynamical Systems: A Survey") describes the significance of
+    physics-guided DL.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [3](#S3 "3 Problem Formulation ‣ Physics-Guided Deep Learning for Dynamical
+    Systems: A Survey") formulates the four main learning problems of physics-guided
+    DL, including solving differential equations, dynamics forecasting, learning dynamics
+    residuals, and equation discovery.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [4](#S4 "4 Physics-Guided Loss Functions and Regularization ‣ Physics-Guided
+    Deep Learning for Dynamical Systems: A Survey")$\sim$[7](#S7 "7 Invariant and
+    Equivariant DL Models ‣ Physics-Guided Deep Learning for Dynamical Systems: A
+    Survey") categorizes existing physics-guided DL approaches into four groups based
+    on the way how physics and DL are combined. Each lead with a detailed review of
+    recent work as a case study and further categorized based on objectives or model
+    architecture.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [4](#S4 "4 Physics-Guided Loss Functions and Regularization ‣ Physics-Guided
+    Deep Learning for Dynamical Systems: A Survey"): Physics-guided loss function:
+    prior physics knowledge is imposed as additional soft constraints in the loss
+    function.'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [5](#S5 "5 Physics-Guided Design of Architecture ‣ Physics-Guided Deep
+    Learning for Dynamical Systems: A Survey"): Physics-guided architecture design:
+    prior physics knowledge is strictly incorporated into the design of neural network
+    modules.'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [6](#S6 "6 Hybrid Physics-DL Model ‣ Physics-Guided Deep Learning for
+    Dynamical Systems: A Survey"): Hybrid physics-DL models: complete physics-based
+    approaches are directly combined with DL models.'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: –
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [7](#S7 "7 Invariant and Equivariant DL Models ‣ Physics-Guided Deep
+    Learning for Dynamical Systems: A Survey"): Invariant and equivariant DL models:
+    DL models are designed to respect the symmetries of a given physical system.'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [8](#S8 "8 Discussion ‣ Physics-Guided Deep Learning for Dynamical
+    Systems: A Survey") summarizes the challenges in this field and discusses the
+    emerging opportunities for future research.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 2 Significance of Physics-Guided Deep Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This subsection provides an overview of the motivations and significance of
+    physics-guided DL for learning dynamical systems. By incorporating physical principles,
+    governing equations, mathematical modeling, and domain knowledge into DL models,
+    the rapidly growing field of physics-guided DL can potentially (1) accelerate
+    data simulation (2) build physically scientifically valid models (3) improve the
+    generalizability of DL models (4) discover governing equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Accelerate Data Simulation.
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Simulation is an important method of analyzing, optimizing, and designing real-world
+    processes, which are easily verified, communicated, and understood. It serves
+    as the surrogate modeling and digital twin and provides valuable insights into
+    complex physical systems. Traditional physics-based simulations often rely on
+    running numerical methods: known physical laws encoded in systems of coupled differential
+    equations are solved over space and time via numerical differentiation and integration
+    schemes [[66](#bib.bib66), [100](#bib.bib100), [70](#bib.bib70), [112](#bib.bib112),
+    [131](#bib.bib131)]. Although the governing equations of many physical systems
+    are known, finding approximate solutions using numerical algorithms and computers
+    is still prohibitively expensive. Because the discretization step size is usually
+    confined to be very small due to stability constraints when the dynamics are complex.
+    Moreover, the performance of numerical methods can highly depend on the initial
+    guesses of unknown parameters [[68](#bib.bib68)]. Recently, DL has demonstrated
+    great success in the automation, acceleration, and streamlining of highly compute-intensive
+    workflows for science [[127](#bib.bib127), [153](#bib.bib153), [81](#bib.bib81)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep dynamics models can directly approximate high-dimensional spatiotemporal
+    dynamics by directly forecasting the future states and bypassing numerical integration
+    [[161](#bib.bib161), [38](#bib.bib38), [135](#bib.bib135), [119](#bib.bib119),
+    [135](#bib.bib135), [162](#bib.bib162), [117](#bib.bib117), [96](#bib.bib96)].
+    These models are trained to make forward predictions given the historic frames
+    as input with one or more steps of supervision and can roll out up to hundreds
+    of steps during inference. DL models are usually faster than classic numerical
+    solvers by orders of magnitude since DL is able to take much larger space or time
+    steps than classical solvers [[119](#bib.bib119)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another common approach is that deep neural networks can directly approximate
+    the solution of complex coupled differential equations via gradient-based optimization,
+    which is the so-called physics-informed neural networks (PINNs). This approach
+    has shown success in approximating a variety of PDEs [[124](#bib.bib124), [123](#bib.bib123),
+    [24](#bib.bib24), [60](#bib.bib60)]. Additionally, deep generative models, such
+    as diffusion models and score-based generative models, have been shown effective
+    in accurate molecule graph generation [[57](#bib.bib57), [65](#bib.bib65)]. The
+    computer graphics community has also investigated using DL to speed up numerical
+    simulations for generating realistic animations of fluids such as water and smoke
+    [[77](#bib.bib77), [153](#bib.bib153), [167](#bib.bib167), [172](#bib.bib172)].
+    However, the community focuses more on the visual realism of the simulation rather
+    than the physical characteristics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Build Scientifically Valid Models.
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Despite the tremendous progress of DL for science, e.g., atmospheric science
+    [[127](#bib.bib127)], computational biology [[1](#bib.bib1)], material science
+    [[22](#bib.bib22)], quantum chemistry [[141](#bib.bib141)], it remains a grand
+    challenge to incorporate physical principles in a systematic manner to the design,
+    training, and inference of such models. DL models are essentially statistical
+    models that learn patterns from the data they are trained on. Without explicit
+    constraints, DL models, when trained solely on data, are prone to make scientifically
+    implausible predictions, violating the governing laws of physical systems. In
+    many scientific applications, it is important that the predictions made by DL
+    models are consistent with the known physical laws and constraints. For example,
+    in fluid dynamics, a model that predicts the velocity field of a fluid must satisfy
+    the conservation of mass and momentum. In materials science, a model that predicts
+    the properties of a material must obey the laws of thermodynamics and the principles
+    of quantum mechanics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, to build trustworthy predictive models for science and engineering, we
+    need to leverage known physical principles to guide DL models to learn the correct
+    underlying dynamics instead of simply fitting the observed data. For instance,
+    [[75](#bib.bib75), [71](#bib.bib71), [171](#bib.bib171), [10](#bib.bib10), [58](#bib.bib58),
+    [33](#bib.bib33)] improve the physical and statistical consistency of DL models
+    by explicitly regularising the loss function with physical constraints. Hybrid
+    DL models, e.g., [[104](#bib.bib104), [4](#bib.bib4), [26](#bib.bib26)] integrate
+    differential equations in DL for temporal dynamics forecasting and achieve promising
+    performance. [[98](#bib.bib98)] and [[49](#bib.bib49)] studied tensor invariant
+    neural networks that can learn the Reynolds stress tensor while preserving Galilean
+    invariance. [[159](#bib.bib159)] presented a hybrid model that combines the numerical
+    RANS-LES coupling method with a custom-designed U-net. The model uses the temporal
+    and spatial filters in the RANS-LES coupling method to guide the U-net in learning
+    both large and small eddies. This approach improves the both accuracy and physical
+    consistency of the model, making it more effective at representing the complex
+    flow phenomena observed in many fluid dynamics applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Improve the generalizability of DL models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'DL models often struggle with generalization: models trained on one dataset
+    cannot adapt properly to unseen scenarios with distributional shifts that may
+    naturally occur in dynamical systems [[84](#bib.bib84), [115](#bib.bib115), [103](#bib.bib103),
+    [2](#bib.bib2), [160](#bib.bib160)]. Because they learn to represent the statistical
+    patterns in the training data, rather than the underlying causal relationships.
+    In addition, most current approaches are still trained to model a specific system
+    and multiple systems with close distributions, making it challenging to meet the
+    needs of the scientific domain with heterogeneous environments. Thus, it is imperative
+    to develop generalizable DL models that can learn and generalize well across systems
+    with various parameter domains.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prior physical knowledge can be considered as an inductive bias that can place
+    a prior distribution on the model class and shrink the model parameter search
+    space. With the guide of inductive bias, DL models can better capture the underlying
+    dynamics from the data that are consistent with physical laws. Across different
+    data domains and systems, the laws of physics stay constant. Hence, integrating
+    physical laws in DL enables the models to generalize outside of the training domain
+    and even to different systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Embedding symmetries into DL models is one way to improve the generalization,
+    which we will discuss in detail in subsection [7](#S7 "7 Invariant and Equivariant
+    DL Models ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey"). For
+    example, [[161](#bib.bib161)] designed deep equivariant dynamics models that respect
+    the rotation, scaling, and uniform motion symmetries in fluid dynamics. The models
+    are both theoretically and experimentally robust to distributional shifts by symmetry
+    group transformations and enjoy favorable sample complexity compared with data
+    augmentation. There are many other ways to improve the generalization of DL models
+    by incorporating other physical knowledge. [[162](#bib.bib162)] proposed a meta-learning
+    framework to forecast systems with different parameters. It leverages prior physics
+    knowledge to distinguish different systems. Specifically, it uses an encoder to
+    infer the physical parameters of different systems and a prediction network to
+    adapt and forecast giving the inferred system. Moreover, [[48](#bib.bib48)] encodes
+    Lyapunov stability into an autoencoder model for predicting fluid flow and sea
+    surface temperature. They show improved generalizability and reduced prediction
+    uncertainty for neural nets that preserve Lyapunov stability. [[143](#bib.bib143)]
+    shows adding spectral normalization to DNN to regularize its Lipschitz continuity
+    can greatly improve the generalization to new input domains on the task of drone
+    landing control.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Discover Governing Equations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the main objectives of science is to discover fundamental laws that can
+    solve practical problems [[46](#bib.bib46), [44](#bib.bib44)]. The discovery of
+    governing equations is crucial as it enables us to comprehend the underlying physical
+    laws that regulate complex systems. By identifying the mathematical models that
+    describe the behavior of a system, we can make accurate predictions and gain insights
+    into how the system will behave under different conditions. This knowledge can
+    be applied to optimize the performance of engineering systems, improve the precision
+    of weather forecasts, and understand the mechanisms behind biological processes,
+    among other applications [[45](#bib.bib45), [15](#bib.bib15)]. However, discovering
+    governing equations is a challenging task for various reasons. Firstly, real-world
+    systems are frequently complex and involve many interdependent variables, making
+    it difficult to identify the relevant variables and their relationships. Secondly,
+    many systems are nonlinear and involve interactions between variables that are
+    hard to model using linear equations. Thirdly, the available data may be noisy
+    or incomplete, making it challenging to extract meaningful patterns and relationships.
+    Despite these challenges, recent advances in machine learning have made it possible
+    to automate the process of governing equations discovery and identify complex,
+    nonlinear models from data. These approaches may lead to new discoveries and insights
+    into the behavior of complex systems for a wide range of applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Discovering governing equations from data is often accomplished by defining
+    a large set of possible mathematical basis functions and learning the coefficients.
+    [[19](#bib.bib19), [20](#bib.bib20), [73](#bib.bib73), [15](#bib.bib15), [138](#bib.bib138)]
+    proposed to find ordinary differential equations by creating a dictionary of possible
+    basis functions and discovering sparse, low-dimensional, and nonlinear models
+    from data using the sparse identification. More recent work, such as [[89](#bib.bib89),
+    [128](#bib.bib128)], incorporated neural networks to further augment the dictionary
+    to model more complex dynamics. [[23](#bib.bib23)] contributed to this trend by
+    introducing an efficient first-order conditional gradient algorithm for solving
+    the optimization problem of finding the best sparse fit to observational data
+    in a large library of potential nonlinear models. Alternatively, [[110](#bib.bib110),
+    [132](#bib.bib132)] presented a shallow neural network approach, EQL to identify
+    concise equations from data. They replaced the activation functions with predefined
+    basis functions, including identity and trigonometry functions, and used specially
+    designed division units to model division relationships in the potential governing
+    equations. Similarly, [[105](#bib.bib105), [106](#bib.bib106)] designed PDE-Nets
+    that use convolution to approximate differential operators and symbolic neural
+    networks to approximate and recover multivariate functions. These models could
+    learn various functional relations, with and without divisions, from noisy data
+    in a confined domain. However, scalability, overfitting, and over-reliance on
+    high-quality measurement data remain critical concerns in this research area [[126](#bib.bib126)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Problem Formulation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In light of the motivation and significance of physics-guided deep learning
+    we discuss in the previous section, the primary research efforts in this field
+    have been aimed at tackling the following four fundamental problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Solving Differential Equations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When $\mathcal{F}$ in Eq. [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣
+    Physics-Guided Deep Learning for Dynamical Systems: A Survey") is known but Eq.
+    [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣ Physics-Guided Deep Learning
+    for Dynamical Systems: A Survey") is too complicated to be solvable, researchers
+    tend to directly solve the differential Eq.ations by approximating solution of
+    $\bm{u}(x)$ with a deep neural network, and enforcing the governing equations
+    as a soft constraint on the output of the neural nets during training at the same
+    time[[125](#bib.bib125), [124](#bib.bib124), [85](#bib.bib85)]. This approach
+    can be formulated as the following optimization problem,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{min}_{\theta}\;\mathcal{L}(\bm{u})+\lambda_{\mathcal{F}}\mathcal{L}_{\mathcal{F}}(\bm{u})$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '$\mathcal{L}(\bm{u})$ denotes the misfit of neural net predictions and the
+    training data points. $\theta$ denotes the neural net parameters. $\mathcal{L}_{\mathcal{F}}(\bm{u})$
+    is a constraint on the residual of the differential equation system under consideration
+    and $\lambda_{\mathcal{F}}$ is a regularization parameter that controls the emphasis
+    on this residual. The goal is then to train the neural nets to minimize the loss
+    function in Eq. [2](#S3.E2 "In 3.1 Solving Differential Equations ‣ 3 Problem
+    Formulation ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Learning Dynamics Residuals
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When $\mathcal{F}$ in Eq. [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣
+    Physics-Guided Deep Learning for Dynamical Systems: A Survey") is partially know,
+    we can use neural nets to learn the errors or residuals made by physics-based
+    models [[37](#bib.bib37), [176](#bib.bib176), [74](#bib.bib74)]. The key is to
+    learn the bias of physics-based models and correct it with the help of deep learning.
+    The final prediction of the state is composed of the simulation from the physics-based
+    models and the residual prediction from neural nets as below,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\hat{\bm{u}}=\hat{\bm{u}}_{\mathcal{F}}+\hat{\bm{u}}_{\text{NN}}.$ |  |
+    (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\hat{u}_{\mathcal{F}}$ is the prediction obtained by numerically solving
+    $\mathcal{F}$, $\hat{u}_{\text{NN}}$is the prediction from neural networks and
+    $\hat{u}$ is the final prediction made by hybrid physics-DL models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This learning problem generally involves two training strategies: 1) joint
+    training: optimizing the parameters in the differential equations and the neural
+    networks at the same time by minimizing the prediction errors of the system states.
+    2) two-stage training: we first fit differential equations on the training data
+    and obtain the residuals, then directly optimize the neural nets on predicting
+    the residuals.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Dynamics Forecasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When $\mathcal{F}$ in Eq. [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣
+    Physics-Guided Deep Learning for Dynamical Systems: A Survey") is unknown or numerically
+    solving Eq. [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣ Physics-Guided Deep
+    Learning for Dynamical Systems: A Survey") requires too much computation, many
+    works studied learning high-dimensional spatiotemporal dynamics by directly predicting
+    the input-output system state mapping and bypassing numerical discretization and
+    integration [[38](#bib.bib38), [76](#bib.bib76), [142](#bib.bib142), [161](#bib.bib161)].
+    If we assume the first dimension $x_{1}$ of $\bm{u}$ in Eq. [1](#S1.E1 "In Definition
+    1\. ‣ 1 Introduction ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey")
+    is the time dimension $t$, then the problem of dynamics forecasting can be defined
+    as learning a map $f:\mathbb{R}^{n\times k}\mapsto\mathbb{R}^{n\times q}$ that
+    maps a sequence of historic states to future states of the dynamical system,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $f(\bm{u}\text{\footnotesize$(t-k+1,\cdot)$},...,\bm{u}\text{\footnotesize$(t,\cdot)$})=\bm{u}\text{\footnotesize$(t+1,\cdot)$},...,\bm{u}\text{\footnotesize$(t+q,\cdot)$}$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $k$ is the input length and $q$ is the output length. $f$ is commonly
+    approximated with purely data-driven or physics-guided neural nets and the neural
+    nets are optimized by minimizing the prediction errors of the state $\mathcal{L}(\bm{u})$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.4 Search for Governing Equations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When $\mathcal{F}$ in Eq. [1](#S1.E1 "In Definition 1\. ‣ 1 Introduction ‣
+    Physics-Guided Deep Learning for Dynamical Systems: A Survey") is unknown and
+    it is necessary to determine the precise governing equations to solve practical
+    problems, numerous efforts have been made to discover the exact mathematical formulation
+    of $\mathcal{F}$. The most common approach is to select from a wide range of possible
+    candidate functions and choose the model that minimizes fitting errors on observation
+    data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, based on Definition [1](#Thmdfn1 "Definition 1\. ‣ 1 Introduction
+    ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey"), the goal of
+    discovering governing equations is to find an approximate function $\mathcal{\hat{F}}=\Phi(\bm{u}(x),x)\bm{\theta}\approx\mathcal{F}$,
+    where $\Phi(\bm{u}(x),x)=[\phi_{1}(\bm{u}(x),x),\phi_{2}(\bm{u},x),\ldots,\phi_{p}(\bm{u},x)]$
+    is a library of candidate functions, such as polynomials and trigonometric functions,
+    and $\bm{\theta}\in\mathbb{R}^{p}$ is a sparse vector indicating which candidate
+    functions are active in the dynamics. This problem can be formulated as an optimization
+    problem, where we aim to minimize the following cost function over a set of observed
+    data $\{\bm{y}_{i}\}_{i=1}^{n}$ of $\bm{u}$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{L}(\bm{\theta})=\sum_{i=1}^{n}&#124;&#124;\Phi(\bm{y}_{i},x)\bm{\theta}&#124;&#124;^{2}$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: 4 Physics-Guided Loss Functions and Regularization
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Complex physical dynamics occur over a wide range of spatial and temporal scales.
+    Standard DL models may simply fit the observed data while failing to learn the
+    correct underlying dynamics, thus leading to low physical consistency and poor
+    generalizability. One of the simplest and most widely used approaches to incorporate
+    physical constraints is via designing loss functions (regularization). Physics-guided
+    loss functions (regularization) can assist DL models to capture correct and generalizable
+    dynamic patterns that are consistent with physical laws. Furthermore, the loss
+    functions constrained by physics laws can reduce the possible search space of
+    parameters. This approach is sometimes referred to as imposing differentiable
+    “soft” constraints, which will be contrasted with imposing “hard” constraints
+    (physics-guided architecture) in the next section. In this chapter, we will start
+    with a case study of physics-guided loss functions, and then categorize these
+    types of methods based on their objectives, including solving differential equations,
+    improving prediction, and accelerating data generation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4.1 Case Study: Physics-informed Neural Networks'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Physics-informed Neural Networks (PINNs) approach [[123](#bib.bib123),
+    [125](#bib.bib125), [34](#bib.bib34), [124](#bib.bib124), [21](#bib.bib21)] is
+    a prime example of incorporating physics knowledge into the design of loss functions.
+    PINNs have shown efficiency and accuracy in learning simple differential equations.
+    Using fully connected neural networks, PINNs directly approximate the solution
+    of differential equations with space coordinates and time stamps as inputs. These
+    networks are trained by minimizing both the loss on measurements and the residual
+    function error through the partial differential equation. More specifically, based
+    on the Def. [1](#Thmdfn1 "Definition 1\. ‣ 1 Introduction ‣ Physics-Guided Deep
+    Learning for Dynamical Systems: A Survey"), a fully connected neural network is
+    employed to model solution $\bm{\hat{u}}(x,t|\bm{\theta}_{\text{PINN}})$, where
+    $\bm{\theta}_{\text{PINN}}$ denotes the weights of the PINN and be optimized by
+    minimizing the following loss function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{L}_{\text{PINN}}=\mathcal{L}(\bm{u})+\lambda_{\mathcal{F}}\mathcal{L}_{\mathcal{F}}(\bm{u})$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: $\mathcal{L}(\bm{u})=\|\bm{\hat{u}}-\bm{y}\|_{\Gamma}$ is the error between
+    the $\bm{\hat{u}}(x,t|\bm{\theta}_{\text{PINN}})$ and the set of boundary conditions
+    and measured data on the set of points $\Gamma$ where the boundary conditions
+    and data are defined. $\mathcal{L}_{\mathcal{F}}=\|\mathcal{F}(\bm{\hat{u}}(x,t|\bm{\theta}_{\text{PINN}}),x,t)\|_{\Gamma}$
+    is the mean-squared error of the residual function to enforce the predictions
+    generated by PINNs satisfy the desired differential equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, while PINNs have shown some success in capturing the underlying physical
+    phenomena, [[85](#bib.bib85)] has pointed out that they often struggle to learn
+    complex physical systems due to the difficulties posed by PDE regularizations
+    in the optimization problem. Furthermore, the effectiveness of PINNs is highly
+    dependent on the quality of the input data, and performance may suffer in the
+    presence of noise or limited data [[28](#bib.bib28), [6](#bib.bib6), [174](#bib.bib174)].
+    Moreover, limited by poor generalizability of neural networks, PINNs have trouble
+    generalizing to the space and time domain that is not covered in the training
+    set [[84](#bib.bib84), [115](#bib.bib115), [2](#bib.bib2)]. These limitations
+    present significant challenges for the development and application of PINNs in
+    real-world applications. Nonetheless, continued research into PINNs may help to
+    overcome these challenges and improve their ability to capture and predict complex
+    physical phenomena.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Solving Differential Equations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Continuing from the previous discussion of PINNs in the previous section, to
+    overcome the optimization difficulties of PINNs, [[85](#bib.bib85)] proposed two
+    ways to alleviate this optimization problem. One is to start by training the PINN
+    on a small constraint coefficient and then gradually increase the coefficient
+    instead of using a big coefficient right away. The other one is training the PINN
+    to predict the solution one time step at a time instead of the entire space-time
+    at once. Furthermore, [[28](#bib.bib28)] found that PINNs can overfit and propagate
+    errors on domain boundaries, even when using physics-inspired regularizers. To
+    address this, they introduced Gaussian Process-based smoothing on boundary conditions
+    to recover PINNs’ performance against noise and errors in measurements. Moreover,
+    [[174](#bib.bib174)] proposed a Bayesian framework that combines PINNs with a
+    Bayesian network. Compared to PINNs, the hybrid model can provide uncertainty
+    quantification and more accurate predictions in scenarios with large noise because
+    it can avoid overfitting. Apart from PINNs, [[184](#bib.bib184)] proposed to use
+    flow-based generative models to learn the solutions of probabilistic PDEs while
+    the PDE constraints are enforced in the loss function. [[159](#bib.bib159)] investigated
+    using neural nets to learn the evolution of the velocity fields of incompressible
+    turbulent flow, the divergence of which is always zero. It found that constraining
+    the model with a divergence-free regularizer can reduce the divergence of prediction
+    and improve prediction accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Improving Prediction Performance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Physics-guided loss functions or regularization have shown great success in
+    improving prediction performance, especially the physical consistency of DL models.
+    [[75](#bib.bib75)] used neural nets to model lake temperature at different times
+    and different depths. They ensure that the predictions are physically meaningful
+    by regularizing that the denser water predictions are at lower depths than predictions
+    of less dense water. [[71](#bib.bib71)] further introduced a loss term that ensures
+    thermal energy conservation between incoming and outgoing heat fluxes for modeling
+    lake temperature. [[11](#bib.bib11)] designed conservation layers to strictly
+    enforce conservation laws in their NN emulator of atmospheric convection. [[9](#bib.bib9)]
+    introduced a more systematic way of enforcing nonlinear analytic constraints in
+    neural networks via constraints in the loss function. [[178](#bib.bib178)] incorporated
+    the loss of atomic force and atomic energy into neural nets for improved accuracy
+    of simulating molecular dynamics. [[101](#bib.bib101)] proposed a novel multi-fidelity
+    physics-constrained neural network for material modeling, in which the neural
+    net was constrained by the losses caused by the violations of the model, initial
+    conditions, and boundary conditions. [[42](#bib.bib42)] proposed a novel paradigm
+    for spatiotemporal dynamics forecasting that performs spatiotemporal disentanglement
+    using the functional variable separation. The specific-designed time invariance
+    and regression loss functions ensure the separation of spatial and temporal information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hamiltonian mechanics is a mathematical framework that describes the dynamics
+    of a system in terms of the total energy of the system, which is the sum of the
+    kinetic and potential energy. [[58](#bib.bib58)] proposed Hamiltonian Neural Nets
+    (HNN) that parameterizes a Hamiltonian with a neural network and then learn it
+    directly from data. The conservation of desired quantities is constrained in the
+    loss function during training. The proposed HNN has shown success in predicting
+    mass-spring and pendulum systems. Lagrangian mechanics describes the dynamics
+    of a system in terms of the difference between the kinetic energy and the potential
+    energy of the system. [[33](#bib.bib33)] proposed Lagrangian Neural Nets (LNN)
+    used a neural network to parameterize the Lagrangian function that is the kinetic
+    energy minus the potential energy. They trained the neural network with the Euler-Lagrange
+    constraint loss functions such that it can learn to approximately conserve the
+    total energy of the system. [[52](#bib.bib52)] further simplify the HNN and LNN
+    via explicit constraints. [[91](#bib.bib91)] further introduced a meta-learning
+    approach in HNN to find the structure of the Hamiltonian that can be adapted quickly
+    to a new instance of a physical system. [[182](#bib.bib182)] benchmark recent
+    energy-conserving neural network models based on Lagrangian/Hamiltonian dynamics
+    on four different physical systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.4 Data Generation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Simulation is an important method of analyzing, optimizing and designing real-world
+    processes. Current numerical methods require significant computational resources
+    when solving chaotic and complex differential equations. Because numerical discretization
+    step size is confined to be very small due to stability constraints [[68](#bib.bib68)].
+    Also, the estimation of unknown parameters by fitting equations to the observed
+    data requires much manual engineering in each application since the optimization
+    of the unknown parameters in the system highly depends on the initial guesses.
+    Thus, there is an increasing interest in utilizing deep generative models for
+    simulating complex physical dynamics. Many works also imposed physical constraints
+    in the loss function for better physical consistency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For instance, [[171](#bib.bib171)] enforced the constraints of covariance into
+    standard Generative Adversarial Networks (GAN) via statistical regularization,
+    which leads to faster training and better physical consistency compared with standard
+    GAN. [[172](#bib.bib172)] proposed tempoGAN for super-resolution fluid flow, in
+    which an advection difference loss is used to enforce the temporal coherence of
+    fluid simulation. [[166](#bib.bib166)] modified ESRGAN, which is a conditional
+    GAN designed for super-resolution, by replacing the adversarial loss with a loss
+    that penalizes errors in the energy spectrum between the generated images and
+    the ground truth data. Conditional GAN is also applied to emulating numeric hydroclimate
+    models in [[108](#bib.bib108)]. The simulation performance is further improved
+    by penalizing the snow water equivalent via the loss function. [[77](#bib.bib77)]
+    proposed a generative model to simulate fluid flows, in which a novel stream function-based
+    loss function is designed to ensure divergence-free motion for incompressible
+    flows. [[55](#bib.bib55)] proposed a physics-informed convolutional model for
+    flow super-resolution, in which the physical consistency of the generated high-resolution
+    flow fields is improved by minimizing the residuals of Navier-Stokes equations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.5 Pros and Cons
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: While physics-guided loss functions are easy to design and use, and can improve
+    prediction accuracy and physical consistency, they do have several limitations.
+    Firstly, the physical constraints incorporated in the loss functions are usually
+    considered soft constraints, and may not be strictly enforced. This means that
+    the desired physical properties may not be guaranteed when the models are applied
+    to new datasets. Secondly, PDE regularization can make loss landscapes more complex
+    and cause optimization issues that are difficult to address, as noted in [[85](#bib.bib85)].
+    Finally, there may be a trade-off between prediction errors and physics-guided
+    regularizers. For example, [[159](#bib.bib159)] investigated incompressible turbulent
+    flow prediction using neural nets and found that while constraining the model
+    with a divergence-free regularizer can reduce the divergence of predictions, too
+    much regularization may smooth out small eddies in the turbulence, resulting in
+    a larger prediction error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Physics-Guided Design of Architecture
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While incorporating physical constraints as regularizers in the loss function
+    can improve performance, DL is still used as a black box model in most cases.
+    The modularity of neural networks offers opportunities for the design of novel
+    neurons, layers, or blocks that encode specific physical properties. The advantage
+    of physics-guided NN architectures is that they can impose “hard” constraints
+    that are strictly enforced, compared to the “soft” constraints described in the
+    previous section. The “soft” constraints are much easier to design than hard constraints,
+    yet not required to be strictly satisfied. DL models with physics-guided architectures
+    have theoretically guaranteed properties, and hence are more interpretable and
+    generalizable. In this chapter, we will start with a case study of Turbulent-Flow
+    Net (TF-Net) that unifies a popular Computational Fluid Dynamics (CFD) technique
+    and a custom-designed U-net. We further categorize other related methods based
+    on their architectural design.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1beae1a49aa1fba54a7dd149f9126d0e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Turbulent Flow Net: three identical encoders to learn the transformations
+    of the three components of different scales, and one shared decoder that learns
+    the interactions among these three components to generate the predicted 2D velocity
+    field at the next instant. Each encoder-decoder pair can be viewed as a U-net
+    and the aggregation is a weighted summation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5.1 Case Study: Turbulent-Flow Net'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'TF-Net [[159](#bib.bib159)] is a physics-guided DL model for turbulent flow
+    prediction. As shown in Figure [1](#S5.F1 "Figure 1 ‣ 5 Physics-Guided Design
+    of Architecture ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey"),
+    it applies scale separation to model different ranges of scales of the turbulent
+    flow individually. Computational fluid dynamics (CFD) techniques are at the core
+    of present-day turbulence simulation. Direct Numerical simulations (DNS) are accurate
+    but not computationally feasible for practical applications. Great emphasis was
+    placed on the alternative approaches including Large Eddy Simulation (LES) and
+    Reynolds-averaged Navier-Stokes (RANS). Both resort to resolving large scales
+    while modeling small scales, using various averaging techniques and/or low-pass
+    filtering of the governing equations [[112](#bib.bib112), [131](#bib.bib131)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: One of the widely used CFD techniques, the RANS-LES coupling approach [[47](#bib.bib47)],
+    combines both Reynolds-averaged Equations (RANs) and Large Eddy Simulation (LES)
+    approaches in order to take advantage of both methods. Inspired by RANS-LES coupling,
+    TF-Net replaces a priori spectral filters with trainable convolutional layers.
+    The turbulent flow is decomposed into three components, each of which is approximated
+    by a specialized U-net to preserve the multiscale properties of the flow. A shared
+    decoder learns the interactions among these three components and generates the
+    final prediction. The motivation for this design is to explicitly guide the ML
+    model to learn the nonlinear dynamics of large-scale and Subgrid-Scale Modeling
+    motions as relevant to the task of spatiotemporal prediction. In other words,
+    we need to force the model to learn not only the large eddies but also the small
+    ones. When we train a predictive model directly on the data with MSE loss, the
+    model may overlook the small eddies and only focus on large eddies to achieve
+    reasonably good accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Besides RMSE, physically relevant metrics including divergence and energy spectrum
+    are used to evaluate the performance of the model’s prediction. Figure [2](#S5.F2
+    "Figure 2 ‣ 5.1 Case Study: Turbulent-Flow Net ‣ 5 Physics-Guided Design of Architecture
+    ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey") shows TF-Net
+    consistently outperforms all baselines on physically relevant metrics (Divergence
+    and Energy Spectrum). Constraining it with the divergence-free regularizer that
+    we described in the previous section can further reduce the Divergence. Figure
+    [3](#S5.F3 "Figure 3 ‣ 5.1 Case Study: Turbulent-Flow Net ‣ 5 Physics-Guided Design
+    of Architecture ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey")
+    shows the ground truth and predicted velocity along $x$ direction by TF-Net and
+    three best baselines. We see that the predictions by our TF-Net model are the
+    closest to the target based on the shape and frequency of the motions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also perform an ablation study to understand each component of TF-Net and
+    investigate whether the model has actually learned the flow with different scales.
+    Figure [2](#S5.F2 "Figure 2 ‣ 5.1 Case Study: Turbulent-Flow Net ‣ 5 Physics-Guided
+    Design of Architecture ‣ Physics-Guided Deep Learning for Dynamical Systems: A
+    Survey") right includes predictions and the outputs of each small U-net while
+    the other two encoders are zeroed out. We observe that the outputs of each small
+    U-net are the flow with different scales, which demonstrates that can learn multi-scale
+    behaviors. In summary, TF-Net is able to generate both accurate and physically
+    meaningful predictions of the velocity fields that preserve critical quantities
+    of relevance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3780eac2a4cb8268d3f373a399cd1635.png)![Refer to caption](img/2fe9e8509ab9d742a27bf3b3339023a9.png)![Refer
+    to caption](img/896a7ae030dbbd0b8928a4da9e245709.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: From left to right: Mean absolute divergence of different models’
+    predictions at varying forecasting horizon; The Energy Spectrum of the target,
+    TF-Net, U-net and ResNet on the leftmost square sub-region; Ablation Study: Ground
+    truth, prediction from TF-Net and the outputs of each small U-net while the other
+    two encoders are zeroed out.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/7474b2703880ca76dd9fc9d9606087f5.png)![Refer to caption](img/dec080b92a512057907bd4adac2a50ed.png)![Refer
+    to caption](img/6e412da89009989a5039a2cfb7f4914d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Ground truth and predicted velocity $u$ by TF-Net and three best
+    baselines (U-Net, ResNet, and GAN) at time $T+10$, $T+30$ to $T+60$ (suppose $T$
+    is the time step of the last input frame).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Convolutional architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Convolutional architecture remains dominant in most tasks of computer vision,
+    such as objection, image classification, and video prediction. Thanks to their
+    efficiency and desired inductive biases, such as locality and translation equivariance,
+    convolution neural nets have been widely applied to emulate and predict complex
+    spatiotemporal physical dynamics. Researchers have proposed various ways to bake
+    desired physical properties into the design of convolutional models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, [[72](#bib.bib72)] proposed to enforce hard linear spatial PDE
+    constraints within CNNs using the Fast Fourier Transform algorithm. [[35](#bib.bib35)]
+    modified the LSTM units to introduce an intermediate variable to preserve monotonicity
+    in a convolutional auto-encoder model for lake temperature. [[113](#bib.bib113)]
+    proposed a physics-guided convolutional model, PhyDNN, which uses physics-guided
+    structural priors and physics-guided aggregate supervision for modeling the drag
+    forces acting on each particle in a computational fluid dynamics-discrete element
+    Method. [[104](#bib.bib104)] designed HybridNet for dynamics predictions that
+    combine ConvLSTM for predicting external forces with model-driven computation
+    with CeNN for system dynamics. HybridNet achieves higher accuracy on the tasks
+    of forecasting heat convection-diffusion and fluid dynamics. [[64](#bib.bib64)]
+    proposed to combine deep learning and a differentiable PDE solver for understanding
+    and controlling complex nonlinear physical systems over a long time horizon. [[141](#bib.bib141)]
+    proposed continuous-filter convolutional layers for modeling quantum interactions.
+    The convolutional kernel is parametrized by neural nets that take relative positions
+    between any two points as input. They obtained a joint model for the total energy
+    and interatomic forces that follow fundamental quantum-chemical principles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition, convolution layers have the potential to uncover governing equations.
+    For instance, [[105](#bib.bib105), [106](#bib.bib106)] developed PDE-Net, which
+    utilizes convolution to approximate differential operators over spatial domains
+    of different orders. It also includes a symbolic neural network based on EQL [[110](#bib.bib110),
+    [132](#bib.bib132)] to approximate and recover multivariate functions. The authors
+    demonstrated that PDE-Net is more compact than SINDy dictionaries [[20](#bib.bib20)]
+    and numerical experiments suggest that it can uncover the hidden PDE of various
+    observed dynamics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Graph Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Standard convolutional neural nets only operate on regular or uniform mesh such
+    as images. Graph neural networks move beyond data on the regular grid towards
+    modeling objects with arbitrary positions. For instance, graph neural networks
+    can model the fluid dynamics on irregular meshes that CNNs cannot. [[135](#bib.bib135)]
+    designed a deep encoder-processor-decoder graphic architecture for simulating
+    fluid dynamics under Lagrangian description. The rich physical states are represented
+    by graphs of interacting particles, and complex interactions are approximated
+    by learned message-passing among nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[119](#bib.bib119)] utilized the same architecture to learn mesh-based simulation.
+    The authors directly construct graphs on the irregular meshes constructed in the
+    numerical simulation methods. In addition, they proposed an adaptive re-meshing
+    algorithm that allows the model to accurately predict dynamics at both large and
+    small scales. [[14](#bib.bib14)] further proposed two tricks to address the instability
+    and error accumulation issues of training graph neural nets for solving PDEs.
+    One is perturbing the input by a certain noise and only backpropagating errors
+    on the last unroll step, and the other one is predicting multiple steps simultaneously
+    in time. Both tricks make the model faster and more stable.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[95](#bib.bib95)] proposed a Neural Operator approach that learns the mapping
+    between function spaces, and is invariant to different approximations and grids.
+    More specifically, it used the message-passing graph network to learn Green’s
+    function from the data, and then the learned Green’s function can be used to compute
+    the final solution of PDEs. [[96](#bib.bib96)] further extended it to Fourier
+    Neural Operator by replacing the kernel integral operator with a convolution operator
+    defined in Fourier space, which is much more efficient than Neural Operator. In
+    [[134](#bib.bib134)], graph networks were also used to represent, learn, and infer
+    robotics systems, bodies, and joints. [[94](#bib.bib94)] proposed to learn compositional
+    Koopman operators, using graph neural networks to encode the state into object-centric
+    embeddings and using a block-wise linear transition matrix to regularize the shared
+    structure across objects. Another important line of work is incorporating symmetries
+    to design equivariant graph neural nets for modeling molecular dynamics, which
+    will discuss in detail in Section [7](#S7 "7 Invariant and Equivariant DL Models
+    ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Multilayer Perceptron
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the main applications of Multilayer perceptron(MLP) in physics-guided
+    architecture design is finding the linear Koopman operator. Koopman theory [[83](#bib.bib83)]
+    provides a way to represent a nonlinear dynamical system using an infinite-dimensional
+    linear Koopman operator that acts on a Hilbert space of measurement functions
+    of the system state. However, finding the appropriate measurement functions that
+    map the dynamics to the function space, as well as an approximate and finite-dimensional
+    Koopman operator, is highly nontrivial. One way to obtain an approximation of
+    the Koopman operator is through the Dynamic Mode Decomposition algorithm [[139](#bib.bib139)],
+    but this requires manually preparing nonlinear observables, which is not always
+    feasible as prior knowledge about them may be lacking.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To address this challenge, recent research has explored using neural networks
+    to learn the Koopman operator. One popular approach hypothesizes that there exists
+    a data transformation that can be learned by neural networks, which yields an
+    approximate finite-dimensional Koopman operator. For example, [[175](#bib.bib175)]
+    and [[148](#bib.bib148)] have proposed using fully connected neural networks to
+    directly map the observed dynamics to a dictionary of nonlinear observables that
+    span a Koopman invariant subspace. This mapping is represented through an autoencoder
+    network, which embeds the observed dynamics onto a low-dimensional latent space
+    where the Koopman operator is approximated by a linear layer. [[107](#bib.bib107)]
+    have further generalized this approach to enable learning the Koopman operator
+    for systems with continuous spectra. [[5](#bib.bib5)] have also designed a similar
+    autoencoder architecture for forecasting physical processes. But in the latent
+    space, the consistency of both the forward and backward systems is ensured, while
+    other models only consider the forward system. This approach performs well on
+    systems that have both forward and backward dynamics, enabling long time prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Koopman theory can also be used to model real-world dynamics without known governing
+    laws. [[163](#bib.bib163)] have developed a novel approach, Koopman Neural Forecaster
+    (KNF), to forecast highly non-stationary time series in an interpretable and robust
+    manner. This approach uses Koopman theory to simplify non-linear real-world dynamics
+    into linear systems, which then can be easily manipulated by modifying the Koopman
+    matrix. It employs predefined measurement functions to impose appropriate inductive
+    biases and uses a Koopman operator that varies over time to capture the underlying
+    changing distribution. The model outperforms the state-of-the-art on highly non-stationary
+    time series datasets, including M4, cryptocurrency return forecasting, and sports
+    player trajectory prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.5 Pros and Cons
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Embedding physics into the design of the model architecture can enable physical
+    principles strictly enforced and theoretically guaranteed. That leads to more
+    interpretable and generalizable deep learning models. However, it is not trivial
+    to design physics-guided architectures that perform and generalize well without
+    hurting the representation power of neural nets. Hard inductive biases can greatly
+    improve the sample efficiency of learning, but could potentially become restrictive
+    when the size of the dataset is big enough for models to learn all the necessary
+    inductive biases from the data or when the inductive biases are not strict.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Hybrid Physics-DL Model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The papers discussed in the previous two sections focus on incorporating the
+    known properties of physical systems into the design of loss functions or neural
+    network modules. In this section, we talk about works that directly combine pure
+    physics-based models, such as numerical methods, with DL models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6.1 Case Study: Neural Differential Equations'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Neural Ordinary Differential Equations (Neural ODEs) [[27](#bib.bib27)] generalize
+    traditional RNNs that process data sequentially in discrete time steps by modeling
+    data as continuous functions that change over time, allowing for a more flexible
+    way to capture complex dynamics. They changed the traditionally discretized neuron
+    layer depths into continuous equivalents such that the derivative of the hidden
+    state can be parameterized using a neural network. The output of the network is
+    then computed using a black box differential equation solver, making Neural ODEs
+    an efficient combination of neural nets and numerical solvers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, they parametrize the velocity $\bm{\hat{z}}$ of a hidden
+    state $\bm{z}$ with the help of a neural network $\bm{\hat{z}}=f_{\theta}(\bm{z},t)$.
+    Given the initial time $t_{0}$ and target time $t_{T}$, Neural ODEs predict the
+    target state $\bm{\hat{y}}_{T}$ by performing the following encoding, integration,
+    and decoding operations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\bm{z}(t_{0})=\phi_{\text{enc}}(\bm{y}_{0}),\;\;\;\;\;\;\bm{z}(t_{T})=\bm{z}(t_{0})+\int_{t_{0}}^{t_{T}}f_{\bm{\theta}}(\bm{z},t)dt,\;\;\;\;\;\;\bm{\hat{y}}_{T}=\psi_{\text{dec}}(\bm{z}(t_{T}))$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where the encoder $\phi_{\text{enc}}$ and the decoder $\psi_{\text{dec}}$ can
+    be neural networks. Solving an ODE numerically is commonly done by discretization
+    and integration, such as the simple Euler method and higher-order variants of
+    the Runge-Kutta method. However, all of these are computationally intensive since
+    they require backpropagating through the operations of the solvers and store any
+    intermediate quantities of the forward pass, incurring a high memory cost. Thus,
+    the adjoint method [[121](#bib.bib121)] is used to efficiently compute gradients
+    during backpropagation. To compute the gradients of a loss function $L$ with respect
+    to the initial state $\bm{z}(t_{0})$ and the parameters $\bm{\theta}$, the key
+    idea of the adjoint method is to introduce an adjoint state $\bm{p}(t)$, $\bm{p}(t)=\frac{\partial
+    L}{\partial\bm{z}(t)}$, which satisfies the following differential equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\frac{d\bm{p}(t)}{dt}=-\bm{p}(t)^{T}\frac{\partial f_{\bm{\theta}}(\bm{z}(t),t)}{\partial\bm{z}}$
+    |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The adjoint state is used to compute the gradients of the loss function with
+    respect to the initial state and the parameters using the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\frac{\partial L}{\partial\bm{\theta}}=-\int_{t_{T}}^{t_{0}}\bm{p}(t)^{T}\frac{\partial
+    f_{\bm{\theta}}(\bm{z}(t),t)}{\partial\bm{\theta}}dt;$ |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'In a word, these formulas can be computed efficiently by solving the ODE for
+    $\bm{p}(t)$ using the same numerical method used to solve the forward ODE. During
+    the forward pass, the ODE solver computes the solution of the differential equation
+    $\bm{z}(t)$ using the initial state $\bm{z}(t_{0})$ and the function $f_{\bm{\theta}}(\bm{z}(t),t)$.
+    During the backward pass, the adjoint state $\bm{p}(t)$ is computed by solving
+    Eqn. [8](#S6.E8 "In 6.1 Case Study: Neural Differential Equations ‣ 6 Hybrid Physics-DL
+    Model ‣ Physics-Guided Deep Learning for Dynamical Systems: A Survey") that starts
+    from the final time $t_{T}$ and backpropagates through time. This adjoint state
+    is then used to compute the gradients of the loss function with respect to the
+    initial state and the parameters of the ODE function in Eqn. [9](#S6.E9 "In 6.1
+    Case Study: Neural Differential Equations ‣ 6 Hybrid Physics-DL Model ‣ Physics-Guided
+    Deep Learning for Dynamical Systems: A Survey"), which can then be used to update
+    the model parameters through gradient descent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural ODEs have broad potential applications, particularly in domains that
+    require continuous and dynamic models. They offer a useful tool for building continuous-time
+    time series models, which can easily handle data coming at irregular intervals.
+    They also allow for building normalizing flow, which makes it easy to track the
+    change in density, even for unrestricted neural architecture. There have been
+    several follow-up works that further extended the idea of continuous neural nets.
+    For instance, [[43](#bib.bib43)] introduced Augmented Neural ODE that is more
+    expressive, empirically more stable, and lower computationally efficient than
+    Neural ODEs. More importantly, it can learn the functions that have continuous
+    trajectories mappings intersecting each other, which Neural ODEs cannot represent.
+    [[120](#bib.bib120)] further extended this idea of continuous neural nets to graph
+    convolutions, and proposed Graph Neural ODE. [[102](#bib.bib102)] proposed Neural
+    Stochastic Differential Equation (Neural SDE), which models stochastic noise injection
+    by stochastic differential equations. They demonstrated that incorporating the
+    noise injection regularization mechanism into the continuous neural network can
+    reduce overfitting and achieve lower generalization errors. [[99](#bib.bib99)]
+    proposed a Neural ODE-based generative time-series model that uses the known differential
+    equation instead of treating it as hidden unit dynamics so that they can integrate
+    mechanistic knowledge into the Neural ODE. [[122](#bib.bib122)] utilized neural
+    networks to directly approximate the unknown terms in the differential equations.
+    By using the adjoint method, the proposed model can efficiently compute gradients
+    with respect to all parameters in the model, including the initial conditions,
+    the parameters of the ODE, and the boundary conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.2 Residual Modeling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Perhaps the simplest form of hybrid modeling is residual learning, where DL
+    learns to predict the errors or residuals made by physics-based models. The key
+    is to learn the bias of physics-based models and correct it with the help of DL
+    models [[54](#bib.bib54), [152](#bib.bib152)]. A representative example is DeepGLEAM
+    [[170](#bib.bib170)] for forecasting COVID-19 mortality that combines a mechanistic
+    epidemic simulation model GLEAM with DL. It uses a Diffusion Convolutional RNN
+    [[93](#bib.bib93)] (DCRNN) to learn the correction terms from GLEAM, which leads
+    to improved performance over either purely mechanistic models or purely DL models
+    on the task of one-week ahead COVID-19 death count predictions
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, [[37](#bib.bib37)] combines graph neural nets with a CFD simulator
+    run on a coarse mesh to generate high-resolution fluid flow prediction. CNNs are
+    used to correct the velocity field from the numerical solver on a coarse grid
+    in [[81](#bib.bib81)]. [[111](#bib.bib111)] utilized neural networks for subgrid
+    modeling of the LES simulation of two-dimensional turbulence. In [[133](#bib.bib133)],
+    a neural network model is implemented in the reduced order modeling framework
+    to compensate for the errors from the model reduction. [[74](#bib.bib74)] proposed
+    DR-RNN that is trained to find the residual minimizer of numerically discretized
+    ODEs or PDEs. They showed that DR-RNN can greatly reduce both computational cost
+    and time discretization error of the reduced order modeling framework. [[176](#bib.bib176)]
+    introduced the APHYNITY framework that can efficiently augment approximate physical
+    models with deep data-driven networks. A key feature of their method is being
+    able to decompose the problem in such a way that the data-driven model only models
+    what cannot be captured by the physical model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.3 Intermediate Variable Modeling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: DL models can be used to replace one or more components of physics-based models
+    that are difficult to compute or unknown. For example, [[153](#bib.bib153)] replaced
+    the numerical solver for solving Poisson’s equations with convolution networks
+    in the procedure of Eulerian fluid simulation, and the obtained results are realistic
+    and showed good generalization properties. [[116](#bib.bib116)] proposed to use
+    neural nets to reconstruct the model corrections in terms of variables that appear
+    in the closure model. [[39](#bib.bib39)] applied a U-net to estimate the velocity
+    field given the historical temperature frames, then used the estimated velocity
+    to forecast the sea surface temperature based on the closed-form solution of the
+    advection-diffusion equation. [[109](#bib.bib109)] combined the high-dimensional
+    model representation that is represented as a sum of mode terms each of which
+    is a sum of component functions with NNs to build multidimensional potential,
+    in which NNs are used to represent the component functions that minimize the error
+    mode term by mode term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.4 Pros and Cons
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Combining physics-based and deep learning models can enable leveraging both
+    the flexibility of neural nets for modeling unknown parts of the dynamics and
+    the interpretability and generalizability of physics-based models. However, one
+    potential downside of hybrid physics-DL models worth mentioning is that all or
+    most of the dynamics could be captured by neural nets and the physics-based models
+    contribute little to the learning. That would hurt the interpretability and the
+    generalizability of the model. We must ensure an optimal balance between the physics-based
+    and DL models. We need neural nets to only model the information that cannot be
+    represented by the physical prior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Invariant and Equivariant DL Models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Symmetry has long been implicitly used in DL to design networks with known invariances
+    and equivariances. Convolutional neural networks enabled breakthroughs in computer
+    vision by leveraging translation equivariance [[179](#bib.bib179), [90](#bib.bib90),
+    [180](#bib.bib180)]. Similarly, recurrent neural networks [[129](#bib.bib129),
+    [63](#bib.bib63)], graph neural networks [[137](#bib.bib137), [80](#bib.bib80)],
+    and capsule networks [[130](#bib.bib130), [62](#bib.bib62)] all impose symmetries.
+    While the equivariant DL models have achieved remarkable success in image and
+    text data [[32](#bib.bib32), [164](#bib.bib164), [30](#bib.bib30), [29](#bib.bib29),
+    [92](#bib.bib92), [82](#bib.bib82), [7](#bib.bib7), [169](#bib.bib169), [31](#bib.bib31),
+    [51](#bib.bib51), [165](#bib.bib165), [41](#bib.bib41), [56](#bib.bib56), [146](#bib.bib146)],
+    the study of equivariant nets in learning dynamical systems has become increasingly
+    popular recently [[97](#bib.bib97), [161](#bib.bib161), [145](#bib.bib145), [65](#bib.bib65),
+    [155](#bib.bib155), [144](#bib.bib144)]. Since the symmetries can be integrated
+    into neural nets through not only loss functions but also the design of neural
+    net layers and there has been a large volume of works about equivariant and invariant
+    DL models for physical dynamics, we discuss this topic separately in this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f80871402dcb845b43107d3f63c36457.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Illustration of equivariance: $f(x)=2x$ w.r.t $T=\mathrm{rot}(\pi/4)$'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In physics, there is a deep connection between symmetries and physics. Noether’s
+    law gives a correspondence between conserved quantities and groups of symmetries.
+    For instance, translation symmetry corresponds to the conservation of energy and
+    rotation symmetry corresponds to the conservation of angular momentum. By building
+    a neural network that inherently respects a given symmetry, we thus make conservation
+    of the associated quantity more likely and consequently the model’s prediction
+    more physically accurate. Furthermore, by designing a model that is inherently
+    equivariant to transformations of its inputs, we can guarantee that our model
+    generalizes automatically across these transformations, making it robust to distributional
+    shifts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A group of symmetries or simply group consists of a set $G$ together with an
+    associative composition map $\circ\colon G\times G\to G$. The composition map
+    has an identity $1\in G$ and composition with any element of $G$ is required to
+    be invertible. A group $G$ has an action on a set $S$ if there is an action map
+    $\cdot\colon G\times S\to S$ which is compatible with the composition law. We
+    say further that $\rho:G\mapsto GL(V)$ is a $G$-representation if the set $V$
+    is a vector space and each group element $g\in G$ is represented by a linear map
+    (matrix) $\rho(g)$ that acts on $V$. Formally, a function $f\colon X\to Y$ may
+    be described as respecting the symmetry coming from a group $G$ using the notion
+    of equivariance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 2.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Assume a group representation $\rho_{\text{in}}$ of $G$ acts on $X$ and $\rho_{\text{out}}$
+    acts on $Y$. We say a function $f$ is $G$-equivariant if
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $f(\rho_{\text{in}}(g)(x))=\rho_{\text{out}}(g)f(x)$ |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'for all $x\in X$ and $g\in G$. The function $f$ is $G$-invariant if $f(\rho_{\text{in}}(g)(x))=f(x)$
+    for all $x\in X$ and $g\in G$. This is a special case of equivariance for the
+    case $\rho_{\mathrm{out}}(g)=1$. See Figure [4](#S7.F4 "Figure 4 ‣ 7 Invariant
+    and Equivariant DL Models ‣ Physics-Guided Deep Learning for Dynamical Systems:
+    A Survey") for an illustration of a rotation equivariant function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '7.1 Case Study: Equivariant Deep Dynamics Models'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '[[161](#bib.bib161)] exploited the symmetries of fluid dynamics to design equivariant
+    networks. The Navier-Stokes equations are invariant under the following five different
+    transformations. Individually, each of these types of transformations generates
+    a group of symmetries in the system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Space translation:   $T_{\bm{c}}^{\mathrm{sp}}\bm{w}(\bm{x},t)=\bm{w}(\bm{x-c},t)$,
+      $\bm{c}\in\mathbb{R}^{2}$,'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Time translation:  $T_{\tau}^{\mathrm{time}}\bm{w}(\bm{x},t)=\bm{w}(\bm{x},t-\tau)$,
+      $\tau\in\mathbb{R}$,'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Galilean transformation:  $T_{\bm{c}}^{\mathrm{gal}}\bm{w}(\bm{x},t)=\bm{w}(\bm{x}-\bm{c}t,t)+\bm{c}$,
+      $\bm{c}\in\mathbb{R}^{2}$,'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rotation/Reflection:   $T_{R}^{\mathrm{rot}}\bm{w}(\bm{x},t)=R\bm{w}(R^{-1}\bm{x},t),\;R\in
+    O(2)$,'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Scaling:   $T_{\lambda}^{sc}\bm{w}(\bm{x},t)=\lambda\bm{w}(\lambda\bm{x},\lambda^{2}t)$,
+      $\lambda\in\mathbb{R}_{>0}$.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Consider a system of differential operators $\mathcal{D}$ acting on $\hat{\mathcal{F}}_{V}$.
+    Denote the set of solutions $\mathrm{Sol}(\mathcal{D})\subseteq\hat{\mathcal{F}}_{V}.$
+    We say $G$ is a symmetry group of $\mathcal{D}$ if $G$ preserves $\mathrm{Sol}(\mathcal{D})$.
+    That is, if $\varphi$ is a solution of $\mathcal{D}$, then for all $g\in G$, $g(\varphi)$
+    is also. In order to forecast the evolution of a system $\mathcal{D}$, we model
+    the forward prediction function $f$. Let $\bm{w}\in\mathrm{Sol}(\mathcal{D})$.
+    The input to $f$ is a collection of $k$ snapshots at times $t-k,\ldots,t-1$ denoted
+    $\bm{w}_{t-i}\in\mathcal{F}_{d}$. The prediction function $f\colon\mathcal{F}_{d}^{k}\to\mathcal{F}_{d}$
+    is defined $f(\bm{w}_{t-k},\ldots,\bm{w}_{t-1})=\bm{w}_{t}$. It predicts the solution
+    at a time $t$ based on the solution in the past. Let $G$ be a symmetry group of
+    $\mathcal{D}$. Then for $g\in G$, $g(\bm{w})$ is also a solution of $\mathcal{D}$.
+    Thus $f(g\bm{w}_{t-k},\ldots,g\bm{w}_{t-1})=g\bm{w}_{t}$. Consequently, $f$ is
+    $G$-equivariant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They tailored different methods for incorporating each symmetry into CNNs for
+    spatiotemporal dynamics forecasting. CNNs are time translation-equivariant when
+    used in an autoregressive manner. Convolutions are also naturally space translation
+    equivariant. Scale equivariance in dynamics is unique as the physical law dictates
+    the scaling of magnitude, space and time simultaneously. To achieve this, they
+    replaced the standard convolution layers with group correlation layers over the
+    group $G=(\mathbb{R}_{>0},\cdot)\ltimes(\mathbb{R}^{2},+)$ of both scaling and
+    translations. The $G$-correlation upgrades this operation by both translating
+    and scaling the kernel relative to the input,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\bm{v}(\bm{p},s,\mu)=\sum_{\lambda\in\mathbb{R}_{>0},t\in\mathbb{R},\bm{q}\in\mathbb{Z}^{2}}\mu\bm{w}(\bm{p}+\mu\bm{q},\mu^{2}t,\lambda)K(\bm{q},s,t,\lambda),$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $s$ and $t$ denote the indices of output and input channels. They add
+    an axis to the tensors corresponding to the scale factor $\mu$. In addition, the
+    rotational symmetry was modeled using $\mathrm{SO}(2)$-equivariant convolutions
+    and activations within the E(2)-CNN framework [[164](#bib.bib164)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: To make CNNs equivariant to Galilean transformation, since they are already
+    translation-equivariant, it is only necessary to make them equivariant to uniform
+    motion transformation, which is adding a constant vector field to the vector field.
+    This is part of Galilean invariance and relevant to all non-relativistic physics
+    modeling. And the uniform motion equivariance is enforced by conjugating the model
+    with shifted input distribution. Basically, for each sliding local block in each
+    convolutional layer, they shift the mean of the input tensor to zero and shift
+    the output back after convolution and activation function per sample. In other
+    words, if the input is $\bm{\mathcal{P}}_{b\times d_{in}\times s\times s}$ and
+    the output is $\bm{\mathcal{Q}}_{b\times d_{out}}=\sigma(\bm{\mathcal{P}}\cdot
+    K)$ for one sliding local block, where $b$ is batch size, $d$ is number of channels,
+    $s$ is the kernel size, and $K$ is the kernel, then
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\bm{\mu}_{i}=\mathrm{Mean}_{jkl}\left(\bm{\mathcal{P}}_{ijkl}\right);\quad\bm{\mathcal{P}}_{ijkl}\mapsto\bm{\mathcal{P}}_{ijkl}-\bm{\mu}_{i};\quad\bm{\mathcal{Q}}_{ij}\mapsto\bm{\mathcal{Q}}_{ij}+\bm{\mu}_{i}.$
+    |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: This will allow the convolution layer to be equivariant with respect to uniform
+    motion. If the input is a vector field, this operation is applied to each element.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The DL models used are ResNet and U-Net, and their equivariant counterparts.
+    Spatiotemporal prediction is done autoregressively. Standard RMSE and an RMSE
+    computed on the energy spectra are used to measure performance. The models are
+    tested on Rayleigh-Bénard convection (RBC) and reanalysis ocean current velocity
+    data. For RBC, the test sets have random transformations from the relevant symmetry
+    groups applied to each sample. This mimics real-world data in which each sample
+    has an unknown reference frame. For ocean data, tests are also performed on different
+    time ranges and different domains from the training set, representing distributional
+    shifts. Figure [5](#S7.F5 "Figure 5 ‣ 7.1 Case Study: Equivariant Deep Dynamics
+    Models ‣ 7 Invariant and Equivariant DL Models ‣ Physics-Guided Deep Learning
+    for Dynamical Systems: A Survey") shows the equivariant models perform significantly
+    better than their non-equivariant counterparts on both simulated RBC data and
+    real-world reanalysis ocean currents. They also show equivariant models also achieve
+    much lower energy spectrum errors and enjoy favorable sample complexity compared
+    with data augmentation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/866e79fefb016129188e1353a7fff07c.png)![Refer to caption](img/870d72312df8745bbba2ad390f0d7ba1.png)![Refer
+    to caption](img/724622a5781d258d28b705d4b4c928a3.png)![Refer to caption](img/3d358ad0b6844b3952fe8c6939c6abcc.png)![Refer
+    to caption](img/ff954353389ad46446e1d91b4328d16b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Top: The ground truth and the predicted velocity norm fields $\|\bm{w}\|_{2}$
+    of RBC at time step $1$, $5$ and $10$ by the ResNet and four Equ-ResNets on four
+    test samples applied with random uniform motion, magnitude, rotation, and scaling
+    transformations respectively. The first column is the target, the second is ResNet
+    predictions, and the third is predictions by Equ-ResNets. Bottom: The ground truth
+    and predicted velocity norm fields of ocean currents by ResNet (Unet) and four
+    Equ-ResNets (Equ-Unets) on the test set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.2 Equivariant Convolutional Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: However, real-world dynamical data rarely conform to strict mathematical symmetries,
+    due to noise and missing values or symmetry-breaking features in the underlying
+    dynamical system. [[149](#bib.bib149)] further explored approximately equivariant
+    convolutional networks that are biased towards preserving symmetry but are not
+    strictly constrained to do so. The key idea is relaxing the weight-sharing schemes
+    by introducing additional trainable weights that can vary across group elements
+    to break the strict equivariance constraints. The proposed approximate equivariant
+    networks can always learn the correct amount of symmetry from the data, and thus
+    consistently perform well on real-world turbulence data with no symmetry, approximate
+    symmetry, and perfect symmetry. When we incorporate prior knowledge into neural
+    nets, we usually need to choose between strictly enforcing it in the design of
+    the model or softly constraining it via regularizers. But this approach allows
+    the model to decide whether and how to use prior knowledge (symmetry) based on
+    the specific task. Moreover, [[162](#bib.bib162)] built a meta-learning framework,
+    DyAd, to forecast systems with different parameters. Specifically, it utilized
+    an encoder capable of extracting the time-invariant and translation-invariant
+    parts of a dynamical system and a prediction network to adapt and forecast giving
+    the inferred system. Time invariance is achieved by using 3D convolution and time-shift
+    invariant loss. On challenging turbulent flow prediction and real-world ocean
+    temperature and currents forecasting tasks, this is the first framework that can
+    generalize and predict dynamics across a wide range of heterogeneous domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Apart from incorporating symmetries into regular convolution, there has been
+    a surge of interest in designing equivariant continuous convolution models. This
+    is due to the fact that continuous convolution allows for convolutional operations
+    to be performed on a continuous input domain. For instance, [[141](#bib.bib141)]
+    proposed SchNet, which is a continuous convolution framework that generalizes
+    the CNN approach to continuous convolutions to model particles at arbitrary positions.
+    Continuous convolution kernels are generated by dense neural networks that operate
+    on the interatomic distances, which ensures rotational and translation invariance
+    of the energy. In a traffic forecasting application, [[157](#bib.bib157)] proposed
+    a novel model, Equivariant Continuous COnvolution (ECCO) that uses rotationally
+    equivariant continuous convolutions to embed the symmetries of the system for
+    improved trajectory prediction. The rotational equivariance is achieved by a weight-sharing
+    scheme within kernels in polar coordinates. ECCO achieves superior performance
+    to baselines on two real-world trajectory prediction datasets, Argoverse and TrajNet++.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.3 Equivariant Graph Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to the equivariant convolution, numerous equivariant graph neural
+    nets have also been developed, particularly for modeling atomic systems and molecular
+    dynamics. This is due to the pervasive presence of symmetry in molecular physics,
+    as evidenced by roto-translation equivariance in molecular conformations and coordinates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[[136](#bib.bib136)] designed E(n)-equivariant graph neural network for predicting
+    molecular properties. It updates edge features with the Euclidean distance between
+    nodes and updates the coordinates of particles with the weighted sum of relative
+    differences of all neighbors. [[142](#bib.bib142)] proposed to use a score-based
+    generative model for generating molecular conformation. The authors used equivariant
+    graph neural networks to estimate the score function, which is the gradient fields
+    of the log density of atomic coordinates because it is roto-translation equivariant.
+    [[3](#bib.bib3)] designed Cormorant, a rotationally covariant neural network architecture
+    for learning the behavior and properties of complex many-body physical systems.
+    Cormorant achieves promising results in learning molecular potential energy surfaces
+    on the MD-17 dataset and learning the geometric, energetic, electronic, and thermodynamic
+    properties of molecules on the GDB-9 dataset. [[144](#bib.bib144)] proposed a
+    model for autoregressive generation of 3D molecular structures with reinforcement
+    learning (RL). The method uses equivariant state representations for autoregressive
+    generation, built largely from Cormorant, and integrates such representations
+    within an existing actor-critic RL generation framework. [[154](#bib.bib154)]
+    further designed a series SE(3)-equivariant operations and building blocks for
+    DL architectures operating on geometric point cloud data, which was used to construct
+    PhiSNet, a novel architecture capable of accurately predicting wavefunctions and
+    electronic densities.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, permutation invariance also exists in molecular dynamics. For
+    instance, quantum mechanical energies are invariant if we exchange the labels
+    of identical atoms. However, [[151](#bib.bib151)] stated that enforcing equivariance
+    to all permutations in graph neural nets can be very restrictive when modeling
+    molecules. Thus, they proposed to decompose a graph into a collection of local
+    graphs that are isomorphic to a pre-selected template graph so that the sub-graphs
+    can always be canonicalized to template graphs before convolution is applied.
+    By doing this, the graph neural nets can not only be much more expressive but
+    also locally equivariant. [[155](#bib.bib155)] proposed to build equivariant neural
+    networks based on the idea that nonlinear $O(d)$-equivariant functions can be
+    universally expressed in terms of a lightweight collection of scalars, which are
+    simpler to build. They demonstrated the efficiency and scalability of their proposed
+    approach to two classical physics problems, calculating the total mechanical energy
+    of particles and the total electromagnetic force, that obeys all translation,
+    rotation, reflection, and permutation symmetries. Moreover, since the design of
+    equivariant layers is a difficult task, [[13](#bib.bib13)] proposed a lie point
+    symmetry data augmentation method for training graph neural PDE solvers and this
+    method enables these neural solvers to preserve multiple symmetries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.4 Symmetry Discovery
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There has been also an emerging area that is symmetry discovery, the key idea
+    of which is to find the weight-sharing patterns in neural networks that have been
+    trained on data with symmetries. For instance, [[183](#bib.bib183)] factorized
+    the weight matrix in a fully connected layer into a symmetry (i.e. weight-sharing)
+    matrix and a vector of filter parameters. The two parts are learned separately
+    in the inner and outer loop training with the Model-Agnostic Meta-Learning algorithm
+    (MAML) [[50](#bib.bib50)], which is an optimization-based meta-learning method
+    so that the symmetry matrix can learn the weight-sharing pattern from the data.
+    Furthermore, [[40](#bib.bib40)] proposed Lie Algebra Convolutional Network (L-conv),
+    a novel architecture that can learn the Lie algebra basis and automatically discover
+    symmetries from data. It can be considered as an infinitesimal version of group
+    convolution. [[173](#bib.bib173)] further leveraged L-conv to construct the LieGAN,
+    to automatically discover equivariances from a dataset using a paradigm akin to
+    generative adversarial training. It represents symmetry as an interpretable Lie
+    algebra basis and can discover various symmetries. Specifically, a generator learns
+    a group of transformations applied to the data, which preserves the original distribution
+    and fools the discriminator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.5 Pros and Cons
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By designing a model that is intrinsically equivariant or invariant to input
+    transformations, we can ensure that our model generalizes automatically across
+    these transformations, making it resilient to distributional shifts. In contrast,
+    data augmentation techniques cannot provide equivariance guarantees when the models
+    are applied to new datasets. Empirically and theoretically, it has been shown
+    that equivariant and invariant neural nets offer superior data and parameter efficiency
+    compared to data augmentation techniques. Furthermore, incorporating symmetries
+    enhances the physical consistency of neural nets because of Noether’s Law.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, incorporating too many symmetries may overly constrain the representation
+    power of neural nets and slow down both training and inference. In addition, many
+    real-world dynamics do not have perfect symmetries. A perfectly equivariant model
+    that respects a given symmetry may have trouble learning partial or approximated
+    symmetries in real-world data. Thus, an ideal model for real-world dynamics should
+    be approximately equivariant and automatically learn the correct amount of symmetry
+    in the data, such as the paper we discussed in Section [7.2](#S7.SS2 "7.2 Equivariant
+    Convolutional Neural Networks ‣ 7 Invariant and Equivariant DL Models ‣ Physics-Guided
+    Deep Learning for Dynamical Systems: A Survey"). There are a few other works that
+    explore the same idea. For instance, [[53](#bib.bib53)] proposed the soft equivariant
+    layer by directly summing up a flexible layer with one that has strong equivariance
+    inductive biases to model the soft equivariance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this paper, we systematically review the recent progress in physics-guided
+    DL for learning dynamical systems. We discussed multiple ways to inject first-principle
+    and physical constraints into DL including (1) physics-informed loss regularizers
+    (2) physics-guided design, (3) hybrid models, and (4) symmetry. By integrating
+    physical principles, the DL models can achieve better physical consistency, higher
+    accuracy, increased data efficiency, improved generalization, and greater interpretability.
+    Despite the great promise and exciting progress in the field, physics-guided AI
+    is still at its infant stage. Below we review the emerging challenges and opportunities
+    of learning physical dynamics with deep learning for future studies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.1 Improving Generalization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Generalization is a central problem in machine learning. One current limitation
+    of deep learning models for learning complex dynamics is their inability to understand
+    the system solely from data and handle distributional shifts that naturally occur.
+    Most deep learning models for dynamics modeling are trained to model a specific
+    system and still struggle with generalization. For example, in turbulence modeling,
+    deep learning models trained with fixed boundaries and initial conditions often
+    fail to generalize to fluid flows with different characteristics. To overcome
+    this limitation, one approach is to build physics-guided deep learning models,
+    where the physics part plays a dominant role while the neural networks focus on
+    learning the unknown process [[122](#bib.bib122)]. Another promising direction
+    is meta-learning. For instance, [[162](#bib.bib162)] proposed a model-based meta-learning
+    method called DyAd that can generalize across heterogeneous domains of fluid dynamics.
+    However, this model can only generalize well on the dynamics with interpolated
+    physical parameters and cannot extrapolate beyond the range of the physical parameters
+    in the training set. Another idea is to transform data into a canonical distribution
+    that neural networks can learn from and then restore the original data after predictions
+    are made [[78](#bib.bib78)]. Since neural networks struggle with multiple distributions,
+    this approach aims to find a single distribution that can represent the dynamics
+    effectively. A trustworthy and reliable model for learning physical dynamics should
+    be able to extrapolate to systems with various parameters, external forces, or
+    boundary conditions while maintaining high accuracy. Therefore, further research
+    into generalizable physics-guided deep learning is crucial.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.2 Improving Robustness of Long-term Forecasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Long-term forecasting of physical dynamics is a challenging task as it is prone
+    to error accumulation and instability to perturbations in the input, which significantly
+    affect the accuracy of neural networks over a long forecasting horizon. To address
+    these issues, several training techniques have been proposed in recent years.
+    One such technique involves adding noise to the input, which makes the models
+    less sensitive to perturbations [[14](#bib.bib14)]. It also suggests when making
+    predictions in an autoregressive manner, the neural nets should be trained to
+    make multiple steps of predictions in each autoregressive call instead of just
+    one step. Additionally, [[181](#bib.bib181)] proposed a time-based Lyapunov regularizer
+    to the loss function of deep forecasters to avoid training error propagation and
+    improve the trained long-term prediction. Moreover, [[119](#bib.bib119), [8](#bib.bib8)]
+    utilized online normalization that is normalizing the current training sample
+    using a running mean and standard deviation, which also increases the time horizon
+    that the model can predict. These models are trained on a large amount of simulation
+    data. However, for real-world problems, obtaining real-world data such as experimental
+    data of jet flow can be expensive, which presents a significant challenge for
+    improving the robustness of predictions on limited training data. In such cases,
+    developing robust prediction models that can generalize well on limited training
+    data is of great importance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.3 Learning Dynamics in Non-Euclidean Spaces
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Spatiotemporal phenomena, from global ocean currents to the spread of infectious
+    diseases, are examples of dynamics in non-Euclidean spaces, which means they cannot
+    be easily represented using traditional Euclidean geometry. To address this issue,
+    the field of geometric deep learning [[16](#bib.bib16)] has emerged. Geometric
+    deep learning aims to generalize neural network models to non-Euclidean domains
+    such as graphs and manifolds. However, most of the existing work in this field
+    has been limited to static graph data. Thus, learning dynamics in non-Euclidean
+    Ssaces is a promising direction, and geometric concepts, such as rent notions
+    of distance, curvature, and parallel transport, must be taken into account when
+    designing models. For example, when modeling the ocean dynamics on the earth,
+    which is a sphere, we need to encode the gauge equivariance [[32](#bib.bib32)]
+    in the design of neural nets since there is no canonical coordinate system on
+    a sphere.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.4 Theoretical Analysis
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The majority of literature on learning dynamics with DL focuses on the methodological
+    and practical aspects. Research into the theoretical analysis of generalization
+    is lacking. Current statistical learning theory is based on the typical assumption
+    that training and test data are identically and independently distributed (i.i.d.)
+    samples from some unknown distribution [[177](#bib.bib177), [114](#bib.bib114)].
+    However, this assumption does not hold for most dynamical systems, where observations
+    at different times and locations may be highly correlated. [[87](#bib.bib87)]
+    provided the discrepancy-based generalization guarantees for time series forecasting.
+    On the basis of this, [[150](#bib.bib150)] took the first step to derive generalization
+    bounds for equivariant models and data augmentation in the dynamics forecasting
+    setting. The derived upper bounds are expressed in terms of measures of distributional
+    shifts and group transformations, as well as the Rademacher complexity. But these
+    bounds are sometimes not very informative since many of the inequalities used
+    can be loose. However, to better understand the performance of DL on learning
+    dynamics, we need to derive generalization bounds expressed in terms of the characteristics
+    of the dynamics, such as the order and Lyapunov exponents. Deriving lower generalization
+    bounds are also necessary since they reveal the best performance scenarios. Theoretical
+    studies can also inspire research into model design and algorithm development
+    for learning dynamics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.5 Causal Inference in Dynamical Systems
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A fundamental pursuit in science is to identify causal relationships. In the
+    context of dynamical systems, we may ask which variables directly or indirectly
+    influence other variables through intermediates. While traditional approaches
+    to the discovery of causation involve conducting controlled real experiments [[118](#bib.bib118),
+    [12](#bib.bib12)], data-driven approaches have been proposed to identify causal
+    relations from observational data in the past few decades [[61](#bib.bib61), [59](#bib.bib59)].
+    However, most data-driven approaches do not directly address the challenge of
+    learning causality with big data. Many questions remain open, such as using causality
+    to improve deep learning models, disentangling complex and multiple treatments,
+    and designing the environment to control the given dynamics. Additionally, we
+    are also interested in understanding the system’s response under interventions.
+    For example, when using deep learning to model climate dynamics, we need to make
+    accurate predictions under different climate policies, such as carbon pricing
+    policies and the development of clean energy, to enable better decisions by governments
+    for controlling climate change.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.6 Search for Physical Laws
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another promising direction is to seek physics laws with the help of DL. The
+    search for fundamental laws of practical problems is the main theme of science.
+    Once the governing equations of dynamical systems are found, they allow for accurate
+    mathematical modeling, increased interpretability, and robust forecasting. However,
+    current methods are limited to selecting from a large dictionary of possible mathematical
+    terms [[126](#bib.bib126), [140](#bib.bib140), [19](#bib.bib19), [89](#bib.bib89),
+    [128](#bib.bib128)]. The extremely large search space, limited high-quality experimental
+    data, and overfitting issues have been critical concerns. Another line of work
+    is to discover symmetry from the observed data instead of the entire dynamics
+    with the help of DL [[40](#bib.bib40), [50](#bib.bib50)]. But these works can
+    only work well on synthetic data and discover known symmetries. Still, research
+    on data-driven methods based on DL for discovering physics laws is quite preliminary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8.7 Efficient Computation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Given the rapid growth in high-performance computation, we need to improve automation
+    and accelerate streamlining of highly compute-intensive workflows for science.
+    We should focus on how to efficiently train, test, and deploy complex physics-guided
+    DL models on large datasets and high-performance computing systems, such that
+    these models can be quickly utilized to solve real-world scientific problems.
+    To really revolutionize the field, these DL tools need to become more scalable
+    and transferable and converge into a complete pipeline for the simulation and
+    analysis of dynamical systems. A simple example is that we can integrate machine
+    learning tools into the existing numerical simulation platforms so that we do
+    not need to move data between systems every time and we can easily use either
+    or both types of methods for analyzing data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In conclusion, given the availability of abundant data and rapid growth in computation,
+    we envision that the integration of physics and DL will play an increasingly essential
+    role in advancing scientific discovery and addressing important dynamics modeling
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgement
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This work was supported in part by U.S. Department Of Energy, Office of Science
+    under grant DESC0022331, U. S. Army Research Office under Grant W911NF-20-1-0334,
+    Facebook Data Science Award, Google Faculty Award, and NSF Grant #2037745.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Alipanahi et al. [2015] B. Alipanahi, Andrew Delong, Matthew T. Weirauch, and
+    B. Frey. Predicting the sequence specificities of dna- and rna-binding proteins
+    by deep learning. *Nature Biotechnology*, 33:831–838, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Amodei et al. [2019] Dario Amodei, Chris Olah, Jacob Steinhardt, Paul Christiano,
+    John Schulman, and Dan Mané. Concrete problems in ai safety. *arXiv preprint arXiv:1606.06565*,
+    2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Anderson et al. [2019] Brandon Anderson, Truong-Son Hy, and Risi Kondor. Cormorant:
+    Covariant molecular neural networks. In *Advances in neural information processing
+    systems (NeurIPS)*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ayed et al. [2019] Ibrahim Ayed, Emmanuel De Bézenac, Arthur Pajot, and Patrick
+    Gallinari. Learning partially observed PDE dynamics with neural networks, 2019.
+    URL [https://openreview.net/forum?id=HyefgnCqFm](https://openreview.net/forum?id=HyefgnCqFm).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Azencot et al. [2020] Omri Azencot, N. Erichson, Vanessa Lin, and Michael W.
+    Mahoney. Forecasting sequential data using consistent koopman autoencoders. *arXiv
+    Preprint arXiv:2003.02236*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bajaj et al. [2021] Chandrajit Bajaj, Luke McLennan, Timothy Andeen, and Avik
+    Roy. Robust learning of physics informed neural networks. *arXiv preprint arXiv:2110.13330*,
+    2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bao and Song [2019] Erkao Bao and Linqi Song. Equivariant neural networks and
+    equivarification. *arXiv preprint arXiv:1906.07172*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bartoldson et al. [2021] Brian R. Bartoldson, Rui Wang, Brenda M. Ng, Phuoc
+    Chanh N Nguyen, Jose E. Cadena Pico, Phan Nguyen, David P. Widemann, and USDOE
+    National Nuclear Security Administration. Meshgraphnets, 2021. URL [https://www.osti.gov//servlets/purl/1834708](https://www.osti.gov//servlets/purl/1834708).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Beucler et al. [2019a] Tom Beucler, M. Pritchard, S. Rasp, J. Ott, P. Baldi,
+    and P. Gentine. Enforcing analytic constraints in neural-networks emulating physical
+    systems. *arXiv: Computational Physics*, 2019a.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beucler et al. [2019b] Tom Beucler, Michael Pritchard, Stephan Rasp, Pierre
+    Gentine, Jordan Ott, and Pierre Baldi. Enforcing analytic constraints in neural-networks
+    emulating physical systems. *arXiv preprint arXiv:1909.00912*, 2019b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beucler et al. [2019c] Tom Beucler, S. Rasp, M. Pritchard, and P. Gentine. Achieving
+    conservation of energy in neural network emulators for climate modeling. *ArXiv*,
+    abs/1906.06622, 2019c.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bollt et al. [2018] E. Bollt, J. Sun, and J. Runge. Introduction to focus issue:
+    Causation inference and information flow in dynamical systems: Theory and applications.
+    *Chaos*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brandstetter et al. [2022a] Johannes Brandstetter, Max Welling, and Daniel E
+    Worrall. Lie point symmetry data augmentation for neural pde solvers. In *International
+    Conference on Machine Learning*, pages 2241–2256\. PMLR, 2022a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brandstetter et al. [2022b] Johannes Brandstetter, Daniel E. Worrall, and Max
+    Welling. Message passing neural PDE solvers. In *International Conference on Learning
+    Representations*, 2022b. URL [https://openreview.net/forum?id=vSix3HPYKSU](https://openreview.net/forum?id=vSix3HPYKSU).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brence et al. [2021] Jure Brence, Ljupčo Todorovski, and Sašo Džeroski. Probabilistic
+    grammars for equation discovery. *Knowledge-Based Systems*, 224:107077, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bronstein et al. [2021] Michael M Bronstein, Joan Bruna, Taco Cohen, and Petar
+    Veličković. Geometric deep learning: Grids, groups, graphs, geodesics, and gauges.
+    *arXiv preprint arXiv:2104.13478*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brunton et al. [2019] S. Brunton, B. R. Noack, and P. Koumoutsakos. Machine
+    learning for fluid mechanics. *ArXiv*, abs/1905.11075, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brunton [2021] Steven L. Brunton. Applying machine learning to study fluid mechanics.
+    *arXiv preprint arXiv:2110.02083*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Brunton et al. [2015] Steven L. Brunton, Joshua L. Proctor, and J. Nathan Kutz.
+    Discovering governing equations from data: Sparse identification of nonlinear
+    dynamical systems. *arXiv preprint arXiv:1509.03580*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brunton et al. [2016] Steven L Brunton, Joshua L Proctor, and J Nathan Kutz.
+    Discovering governing equations from data by sparse identification of nonlinear
+    dynamical systems. *Proceedings of the national academy of sciences*, 113(15):3932–3937,
+    2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cai et al. [2021] Shengze Cai, Zhiping Mao, Zhicheng Wang, Minglang Yin, and
+    George Em Karniadakis. Physics-informed neural networks (pinns) for fluid mechanics:
+    A review. *Acta Mechanica Sinica*, 37(12):1727–1738, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cang et al. [2017] Ruijin Cang, Hechao Li, Hope Yao, Yang Jiao, and Yi Ren.
+    Improving direct physical properties prediction of heterogeneous materials from
+    imaging data via convolutional neural network and a morphology-aware generative
+    model. *arXiv: Computational Physics*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Carderera et al. [2021] Alejandro Carderera, Sebastian Pokutta, Christof Schütte,
+    and Martin Weiser. Cindy: Conditional gradient-based identification of non-linear
+    dynamics – noise-robust recovery. *arXiv preprint arXiv:2101.02630*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Carleo and Troyer [2017] G. Carleo and M. Troyer. Solving the quantum many-body
+    problem with artificial neural networks. *Science*, 355:602 – 606, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chaoua [2017] Bruno Chaoua. The state of the art of hybrid rans/les modeling
+    for the simulation of turbulent flows. *Springer Netherlands*, 99:279–327, 2017.
+    doi: https://doi.org/10.1007/s10494-017-9828-8.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. [2018a] Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, and
+    David Duvenaud. Neural ordinary differential equations. In S. Bengio, H. Wallach,
+    H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Garnett, editors, *Advances
+    in Neural Information Processing Systems 31*, pages 6571–6583\. Curran Associates,
+    Inc., 2018a. URL [http://papers.nips.cc/paper/7892-neural-ordinary-differential-equations.pdf](http://papers.nips.cc/paper/7892-neural-ordinary-differential-equations.pdf).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. [2018b] Tian Qi Chen, Yulia Rubanova, Jesse Bettencourt, and David K
+    Duvenaud. Neural ordinary differential equations. In *Advances in neural information
+    processing systems*, pages 6571–6583, 2018b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. [2021] Zhao Chen, Yang Liu, and Hao Sun. Physics-informed learning
+    of governing equations from scarce data. *Nature communications*, 12(1):6136,
+    2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chidester et al. [2018] Benjamin Chidester, Minh N. Do, and Jian Ma. Rotation
+    equivariance and invariance in convolutional neural networks. *arXiv preprint
+    arXiv:1805.12301*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cohen and Welling [2016a] Taco S. Cohen and Max Welling. Group equivariant convolutional
+    networks. In *International conference on machine learning (ICML)*, pages 2990–2999,
+    2016a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cohen and Welling [2016b] Taco S. Cohen and Max Welling. Steerable CNNs. *arXiv
+    preprint arXiv:1612.08498*, 2016b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cohen et al. [2019] Taco S. Cohen, Maurice Weiler, Berkay Kicanaoglu, and Max
+    Welling. Gauge equivariant convolutional networks and the icosahedral CNN. In
+    *Proceedings of the 36th International Conference on Machine Learning (ICML)*,
+    volume 97, pages 1321–1330, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cranmer et al. [2020] M. Cranmer, S. Greydanus, S. Hoyer, P. Battaglia, D. Spergel,
+    and S. Ho. Lagrangian neural networks. *ArXiv*, abs/2003.04630, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cuomo et al. [2022] Salvatore Cuomo, Vincenzo Schiano Di Cola, Fabio Giampaolo,
+    Gianluigi Rozza, Maziar Raissi, and Francesco Piccialli. Scientific machine learning
+    through physics–informed neural networks: where we are and what’s next. *Journal
+    of Scientific Computing*, 92(3):88, 2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daw et al. [2020] Arka Daw, R. Thomas, C. Carey, J. Read, A. Appling, and A. Karpatne.
+    Physics-guided architecture (pga) of neural networks for quantifying uncertainty
+    in lake temperature modeling. *ArXiv*, abs/1911.02682, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Day [1994] Richard H. Day. Complex economic dynamics-vol. 1: An introduction
+    to dynamical systems and market mechanisms. *MIT Press Books*, 1, 1994.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: de Avila Belbute-Peres et al. [2020] Filipe de Avila Belbute-Peres, Thomas D.
+    Economon, and J. Z. Kolter. Combining differentiable pde solvers and graph neural
+    networks for fluid flow prediction. *ArXiv*, abs/2007.04439, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'de Bezenac et al. [2018a] Emmanuel de Bezenac, Arthur Pajot, and Patrick Gallinari.
+    Deep learning for physical processes: Incorporating prior scientific knowledge.
+    In *International Conference on Learning Representations*, 2018a. URL [https://openreview.net/forum?id=By4HsfWAZ](https://openreview.net/forum?id=By4HsfWAZ).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'de Bezenac et al. [2018b] Emmanuel de Bezenac, Arthur Pajot, and Patrick Gallinari.
+    Deep learning for physical processes: Incorporating prior scientific knowledge.
+    In *International Conference on Learning Representations*, 2018b. URL [https://openreview.net/forum?id=By4HsfWAZ](https://openreview.net/forum?id=By4HsfWAZ).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dehmamy et al. [2021] Nima Dehmamy, Robin Walters, Yanchen Liu, Dashun Wang,
+    and Rose Yu. Automatic symmetry discovery with lie algebra convolutional network.
+    *Advances in Neural Information Processing Systems*, 34, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dieleman et al. [2016] Sander Dieleman, Jeffrey De Fauw, and Koray Kavukcuoglu.
+    Exploiting cyclic symmetry in convolutional neural networks. In *International
+    Conference on Machine Learning (ICML)*, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Donà et al. [2021] Jérémie Donà, Jean-Yves Franceschi, sylvain lamprier, and
+    patrick gallinari. {PDE}-driven spatiotemporal disentanglement. In *International
+    Conference on Learning Representations*, 2021. URL [https://openreview.net/forum?id=vLaHRtHvfFp](https://openreview.net/forum?id=vLaHRtHvfFp).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dupont et al. [2019] E. Dupont, A. Doucet, and Y. Teh. Augmented neural odes.
+    In *NeurIPS*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dzeroski and Todorovski [2007] Saso Dzeroski and Ljupco Todorovski. *Computational
+    discovery of scientific knowledge: introduction, techniques, and applications
+    in environmental and life sciences*, volume 4660. Springer, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Džeroski et al. [2007] Sašo Džeroski, Pat Langley, and Ljupčo Todorovski. *Computational
+    discovery of scientific knowledge*. Springer, 2007.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: E et al. [2019] Weinan E, Jiequn Han, and Linfeng Zhang. Integrating machine
+    learning with physics-based modeling. *arXiv:2006.02619*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: E.Labourasse and P.Sagaut [2002] E.Labourasse and P.Sagaut. Reconstruction of
+    turbulent fluctuations using a hybrid rans-les approach. *Journal of Computational
+    Physics*, 182:301–336, 2002.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Erichson et al. [2019] N. Erichson, Michael Muehlebach, and Michael W. Mahoney.
+    Physics-informed autoencoders for lyapunov-stable fluid flow prediction. *arXiv
+    preprint arXiv:1905.10866*, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fang et al. [2018] Rui Fang, David Sondak, Pavlos Protopapas, and Sauro Succi.
+    Deep learning for turbulent channel flow. *arXiv preprint arXiv:1812.02241*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finn et al. [2017] Chelsea Finn, Pieter Abbeel, and Sergey Levine. Model-agnostic
+    meta-learning for fast adaptation of deep networks. In *International conference
+    on machine learning*, pages 1126–1135\. PMLR, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finzi et al. [2020a] Marc Finzi, Samuel Stanton, Pavel Izmailov, and Andrew Gordon
+    Wilson. Generalizing convolutional neural networks for equivariance to lie groups
+    on arbitrary continuous data. *arXiv preprint arXiv:2002.12880*, 2020a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finzi et al. [2020b] Marc Finzi, K. Wang, and A. Wilson. Simplifying hamiltonian
+    and lagrangian neural networks via explicit constraints. *ArXiv*, abs/2010.13581,
+    2020b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finzi et al. [2021] Marc Finzi, Gregory Benton, and Andrew G Wilson. Residual
+    pathway priors for soft equivariance constraints. *Advances in Neural Information
+    Processing Systems*, 34, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Forssell and Lindskog [1997] U. Forssell and P. Lindskog. Combining semi-physical
+    and neural network modeling: An example of its usefulness u. forssell and p. lindskog.
+    1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gao et al. [2020] Han Gao, Luning Sun, and J. Wang. Super-resolution and denoising
+    of fluid flow using physics-informed convolutional neural networks without high-resolution
+    labels. *arXiv: Fluid Dynamics*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ghosh and Gupta [2019] Rohan Ghosh and Anupam K. Gupta. Scale steerable filters
+    for locally scale-invariant convolutional neural networks. *arXiv preprint arXiv:1906.03861*,
+    2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gnaneshwar et al. [2022] Dwaraknath Gnaneshwar, Bharath Ramsundar, Dhairya Gandhi,
+    Rachel Kurchin, and Venkatasubramanian Viswanathan. Score-based generative models
+    for molecule generation. In *International Conference on Machine Learning*, 2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Greydanus et al. [2019] S. Greydanus, Misko Dzamba, and J. Yosinski. Hamiltonian
+    neural networks. *ArXiv*, abs/1906.01563, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Guo et al. [2020] Ruocheng Guo, Lu Cheng, Jundong Li, P. R. Hahn, and Huan Liu.
+    A survey of learning causality with data. *ACM Computing Surveys (CSUR)*, 53:1
+    – 37, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han et al. [2019] Jiequn Han, Linfeng Zhang, and E. Weinan. Solving many-electron
+    schrödinger equation using deep neural networks. *J. Comput. Phys.*, 399, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Harradon et al. [2018] Michael Harradon, Jeff Druce, and Brian E. Ruttenberg.
+    Causal learning and explanation of deep neural networks via autoencoded activations.
+    *ArXiv*, abs/1802.00541, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hinton et al. [2011] Geoffrey E Hinton, Alex Krizhevsky, and Sida D Wang. Transforming
+    auto-encoders. In *International conference on artificial neural networks*, pages
+    44–51\. Springer, 2011.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hochreiter and Schmidhuber [1997] Sepp Hochreiter and Jürgen Schmidhuber. Long
+    short-term memory. *Neural computation*, 9(8):1735–1780, 1997.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Holl et al. [2020] Philipp Holl, Nils Thuerey, and Vladlen Koltun. Learning
+    to control pdes with differentiable physics. In *International Conference on Learning
+    Representations*, 2020. URL [https://openreview.net/forum?id=HyeSin4FPB](https://openreview.net/forum?id=HyeSin4FPB).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hoogeboom et al. [2022] Emiel Hoogeboom, Victor Garcia Satorras, Clement Vignac,
+    and Max Welling. Equivariant diffusion for molecule generation in 3d. In *International
+    Conference on Machine Learning*, pages 8867–8887\. PMLR, 2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Houska et al. [2012] B. Houska, F. Logist, M. Diehl, and J. Van Impe. A tutorial
+    on numerical methods for state and parameter estimation in nonlinear dynamic systems.
+    In D. Alberer, H. Hjalmarsson, and L. Del Re, editors, *Identification for Automotive
+    Systems, Volume 418, Lecture Notes in Control and Information Sciences*, page
+    67–88\. Springer, 2012.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hughes [2012] Thomas JR Hughes. *The finite element method: linear static and
+    dynamic finite element analysis*. Courier Corporation, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Iserles [2009] Arieh Iserles. *A first course in the numerical analysis of differential
+    equations*. Number 44\. Cambridge university press, 2009.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Izhikevich [2007] Eugene M. Izhikevich. *Dynamical systems in neuroscience*.
+    MIT press, 2007.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: J.C.Butcher [1996] J.C.Butcher. *Applied Numerical Mathematics*, volume 20.
+    Elsevier B.V., 1996.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jia et al. [2019] Xiaowei Jia, Jared Willard, Anuj Karpatne, Jordan Read, Jacob
+    Zwart, Michael Steinbach, and Vipin Kumar. Physics guided rnns for modeling dynamical
+    systems: A case study in simulating lake temperature profiles. In *Proceedings
+    of the 2019 SIAM International Conference on Data Mining*, pages 558–566\. SIAM,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jiang et al. [2020] Chiyu ”Max” Jiang, Karthik Kashinath, Prabhat, and Philip
+    Marcus. Enforcing physical constraints in {cnn}s through differentiable {pde}
+    layer. In *ICLR 2020 Workshop on Integration of Deep Neural Models and Differential
+    Equations*, 2020. URL [https://openreview.net/forum?id=q2noHUqMkK](https://openreview.net/forum?id=q2noHUqMkK).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kaiser et al. [2018] Eurika Kaiser, J Nathan Kutz, and Steven L Brunton. Sparse
+    identification of nonlinear dynamics for model predictive control in the low-data
+    limit. *Proceedings of the Royal Society A*, 474(2219):20180335, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kani and Elsheikh [2017] J. Kani and A. H. Elsheikh. Dr-rnn: A deep residual
+    recurrent neural network for model reduction. *ArXiv*, abs/1709.00939, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Karpatne et al. [2017] Anuj Karpatne, William Watkins, Jordan Read, and Vipin
+    Kumar. Physics-guided neural networks (pgnn): An application in lake temperature
+    modeling. *arXiv Preprint arXiv:1710.11431*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kashinath et al. [2020] K. Kashinath, M. Mustafa, J-L. Wu A. Albert, C. Jiang,
+    K. Azizzadenesheli S. Esmaeilzadeh, R. Wang, A. Chattopadhyay, A. Singh, A. Manepalli,
+    D. Chirila, R. Yu, R. Walters, B. White, H. Xiao, H. A. Tchelepi, P. Marcus, A. Anandkumar,
+    and P. Hassanzadeh. Physics-informed machine learning: case studies for weather
+    and climate modelling. *Journal of Philosophical Transactions of the Royal Society
+    A*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kim et al. [2019] B. Kim, V. C. Azevedo, N. Thürey, Theodore Kim, M. Gross,
+    and B. Solenthaler. Deep fluids: A generative network for parameterized fluid
+    simulations. *Computer Graphics Forum*, 38, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kim et al. [2022] Taesung Kim, Jinhee Kim, Yunwon Tae, Cheonbok Park, Jang-Ho
+    Choi, and Jaegul Choo. Reversible instance normalization for accurate time-series
+    forecasting against distribution shift. In *International Conference on Learning
+    Representations*, 2022. URL [https://openreview.net/forum?id=cGDAkQo1C0p](https://openreview.net/forum?id=cGDAkQo1C0p).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kima and Lee [2019] Junhyuk Kima and Changhoon Lee. Deep unsupervised learning
+    of turbulence for inflow generation at various reynolds numbers. *arXiv:1908.10515v1*,
+    2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kipf and Welling [2016] Thomas N Kipf and Max Welling. Semi-supervised classification
+    with graph convolutional networks. *arXiv preprint arXiv:1609.02907*, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kochkov et al. [2021] D. Kochkov, J. A. Smith, A. Alieva, Qifeng Wang, M. Brenner,
+    and Stephan Hoyer. Machine learning accelerated computational fluid dynamics.
+    *ArXiv*, abs/2102.01010, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kondor and Trivedi [2018] Risi Kondor and Shubhendu Trivedi. On the generalization
+    of equivariance and convolution in neural networks to the action of compact groups.
+    In *Proceedings of the 35th International Conference on Machine Learning (ICML)*,
+    volume 80, pages 2747–2755, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Koopman [1931] B. O. Koopman. Hamiltonian systems and transformation in hilbert
+    space. *Proceedings of the National Academy of Sciences of the United States of
+    America*, 17 5:315–8, 1931.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kouw and Loog [2018] Wouter M. Kouw and Marco Loog. An introduction to domain
+    adaptation and transfer learning. *arXiv preprint arXiv:1812.11806*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krishnapriyan et al. [2021] Aditi Krishnapriyan, Amir Gholami, Shandian Zhe,
+    Robert Kirby, and Michael W Mahoney. Characterizing possible failure modes in
+    physics-informed neural networks. *Advances in Neural Information Processing Systems*,
+    34, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kutz [2017] J. Kutz. Deep learning in fluid dynamics. *Journal of Fluid Mechanics*,
+    814:1–4, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kuznetsov and Mohri [2020] Vitaly Kuznetsov and Mehryar Mohri. Discrepancy-based
+    theory and algorithms for forecasting non-stationary time series. *Annals of Mathematics
+    and Artificial Intelligence*, 88(4):367–399, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Labourasse and Sagaut [2004] E. Labourasse and P. Sagaut. Advance in rans-les
+    coupling, a review and an insight on the nlde approach. *Archives of Computational
+    Methods in Engineering*, 11:199–256, 2004.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lagergren et al. [2020] John H. Lagergren, John T. Nardini, G. Michael Lavigne,
+    E. Rutter, and K. Flores. Learning partial differential equations for biological
+    transport models from noisy spatio-temporal data. *Proceedings of the Royal Society
+    A*, 476, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LeCun et al. [1989] Yann LeCun, Bernhard Boser, John S Denker, Donnie Henderson,
+    Richard E Howard, Wayne Hubbard, and Lawrence D Jackel. Backpropagation applied
+    to handwritten zip code recognition. *Neural computation*, 1(4):541–551, 1989.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lee et al. [2021] Seungjun Lee, Haesang Yang, and Woojae Seong. Identifying
+    physical law of hamiltonian systems via meta-learning. In *International Conference
+    on Learning Representations*, 2021. URL [https://openreview.net/forum?id=45NZvF1UHam](https://openreview.net/forum?id=45NZvF1UHam).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lenc and Vedaldi [2015] Karel Lenc and Andrea Vedaldi. Understanding image representations
+    by measuring their equivariance and equivalence. In *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, pages 991–999, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2018] Yaguang Li, Rose Yu, Cyrus Shahabi, and Yan Liu. Diffusion
+    convolutional recurrent neural network: Data-driven traffic forecasting. In *International
+    Conference on Learning Representations (ICLR ’18)*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. [2020a] Yunzhu Li, Hao He, Jiajun Wu, D. Katabi, and A. Torralba.
+    Learning compositional koopman operators for model-based control. *arXiv Preprint
+    arXiv:1910.08264*, 2020a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2020b] Zongyi Li, Nikola Kovachki, Kamyar Azizzadenesheli, Burigede
+    Liu, Kaushik Bhattacharya, Andrew Stuart, and Anima Anandkumar. Neural operator:
+    Graph kernel network for partial differential equations. *arXiv preprint arXiv:2003.03485*,
+    2020b.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. [2021] Zongyi Li, Nikola Borislavov Kovachki, Kamyar Azizzadenesheli,
+    Burigede liu, Kaushik Bhattacharya, Andrew Stuart, and Anima Anandkumar. Fourier
+    neural operator for parametric partial differential equations. In *International
+    Conference on Learning Representations*, 2021. URL [https://openreview.net/forum?id=c8P9NQVtmnO](https://openreview.net/forum?id=c8P9NQVtmnO).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ling et al. [2016] Julia Ling, Andrew Kurzawski, and Jeremy Templeton. Reynolds
+    averaged turbulence modeling using deep neural networks with embedded invariance.
+    *Journal of Fluid Mechanics*, 807:155–166, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ling et al. [2017] Julia Ling, Andrew Kurzawskim, and Jeremy Templeton. Reynolds
+    averaged turbulence modeling using deep neural networks with embedded invariance.
+    *Journal of Fluid Mechanics*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Linial et al. [2021] Ori Linial, D. Eytan, and U. Shalit. Generative ode modeling
+    with known unknowns. *Proceedings of the Conference on Health, Inference, and
+    Learning*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lisitsa et al. [2012] Vadim Lisitsa, Galina Reshetova, and Vladimir Tcheverda.
+    Finite-difference algorithm with local time-space grid refinement for simulation
+    of waves. *Computational geosciences*, 16(1):39–54, 2012.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu and Wang [2019] Dehao Liu and Yan Wang. Multi-fidelity physics-constrained
+    neural network and its application in materials modeling. *Journal of Mechanical
+    Design*, 141, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. [2019] Xuanqing Liu, Tesi Xiao, Si Si, Qin Cao, Sanjiv Kumar, and
+    Cho-Jui Hsieh. Neural sde: Stabilizing neural ode networks with stochastic noise.
+    *ArXiv*, abs/1906.02355, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Long et al. [2015] Mingsheng Long, Yue Cao, Jianmin Wang, and Michael Jordan.
+    Learning transferable features with deep adaptation networks. In *International
+    conference on machine learning*, pages 97–105\. PMLR, 2015.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Long et al. [2019a] Yun Long, Xueyuan She, and Saibal Mukhopadhyay. Hybridnet:
+    Integrating model-based and data-driven learning to predict evolution of dynamical
+    systems. *ArXiv Preprint arXiv:1806.07439*, 2019a.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Long et al. [2018] Zichao Long, Yiping Lu, Xianzhong Ma, and Bin Dong. Pde-net:
+    Learning pdes from data. In *International Conference on Machine Learning*, pages
+    3214–3222, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Long et al. [2019b] Zichao Long, Yiping Lu, and Bin Dong. Pde-net 2.0: Learning
+    pdes from data with a numeric-symbolic hybrid deep network. *Journal of Computational
+    Physics*, page 108925, 2019b.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lusch et al. [2018] Bethany Lusch, J. N. Kutz, and S. Brunton. Deep learning
+    for universal linear embeddings of nonlinear dynamics. *Nature Communications*,
+    9, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manepalli and Albert [2019] A. Manepalli and A. Albert. Emulating numeric hydroclimate
+    models with physics-informed cgans. 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manzhos and Carrington [2006] S. Manzhos and T. Carrington. A random-sampling
+    high dimensional model representation neural network for building potential energy
+    surfaces. *The Journal of chemical physics*, 125 8:084109, 2006.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martius and Lampert [2016] Georg Martius and Christoph H Lampert. Extrapolation
+    and learning equations. *arXiv preprint arXiv:1610.02995*, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Maulik et al. [2019] R. Maulik, O. San, A. Rasheed, and P. Vedula. Subgrid modelling
+    for two-dimensional turbulence using neural networks. *Journal of Fluid Mechanics*,
+    858:122–144, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: McDonough [2007] J. M. McDonough. *Introductory Lectures on Turbulence*. Mechanical
+    Engineering Textbook Gallery, 2007. URL [https://uknowledge.uky.edu/me_textbooks/2](https://uknowledge.uky.edu/me_textbooks/2).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Muralidhar et al. [2020] Nikhil Muralidhar, Jie Bu, Z. Cao, Long He, N. Ramakrishnan,
+    D. Tafti, and A. Karpatne. Phynet: Physics guided neural networks for particle
+    drag force prediction in assembly. In *SDM*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neyshabur et al. [2017] Behnam Neyshabur, Srinadh Bhojanapalli, David McAllester,
+    and Nati Srebro. Exploring generalization in deep learning. *Advances in neural
+    information processing systems*, 30, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pan and Yang [2010] Sinno Jialin Pan and Qiang Yang. A survey on transfer learning.
+    *IEEE Transactions on knowledge and data engineering*, 22(10):1345–1359, 2010.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Parish and Duraisamy [2016] Eric J. Parish and K. Duraisamy. A paradigm for
+    data-driven predictive modeling using field inversion and machine learning. *J.
+    Comput. Phys.*, 305:758–774, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pathak et al. [2022] Jaideep Pathak, Shashank Subramanian, Peter Harrington,
+    Sanjeev Raja, Ashesh Chattopadhyay, Morteza Mardani, Thorsten Kurth, David Hall,
+    Zongyi Li, Kamyar Azizzadenesheli, et al. Fourcastnet: A global data-driven high-resolution
+    weather model using adaptive fourier neural operators. *arXiv preprint arXiv:2202.11214*,
+    2022.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pearl [2009] J. Pearl. Causal inference in statistics: An overview. *Statistics
+    Surveys*, 3:96–146, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pfaff et al. [2021] Tobias Pfaff, Meire Fortunato, Alvaro Sanchez-Gonzalez,
+    and Peter Battaglia. Learning mesh-based simulation with graph networks. In *International
+    Conference on Learning Representations*, 2021. URL [https://openreview.net/forum?id=roNqYL0_XP](https://openreview.net/forum?id=roNqYL0_XP).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Poli et al. [2019] Michael Poli, Stefano Massaroli, Junyoung Park, A. Yamashita,
+    H. Asama, and Jinkyoo Park. Graph neural ordinary differential equations. *ArXiv*,
+    abs/1911.07532, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pontryagin [1987] Lev Semenovich Pontryagin. *Mathematical theory of optimal
+    processes*. CRC press, 1987.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rackauckas et al. [2020] Christopher Rackauckas, Yingbo Ma, Julius Martensen,
+    Collin Warner, Kirill Zubov, Rohit Supekar, Dominic Skinner, Ali Ramadhan, and
+    Alan Edelman. Universal differential equations for scientific machine learning.
+    *arXiv preprint arXiv:2001.04385*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Raissi and Karniadakis [2018] Maziar Raissi and George Em Karniadakis. Hidden
+    physics models: Machine learning of nonlinear partial differential equations.
+    *Journal of Computational Physics*, 357:125–141, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Raissi et al. [2017] Maziar Raissi, Paris Perdikaris, and George Em Karniadakis.
+    Physics informed deep learning (part i): Data-driven solutions of nonlinear partial
+    differential equations. *arXiv preprint arXiv:1711.10561*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Raissi et al. [2019] Maziar Raissi, Paris Perdikaris, and George E Karniadakis.
+    Physics-informed neural networks: A deep learning framework for solving forward
+    and inverse problems involving nonlinear partial differential equations. *Journal
+    of Computational Physics*, 378:686–707, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rao et al. [2022] Chengping Rao, Pu Ren, Yang Liu, and Hao Sun. Discovering
+    nonlinear PDEs from scarce data with physics-encoded learning. In *International
+    Conference on Learning Representations*, 2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Reichstein et al. [2019] Markus Reichstein, Gustau Camps-Valls, Bjorn Stevens,
+    Martin Jung, Joachim Denzler, Nuno Carvalhais, and Prabhat. Deep learning and
+    process understanding for data-driven earth system science. *Nature*, 566(7743):195–204,
+    2019. doi: 10.1038/s41586-019-0912-1. URL [https://doi.org/10.1038/s41586-019-0912-1](https://doi.org/10.1038/s41586-019-0912-1).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rudy et al. [2016] Samuel H. Rudy, Steven L. Brunton, Joshua L. Proctor, and
+    J. Nathan Kutz. Data-driven discovery of partial differential equations. *arXiv
+    preprint arXiv:1609.06401*, 2016.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rumelhart et al. [1986] David E Rumelhart, Geoffrey E Hinton, and Ronald J Williams.
+    Learning representations by back-propagating errors. *nature*, 323(6088):533–536,
+    1986.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sabour et al. [2017] Sara Sabour, Nicholas Frosst, and Geoffrey E Hinton. Dynamic
+    routing between capsules. *arXiv preprint arXiv:1710.09829*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sagaut et al. [2006] Pierre Sagaut, Sebastien Deck, and Marc Terracol. *Multiscale
+    and Multiresolution Approaches in Turbulence*. Imperial College Press, 2006.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sahoo et al. [2018] Subham Sahoo, Christoph Lampert, and Georg Martius. Learning
+    equations for extrapolation and control. In *International Conference on Machine
+    Learning*, pages 4442–4450\. PMLR, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: San and Maulik [2018] O. San and R. Maulik. Neural network closures for nonlinear
+    model order reduction. *Advances in Computational Mathematics*, 44:1717–1750,
+    2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sanchez-Gonzalez et al. [2018] Alvaro Sanchez-Gonzalez, N. Heess, Jost Tobias
+    Springenberg, J. Merel, Martin A. Riedmiller, Raia Hadsell, and P. Battaglia.
+    Graph networks as learnable physics engines for inference and control. *ArXiv*,
+    abs/1806.01242, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sanchez-Gonzalez et al. [2020] Alvaro Sanchez-Gonzalez, J. Godwin, T. Pfaff,
+    Rex Ying, J. Leskovec, and P. Battaglia. Learning to simulate complex physics
+    with graph networks. *ArXiv*, abs/2002.09405, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Satorras et al. [2021] Victor Garcia Satorras, Emiel Hoogeboom, and Max Welling.
+    E (n) equivariant graph neural networks. In *International Conference on Machine
+    Learning*, pages 9323–9332\. PMLR, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Scarselli et al. [2008] Franco Scarselli, Marco Gori, Ah Chung Tsoi, Markus
+    Hagenbuchner, and Gabriele Monfardini. The graph neural network model. *IEEE transactions
+    on neural networks*, 20(1):61–80, 2008.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Schaeffer [2017] Hayden Schaeffer. Learning partial differential equations
+    via data discovery and sparse optimization. *Proceedings of the Royal Society
+    A: Mathematical, Physical and Engineering Sciences*, 473(2197):20160446, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schmid [2008] P. Schmid. Dynamic mode decomposition of numerical and experimental
+    data. *Journal of Fluid Mechanics*, 656:5–28, 2008.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Schmidt and Lipson [2009] Michael D. Schmidt and Hod Lipson. Distilling free-form
+    natural laws from experimental data. *Science*, 324:81 – 85, 2009.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Schütt et al. [2017] Kristof Schütt, P. Kindermans, Huziel Enoc Sauceda Felix,
+    Stefan Chmiela, A. Tkatchenko, and K. Müller. Schnet: A continuous-filter convolutional
+    neural network for modeling quantum interactions. In *NIPS*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shi et al. [2021] Chence Shi, Shitong Luo, and Minkai Xu1. Learning gradient
+    fields for molecular conformation generation. *International Conference on Machine
+    Learning*, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shi et al. [2019] Guanya Shi, Xichen Shi, Michael O’Connell, Rose Yu, Kamyar
+    Azizzadenesheli, Animashree Anandkumar, Yisong Yue, and Soon-Jo Chung. Neural
+    lander: Stable drone landing control using learned dynamics. In *2019 International
+    Conference on Robotics and Automation (ICRA)*, pages 9784–9790, 2019. doi: 10.1109/ICRA.2019.8794351.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simm et al. [2021] Gregor N. C. Simm, Robert Pinsler, Gábor Csányi, and José Miguel
+    Hernández-Lobato. Symmetry-aware actor-critic for 3d molecular design. In *International
+    Conference on Learning Representations*, 2021. URL [https://openreview.net/forum?id=jEYKjPE1xYN](https://openreview.net/forum?id=jEYKjPE1xYN).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Smidt [2021] Tess E Smidt. Euclidean symmetry and equivariance in machine learning.
+    *Trends in Chemistry*, 3(2):82–85, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sosnovik et al. [2020] Ivan Sosnovik, Michał Szmaja, and Arnold Smeulders. Scale-equivariant
+    steerable networks. In *International Conference on Learning Representations*,
+    2020. URL [https://openreview.net/forum?id=HJgpugrKPS](https://openreview.net/forum?id=HJgpugrKPS).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Strogatz [2018] Steven H. Strogatz. *Nonlinear dynamics and chaos: with applications
+    to physics, biology, chemistry, and engineering*. CRC press, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Takeishi et al. [2017] Naoya Takeishi, Y. Kawahara, and T. Yairi. Learning koopman
+    invariant subspaces for dynamic mode decomposition. In *NIPS*, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rui Wang et al. [2022a] Rui Wang, Robin Walters, and Rose Yu. Approximately
+    equivariant networks for imperfectly symmetric dynamics. *International Conference
+    on Machine Learning (ICML)*, 2022a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rui Wang et al. [2022b] Rui Wang, Robin Walters, and Rose Yu. Data augmentation
+    vs. equivariant networks: A theoretical study of generalizability on dynamics
+    forecasting. *International Conference on Machine Learning, Principles of Distribution
+    Shift Workshop*, 2022b.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Thiede et al. [2021] Erik Thiede, Wenda Zhou, and Risi Kondor. Autobahn: Automorphism-based
+    graph neural nets. *Advances in Neural Information Processing Systems*, 34, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thompson and Kramer [1994] Michael L. Thompson and M. Kramer. Modeling chemical
+    processes using prior knowledge and neural networks. *Aiche Journal*, 40:1328–1340,
+    1994.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tompson et al. [2017] Jonathan Tompson, Kristofer Schlachter, Pablo Sprechmann,
+    and Ken Perlin. Accelerating eulerian fluid simulation with convolutional networks.
+    In *Proceedings of the 34th International Conference on Machine Learning-Volume
+    70*, pages 3424–3433\. JMLR. org, 2017.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Unke et al. [2021] Oliver Unke, Mihail Bogojeski, Michael Gastegger, Mario Geiger,
+    Tess Smidt, and Klaus-Robert Müller. Se (3)-equivariant prediction of molecular
+    wavefunctions and electronic densities. *Advances in Neural Information Processing
+    Systems*, 34:14434–14447, 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Villar et al. [2021] Soledad Villar, David W Hogg, Kate Storey-Fisher, Weichi
+    Yao, and Ben Blum-Smith. Scalars are universal: Equivariant machine learning,
+    structured like classical physics. In *Advances in Neural Information Processing
+    Systems*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wainwright [2005] John Wainwright. *Dynamical systems in cosmology*. Cambridge
+    University Press, 2005.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Walters et al. [2021] Robin Walters, Jinxi Li, and Rose Yu. Trajectory prediction
+    using equivariant continuous convolution. In *International Conference on Learning
+    Representations*, 2021. URL [https://openreview.net/forum?id=J8_GttYLFgr](https://openreview.net/forum?id=J8_GttYLFgr).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2020a] Rui Wang, E. Huang, Uma Chandrasekaran, and Rose Yu. Aortic
+    pressure forecasting with deep learning. *2020 Computing in Cardiology*, pages
+    1–4, 2020a.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2020b] Rui Wang, Karthik Kashinath, Mustafa Mustafa, Adrian Albert,
+    and Rose Yu. Towards physics-informed deep learning for turbulent flow prediction.
+    *Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery
+    and Data Mining*, 2020b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2020c] Rui Wang, Danielle Maddix, Christos Faloutsos, Yuyang Wang,
+    and Rose Yu. Bridging physics-based and data-driven modeling for learning dynamical
+    systems. *arXiv Preprint arXiv:2011.10616*, 2020c.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2021a] Rui Wang, Robin Walters, and Rose Yu. Incorporating symmetry
+    into deep dynamics models for improved generalization. 2021a. URL [https://openreview.net/forum?id=wta_8Hx2KD](https://openreview.net/forum?id=wta_8Hx2KD).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2021b] Rui Wang, Robin Walters, and Rose Yu. Bridging physics-based
+    and data-driven modeling for learning dynamical systems. *arXiv preprint arXiv:2102.10271*,
+    2021b.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2023] Rui Wang, Yihe Dong, Sercan O Arik, and Rose Yu. Koopman
+    neural operator forecaster for time-series with temporal distributional shifts.
+    In *International Conference on Learning Representations*, 2023. URL [https://openreview.net/forum?id=kUmdmHxK5N](https://openreview.net/forum?id=kUmdmHxK5N).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Weiler and Cesa [2019] Maurice Weiler and Gabriele Cesa. General E(2)-equivariant
+    steerable CNNs. In *Advances in Neural Information Processing Systems (NeurIPS)*,
+    pages 14334–14345, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Weiler et al. [2018] Maurice Weiler, Fred A. Hamprecht, and Martin Storath.
+    Learning steerable filters for rotation equivariant CNNs. *Computer Vision and
+    Pattern Recognition (CVPR)*, 2018.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: White et al. [2019] B. White, A. Singh, and A. Albert. Downscaling numerical
+    weather models with gans. 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wiewel et al. [2019] Steffen Wiewel, Moritz Becher, and Nils Thuerey. Latent
+    space physics: Towards learning the temporal evolution of fluid flow. In *Computer
+    Graphics Forum*, volume 38, pages 71–82, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Willard et al. [2020] Jared Willard, Xiaowei Jia, Shaoming Xu, Michael S. Steinbach,
+    and Vipin Kumar. Integrating physics-based modeling with machine learning: A survey.
+    *CoRR*, abs/2003.04919, 2020. URL [https://arxiv.org/abs/2003.04919](https://arxiv.org/abs/2003.04919).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Worrall et al. [2017] Daniel E Worrall, Stephan J Garbin, Daniyar Turmukhambetov,
+    and Gabriel J Brostow. Harmonic networks: Deep translation and rotation equivariance.
+    In *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*,
+    pages 5028–5037, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. [2021] Dongxian Wu, Liyao Gao, X. Xiong, Matteo Chinazzi, Alessandro
+    Vespignani, Y. Ma, and Rose Yu. Deepgleam: a hybrid mechanistic and deep learning
+    model for covid-19 forecasting. *ArXiv*, abs/2102.06684, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wu et al. [2019] Jin-Long Wu, Karthik Kashinath, Adrian Albert, Dragos Chirila,
+    Prabhat, and Heng Xiao. Enforcing Statistical Constraints in Generative Adversarial
+    Networks for Modeling Chaotic Dynamical Systems. *arXiv e-prints*, May 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xie et al. [2018] You Xie, Erik Franz, Mengyu Chu, and Nils Thuerey. tempogan:
+    A temporally coherent, volumetric gan for super-resolution fluid flow. *ACM Transactions
+    on Graphics (TOG)*, 37(4):95, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. [2023] Jianke Yang, Robin Walters, Nima Dehmamy, and Rose Yu. Generative
+    adversarial symmetry discovery. *arXiv preprint arXiv:2302.00236*, 2023.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. [2021] Liu Yang, Xuhui Meng, and George Em Karniadakis. B-pinns:
+    Bayesian physics-informed neural networks for forward and inverse pde problems
+    with noisy data. *Journal of Computational Physics*, 425:109913, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yeung et al. [2019] E. Yeung, Soumya Kundu, and Nathan Oken Hodas. Learning
+    deep neural network representations for koopman operators of nonlinear dynamical
+    systems. *2019 American Control Conference (ACC)*, pages 4832–4839, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yin et al. [2021] Yuan Yin, Vincent LE GUEN, Jérémie DONA, Emmanuel de Bezenac,
+    Ibrahim Ayed, Nicolas THOME, and patrick gallinari. Augmenting physical models
+    with deep networks for complex dynamics forecasting. In *International Conference
+    on Learning Representations*, 2021. URL [https://openreview.net/forum?id=kmG8vRXTFv](https://openreview.net/forum?id=kmG8vRXTFv).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. [2017] Chiyuan Zhang, Samy Bengio, Moritz Hardt, Benjamin Recht,
+    and Oriol Vinyals. Understanding deep learning requires rethinking generalization.
+    In *International Conference on Learning Representations*, 2017. URL [https://openreview.net/forum?id=Sy8gdB9xx](https://openreview.net/forum?id=Sy8gdB9xx).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. [2018] Linfeng Zhang, Jiequn Han, Han Wang, R. Car, and E. Weinan.
+    Deep potential molecular dynamics: a scalable model with the accuracy of quantum
+    mechanics. *Physical review letters*, page 143001, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang [1988] Wei Zhang. Shift-invariant pattern recognition neural network and
+    its optical architecture. In *Proceedings of annual conference of the Japan Society
+    of Applied Physics*, 1988.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. [1990] Wei Zhang, Kazuyoshi Itoh, Jun Tanida, and Yoshiki Ichioka.
+    Parallel distributed processing model with local space-invariant interconnections
+    and its optical architecture. *Applied optics*, 29(32):4790–4797, 1990.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zheng et al. [2022] Rong Zheng, Sicun Gao, and Rose Yu. Lyapunov regularized
+    forecaster. *Machine Learning and the Physical Sciences workshop, NeurIPS 2022.*,
+    2022.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhong et al. [2020] Yaofeng Zhong, Biswadip Dey, and Amit Chakraborty. Benchmarking
+    energy-conserving neural networks for learning dynamics from data. *arXiv Preprint
+    arXiv:2012.02334*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhou et al. [2020] Allan Zhou, Tom Knowles, and Chelsea Finn. Meta-learning
+    symmetries by reparameterization. *arXiv preprint arXiv:2007.02933*, 2020.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhu et al. [2019] Yinhao Zhu, Nicholas Zabaras, Phaedon-Stelios Koutsourelakis,
+    and Paris Perdikaris. Physics-constrained deep learning for high-dimensional surrogate
+    modeling and uncertainty quantification without labeled data. *Journal of Computational
+    Physics*, 394:56–81, 2019.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

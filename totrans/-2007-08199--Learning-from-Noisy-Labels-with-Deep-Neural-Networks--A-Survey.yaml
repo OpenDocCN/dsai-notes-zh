@@ -1,0 +1,3291 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:00:21'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2007.08199] Learning from Noisy Labels with Deep Neural Networks: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2007.08199](https://ar5iv.labs.arxiv.org/html/2007.08199)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \DeclareNewFootnote
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[para]A'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Learning from Noisy Labels with Deep Neural Networks: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Hwanjun Song, Minseok Kim, Dongmin Park, Yooju Shin, Jae-Gil Lee H. Song is
+    with NAVER AI Lab, Seongnam 13561, Republic of Korea (e-mail: hwanjun.song@navercorp.com);
+    M. Kim, D, Park, Y, Shin, and J.-G., Lee are with the Graduate School of Knowledge
+    Service Engineering, Korea Advanced Institute of Science and Technology, Daejeon
+    34141, Republic of Korea (e-mail: minseokkim@kaist.ac.kr; dongminpark@kaist.ac.kr;
+    yooju24@kaist.ac.kr; jaegil@kaist.ac.kr). This work has been submitted to the
+    IEEE for possible publication. Copyright may be transferred without notice, after
+    which this version may no longer be accessible.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Deep learning has achieved remarkable success in numerous domains with help
+    from large amounts of big data. However, the quality of data labels is a concern
+    because of the lack of high-quality labels in many real-world scenarios. As noisy
+    labels severely degrade the generalization performance of deep neural networks,
+    learning from noisy labels (robust training) is becoming an important task in
+    modern deep learning applications. In this survey, we first describe the problem
+    of learning with label noise from a supervised learning perspective. Next, we
+    provide a comprehensive review of 62 state-of-the-art robust training methods,
+    all of which are categorized into five groups according to their methodological
+    difference, followed by a systematic comparison of six properties used to evaluate
+    their superiority. Subsequently, we perform an in-depth analysis of noise rate
+    estimation and summarize the typically used evaluation methodology, including
+    public noisy datasets and evaluation metrics. Finally, we present several promising
+    research directions that can serve as a guideline for future studies. All the
+    contents will be available at [https://github.com/songhwanjun/Awesome-Noisy-Labels](https://github.com/songhwanjun/Awesome-Noisy-Labels).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: deep learning, noisy label, label noise, robust optimization, robust deep learning,
+    classification, survey
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: With the recent emergence of large-scale datasets, deep neural networks (DNNs)
+    have exhibited impressive performance in numerous machine learning tasks, such
+    as computer vision [[1](#bib.bib1), [2](#bib.bib2)], information retrieval [[3](#bib.bib3),
+    [4](#bib.bib4), [5](#bib.bib5)], and language processing [[6](#bib.bib6), [7](#bib.bib7),
+    [8](#bib.bib8)]. Their success is dependent on the availability of massive but
+    carefully labeled data, which are expensive and time-consuming to obtain. Some
+    non-expert sources, such as Amazon’s Mechanical Turk and the surrounding text
+    of collected data, have been widely used to mitigate the high labeling cost; however,
+    the use of these source often results in unreliable labels [[9](#bib.bib9), [10](#bib.bib10),
+    [11](#bib.bib11), [12](#bib.bib12)]. In addition, data labels can be extremely
+    complex even for experienced domain experts [[13](#bib.bib13), [14](#bib.bib14)];
+    they can also be adversarially manipulated by a label-flipping attack [[15](#bib.bib15)].
+    Such unreliable labels are called *noisy labels* because they may be *corrupted*
+    from ground-truth labels. The ratio of corrupted labels in real-world datasets
+    is reported to range from $8.0\%$ to $38.5\%$ [[16](#bib.bib16), [17](#bib.bib17),
+    [18](#bib.bib18), [19](#bib.bib19)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the presence of noisy labels, training DNNs is known to be susceptible to
+    noisy labels because of the significant number of model parameters that render
+    DNNs overfit to even corrupted labels with the capability of learning any complex
+    function [[20](#bib.bib20), [21](#bib.bib21)]. Zhang et al. [[22](#bib.bib22)]
+    demonstrated that DNNs can easily fit an entire training dataset with any ratio
+    of corrupted labels, which eventually resulted in poor generalizability on a test
+    dataset. Unfortunately, popular regularization techniques, such as data augmentation
+    [[23](#bib.bib23)], weight decay [[24](#bib.bib24)], dropout [[25](#bib.bib25)],
+    and batch normalization [[26](#bib.bib26)] have been applied extensively, but
+    they do *not* completely overcome the overfitting issue by themselves. As shown
+    in Figure [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ Learning from Noisy Labels with
+    Deep Neural Networks: A Survey"), the gap in test accuracy between models trained
+    on clean and noisy data remains significant even though all of the aforementioned
+    regularization techniques are activated. Additionally, the accuracy drop with
+    label noise is considered to be more harmful than with other noises, such as input
+    noise [[27](#bib.bib27)]. Hence, achieving a good generalization capability in
+    the presence of noisy labels is a key challenge.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9652535680cd27cfc7f591f0cdba6866.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Convergence curves of training and test accuracy when training WideResNet-16-8
+    using a standard training method on the CIFAR-100 dataset with the symmetric noise
+    of $40\%$: “Noisy w/o. Reg.” and “Noisy w. Reg.” are the models trained on noisy
+    data without and with regularization, respectively, and “Clean w. Reg.” is the
+    model trained on clean data with regularization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Several studies have been conducted to investigate supervised learning under
+    noisy labels. Beyond conventional machine learning techniques [[13](#bib.bib13),
+    [28](#bib.bib28)], deep learning techniques have recently gained significant attention
+    in the machine learning community. In this survey, we present the advances in
+    recent deep learning techniques for overcoming noisy labels. We surveyed recent
+    studies by recursively tracking relevant bibliographies in papers published at
+    premier research conferences, such as CVPR, ICCV, NeurIPS, ICML, and ICLR. Although
+    we attempted to comprehensively include all recent studies at the time of submission,
+    some of them may not be included because of the quadratic increase in deep learning
+    papers. The studies included were grouped into *five* categories, as shown in
+    Figure [2](#S1.F2 "Figure 2 ‣ I Introduction ‣ Learning from Noisy Labels with
+    Deep Neural Networks: A Survey") (see Section [III](#S3 "III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey") for details).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8aed60e5d07d2f16cc4c2312ee8812a0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Categorization of recent deep learning methods for overcomming noisy
+    labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-A Related Surveys
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Frénay and Verleysen [[13](#bib.bib13)] discussed the potential negative consequence
+    of learning from noisy labels and provided a comprehensive survey on noise-robust
+    classification methods, focusing on conventional supervised approaches such as
+    naïve Bayes and support vector machines. Furthermore, their survey included the
+    definitions and sources of label noise as well as the taxonomy of label noise.
+    Zhang et al. [[28](#bib.bib28)] discussed another aspect of label noise in crowdsourced
+    data annotated by non-experts and provided a thorough review of expectation-maximization
+    (EM) algorithms that were proposed to improve the quality of crowdsourced labels.
+    Meanwhile, Nigam et al. [[29](#bib.bib29)] provided a brief introduction to deep
+    learning algorithms that were proposed to manage noisy labels; however, the scope
+    of these algorithms was limited to only two categories, i.e., the loss function
+    and sample selection in Figure [2](#S1.F2 "Figure 2 ‣ I Introduction ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey"). Recently, Han et al.
+    [[30](#bib.bib30)] summarized the essential components of robust learning with
+    noisy labels, but their categorization is totally different from ours in philosophy;
+    we mainly focus on systematic methodological difference, whereas they rather focused
+    on more general views, such as input data, objective functions, and optimization
+    policies. Furthermore, this survey is the first to present a comprehensive methodological
+    comparison of existing robust training approaches (see Tables [II](#S3.T2 "Table
+    II ‣ III-E3 Hybrid Approach ‣ III-E Sample Selection ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey") and [III](#S3.T3
+    "Table III ‣ III-E3 Hybrid Approach ‣ III-E Sample Selection ‣ III Deep Learning
+    Approaches ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I-B Survey Scope
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Robust training with DNNs becomes critical to guarantee the reliability of machine
+    learning algorithms. In addition to label noise, two types of flawed training
+    data have been actively studied by different communities [[31](#bib.bib31), [32](#bib.bib32)].
+    *Adversarial learning* is designed for small, worst-case perturbations of the
+    inputs, so-called adversarial examples, which are maliciously constructed to deceive
+    an already trained model into making errors [[33](#bib.bib33), [34](#bib.bib34),
+    [35](#bib.bib35), [36](#bib.bib36)]. Meanwhile, *data imputation* primarily deals
+    with missing inputs in training data, where missing values are estimated from
+    the observed ones [[37](#bib.bib37), [32](#bib.bib32)]. Adversarial learning and
+    data imputation are closely related to robust learning, but handling *feature*
+    noise is beyond the scope of this survey—i.e., learning from noisy *labels*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Preliminaries
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, the problem statement for supervised learning with noisy labels
+    is provided along with the taxonomy of label noise. Managing noisy labels is a
+    long-standing issue; therefore, we review the basic conventional approaches and
+    theoretical foundations underlying robust deep learning. Table [I](#S2.T1 "Table
+    I ‣ II Preliminaries ‣ Learning from Noisy Labels with Deep Neural Networks: A
+    Survey") summarizes the notation frequently used in this study.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table I: Summary of the notation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ​​Notation |                      Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{X}$ | the data feature space |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{Y}$, $\tilde{\mathcal{Y}}$ | the true and noisy label space |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{D}$, $\tilde{\mathcal{D}}$ | the clean and noisy training data
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $P_{\mathcal{D}}$, $P_{\tilde{\mathcal{D}}}$ | the joint distributions of
+    clean and noisy data |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{B}_{t}$ | a set of mini-batch examples at time $t$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\Theta_{t}$ | the parameter of a deep neural network at time $t$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $f(\,\cdot\,;\Theta_{t})$ | a deep neural network parameterized by $\Theta_{t}$
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\ell$ | a specific loss function |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathcal{R}$ | an empirical risk |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\mathbb{E}_{\mathcal{D}}$ | an expectation over $\mathcal{D}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $x$, $x_{i}$ | a data example of $\mathcal{X}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $y$, $y_{i}$ | a true label of $\mathcal{Y}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\tilde{y}$, $\tilde{y}_{i}$ | a noisy label of $\tilde{\mathcal{Y}}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\eta$ | a specific learning rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $\tau$ | a true noise rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $b$ | the number of mini-batch examples in $\mathcal{B}_{t}$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $c$ | the number of classes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| T, $\hat{\text{T}}$ | the true and estimated noise transition matrix |'
+  prefs: []
+  type: TYPE_TB
+- en: '![Refer to caption](img/aba79f256c3c8d1377c0b52c41755fad.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: A high level research overview of robust deep learning for noisy
+    labels. The research directions that are actively contributed by the machine learning
+    community are categorized into five groups in blue italic.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A Supervised Learning with Noisy Labels
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Classification* is a representative supervised learning task for learning
+    a function that maps an input feature to a label [[38](#bib.bib38)]. In this paper,
+    we consider a $c$-class classification problem using a DNN with a softmax output
+    layer. Let $\mathcal{X}\subset\mathbb{R}^{d}$ be the feature space and $\mathcal{Y}=\{0,1\}^{c}$
+    be the ground-truth label space in a *one-hot* manner. In a typical classification
+    problem, we are provided with a training dataset $\mathcal{D}=\{(x_{i},y_{i})\}_{i=1}^{N}$
+    obtained from an unknown joint distribution $P_{\mathcal{D}}$ over $\mathcal{X}\times\mathcal{Y}$,
+    where each $(x_{i},y_{i})$ is *independent and identically distributed*. The goal
+    of the task is to learn the mapping function $f(\,\cdot\,;\Theta):\mathcal{X}\rightarrow[0,1]^{c}$
+    of the DNN parameterized by $\Theta$ such that the parameter $\Theta$ minimizes
+    the empirical risk $\mathcal{R}_{\mathcal{D}}(f)$,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\!\!\mathcal{R}_{\mathcal{D}}(f)=\mathbb{E}_{\mathcal{D}}[\ell\big{(}f(x;\Theta),y\big{)}]=\frac{1}{&#124;\mathcal{D}&#124;}\!\sum_{(x,y)\in\mathcal{D}}\!\!\!\!\ell\big{(}f(x;\Theta),y\big{)},$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\ell$ is a certain loss function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As data labels are corrupted in various real-world scenarios, we aim to train
+    the DNN from noisy labels. Specifically, we are provided with a noisy training
+    dataset $\tilde{\mathcal{D}}=\{(x_{i},\tilde{y}_{i})\}_{i=1}^{N}$ obtained from
+    a noisy joint distribution $P_{\tilde{\mathcal{D}}}$ over $\mathcal{X}\times\tilde{\mathcal{Y}}$,
+    where $\tilde{y}$ is a *noisy* label which may not be true. Hence, following the
+    standard training procedure, a mini-batch $\mathcal{B}_{t}=\{(x_{i},\tilde{y}_{i})\}_{i=1}^{b}$
+    comprising $b$ examples is obtained randomly from the noisy training dataset $\tilde{\mathcal{D}}$
+    at time $t$. Subsequently, the DNN parameter $\Theta_{t}$ at time $t$ is updated
+    along the descent direction of the empirical risk on mini-batch $\mathcal{B}_{t}$,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Theta_{t+1}=\Theta_{t}-\eta\nabla\Big{(}\frac{1}{&#124;\mathcal{B}_{t}&#124;}\!\sum_{(x,\tilde{y})\in\mathcal{B}_{t}}\!\!\!\!\ell\big{(}f(x;\Theta_{t}),\tilde{y}\big{)}\Big{)},$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\eta$ is a learning rate specified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, the risk minimization process is no longer *noise-tolerant* because of
+    the loss computed by the noisy labels. DNNs can easily memorize corrupted labels
+    and correspondingly degenerate their generalizations on unseen data [[13](#bib.bib13),
+    [28](#bib.bib28), [29](#bib.bib29)]. Hence, mitigating the adverse effects of
+    noisy labels is essential to enable noise-tolerant training for deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Taxonomy of Label Noise
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section presents the types of label noise that have been adopted to design
+    robust training algorithms. Even if data labels are corrupted from ground-truth
+    labels without *any* prior assumption, in essence, the corruption probability
+    is affected by the dependency between *data features* or *class labels*. A detailed
+    analysis of the taxonomy of label noise was provided by Frénay and Verleysen [[13](#bib.bib13)].
+    Most existing algorithms dealt with instance-independent noise, but instance-dependent
+    noise has not yet been extensively investigated owing to its complex modeling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B1 Instance-independent Label Noise
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A typical approach for modeling label noise assumes that the corruption process
+    is conditionally *independent* of data features when the true label is given [[39](#bib.bib39),
+    [22](#bib.bib22)]. That is, the true label is corrupted by a *noise transition
+    matrix* $\text{T}\in[0,1]^{c\times c}$, where $\text{T}_{ij}\coloneqq p(\tilde{y}=j|y=i)$
+    is the probability of the true label $i$ being flipped into a corrupted label
+    $j$. In this approach, the noise is called a *symmetric* (or *uniform*) noise
+    with a noise rate $\tau\in[0,1]$ if $\forall_{i=j}\text{T}_{ij}\!=\!1-\tau\wedge\forall_{i\neq
+    j}\text{T}_{ij}=\frac{\tau}{c-1}$, where a true label is flipped into other labels
+    with equal probability. In contrast to symmetric noise, the noise is called an
+    *asymmetric* (or *label-dependent*) noise if $\forall_{i=j}\text{T}_{ij}\!=\!1-\tau\wedge\exists_{i\neq
+    j,i\neq k,j\neq k}\text{T}_{ij}>\text{T}_{ik}$, where a true label is more likely
+    to be mislabeled into a particular label. For example, a “dog” is more likely
+    to be confused with a “cat” than with a “fish.” In a stricter case when $\forall_{i=j}\text{T}_{ij}\!=\!1-\tau\wedge\exists_{i\neq
+    j}\text{T}_{ij}=\tau$, the noise is called a *pair noise*, where a true label
+    is flipped into only a certain label.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B2 Instance-dependent Label Noise
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: For more realistic noise modeling, the corruption probability is assumed to
+    be *dependent* on both the data features and class labels [[16](#bib.bib16), [40](#bib.bib40)].
+    Accordingly, the corruption probability is defined as $\rho_{ij}(x)\!=\!p(\tilde{y}\!=\!j|y\!=\!i,x)$.
+    Unlike the aforementioned noises, the data feature of an example $x$ also affects
+    the chance of $x$ being mislabeled.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-C Non-deep Learning Approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For decades, numerous methods have been proposed to manage noisy labels using
+    conventional machine learning techniques. These methods can be categorized into
+    *four* groups [[13](#bib.bib13), [41](#bib.bib41), [29](#bib.bib29)], as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Data Cleaning: Training data are cleaned by excluding examples whose labels
+    are likely to be corrupted. Bagging and boosting are used to filter out false-labeled
+    examples to remove examples with higher weights because false-labeled examples
+    tend to exhibit much higher weights than true-labeled examples [[42](#bib.bib42),
+    [43](#bib.bib43)]. In addition, various methods, such as $k$-nearest neighbor,
+    outlier detection, and anomaly detection, have been widely exploited to exclude
+    false-labeled examples from noisy training data [[44](#bib.bib44), [45](#bib.bib45),
+    [46](#bib.bib46)]. Nevertheless, this family of methods suffers from over-cleaning
+    issue that overly removes even the true-labeled examples.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Surrogate Loss: Motivated by the noise-tolerance of the 0-1 loss function [[39](#bib.bib39)],
+    many researchers have attempted to resolve its inherent limitations, such as computational
+    hardness and non-convexity that render gradient methods unusable. Hence, several
+    convex surrogate loss functions, which approximate the 0-1 loss function, have
+    been proposed to train a specified classifier under the binary classification
+    setting [[47](#bib.bib47), [48](#bib.bib48), [49](#bib.bib49), [50](#bib.bib50),
+    [51](#bib.bib51)]. However, these loss functions cannot support the multi-class
+    classification task.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Probabilistic Method: Under the assumption that the distribution of features
+    is helpful in solving the problem of learning from noisy labels [[52](#bib.bib52)],
+    the confidence of each label is estimated by clustering and then used for a weighted
+    training scheme [[53](#bib.bib53)]. This confidence is also used to convert hard
+    labels into soft labels to reflect the uncertainty of labels [[54](#bib.bib54)].
+    In addition to these clustering approaches, several Bayesian methods have been
+    proposed for graphical models such that they can benefit from using any type of
+    prior information in the learning process [[55](#bib.bib55)]. However, this family
+    of methods may exacerbate the overfitting issue owing to the increased number
+    of model parameters.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Model-based Method: As conventional models, such as the SVM and decision tree,
+    are not robust to noisy labels, significant effort has been expended to improve
+    the robustness of them. To develop a robust SVM model, misclassified examples
+    during learning are penalized in the objective [[56](#bib.bib56), [57](#bib.bib57)].
+    In addition, several decision tree models are extended using new split criteria
+    to solve the overfitting issue when the training data are not fully reliable [[58](#bib.bib58),
+    [59](#bib.bib59)]. However, it is infeasible to apply their design principles
+    to deep learning.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Meanwhile, deep learning is more susceptible to label noises than traditional
+    machine learning owing to its high expressive power, as proven by many researchers
+    [[21](#bib.bib21), [60](#bib.bib60), [61](#bib.bib61)]. There has been significant
+    effort to understand why noisy labels negatively affect the performance of DNNs
+    [[62](#bib.bib62), [22](#bib.bib22), [61](#bib.bib61), [63](#bib.bib63)]. This
+    theoretical understanding has led to the algorithmic design which achieves higher
+    robustness than non-deep learning methods. A detailed analysis of theoretical
+    understanding for robust deep learning was provided by Han et al. [[30](#bib.bib30)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-D Regression with Noisy Labels
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to classification, regression is another main topic of supervised
+    machine learning, which aims to model the relationship between a number of features
+    and a continuous target variable. Unlike the classification task with a *discrete*
+    label space, the regression task considers the continuous variable as its target
+    label [[64](#bib.bib64)], and thus it learns the mapping function $f(\leavevmode\nobreak\
+    \cdot\leavevmode\nobreak\ ;\Theta):\mathcal{X}\rightarrow\mathcal{Y}$, where $\mathcal{Y}\in\mathbb{R}$
+    is a *continuous* label space. Given the input feature $x$ and its ground-truth
+    label $y$, two types of label noise are considered in the regression task. An
+    *additive noise* [[65](#bib.bib65)] is formulated by $\tilde{y}:=y+\epsilon$ where
+    $\epsilon$ is drawn from a random distribution independent from the input feature;
+    an *instance-dependent noise* [[66](#bib.bib66)] is formulated by $\tilde{y}:=\rho(x)$
+    where $\rho:\mathcal{X}\rightarrow\mathcal{Y}$ is a noise function dependent on
+    the input feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although regression predicts continuous values, regression and classification
+    share the same concept of learning the mapping function from the input feature
+    $x$ to the output label $y$. Thus, many robust approaches for classification are
+    easily extended to the regression problem with simple modification [[67](#bib.bib67)].
+    Thus, in this survey, we focus on the classification setting for which most robust
+    methods are defined.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Deep Learning Approaches
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'According to our comprehensive survey, the robustness of deep learning can
+    be enhanced in numerous approaches [[68](#bib.bib68), [16](#bib.bib16), [25](#bib.bib25),
+    [69](#bib.bib69), [70](#bib.bib70), [71](#bib.bib71), [72](#bib.bib72), [73](#bib.bib73),
+    [74](#bib.bib74)]. Figure [3](#S2.F3 "Figure 3 ‣ II Preliminaries ‣ Learning from
+    Noisy Labels with Deep Neural Networks: A Survey") shows an overview of recent
+    research directions conducted by the machine learning community. All of them (i.e.,
+    §[III-A](#S3.SS1 "III-A Robust Architecture ‣ III Deep Learning Approaches ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey") – §[III-E](#S3.SS5 "III-E
+    Sample Selection ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with
+    Deep Neural Networks: A Survey")) focused on making a supervised learning process
+    more robust to label noise:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(§[III-A](#S3.SS1 "III-A Robust Architecture ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")) Robust architecture:
+    adding a noise adaptation layer at the top of an underlying DNN to learn label
+    transition process or developing a dedicated architecture to reliably support
+    more diverse types of label noise;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(§[III-B](#S3.SS2 "III-B Robust Regularization ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")) Robust regularization:
+    enforcing a DNN to overfit less to false-labeled examples explicitly or implicitly;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(§[III-C](#S3.SS3 "III-C Robust Loss Function ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")) Robust loss
+    function: improving the loss function;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(§[III-D](#S3.SS4 "III-D Loss Adjustment ‣ III Deep Learning Approaches ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey")) Loss adjustment: adjusting
+    the loss value according to the confidence of a given loss (or label) by loss
+    correction, loss reweighting, or label refurbishment;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(§[III-E](#S3.SS5 "III-E Sample Selection ‣ III Deep Learning Approaches ‣
+    Learning from Noisy Labels with Deep Neural Networks: A Survey")) Sample selection:
+    identifying true-labeled examples from noisy training data via multi-network or
+    multi-round learning.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Overall, we categorize all recent deep learning methods into *five* groups
+    corresponding to popular research directions, as shown in Figure [3](#S2.F3 "Figure
+    3 ‣ II Preliminaries ‣ Learning from Noisy Labels with Deep Neural Networks: A
+    Survey"). In §[III-D](#S3.SS4 "III-D Loss Adjustment ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey"), meta learning
+    is also discussed because it finds the optimal hyperparameters for loss reweighting.
+    In §[III-E](#S3.SS5 "III-E Sample Selection ‣ III Deep Learning Approaches ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey"), we discuss the recent
+    efforts for combining sample selection with other orthogonal directions or semi-supervised
+    learning toward the state-of-the-art performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [2](#S1.F2 "Figure 2 ‣ I Introduction ‣ Learning from Noisy Labels with
+    Deep Neural Networks: A Survey") illustrates the categorization of robust training
+    methods using these five groups.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Robust Architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In numerous studies, architectural changes have been made to model the noise
+    transition matrix of a noisy dataset [[75](#bib.bib75), [76](#bib.bib76), [77](#bib.bib77),
+    [78](#bib.bib78), [79](#bib.bib79), [16](#bib.bib16), [80](#bib.bib80), [81](#bib.bib81),
+    [82](#bib.bib82)]. These changes include adding a noise adaptation layer at the
+    top of the softmax layer and designing a new dedicated architecture. The resulting
+    architectures yield improved generalization through the modification of the DNN
+    output based on the estimated label transition probability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A1 Noise Adaptation Layer
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: From the view of training data, the noise process is modeled by discovering
+    the underlying label transition pattern (i.e., the noise transition matrix T).
+    Given an example $x$, the noisy class posterior probability for an example $x$
+    is expressed by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{gathered}\!\!\!\!\!p(\tilde{y}=j&#124;x)\!=\!\sum_{i=1}^{c}p(\tilde{y}=j,y=i&#124;x)\!=\!\sum_{i=1}^{c}\text{T}_{ij}p(y=i&#124;x),\\
+    \text{where}\leavevmode\nobreak\ \leavevmode\nobreak\ \text{T}_{ij}=p(\tilde{y}=j&#124;y=i,x).\end{gathered}$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'In light of this, the noise adaptation layer is intended to mimic the label
+    transition behavior in learning a DNN. Let $p(y|x;\Theta)$ be the output of the
+    base DNN with a softmax output layer. Then, following Eq. ([3](#S3.E3 "In III-A1
+    Noise Adaptation Layer ‣ III-A Robust Architecture ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")), the probability
+    of an example $x$ being predicted as its noisy label $\tilde{y}$ is parameterized
+    by'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{split}\!\!\!p(\tilde{y}=j&#124;x;\Theta,\mathcal{W})&amp;=\sum_{i=1}^{c}p(\tilde{y}=j,y\!=\!i&#124;x;\Theta,\mathcal{W})\\
+    &amp;=\sum_{i=1}^{c}\underbrace{p(\tilde{y}=j&#124;y\!=\!i;\mathcal{W})}_{\text{Noise
+    Adaptation Layer}}\underbrace{p(y\!=\!i&#124;x;\Theta)}_{\text{Base Model}}.\end{split}$
+    |  | (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here, the noisy label $\tilde{y}$ is assumed to be *conditionally independent*
+    of the input $x$ in general. Accordingly, as shown in Figure [4](#S3.F4 "Figure
+    4 ‣ III-A1 Noise Adaptation Layer ‣ III-A Robust Architecture ‣ III Deep Learning
+    Approaches ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey"),
+    the noisy adaptation layer is added at the top of the base DNN to model the noise
+    transition matrix parameterized by $\mathcal{W}$. This layer should be removed
+    when test data is to be predicted.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/04619274794b7f5746f06408ce97be92.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Noise modeling process using the noise adaptation layer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Webly learning* [[75](#bib.bib75)] first trains the base
+    DNN only for easy examples retrieved by search engines; subsequently, the confusion
+    matrix for all training examples is used as the initial weight $\mathcal{W}$ of
+    the noise adaptation layer. It fine-tunes the entire model in an end-to-end manner
+    for hard training examples. In contrast, the *noise model* [[77](#bib.bib77)]
+    initializes $\mathcal{W}$ to an identity matrix and adds a regularizer to force
+    $\mathcal{W}$ to diffuse during DNN training. The *dropout noise model* [[25](#bib.bib25)]
+    applies dropout regularization to the adaptation layer, whose output is normalized
+    by the softmax function to implicitly diffuse $\mathcal{W}$. The *s-model* [[79](#bib.bib79)]
+    is similar to the *dropout noise model* but dropout is not applied. The *c-model*
+    [[79](#bib.bib79)] is an extension of the s-model that models the instance-dependent
+    noise, which is more realistic than the symmetric and asymmetric noises. Meanwhile,
+    *NLNN* [[76](#bib.bib76)] adopts the EM algorithm to iterate the E-step to estimate
+    the noise transition matrix and the M-step to back-propagate the DNN.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: A common drawback of this family is their inability to identify false-labeled
+    examples, treating all the examples equally. Thus, the estimation error for the
+    transition matrix is generally large when only noisy training data is used or
+    when the noise rate is high [[83](#bib.bib83)]. Meanwhile, for the EM-based method,
+    becoming stuck in local optima is inevitable, and high computational costs are
+    incurred [[79](#bib.bib79)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A2 Dedicated Architecture
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Beyond the label-dependent label noise, several studies have been conducted
+    to support more complex noise, leading to the design of dedicated architectures
+    [[16](#bib.bib16), [80](#bib.bib80), [81](#bib.bib81)]. They typically aimed at
+    increasing the reliability of estimating the label transition probability to handle
+    more complex and realistic label noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Probabilistic noise modeling* [[16](#bib.bib16)] manages
+    two independent networks, each of which is specialized to predict the noise type
+    and label transition probability. Because an EM-based approach with random initialization
+    is impractical for training the entire network, both networks are trained with
+    massive noisy labeled data after the pre-training step with a small amount of
+    clean data. Meanwhile, *masking* [[80](#bib.bib80)] is a human-assisted approach
+    to convey the human cognition of invalid label transitions. Considering that noisy
+    labels are mainly from the interaction between humans and tasks, the invalid transition
+    investigated by humans was leveraged to constrain the noise modeling process.
+    Owing to the difficulty in specifying the explicit constraint, a variant of generative
+    adversarial networks (GANs) [[84](#bib.bib84)] was employed in this study. Recently,
+    the *contrastive-additive noise network* [[81](#bib.bib81)] was proposed to adjust
+    incorrectly estimated label transition probabilities by introducing a new concept
+    of quality embedding, which models the trustworthiness of noisy labels. *RoG*
+    [[85](#bib.bib85)] builds a simple yet robust generative classifier on top of
+    any discriminative DNN pre-trained on noisy data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: Compared with the noise adaptation layer, this family of methods significantly
+    improves the robustness to more diverse types of label noise, but it cannot be
+    easily extended to other architectures in general.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Robust Regularization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Regularization methods have been widely studied to improve the generalizability
+    of a learned model in the machine learning community [[26](#bib.bib26), [24](#bib.bib24),
+    [25](#bib.bib25), [23](#bib.bib23)]. By avoiding overfitting in model training,
+    the robustness to label noise improves with widely-used regularization techniques
+    such as *data augmentation* [[23](#bib.bib23)], *weight decay* [[24](#bib.bib24)],
+    *dropout* [[25](#bib.bib25)], and *batch normalization* [[26](#bib.bib26)]. These
+    canonical regularization methods operate well on moderately noisy data, but they
+    alone do *not sufficiently* improve the test accuracy; poor generalization could
+    be obtained when the noise is heavy [[86](#bib.bib86)]. Thus, more advanced regularization
+    techniques have been recently proposed, which further improved robustness to label
+    noise when used along with the canonical methods. The main advantage of this family
+    is its *flexibility* in collaborating with other directions because it only requires
+    simple modifications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B1 Explicit Regularization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The regularization can be an explicit form that modifies the expected training
+    loss, e.g., weight decay and dropout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Bilevel learning* [[87](#bib.bib87)] uses a clean validation
+    dataset to regularize the overfitting of a model by introducing a bilevel optimization
+    approach, which differs from the conventional one in that its regularization constraint
+    is also an optimization problem. Overfitting is controlled by adjusting the weights
+    on each mini-batch and selecting their values such that they minimize the error
+    on the validation dataset. Meanwhile, *annotator confusion* [[86](#bib.bib86)]
+    assumes the existence of multiple annotators and introduces a regularized EM-based
+    approach to model the label transition probability; its regularizer enables the
+    estimated transition probability to converge to the true confusion matrix of the
+    annotators. In contrast, *pre-training* [[88](#bib.bib88)] empirically proves
+    that fine-tuning on a pre-trained model provides a significant improvement in
+    robustness compared with models trained from scratch; the universal representations
+    of pre-training prevent the model parameters from being updated in the wrong direction
+    by noisy labels. *PHuber* [[89](#bib.bib89)] proposes a composite loss-based gradient
+    clipping, which is a variation of standard gradient clipping for label noise robustness.
+    *Robust early-learning* [[90](#bib.bib90)] classifies critical parameters and
+    non-critical parameters for fitting clean and noise labels, respectively. Then,
+    it penalizes only the non-critical ones with a different update rule. *ODLN* [[91](#bib.bib91)]
+    leverages open-set auxiliary data and prevents the overfitting to noisy labels
+    by assigning random labels to the open-set examples, which are uniformly sampled
+    from the label set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The explicit regularization often introduces sensitive model-dependent
+    hyperparameters or requires deeper architectures to compensate for the reduced
+    capacity, yet it can lead to significant performance gain if they are optimally
+    tuned.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B2 Implicit Regularization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The regularization can also be an implicit form that gives the effect of stochasticity,
+    e.g., data augmentation and mini-batch stochastic gradient descent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Adversarial training* [[92](#bib.bib92)] enhances the noise
+    tolerance by encouraging the DNN to correctly classify both original inputs and
+    hostilely perturbed ones. *Label smoothing* [[93](#bib.bib93), [94](#bib.bib94)]
+    estimates the marginalized effect of label noise during training, thereby reducing
+    overfitting by preventing the DNN from assigning a full probability to noisy training
+    examples. Instead of the one-hot label, the noisy label is mixed with a uniform
+    mixture over all possible labels,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{gathered}\bar{y}=\big{\langle}\bar{y}(1),\bar{y}(2),\dots,\bar{y}(c)\big{\rangle},\\
+    \text{where}\leavevmode\nobreak\ \bar{y}(i)=(1-\alpha)\cdot[\tilde{y}=i]+\alpha/c\leavevmode\nobreak\
+    \text{and}\leavevmode\nobreak\ \alpha\in[0,1].\end{gathered}$ |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, $[\cdot]$ is the Iverson bracket and $\alpha$ is the smoothing degree.
+    In contrast, *mixup* [[95](#bib.bib95)] regularizes the DNN to favor simple linear
+    behaviors in between training examples. First, the mini-batch is constructed using
+    virtual training examples, each of which is formed by the linear interpolation
+    of two noisy training examples $(x_{i},\tilde{y}_{i})$ and $(x_{j},\tilde{y}_{j})$
+    obtained at random from noisy training data $\tilde{\mathcal{D}}$,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | ${x}_{mix}=\lambda x_{i}+(1-\lambda)x_{j}\leavevmode\nobreak\ \leavevmode\nobreak\
+    \text{and}\leavevmode\nobreak\ \leavevmode\nobreak\ {y}_{mix}=\lambda\tilde{y}_{i}+(1-\lambda)\tilde{y}_{j},$
+    |  | (6) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\lambda\in[0,1]$ is the balance parameter between two examples. Thus,
+    *mixup* extends the training distribution by updating the DNN for the constructed
+    mini-batch.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The implicit regularization improves the generalization capability
+    of the DNN without reducing the representational capacity. It also does not introduce
+    sensitive model-dependent hyperparameters because it is applied to the training
+    data. However, the extended feature or label space slows down the convergence
+    of training.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-C Robust Loss Function
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It was proven that a learned DNN with a *suitably modified* loss function $\ell^{\prime}$
+    for noisy data $\tilde{\mathcal{D}}$ can approach the Bayes optimal classifier
+    $f^{*}$, which achieves the optimal Bayes risk $\mathcal{R}^{*}=\mathcal{R}_{\mathcal{D}}(f^{*})$
+    for clean data $\mathcal{D}$. Let $\hat{f}=\text{argmin}_{f\in\mathcal{F}}\hat{\mathcal{R}}_{\ell^{\prime},\tilde{\mathcal{D}}}(f)$
+    be the learned classifier with the modified loss $\ell^{\prime}$ for the noisy
+    data, where $\hat{\mathcal{R}}_{\ell^{\prime},\tilde{\mathcal{D}}}(f)=\mathbb{E}_{\tilde{\mathcal{D}}}[\ell(f(x;\Theta),\tilde{y})]$.
+    If $\ell$ is $L$-Lipschitz and classification-calibrated [[50](#bib.bib50)], with
+    probability at least $1\!-\!\delta$, there exists a non-decreasing function $\zeta_{\ell}$
+    with $\zeta_{\ell}(0)=0$ [[39](#bib.bib39)] such that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{split}\mathcal{R}_{\mathcal{D}}(\hat{f})-\mathcal{R}^{*}\leq&amp;\leavevmode\nobreak\
+    \overbrace{\zeta_{\ell}\Big{(}\text{min}_{f\in\mathcal{F}}\mathcal{R}_{\ell,\mathcal{D}}(f)-\text{min}_{f}\mathcal{R}_{\ell,\mathcal{D}}(f)}^{\text{Approximation
+    and Estimation Errors}}\\ &amp;\leavevmode\nobreak\ \leavevmode\nobreak\ +4L_{p}\text{RC}(\mathcal{F})+2\sqrt{{\text{log}(1/\delta)}\big{/}{2&#124;\mathcal{D}&#124;}}\Big{)},\!\!\!\!\!\end{split}$
+    |  | (7) |'
+  prefs: []
+  type: TYPE_TB
+- en: $L_{p}$ is the Lipschitz constant of $\ell^{\prime}$ and RC is the Rademacher
+    complexity of the hypothesis class $\mathcal{F}$. Then, by the universal approximation
+    theorem [[96](#bib.bib96)], the Bayes optimal classifier $f^{*}$ is guaranteed
+    to be in the hypothesis class $\mathcal{F}$ with DNNs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on this theoretical foundation, researchers have attempted to design robust
+    loss functions such that they achieve a small risk for unseen clean data even
+    when noisy labels exist in the training data [[68](#bib.bib68), [97](#bib.bib97),
+    [98](#bib.bib98), [99](#bib.bib99), [100](#bib.bib100), [101](#bib.bib101)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: Initially, Manwani and Sastry [[48](#bib.bib48)] theoretically
+    proved a sufficient condition for the loss function such that risk minimization
+    with that function becomes noise-tolerant for binary classification. Subsequently,
+    the sufficient condition was extended for multi-class classification using deep
+    learning [[68](#bib.bib68)]. Specifically, a loss function is defined to be *noise-tolerant*
+    for a $c$-class classification under *symmetric* noise if the function satisfies
+    the noise rate $\tau<\frac{c-1}{c}$ and'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\sum_{j=1}^{c}\ell\big{(}f(x;\Theta),y=j\big{)}=C,\leavevmode\nobreak\
+    \forall x\in\mathcal{X},\leavevmode\nobreak\ \forall f,$ |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $C$ is a constant. This condition guarantees that the classifier trained
+    on noisy data has the same misclassification probability as that trained on noise-free
+    data under the specified assumption. An extension for *multi-label* classification
+    was provided by Kumar et al. [[102](#bib.bib102)]. Moreover, if $\mathcal{R}_{\mathcal{D}}(f^{*})=0$,
+    then the function is also noise-tolerant under an *asymmetric* noise, where $f^{*}$
+    is a global risk minimizer of $\mathcal{R}_{\mathcal{D}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the classification task, the categorical cross entropy (CCE) loss is the
+    most widely used loss function owing to its fast convergence and high generalization
+    capability. However, in the presence of noisy labels, the *robust MAE* [[68](#bib.bib68)]
+    showed that the mean absolute error (MAE) loss achieves better generalization
+    than the CCE loss because only the MAE loss satisfies the aforementioned condition.
+    A limitation of the MAE loss is that its generalization performance degrades significantly
+    when complicated data are involved. Hence, the *generalized cross entropy* (GCE)
+    [[97](#bib.bib97)] was proposed to achieve the advantages of both MAE and CCE
+    losses; the GCE loss is a more general class of noise-robust loss that encompasses
+    both of them. Amid et al. [[103](#bib.bib103)] extended the GCE loss by introducing
+    two temperatures based on the Tsallis divergence. *Bi-tempered loss* [[104](#bib.bib104)]
+    introduces a proper unbiased generalization of the CE loss based on the Bregman
+    divergence. In addition, inspired by the symmetricity of the Kullback-Leibler
+    divergence, the symmetric cross entropy (SCE) [[98](#bib.bib98)] was proposed
+    by combining a noise tolerance term, namely reverse cross entropy loss, with the
+    standard CCE loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Meanwhile, the *curriculum loss* (CL) [[99](#bib.bib99)] is a surrogate loss
+    of the 0-1 loss function; it provides a tight upper bound and can easily be extended
+    to multi-class classification. The *active passive loss* (APL) [[105](#bib.bib105)]
+    is a combination of two types of robust loss functions, an active loss that maximizes
+    the probability of belonging to the given class and a passive loss that minimizes
+    the probability of belonging to other classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The robustness of these methods is theoretically supported well. However,
+    they perform well only in simple cases, when learning is easy or the number of
+    classes is small [[106](#bib.bib106)]. Moreover, the modification of the loss
+    function increases the training time for convergence [[97](#bib.bib97)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D Loss Adjustment
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Loss adjustment is effective for reducing the negative impact of noisy labels
+    by adjusting the loss of all training examples before updating the DNN [[62](#bib.bib62),
+    [107](#bib.bib107), [108](#bib.bib108), [109](#bib.bib109), [69](#bib.bib69),
+    [110](#bib.bib110), [111](#bib.bib111), [19](#bib.bib19)]. The methods associated
+    with it can be categorized into three groups depending on their adjustment philosophy:
+    *1)* *loss correction* that estimates the noise transition matrix to correct the
+    forward or backward loss, *2)* *loss reweighting* that imposes different importance
+    to each example for a weighted training scheme, *3)* *label refurbishment* that
+    adjusts the loss using the refurbished label obtained from a convex combination
+    of noisy and predicted labels, and *4)* *meta learning* that automatically infers
+    the optimal rule for loss adjustment. Unlike the robust loss function newly designed
+    for robustness, this family of methods aims to make the traditional optimization
+    process robust to label noise. Hence, in the middle of training, the update rule
+    is adjusted such that the negative impact of label noise is minimized.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, loss adjustment allows for a *full exploration* of the training
+    data by adjusting the loss of every example. However, the error incurred by *false*
+    correction is accumulated, especially when the number of classes or the number
+    of mislabeled examples is large [[112](#bib.bib112)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D1 Loss Correction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Similar to the noise adaptation layer presented in Section [III-A](#S3.SS1
+    "III-A Robust Architecture ‣ III Deep Learning Approaches ‣ Learning from Noisy
+    Labels with Deep Neural Networks: A Survey"), this approach modifies the loss
+    of each example by multiplying the estimated label transition probability by the
+    output of a specified DNN. The main difference is that the learning of the transition
+    probability is decoupled from that of the model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Backward correction* [[62](#bib.bib62)] initially approximates
+    the noise transition matrix using the softmax output of the DNN trained without
+    loss correction. Subsequently, it retrains the DNN while correcting the original
+    loss based on the estimated matrix. The corrected loss of a example $(x,\tilde{y})$
+    is computed by a linear combination of its loss values for observable labels,
+    whose coefficient is the inverse transition matrix $\text{T}^{-1}$ to the observable
+    label $y\in\{1,\dots,c\}$, given its target label $\tilde{y}$. Therefore, the
+    backward correction $\textstyle\vec{}\mkern 4.0mu$ $\textstyle\ell$ is performed
+    by multiplying the inverse transition matrix to the prediction for all the observable
+    labels,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  |  $\small\begin{split}{\mathchoice{\vbox{\offinterlineskip\halign{#\cr\reflectbox{$\displaystyle\vec{}\mkern
+    4.0mu$}\cr\kern-3.87498pt\cr$\displaystyle\ell$\cr}}}{\vbox{\offinterlineskip\halign{#\cr\reflectbox{$\textstyle\vec{}\mkern
+    4.0mu$}\cr\kern-3.87498pt\cr$\textstyle\ell$\cr}}}{\vbox{\offinterlineskip\halign{#\cr\reflectbox{$\scriptstyle\vec{}\mkern
+    4.0mu$}\cr\kern-2.7125pt\cr$\scriptstyle\ell$\cr}}}{\vbox{\offinterlineskip\halign{#\cr\reflectbox{$\scriptscriptstyle\vec{}\mkern
+    4.0mu$}\cr\kern-1.93748pt\cr$\scriptscriptstyle\ell$\cr}}}}\big{(}f(x;&amp;\Theta),\tilde{y}\big{)}=\hat{\text{T}}^{-1}\Big{\langle}\ell\big{(}f(x;\Theta),1\big{)},\dots,\ell\big{(}f(x;\Theta),c\big{)}\Big{\rangle}^{\!\top}\!\!,\end{split}$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\hat{\text{T}}$ is the estimated noise transition matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversely, *forward correction* [[62](#bib.bib62)] uses a linear combination
+    of a DNN’s softmax outputs before applying the loss function. Hence, the forward
+    correction $\vec{\ell}$ is performed by multiplying the estimated transition probability
+    with the softmax outputs during the forward propagation step,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\small\begin{split}\vec{\ell}\big{(}f(x;\Theta),\tilde{y}\big{)}&amp;=\ell\Big{(}\Big{\langle}\hat{p}(\tilde{y}&#124;1),\dots,\hat{p}(\tilde{y}&#124;c)\Big{\rangle}f(x;\Theta)^{\top},\tilde{y}\Big{)}\\
+    &amp;=\ell\big{(}\hat{\text{T}}^{\top}f(x;\Theta)^{\top},\tilde{y}\big{)}.\end{split}$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: Furthermore, *gold loss correction* [[107](#bib.bib107)] assumes the availability
+    of clean validation data or anchor points for loss correction. Thus, a more accurate
+    transition matrix is obtained by using them as additional information, which further
+    improves the robustness of the loss correction. Recently, *T-Revision* [[113](#bib.bib113)]
+    provides a solution that can infer the transition matrix without anchor points,
+    and *Dual T* [[114](#bib.bib114)] factorizes the matrix into the product of two
+    easy-to-estimate matrices to avoid directly estimating the noisy class posterior.
+    Beyond the instance-independent noise assumption, Zhang et al. [[115](#bib.bib115)]
+    introduced the instance-confidence embedding to model instance-dependent noise
+    in estimating the transition matrix. On the other hand, Yang et al. [[116](#bib.bib116)]
+    proposed to use the Bayes optimal transition matrix estimated from the distilled
+    examples for the instance-dependent noise transition matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The robustness of these approaches is highly dependent on how precisely
+    the transition matrix is estimated. To acquire such a transition matrix, they
+    require prior knowledge in general, such as anchor points or clean validation
+    data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D2 Loss Reweighting
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Inspired by the concept of importance reweighting [[117](#bib.bib117)], loss
+    reweighting aims to assign smaller weights to the examples with false labels and
+    greater weights to those with true labels. Accordingly, the reweighted loss on
+    the mini-batch $\mathcal{B}_{t}$ is used to update the DNN,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Theta_{t+1}=\Theta_{t}-\eta\nabla\Big{(}\frac{1}{&#124;\mathcal{B}_{t}&#124;}\!\sum_{(x,\tilde{y})\in\mathcal{B}_{t}}\!\!\!\!\overbrace{w(x,\tilde{y})\ell\big{(}f(x;\Theta_{t}),\tilde{y}\big{)}}^{\text{Reweighted
+    Loss}}\Big{)},$ |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $w(x,\tilde{y})$ is the weight of an example $x$ with its noisy label
+    $\tilde{y}$. Hence, the examples with smaller weights do not significantly affect
+    the DNN learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: In *importance reweighting* [[108](#bib.bib108)], the ratio
+    of two joint data distributions $w(x,\tilde{y})=P_{\mathcal{D}}(x,\tilde{y})/P_{\tilde{\mathcal{D}}}(x,\tilde{y})$
+    determines the contribution of the loss of each noisy example. An approximate
+    solution to estimate the ratio was developed because the two distributions are
+    difficult to determine from noisy data. Meanwhile, *active bias* [[109](#bib.bib109)]
+    emphasizes uncertain examples with inconsistent label predictions by assigning
+    their prediction variances as the weights for training. *DualGraph* [[118](#bib.bib118)]
+    employs graph neural networks and reweights the examples according to the structural
+    relations among labels, eliminating the abnormal noise examples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: These approaches need to manually pre-specify the weighting function
+    as well as there additional hyper-parameters, which is fairly hard to be applied
+    in practice due to the significant variation of appropriate weighting schemes
+    that rely on the noise type and training data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D3 Label Refurbishment
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Refurbishing a noisy label $\tilde{y}$ effectively prevents overfitting to false
+    labels. Let $\hat{y}$ be the current prediction of the DNN $f(x;\Theta)$. Therefore,
+    the refurbished label $y^{refurb}$ can be obtained by a convex combination of
+    the noisy label $\tilde{y}$ and the DNN prediction $\hat{y}$,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $y^{refurb}=\alpha\tilde{y}+(1-\alpha)\hat{y},$ |  | (12) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\alpha\in[0,1]$ is the label confidence of $\tilde{y}$. To mitigate the
+    damage of incorrect labeling, this approach backpropagates the loss for the refurbished
+    label instead of the noisy one, thereby yielding substantial robustness to noisy
+    labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *Bootstrapping* [[69](#bib.bib69)] is the first method that
+    proposes the concept of label refurbishment to update the target label of training
+    examples. It develops a more coherent network that improves its ability to evaluate
+    the consistency of noisy labels, with the label confidence $\alpha$ obtained via
+    cross-validation. *Dynamic bootstrapping* [[110](#bib.bib110)] dynamically adjusts
+    the confidence $\alpha$ of individual training examples. The confidence $\alpha$
+    is obtained by fitting a two-component and one-dimensional beta mixture model
+    to the loss distribution of all training examples. *Self-adaptive training* [[119](#bib.bib119)]
+    applies the exponential moving average to alleviate the instability issue of using
+    instantaneous prediction of the current DNN,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\!\!y_{t+1}^{refurb}=\alpha y_{t}^{refurb}+(1-\alpha)\hat{y},\leavevmode\nobreak\
+    \text{where}\leavevmode\nobreak\ y_{0}^{refurb}=\tilde{y}\!\!$ |  | (13) |'
+  prefs: []
+  type: TYPE_TB
+- en: '*D2L* [[111](#bib.bib111)] trains a DNN using a dimensionality-driven learning
+    strategy to avoid overfitting to false labels. A simple measure called *local
+    intrinsic dimensionality* [[120](#bib.bib120)] is adopted to evaluate the confidence
+    $\alpha$ in considering that the overfitting is exacerbated by dimensional expansion.
+    Hence, refurbished labels are generated to prevent the dimensionality of the representation
+    subspace from expanding at a later stage of training. Recently, *SELFIE* [[19](#bib.bib19)]
+    introduces a novel concept of *refurbishable examples* that can be corrected with
+    high precision. The key idea is to consider the example with consistent label
+    predictions as refurbishable because such consistent predictions correspond to
+    its true label with a high probability owing to the learner’s perceptual consistency.
+    Accordingly, the labels of only refurbishable examples are corrected to minimize
+    the number of falsely corrected cases. Similarly, *AdaCorr* [[121](#bib.bib121)]
+    selectively refurbishes the label of noisy examples, but a theoretical error-bound
+    is provided. Alternatively, *SEAL* [[122](#bib.bib122)] averages the softmax output
+    of a DNN on each example over the whole training process, then re-trains the DNN
+    using the averaged soft labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: Differently from loss correction and reweighting, all the noisy labels
+    are explicitly replaced with other expected clean labels (or their combination).
+    If there are not many confusing classes in data, these methods work well by refurbishing
+    the noisy labels with high precision. In the opposite case, the DNN could overfit
+    to wrongly refurbished labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-D4 Meta Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In recent years, meta learning becomes an important topic in the machine learning
+    community and is applied to improve noise robustness [[123](#bib.bib123), [124](#bib.bib124),
+    [125](#bib.bib125)]. The key concept is *learning to learn* that performs learning
+    at a level higher than conventional learning, thus achieving data-agnostic and
+    noise type-agnostic rules for better practical use. It is similar to loss reweighting
+    and label refurbishment, but the adjustment is automated in a meta learning manner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: For the loss reweighting in Eq. ([11](#S3.E11 "In III-D2
+    Loss Reweighting ‣ III-D Loss Adjustment ‣ III Deep Learning Approaches ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey")), the goal is to learn
+    the weight function $w(x,\tilde{y})$. Specifically, *L2LWS* [[126](#bib.bib126)]
+    and *CWS* [[127](#bib.bib127)] are unified neural architectures composed of a
+    target DNN and a meta-DNN. The meta-DNN is trained on a small clean validation
+    dataset; it then provides guidance to evaluate the weight score for the target
+    DNN. Here, part of the two DNNs are shared and jointly trained to benefit from
+    each other. *Automatic reweighting* [[106](#bib.bib106)] is a meta learning algorithm
+    that learns the weights of training examples based on their gradient directions.
+    It includes a small clean validation dataset into the training dataset and reweights
+    the backward loss of the mini-batch examples such that the updated gradient minimizes
+    the loss of this validation dataset. *Meta-weight-net* [[124](#bib.bib124)] parameterizes
+    the weighting function as a multi-layer perceptron network with only one hidden
+    layer. A meta-objective is defined to update its parameters such that they minimize
+    the empirical risk of a small clean dataset. At each iteration, the parameter
+    of the target network is guided by the weight function updated via the meta-objective.
+    Likewise, *data coefficients* (i.e., exemplar weights and true labels) [[128](#bib.bib128)]
+    are estimated by meta-optimization with a small clean set, which is only $0.2$%
+    of the entire training set, while refurbishing the examples probably mislabeled.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the label refurbishment in Eq. ([12](#S3.E12 "In III-D3 Label Refurbishment
+    ‣ III-D Loss Adjustment ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels
+    with Deep Neural Networks: A Survey")), *knowledge distillation* [[129](#bib.bib129)]
+    adopts the technique of transferring knowledge from one expert model to a target
+    model. The prediction from the expert DNN trained on small clean validation data
+    is used instead of the prediction $\hat{y}$ from the target DNN. *MLC* [[130](#bib.bib130)]
+    updates the target model with corrected labels provided by a meta model trained
+    on clean validation data. The two models are trained concurrently via a bi-level
+    optimization.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: By learning the update rule via meta learning, the trained network
+    easily adapts to various types of data and label noise. Nevertheless, unbiased
+    clean validation data is essential to minimize the auxiliary objective, although
+    it may not be available in real-world data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E Sample Selection
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To avoid any false corrections, many recent studies [[70](#bib.bib70), [131](#bib.bib131),
+    [112](#bib.bib112), [132](#bib.bib132), [133](#bib.bib133), [134](#bib.bib134),
+    [135](#bib.bib135), [19](#bib.bib19), [136](#bib.bib136), [99](#bib.bib99), [137](#bib.bib137)]
+    have adopted sample selection that involves selecting true-labeled examples from
+    a noisy training dataset. In this case, the update equation in Eq. ([2](#S2.E2
+    "In II-A Supervised Learning with Noisy Labels ‣ II Preliminaries ‣ Learning from
+    Noisy Labels with Deep Neural Networks: A Survey")) is modified to render a DNN
+    more robust for noisy labels. Let $\mathcal{C}_{t}\subseteq\mathcal{B}_{t}$ be
+    the identified *clean* examples at time $t$. Then, the DNN is updated only for
+    the selected clean examples $\mathcal{C}_{t}$,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\Theta_{t+1}=\Theta_{t}-\eta\nabla\Big{(}\frac{1}{&#124;\mathcal{C}_{t}&#124;}\!\sum_{(x,\tilde{y})\in\mathcal{C}_{t}}\!\!\!\!\ell\big{(}f(x;\Theta_{t}),\tilde{y}\big{)}\Big{)},$
+    |  | (14) |'
+  prefs: []
+  type: TYPE_TB
+- en: where the rest mini-batch examples, which are likely to be false-labeled, are
+    excluded to pursue robust learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The memorization nature of DNNs has been explored theoretically and empirically
+    to identify clean examples from noisy training data [[138](#bib.bib138), [139](#bib.bib139),
+    [140](#bib.bib140)]. Specifically, assuming clusterable data where the clusters
+    are located on the unit Euclidean ball, Li et al. [[61](#bib.bib61)] proved the
+    distance from the initial weight ${W}_{0}$ to the weight ${W}_{t}$ after $t$ iterations,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\left\lVert{W}_{t}-{W}_{0}\right\rVert_{F}\lesssim\big{(}\sqrt{K}+(K^{2}\epsilon_{0}/\left\lVert{C}\right\rVert^{2})t\big{)},$
+    |  | (15) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\left\lVert\cdot\right\rVert_{F}$ is the Frobenius norm, $K$ is the
+    number of clusters, and ${C}$ is the set of cluster centers reaching all input
+    examples within their $\epsilon_{0}$ neighborhood. Eq. ([15](#S3.E15 "In III-E
+    Sample Selection ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with
+    Deep Neural Networks: A Survey")) demonstrates that the weights of DNNs start
+    to stray far from the initial weights when overfitting to corrupted labels, while
+    they are still in the vicinity of the initial weights at an early stage of training
+    [[61](#bib.bib61), [30](#bib.bib30)]. In the empirical studies [[21](#bib.bib21),
+    [141](#bib.bib141)], the *memorization effect* is also observed since DNNs tend
+    to first learn simple and generalized patterns and then gradually overfit to all
+    noisy patterns. As such, favoring small-loss training examples as the clean ones
+    are commonly employed to design robust training methods [[112](#bib.bib112), [131](#bib.bib131),
+    [135](#bib.bib135), [134](#bib.bib134), [142](#bib.bib142)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning with sample selection is well motivated and works well in general,
+    but this approach suffers from accumulated error caused by incorrect selection,
+    especially when there are many ambiguous classes in training data. Hence, recent
+    approaches often leverage multiple DNNs to cooperate with one another [[112](#bib.bib112)]
+    or run multiple training rounds [[133](#bib.bib133)]. Moreover, to benefit from
+    even false-labeled examples, loss correction or semi-supervised learning have
+    been recently combined with the sample selection strategy [[19](#bib.bib19), [142](#bib.bib142)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f2f552e7d0e2fde51781ca94a26d484a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Symmetric Noise $40\%$.       (b) Asymmetric Noise $40\%$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 5: Loss distribution of training examples at the training accuracy of
+    $50\%$ on noisy CIFAR-100\. (This figure is adapted from Song et al. [[141](#bib.bib141)].)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E1 Multi-network Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Collaborative learning and co-training are widely used for the multi-network
+    training. Consequently, the sample selection process is guided by the mentor network
+    in the case of collaborative learning or the peer network in the case of co-training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: Initially, *Decouple* [[70](#bib.bib70)] proposes the decoupling
+    of when to update from how to update. Hence, two DNNs are maintained simultaneously
+    and updated only the examples selected based on a disagreement between the two
+    DNNs. Next, due to the memorization effect of DNNs, many researchers have adopted
+    another selection criterion, called a *small-loss* trick, which treats a certain
+    number of small-loss training examples as true-labeled examples; many true-labeled
+    examples tend to exhibit smaller losses than false-labeled examples, as illustrated
+    in Figure [5](#S3.F5 "Figure 5 ‣ III-E Sample Selection ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")(a). In *MentorNet*
+    [[131](#bib.bib131)], a pre-trained mentor network guides the training of a student
+    network in a collaborative learning manner. Based on the small-loss trick, the
+    mentor network provides the student network with examples whose labels are likely
+    to be correct. *Co-teaching* [[112](#bib.bib112)] and *Co-teaching+* [[132](#bib.bib132)]
+    also maintain two DNNs, but each DNN selects a certain number of small-loss examples
+    and feeds them to its peer DNN for further training. *Co-teaching+* further employs
+    the disagreement strategy of *Decouple* compared with *Co-teaching*. In contrast,
+    *JoCoR* [[143](#bib.bib143)] reduces the diversity of two networks via co-regularization,
+    making predictions of the two networks closer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The co-training methods help reduce the confirmation bias [[112](#bib.bib112)],
+    which is a hazard of favoring the examples selected at the beginning of training,
+    while the increase in the number of learnable parameters makes their learning
+    pipeline inefficient. In addition, the small-loss trick does not work well when
+    the loss distribution of true-labeled and false-labeled examples largely overlap,
+    as in the asymmetric noise in Figure [5](#S3.F5 "Figure 5 ‣ III-E Sample Selection
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")(b).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E2 Multi-round Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Without maintaining additional DNNs, multi-round learning iteratively refines
+    the selected set of clean examples by repeating the training round. Thus, the
+    selected set keeps improved as the number of rounds increases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: *ITLM* [[134](#bib.bib134)] iteratively minimizes the trimmed
+    loss by alternating between selecting true-labeled examples at the current moment
+    and retraining the DNN using them. At each training round, only a fraction of
+    small-loss examples obtained in the current round are used to retrain the DNN
+    in the next round. *INCV* [[135](#bib.bib135)] randomly divides noisy training
+    data and then employs cross-validation to classify true-labeled examples while
+    removing large-loss examples at each training round. Here, *Co-teaching* is adopted
+    to train the DNN on the identified examples in the final round of training. Similarly,
+    *O2U-Net* [[144](#bib.bib144)] repeats the whole training process with the cyclical
+    learning rate until enough loss statistics of every examples are gathered. Next,
+    the DNN is re-trained from scratch only for the clean data where false-labeled
+    examples have been detected and removed based on statistics.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A number of variations have been proposed to achieve high performance using
+    iterative refinement only in a single training round. Beyond the small-loss trick,
+    *iterative detection* [[133](#bib.bib133)] detects false-labeled examples by employing
+    the local outlier factor algorithm [[145](#bib.bib145)]. With a Siamese network,
+    it gradually pulls away false-labeled examples from true-labeled samples in the
+    deep feature space. *MORPH* [[137](#bib.bib137)] introduces the concept of memorized
+    examples which is used to iteratively expand an initial safe set into a maximal
+    safe set via self-transitional learning. *TopoFilter* [[146](#bib.bib146)] utilizes
+    the spatial topological pattern of learned representations to detect true-labeled
+    examples, not relying on the prediction of the noisy classifier. *NGC* [[147](#bib.bib147)]
+    iteratively constructs the nearest neighbor graph using latent representations
+    and performs geometry-based sample selection by aggregating information from neighborhoods.
+    Soft pesudo-labels are assigned to the examples not selected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: The selected clean set keeps expanded and purified with iterative refinement,
+    mainly through multi-round learning. As a side effect, the computational cost
+    for training increases linearly for the number of training rounds.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-E3 Hybrid Approach
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: An inherent limitation of sample selection is to discard all the *unselected*
+    training examples, thus resulting in a *partial* exploration of training data.
+    To exploit all the noisy examples, researchers have attempted to combine sample
+    selection with other orthogonal ideas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3c914bc4958eff9c7257c6ebcb6e6eec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Noisy Data.      (b) Transformed Data.          (c) SSL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 6: Procedures for semi-supervised learning under label noise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical Detail: The most prominent method in this direction is combining
+    a specific sample selection strategy with a specific semi-supervised learning
+    model. As illustrated in Figure [6](#S3.F6 "Figure 6 ‣ III-E3 Hybrid Approach
+    ‣ III-E Sample Selection ‣ III Deep Learning Approaches ‣ Learning from Noisy
+    Labels with Deep Neural Networks: A Survey"), selected examples are treated as
+    labeled clean data, whereas the remaining examples are treated as unlabeled. Subsequently,
+    semi-supervised learning is performed using the transformed data. *SELF* [[136](#bib.bib136)]
+    is combined with a semi-supervised learning approach to progressively filter out
+    false-labeled examples from noisy data. By maintaining the running average model
+    called the mean-teacher [[148](#bib.bib148)] as the backbone, it obtains the self-ensemble
+    predictions of all training examples and then progressively removes examples whose
+    ensemble predictions do not agree with their annotated labels. This method further
+    leverages unsupervised loss from the examples not included in the selected clean
+    set. *DivideMix* [[142](#bib.bib142)] uses two-component and one-dimensional Gaussian
+    mixture models to transform noisy data into labeled (clean) and unlabeled (noisy)
+    sets. Then, it applies a semi-supervised technique *MixMatch* [[149](#bib.bib149)].
+    Recently, *RoCL* [[150](#bib.bib150)] employs two-phase learning strategies: supervised
+    training on selected clean examples and then semi-supervised learning on relabeled
+    noisy examples with self-supervision. For selection and relabeling, it computes
+    the exponential moving average of the loss over training iterations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table II: Comparison of proposed robust deep learning methods with respect
+    to the following six properties: (P1) Flexibility, (P2) No Pre-training, (P3) Full
+    Exploration, (P4) No Supervision, (P5) Heavy Noise, and (P6) Complex Noise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Category | Method | P1 | P2 | P3 | P4 | P5 | P6 | Implementation​​ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  ​​​​​​ Robust Architecture         (§[III-A](#S3.SS1 "III-A Robust Architecture
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) ​​​​​ | Noisy Adaptation         Layer | *Webly Learning*[[75](#bib.bib75)]
+    | $\bigtriangleup$ | ✕ | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | Official (Caffe)¹¹1[https://github.com/endernewton/webly-supervised](https://github.com/endernewton/webly-supervised)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Noise Model*[[77](#bib.bib77)] | $\bigtriangleup$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ | Unofficial (Keras)²²2[https://github.com/delchiaro/training-cnn-noisy-labels-keras](https://github.com/delchiaro/training-cnn-noisy-labels-keras)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Dropout Noise Model*[[78](#bib.bib78)] | $\bigtriangleup$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | Official (MATLAB)³³3[https://github.com/ijindal/Noisy_Dropout_regularization](https://github.com/ijindal/Noisy_Dropout_regularization)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *S-model*[[79](#bib.bib79)] | $\bigtriangleup$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ | Official (Keras)⁴⁴4[https://github.com/udibr/noisy_labels](https://github.com/udibr/noisy_labels)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *C-model*[[79](#bib.bib79)] | $\bigtriangleup$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigcirc$ | Official (Keras)⁴⁴4[https://github.com/udibr/noisy_labels](https://github.com/udibr/noisy_labels)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *NLNN*[[76](#bib.bib76)] | $\bigtriangleup$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ | Unofficial (Chainer)⁵⁵5[https://github.com/Ryo-Ito/Noisy-Labels-Neural-Network](https://github.com/Ryo-Ito/Noisy-Labels-Neural-Network)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Dedicated Architecture | *Probablistic Noise Model*[[16](#bib.bib16)]
+    | ✕ | ✕ | $\bigcirc$ | ✕ | $\pagecolor{gray!10}\bigtriangleup$ | $\bigcirc$ |
+    Official (Caffe)⁶⁶6[https://github.com/Cysu/noisy_label](https://github.com/Cysu/noisy_label)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Masking*[[80](#bib.bib80)] | ✕ | $\bigcirc$ | $\bigcirc$ | ✕ | $\pagecolor{gray!10}\bigtriangleup$
+    | $\bigcirc$ | Official (TensorFlow)⁷⁷7[https://github.com/bhanML/Masking](https://github.com/bhanML/Masking)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Contrastive-Additive Noise Network*[[81](#bib.bib81)] | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\pagecolor{gray!10}\bigtriangleup$ | $\bigcirc$ |
+    N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *RoG*[[85](#bib.bib85)] | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\pagecolor{gray!10}\bigtriangleup$ | Official (PyTorch)⁸⁸8[https://github.com/pokaxpoka/RoGNoisyLabel](https://github.com/pokaxpoka/RoGNoisyLabel)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  ​​​​​​ Robust Regularization          (§[III-B](#S3.SS2 "III-B Robust Regularization
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) ​​​​​ |      Explicit Regularization | *Bilevel Learning*[[87](#bib.bib87)]
+    | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$ | $\bigtriangleup$
+    | Official (TensorFlow)⁹⁹9[https://github.com/sjenni/DeepBilevel](https://github.com/sjenni/DeepBilevel)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Annotator Confusion*[[86](#bib.bib86)] | $\bigcirc$ | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | $\bigtriangleup$ | Official (TensorFlow)^(10)^(10)10[https://rt416.github.io/pdf/trace_codes.pdf](https://rt416.github.io/pdf/trace_codes.pdf)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Pre-training*[[88](#bib.bib88)] | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | $\bigtriangleup$ | $\bigtriangleup$ | Official (PyTorch)^(11)^(11)11[github.com/hendrycks/pre-training](github.com/hendrycks/pre-training)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *PHuber*[[89](#bib.bib89)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | $\bigtriangleup$ | $\bigtriangleup$ | Unofficial (PyTorch)^(12)^(12)12[https://github.com/dmizr/phuber](https://github.com/dmizr/phuber)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Robust Early-learning*[[90](#bib.bib90)] | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | $\bigtriangleup$ | Official (PyTorch)^(13)^(13)13[https://github.com/xiaoboxia/CDR](https://github.com/xiaoboxia/CDR)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *ODLN*[[91](#bib.bib91)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigtriangleup$ | $\bigtriangleup$ | Official (PyTorch)^(14)^(14)14[https://github.com/hongxin001/ODNL?ref=pythonrepo.com](https://github.com/hongxin001/ODNL?ref=pythonrepo.com)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |      Implicit Regularization | *Adversarial Training*[[92](#bib.bib92)]
+    | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$ | Unofficial (PyTorch)^(15)^(15)15[https://https://github.com/sarathknv/adversarial-examples-pytorch](https://https://github.com/sarathknv/adversarial-examples-pytorch)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Label Smoothing*[[93](#bib.bib93)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigtriangleup$ | Unofficial (PyTorch)^(16)^(16)16[https://github.com/CoinCheung/pytorch-loss](https://github.com/CoinCheung/pytorch-loss)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Mixup*[[95](#bib.bib95)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | ✕ | $\bigtriangleup$ | Official (PyTorch)^(17)^(17)17[https://github.com/facebookresearch/mixup-cifar10](https://github.com/facebookresearch/mixup-cifar10)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Robust Loss Function          (§[III-C](#S3.SS3 "III-C Robust Loss Function
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) | *Robust MAE*[[68](#bib.bib68)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Generalized Cross Entropy*[[97](#bib.bib97)] | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | Unofficial (PyTorch)^(18)^(18)18[https://github.com/AlanChou/Truncated-Loss](https://github.com/AlanChou/Truncated-Loss)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Symmetric Cross Entropy*[[98](#bib.bib98)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ | Official (Keras)^(19)^(19)19[https://github.com/YisenWang/symmetric_cross_entropy](https://github.com/YisenWang/symmetric_cross_entropy_for_noisy_label)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Bi-tempered Loss*[[104](#bib.bib104)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | $\bigtriangleup$ | Official (TensorFlow)^(20)^(20)20[https://github.com/google/bi-tempered-loss](https://github.com/google/bi-tempered-loss)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Curriculum Learning*[[99](#bib.bib99)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | ✕ | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *Active Passive Loss*[[105](#bib.bib105)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(21)^(21)21[https://github.com/HanxunH/Active-Passive-Losses](https://github.com/HanxunH/Active-Passive-Losses)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  ​​​​​​ Loss Adjustment        (§[III-D](#S3.SS4 "III-D Loss Adjustment ‣
+    III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) ​​​​​ | Loss Correction | *Backward Correction*[[62](#bib.bib62)]
+    | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | ✕ | Official (Keras)^(22)^(22)22[https://github.com/giorgiop/loss-correction](https://github.com/giorgiop/loss-correction)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Forward Correction*[[62](#bib.bib62)] | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | ✕ | ✕ | ✕ | Official (Keras)^(22)^(22)22[https://github.com/giorgiop/loss-correction](https://github.com/giorgiop/loss-correction)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Gold Loss Correction*[[107](#bib.bib107)] | $\bigcirc$ | ✕ | $\bigcirc$
+    | ✕ | ✕ | ✕ | Official (PyTorch)^(23)^(23)23[https://github.com/mmazeika/glc](https://github.com/mmazeika/glc)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *T-revision*[[113](#bib.bib113)] | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | ✕ | ✕ | Official (PyTorch)^(24)^(24)24[https://github.com/xiaoboxia/T-Revision](https://github.com/xiaoboxia/T-Revision)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Dual T*[[114](#bib.bib114)] | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | $\bigtriangleup$ | ✕ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Loss Reweigting | *Importance Reweighting*[[108](#bib.bib108)] | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$ | Unofficial (PyTorch)^(25)^(25)25[https://github.com/xiaoboxia/Classification-with-noisy-labels](https://github.com/xiaoboxia/Classification-with-noisy-labels-by-importance-reweighting)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Active Bias*[[109](#bib.bib109)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigtriangleup$ | Unofficial (TensorFlow)^(26)^(26)26[https://github.com/songhwanjun/ActiveBias](https://github.com/songhwanjun/ActiveBias)​​
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *DualGraph*[[118](#bib.bib118)] | ✕ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Label Refurbishment | *Bootstrapping*[[69](#bib.bib69)] | $\bigcirc$ |
+    $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | $\bigtriangleup$ | Unofficial (Keras)^(27)^(27)27[https://github.com/dr-darryl-wright/Noisy-Labels-with-Bootstrapping](https://github.com/dr-darryl-wright/Noisy-Labels-with-Bootstrapping)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Dynamic Bootstrapping*[[110](#bib.bib110)] | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$ | Official (PyTorch)^(28)^(28)28[https://github.com/PaulAlbert31/LabelNoiseCorrection](https://github.com/PaulAlbert31/LabelNoiseCorrection)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Self-adaptive Training*[[119](#bib.bib119)] | $\bigcirc$ | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(29)^(29)29[https://github.com/LayneH/self-adaptive-training](https://github.com/LayneH/self-adaptive-training)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *D2L*[[111](#bib.bib111)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | ✕ | $\bigtriangleup$ | Official (Keras)^(30)^(30)30[https://github.com/xingjunm/dimensionality-driven-learning](https://github.com/xingjunm/dimensionality-driven-learning)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *AdaCorr*[[121](#bib.bib121)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(31)^(31)31[https://github.com/pingqingsheng/LRT](https://github.com/pingqingsheng/LRT)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *SEAL*[[122](#bib.bib122)] | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | Official (PyTorch)^(32)^(32)32[https://github.com/chenpf1025/IDN](https://github.com/chenpf1025/IDN)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Meta Learning | *L2LWS*[[126](#bib.bib126)] | ✕ | $\bigcirc$ | $\bigcirc$
+    | ✕ | $\bigtriangleup$ | $\bigtriangleup$ | Unofficial (TensorFlow)^(33)^(33)33[https://github.com/krayush07/learn-by-weak-supervision](https://github.com/krayush07/learn-by-weak-supervision)​​
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *CWS*[[127](#bib.bib127)] | ✕ | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$
+    | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Automatic Reweighting*[[106](#bib.bib106)] | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigtriangleup$ | $\bigtriangleup$ | Official (TensorFlow)^(34)^(34)34[https://github.com/uber-research/learning-to-reweight-examples](https://github.com/uber-research/learning-to-reweight-examples)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Meta-weight-net*[[124](#bib.bib124)] | $\bigtriangleup$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigtriangleup$ | $\bigtriangleup$ | Official (PyTorch)^(35)^(35)35[https://github.com/xjtushujun/meta-weight-net](https://github.com/xjtushujun/meta-weight-net)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Data Coefficients*[[128](#bib.bib128)] | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | ✕ | $\bigtriangleup$ | $\bigtriangleup$ | Official (TensorFlow)^(36)^(36)36[https://github.com/google-research/google-research/tree/master/ieg](https://github.com/google-research/google-research/tree/master/ieg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Knowledge Distillation*[[129](#bib.bib129)] | $\bigcirc$ | ✕ | $\bigcirc$
+    | ✕ | $\bigtriangleup$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *MLC*[[130](#bib.bib130)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    ✕ | $\bigtriangleup$ | $\bigcirc$ | Official (PyTorch)^(37)^(37)37[https://aka.ms/MLC](https://aka.ms/MLC)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  ​​​​​​ Sample Selection        (§[III-E](#S3.SS5 "III-E Sample Selection
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) ​​​​​ | Multi-Network      Learning | *Decouple*[[70](#bib.bib70)]
+    | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigcirc$ | ✕ | $\bigtriangleup$ | Official (TensorFlow)^(38)^(38)38[https://github.com/emalach/UpdateByDisagreement](https://github.com/emalach/UpdateByDisagreement)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *MentorNet*[[131](#bib.bib131)] | ✕ | ✕ | ✕ | ✕ | $\bigcirc$ | $\bigtriangleup$
+    | Official (TensorFlow)^(39)^(39)39[https://github.com/google/mentornet](https://github.com/google/mentornet)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Co-teaching*[[112](#bib.bib112)] | $\bigcirc$ | $\bigcirc$ | ✕ | ✕
+    | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(40)^(40)40[https://github.com/bhanML/Co-teaching](https://github.com/bhanML/Co-teaching)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Co-teaching+*[[132](#bib.bib132)] | $\bigcirc$ | $\bigcirc$ | ✕ |
+    ✕ | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(41)^(41)41[https://github.com/bhanML/coteaching_plus](https://github.com/bhanML/coteaching_plus)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *JoCoR*[[143](#bib.bib143)] | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | $\bigcirc$
+    | $\bigtriangleup$ | Official (PyTorch)^(42)^(42)42[https://github.com/hongxin001/JoCoR](https://github.com/hongxin001/JoCoR)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Multi-Round Learning | *ITLM*[[134](#bib.bib134)] | $\bigcirc$ | $\bigcirc$
+    | ✕ | ✕ | $\bigcirc$ | $\bigtriangleup$ | Official (GluonCV)^(43)^(43)43[https://github.com/yanyao-shen/ITLM-simplecode](https://github.com/yanyao-shen/ITLM-simplecode)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *INCV*[[135](#bib.bib135)] | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | Official (Keras)^(44)^(44)44[https://github.com/chenpf1025/noisy_label_understanding_utilizing](https://github.com/chenpf1025/noisy_label_understanding_utilizing)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *O2U-Net*[[144](#bib.bib144)] | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | $\bigcirc$
+    | $\bigtriangleup$ | Unofficial (PyTorch)^(45)^(45)45[https://github.com/hjimce/O2U-Net](https://github.com/hjimce/O2U-Net)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *Iterative Detection*[[133](#bib.bib133)] | $\bigcirc$ | $\bigcirc$
+    | ✕ | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | Official (Keras)^(46)^(46)46[https://github.com/YisenWang/Iterative_learning](https://github.com/YisenWang/Iterative_learning)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *MORPH*[[137](#bib.bib137)] | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *TopoFilter*[[146](#bib.bib146)] | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(47)^(47)47[https://github.com/pxiangwu/TopoFilter](https://github.com/pxiangwu/TopoFilter)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *NGC*[[147](#bib.bib147)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Hybrid Approach | *SELFIE*[[19](#bib.bib19)] | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigtriangleup$ | Official (TensorFlow)^(48)^(48)48[https://github.com/kaist-dmlab/SELFIE](https://github.com/kaist-dmlab/SELFIE)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *SELF*[[136](#bib.bib136)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *DivideMix*[[142](#bib.bib142)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | Official (PyTorch)^(49)^(49)49[https://github.com/LiJunnan1992/DivideMix](https://github.com/LiJunnan1992/DivideMix)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | *RoCL*[[150](#bib.bib150)] | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ |
+    $\bigcirc$ | $\bigcirc$ | $\bigtriangleup$ | N/A |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table III: Comparison of robust deep learning categories for overcoming noisy
+    labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Category | P1 | P2 | P3 | P4 | P5 | P6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ​​​Flexibility​​​ | ​​​No Pre-train​​​ | ​​​Full Exploration​​​ | ​​​No Supervision​​​
+    | ​​​Heavy Noise​​​ | ​​​Complex Noise​​​ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Robust Architecture​​​        (§[III-A](#S3.SS1 "III-A Robust Architecture
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) | ​​Noise Adaptation Layer | $\bigtriangleup$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | ✕ | ✕ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Dedicated Architecture | ✕ | $\bigtriangleup$ | $\bigcirc$ | $\bigtriangleup$
+    | $\bigtriangleup$ | $\bigcirc$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Robust Regularization​​​​​​        (§[III-B](#S3.SS2 "III-B Robust Regularization
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) | ​​Implicit Regularization | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Explicit Regularization | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | ✕ | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Robust Loss Function (§[III-C](#S3.SS3 "III-C Robust Loss Function ‣ III
+    Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ​ Loss Adjustment        (§[III-D](#S3.SS4 "III-D Loss Adjustment ‣ III Deep
+    Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks: A
+    Survey")) | ​​Loss Correction | $\bigcirc$ | ✕ | $\bigcirc$ | ✕ | ✕ | ✕ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Loss Reweighting | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | ✕ | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Label Refurbishment | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigtriangleup$ | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Meta Learning | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigtriangleup$
+    | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sample Selection        (§[III-E](#S3.SS5 "III-E Sample Selection ‣ III Deep
+    Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks: A
+    Survey")) | ​​Multi-Network Learning | $\bigcirc$ | $\bigcirc$ | ✕ | ✕ | $\bigcirc$
+    | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Multi-Round Learning | $\bigcirc$ | $\bigcirc$ | ✕ | $\bigcirc$ | $\bigcirc$
+    | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ​​Hybrid Approach | $\bigcirc$ | $\bigcirc$ | $\bigcirc$ | $\bigcirc$
+    | $\bigcirc$ | $\bigtriangleup$ |'
+  prefs: []
+  type: TYPE_TB
+- en: Meanwhile, *SELFIE* [[19](#bib.bib19)] is a hybrid approach of sample selection
+    and loss correction. The loss of refurbishable examples is corrected (i.e., loss
+    correction) and then used together with that of small-loss examples (i.e., sample
+    selection). Consequently, more training examples are considered for updating the
+    DNN. The *curriculum loss (CL)* [[99](#bib.bib99)] is combined with the robust
+    loss function approach and used to extract the true-labeled examples from noisy
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Remark: Noise robustness is significantly improved by combining with other
+    techniques. However, the hyperparameters introduced by these techniques render
+    a DNN more susceptible to changes in data and noise types, and an increase in
+    computational cost is inevitable'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Methodological Comparison
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we compare the $62$ deep learning methods for overcoming noisy
+    labels introduced in Section [III](#S3 "III Deep Learning Approaches ‣ Learning
+    from Noisy Labels with Deep Neural Networks: A Survey") with respect to the following
+    *six* properties. When selecting the properties, we refer to the properties that
+    are typically used to compare the performance of robust deep learning methods
+    [[112](#bib.bib112), [19](#bib.bib19)]. To the best of our knowledge, this survey
+    is the first to provide a systematic comparison of robust training methods. This
+    comprehensive comparison will provide useful insights that can enlighten new future
+    directions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P1) Flexibility: With the rapid evolution of deep learning research, a number
+    of new network architectures are constantly emerging and becoming available. Hence,
+    the ability to support any type of architecture is important. “Flexibility” ensures
+    that the proposed method can quickly adapt to the state-of-the-art architecture.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P2) No Pre-training: A typical approach to improve noise robustness is to
+    use a pre-trained network; however, this incurs an additional computational cost
+    to the learning process. “No Pre-training” ensures that the proposed method can
+    be trained from scratch without any pre-training.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P3) Full Exploration: Excluding unreliable examples from the update is an
+    effective method for robust deep learning; however, it eliminates hard but useful
+    training examples as well. “Full Exploration” ensures that the proposed methods
+    can use *all* training examples without severe overfitting to false-labeled examples
+    by adjusting their training losses or applying semi-supervised learning.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P4) No Supervision: Learning with supervision, such as a clean validation
+    set or a known noise rate, is often impractical because they are difficult to
+    obtain. Hence, such supervision had better be avoided to increase practicality
+    in real-world scenarios. “No Supervision” ensures that the proposed methods can
+    be trained without any supervision.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P5) Heavy Noise: In real-world noisy data, the noise rate can vary from light
+    to heavy. Hence, learning methods should achieve consistent noise robustness with
+    respect to the noise rate. “Heavy Noise” ensures that the proposed methods can
+    combat even the heavy noise.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '(P6) Complex Noise: The type of label noise significantly affects the performance
+    of a learning method. To manage real-world noisy data, diverse types of label
+    noise should be considered when designing a robust training method. “Complex Noise”
+    ensures that the proposed method can combat even the complex label noise.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Table [II](#S3.T2 "Table II ‣ III-E3 Hybrid Approach ‣ III-E Sample Selection
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey") shows a comparison of all robust deep learning methods, which are grouped
+    according to the most appropriate category. In the first row, the aforementioned
+    six properties are labeled as P1–P6, and the availability of open-source implementation
+    is added in the last column. For each property, we assign “$\bigcirc$” if it is
+    completely supported, “✕” if it is not supported, and “$\bigtriangleup$” if it
+    is supported but not completely. More specifically, “$\bigtriangleup$” is assigned
+    to P1 if the method can be flexible but requires additional effort, to P5 if the
+    method can combat only moderate label noise, and to P6 if the method does not
+    make a strict assumption about the noise type but without explicitly modeling
+    instance-dependent noise. Thus, for P6, the method marked with “✕” only deals
+    with the instance-independent noise, while the method marked with “$\bigcirc$”
+    deals with both instance-independent and -dependent noises. The remaining properties (i.e.,
+    P2, P3, and P4) are only assigned “$\bigcirc$” or “✕”. Regarding the implementation,
+    we assign “N/A” if a publicly available source code is not available.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'No existing method supports all the properties. Each method achieves noise
+    robustness by supporting a different combination of the properties. The supported
+    properties are similar among the methods of the same (sub-)category because those
+    methods share the same methodological philosophy; however, they differ significantly
+    depending on the (sub-)category. Therefore, we investigate the properties generally
+    supported in each (sub-)category and summarize them in Table [III](#S3.T3 "Table
+    III ‣ III-E3 Hybrid Approach ‣ III-E Sample Selection ‣ III Deep Learning Approaches
+    ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey"). Here, the
+    property of a (sub-)category is marked as the majority of the belonging methods.
+    If no clear trend is observed among those methods, then the property is marked
+    “$\bigtriangleup$”.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Noise Rate Estimation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The estimation of a noise rate is an imperative part of utilizing robust methods
+    for better practical use, especially with the approaches belonging to the loss
+    adjustment and sample selection. The estimated noise rate is widely used to reweight
+    examples for a robust classifier [[97](#bib.bib97), [114](#bib.bib114), [117](#bib.bib117)]
+    or to determine how many examples should be selected as clean ones [[112](#bib.bib112),
+    [19](#bib.bib19), [135](#bib.bib135)]. However, detailed analysis has yet to be
+    performed properly, though many robust approaches highly rely on the accuracy
+    of noise rate estimation. The noise rate can be estimated by exploiting the inferred
+    noise transition matrix [[113](#bib.bib113), [114](#bib.bib114), [151](#bib.bib151)],
+    the Gaussian mixture model [[110](#bib.bib110), [152](#bib.bib152), [137](#bib.bib137)],
+    or the cross-validation [[135](#bib.bib135), [19](#bib.bib19)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: V-A Noise Transition Matrix
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The noise transition matrix has been used to build a statistically consistent
+    robust classifier because it represents the class posterior probabilities for
+    noisy and clean data, as in Eq. ([3](#S3.E3 "In III-A1 Noise Adaptation Layer
+    ‣ III-A Robust Architecture ‣ III Deep Learning Approaches ‣ Learning from Noisy
+    Labels with Deep Neural Networks: A Survey")). The first method to estimate the
+    noise rate is exploiting this noise transition matrix, which can be inferred or
+    trained accurately by using perfectly clean examples, i.e., *anchor points* [[117](#bib.bib117),
+    [153](#bib.bib153)]; an example $x$ with its label $i$ is defined as an anchor
+    point if $p(y=i|x)=1$ and $p(y=k|x)=0$ for $k\neq i$. Thus, let $\mathcal{A}_{i}$
+    be the set of anchor points with label $i$, then the element of the noise transition
+    matrix $T_{ij}$ is estimated by'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{split}\hat{T}_{ij}&amp;=\frac{1}{&#124;\mathcal{A}_{i}&#124;}\sum_{x\in\mathcal{A}_{i}}\sum_{k=1}^{c}p(\tilde{y}=j&#124;y=k)p(y=k&#124;x)\\
+    &amp;=\frac{1}{&#124;\mathcal{A}_{i}&#124;}\sum_{x\in\mathcal{A}_{i}}p(\tilde{y}=j&#124;x;\Theta),\end{split}$
+    |  | (16) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $p(\tilde{y}=j|x;\Theta)$ is the noisy class posterior probability of
+    the classifier trained on noisy training data for the anchor point $x$ (see the
+    detailed proof in [[113](#bib.bib113), [107](#bib.bib107), [114](#bib.bib114)]).
+    Next, based on the inferred noise transition matrix, the noise rate of a balanced
+    training data is obtained by averaging the label transition probabilities between
+    classes,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\hat{\tau}=\frac{1}{c}\sum_{i=1}^{c}\sum_{j\neq i}^{c}p(\tilde{y}=j&#124;{y}=i)=\frac{1}{c}\sum_{i=1}^{c}\sum_{j\neq
+    i}^{c}\hat{T}_{ij}.$ |  | (17) |'
+  prefs: []
+  type: TYPE_TB
+- en: However, since the anchor points are typically unknown in real-world data, they
+    are identified from noisy training data by either theoretical derivations [[117](#bib.bib117)]
+    or heuristics [[62](#bib.bib62)]. In addition, there have been recent efforts
+    to learn the noise transition matrix without anchor points. *T-Revision* [[113](#bib.bib113)]
+    initializes a transition matrix by exploiting the examples with high noisy class
+    posterior probabilities and then refines the matrix by adding a slack variable.
+    *Dual-T* [[114](#bib.bib114)] introduces an intermediate class that factorizes
+    the transition matrix into two easy-to-estimate matrices for better accuracy.
+    *VolMinNet* [[151](#bib.bib151)] realizes an end-to-end framework and relaxes
+    the need for anchor points under the sufficiently scattered assumption.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table IV: Summary of publicly available datasets used for studying label noise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Dataset | # Training | # Validation | # Testing | # Classes | Noise Rate (%)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|   ​​​​​​ Clean Data ​​​​​ | MNIST [[154](#bib.bib154)]^(50)^(50)50 | 60K
+    | N/A | 10K | $10$ | $\approx 0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Fashion-MNIST [[155](#bib.bib155)]^(51)^(51)51​​​​​ | 60K | N/A | 10K
+    | $10$ | $\approx 0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CIFAR-10 [[156](#bib.bib156)]^(52)^(52)52 | 50K | N/A | 10K | $10$ | $\approx
+    0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CIFAR-100 [[156](#bib.bib156)]^(52)^(52)52 | 50K | N/A | 10K | $100$ |
+    $\approx 0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | SVHN [[157](#bib.bib157)]^(53)^(53)53 | 73K | N/A | 26K | $10$ | $\approx
+    0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Tiny-ImageNet [[158](#bib.bib158)]^(55)^(55)55 | 100K | 10K | 10K | $200$
+    | $\approx 0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | ImageNet [[1](#bib.bib1)]^(54)^(54)54 | 1.3M | 50K | 50K | $1000$ | $\approx
+    0.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|   ​​​​​​ Real-world Noisy Data ​​​​​ | ANIMAL-10N [[19](#bib.bib19)]^(56)^(56)56
+    | 50K | N/A | 5K | $10$ | $\approx 8.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CIFAR-10N [[159](#bib.bib159)]^(57)^(57)57 | 50K | N/A | 10K | $10$ |
+    $\approx 9.0/18.0/40.2$​​​​​​​ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | CIFAR-100N [[159](#bib.bib159)]^(57)^(57)57 | 50K | N/A | 10K | $100$
+    | $\approx 25.6/40.2$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Food-101N [[18](#bib.bib18)]^(58)^(58)58 | 310K | 5K | 25K | $101$ | $\approx
+    18.4$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Clothing1M [[16](#bib.bib16)]^(59)^(59)59 | 1M | 14K | 10K | $14$ | $\approx
+    38.5$ |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | WebVision [[17](#bib.bib17)]^(60)^(60)60 | 2.4M | 50K | 50K | $1000$ |
+    $\approx 20.0$ |'
+  prefs: []
+  type: TYPE_TB
+- en: V-B Gaussian Mixture Model (GMM)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/da46fd9da6bb31d043617457d6e5a089.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Symmetric Noise.              (b) Asymmetric Noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 7: Training loss distributions of true-labeled and false-labeled examples
+    using the ground-truth label and the GMM on CIFAR-100 data with two synthetic
+    noises of $40\%$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The second method is exploiting a one-dimensional and two-component GMM to
+    model the loss distribution of true-labeled and false-labeled examples [[110](#bib.bib110),
+    [152](#bib.bib152)]. As shown in Figure [7](#S5.F7 "Figure 7 ‣ V-B Gaussian Mixture
+    Model (GMM) ‣ V Noise Rate Estimation ‣ Learning from Noisy Labels with Deep Neural
+    Networks: A Survey"), since the loss distribution tends to be *bi-modal*, the
+    two Gaussian components are fitted to the training loss by using the EM algorithm;
+    the probability of an example being a false-labeled one is obtained through its
+    posterior probability. Hence, the noise rate is estimated at each epoch $t$ by
+    computing the expectation of the posterior probability for all training examples,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{gathered}\hat{\tau}=\mathbb{E}_{(x,\tilde{y})\in\tilde{\mathcal{D}}}\Big{[}\,p\big{(}g\,&#124;\,\ell\big{(}f(x;\Theta_{t}),\tilde{y}\big{)}\big{)}\,\Big{]},\\
+    \end{gathered}$ |  | (18) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $g$ is the Gaussian component with a larger loss. However, Pleiss et al.
+    [[152](#bib.bib152)] recently pointed out that the training loss becomes less
+    separable by the GMM as the training progresses, and thus proposed the *area under
+    the loss* (AUL) curve, which is the sum of the example’s training losses obtained
+    from all previous training epochs. Even after the loss signal decays in later
+    epochs, the distributions remain separable. Therefore, the noise rate is finally
+    estimated by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{gathered}\hat{\tau}=\mathbb{E}_{(x,\tilde{y})\in\tilde{\mathcal{D}}}\Big{[}\,p\big{(}g\,&#124;\,{\rm
+    AUL}_{t}(x,\tilde{y})\big{)}\,\Big{]},\\ \text{where}\leavevmode\nobreak\ \text{AUL}_{t}(x,\tilde{y})=\sum_{i=1}^{t}\ell\big{(}f(x;\Theta_{t}),\tilde{y}\big{)}.\end{gathered}$
+    |  | (19) |'
+  prefs: []
+  type: TYPE_TB
+- en: V-C Cross Validation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The third method is estimating the noise rate by applying cross validation,
+    which typically requires clean validation data [[19](#bib.bib19), [112](#bib.bib112),
+    [132](#bib.bib132)]. However, such clean validation data is hard to acquire in
+    real-world applications. Thus, Chen et al. [[135](#bib.bib135)] leveraged two
+    randomly divided noisy training datasets for cross validation. Under the assumption
+    that the two datasets share exactly the same noise transition matrix, the noise
+    rate quantifies the test accuracy of DNNs that are respectively trained and tested
+    on the two divided sets,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\!\!\!{\rm Test\,Accuracy}\!=\!\!\!\ \begin{cases}(1-\hat{\tau})^{2}+\hat{\tau}^{2}/(c-1)\!\!&amp;\!\!\text{if
+    symmetric}\!\!\!\!\\ (1-\hat{\tau})^{2}+\hat{\tau}^{2}\!\!&amp;\!\!\text{if asymmetric}.\!\!\!\!\end{cases}$
+    |  | (20) |'
+  prefs: []
+  type: TYPE_TB
+- en: Therefore, the noise rate is estimated from the test accuracy obtained by cross
+    validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Experimental Design
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section describes the typically used experimental design for comparing
+    robust training methods in the presence of label noise. We introduce publicly
+    available image datasets and then describe widely-used evaluation metrics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-A Publicly Available Datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To validate the robustness of the proposed algorithms, an image classification
+    task was widely conducted on numerous image benchmark datasets. Table [IV](#S5.T4
+    "Table IV ‣ V-A Noise Transition Matrix ‣ V Noise Rate Estimation ‣ Learning from
+    Noisy Labels with Deep Neural Networks: A Survey") summarizes popularly-used public
+    benchmark datasets, which are classified into two categories: *1)* a “clean dataset”
+    that consists of mostly true-labeled examples annotated by human experts and *2)*
+    a “real-world noisy dataset” that comprises real-world noisy examples with varying
+    numbers of false labels.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-A1 Clean Datasets
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'According to the literature [[133](#bib.bib133), [19](#bib.bib19), [142](#bib.bib142)],
+    *seven* clean datasets are widely used: MNIST^(50)^(50)50[http://yann.lecun.com/exdb/mnist](http://yann.lecun.com/exdb/mnist),
+    classification of handwritten digits [[154](#bib.bib154)]; Fashion-MNIST^(51)^(51)51[https://github.com/zalandoresearch/fashion-mnist](https://github.com/zalandoresearch/fashion-mnist),
+    classification of various clothing [[155](#bib.bib155)]; CIFAR-10^(52)^(52)52[https://www.cs.toronto.edu/~kriz/cifar.html](https://www.cs.toronto.edu/~kriz/cifar.html)
+    and CIFAR-100^(52)^(52)footnotemark: 52, classification of a subset of $80$ million
+    categorical images [[156](#bib.bib156)]; SVHN^(53)^(53)53[http://ufldl.stanford.edu/housenumbers](http://ufldl.stanford.edu/housenumbers),
+    classification of house numbers in Google Street view images [[157](#bib.bib157)];
+    ImageNet^(54)^(54)54[http://www.image-net.org](http://www.image-net.org) and Tiny-ImageNet^(55)^(55)55[https://www.kaggle.com/c/tiny-imagenet](https://www.kaggle.com/c/tiny-imagenet),
+    image database organized according to the WordNet hierarchy and its small subset
+    [[1](#bib.bib1), [158](#bib.bib158)]. Because the labels in these datasets are
+    almost all true-labeled, their labels in the training data should be artificially
+    corrupted for the evaluation of synthetic noises, namely *symmetric* noise and
+    *asymmetric* noise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-A2 Real-world Noisy Datasets
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Unlike the clean datasets, real-world noisy datasets inherently contain many
+    mislabeled examples annotated by non-experts. According to the literature [[17](#bib.bib17),
+    [19](#bib.bib19), [18](#bib.bib18), [16](#bib.bib16)], *six* real-world noisy
+    datasets are widely used: ANIMAL-10N^(56)^(56)56[https://dm.kaist.ac.kr/datasets/animal-10n](https://dm.kaist.ac.kr/datasets/animal-10n),
+    real-world noisy data of human-labeled online images for 10 confusing animals
+    [[19](#bib.bib19)]; CIFAR-10N^(57)^(57)57[http://noisylabels.com/](http://noisylabels.com/)
+    and CIFAR-100N^(57)^(57)footnotemark: 57, variations of CIFAR-10 and CIFAR-100
+    with human-annotated real-world noisy labels collected from Amazon’s Mechanical
+    Turk [[159](#bib.bib159)]. They provide human labels with different noise rates,
+    as shown in Table [IV](#S5.T4 "Table IV ‣ V-A Noise Transition Matrix ‣ V Noise
+    Rate Estimation ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey");
+    Food-101N^(58)^(58)58[https://kuanghuei.github.io/Food-101N](https://kuanghuei.github.io/Food-101N),
+    real-world noisy data of crawled food images annotated by their search keywords
+    in the Food-101 taxonomy [[160](#bib.bib160), [18](#bib.bib18)]; Clothing1M^(59)^(59)59[https://www.floydhub.com/lukasmyth/datasets/clothing1m](https://www.floydhub.com/lukasmyth/datasets/clothing1m),
+    real-world noisy data of large-scale crawled clothing images from several online
+    shopping websites [[16](#bib.bib16)]; WebVision^(60)^(60)60[https://data.vision.ee.ethz.ch/cvl/webvision/download.html](https://data.vision.ee.ethz.ch/cvl/webvision/download.html),
+    real-world noisy data of large-scale web images crawled from Flickr and Google
+    Images search [[17](#bib.bib17)]. To support sophisticated evaluation, most real-world
+    noisy datasets contain their own clean validation set and provide the estimated
+    noise rate of their training set.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI-B Evaluation Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A typical metric to assess the robustness of a particular method is the prediction
+    accuracy for unbiased and clean examples that are not used in training. The prediction
+    accuracy degrades significantly if the DNN overfits to false-labeled examples
+    [[22](#bib.bib22)]. Hence, *test accuracy* has generally been adopted for evaluation
+    [[13](#bib.bib13)]. For a test set $\mathcal{T}=\{(x_{i},y_{i})\}_{i=1}^{|\mathcal{T}|}$,
+    let $\hat{y}_{i}$ be the predicted label of the $i$-th example in $\mathcal{T}$.
+    Subsequently, the test accuracy is formalized by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{Test Accuracy}=\frac{&#124;\{(x_{i},y_{i})\in\mathcal{T}:\hat{y}_{i}=y_{i}\}&#124;}{&#124;\mathcal{T}&#124;}.$
+    |  | (21) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'If the test data are not available, *validation accuracy* can be used by replacing
+    $\mathcal{T}$ in Eq. ([21](#S6.E21 "In VI-B Evaluation Metrics ‣ VI Experimental
+    Design ‣ Learning from Noisy Labels with Deep Neural Networks: A Survey")) with
+    validation data $\mathcal{V}=\{(x_{i},y_{i})\}_{i=1}^{|\mathcal{V}|}$ as an alternative,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\text{Validation Accuracy}=\frac{&#124;\{(x_{i},y_{i})\in\mathcal{V}:\hat{y}_{i}=y_{i}\}&#124;}{&#124;\mathcal{V}&#124;}.$
+    |  | (22) |'
+  prefs: []
+  type: TYPE_TB
+- en: Furthermore, if the specified method belongs to the “sample selection” category,
+    *label precision* and *label recall* [[112](#bib.bib112), [135](#bib.bib135)]
+    can be used as the metrics,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{gathered}\text{Label Precision}=\frac{&#124;\{(x_{i},\tilde{y}_{i})\in\mathcal{S}_{t}:\tilde{y}_{i}=y_{i}\}&#124;}{&#124;\mathcal{S}_{t}&#124;},\\
+    \text{Label Recall}=\frac{&#124;\{(x_{i},\tilde{y}_{i})\in\mathcal{S}_{t}:\tilde{y}_{i}=y_{i}\}&#124;}{&#124;\{(x_{i},\tilde{y}_{i})\in\mathcal{B}_{t}:\tilde{y}_{i}=y_{i}\}&#124;},\end{gathered}$
+    |  | (23) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathcal{S}_{t}$ is the set of selected clean examples in a mini-batch
+    $\mathcal{B}_{t}$. The two metrics are performance indicators for the examples
+    selected from the mini-batch as true-labeled ones [[112](#bib.bib112)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Meanwhile, if the specified method belongs to the “label refurbishment” category,
+    *correction error* [[19](#bib.bib19)] can be used as an indicator of how many
+    examples are incorrectly refurbished,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\!\text{Correction Error}=\frac{&#124;\{x_{i}\!\in\!\mathcal{R}:\text{argmax}(y_{i}^{refurb})\neq
+    y_{i}\}&#124;}{&#124;\mathcal{R}&#124;},$ |  | (24) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\mathcal{R}$ is the set of examples whose labels are refurbished by
+    Eq. ([12](#S3.E12 "In III-D3 Label Refurbishment ‣ III-D Loss Adjustment ‣ III
+    Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")) and $y_{i}^{refurb}$ is the refurbished label of the $i$-th examples
+    in $\mathcal{R}$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII Future Research Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: With recent efforts in the machine learning community, the robustness of DNNs
+    becomes evolving in several directions. Thus, the existing approaches covered
+    in our survey face a variety of future challenges. This section provides discussion
+    for future research that can facilitate and envision the development of deep learning
+    in the label noise area.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-A Instance-dependent Label Noise
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Existing theoretical and empirical studies for *robust loss function* and *loss
+    correction* are largely built upon the instance-independent noise assumption that
+    the label noise is independent of input features [[77](#bib.bib77), [76](#bib.bib76),
+    [113](#bib.bib113), [114](#bib.bib114)]. However, this assumption may not be a
+    good approximation of the real-world label noise. In particular, Chen et al. [[122](#bib.bib122)]
+    conducted a theoretical hypothesis testing^(61)^(61)61In Clothing1M, the result
+    showed that the instance-independent noise happens with probability lower than
+    $10^{-21250}$, which is statistically impossible. using a popular real-world dataset,
+    Clothing1M, and proved that its label noise is statistically different from the
+    instance-independent noise. This testing confirms that the label noise should
+    depend on the instance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Conversely, most methods for the other direction (especially, *sample selection*)
+    work well even under the instance-dependent label noise in general since they
+    do not rely on the assumption. Nevertheless, Song et al. [[141](#bib.bib141)]
+    pointed out that their performance could considerably worsen in the instance-dependent (or
+    real-world) noise compared to symmetric noise due to the confusion between true-labeled
+    and false-labeled examples. The loss distribution of true-labeled examples heavily
+    overlaps that of false-labeled samples in the asymmetric noise, which is similar
+    to the real-world noise, in Figure [5](#S3.F5 "Figure 5 ‣ III-E Sample Selection
+    ‣ III Deep Learning Approaches ‣ Learning from Noisy Labels with Deep Neural Networks:
+    A Survey")(b). Thus, identifying clean examples becomes more challenging when
+    dealing with the instance-dependent label noise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Beyond the instance-independent label noise, there have been a few recent studies
+    for the instance-dependent label noise. Mostly, they only focus on a binary classification
+    task [[66](#bib.bib66), [161](#bib.bib161)] or a restricted small-scale machine
+    learning model such as logistic regression [[63](#bib.bib63)]. Therefore, learning
+    with the instance-dependent label noise is an important topic that deserves more
+    research attention.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-B Multi-label Data with Label Noise
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most of the existing methods are applicable only for a *single-label* multi-class
+    classification problem, where each data example is assumed to have only one true
+    label. However, in the case of *multi-label* learning, each data example can be
+    associated with a set of multiple true class labels. In music categorization,
+    each music can belong to multiple categories [[162](#bib.bib162)]. In semantic
+    scene classification, each scene may belong to multiple scene classes [[163](#bib.bib163)].
+    Thus, contrary to the single-label setup, the multi-label classifier aims to predict
+    a set of target objects simultaneously. In this setup, a multi-label dataset of
+    millions of examples are reported to contain over $26.6\%$ false-positive labels
+    as well as a significant number of omitted labels [[164](#bib.bib164)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even worse, the difference in occurrence between classes makes this problem
+    more challenging; some minor class labels occur less in training data than other
+    major class labels. Considering such aspects that can arise in multi-label classification,
+    the simple extension of existing methods may not learn the proper correlations
+    among multiple labels. Therefore, learning from noisy labels with multi-label
+    data is another important topic for future research. We refer the readers to a
+    recent study [[165](#bib.bib165)] that discusses the evaluation of multi-label
+    classifiers trained with noisy labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-C Class Imbalance Data with Label Noise
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The *class imbalance* in training data is commonly observed, where a few classes
+    account for most of the data. Especially when working with large data in many
+    real-world applications, this problem becomes more severe and is often associated
+    with the problem of noisy labels [[166](#bib.bib166)]. Nevertheless, to ease the
+    label noise problem, it is commonly assumed that training examples are equally
+    distributed over all class labels in the training data. This assumption is quite
+    strong when collecting large-scale data, and thus we need to consider a more realistic
+    scenario in which the two problems coexist.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most of the existing robust methods may not work well with the class imbalance,
+    especially when they rely on the learning dynamics of DNNs, e.g., the small-loss
+    trick or memorization effect. Under the existence of the class imbalance, the
+    training model converges to major classes faster than minor classes such that
+    most examples in the major class exhibit small losses (i.e., early memorization).
+    That is, there is a risk of discarding most examples in the minor class. Furthermore,
+    in terms of example importance, high-loss examples are commonly favored for the
+    class imbalance problem [[124](#bib.bib124)], while small-loss examples are favored
+    for the label noise problem. This conceptual contradiction hinders the applicability
+    of the existing methods that neglect the class imbalance. Therefore, these two
+    problems should be considered simultaneously to deal with more general situations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-D Robust and Fair Training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Machine learning classifiers can perpetuate and amplify the existing systemic
+    injustices in society [[167](#bib.bib167)]. Hence, fairness is becoming another
+    important topic. Traditionally, robust training and fair training have been studied
+    by separate communities; robust training with noisy labels has mostly focused
+    on combating label noise without regarding data bias [[13](#bib.bib13), [30](#bib.bib30)],
+    whereas fair training has focused on dealing with data bias, not necessarily noise
+    [[167](#bib.bib167), [168](#bib.bib168)]. However, noisy labels and data bias,
+    in fact, coexist in real-world data. Satisfying both robustness and fairness is
+    more realistic but challenging because the bias in data is pertinent to label
+    noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, many fairness criteria are group-based, where a target metric is
+    equalized or enforced over subpopulations in the data, also known as *protected
+    groups* such as race or gender [[167](#bib.bib167)]. Accordingly, the goal of
+    fair training is building a model that satisfies such fairness criteria for the
+    *true* protected groups. However, if the *noisy* protection group is involved,
+    such fairness criteria cannot be directly applied. Recently, mostly after 2020,
+    a few pioneering studies have emerged to consider both robustness and fairness
+    objectives at the same time under the binary classification setting [[169](#bib.bib169),
+    [170](#bib.bib170)]. Therefore, more research attention is needed for the convergence
+    of robust training and fair training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-E Connection with Input Perturbation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There has been a lot of research on the robustness of deep learning under input
+    perturbation, mainly in the field of adversarial training where the input feature
+    is maliciously perturbed to distort the output of the DNN [[34](#bib.bib34), [36](#bib.bib36)].
+    Although learning with noisy labels and learning with noisy inputs have been regarded
+    as separate research fields, their goals are similar in that they learn noise-robust
+    representations from noisy data. Based on this common point of view, a few recent
+    studies have investigated the interaction of adversarial training with noisy labels
+    [[171](#bib.bib171), [172](#bib.bib172), [173](#bib.bib173)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interestingly, it was turned out that adversarial training makes DNNs robust
+    to label noise [[171](#bib.bib171)]. Based on this finding, Damodaran et al. [[172](#bib.bib172)]
+    proposed a new regularization term, called Wasserstein adversarial regularization,
+    to address the problem of learning with noisy labels. Zhu et al. [[173](#bib.bib173)]
+    proposed to use the number of projected gradient descent steps as a new criterion
+    for sample selection such that clean examples are filtered out from noisy data.
+    These approaches are regarded as a new perspective on label noise compared to
+    traditional work. Therefore, understanding the connection between input perturbation
+    and label noise could be another future topic for better representation learning
+    toward robustness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VII-F Efficient Learning Pipeline
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The efficiency of the learning pipeline is another important aspect to design
+    deep learning approaches. However, for robust deep learning, most studies have
+    neglected the efficiency of the algorithm because their main goal is to improve
+    the robustness to label noise. For example, maintaining multiple DNNs or training
+    a DNN in multiple rounds is frequently used, but these approaches significantly
+    degrade the efficiency of the learning pipeline. On ther other hand, the need
+    for more efficient algorithms is increasing owing to the rapid increase in the
+    amount of available data [[174](#bib.bib174)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: According to our literature survey, most work did not even report the efficiency (or
+    time complexity) of their approaches. However, it is evident that saving the training
+    time is helpful under the restricted budget for computation. Therefore, enhancing
+    the efficiency will significantly increase the usability of robust deep learning
+    in the big data era.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VIII Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: DNNs easily overfit to false labels owing to their high capacity in totally
+    memorizing all noisy training samples. This overfitting issue still remains even
+    with various conventional regularization techniques, such as dropout and batch
+    normalization, thereby significantly decreasing their generalization performance.
+    Even worse, in real-world applications, the difficulty in labeling renders the
+    overfitting issue more severe. Therefore, learning from noisy labels has recently
+    become one of the most active research topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this survey, we presented a comprehensive understanding of modern deep learning
+    methods to address the negative consequences of learning from noisy labels. All
+    the methods were grouped into five categories according to their underlying strategies
+    and described along with their methodological weaknesses. Furthermore, a systematic
+    comparison was conducted using six popular properties used for evaluation in the
+    recent literature. According to the comparison results, there is no ideal method
+    that supports all the required properties; the supported properties varied depending
+    on the category to which each method belonged. Several experimental guidelines
+    were also discussed, including noise rate estimation, publicly available datasets,
+    and evaluation metrics. Finally, we provided insights and directions for future
+    research in this domain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “ImageNet classification
+    with deep convolutional neural networks,” in *Proc. NeurIPS*, 2012, pp. 1097–1105.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You only look once:
+    Unified, real-time object detection,” in *Proc. CVPR*, 2016, pp. 779–788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] W. Zhang, T. Du, and J. Wang, “Deep learning over multi-field categorical
+    data,” in *Proc. ECIR*, 2016, pp. 45–57.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] L. Pang, Y. Lan, J. Guo, J. Xu, J. Xu, and X. Cheng, “Deeprank: A new deep
+    architecture for relevance ranking in information retrieval,” in *Proc. CIKM*,
+    2017, pp. 257–266.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] K. D. Onal, Y. Zhang, I. S. Altingovde, M. M. Rahman, P. Karagoz, A. Braylan,
+    B. Dang, H.-L. Chang, H. Kim, Q. McNamara *et al.*, “Neural information retrieval:
+    At the end of the early years,” *Information Retrieval Journal*, vol. 21, no.
+    2-3, pp. 111–182, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] J. Howard and S. Ruder, “Universal language model fine-tuning for text
+    classification,” in *Proc. ACL*, 2018, pp. 328–339.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, “BERT: Pre-training of
+    deep bidirectional transformers for language understanding,” in *Proc. ACL*, 2019,
+    pp. 4171–4186.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] A. Severyn and A. Moschitti, “Twitter sentiment analysis with deep convolutional
+    neural networks,” in *Proc. ACL*, 2015, pp. 959–962.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] G. Paolacci, J. Chandler, and P. G. Ipeirotis, “Running experiments on
+    amazon mechanical turk,” *Judgment and Decision Making*, vol. 5, no. 5, pp. 411–419,
+    2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] V. Cothey, “Web-crawling reliability,” *Journal of the American Society
+    for Information Science and Technology*, vol. 55, no. 14, pp. 1228–1238, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] W. Mason and S. Suri, “Conducting behavioral research on amazon’s mechanical
+    turk,” *Behavior Research Methods*, vol. 44, no. 1, pp. 1–23, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] C. Scott, G. Blanchard, and G. Handy, “Classification with asymmetric
+    label noise: Consistency and maximal denoising,” in *Proc. COLT*, 2013, pp. 489–511.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] B. Frénay and M. Verleysen, “Classification in the presence of label noise:
+    A survey,” *IEEE Transaction on Neural Networks and Learning Systems*, vol. 25,
+    no. 5, pp. 845–869, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] R. V. Lloyd, L. A. Erickson, M. B. Casey, K. Y. Lam, C. M. Lohse, S. L.
+    Asa, J. K. Chan, R. A. DeLellis, H. R. Harach, K. Kakudo *et al.*, “Observer variation
+    in the diagnosis of follicular variant of papillary thyroid carcinoma,” *The American
+    Journal of Surgical Pathology*, vol. 28, no. 10, pp. 1336–1340, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] H. Xiao, H. Xiao, and C. Eckert, “Adversarial label flips attack on support
+    vector machines.” in *Proc. ECAI*, 2012, pp. 870–875.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] T. Xiao, T. Xia, Y. Yang, C. Huang, and X. Wang, “Learning from massive
+    noisy labeled data for image classification,” in *Proc. CVPR*, 2015, pp. 2691–2699.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] W. Li, L. Wang, W. Li, E. Agustsson, and L. Van Gool, “Webvision database:
+    Visual learning and understanding from web data,” *arXiv preprint arXiv:1708.02862*,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] K.-H. Lee, X. He, L. Zhang, and L. Yang, “CleanNet: Transfer learning
+    for scalable image classifier training with label noise,” in *Proc. CVPR*, 2018,
+    pp. 5447–5456.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] H. Song, M. Kim, and J.-G. Lee, “SELFIE: Refurbishing unclean samples
+    for robust deep learning,” in *Proc. ICML*, 2019, pp. 5907–5915.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] J. Krause, B. Sapp, A. Howard, H. Zhou, A. Toshev, T. Duerig, J. Philbin,
+    and L. Fei-Fei, “The unreasonable effectiveness of noisy data for fine-grained
+    recognition,” in *Proc. ECCV*, 2016, pp. 301–320.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] D. Arpit, S. Jastrzebski, N. Ballas, D. Krueger, E. Bengio, M. S. Kanwal,
+    T. Maharaj, A. Fischer, A. Courville, Y. Bengio *et al.*, “A closer look at memorization
+    in deep networks,” in *Proc. ICML*, 2017, pp. 233–242.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] C. Zhang, S. Bengio, M. Hardt, B. Recht, and O. Vinyals, “Understanding
+    deep learning requires rethinking generalization,” in *Proc. ICLR*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] C. Shorten and T. M. Khoshgoftaar, “A survey on image data augmentation
+    for deep learning,” *Journal of Big Data*, vol. 6, no. 1, p. 60, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] A. Krogh and J. A. Hertz, “A simple weight decay can improve generalization,”
+    in *Proc, NeurIPS*, 1992, pp. 950–957.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever, and R. Salakhutdinov,
+    “Dropout: A simple way to prevent neural networks from overfitting,” *The Journal
+    of Machine Learning Research*, vol. 15, no. 1, pp. 1929–1958, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] S. Ioffe and C. Szegedy, “Batch normalization: Accelerating deep network
+    training by reducing internal covariate shift,” in *Proc. ICML*, 2015, pp. 448–456.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] X. Zhu and X. Wu, “Class noise vs. attribute noise: A quantitative study,”
+    *Artificial Intelligence Review*, vol. 22, no. 3, pp. 177–210, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] J. Zhang, X. Wu, and V. S. Sheng, “Learning from crowdsourced labeled
+    data: A survey,” *Artificial Intelligence Review*, vol. 46, no. 4, pp. 543–576,
+    2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] N. Nigam, T. Dutta, and H. P. Gupta, “Impact of noisy labels in learning
+    techniques: A survey,” in *Proc. ICDIS*, 2020, pp. 403–411.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] B. Han, Q. Yao, T. Liu, G. Niu, I. W. Tsang, J. T. Kwok, and M. Sugiyama,
+    “A survey of label-noise representation learning: Past, present and future,” *arXiv
+    preprint arXiv:2011.04406*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] N. Akhtar and A. Mian, “Threat of adversarial attacks on deep learning
+    in computer vision: A survey,” *Access*, vol. 6, pp. 14 410–14 430, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] J. Yoon, J. Jordon, and M. Schaar, “Gain: Missing data imputation using
+    generative adversarial nets,” in *Proc. ICML*, 2018, pp. 5689–5698.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] A. Fawzi, S.-M. Moosavi-Dezfooli, and P. Frossard, “Robustness of classifiers:
+    from adversarial to random noise,” in *Proc. NeurIPS*, 2016, pp. 1632–1640.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] E. Dohmatob, “Limitations of adversarial robustness: strong no free lunch
+    theorem,” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] J. Gilmer, N. Ford, N. Carlini, and E. Cubuk, “Adversarial examples are
+    a natural consequence of test error in noise,” in *Proc. ICML*, 2019, pp. 2280–2289.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] S. Mahloujifar, D. I. Diochnos, and M. Mahmoody, “The curse of concentration
+    in robust learning: Evasion and poisoning attacks from concentration of measure,”
+    in *Proc. AAAI*, vol. 33, no. 01, 2019, pp. 4536–4543.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] D. B. Rubin, “Inference and missing data,” *Biometrika*, vol. 63, no. 3,
+    pp. 581–592, 1976.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] C. M. Bishop, *Pattern recognition and machine learning*.   Springer,
+    2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] N. Natarajan, I. S. Dhillon, P. K. Ravikumar, and A. Tewari, “Learning
+    with noisy labels,” in *Proc. NeurIPS*, 2013, pp. 1196–1204.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] J. Goldberger and E. Ben-Reuven, “Training deep neural-networks using
+    a noise adaptation layer,” in *Proc. ICLR*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] P. Sastry and N. Manwani, “Robust learning of classifiers in the presence
+    of label noise,” in *Pattern Recognition and Big Data*, 2017, pp. 167–197.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] V. Wheway, “Using boosting to detect noisy data,” in *Proc. PRICAI*, 2000,
+    pp. 123–130.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] B. Sluban, D. Gamberger, and N. Lavrač, “Ensemble-based noise detection:
+    Noise ranking and visual performance evaluation,” *Data Mining and Knowledge Discovery*,
+    vol. 28, no. 2, pp. 265–303, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] S. J. Delany, N. Segata, and B. Mac Namee, “Profiling instances in noise
+    reduction,” *Knowledge-Based Systems*, vol. 31, pp. 28–40, 2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] D. Gamberger, N. Lavrac, and S. Dzeroski, “Noise detection and elimination
+    in data preprocessing: Experiments in medical domains,” *Applied Artificial Intelligence*,
+    vol. 14, no. 2, pp. 205–223, 2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] J. Thongkam, G. Xu, Y. Zhang, and F. Huang, “Support vector machine for
+    outlier detection in breast cancer survivability prediction,” in *Proc. APWeb*,
+    2008, pp. 99–109.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] V. Mnih and G. E. Hinton, “Learning to label aerial images from noisy
+    data,” in *Proc. ICML*, 2012, pp. 567–574.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] N. Manwani and P. Sastry, “Noise tolerance under risk minimization,” *IEEE
+    Transactions on Cybernetics*, vol. 43, no. 3, pp. 1146–1151, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] A. Ghosh, N. Manwani, and P. Sastry, “Making risk minimization tolerant
+    to label noise,” *Neurocomputing*, vol. 160, pp. 93–107, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] B. Van Rooyen, A. Menon, and R. C. Williamson, “Learning with symmetric
+    label noise: The importance of being unhinged,” in *Proc. NeurIPS*, 2015, pp.
+    10–18.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] G. Patrini, F. Nielsen, R. Nock, and M. Carioni, “Loss factorization,
+    weakly supervised learning and label noise robustness,” in *Proc. ICML*, 2016,
+    pp. 708–717.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] R. Xu and D. Wunsch, “Survey of clustering algorithms,” *IEEE Transactions
+    on Neural Networks*, vol. 16, no. 3, pp. 645–678, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] U. Rebbapragada and C. E. Brodley, “Class noise mitigation through instance
+    weighting,” in *Proc. ECML*, 2007, pp. 708–715.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] T. Liu, K. Wang, B. Chang, and Z. Sui, “A soft-label method for noise-tolerant
+    distantly supervised relation extraction,” in *Proc. EMNLP*, 2017, pp. 1790–1795.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] F. O. Kaster, B. H. Menze, M.-A. Weber, and F. A. Hamprecht, “Comparative
+    validation of graphical models for learning tumor segmentations from noisy manual
+    annotations,” in *Proc. MICCAI*, 2010, pp. 74–85.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] A. Ganapathiraju and J. Picone, “Support vector machines for automatic
+    data cleanup,” in *Proc. ICSLP*, 2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] B. Biggio, B. Nelson, and P. Laskov, “Support vector machines under adversarial
+    label noise,” in *Proc. ACML*, 2011, pp. 97–112.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] C. J. Mantas and J. Abellán, “Credal-C4\. 5: Decision tree based on imprecise
+    probabilities to classify noisy data,” *Expert Systems with Applications*, vol. 41,
+    no. 10, pp. 4625–4637, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] A. Ghosh, N. Manwani, and P. Sastry, “On the robustness of decision tree
+    learning under label noise,” in *Proc. PAKDD*, 2017, pp. 685–697.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] S. Liu, J. Niles-Weed, N. Razavian, and C. Fernandez-Granda, “Early-learning
+    regularization prevents memorization of noisy labels,” in *Proc. NeurIPS*, vol. 33,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] M. Li, M. Soltanolkotabi, and S. Oymak, “Gradient descent with early stopping
+    is provably robust to label noise for overparameterized neural networks,” in *Proc.
+    AISTATS*, 2020, pp. 4313–4324.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] G. Patrini, A. Rozza, A. Krishna Menon, R. Nock, and L. Qu, “Making deep
+    neural networks robust to label noise: A loss correction approach,” in *Proc.
+    CVPR*, 2017, pp. 1944–1952.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] J. Cheng, T. Liu, K. Ramamohanarao, and D. Tao, “Learning with bounded
+    instance and label-dependent label noise,” in *Proc. ICML*, 2020, pp. 1789–1799.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] B. Garg and N. Manwani, “Robust deep ordinal regression under label noise,”
+    in *Proc. ACML*, 2020, pp. 782–796.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] W. Hu, Z. Li, and D. Yu, “Simple and effective regularization methods
+    for training on noisily labeled data with generalization guarantee,” in *Proc.
+    ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] A. K. Menon, B. Van Rooyen, and N. Natarajan, “Learning from binary labels
+    with instance-dependent noise,” *Machine Learning*, vol. 107, no. 8, pp. 1561–1595,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] L. Torgo and J. Gama, “Regression using classification algorithms,” *Intelligent
+    Data Analysis*, vol. 1, no. 4, pp. 275–292, 1997.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] A. Ghosh, H. Kumar, and P. Sastry, “Robust loss functions under label
+    noise for deep neural networks,” in *Proc. AAAI*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] S. Reed, H. Lee, D. Anguelov, C. Szegedy, D. Erhan, and A. Rabinovich,
+    “Training deep neural networks on noisy labels with bootstrapping,” in *Proc.
+    ICLR*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] E. Malach and S. Shalev-Shwartz, “Decoupling” when to update” from” how
+    to update”,” in *Proc. NeurIPS*, 2017, pp. 960–970.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] L. P. Garcia, A. C. de Carvalho, and A. C. Lorena, “Noise detection in
+    the meta-learning level,” *Neurocomputing*, vol. 176, pp. 14–25, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] Y. Yan, Z. Xu, I. W. Tsang, G. Long, and Y. Yang, “Robust semi-supervised
+    learning through label aggregation,” in *Proc. AAAI*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] H. Harutyunyan, K. Reing, G. Ver Steeg, and A. Galstyan, “Improving generalization
+    by controlling label-noise information in neural network weights,” in *Proc. ICML*,
+    2020, pp. 4071–4081.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] P. Chen, G. Chen, J. Ye, jingwei zhao, and P.-A. Heng, “Noise against
+    noise: stochastic label noise helps combat inherent label noise,” in *Proc. ICLR*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] X. Chen and A. Gupta, “Webly supervised learning of convolutional networks,”
+    in *Proc. ICCV*, 2015, pp. 1431–1439.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] A. J. Bekker and J. Goldberger, “Training deep neural-networks based on
+    unreliable labels,” in *Proc. ICASSP*, 2016, pp. 2682–2686.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] S. Sukhbaatar, J. Bruna, M. Paluri, L. Bourdev, and R. Fergus, “Training
+    convolutional networks with noisy labels,” in *Proc. ICLRW*, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] I. Jindal, M. Nokleby, and X. Chen, “Learning deep networks from noisy
+    labels with dropout regularization,” in *Proc. ICDM*, 2016, pp. 967–972.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] J. Goldberger and E. Ben-Reuven, “Training deep neural-networks using
+    a noise adaptation layer,” in *Proc. ICLR*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] B. Han, J. Yao, G. Niu, M. Zhou, I. Tsang, Y. Zhang, and M. Sugiyama,
+    “Masking: A new perspective of noisy supervision,” in *Proc. NeurIPS*, 2018, pp.
+    5836–5846.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] J. Yao, J. Wang, I. W. Tsang, Y. Zhang, J. Sun, C. Zhang, and R. Zhang,
+    “Deep learning from noisy image labels with quality embedding,” *IEEE Transactions
+    on Image Processing*, vol. 28, no. 4, pp. 1909–1922, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] L. Cheng, X. Zhou, L. Zhao, D. Li, H. Shang, Y. Zheng, P. Pan, and Y. Xu,
+    “Weakly supervised learning with side information for noisy labeled images,” in
+    *Proc. ECCV*, 2020, pp. 306–321.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] X. Xia, T. Liu, B. Han, N. Wang, J. Deng, J. Li, and Y. Mao, “Extended
+    T: Learning with mixed closed-set and open-set noisy labels,” *arXiv preprint
+    arXiv:2012.00932*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair,
+    A. Courville, and Y. Bengio, “Generative adversarial nets,” in *Proc. NeurIPS*,
+    2014, pp. 2672–2680.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] K. Lee, S. Yun, K. Lee, H. Lee, B. Li, and J. Shin, “Robust inference
+    via generative classifiers for handling noisy labels,” in *Proc. ICML*, 2019,
+    pp. 3763–3772.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] R. Tanno, A. Saeedi, S. Sankaranarayanan, D. C. Alexander, and N. Silberman,
+    “Learning from noisy labels by regularized estimation of annotator confusion,”
+    in *Proc. CVPR*, 2019, pp. 11 244–11 253.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] S. Jenni and P. Favaro, “Deep bilevel learning,” in *Proc. ECCV*, 2018,
+    pp. 618–633.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] D. Hendrycks, K. Lee, and M. Mazeika, “Using pre-training can improve
+    model robustness and uncertainty,” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] A. K. Menon, A. S. Rawat, S. J. Reddi, and S. Kumar, “Can gradient clipping
+    mitigate label noise?” in *Proc. ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] X. Xia, T. Liu, B. Han, C. Gong, N. Wang, Z. Ge, and Y. Chang, “Robust
+    early-learning: Hindering the memorization of noisy labels,” in *Proc. ICLR*,
+    2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] H. Wei, L. Tao, R. Xie, and B. An, “Open-set label noise can improve robustness
+    against inherent label noise,” in *Proc. NeurIPS*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] I. J. Goodfellow, J. Shlens, and C. Szegedy, “Explaining and harnessing
+    adversarial examples,” in *Proc. ICLR*, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] G. Pereyra, G. Tucker, J. Chorowski, Ł. Kaiser, and G. Hinton, “Regularizing
+    neural networks by penalizing confident output distributions,” in *Proc. ICLRW*,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] M. Lukasik, S. Bhojanapalli, A. Menon, and S. Kumar, “Does label smoothing
+    mitigate label noise?” in *Proc. ICLR*, 2020, pp. 6448–6458.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] H. Zhang, M. Cisse, Y. N. Dauphin, and D. Lopez-Paz, “Mixup: Beyond empirical
+    risk minimization,” in *Proc. ICLR*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] B. C. Csáji *et al.*, “Approximation with artificial neural networks,”
+    *Faculty of Sciences, Etvs Lornd University, Hungary*, vol. 24, no. 48, p. 7,
+    2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] Z. Zhang and M. Sabuncu, “Generalized cross entropy loss for training
+    deep neural networks with noisy labels,” in *Proc. NeurIPS*, 2018, pp. 8778–8788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] Y. Wang, X. Ma, Z. Chen, Y. Luo, J. Yi, and J. Bailey, “Symmetric cross
+    entropy for robust learning with noisy labels,” in *Proc. ICCV*, 2019, pp. 322–330.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] Y. Lyu and I. W. Tsang, “Curriculum loss: Robust learning and generalization
+    against label corruption,” in *Proc. ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] L. Feng, S. Shu, Z. Lin, F. Lv, L. Li, and B. An, “Can cross entropy
+    loss be robust to label noise,” in *Proc. IJCAI*, 2020, pp. 2206–2212.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] Y. Liu and H. Guo, “Peer loss functions: Learning from noisy labels without
+    knowing noise rates,” in *Proc. ICML*, 2020, pp. 6226–6236.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] H. Kumar, N. Manwani, and P. Sastry, “Robust learning of multi-label
+    classifiers under label noise,” in *Proc. CODS-COMAD*, 2020, pp. 90–97.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] E. Amid, M. K. Warmuth, and S. Srinivasan, “Two-temperature logistic
+    regression based on the tsallis divergence,” in *Proc. AISTATS*, 2019, pp. 2388–2396.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] E. Amid, M. K. Warmuth, R. Anil, and T. Koren, “Robust bi-tempered logistic
+    loss based on bregman divergences,” in *Proc. NeurIPS*, 2019, pp. 14 987–14 996.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] X. Ma, H. Huang, Y. Wang, S. Romano, S. Erfani, and J. Bailey, “Normalized
+    loss functions for deep learning with noisy labels,” in *Proc. ICML*, 2020, pp.
+    6543–6553.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] M. Ren, W. Zeng, B. Yang, and R. Urtasun, “Learning to reweight examples
+    for robust deep learning,” in *Proc. ICML*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] D. Hendrycks, M. Mazeika, D. Wilson, and K. Gimpel, “Using trusted data
+    to train deep networks on labels corrupted by severe noise,” in *Proc. NeurIPS*,
+    2018, pp. 10 456–10 465.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] R. Wang, T. Liu, and D. Tao, “Multiclass learning with partially corrupted
+    labels,” *IEEE Transactions on Neural Networks and Learning Systems*, vol. 29,
+    no. 6, pp. 2568–2580, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] H.-S. Chang, E. Learned-Miller, and A. McCallum, “Active Bias: Training
+    more accurate neural networks by emphasizing high variance samples,” in *Proc.
+    NeurIPS*, 2017, pp. 1002–1012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] E. Arazo, D. Ortego, P. Albert, N. E. O’Connor, and K. McGuinness, “Unsupervised
+    label noise modeling and loss correction,” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] X. Ma, Y. Wang, M. E. Houle, S. Zhou, S. M. Erfani, S.-T. Xia, S. Wijewickrema,
+    and J. Bailey, “Dimensionality-driven learning with noisy labels,” in *Proc. ICML*,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] B. Han, Q. Yao, X. Yu, G. Niu, M. Xu, W. Hu, I. Tsang, and M. Sugiyama,
+    “Co-teaching: Robust training of deep neural networks with extremely noisy labels,”
+    in *Proc. NeurIPS*, 2018, pp. 8527–8537.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] X. Xia, T. Liu, N. Wang, B. Han, C. Gong, G. Niu, and M. Sugiyama, “Are
+    anchor points really indispensable in label-noise learning?” in *Proc. NeurIPS*,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] Y. Yao, T. Liu, B. Han, M. Gong, J. Deng, G. Niu, and M. Sugiyama, “Dual
+    T: Reducing estimation error for transition matrix in label-noise learning,” in
+    *Proc. NeurIPS*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] Y. Zhang and M. Sugiyama, “Approximating instance-dependent noise via
+    instance-confidence embedding,” *arXiv preprint arXiv:2103.13569*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] S. Yang, E. Yang, B. Han, Y. Liu, M. Xu, G. Niu, and T. Liu, “Estimating
+    instance-dependent label-noise transition matrix using dnns,” *arXiv preprint
+    arXiv:2105.13001*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] T. Liu and D. Tao, “Classification with noisy labels by importance reweighting,”
+    *IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 38, no. 3,
+    pp. 447–461, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] H. Zhang, X. Xing, and L. Liu, “DualGraph: A graph-based method for reasoning
+    about label noise,” in *Proc. CVPR*, 2021, pp. 9654–9663.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] L. Huang, C. Zhang, and H. Zhang, “Self-adaptive training: beyond empirical
+    risk minimization,” in *Proc. NeurIPS*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] M. E. Houle, “Local intrinsic dimensionality I: An extreme-value-theoretic
+    foundation for similarity applications,” in *Proc. SISAP*, 2017, pp. 64–79.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] S. Zheng, P. Wu, A. Goswami, M. Goswami, D. Metaxas, and C. Chen, “Error-bounded
+    correction of noisy labels,” in *Proc. ICML*, 2020, pp. 11 447–11 457.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] P. Chen, J. Ye, G. Chen, J. Zhao, and P.-A. Heng, “Beyond class-conditional
+    assumption: A primary attempt to combat instance-dependent label noise,” in *Proc.
+    AAAI*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] C. Finn, P. Abbeel, and S. Levine, “Model-agnostic meta-learning for
+    fast adaptation of deep networks,” in *Proc. ICML*, 2017, pp. 1126–1135.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] J. Shu, Q. Xie, L. Yi, Q. Zhao, S. Zhou, Z. Xu, and D. Meng, “Meta-Weight-Net:
+    Learning an explicit mapping for sample weighting,” in *Proc. NeurIPS*, 2019,
+    pp. 1917–1928.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] Z. Wang, G. Hu, and Q. Hu, “Training noise-robust deep neural networks
+    via meta-learning,” in *Proc. CVPR*, 2020, pp. 4524–4533.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] M. Dehghani, A. Severyn, S. Rothe, and J. Kamps, “Learning to learn from
+    weak supervision by full supervision,” in *Proc. NeurIPSW*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] ——, “Avoiding your teacher’s mistakes: Training neural networks with
+    controlled weak supervision,” *arXiv preprint arXiv:1711.00313*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] Z. Zhang, H. Zhang, S. O. Arik, H. Lee, and T. Pfister, “Distilling effective
+    supervision from severe label noise,” in *Proc. CVPR*, 2020, pp. 9294–9303.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] Y. Li, J. Yang, Y. Song, L. Cao, J. Luo, and L.-J. Li, “Learning from
+    noisy labels with distillation,” in *Proc. ICCV*, 2017, pp. 1910–1918.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] G. Zheng, A. H. Awadallah, and S. Dumais, “Meta label correction for
+    noisy label learning,” in *Proc. AAAI*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] L. Jiang, Z. Zhou, T. Leung, L.-J. Li, and L. Fei-Fei, “MentorNet: Learning
+    data-driven curriculum for very deep neural networks on corrupted labels,” in
+    *Proc. ICML*, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] X. Yu, B. Han, J. Yao, G. Niu, I. W. Tsang, and M. Sugiyama, “How does
+    disagreement help generalization against label corruption?” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] Y. Wang, W. Liu, X. Ma, J. Bailey, H. Zha, L. Song, and S.-T. Xia, “Iterative
+    learning with open-set noisy labels,” in *Proc. CVPR*, 2018, pp. 8688–8696.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] Y. Shen and S. Sanghavi, “Learning with bad training data via iterative
+    trimmed loss minimization,” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] P. Chen, B. Liao, G. Chen, and S. Zhang, “Understanding and utilizing
+    deep neural networks trained with noisy labels,” in *Proc. ICML*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] D. T. Nguyen, C. K. Mummadi, T. P. N. Ngo, T. H. P. Nguyen, L. Beggel,
+    and T. Brox, “SELF: Learning to filter noisy labels with self-ensembling,” in
+    *Proc. ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] H. Song, M. Kim, D. Park, Y. Shin, and J.-G. Lee, “Robust learning by
+    self-transition for handling noisy labels,” in *KDD*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] D. Krueger, N. Ballas, S. Jastrzebski, D. Arpit, M. S. Kanwal, T. Maharaj,
+    E. Bengio, A. Fischer, and A. Courville, “Deep nets don’t learn via memorization,”
+    in *Proc. ICLRW*, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] C. Zhang, S. Bengio, M. Hardt, M. C. Mozer, and Y. Singer, “Identity
+    Crisis: Memorization and generalization under extreme overparameterization,” in
+    *Proc. ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] Q. Yao, H. Yang, B. Han, G. Niu, and J. T.-Y. Kwok, “Searching to exploit
+    memorization effect in learning with noisy labels,” in *Proc. ICML*, 2020, pp.
+    10 789–10 798.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] H. Song, M. Kim, D. Park, and J.-G. Lee, “How does early stopping help
+    generalization against label noise?” *arXiv preprint arXiv:1911.08059*, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] J. Li, R. Socher, and S. C. Hoi, “DivideMix: Learning with noisy labels
+    as semi-supervised learning,” in *Proc. ICLR*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] H. Wei, L. Feng, X. Chen, and B. An, “Combating noisy labels by agreement:
+    A joint training method with co-regularization,” in *Proc. CVPR*, 2020, pp. 13 726–13 735.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] J. Huang, L. Qu, R. Jia, and B. Zhao, “O2U-Net: A simple noisy label
+    detection approach for deep neural networks,” in *Proc. ICCV*, 2019, pp. 3326–3334.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] M. M. Breunig, H.-P. Kriegel, R. T. Ng, and J. Sander, “LOF: Identifying
+    density-based local outliers,” *ACM SIGMOD Record*, vol. 29, no. 2, pp. 93–104,
+    2000.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] P. Wu, S. Zheng, M. Goswami, D. Metaxas, and C. Chen, “A topological
+    filter for learning with label noise,” in *Proc. NeurIPS*, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] Z.-F. Wu, T. Wei, J. Jiang, C. Mao, M. Tang, and Y.-F. Li, “NGC: A unified
+    framework for learning with open-world noisy data,” in *Proc. ICCV*, 2021, pp.
+    62–71.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] A. Tarvainen and H. Valpola, “Mean teachers are better role models: Weight-averaged
+    consistency targets improve semi-supervised deep learning results,” in *Proc.
+    NeurIPS*, 2017, pp. 1195–1204.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] D. Berthelot, N. Carlini, I. Goodfellow, N. Papernot, A. Oliver, and
+    C. A. Raffel, “MixMatch: A holistic approach to semi-supervised learning,” in
+    *Proc. NeurIPS*, 2019, pp. 5050–5060.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] T. Zhou, S. Wang, and J. Bilmes, “Robust curriculum learning: from clean
+    label detection to noisy label self-correction,” in *Proc. ICLR*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] X. Li, T. Liu, B. Han, G. Niu, and M. Sugiyama, “Provably end-to-end
+    label-noise learning without anchor points,” in *Proc. ICML*, 2021, pp. 6403–6413.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] G. Pleiss, T. Zhang, E. R. Elenberg, and K. Q. Weinberger, “Detecting
+    noisy training data with loss curves,” 2020\. [Online]. Available: [https://openreview.net/forum?id=HyenUkrtDB](https://openreview.net/forum?id=HyenUkrtDB)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[153] C. Scott, “A rate of convergence for mixture proportion estimation, with
+    application to learning from noisy labels,” in *AISTATS*, 2015, pp. 838–846.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[154] Y. LeCun, C. Cortes, and C. J. Burges, “The MNIST database of handwritten
+    digits, 1998,” *URL http://yann. lecun. com/exdb/mnist*, vol. 10, p. 34, 1998.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[155] H. Xiao, K. Rasul, and R. Vollgraf, “Fashion-MNIST: A novel image dataset
+    for benchmarking machine learning algorithms,” *arXiv preprint arXiv:1708.07747*,
+    2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] A. Krizhevsky, V. Nair, and G. Hinton, “CIFAR-10 and CIFAR-100 datasets,”
+    2014, [https://www.cs.toronto.edu/~kriz/cifar.html](https://www.cs.toronto.edu/~kriz/cifar.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[157] Y. Netzer, T. Wang, A. Coates, A. Bissacco, B. Wu, and A. Y. Ng, “Reading
+    digits in natural images with unsupervised feature learning,” in *Proc. NeurIPSW*,
+    2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[158] A. Karpathy *et al.*, “Cs231n convolutional neural networks for visual
+    recognition,” *Neural Networks*, vol. 1, p. 1, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[159] J. Wei, Z. Zhu, H. Cheng, T. Liu, G. Niu, and Y. Liu, “Learning with
+    noisy labels revisited: A study using real-world human annotations,” *arXiv preprint
+    arXiv:2110.12088*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[160] L. Bossard, M. Guillaumin, and L. Van Gool, “Food-101–mining discriminative
+    components with random forests,” in *Proc. ECCV*, 2014, pp. 446–461.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[161] J. Bootkrajang and J. Chaijaruwanich, “Towards instance-dependent label
+    noise-tolerant classification: a probabilistic approach,” *Pattern Analysis and
+    Applications*, vol. 23, no. 1, pp. 95–111, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[162] G. Tsoumakas and I. Katakis, “Multi-label classification: An overview,”
+    *International Journal of Data Warehousing and Mining*, vol. 3, no. 3, pp. 1–13,
+    2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[163] M. R. Boutell, J. Luo, X. Shen, and C. M. Brown, “Learning multi-label
+    scene classification,” *Pattern Recognition*, vol. 37, no. 9, pp. 1757–1771, 2004.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[164] I. Krasin, T. Duerig, N. Alldrin, V. Ferrari, S. Abu-El-Haija, A. Kuznetsova,
+    H. Rom, J. Uijlings, S. Popov, A. Veit *et al.*, “OpenImages: A public dataset
+    for large-scale multi-label and multi-class image classification,” *Dataset available
+    from https://github. com/openimages*, vol. 2, no. 3, p. 18, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[165] W. Zhao and C. Gomes, “Evaluating multi-label classifiers with noisy
+    labels,” *arXiv preprint arXiv:2102.08427*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[166] J. M. Johnson and T. M. Khoshgoftaar, “Survey on deep learning with class
+    imbalance,” *Journal of Big Data*, vol. 6, no. 1, pp. 1–54, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[167] M. Hardt, E. Price, and N. Srebro, “Equality of opportunity in supervised
+    learning,” in *Proc. NeurIPS*, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[168] H. Jiang and O. Nachum, “Identifying and correcting label bias in machine
+    learning,” in *Proc. AISTATS*, 2020, pp. 702–712.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[169] S. Wang, W. Guo, H. Narasimhan, A. Cotter, M. Gupta, and M. I. Jordan,
+    “Robust optimization for fairness with noisy protected groups,” in *Proc. NeurIPS*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[170] J. Wang, Y. Liu, and C. Levy, “Fair classification with group-dependent
+    label noise,” in *Proc. FAccT*, 2021, pp. 526–536.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[171] J. Uesato, J.-B. Alayrac, P.-S. Huang, R. Stanforth, A. Fawzi, and P. Kohli,
+    “Are labels required for improving adversarial robustness?” in *Proc. NeurIPS*,
+    2019, pp. 12 192–12 202.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[172] B. B. Damodaran, K. Fatras, S. Lobry, R. Flamary, D. Tuia, and N. Courty,
+    “Wasserstein adversarial regularization (WAR) on label noise,” in *Proc. ICLR*,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[173] J. Zhu, J. Zhang, B. Han, T. Liu, G. Niu, H. Yang, M. Kankanhalli, and
+    M. Sugiyama, “Understanding the interaction of adversarial training with noisy
+    labels,” *arXiv preprint arXiv:2102.03482*, 2021.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[174] G. Nguyen, S. Dlugolinsky, M. Bobák, V. Tran, Á. L. García, I. Heredia,
+    P. Malík, and L. Hluchỳ, “Machine learning and deep learning frameworks and libraries
+    for large-scale data mining: a survey,” *Artificial Intelligence Review*, vol. 52,
+    no. 1, pp. 77–124, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Acknowledgements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This work was supported by Institute of Information & Communications Technology
+    Planning & Evaluation (IITP) grant funded by the Korea government (MSIT) (No.
+    2020-0-00862, DB4DL: High-Usability and Performance In-Memory Distributed DBMS
+    for Deep Learning).'
+  prefs: []
+  type: TYPE_NORMAL

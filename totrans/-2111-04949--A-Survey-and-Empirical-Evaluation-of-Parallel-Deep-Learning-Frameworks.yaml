@@ -1,0 +1,1870 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:49:58'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2111.04949] A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2111.04949](https://ar5iv.labs.arxiv.org/html/2111.04949)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Daniel Nichols, Siddharth Singh, Shu-Huai Lin, Abhinav Bhatele ^†Department
+    of Computer Science, University of MarylandCollege ParkUSA [dnicho, ssingh37,
+    slin185@umd.edu, bhatele@cs.umd.edu](mailto:dnicho,%20ssingh37,%20slin185@umd.edu,%20bhatele@cs.umd.edu)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: The field of deep learning has witnessed a remarkable shift towards extremely
+    compute- and memory-intensive neural networks. These newer larger models have
+    enabled researchers to advance state-of-the-art tools across a variety of fields.
+    This phenomenon has spurred the development of algorithms for distributed training
+    of neural networks over a larger number of hardware accelerators. In this paper,
+    we discuss and compare current state-of-the-art frameworks for large scale distributed
+    deep learning. First, we survey current practices in distributed learning and
+    identify the different types of parallelism used. Then, we present empirical results
+    comparing their performance on large image and language training tasks. Additionally,
+    we address their statistical efficiency and memory consumption behavior. Based
+    on our results, we discuss algorithmic and implementation portions of each framework
+    which hinder performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'neural networks, deep learning, distributed training, GPUs, performance, survey^†^†conference:
+    ; ;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The previous decade witnessed an explosion in the development of machine learning
+    algorithms. In particular, deep learning (DL), a subset of machine learning focused
+    on using neural networks for function approximation, has gained widespread popularity.
+    Deep neural networks (DNNs) have enabled the advancement of the state of the art
+    in a plethora of research areas: ranging from visual recognition (Kolesnikov et al.,
+    [2020](#bib.bib29); Simonyan and Zisserman, [2015](#bib.bib56); Tao et al., [2020](#bib.bib62);
+    Zhao et al., [2019](#bib.bib73); Vijayanarasimhan et al., [2017](#bib.bib65))
+    and natural language processing (Devlin et al., [2019](#bib.bib14); Radford et al.,
+    [2019](#bib.bib46); Wu et al., [2016](#bib.bib67); Nikolentzos et al., [2020](#bib.bib41))
+    to computational chemistry and computer systems (Jain et al., [2013](#bib.bib22);
+    Bhatele et al., [2015](#bib.bib5); Islam et al., [2016](#bib.bib20); Yeom et al.,
+    [2016](#bib.bib68); Marathe et al., [2017](#bib.bib35); Thiagarajan et al., [2018b](#bib.bib64),
+    [a](#bib.bib63); Menon et al., [2020](#bib.bib37)). Their popularity stems from
+    the DNN’s ability to automatically learn low-dimensional representations from
+    high-dimensional unstructured data such as images, text and audio. Given enough
+    data, the representations learned by these models are often superior to handcrafted
+    features designed by domain experts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The advances in accelerator technology, increased memory capacity per accelerator,
+    and faster networks have encouraged users of deep learning to train neural networks
+    with increasingly larger numbers of parameters. Figure [1](#S1.F1 "Figure 1 ‣
+    1\. Introduction ‣ A Survey and Empirical Evaluation of Parallel Deep Learning
+    Frameworks") shows the increasing number of parameters in the largest networks
+    since 2012\. Often times, it is impossible to train such networks on a single
+    accelerator either due to large execution time or insufficient memory capacity
+    to fit these models. The latter problem is further exacerbated for contemporary
+    neural architectures. For example, GPT-2, an extremely popular neural network
+    used in NLP requires 84 GB of GPU DRAM for training. This has motivated recent
+    works in parallelizing the task of deep learning: training large models using
+    multiple GPUs on a single node (Huang et al., [2019](#bib.bib19); Kim et al.,
+    [2020](#bib.bib26)) or across multiple nodes connected by a network (Rajbhandari
+    et al., [2020](#bib.bib47); Shoeybi et al., [2020](#bib.bib55); Li et al., [2020](#bib.bib32);
+    Narayanan et al., [2019](#bib.bib40); You et al., [2018](#bib.bib71); Jia et al.,
+    [2019](#bib.bib23); Dryden et al., [2019a](#bib.bib15)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/b7791e6214b64e8a68f4ea70c5078d21.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 1\. Neural networks have continued to grow in size in terms of the number
+    of parameters. Recent language networks have further contributed to this trend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Different parallel frameworks offer different strengths and weaknesses in terms
+    of performance (execution time for training), memory consumption, and statistical
+    efficiency. Ben-Nun et al. (Ben-Nun and Hoefler, [2019](#bib.bib4)) surveyed parallel
+    DL frameworks and the different ways of exploiting the concurrency in neural networks
+    in 2018\. However, many new frameworks have emerged in the last three years, and
+    the authors limited their discussion to a qualitative analysis. In this paper,
+    we survey the most popular parallel DL frameworks available today and perform
+    an empirical evaluation for the ones with open-source implementations to compare
+    various metrics. This comparative evaluation can help users of deep learning select
+    the best parallel framework for their training tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first present a comprehensive qualitative survey of the state of the art
+    in parallel deep learning. We classify approaches for parallelization into three
+    categories (defined in Section [2](#S2 "2\. Background ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks")): data parallelism, intra-layer
+    parallelism (sometimes referred to as model parallelism), and inter-layer parallelism
+    (sometimes referred to as pipelining,). We present the advantages and disadvantages
+    of using each approach and discuss the capabilities of different frameworks that
+    implement each type of parallelism.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An end user who needs a scalable DL framework for their training experiments
+    needs to know which frameworks provide the best statistical efficiency in the
+    shortest possible time. To the best of our knowledge, an empirical comparison
+    of parallel DL frameworks has not been attempted before. We identify two popular
+    training datasets and two neural networks to benchmark several open-source DL
+    frameworks including DDP (Li et al., [2020](#bib.bib32)), PipeDream (Narayanan
+    et al., [2019](#bib.bib40)), ZeRO (Rajbhandari et al., [2020](#bib.bib47)), Megatron (Shoeybi
+    et al., [2020](#bib.bib55)), TorchGPipe (Kim et al., [2020](#bib.bib26)), and
+    LBANN (Essen et al., [2015](#bib.bib17)). We use metrics that matter the most
+    to a deep learning researcher – epoch execution times, statistical efficiency,
+    and memory consumption. We run our experiments on two different supercomputers
+    and clusters that are built using different generations of NVIDIA GPUs (A100s,
+    V100s). Through these experiments, we seek to develop a consensus on the suitability
+    of parallel frameworks to different scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this paper we contribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A comprehensive survey of current state-of-the art techniques in distributed
+    deep learning organized by parallelization strategy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An empirical evaluation of these techniques across vision and language tasks
+    on 2 different clusters that, to our knowledge, has not been done before.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'A comparison of metrics, recorded across frameworks and architectures, that
+    concern both the HPC and deep learning communities: runtime, scaling, statistical
+    efficiency, and memory consumption.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 2\. Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we first give brief descriptions of deep learning terminology.
+    We refer the reader to (Goodfellow-et-al-2016) for an in-depth review of deep
+    learning. We then provide an outline of the three ways in which training of a
+    deep neural network can be parallelized: data parallelism, intra-layer parallelism
+    and inter-layer parallelism.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1\. Definitions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Neural networks: Neural networks are parameterized functions for predicting
+    properties of some input data. They excel at learning low dimensional representations
+    of complex, high dimensional data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Layers: Networks are composed of a sequence of layers, which take the previous
+    layer’s output as input and computes some non-linear transformation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Training and Loss: The processing of finding the best parameters for a neural
+    network is called training. This is done by minimizing a loss function over an
+    input data set. Loss functions, such as mean squared error, are typically chosen
+    to represent the prediction capability of the network.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Backpropagation: Backpropagation is a dynamic programming algorithm based on
+    reverse-mode automatic differentiation that computes the gradients of each layer
+    with respect to the loss function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Gradient Descent and Learning Rate: Many training algorithms use variations
+    of gradient descent to minimize the loss function. Gradient descent iteratively
+    updates the parameters of the neural network based on the negative gradient such
+    that the loss moves towards a minima. The distance moved in the direction of the
+    negative gradient is scaled by a value called the learning rate.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Mini-Batches, Epochs and Stochastic Gradient Descent: Computing gradients of
+    the entire data set is expensive, so approximate gradients are computed using
+    random mini-batches of data. This version of gradient descent is called batched
+    stochastic gradient descent. Each time the entirety of the data set is iterated
+    over is called an epoch.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Statistical Efficiency: Statistical efficiency is a measure of the relationship
+    between epochs and accuracy/loss. A training algorithm is said to be statistically
+    efficient if it requires a low number of epochs to converge to a target validation
+    loss.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2\. Parallel Deep Learning Methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Data Parallelism: Data parallelism refers to an even division of training data
+    among worker GPUs. Each GPU possesses a copy of the neural network along with
+    it’s parameters. Gradient calculation via backpropagation proceeds independently
+    on all GPUs. These gradients are then subject to a collective all-reduce operation
+    before the weight update step of the optimizer. The all-reduce step can either
+    take place synchronously after each mini-batch, or asynchronously using a central
+    parameter server. Implementations of data parallelism are widely available in
+    popular deep learning frameworks like PyTorch (Li et al., [2020](#bib.bib32)),
+    and TensorFlow (Abadi et al., [2016](#bib.bib2)). Figure [2](#S2.F2 "Figure 2
+    ‣ 2.2\. Parallel Deep Learning Methods ‣ 2\. Background ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks") illustrates data parallelism
+    across 4 GPUs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/dd22fe7061e9f6b07a44b6c448ef1d53.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 2\. Processing of mini-batches over time in data parallelism. Each GPU
+    has a copy of all the layers (shown in different colors) and different mini-batches
+    (numbered) are processed by different GPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Intra-layer Parallelism: Intra-layer parallelism distributes the work of a
+    layer by dividing its computation across multiple GPUs. Parallelizing an entire
+    neural network entails applying intra-layer parallelism to some or all of its
+    constituent layers. Research in this area is focused on optimizing the multi-GPU
+    execution of different kinds of layers - Fully Connected, Convolutional (Coates
+    et al., [2013](#bib.bib12); Oyama et al., [2020](#bib.bib42); Shazeer et al.,
+    [2018](#bib.bib54)) and more recently the Transformer (Shoeybi et al., [2020](#bib.bib55)).
+    Intra-layer parallelism enables us to train neural networks that would not fit
+    inside the DRAM of a single GPU.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Inter-layer Parallelism: In inter-layer parallelism contiguous subsets of layers
+    are mapped to individual GPUs. Each GPU is thus tasked with operating on a subset
+    of the neural network. Exchange of activations and gradients among consecutive
+    layers on different GPUs takes place via point-to-point communication primitives.
+    To achieve true parallelism more than one mini-batch should be active on different
+    GPUs at a time since the processing of a mini-batch across layers is sequential
+    and cannot be parallelized. This is called pipelining. The maximum number of mini-batches
+    active in the system at any given point of time is called the pipeline limit.
+    Figure [3](#S2.F3 "Figure 3 ‣ 2.2\. Parallel Deep Learning Methods ‣ 2\. Background
+    ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks") shows
+    inter-layer parallelism in action with four GPUs and a pipeline limit of four.
+    Just like intra-layer parallelism inter-layer parallelism makes it possible to
+    train models whose memory requirements exceed the DRAM capacity of a single GPU.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4a5906b9806007851b049c0db5038b42.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 3\. Processing of micro-batches in inter-layer parallelism. Each GPU
+    holds one or more layers in the network and all mini-batches pass through all
+    the layers/GPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3\. Related Work
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Pouyanfar et al. (Pouyanfar et al., [2018](#bib.bib44)) and Ben-Nun et al. (Ben-Nun
+    and Hoefler, [2019](#bib.bib4)) comprehensively survey established techniques
+    in sequential deep learning as well as distributed. Another survey (Sze et al.,
+    [2017](#bib.bib60)) covers work in processing neural networks efficiently. Distributed
+    training on big data software stacks (such as Spark and Hadoop) is explored by
+    Lu et al. (Lu et al., [2018](#bib.bib33)). The network demands of parallel training
+    are presented in (Awan et al., [2020](#bib.bib3)) where typical communication
+    workloads are profiled and characterized. Tang et al. (Tang et al., [2020](#bib.bib61))
+    further character distributed training communication via analytical models and
+    survey current practices. We also point the reader to the MLPerf benchmarks¹¹1[https://mlcommons.org/en/training-normal-07/](https://mlcommons.org/en/training-normal-07/),
+    which have become popular for comparing deep learning algorithms, frameworks,
+    and hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Literature Survey
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we present a survey of current state-of-the-art techniques and
+    implementations for each type of distributed learning. Table [1](#S3.T1 "Table
+    1 ‣ 3\. Literature Survey ‣ A Survey and Empirical Evaluation of Parallel Deep
+    Learning Frameworks") provides an overview of each discussed framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 1\. Summary of Literature Review on Parallel Deep Learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Framework | Type of Parallelism |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Largest &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Accelerator Count &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Largest Trained Network &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (No. of Parameters) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FlexFlow | Hybrid | 64 GPUs | 24M^∗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PipeDream^(∗∗) | Inter-Layer | 16 GPUs | 138M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DDP^(∗∗) | Data | 256 GPUs | 345M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GPipe | Inter-Layer | 8 GPUs | 557M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MeshTensorFlow | Intra-Layer | 512-core TPUv2 | 4.9B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Megatron^(∗∗) | Intra-Layer | 512 GPUs | 8.3B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TorchGPipe^(∗∗) | Inter-Layer | 8 GPUs | 15.8B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| KARMA | Data | 2048 GPUs | 17B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LBANN^(∗∗) | Data | 3072 CPUs | 78.6B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ZeRO^(∗∗) | Data | 400 GPUs | 100B |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ZeRO-Infinity | Data | 512 GPUs | 32T |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AxoNN | Inter-Layer | 384 GPUs | 100B |'
+  prefs: []
+  type: TYPE_TB
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '^∗Note: FlexFlow does not provide a parameter size for the largest network
+    it trains. We have defaulted to the largest network with a known network size
+    cited in their paper.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ^(∗∗)The following frameworks are compared quantitatively in Section [4](#S4
+    "4\. Experimental Setup ‣ A Survey and Empirical Evaluation of Parallel Deep Learning
+    Frameworks")
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 3.1\. Data Parallelism
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Data parallelism has been the go-to algorithm for parallelizing neural network
+    training. It is simple in design and performs well with the correct settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1\. Small Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Data parallelism hinges on a synchronous all-reduce operation to gather the
+    gradients across all GPUs. Naturally, this can become a bottleneck as the size
+    of the gradients being being shared grows. This problem is further exacerbated
+    by the increasing computational capabilities of hardware accelerators. The ensuing
+    decrease in the computation to communication ratio increases the severity of this
+    problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Initial attempts to reduce the communication overhead targeted introducing asynchrony
+    in the stochastic gradient descent (SGD) algorithm (Recht et al., [2011](#bib.bib50);
+    Chilimbi et al., [2014](#bib.bib11); Dean et al., [2012](#bib.bib13)). However,
+    Chen et al. (Chen et al., [2016](#bib.bib7)) demonstrate that synchronous SGD
+    and its variants converged faster with higher accuracy than their asynchronous
+    counterparts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Efforts to minimize communication bottlenecks continued. Zhang et al. (Zhang
+    et al., [2017](#bib.bib72)) devise a strategy known as Wait-Free Backpropagation
+    (WFBP) to interleave GPU and CPU computation and communication. WFBP reduces bursts
+    in network traffic and lowers overall network strain. Using WFBP, Zhang et al.
+    achieve speed-ups in training times in 16 and 32 single-GPU machines. WFBP has
+    become the de-facto approach for data parallelism frameworks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PyTorch DistributedDataParallel (DDP) (Li et al., [2020](#bib.bib32)), Horovod (Sergeev
+    and Balso, [2018](#bib.bib53)) and Livermore Big Artificial Neural Network (LBANN) (Essen
+    et al., [2015](#bib.bib17)) toolkit are three open source frameworks designed
+    to assist in transitioning models into a distributed environment. Out of these
+    frameworks PyTorch DDP has been extremely popular among the deep learning community
+    due to its seamless integration with PyTorch (Paszke et al., [2019](#bib.bib43)).
+    Horovod is an implementation of WFBP for TensorFlow by Uber. LBANN accelerates
+    parallelized deep learning by taking advantage of high performance computing hardware.
+    These implementations share an uncanny similarity in the way they optimize WFBP.
+    Instead of having an individual all-reduce call for each parameter tensor, they
+    fuse parameter tensors into fixed size bins. All reduce calls are made at the
+    granularity of these fused parameter bins. This increases network bandwidth utilization
+    and thus the overall performance of these frameworks. Although the fused tensor
+    bin-size is kept as a tunable hyperparameter, Li et al. (Li et al., [2020](#bib.bib32))
+    demonstrate that the default bucket size of PyTorch DDP i.e. 25MB is a reasonable
+    choice for efficient scaling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2\. Large Models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Given the abundance of large training datasets neural networks with increasingly
+    larger number of parameters have led to tremendous gains in performance on a variety
+    of training tasks. As models and datasets grow in size GPU memory capacity becomes
+    a major bottleneck. Data parallelism requires each GPU to store its own copy of
+    the neural network. With larger models and datasets the memory required to house
+    the activations, gradients and parameters of these neural networks often exceeds
+    the capacity of a single GPU DRAM. Data parallelism is thus rendered infeasible
+    for training large models without memory optimizations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Zero Redundancy Optimizer (ZeRO) (Rajbhandari et al., [2020](#bib.bib47)) is
+    a framework built over PyTorch to reduce per-GPU memory consumption. The paper
+    observes that most memory during training is occupied by optimizer states, gradients,
+    and parameters. ZeRO partitions these model states across GPUs to remove memory
+    redundancies. With ZeRO, memory reduction scales proportionally with the number
+    of GPUs while communication overhead only increases by a constant factor of 1.5x.
+    The paper finds improvements in model size, training performance, and scalability
+    with 100 billion parameter models on up to 400 GPUs using the Adam optimizer (Kingma
+    and Ba, [2015](#bib.bib28)) and mixed precision. Researchers at Microsoft have
+    used ZeRO to train one of the largest neural networks in language modeling literature:
+    a 17B parameter neural network called the Turing-NLG.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Out-of core training algorithms like NVIDIA’s vDNN (Rhu et al., [2016](#bib.bib51))
+    are often used to train neural networks on a single GPU with insufficient DRAM
+    capacity. These algorithms move data back and forth between the CPU and the GPU
+    to free up space on the GPU. KARMA (Wahib et al., [2020](#bib.bib66)) is a framework
+    built over PyTorch that extends this out-of-core approach to data parallelism
+    on multiple GPUs. They design an efficient algorithm for automatic offloading
+    and prefetching of activations and parameters of the neural network to and from
+    the CPU DRAM. These capabilities are further extended to support multi-GPU models
+    by performing weight updates on the CPU. KARMA sees a 1.52x speed-up against other
+    state-of-the-art out-of-core methods. It provides an efficient way to utilize
+    data parallelism for large models that would otherwise necessitate other frameworks.
+    Zero-Infinity (Rajbhandari et al., [2021](#bib.bib48)) is another framework that
+    provides support for out-of-core data parallel training for multi-billion parameter
+    models. Using their memory optimizations, The authors are able to deploy a 32
+    trillion parameter model on as little as 512 GPUs while maintaining a decent throughput
+    of around 40% of the peak.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.3\. Large Effective Mini-Batch Sizes
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Data parallelism is most efficient with high per-GPU workloads. This is ensured
+    by fixing the per-GPU mini-batch size. As an example, suppose a ResNet model with
+    a per-GPU mini-batch size of 128 is trained over 64 GPUs. This is equivalent to
+    an effective mini-batch size of 8192 on a single GPU. It has been empirically
+    shown that an extremely large effective mini-batch size has an adverse effect
+    on the statistical efficiency of neural network training (Goyal et al., [2017](#bib.bib18)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The naive approach to compensate for this is to increase the learning rate
+    (LR). Krizhevsky (Krizhevsky et al., [2017](#bib.bib30)) proposes to scale LR
+    linearly with mini-batch size. Problems emerge as more workers are added to accelerate
+    training: large LR values result in accuracy losses and training instability.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Goyal et al. (Goyal et al., [2017](#bib.bib18)) propose a LR warmup scheme to
+    combat accuracy loss. Training begins with a lower LR that slowly builds up to
+    a target value following the linear scaling rule. The paper was able to train
+    ResNet-50 with a mini-batch size of 8K and accuracy matching smaller mini-batch
+    models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You et al.(You et al., [2017](#bib.bib69), [2018](#bib.bib71)) devise Layer-wise
+    Adaptive Rate Scaling (LARS) as an alternate approach to LR warmup. LARS adapts
+    the global LR to create separate LRs per model layer based on the ratio between
+    layer weights and gradient updates. The paper observes this ratio varies across
+    layers and provides insight into the efficacy of a layer’s weight updates. You
+    et al. utilize LARS to train AlexNet and ResNet-50 with a mini-batch size of 32K
+    without accuracy loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: LARS experiences inconsistent performance gains across different deep learning
+    tasks. You et. al (You et al., [2019](#bib.bib70)) propose a general strategy
+    to adapt any iterative optimizer for large mini-batch training. They apply this
+    strategy to create LAMB using the Adam optimizer as a base. Using LAMB, You et
+    al. scale BERT training to a mini-batch size of 32K without performance degradation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2\. Intra-Layer Parallelism
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: State of the art training techniques in intra-layer parallelism span from fine-grained
+    parallel implementations of numerical kernels to dividing the coarse-grained work
+    of a single layer across processes. It is often used in conjunction with other
+    parallelization strategies such as data or inter-layer parallelism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1\. Fine-Grained Parallelism
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: At the fine-grained level many techniques draw from existing numerical methods
+    and adapt them to deep learning. Matrix multiplication and convolutions are the
+    most utilized kernels and have been the focus of much optimization from the ML
+    and broader scientific community. Many accelerators and processors have paired
+    software libraries which implement these kernels tuned to their hardware such
+    as CuDNN(Chetlur et al., [2014](#bib.bib10)), MIOpen(Khan et al., [2019](#bib.bib25)),
+    and OneDNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Accelerators have been at the core of fine-grained parallelism within a layer.
+    Several works have introduced techniques, some ML based, for mapping layer computations
+    to the hardware optimally(Kao and Krishna, [2020](#bib.bib24); Steuwer et al.,
+    [2017](#bib.bib59); Kwon et al., [2020](#bib.bib31)). Here a mapping is the tiling
+    strategy, computation order, and parallelization strategy, hence, the search space
+    for optimal mappings can be immense.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There has been recent interest in using hardware accelerators other than GPGPUs
+    to train deep networks. FPGAs have emerged as a viable candidate in DNN acceleration
+    due to their lower energy consumption than GPUs and the flexibility provided by
+    their reconfigurability. Recent work has explored optimizing DNN operations on
+    FPGA hardware(Ma et al., [2017](#bib.bib34)). More recently, novel architectures
+    have been proposed to improve memory re-use and parallel performance(Kim et al.,
+    [2016](#bib.bib27); Chen et al., [2016](#bib.bib8), [2017](#bib.bib9)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2\. Coarse-Grained Parallelism
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Orthogonal to the fine-grained compute kernels there have been techniques developed
+    to divide work inside a layer along coarser tensor dimensions. These typically
+    involve using optimization algorithms and/or ML to identify optimal partitions
+    of computation and data within a layer and then developing a parallel strategy
+    for execution. Song et al. propose a method for finding communication optimal
+    parallel strategies on accelerator arrays in linear time(Song et al., [2019](#bib.bib58)).
+    Similarly, Jia et al. introduce a novel Markov Chain Monte Carlo based search
+    for finding optimal parallelization strategies, which encompasses intra-layer
+    in its operator dimension(Jia et al., [2019](#bib.bib23)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: MeshTensorFlow accomplishes a similar effect by mapping tensor dimensions to
+    a n-dimensional processor array or ”mesh”(Shazeer et al., [2018](#bib.bib54)).
+    These tensors are split and/or replicated across the mesh, such that the computation
+    can be done in parallel using the processor array. The framework itself provides
+    an interface for users to define a layout. Any layout will produce the same results
+    for the same problem, however, the memory footprint and performance can be greatly
+    improved with an optimal layout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dryden et al(Dryden et al., [2019b](#bib.bib16)) also propose several algorithms
+    for partitioning convolution tensor dimensions with the goal of reducing all-reduce
+    time during training. Their algorithms are available in the LBANN framework. Convolutions
+    are also parallelized in (Oyama et al., [2020](#bib.bib42)) with a hybrid parallelism
+    by extending data parallelism with parallelism in the spatial domain. For language-based
+    models Megatron(Shoeybi et al., [2020](#bib.bib55)) achieves a similar parallelism
+    by partitioning the blocks in transformer layers across processors. Megatron has
+    been increasingly used as language models become more common and larger (see Figure
+    [1](#S1.F1 "Figure 1 ‣ 1\. Introduction ‣ A Survey and Empirical Evaluation of
+    Parallel Deep Learning Frameworks")). It has shown up to 74% weak scaling coefficient
+    on 512 GPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dividing layer tensor dimensions across processors is, however, very sensitive
+    to the layer type. For instance, fully connected layers involve an all-to-all
+    computation and therefore all-to-all communication, which is more expensive the
+    data parallelism’s allreduce. Thus, it is hard to generalize coarser grained intra-layer
+    parallelism for models with custom layers. To combat this some methods look strictly
+    at compute graph operations and not model layers (Jia et al., [2019](#bib.bib23)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3\. Inter-Layer Parallelism
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'True inter-layer parallelism can only be achieved by pipelining i.e. having
+    multiple mini-batches active in the system at any given instance. There are two
+    ways to achieve pipelining: with and without flushing. In this section, we discuss
+    the pros and cons of both approaches. We also provide an overview of frameworks
+    that implement these approaches.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1\. Pipelining with Flushing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Pipelining with flushing divides a mini-batch into micro-batches of equal size.
+    These micro-batches are injected one by one into the system. GPUs accumulate gradients
+    from all the micro-batches in the system. A GPU updates its weights only after
+    it has finished the backward pass of the last micro-batch. The next mini-batch
+    and its corresponding micro-batches are injected after all the GPUs have finished
+    updating their weights. This approach to pipelining is also called micro-batching.
+    The number of micro-batches is usually kept to be much larger than the number
+    of workers so that each worker can compute concurrently. Ensuring optimum hardware
+    utilization requires having a large mini-batch size. To maintain statistical efficiency
+    at large mini-batch sizes the same set of solutions discussed in Section [3.1.3](#S3.SS1.SSS3
+    "3.1.3\. Large Effective Mini-Batch Sizes ‣ 3.1\. Data Parallelism ‣ 3\. Literature
+    Survey ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
+    can be used. Figure [3](#S2.F3 "Figure 3 ‣ 2.2\. Parallel Deep Learning Methods
+    ‣ 2\. Background ‣ A Survey and Empirical Evaluation of Parallel Deep Learning
+    Frameworks") shows pipelining with flushing in action. Worker GPUs incur idle
+    time between the forward pass of the last micro-batch and the backward pass of
+    the first micro-batch. These are called pipeline bubbles. They reduce the overall
+    hardware utilization of the system A load balanced mapping of layers to GPUs is
+    absolutely critical to maximize performance. The load balancing algorithm must
+    also be communication-aware. This is because activations and gradients exchanged
+    at GPU boundaries can be in the magnitudes of GBs for large neural networks. An
+    efficient implementation of pipelining with flushing must have load balancing
+    support.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 2\. System information about the HPC platforms used for the experiments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| System | No. of Nodes | CPU |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Cores/ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; node &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| GPU |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; GPUs/ &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; node &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; CPU Mem. / &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Node (GB) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; GPU Mem. / &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Node (GB) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; GPU FP64 &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Peak (TFlop/s) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lassen | 795 | IBM Power9 | 44 | NVIDIA V100 | 4 | 256 | 64 | 7.0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ThetaGPU | 24 | AMD Rome | 64 | NVIDIA A100 | 8 | 1024 | 320 | 9.7 |'
+  prefs: []
+  type: TYPE_TB
+- en: This idea was first introduced by Huang et al. in GPipe (Huang et al., [2019](#bib.bib19)).
+    Using GPipe they trained a 557M parameter neural network - AmoebaNet-B (Real et al.,
+    [2019](#bib.bib49)) on the ImageNet (Russakovsky et al., [2015](#bib.bib52)) dataset
+    and surpassed the state of the art in a number of downstream image classification
+    tasks. TorchGPipe (Kim et al., [2020](#bib.bib26)) is an unofficial open-source
+    implementation of GPipe built on the PyTorch (Paszke et al., [2019](#bib.bib43))
+    backend. GEMS (GPU-Enabled Memory Aware Model-Parallelism System) (Jain et al.,
+    [2020](#bib.bib21)) introduces a novel approach to increase hardware utilization.
+    This framework proposes an algorithm to train two neural networks concurrently
+    using pipelining without flushing on multiple GPUs. They double the throughput
+    of the system by overlapping the forward and backward passes of the two neural
+    networks. We refer the reader to their paper for the details of their implementation.
+    Recently ZeRO (Rajbhandari et al., [2020](#bib.bib47)) and Megatron (Shoeybi et al.,
+    [2020](#bib.bib55)) also extended support for this approach towards inter-layer
+    parallelism. TorchGPipe (Kim et al., [2020](#bib.bib26)) provides a load balancing
+    algorithm that seeks to balance the net execution time of the forward and backward
+    pass of a micro-batch on each GPU. However, their algorithm ignores the communication
+    overhead of exchanging tensors across GPU boundaries. Megatron divides the layers
+    of a transformer across GPUs, which is optimal because all the layers of a transformer
+    are identical. ZeRO also provides an identical strategy that divides the layers
+    equally across GPUs. Additionally, they also support a load balancing algorithm
+    that equalizes GPU memory consumption across GPUs. AxoNN (Singh and Bhatele, [pear](#bib.bib57))
+    introduced a novel asynchronous communication backend for inter-layer parallelism.
+    To the best of our knowledge this is the first work that utilizes asychrony for
+    increasing hardware utilization by opting for MPI instead of NCCL. They also introduce
+    a memory optimization algorithm that they use to decrease the pipeline depth,
+    increase data parallelism and outperform the state-of-art by 15%-25% on models
+    with as many as 100 billion parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2\. Pipelining without Flushing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In this approach the number of mini-batches active in the system is kept constant.
+    As soon as a mini-batch finishes its backward pass on the first GPU a new mini-batch
+    is injected into the system to maintain full pipeline occupancy. Unlike pipelining
+    with flushing, weight updates on a GPU take place as soon as it is done with the
+    backward pass of a mini-batch. This method of pipelining seeks to increase hardware
+    utilization by removing flushing induced bubbles in the pipeline. However, statistical
+    efficiency of such a training algorithm reduces drastically. This is due to a
+    problem called weight staleness that occurs when newer mini-batches in a pipeline
+    encounter stale weights in forward passes which are yet to be updated with the
+    backward pass of older mini-batches. This is one of the major reasons why pipelining
+    without flushing has not seen widespread adoption. PipeDream (Narayanan et al.,
+    [2019](#bib.bib40)) is a framework that implements pipelining without flushing.
+    It employs an algorithm called weight stashing to counter weight staleness. We
+    refer the reader to their paper for exact details of the implementation. Chen
+    et al. (Chen et al., [2019](#bib.bib6)) suggest predicting future weights from
+    stale weights using a variant of SGD with momentum (Qian, [1999](#bib.bib45)).
+    PipeDream additionally proposes a static load balancing algorithm that is communication
+    aware. It instruments each layer and uses the profiling data in its load balancer.
+    Their framework also has an additional provision to replicate compute-intensive
+    layers across GPUs to increase their throughput. Replicated layers synchronize
+    their gradients via all-reduce after each backward pass.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 3\. Training datasets and network hyperparameters used for benchmarking
+    in the paper
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Dataset |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Training &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Split Size &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Validation &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Split Size &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Network |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Mini-Batch Size &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; per GPU &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Optimizer^(††) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Learning &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Rate &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; No. of &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Epochs &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; L2 Decay &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ImageNet | 1,281,167 | 50,000 | VGG-16 | 64^† | SGD^† | 0.01^† | 90^† | 0.0001^†
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wikitext-103 | 103,227,021 | 217,646 | GPT2-medium | 32^(∗∗) | LAMB^∗ | 0.001^∗
+    | 100^(∗∗) | 0.01^∗ |'
+  prefs: []
+  type: TYPE_TB
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ^∗ Values directly taken from MLPerf
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ^(∗∗) Values defined as unconstrained in MLPerf
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ^† Values directly taken from torchvision - [https://github.com/pytorch/vision/tree/master/references/classification](https://github.com/pytorch/vision/tree/master/references/classification)
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ^(††) For ZeRO, we use the Adam optimizer with 0.001 learning rate and 0.01
+    l2 decay as it’s memory optimizations only work with Adam
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 4\. Experimental Setup
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we present a detailed overview of our empirical evaluation of
+    a number of parallel deep learning frameworks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1\. Choice of Frameworks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We use DDP²²2[https://github.com/pytorch/pytorch](https://github.com/pytorch/pytorch) @1.8.0 (Li
+    et al., [2020](#bib.bib32)), ZeRO³³3[https://github.com/microsoft/DeepSpeed](https://github.com/microsoft/DeepSpeed) @0.3.13 (Rajbhandari
+    et al., [2020](#bib.bib47)), Megatron⁴⁴4[https://github.com/NVIDIA/Megatron-LM](https://github.com/NVIDIA/Megatron-LM) @2.3 (Shoeybi
+    et al., [2020](#bib.bib55)), PipeDream⁵⁵5[https://github.com/siddharth9820/pipedream](https://github.com/siddharth9820/pipedream) @00931df (Narayanan
+    et al., [2019](#bib.bib40)), TorchGPipe⁶⁶6[https://github.com/kakaobrain/torchgpipe](https://github.com/kakaobrain/torchgpipe) @a1b4ee2 (Kim
+    et al., [2020](#bib.bib26)), LBANN⁷⁷7[https://github.com/LLNL/lbann](https://github.com/LLNL/lbann) @0.101 (Essen
+    et al., [2015](#bib.bib17)), and AxoNN⁸⁸8https://github.com/hpcgroup/axonn/ @db1c6a0 (Singh
+    and Bhatele, [pear](#bib.bib57)) for our empirical analysis. For Megatron we profile
+    it’s implementations of data-parallelism and intra-layer parallel implementations
+    separately. We refer to these as Megatron-data and Megatron-intra respectively.
+    This subset is representative of the three types of parallelism discussed in Section
+    [3](#S3 "3\. Literature Survey ‣ A Survey and Empirical Evaluation of Parallel
+    Deep Learning Frameworks"). We select frameworks which have open-source implementations,
+    are easy to setup, and have a relatively large user-base. We also tried to include
+    MeshTensorFlow (Shazeer et al., [2018](#bib.bib54)) and FlexFlow  (Jia et al.,
+    [2019](#bib.bib23)) in our set of frameworks. However, despite our best efforts
+    we could not set them up successfully for experimentation on our machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To prevent dataloading from being a bottleneck we copy training datasets into
+    node-local SSDs before training. Data is loaded using PyTorch’s distributed data
+    loader with several worker processes. We defaulted to four processes, separate
+    from the main process, to read in data. MegatronLM implements their own data loaders,
+    which we used with Megatron rather than PyTorch’s. In practice we found these
+    to be much faster than the default PyTorch data loaders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a fair performance evaluation of each framework we used mixed precision
+    on the V100 and A100 cards on Lassen and ThetaGPU (Micikevicius et al., [2018](#bib.bib39)).
+    Of the frameworks we ran DDP, Megatron, LBANN, and ZeRO were the only ones that
+    supported mixed precision with distributed training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All of the listed frameworks use Pytorch 1.8.0, CUDA 11.0, and CuDNN 8.0 for
+    launching computation on GPUs. For inter-GPU communication, PipeDream uses the
+    gloo communication library shipped with Pytorch 1.8.0, whereas all of the other
+    frameworks use NCCL 2.7.8.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2\. System Hardware
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Table [2](#S3.T2 "Table 2 ‣ 3.3.1\. Pipelining with Flushing ‣ 3.3\. Inter-Layer
+    Parallelism ‣ 3\. Literature Survey ‣ A Survey and Empirical Evaluation of Parallel
+    Deep Learning Frameworks") describes the systems and hardware used in our training.
+    Lassen is an IBM machine at Lawrence Livermore National Laboratory with a Mellanox
+    network. It currently sits at number 26 on the Top500 list. ThetaGPU is a GPU
+    extension of the Cray XC40 Theta system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each system was selected to be representative of typical machines used for DL
+    training. Lassen is similar to other leadership HPC systems with GPU-dense nodes.
+    The ThetaGPU extension of Theta with dense A100 nodes is more typical of current
+    cutting edge AI machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3\. Datasets and Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We evaluate the aforementioned subset of frameworks on two popular deep learning
+    tasks: image classification and language modeling. For the former task we use
+    The ImageNet Large Scale Visual Recognition Challenge (ILSVRC) 2012 dataset (Russakovsky
+    et al., [2015](#bib.bib52)). This dataset has been widely used to train large
+    state of the art image classification neural networks throughout the last decade.
+    It consists of more than a million RGB images of dimension 224x224 evenly divided
+    across 1000 image classes. We use this dataset to train the VGG-16 (Simonyan and
+    Zisserman, [2015](#bib.bib56)) architecture on our selected subset of frameworks.
+    Language modeling is an unsupervised learning task wherein models are trained
+    to predict the next word in a sentence given all of the previously occurring words.
+    We use the Wikitext-103 (Merity et al., [2016](#bib.bib38)) dataset for our language
+    modeling training workloads. This dataset is comprised of more than 28000 articles
+    from the English Wikipedia amounting to a total of 100 million English words.
+    Language modeling has gained immense popularity recently in NLP for training extremely
+    large neural networks. Researchers have achieved stellar performance with these
+    models in a variety of downstream tasks like question answering, textual entailment,
+    translation, reading comprehension, etc… We train the GPT-2-medium architecture
+    proposed by OpenAI in their paper (Radford et al., [2019](#bib.bib46)) on the
+    Wikitext-103 (Merity et al., [2016](#bib.bib38)) dataset. Table [3](#S3.T3 "Table
+    3 ‣ 3.3.2\. Pipelining without Flushing ‣ 3.3\. Inter-Layer Parallelism ‣ 3\.
+    Literature Survey ‣ A Survey and Empirical Evaluation of Parallel Deep Learning
+    Frameworks") provides an overview of the datasets used across our experiments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.1\. Hyperparameters
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The epoch execution times and statistical efficiency of a training algorithm
+    are very sensitive to the choice of hyperparameters. Learning rate schedules,
+    optimizer choices and weight decay values can have a large impact on the statistical
+    efficiency. Larger mini-batch sizes reduce epoch execution times at the expense
+    of statistical efficiency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hyperparameters were chosen based on corresponding MLPerf (Mattson et al., [2019](#bib.bib36))
+    benchmarks, which are a standard means of comparison for DL training. Because
+    of this we keep the parameters fixed between frameworks. For parameters not included
+    in the MLPerf description we choose them based on the values given in their respective
+    papers. We ensure that training with our hyperparameters gives us reasonable performance
+    on the validation set. Table [3](#S3.T3 "Table 3 ‣ 3.3.2\. Pipelining without
+    Flushing ‣ 3.3\. Inter-Layer Parallelism ‣ 3\. Literature Survey ‣ A Survey and
+    Empirical Evaluation of Parallel Deep Learning Frameworks") provides an overview
+    of the hyperparameters applied to each model. It is possible further tuning could
+    improve the performance and/or statistical efficiencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For efficient scaling to larger GPU counts, data parallel algorithms typically
+    use a fixed mini-batch size per GPU to maintain a constant computational workload
+    per GPU. Thus, to ensure a fair comparison of other frameworks with DDP, AxoNN,
+    ZeRO, LBANN and Megatron-data we do the following for each framework:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Megatron-intra - We linearly scale the mini-batch size with increasing number
+    of GPUs.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: TorchGPipe - We fix the size of a micro-batch and set the number of micro-batches
+    to 4 times that of the GPU count.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: PipeDream - We fix the size of a mini-batch. PipeDream ensures constant computational
+    workload on each GPU by increasing it’s pipeline limit automatically.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 4.4\. Exceptions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We make the following exceptions to the experimental setups listed above. We
+    only show results for PipeDream on a subset of the GPUs due to the framework deadlocking
+    on higher GPU counts. We only show results for TorchGPipe upto 8 GPUs on ThetaGPU
+    and 4 GPUs on Lassen as it is only applicable to a single node. We only show results
+    for LBANN on Lassen as we had difficulties building the framework on ThetaGPU.
+    Likewise, we only show AxoNN results on Lassen due to jobs not finishing on ThetaGPU.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.5\. Evaluation Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For our analysis we use metrics that matter the most to a deep learning researcher
+    - epoch execution times, statistical efficiency, and GPU memory consumption. Statistically
+    efficient training algorithms or frameworks require less number of epochs to reach
+    a certain target accuracy on the validation data. When comparing parallel DL frameworks
+    it is absolutely imperative to compare both the epoch execution times and statistical
+    efficiency of the training runs. We have discussed the tradeoffs that parallel
+    DL algorithms incur between these two metrics in Section [3](#S3 "3\. Literature
+    Survey ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: We profile epoch execution times on 1, 2, 4, 8, 16, 32 and 64 GPUs on Lassen
+    and ThetaGPU. While profiling the statistical efficiency for a particular framework,
+    we use the GPU count where it has the minimum epoch execution times. For gathering
+    memory utilization data we use 1, 2, 4, 8, 16, 32 and 64 GPUs on ThetaGPU. Table
+    [3](#S3.T3 "Table 3 ‣ 3.3.2\. Pipelining without Flushing ‣ 3.3\. Inter-Layer
+    Parallelism ‣ 3\. Literature Survey ‣ A Survey and Empirical Evaluation of Parallel
+    Deep Learning Frameworks") and Table [2](#S3.T2 "Table 2 ‣ 3.3.1\. Pipelining
+    with Flushing ‣ 3.3\. Inter-Layer Parallelism ‣ 3\. Literature Survey ‣ A Survey
+    and Empirical Evaluation of Parallel Deep Learning Frameworks") gives an overview
+    of the neural networks and machines we used for evaluating these metrics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To measure the statistical efficiency we record the accuracy and loss for the
+    vision tasks and perplexity for the language tasks. Loss is the output of the
+    loss function used for training. Its magnitude depends on its definition, but
+    the training loss should decrease towards zero as the model improves in predictive
+    capacity. Accuracy measures the ratio of samples accurately predicted to total
+    samples. We use the validation accuracy, which is calculated based on samples
+    exclusive to the training set. Perplexity is commonly used in NLP to measure how
+    well a model predicts for a certain corpus based on the cross-entropy of the model.
+    It is defined as the exponential of the cross entropy loss on the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5\. Comparative Evaluation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we present and discuss the results from our experiments on epoch
+    execution times, statistical efficiency, and memory utilization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8c71b32446f766d400ef9bef19a368c5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 4\. Comparison of single GPU performance and 4 GPU speedup on Lassen
+    for VGG-16 and GPT2-medium. The labels list the speedup of each framework relative
+    to their own 1 GPU performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1\. Execution Time Comparison
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We first look at the baseline performance of each framework. Figure [4](#S5.F4
+    "Figure 4 ‣ 5\. Comparative Evaluation ‣ A Survey and Empirical Evaluation of
+    Parallel Deep Learning Frameworks") presents the sequential single GPU execution
+    times on the two neural networks on Lassen. In this test TorchGPipe performs the
+    worst on both VGG-16 and GPT2-medium by up to 1.8x and 5.2x, respectively. We
+    also observe Pipedream is the second slowest framework. The single GPU performances
+    differ significantly largely due to these two not supporting mixed precision.
+    The difference is exacerbated for extremely compute intensive neural networks
+    like the GPT2-medium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While Megatron, DDP, ZeRO and AxoNN employ mixed precision, Megatron is considerably
+    faster as it uses its own optimized implementation of the transformer encoder
+    layer and Adam optimizer. Figure [4](#S5.F4 "Figure 4 ‣ 5\. Comparative Evaluation
+    ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks") exemplifies
+    this, where we observe a 2x speedup on a single GPU over the native PyTorch kernel
+    used by DDP and ZeRO. The PyTorch implementation performs worse due to its handling
+    of the computationally intensive final softmax layer in GPT2-medium. While DDP
+    and AxoNN compute this layer in full precision, ZeRO’s mixed precision strategy
+    computes this layer in half precision,, leading to the difference in performance
+    between the two.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Out of all the frameworks TorchGPipe has the worst single GPU performance. This
+    is because micro-batching provides no performance benefits as operations of different
+    microbatches are serialized on a single GPU. It however does save memory used
+    for stashing activations during the forward pass. We discuss this in Section [5.3](#S5.SS3
+    "5.3\. Memory Utilization ‣ 5\. Comparative Evaluation ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/688d504ae8ca579aca78889831faa3ac.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 5\. Breakdown of time spent in training on 1, 2, 4, and 8 GPUs of ThetaGPU
+    for GPT2-medium. We use NVIDIA’s NVTX SDK for annotating events and Nsight Systems
+    for instrumentation. Megatron refers to Megatron-intra.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/80bbee79864d94018c4a99c936e8e86f.png)![Refer to caption](img/a6ee0d8ebbfc19950c6ad1917046ece6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 6\. Performance results on Lassen for VGG-16 and GPT2-medium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ea04ffb5c624e9067ad4d54277d423b9.png)![Refer to caption](img/3a79d8cce57c983c90f1f76d36df75a2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 7\. Performance results on ThetaGPU for VGG-16 and GPT2-medium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [5](#S5.F5 "Figure 5 ‣ 5.1\. Execution Time Comparison ‣ 5\. Comparative
+    Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
+    shows the time spent by each framework in the forward pass, backward pass, and
+    I/O for GPT2-medium on ThetaGPU. We observe a marked improvement in Megatron’s
+    I/O performance due to its custom data loaders (see Section [4.1](#S4.SS1 "4.1\.
+    Choice of Frameworks ‣ 4\. Experimental Setup ‣ A Survey and Empirical Evaluation
+    of Parallel Deep Learning Frameworks")), however, these are a negligible part
+    of the overall time per iteration. Across all frameworks, we see that the backward
+    pass is more computationally intensive than the forward pass. This is because
+    for each layer we not only compute the gradients for its parameters but also for
+    its input activations which need to be backpropagated to previous layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Single GPU profiles in the figure also highlight the difference in the absolute
+    computation time of the forward and backward passes for these frameworks. It further
+    supports our above explanation for the differences in sequential performance in
+    Figure [4](#S5.F4 "Figure 4 ‣ 5\. Comparative Evaluation ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figures [6](#S5.F6 "Figure 6 ‣ 5.1\. Execution Time Comparison ‣ 5\. Comparative
+    Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
+    and [7](#S5.F7 "Figure 7 ‣ 5.1\. Execution Time Comparison ‣ 5\. Comparative Evaluation
+    ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks") detail
+    the results from the performance tests on each machine. We present number of seconds
+    per epoch for each neural network as the GPU count increases from 1 to 64.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Across both machines and neural networks we observe two separate trends amongst
+    the frameworks. First, DDP, ZeRO, LBANN, AxoNN and Megatron-data all perform similarly
+    with only constant deviations from each other. Second, PipeDream and TorchGPipe
+    are slower, more erratic, and scale worse than the others. Third, Megatron-intra’s
+    speedup seems to plateau when we try to scale it across multiple nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Within this first trend we observe that ZeRO’s performance trends the same as
+    DDP and AxoNN with only 10-15% difference in absolute run time. These variations
+    can be attributed to the different mixed precision implementations and ZeRO’s
+    memory optimizations. As noted previously in Section [3.1.2](#S3.SS1.SSS2 "3.1.2\.
+    Large Models ‣ 3.1\. Data Parallelism ‣ 3\. Literature Survey ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks"), ZeRO reduces the per GPU memory
+    footprint of data parallelism at the expense of added communication. However,
+    we see that this communication overhead scales the same as standard DDP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is immediately apparent that these data parallel approaches strongly outperform
+    the other frameworks in scaling. This is notably due to the embarrassingly parallel
+    workload in data parallelism when the entire model fits within GPU memory. We
+    also see an expected slight reduction in speedup on Lassen and ThetaGPU (shown
+    in Figure [4](#S5.F4 "Figure 4 ‣ 5\. Comparative Evaluation ‣ A Survey and Empirical
+    Evaluation of Parallel Deep Learning Frameworks")) for data parallelism as the
+    number of GPUs surpassed that of a single node. This happens as the all-reduce
+    communication now occurs outside the fast intra-node NVLink and has to use the
+    system network. This is a negligible issue due to how much better the data parallel
+    algorithms scale.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Due to the lack of mixed precision support, PipeDream and TorchGPipe have the
+    largest epoch execution times at all GPU counts across all machines. PipeDream
+    seems to scale erratically relative to its own single GPU execution. The poor
+    scaling can be attributed to two factors. Firstly, PipeDream uses the relatively
+    slow Gloo library as its communication backend. Secondly, erratic scaling is usually
+    a sign of load imbalance. Our experiments show that their communication-aware
+    load balancing algorithm does not perform satisfactorily in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Along with these two major trends we also observe that Megatron-intra plateaus
+    once it runs on multiple nodes. For larger GPU counts it scales worse than DDP,
+    ZeRO and AxoNN. We observed that the communication overhead of Megatron-intra
+    increases rapidly with increasing number of GPUs, ultimately reaching 52.5% of
+    the total execution time on 16 GPUs. Based on our observations we recommend that
+    researchers who wish to train large transformer models on language modeling task
+    use Megatron-intra for their single GPU sequential implementations. If the model
+    surpasses the memory capacity of a single GPU, we recommend employing Megatron’s
+    intra-layer parallelism to fit the model inside the GPUs of a single node. Scaling
+    to large GPU counts should be done by integrating Megatron’s intra-layer parallelism
+    with data parallelism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2\. Statistical Efficiency
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Figure [8](#S5.F8 "Figure 8 ‣ 5.2\. Statistical Efficiency ‣ 5\. Comparative
+    Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
+    illustrates the results of our statistical efficiency experiments. Following standard
+    practice we measure the validation accuracy and perplexity at each epoch for the
+    image classification and language modeling tasks respectively. We report the epoch
+    number as well as the total training time. On observing the performance of PipeDream
+    on both the tasks it is apparent that weight staleness is a huge roadblock in
+    the path of algorithms that seek to implement pipelining without flushing. PipeDream’s
+    proposed weight stashing approach does not mitigate this problem satisfactorily.
+    ZeRO, DDP and LBANN exhibit near identical validation curves. The slight variations
+    in the validation curves are likely due to differences in the mixed precision
+    implementations in these frameworks. TorchGPipe and Megatron-intra exhibit greater
+    statistical efficiencies than the data parallel frameworks on the language modeling
+    task. We attribute the fast convergence of these frameworks due to their training
+    runs being carried out on a small GPU count. The data parallel frameworks being
+    trained at 64 GPUs take a slight hit in their convergence speeds due to the problem
+    of increase effective mini-batch sizes that we highlighted in Section [3.1.3](#S3.SS1.SSS3
+    "3.1.3\. Large Effective Mini-Batch Sizes ‣ 3.1\. Data Parallelism ‣ 3\. Literature
+    Survey ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [8](#S5.F8 "Figure 8 ‣ 5.2\. Statistical Efficiency ‣ 5\. Comparative
+    Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
+    further details how the accuracies and perplexities behave over time rather than
+    epoch. PipeDream is much slower to accuracies than the other frameworks. Such
+    a figure presents a combined picture of the statistical efficiency and epoch execution
+    times of a framework. We argue that plotting validation metrics against epoch
+    times is the best way to evaluate the performance of any distributed deep learning
+    framework. It also clearly demonstrates the superiority of data parallelism over
+    other classes of parallel deep learning algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3d290f80c7b1a9386cfda3094096ed8e.png)![Refer to caption](img/91fb588a5f50e95e34ca4319e838a3e3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8\. Validation performance by time for training VGG-16 and GPT2-medium
+    on ThetaGPU. Epoch numbers are shown in labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3\. Memory Utilization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Figure [9](#S5.F9 "Figure 9 ‣ 5.3\. Memory Utilization ‣ 5\. Comparative Evaluation
+    ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks") details
+    the per GPU memory usage of each framework during the training tasks. ZeRO, while
+    having similar performance and scaling to DDP, had between 42% and 66% of the
+    memory footprint. We also see this improving as more GPUs are added similar to
+    the layer parallel runs, while DDP remains fixed as it simply duplicates the models
+    across GPUs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pipelining implementations both experienced over 2x better memory usage
+    with more resources. More of the models were able to be partitioned amongst the
+    GPUs. However, the memory savings begin to plateau as more GPUs are added since
+    increase in the activation memory due to increasing batch sizes balances out the
+    decrease in parameter memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The U-shaped per GPU memory curve of Megatron can be attributed to the inner
+    workings of their intra-layer parallelism implementation. While the computation
+    of a transformer layer is divided across multiple GPUs, the output of the last
+    layer needs to be present in its entirety on every GPU. Since the per GPU mini-batch
+    size is fixed the memory occupied by the input for any layer on each GPU increases
+    linearly with an increase in GPU count. At lower GPU counts this increase is offset
+    by the decrease in parameter memory due to the division of the layer computation
+    across GPUs. After a while, however, the decrease is not enough to completely
+    offset the increasing input activation memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3c88ba96135a72e9df50f703de6b8630.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9\. Memory consumption by different frameworks on ThetaGPU for GPT2-medium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6\. Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The increasing size of contemporary neural network architectures has necessitated
+    the development of efficient algorithms for parallelizing neural networks. The
+    performance of parallel training of neural networks is heavily dependent on the
+    algorithm, implementation, hyperparameters, and hardware used. In this paper we
+    provide a comprehensive survey of parallel deep learning frameworks that have
+    demonstrated scaling on parallel systems. We use two dataset-network combinations
+    to study various properties of parallel deep learning frameworks such as scalability,
+    memory requirements, and statistical efficiency as a function of performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our benchmarking studies presents some interesting observations. When the entire
+    model can fit within a single GPU, it is best to use data parallel approaches
+    as they perform and scale well. In memory constrained environments, ZeRO (Rajbhandari
+    et al., [2020](#bib.bib47)) can save us a decent amount of memory. Their memory
+    optimizations only add substantial cost to the computation for non-transformer
+    models. For saving more memory we recommend using intra or inter-layer parallelism
+    to deploy a model across a few number of GPUs and then scale it in a hybrid fashion
+    with data parallelism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: (1)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Abadi et al. (2016) Martín Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen,
+    Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey Irving, Michael
+    Isard, Manjunath Kudlur, Josh Levenberg, Rajat Monga, Sherry Moore, Derek G. Murray,
+    Benoit Steiner, Paul Tucker, Vijay Vasudevan, Pete Warden, Martin Wicke, Yuan
+    Yu, and Xiaoqiang Zheng. 2016. TensorFlow: A System for Large-Scale Machine Learning.
+    In *Proceedings of the 12th USENIX Conference on Operating Systems Design and
+    Implementation* (Savannah, GA, USA) *(OSDI’16)*. USENIX Association, USA, 265–283.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Awan et al. (2020) A. A. Awan, A. Jain, C. Chu, H. Subramoni, and D. K. Panda.
+    2020. Communication Profiling and Characterization of Deep-Learning Workloads
+    on Clusters With High-Performance Interconnects. *IEEE Micro* 40, 1 (2020), 35–43.
+    [https://doi.org/10.1109/MM.2019.2949986](https://doi.org/10.1109/MM.2019.2949986)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ben-Nun and Hoefler (2019) Tal Ben-Nun and Torsten Hoefler. 2019. Demystifying
+    Parallel and Distributed Deep Learning: An In-Depth Concurrency Analysis. *ACM
+    Comput. Surv.* 52, 4, Article 65 (Aug. 2019), 43 pages. [https://doi.org/10.1145/3320060](https://doi.org/10.1145/3320060)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bhatele et al. (2015) Abhinav Bhatele, Andrew R. Titus, Jayaraman J. Thiagarajan,
+    Nikhil Jain, Todd Gamblin, Peer-Timo Bremer, Martin Schulz, and Laxmikant V. Kale.
+    2015. Identifying the Culprits behind Network Congestion. In *Proceedings of the
+    IEEE International Parallel & Distributed Processing Symposium* *(IPDPS ’15)*.
+    IEEE Computer Society. [http://doi.ieeecomputersociety.org/10.1109/IPDPS.2015.92](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2015.92)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. (2019) Chi-Chung Chen, Chia-Lin Yang, and Hsiang-Yun Cheng. 2019.
+    Efficient and Robust Parallel DNN Training through Model Parallelism on Multi-GPU
+    Platform. arXiv:1809.02839 [cs.DC]
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. (2016) Jianmin Chen, Rajat Monga, Samy Bengio, and Rafal Jozefowicz.
+    2016. Revisiting Distributed Synchronous SGD. In *International Conference on
+    Learning Representations Workshop Track*. [https://arxiv.org/abs/1604.00981](https://arxiv.org/abs/1604.00981)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. (2016) Y. Chen, J. Emer, and V. Sze. 2016. Eyeriss: A Spatial Architecture
+    for Energy-Efficient Dataflow for Convolutional Neural Networks. In *2016 ACM/IEEE
+    43rd Annual International Symposium on Computer Architecture (ISCA)*. 367–379.
+    [https://doi.org/10.1109/ISCA.2016.40](https://doi.org/10.1109/ISCA.2016.40)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. (2017) Y. Chen, T. Krishna, J. S. Emer, and V. Sze. 2017. Eyeriss:
+    An Energy-Efficient Reconfigurable Accelerator for Deep Convolutional Neural Networks.
+    *IEEE Journal of Solid-State Circuits* 52, 1 (2017), 127–138. [https://doi.org/10.1109/JSSC.2016.2616357](https://doi.org/10.1109/JSSC.2016.2616357)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chetlur et al. (2014) Sharan Chetlur, Cliff Woolley, Philippe Vandermersch,
+    Jonathan Cohen, John Tran, Bryan Catanzaro, and Evan Shelhamer. 2014. cuDNN: Efficient
+    Primitives for Deep Learning. *CoRR* abs/1410.0759 (2014). arXiv:1410.0759 [http://arxiv.org/abs/1410.0759](http://arxiv.org/abs/1410.0759)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chilimbi et al. (2014) Trishul Chilimbi, Yutaka Suzue, Johnson Apacible, and
+    Karthik Kalyanaraman. 2014. Project Adam: Building an Efficient and Scalable Deep
+    Learning Training System. In *11th USENIX Symposium on Operating Systems Design
+    and Implementation (OSDI 14)*. USENIX Association, Broomfield, CO, 571–582. [https://www.usenix.org/conference/osdi14/technical-sessions/presentation/chilimbi](https://www.usenix.org/conference/osdi14/technical-sessions/presentation/chilimbi)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Coates et al. (2013) Adam Coates, Brody Huval, Tao Wang, David Wu, Bryan Catanzaro,
+    and Ng Andrew. 2013. Deep learning with COTS HPC systems *(Proceedings of Machine
+    Learning Research, Vol. 28)*, Sanjoy Dasgupta and David McAllester (Eds.). PMLR,
+    Atlanta, Georgia, USA, 1337–1345. [http://proceedings.mlr.press/v28/coates13.html](http://proceedings.mlr.press/v28/coates13.html)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dean et al. (2012) Jeffrey Dean, Greg S. Corrado, Rajat Monga, Kai Chen, Matthieu
+    Devin, Quoc V. Le, Mark Z. Mao, Marc’Aurelio Ranzato, Andrew Senior, Paul Tucker,
+    Ke Yang, and Andrew Y. Ng. 2012. Large Scale Distributed Deep Networks. In *NIPS*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devlin et al. (2019) Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+    Toutanova. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language
+    Understanding. In *Proceedings of the 2019 Conference of the North American Chapter
+    of the Association for Computational Linguistics: Human Language Technologies,
+    Volume 1 (Long and Short Papers)*. Association for Computational Linguistics,
+    Minneapolis, Minnesota, 4171–4186. [https://doi.org/10.18653/v1/N19-1423](https://doi.org/10.18653/v1/N19-1423)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dryden et al. (2019a) Nikoli Dryden, Naoya Maruyama, Tim Moon, Tom Benson, Marc
+    Snir, and Brian Van Essen. 2019a. Channel and Filter Parallelism for Large-Scale
+    CNN Training. In *Proceedings of the International Conference for High Performance
+    Computing, Networking, Storage and Analysis* (Denver, Colorado) *(SC ’19)*. Association
+    for Computing Machinery, New York, NY, USA, Article 10, 20 pages. [https://doi.org/10.1145/3295500.3356207](https://doi.org/10.1145/3295500.3356207)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dryden et al. (2019b) Nikoli Dryden, Naoya Maruyama, Tim Moon, Tom Benson, Marc
+    Snir, and Brian Van Essen. 2019b. Channel and Filter Parallelism for Large-Scale
+    CNN Training. In *Proceedings of the International Conference for High Performance
+    Computing, Networking, Storage and Analysis* (Denver, Colorado) *(SC ’19)*. Association
+    for Computing Machinery, New York, NY, USA, Article 10, 20 pages. [https://doi.org/10.1145/3295500.3356207](https://doi.org/10.1145/3295500.3356207)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Essen et al. (2015) Brian Van Essen, Hyojin Kim, Roger A. Pearce, Kofi Boakye,
+    and Barry Chen. 2015. LBANN: livermore big artificial neural network HPC toolkit.
+    In *Proceedings of the Workshop on Machine Learning in High-Performance Computing
+    Environments, MLHPC 2015, Austin, Texas, USA, November 15, 2015*. ACM, 5:1–5:6.
+    [https://doi.org/10.1145/2834892.2834897](https://doi.org/10.1145/2834892.2834897)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Goyal et al. (2017) Priya Goyal, Piotr Dollár, Ross B. Girshick, Pieter Noordhuis,
+    Lukasz Wesolowski, Aapo Kyrola, Andrew Tulloch, Yangqing Jia, and Kaiming He.
+    2017. Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour. *CoRR* abs/1706.02677
+    (2017). arXiv:1706.02677 [http://arxiv.org/abs/1706.02677](http://arxiv.org/abs/1706.02677)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Huang et al. (2019) Yanping Huang, Youlong Cheng, Ankur Bapna, Orhan Firat,
+    Dehao Chen, Mia Chen, HyoukJoong Lee, Jiquan Ngiam, Quoc V Le, Yonghui Wu, and
+    zhifeng Chen. 2019. GPipe: Efficient Training of Giant Neural Networks using Pipeline
+    Parallelism. In *Advances in Neural Information Processing Systems*, H. Wallach,
+    H. Larochelle, A. Beygelzimer, F. d''Alché-Buc, E. Fox, and R. Garnett (Eds.),
+    Vol. 32\. Curran Associates, Inc. [https://proceedings.neurips.cc/paper/2019/file/093f65e080a295f8076b1c5722a46aa2-Paper.pdf](https://proceedings.neurips.cc/paper/2019/file/093f65e080a295f8076b1c5722a46aa2-Paper.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Islam et al. (2016) Tanzima Z. Islam, Jayaraman J. Thiagarajan, Abhinav Bhatele,
+    Martin Schulz, and Todd Gamblin. 2016. A Machine Learning Framework for Performance
+    Coverage Analysis of Proxy Applications. In *Proceedings of the ACM/IEEE International
+    Conference for High Performance Computing, Networking, Storage and Analysis* *(SC
+    ’16)*. IEEE Computer Society. [http://doi.ieeecomputersociety.org/10.1109/SC.2016.45](http://doi.ieeecomputersociety.org/10.1109/SC.2016.45)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jain et al. (2020) Arpan Jain, Ammar Ahmad Awan, Asmaa M. Aljuhani, Jahanzeb Maqbool
+    Hashmi, Quentin G. Anthony, Hari Subramoni, Dhableswar K. Panda, Raghu Machiraju,
+    and Anil Parwani. 2020. GEMS: GPU-ENabled MEmory-Aware Model-Parallelism SYstem
+    for Distributed DNN Training. In *Proceedings of the International Conference
+    for High Performance Computing, Networking, Storage and Analysis* (Atlanta, Georgia)
+    *(SC ’20)*. IEEE Press, Article 45, 15 pages.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jain et al. (2013) Nikhil Jain, Abhinav Bhatele, Michael P. Robson, Todd Gamblin,
+    and Laxmikant V. Kale. 2013. Predicting application performance using supervised
+    learning on communication features. In *ACM/IEEE International Conference for
+    High Performance Computing, Networking, Storage and Analysis* *(SC ’13)*. IEEE
+    Computer Society.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jia et al. (2019) Zhihao Jia, Matei Zaharia, and Alex Aiken. 2019. Beyond Data
+    and Model Parallelism for Deep Neural Networks.. In *Proceedings of Machine Learning
+    and Systems*, A. Talwalkar, V. Smith, and M. Zaharia (Eds.), Vol. 1\. 1–13. [https://proceedings.mlsys.org/paper/2019/file/c74d97b01eae257e44aa9d5bade97baf-Paper.pdf](https://proceedings.mlsys.org/paper/2019/file/c74d97b01eae257e44aa9d5bade97baf-Paper.pdf)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kao and Krishna (2020) Sheng-Chun Kao and Tushar Krishna. 2020. GAMMA: Automating
+    the HW Mapping of DNN Models on Accelerators via Genetic Algorithm. In *Proceedings
+    of the 39th International Conference on Computer-Aided Design* (Virtual Event,
+    USA) *(ICCAD ’20)*. Association for Computing Machinery, New York, NY, USA, Article
+    44, 9 pages. [https://doi.org/10.1145/3400302.3415639](https://doi.org/10.1145/3400302.3415639)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Khan et al. (2019) Jehandad Khan, Paul Fultz, Artem Tamazov, Daniel Lowell,
+    Chao Liu, Michael Melesse, Murali Nandhimandalam, Kamil Nasyrov, Ilya Perminov,
+    Tejash Shah, Vasilii Filippov, Jing Zhang, Jing Zhou, Bragadeesh Natarajan, and
+    Mayank Daga. 2019. MIOpen: An Open Source Library For Deep Learning Primitives.
+    arXiv:1910.00078 [cs.LG]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kim et al. (2020) Chiheon Kim, Heungsub Lee, Myungryong Jeong, Woonhyuk Baek,
+    Boogeon Yoon, Ildoo Kim, Sungbin Lim, and Sungwoong Kim. 2020. torchgpipe: On-the-fly
+    Pipeline Parallelism for Training Giant Models. (2020). arXiv:2004.09910'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kim et al. (2016) D. Kim, J. Kung, S. Chai, S. Yalamanchili, and S. Mukhopadhyay.
+    2016. Neurocube: A Programmable Digital Neuromorphic Architecture with High-Density
+    3D Memory. In *2016 ACM/IEEE 43rd Annual International Symposium on Computer Architecture
+    (ISCA)*. 380–392. [https://doi.org/10.1109/ISCA.2016.41](https://doi.org/10.1109/ISCA.2016.41)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kingma and Ba (2015) Diederik P. Kingma and Jimmy Ba. 2015. Adam: A Method
+    for Stochastic Optimization. In *3rd International Conference on Learning Representations,
+    ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings*, Yoshua
+    Bengio and Yann LeCun (Eds.). [http://arxiv.org/abs/1412.6980](http://arxiv.org/abs/1412.6980)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kolesnikov et al. (2020) Alexander Kolesnikov, Lucas Beyer, Xiaohua Zhai, Joan
+    Puigcerver, Jessica Yung, Sylvain Gelly, and Neil Houlsby. 2020. Big Transfer
+    (BiT): General Visual Representation Learning. In *Computer Vision – ECCV 2020*,
+    Andrea Vedaldi, Horst Bischof, Thomas Brox, and Jan-Michael Frahm (Eds.). Springer
+    International Publishing, Cham, 491–507.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krizhevsky et al. (2017) Alex Krizhevsky, Ilya Sutskever, and Geoffrey E. Hinton.
+    2017. ImageNet Classification with Deep Convolutional Neural Networks. *Commun.
+    ACM* 60, 6 (May 2017), 84–90. [https://doi.org/10.1145/3065386](https://doi.org/10.1145/3065386)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kwon et al. (2020) H. Kwon, P. Chatarasi, V. Sarkar, T. Krishna, M. Pellauer,
+    and A. Parashar. 2020. MAESTRO: A Data-Centric Approach to Understand Reuse, Performance,
+    and Hardware Cost of DNN Mappings. *IEEE Micro* 40, 3 (2020), 20–29. [https://doi.org/10.1109/MM.2020.2985963](https://doi.org/10.1109/MM.2020.2985963)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2020) Shen Li, Yanli Zhao, Rohan Varma, Omkar Salpekar, Pieter Noordhuis,
+    Teng Li, Adam Paszke, Jeff Smith, Brian Vaughan, Pritam Damania, and Soumith Chintala.
+    2020. PyTorch Distributed: Experiences on Accelerating Data Parallel Training.
+    *Proc. VLDB Endow.* 13, 12 (Aug. 2020), 3005–3018. [https://doi.org/10.14778/3415478.3415530](https://doi.org/10.14778/3415478.3415530)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lu et al. (2018) X. Lu, H. Shi, R. Biswas, M. H. Javed, and D. K. Panda. 2018.
+    DLoBD: A Comprehensive Study of Deep Learning over Big Data Stacks on HPC Clusters.
+    *IEEE Transactions on Multi-Scale Computing Systems* 4, 4 (2018), 635–648. [https://doi.org/10.1109/TMSCS.2018.2845886](https://doi.org/10.1109/TMSCS.2018.2845886)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ma et al. (2017) Yufei Ma, Yu Cao, Sarma Vrudhula, and Jae-sun Seo. 2017. Optimizing
+    Loop Operation and Dataflow in FPGA Acceleration of Deep Convolutional Neural
+    Networks. In *Proceedings of the 2017 ACM/SIGDA International Symposium on Field-Programmable
+    Gate Arrays* (Monterey, California, USA) *(FPGA ’17)*. Association for Computing
+    Machinery, New York, NY, USA, 45–54. [https://doi.org/10.1145/3020078.3021736](https://doi.org/10.1145/3020078.3021736)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Marathe et al. (2017) Aniruddha Marathe, Rushil Anirudh, Nikhil Jain, Abhinav
+    Bhatele, Jayaraman Thiagarajan, Bhavya Kailkhura, Jae-Seung Yeom, Barry Rountree,
+    and Todd Gamblin. 2017. Performance Modeling under Resource Constraints Using
+    Deep Transfer Learning. In *Proceedings of the ACM/IEEE International Conference
+    for High Performance Computing, Networking, Storage and Analysis* *(SC ’17)*.
+    IEEE Computer Society. [http://doi.acm.org/10.1145/3126908.3126969](http://doi.acm.org/10.1145/3126908.3126969)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mattson et al. (2019) Peter Mattson, Christine Cheng, Cody Coleman, Greg Diamos,
+    Paulius Micikevicius, David A. Patterson, Hanlin Tang, Gu-Yeon Wei, Peter Bailis,
+    Victor Bittorf, David Brooks, Dehao Chen, Debojyoti Dutta, Udit Gupta, Kim M.
+    Hazelwood, Andrew Hock, Xinyuan Huang, Bill Jia, Daniel Kang, David Kanter, Naveen
+    Kumar, Jeffery Liao, Guokai Ma, Deepak Narayanan, Tayo Oguntebi, Gennady Pekhimenko,
+    Lillian Pentecost, Vijay Janapa Reddi, Taylor Robie, Tom St. John, Carole-Jean
+    Wu, Lingjie Xu, Cliff Young, and Matei Zaharia. 2019. MLPerf Training Benchmark.
+    *CoRR* abs/1910.01500 (2019). arXiv:1910.01500 [http://arxiv.org/abs/1910.01500](http://arxiv.org/abs/1910.01500)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Menon et al. (2020) Harshitha Menon, Abhinav Bhatele, and Todd Gamblin. 2020.
+    Auto-Tuning Parameter Choices using Bayesian Optimization. In *Proceedings of
+    the IEEE International Parallel & Distributed Processing Symposium* *(IPDPS ’20)*.
+    IEEE Computer Society.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Merity et al. (2016) Stephen Merity, Caiming Xiong, James Bradbury, and Richard
+    Socher. 2016. Pointer Sentinel Mixture Models. *CoRR* abs/1609.07843 (2016). arXiv:1609.07843
+    [http://arxiv.org/abs/1609.07843](http://arxiv.org/abs/1609.07843)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Micikevicius et al. (2018) Paulius Micikevicius, Sharan Narang, Jonah Alben,
+    Gregory Diamos, Erich Elsen, David Garcia, Boris Ginsburg, Michael Houston, Oleksii
+    Kuchaiev, Ganesh Venkatesh, and Hao Wu. 2018. Mixed Precision Training. In *International
+    Conference on Learning Representations*. [https://openreview.net/forum?id=r1gs9JgRZ](https://openreview.net/forum?id=r1gs9JgRZ)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Narayanan et al. (2019) Deepak Narayanan, Aaron Harlap, Amar Phanishayee, Vivek
+    Seshadri, Nikhil Devanur, Greg Granger, Phil Gibbons, and Matei Zaharia. 2019.
+    PipeDream: Generalized Pipeline Parallelism for DNN Training. In *ACM Symposium
+    on Operating Systems Principles (SOSP 2019)*. [https://www.microsoft.com/en-us/research/publication/pipedream-generalized-pipeline-parallelism-for-dnn-training/](https://www.microsoft.com/en-us/research/publication/pipedream-generalized-pipeline-parallelism-for-dnn-training/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nikolentzos et al. (2020) Giannis Nikolentzos, Antoine Tixier, and Michalis
+    Vazirgiannis. 2020. Message Passing Attention Networks for Document Understanding.
+    *Proceedings of the AAAI Conference on Artificial Intelligence* 34, 05 (Apr. 2020),
+    8544–8551. [https://doi.org/10.1609/aaai.v34i05.6376](https://doi.org/10.1609/aaai.v34i05.6376)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Oyama et al. (2020) Yosuke Oyama, Naoya Maruyama, Nikoli Dryden, Erin McCarthy,
+    Peter Harrington, Jan Balewski, Satoshi Matsuoka, Peter Nugent, and Brian Van
+    Essen. 2020. The Case for Strong Scaling in Deep Learning: Training Large 3D CNNs
+    with Hybrid Parallelism. arXiv:2007.12856 [cs.DC]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Paszke et al. (2019) Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James
+    Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca
+    Antiga, Alban Desmaison, Andreas Kopf, Edward Yang, Zachary DeVito, Martin Raison,
+    Alykhan Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu Fang, Junjie Bai, and
+    Soumith Chintala. 2019. PyTorch: An Imperative Style, High-Performance Deep Learning
+    Library. In *Advances in Neural Information Processing Systems*, H. Wallach, H. Larochelle,
+    A. Beygelzimer, F. d''Alché-Buc, E. Fox, and R. Garnett (Eds.), Vol. 32\. Curran
+    Associates, Inc. [https://proceedings.neurips.cc/paper/2019/file/bdbca288fee7f92f2bfa9f7012727740-Paper.pdf](https://proceedings.neurips.cc/paper/2019/file/bdbca288fee7f92f2bfa9f7012727740-Paper.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pouyanfar et al. (2018) Samira Pouyanfar, Saad Sadiq, Yilin Yan, Haiman Tian,
+    Yudong Tao, Maria Presa Reyes, Mei-Ling Shyu, Shu-Ching Chen, and S. S. Iyengar.
+    2018. A Survey on Deep Learning: Algorithms, Techniques, and Applications. *ACM
+    Comput. Surv.* 51, 5, Article 92 (Sept. 2018), 36 pages. [https://doi.org/10.1145/3234150](https://doi.org/10.1145/3234150)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Qian (1999) Ning Qian. 1999. On the momentum term in gradient descent learning
+    algorithms. *Neural Networks* 12, 1 (1999), 145–151. [https://doi.org/10.1016/S0893-6080(98)00116-6](https://doi.org/10.1016/S0893-6080(98)00116-6)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Radford et al. (2019) Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario
+    Amodei, and Ilya Sutskever. 2019. Language Models are Unsupervised Multitask Learners.
+    (2019).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rajbhandari et al. (2020) Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase,
+    and Yuxiong He. 2020. ZeRO: Memory Optimizations toward Training Trillion Parameter
+    Models. In *Proceedings of the International Conference for High Performance Computing,
+    Networking, Storage and Analysis* (Atlanta, Georgia) *(SC ’20)*. IEEE Press, Article
+    20, 16 pages.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rajbhandari et al. (2021) Samyam Rajbhandari, Olatunji Ruwase, Jeff Rasley,
+    Shaden Smith, and Yuxiong He. 2021. ZeRO-Infinity: Breaking the GPU Memory Wall
+    for Extreme Scale Deep Learning *(SC ’21)*. Association for Computing Machinery,
+    New York, NY, USA, Article 59, 14 pages. [https://doi.org/10.1145/3458817.3476205](https://doi.org/10.1145/3458817.3476205)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Real et al. (2019) Esteban Real, Alok Aggarwal, Yanping Huang, and Quoc V. Le.
+    2019. Regularized Evolution for Image Classifier Architecture Search. *Proceedings
+    of the AAAI Conference on Artificial Intelligence* 33, 01 (Jul. 2019), 4780–4789.
+    [https://doi.org/10.1609/aaai.v33i01.33014780](https://doi.org/10.1609/aaai.v33i01.33014780)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Recht et al. (2011) Benjamin Recht, Christopher Re, Stephen Wright, and Feng
+    Niu. 2011. Hogwild!: A Lock-Free Approach to Parallelizing Stochastic Gradient
+    Descent. In *Advances in Neural Information Processing Systems*, J. Shawe-Taylor,
+    R. Zemel, P. Bartlett, F. Pereira, and K. Q. Weinberger (Eds.), Vol. 24\. Curran
+    Associates, Inc. [https://proceedings.neurips.cc/paper/2011/file/218a0aefd1d1a4be65601cc6ddc1520e-Paper.pdf](https://proceedings.neurips.cc/paper/2011/file/218a0aefd1d1a4be65601cc6ddc1520e-Paper.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rhu et al. (2016) Minsoo Rhu, Natalia Gimelshein, Jason Clemons, Arslan Zulfiqar,
+    and Stephen W. Keckler. 2016. VDNN: Virtualized Deep Neural Networks for Scalable,
+    Memory-Efficient Neural Network Design. In *The 49th Annual IEEE/ACM International
+    Symposium on Microarchitecture* (Taipei, Taiwan) *(MICRO-49)*. IEEE Press, Article
+    18, 13 pages.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Russakovsky et al. (2015) Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause,
+    Sanjeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael
+    Bernstein, Alexander C. Berg, and Li Fei-Fei. 2015. ImageNet Large Scale Visual
+    Recognition Challenge. *International Journal of Computer Vision (IJCV)* 115,
+    3 (2015), 211–252. [https://doi.org/10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sergeev and Balso (2018) Alexander Sergeev and Mike Del Balso. 2018. Horovod:
+    fast and easy distributed deep learning in TensorFlow. arXiv:1802.05799 [cs.LG]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shazeer et al. (2018) Noam Shazeer, Youlong Cheng, Niki Parmar, Dustin Tran,
+    Ashish Vaswani, Penporn Koanantakool, Peter Hawkins, HyoukJoong Lee, Mingsheng
+    Hong, Cliff Young, Ryan Sepassi, and Blake Hechtman. 2018. Mesh-TensorFlow: Deep
+    Learning for Supercomputers. In *Advances in Neural Information Processing Systems*,
+    S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Garnett
+    (Eds.), Vol. 31. Curran Associates, Inc. [https://proceedings.neurips.cc/paper/2018/file/3a37abdeefe1dab1b30f7c5c7e581b93-Paper.pdf](https://proceedings.neurips.cc/paper/2018/file/3a37abdeefe1dab1b30f7c5c7e581b93-Paper.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shoeybi et al. (2020) Mohammad Shoeybi, Mostofa Patwary, Raul Puri, Patrick
+    LeGresley, Jared Casper, and Bryan Catanzaro. 2020. Megatron-LM: Training Multi-Billion
+    Parameter Language Models Using Model Parallelism. arXiv:1909.08053 [cs.CL]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simonyan and Zisserman (2015) Karen Simonyan and Andrew Zisserman. 2015. Very
+    Deep Convolutional Networks for Large-Scale Image Recognition. In *3rd International
+    Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9,
+    2015, Conference Track Proceedings*, Yoshua Bengio and Yann LeCun (Eds.). [http://arxiv.org/abs/1409.1556](http://arxiv.org/abs/1409.1556)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Singh and Bhatele (pear) Siddharth Singh and Abhinav Bhatele. 2022 (to appear).
+    AxoNN: An asynchronous, message-driven parallel framework for extreme-scale deep
+    learning. In *Proceedings of the IEEE International Parallel & Distributed Processing
+    Symposium* *(IPDPS ’22)*. IEEE Computer Society.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Song et al. (2019) L. Song, J. Mao, Y. Zhuo, X. Qian, H. Li, and Y. Chen. 2019.
+    HyPar: Towards Hybrid Parallelism for Deep Learning Accelerator Array. In *2019
+    IEEE International Symposium on High Performance Computer Architecture (HPCA)*.
+    56–68. [https://doi.org/10.1109/HPCA.2019.00027](https://doi.org/10.1109/HPCA.2019.00027)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Steuwer et al. (2017) Michel Steuwer, Toomas Remmelg, and Christophe Dubach.
+    2017. Lift: A Functional Data-Parallel IR for High-Performance GPU Code Generation.
+    In *Proceedings of the 2017 International Symposium on Code Generation and Optimization*
+    (Austin, USA) *(CGO ’17)*. IEEE Press, 74–85.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sze et al. (2017) V. Sze, Y. Chen, T. Yang, and J. S. Emer. 2017. Efficient
+    Processing of Deep Neural Networks: A Tutorial and Survey. *Proc. IEEE* 105, 12
+    (2017), 2295–2329. [https://doi.org/10.1109/JPROC.2017.2761740](https://doi.org/10.1109/JPROC.2017.2761740)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tang et al. (2020) Zhenheng Tang, Shaohuai Shi, Xiaowen Chu, Wei Wang, and
+    Bo Li. 2020. Communication-Efficient Distributed Deep Learning: A Comprehensive
+    Survey. arXiv:2003.06307 [cs.DC]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tao et al. (2020) Andrew Tao, Karan Sapra, and Bryan Catanzaro. 2020. Hierarchical
+    Multi-Scale Attention for Semantic Segmentation. arXiv:2005.10821 [cs.CV]
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Thiagarajan et al. (2018a) Jayaraman J. Thiagarajan, Rushil Anirudh, Bhavya
+    Kailkhura, Nikhil Jain, Tanzima Islam, Abhinav Bhatele, Jae-Seung Yeom, and Todd
+    Gamblin. 2018a. PADDLE: Performance Analysis using a Data-driven Learning Environment.
+    In *Proceedings of the IEEE International Parallel & Distributed Processing Symposium*
+    *(IPDPS ’18)*. IEEE Computer Society. [http://doi.ieeecomputersociety.org/10.1109/IPDPS.2018.00088](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2018.00088)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Thiagarajan et al. (2018b) Jayaraman J. Thiagarajan, Nikhil Jain, Rushil Anirudh,
+    Alfredo Giménez, Rahul Sridhar, Aniruddha Marathe, Tao Wang, Murali Emani, Abhinav
+    Bhatele, and Todd Gamblin. 2018b. Bootstrapping Parameter Space Exploration for
+    Fast Tuning. In *Proceedings of the International Conference on Supercomputing*
+    *(ICS ’18)*. [http://doi.acm.org/10.1145/3205289.3205321](http://doi.acm.org/10.1145/3205289.3205321)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Vijayanarasimhan et al. (2017) Sudheendra Vijayanarasimhan, Susanna Ricco,
+    Cordelia Schmid, Rahul Sukthankar, and Katerina Fragkiadaki. 2017. SfM-Net: Learning
+    of Structure and Motion from Video. arXiv:1704.07804 [cs.CV]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wahib et al. (2020) Mohamed Wahib, Haoyu Zhang, Truong Thao Nguyen, Aleksandr
+    Drozd, Jens Domke, Lingqi Zhang, Ryousei Takano, and Satoshi Matsuoka. 2020. Scaling
+    Distributed Deep Learning Workloads beyond the Memory Capacity with KARMA. In
+    *Proceedings of the International Conference for High Performance Computing, Networking,
+    Storage and Analysis* (Atlanta, Georgia) *(SC ’20)*. IEEE Press, Article 19, 15 pages.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. (2016) Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V. Le, Mohammad
+    Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Klaus Macherey, Jeff
+    Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Łukasz Kaiser, Stephan Gouws,
+    Yoshikiyo Kato, Taku Kudo, Hideto Kazawa, Keith Stevens, George Kurian, Nishant
+    Patil, Wei Wang, Cliff Young, Jason Smith, Jason Riesa, Alex Rudnick, Oriol Vinyals,
+    Greg Corrado, Macduff Hughes, and Jeffrey Dean. 2016. Google’s Neural Machine
+    Translation System: Bridging the Gap between Human and Machine Translation. *CoRR*
+    abs/1609.08144 (2016). [http://arxiv.org/abs/1609.08144](http://arxiv.org/abs/1609.08144)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yeom et al. (2016) Jae-Seung Yeom, Jayaraman J. Thiagarajan, Abhinav Bhatele,
+    Greg Bronevetsky, and Tzanio Kolev. 2016. Data-dependent Performance Modeling
+    of Linear Solvers for Sparse Matrices. In *Proceedings of the 7th International
+    Workshop in Performance Modeling, Benchmarking and Simulation of High Performance
+    Computer Systems* *(PMBS ’16)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You et al. (2017) Yang You, Igor Gitman, and Boris Ginsburg. 2017. Large Batch
+    Training of Convolutional Networks. arXiv:1708.03888 [cs.CV]
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You et al. (2019) Yang You, Jing Li, Sashank Reddi, Jonathan Hseu, Sanjiv Kumar,
+    Srinadh Bhojanapalli, Xiaodan Song, James Demmel, Kurt Keutzer, and Cho-Jui Hsieh.
+    2019. Large Batch Optimization for Deep Learning: Training BERT in 76 minutes.
+    arXiv:1904.00962 [cs.LG]'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You et al. (2018) Yang You, Zhao Zhang, Cho-Jui Hsieh, James Demmel, and Kurt
+    Keutzer. 2018. ImageNet Training in Minutes. In *Proceedings of the 47th International
+    Conference on Parallel Processing* (Eugene, OR, USA) *(ICPP 2018)*. Association
+    for Computing Machinery, New York, NY, USA, Article 1, 10 pages. [https://doi.org/10.1145/3225058.3225069](https://doi.org/10.1145/3225058.3225069)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2017) Hao Zhang, Zeyu Zheng, Shizhen Xu, Wei Dai, Qirong Ho,
+    Xiaodan Liang, Zhiting Hu, Jinliang Wei, Pengtao Xie, and Eric P. Xing. 2017.
+    Poseidon: An Efficient Communication Architecture for Distributed Deep Learning
+    on GPU Clusters. In *2017 USENIX Annual Technical Conference (USENIX ATC 17)*.
+    USENIX Association, Santa Clara, CA, 181–193. [https://www.usenix.org/conference/atc17/technical-sessions/presentation/zhang](https://www.usenix.org/conference/atc17/technical-sessions/presentation/zhang)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhao et al. (2019) Zhong-Qiu Zhao, Peng Zheng, Shou-Tao Xu, and Xindong Wu.
+    2019. Object Detection With Deep Learning: A Review. *IEEE Transactions on Neural
+    Networks and Learning Systems* 30, 11 (2019), 3212–3232. [https://doi.org/10.1109/TNNLS.2018.2876865](https://doi.org/10.1109/TNNLS.2018.2876865)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

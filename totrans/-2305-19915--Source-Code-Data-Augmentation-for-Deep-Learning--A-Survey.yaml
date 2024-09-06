@@ -1,0 +1,2356 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:39:13'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2305.19915] Source Code Data Augmentation for Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2305.19915](https://ar5iv.labs.arxiv.org/html/2305.19915)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Source Code Data Augmentation for Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Terry Yue Zhuo^(1,2†), Zhou Yang³, Zhensu Sun³,
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yufei Wang⁴, Li Li⁵, Xiaoning Du¹, Zhenchang Xing^(2,6), David Lo³
+  prefs: []
+  type: TYPE_NORMAL
+- en: ¹ Monash University ² CSIRO’s Data61 ³ Singapore Management University
+  prefs: []
+  type: TYPE_NORMAL
+- en: ⁴ Huawei Noah’s Ark Lab ⁵ Beihang University ⁶ Australian National University
+  prefs: []
+  type: TYPE_NORMAL
+- en: terry.zhuo@monash.edu
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: The increasingly popular adoption of deep learning models in many critical source
+    code tasks motivates the development of data augmentation (DA) techniques to enhance
+    training data and improve various capabilities (e.g., robustness and generalizability)
+    of these models. Although a series of DA methods have been proposed and tailored
+    for source code models, there lacks a comprehensive survey and examination to
+    understand their effectiveness and implications. This paper fills this gap by
+    conducting a comprehensive and integrative survey of data augmentation for source
+    code, wherein we systematically compile and encapsulate existing literature to
+    provide a comprehensive overview of the field. We start with an introduction of
+    data augmentation in source code and then provide a discussion on major representative
+    approaches. Next, we highlight the general strategies and techniques to optimize
+    the DA quality. Subsequently, we underscore techniques useful in real-world source
+    code scenarios and downstream tasks. Finally, we outline the prevailing challenges
+    and potential opportunities for future research. In essence, we aim to demystify
+    the corpus of existing literature on source code DA for deep learning, and foster
+    further exploration in this sphere. Complementing this, we present a continually
+    updated GitHub repository that hosts a list of update-to-date papers on DA for
+    source code modeling, accessible at [https://github.com/terryyz/DataAug4Code](https://github.com/terryyz/DataAug4Code).
+  prefs: []
+  type: TYPE_NORMAL
+- en: ^†^†$\dagger$ Corresponding author.![Refer to caption](img/4ff3e7f759722e9a9df10968999b2d6c.png)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Yearly publications on the topic of “Source Code DA for Deep Learning”.
+    Data Statistics as of November 2023.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6d7db8ce5ae0332e47abb47715bfe0a5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Venue Distribution of the collected publications.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Data augmentation (DA) is a technique used to increase the variety of training
+    examples without collecting new data. It has gained popularity in recent machine
+    learning (ML) research, with methods like back-translation Sennrich et al. ([2015](#bib.bib99));
+    Shiri et al. ([2022](#bib.bib105)), Mixup Zhang et al. ([2018](#bib.bib149)),
+    and synthetic audio Asyrofi et al. ([2021](#bib.bib9)) being widely adopted in
+    natural language processing (NLP), computer vision (CV), and speech recognition.
+    These techniques have significantly improved the performance of data-centric models
+    in low-resource domains. For example, Fadaee et al. ([2017](#bib.bib32)) obtain
+    substantial improvements for low-resource machine translation via DA, where the
+    translation system is trained with the bilingual pairs synthesized from a limited
+    training corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, DA has not yet been fully explored in source code modeling, which
+    is the intersection of ML and software engineering (SE). Source code modeling
+    is an emerging area that applies ML techniques to solve various source code tasks
+    such as code completion Yin and Neubig ([2017](#bib.bib145)), code summarization McBurney
+    and McMillan ([2014](#bib.bib72)), and defect detection Wang et al. ([2016](#bib.bib126)),
+    by training models on a vast amount of data available in open-source repositories Allamanis
+    et al. ([2017](#bib.bib3)). Source code data typically has two modalities: the
+    programming language (e.g., Python and Java) and the natural language (e.g., doc-strings
+    and code comments), which complement each other. Such dual-modality nature of
+    source code data presents unique challenges in tailoring DA for NLP to source
+    code models. For example, the context of a sentence can be relatively standalone
+    or derived from a few surrounding sentences in many NLP tasks Feng et al. ([2021](#bib.bib34)).
+    However, in source code, the context can span across multiple functions or even
+    different files, due to the widespread use of function calls, object-oriented
+    programming, and modular design. Therefore, we argue that DA methods for source
+    code would need to take this extended context into account, to avoid introducing
+    errors or changing the original program’s behavior. In addition, source code follows
+    strict syntactic rules that are specified using context-free grammar. Consequently,
+    conventional NLP data augmentation methods, such as token substitution with similar
+    words, may make the augmented source code fail to compile and introduce erroneous
+    knowledge for training models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite such challenges, there has been increasing interest and demand for DA
+    for source code modeling. With the growing accessibility of large, off-the-shelf,
+    pre-trained source code models via learning from large-scale corpora Chen et al.
+    ([2021](#bib.bib15)); Li et al. ([2023b](#bib.bib57)); Allal et al. ([2023](#bib.bib2)),
+    there is a growing focus on applying these models to real-world software development.
+    For instance, (Husain et al., [2019](#bib.bib50)) observed that many programming
+    languages are low-resource, emphasizing the importance of DA to improve model
+    performance and robustness on unseen data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This study aims to bring attention from both ML and SE communities to this
+    emerging field. As depicted in Figure [2](#S0.F2 "Figure 2 ‣ Source Code Data
+    Augmentation for Deep Learning: A Survey"), the relevant publications have been
+    increasing in the recent five years. More precisely, we have compiled a list of
+    89 core papers from the past five years, mainly from premier conferences and journals
+    in both the ML and SE disciplines as shown in Figure [2](#S0.F2 "Figure 2 ‣ Source
+    Code Data Augmentation for Deep Learning: A Survey") (with 62 out of 89 papers
+    published in Core Rank A/A* venues¹¹1We refer to the venues listed at [http://portal.core.edu.au/conf-ranks/](http://portal.core.edu.au/conf-ranks/)
+    and [http://portal.core.edu.au/jnl-ranks/](http://portal.core.edu.au/jnl-ranks/).).
+    Given the escalating interest and burgeoning research in this domain, it is timely
+    for our survey to (1) provide a comprehensive overview of DA for source code models,
+    and (2) pinpoint key challenges and opportunities to stimulate and guide further
+    exploration in this emerging field. To the best of our awareness, our paper constitutes
+    the first comprehensive survey offering an in-depth examination of DA techniques
+    for source code models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The structure of this paper is organized as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [3](#S3 "3 Source Code Data Augmentation Methods for Deep Learning
+    ‣ Source Code Data Augmentation for Deep Learning: A Survey") offers a thorough
+    review of three categories of DA for source code modeling: rule-based ([3.1](#S3.SS1
+    "3.1 Rule-based Techniques ‣ 3 Source Code Data Augmentation Methods for Deep
+    Learning ‣ Source Code Data Augmentation for Deep Learning: A Survey")), model-based
+    ([3.2](#S3.SS2 "3.2 Model-based Techniques ‣ 3 Source Code Data Augmentation Methods
+    for Deep Learning ‣ Source Code Data Augmentation for Deep Learning: A Survey")),
+    and example interpolation-based ([3.3](#S3.SS3 "3.3 Example Interpolation Techniques
+    ‣ 3 Source Code Data Augmentation Methods for Deep Learning ‣ Source Code Data
+    Augmentation for Deep Learning: A Survey")) techniques.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [4](#S4 "4 Strategies and Techniques ‣ Source Code Data Augmentation
+    for Deep Learning: A Survey") provides a summary of prevalent strategies and techniques
+    designed to enhance the quality of augmented data, encompassing method stacking
+    ([4.1](#S4.SS1 "4.1 Method Stacking ‣ 4 Strategies and Techniques ‣ Source Code
+    Data Augmentation for Deep Learning: A Survey")) and optimization ([4.2](#S4.SS2
+    "4.2 Optimization ‣ 4 Strategies and Techniques ‣ Source Code Data Augmentation
+    for Deep Learning: A Survey")).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [5](#S5 "5 Scenarios ‣ Source Code Data Augmentation for Deep Learning:
+    A Survey") articulates various beneficial source code scenarios for DA, including
+    adversarial examples for robustness ([5.1](#S5.SS1 "5.1 Adversarial Examples for
+    Robustness ‣ 5 Scenarios ‣ Source Code Data Augmentation for Deep Learning: A
+    Survey")), low-resource domains ([5.2](#S5.SS2 "5.2 Low-Resource Domains ‣ 5 Scenarios
+    ‣ Source Code Data Augmentation for Deep Learning: A Survey")), retrieval augmentation
+    ([5.3](#S5.SS3 "5.3 Retrieval Augmentation ‣ 5 Scenarios ‣ Source Code Data Augmentation
+    for Deep Learning: A Survey")), and contrastive learning ([5.4](#S5.SS4 "5.4 Contrastive
+    Learning ‣ 5 Scenarios ‣ Source Code Data Augmentation for Deep Learning: A Survey")).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [6](#S6 "6 Downstream Tasks ‣ Source Code Data Augmentation for Deep
+    Learning: A Survey") delineates DA methodologies for common source code tasks,
+    such as code authorship attribution ([6.1](#S6.SS1 "6.1 Code Authorship Attribution
+    ‣ 6 Downstream Tasks ‣ Source Code Data Augmentation for Deep Learning: A Survey")),
+    clone detection ([6.2](#S6.SS2 "6.2 Clone Detection ‣ 6 Downstream Tasks ‣ Source
+    Code Data Augmentation for Deep Learning: A Survey")), defect detection and repair
+    ([6.3](#S6.SS3 "6.3 Defect Detection and Repair ‣ 6 Downstream Tasks ‣ Source
+    Code Data Augmentation for Deep Learning: A Survey")), code summarization ([6.4](#S6.SS4
+    "6.4 Code Summarization ‣ 6 Downstream Tasks ‣ Source Code Data Augmentation for
+    Deep Learning: A Survey")), code search ([6.5](#S6.SS5 "6.5 Code Search ‣ 6 Downstream
+    Tasks ‣ Source Code Data Augmentation for Deep Learning: A Survey")), code completion
+    ([6.6](#S6.SS6 "6.6 Code Completion ‣ 6 Downstream Tasks ‣ Source Code Data Augmentation
+    for Deep Learning: A Survey")), code translation ([6.7](#S6.SS7 "6.7 Code Translation
+    ‣ 6 Downstream Tasks ‣ Source Code Data Augmentation for Deep Learning: A Survey")),
+    code question answering ([6.8](#S6.SS8 "6.8 Code Question Answering (CQA) ‣ 6
+    Downstream Tasks ‣ Source Code Data Augmentation for Deep Learning: A Survey")),
+    problem classification ([6.9](#S6.SS9 "6.9 Code Classification ‣ 6 Downstream
+    Tasks ‣ Source Code Data Augmentation for Deep Learning: A Survey")), method name
+    prediction ([6.10](#S6.SS10 "6.10 Method Name Prediction ‣ 6 Downstream Tasks
+    ‣ Source Code Data Augmentation for Deep Learning: A Survey")), and type prediction
+    ([6.11](#S6.SS11 "6.11 Type Prediction ‣ 6 Downstream Tasks ‣ Source Code Data
+    Augmentation for Deep Learning: A Survey")).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Section [7](#S7 "7 Challenges and Opportunities ‣ Source Code Data Augmentation
+    for Deep Learning: A Survey") expounds on the challenges and future prospects
+    in the realm of DA for source code modeling.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Through this work, we hope to emulate prior surveys which have analyzed DA techniques
+    for other data types, such as text Feng et al. ([2021](#bib.bib34)), time series Wen
+    et al. ([2020](#bib.bib132)), and images Shorten and Khoshgoftaar ([2019](#bib.bib106)).
+    Our intention is to pique further interest, spark curiosity, and encourage further
+    research in the field of data augmentation, specifically focusing on its application
+    to source code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Background
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 2.1 What are source code models?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Source code models are trained on large-scale corpora of source code and therefore
+    able to model the contextual representations of given code snippets Allamanis
+    et al. ([2017](#bib.bib3)). In the early stage, researchers have attempted to
+    leverage deep learning architectures like LSTM Gu et al. ([2016](#bib.bib37))
+    and Seq2Seq Yin and Neubig ([2017](#bib.bib145)) to model the source code like
+    plain text, and shown that these models can achieve great performance on specific
+    downstream tasks of source code. With the development of pre-trained language
+    models in NLP, many pre-trained source code models are proposed to enhance the
+    source code representations and efficiently be scaled to any downstream tasks Feng
+    et al. ([2020](#bib.bib35)); Guo et al. ([2021](#bib.bib39)); Nijkamp et al. ([2023](#bib.bib81)).
+    Some of these models incorporate the inherent structure of code. For example,
+    instead of taking the syntactic-level structure of source code like ASTs, Guo
+    et al. ([2021](#bib.bib39)) consider program data flow in the pre-training stage,
+    which is a semantic-level structure of code that encodes the relation of “where-the-value-comes-from”
+    between variables. In this survey, we focus DA methods designed for all the deep-learning-based
+    source code models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 What is data augmentation?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Data augmentation (DA) techniques aim to improve the model’s performance in
+    terms of various aspects (e.g., accuracy and robustness) via increasing training
+    example diversity with data synthesis. Besides, DA techniques can help avoid model
+    overfitting in the training stage, which maintains the generability of the model.
+    In CV, DA techniques with predefined rules are commonly adopted when training
+    models, such as image cropping, image flipping, and color jittering Shorten and
+    Khoshgoftaar ([2019](#bib.bib106)). These techniques can be classified as rule-based
+    DA. Furthermore, some attempts like Mixup have been made to create new examples
+    by fusing multiple examples together, which is categorized as example interpolation
+    DA. Compared to CV, DA techniques for NLP greatly rely on language models that
+    can help paraphrase the given context by word replacing or sentence rewriting Feng
+    et al. ([2021](#bib.bib34)). As most of these language models are pre-trained
+    and can capture the semantics of inputs, they serve as reasonable frameworks to
+    modify or paraphrase the plain text. We denote such DA methods as model-based
+    DA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 How does data augmentation work in source code?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Compared to images and plain texts, source code is less flexible to be augmented
+    due to the nature of strict programming syntactic rules. Hence, we observe that
+    most DA approaches in source code must follow the predetermined transformation
+    rules in order to preserve the functionality and syntax of the original code snippets.
+    To enable the complex processing of the given source code, a common approach is
+    to use a parser to build a concrete syntax tree from the code, which represents
+    the program grammar in a tree-like form. The concrete syntax tree will be further
+    transformed into an abstract syntax tree (AST) to simplify the representation
+    but maintain the key information such as identifiers, if-else statements, and
+    loop conditions. The parsed information is utilized as the basis of the rule-based
+    DA approaches for identifier replacement and statement rewrite Quiring et al.
+    ([2019](#bib.bib91)). From a software engineering perspective, these DA approaches
+    can emulate more diverse code representation in real-world scenarios and thus
+    make source code models more robust by training with the augmented data Yefet
+    et al. ([2020](#bib.bib144)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Source Code Data Augmentation Methods for Deep Learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This section categorizes the mainstream DA techniques specifically designed
+    for source code models into three parts: rule-based, model-based, and example-interpolation
+    techniques. We explain studies of different branches as follows.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Rule-based Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A large number of DA methods utilize predetermined rules to transform the programs
+    without breaking syntax rules and semantics. Specifically, these rules mainly
+    implicitly leverage ASTs to transform the code snippets. The transformations can
+    include operations such as replacing variable names, renaming method names, and
+    inserting dead code. Besides the basic program syntax, some code transformations
+    consider deeper structural information, such as control-flow graph (CGF) and use-define
+    chains (UDG) Quiring et al. ([2019](#bib.bib91)). Additionally, a small part of
+    rule-based DA techniques focuses on augmenting the natural language context in
+    the code snippets, including doc-strings and comments Bahrami et al. ([2021](#bib.bib11));
+    Song et al. ([2022](#bib.bib108)); Park et al. ([2023](#bib.bib86)). We illustrate
+    a rule-based DA example relying on program grammars in Figure [3](#S3.F3 "Figure
+    3 ‣ 3.1 Rule-based Techniques ‣ 3 Source Code Data Augmentation Methods for Deep
+    Learning ‣ Source Code Data Augmentation for Deep Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/847293400c3204716856d317a1b23ec2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Rule-based DA to transform code snippets, Wang et al. ([2022d](#bib.bib129)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zhang et al. ([2020a](#bib.bib150)) propose MHM, a method of iteratively renaming
+    identifiers in the code snippets. Considered as the approach to generate examples
+    for adversarial training, MHM greatly improves the robustness of source code models.
+    Later, [Srikant et al.](#bib.bib110) consider program obfuscations as adversarial
+    perturbations, where they rename program variables in an attempt to hide the program’s
+    intent from a reader. By applying these perturbed examples to the training stage,
+    the source code models become more robust to the adversarial attack. Instead of
+    just renaming identifiers, BUGLAB-Aug Allamanis et al. ([2021](#bib.bib5)) contains
+    more rules to augment code snippets, emphasizing both the programming language
+    and natural language, such as comment deletion, comparison expression mirroring,
+    and if-else branch swapping. The evaluation on BUGLAB-Aug demonstrates that DA
+    methods can be exploited for self-supervised bug detection and repair. Similarly,
+    Jain et al. ([2021](#bib.bib51)) use compiler transforms as data augmentation,
+    called Transpiler, automatically generating a dataset of equivalent functions.
+    Specifically, they define 11 compiler transforms by exploiting ASTs of the programs.
+    Rule-based DA later has been widely used for source code models to capture code
+    representation effectively via contrastive learning Ding et al. ([2021](#bib.bib27));
+    Liu et al. ([2023b](#bib.bib67)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Brockschmidt et al. ([2019](#bib.bib13)) present a generative source code model
+    by augmenting the given AST with additional edges to learn diverse code expressions.
+    Instead of the direct augmentation on AST, Quiring et al. ([2019](#bib.bib91))
+    propose three different augmentation schemes via the combination of AST and CFG,
+    UDG and declaration-reference mapping (DRM), named as Control Transformations,
+    Declaration Transformations and API Transformations. Control Transformations rewrite
+    control-flow statements or modify the control flow between functions. In total,
+    the family contains 5 transformations. This transformation involves passing variables
+    as function arguments, updating their values, and changing the control flow of
+    the caller and callee. Declaration Transformations consist of 14 transformers
+    that modify, add or remove declarations in source code. Declaration Transformations
+    make DA necessary to update all usages of variables which can be elegantly carried
+    out using the DRM representation. API Transformations contain 9 transformations
+    and exploits the fact that various APIs can be used to solve the same problem.
+    Programmers are known to favor different APIs and thus tampering with API usage
+    is an effective strategy for changing stylistic patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another line of work is augmenting the natural language context in source code.
+    QRA Huang et al. ([2021](#bib.bib47)) augments examples by rewriting natural language
+    queries when performing code search and code question answering. It rewrites queries
+    with minor rule-based modifications that share the same semantics as the original
+    one. Specifically, it consists of three ways: randomly deleting a word, randomly
+    switching the position of two words, and randomly copying a word. Inspired by
+    this approach, Park et al. ([2023](#bib.bib86)) recently devised KeyDAC with an
+    emphasis on the query keywords. KeyDAC augments on both natural language and programming
+    language. For natural language query, it follows the rules in QRA but only modifies
+    non-keywords. In terms of programming language augmentation, KeyDAC simply uses
+    ASTs to rename program variables, similar to the aforementioned works.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Model-based Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A series of DA techniques for source code target training various models to
+    augment data. Intuitively, Mi et al. ([2021](#bib.bib76)) utilize Auxiliary Classifier
+    Generative Adversarial Networks (AC-GAN) Odena et al. ([2017](#bib.bib82)) to
+    generate augmented programs. Similarly, Wang et al. ([2023a](#bib.bib123)) trained
+    a generative adversarial network to boost code generation and code search at the
+    same time. To increase the training data for code summarization, CDA-CS Song et al.
+    ([2022](#bib.bib108)) uses the pre-trained BERT model Devlin et al. ([2019](#bib.bib24))
+    to replace synonyms for non-keywords in code comments, which benefits the source
+    code downstream tasks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While these methods largely adapt the existing model-based DA techniques for
+    general purposes, most DA approaches are specifically designed for source code
+    models. Li et al. ([2022f](#bib.bib63)) introduce IRGen, a genetic-algorithm-based
+    model using compiler intermediate representation (LLVM IR) to augment source code
+    embeddings, where IRGen generates a piece of source code into a range of semantically
+    identical but syntactically distinct IR codes for improving model’s contextual
+    understanding. Several works Roziere et al. ([2021](#bib.bib98)); Ahmad et al.
+    ([2023](#bib.bib1)); Silva et al. ([2023](#bib.bib107)) have investigated the
+    suitability of the multilingual generative source code models for unsupervised
+    programming language translation via Back-translation, in the similar scope of
+    the one for NLP Sennrich et al. ([2016](#bib.bib100)). However, unlike the one
+    in NLP, Back-translation here is defined as translating between two programming
+    languages via the natural language as an intermediate language. Pinku et al. ([2023](#bib.bib88))
+    exploit another generative source code model, Transcoder Roziere et al. ([2020](#bib.bib97)),
+    to perform source-to-source translation for augmenting cross-language source code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Example Interpolation Techniques
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another category of data augmentation (DA) techniques, originated by Mixup Zhang
+    et al. ([2018](#bib.bib149)), involves interpolating the inputs and labels of
+    two or more actual examples. For instance, given that a binary classification
+    task in CV and two images of a dog and a cat, respectively, these DA approaches
+    like Mixup can blend these two image inputs and their corresponding labels based
+    on a randomly selected weight. This collection of methods is also termed Mixed
+    Sample Data Augmentation. Despite trials in the context of text classification
+    problems, such methods are hard to be deployed in the realm of source code, as
+    each code snippet is constrained by its unique program grammar and functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8f403905a376e23b1688ec1923bdac13.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: MixCode, Dong et al. ([2023a](#bib.bib29)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast to the aforementioned surface-level interpolation, the majority
+    of example-interpolation DA methods are enhanced to fuse multiple real examples
+    into a single input via model embeddings Feng et al. ([2021](#bib.bib34)). As
+    an illustration in Figure [4](#S3.F4 "Figure 4 ‣ 3.3 Example Interpolation Techniques
+    ‣ 3 Source Code Data Augmentation Methods for Deep Learning ‣ Source Code Data
+    Augmentation for Deep Learning: A Survey"), Dong et al. ([2023a](#bib.bib29))
+    merge rule-based techniques for source code models with Mixup to blend the representations
+    of the original code snippet and its transformation. This approach is commonly
+    regarded as the linear interpolation technique deployed in NLP classification
+    tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Li et al. ([2022a](#bib.bib55)) introduce two novel interpolation techniques
+    for source code models, namely Binary Interpolation and Linear Extrapolation.
+    Binary Interpolation serves as a data augmentation strategy, which interchangeably
+    swaps features between samples using elements acquired from a Bernoulli distribution.
+    On the other hand, Linear Extrapolation is another data augmentation approach
+    that generates new data points beyond the existing feature space by extending
+    current features in accordance with a uniform distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Strategies and Techniques
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In real-world applications, the design and efficacy of DA techniques for source
+    code models are influenced by a variety of factors, such as computing cost, example
+    diversity, and models’ robustness. This section highlights these factors, offering
+    insights and techniques for devising and optimizing suitable DA methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Method Stacking
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As discussed in Section [3](#S3 "3 Source Code Data Augmentation Methods for
+    Deep Learning ‣ Source Code Data Augmentation for Deep Learning: A Survey"), numerous
+    DA strategies are proposed concurrently in a single work, aiming to enhance the
+    models’ performance. [Add one sentence to define method stacking] Typically, the
+    combination entails two types: same-type DA or a mixture of different DA methods.
+    The former is typically applied in rule-based DA techniques, stemming from the
+    realization that a single code transformation cannot fully represent the diverse
+    code style and implementation found in the real world.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Several works Shi et al. ([2023](#bib.bib102)); Huang et al. ([2021](#bib.bib47))
+    demonstrate that merging multiple types of DA techniques can enhance the performance
+    of source code models. Mi et al. ([2021](#bib.bib76)) combined rule-based code
+    transformation schemes with model-based DA using AC-GAN to create an augmented
+    corpus for model training. Instead of augmenting on programming language, CDA-CS Song
+    et al. ([2022](#bib.bib108)) encompasses two kinds of DA techniques: rule-based
+    non-keyword extraction and model-based non-keyword replacement. Empirical evidence
+    from Chen and Lampouras ([2023](#bib.bib16)) shows that combining Back-translation
+    and variable renaming can result in improved code completion performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Optimization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In certain scenarios such as enhancing robustness and minimizing computational
+    cost, optimally selecting specific augmented example candidates is crucial. We
+    denote such goal-oriented candidate selections in DA as optimization. Subsequently,
+    we introduce three types of strategies: probabilistic, model-based, and rule-based
+    selection. Probabilistic selection is defined as the optimization via sampling
+    from a probability distribution, while model-based selection is guided by the
+    model to select the most proper examples. In terms of rule-based selection, it
+    is an optimization strategy where specific predetermined rules or heuristics are
+    used to select the most suitable examples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.1 Probabilistic Selection
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We introduce three representative probabilistic selection strategies, MHM, QMDP,
+    and BUGLAB-Aug. MHM Zhang et al. ([2020a](#bib.bib150)) adopts the Metropolis-Hastings
+    probabilistic sampling method, which is a Markov Chain Monte Carlo technique,
+    to choose adversarial examples via identifier replacement. Similarly, QMDP Tian
+    et al. ([2021](#bib.bib116)) uses a Q-learning approach to strategically select
+    and execute rule-based structural transformations on the source code, thereby
+    guiding the generation of adversarial examples. In BUGLAB-Aug, Allamanis et al.
+    ([2021](#bib.bib5)) model the probability of applying a specific rewrite rule
+    at a location in a code snippet similar to the pointer net [Merity et al.](#bib.bib73)
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.2 Model-based Selection
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Several DA techniques employing this strategy use the model’s gradient information
+    to guide the selection of augmented examples. An emblematic approach is the DAMP
+    method Yefet et al. ([2020](#bib.bib144)), which optimizes based on the model
+    loss to select and generate adversarial examples via variable renaming. Another
+    variant, SPACE Li et al. ([2022c](#bib.bib60)), performs selection and perturbation
+    of code identifiers’ embeddings via gradient ascent, targeting to maximize the
+    model’s performance impact while upholding semantic and grammatical correctness
+    of the programming language. A more complex technique, ALERT Yang et al. ([2022b](#bib.bib141)),
+    uses a genetic algorithm in its gradient-based selection strategy. It evolves
+    a population of candidate solutions iteratively, guided by a fitness function
+    that calculates the model’s confidence difference, aiming to identify the most
+    potent adversarial examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| DA Method | Category | PL | NL | Optimization | Preprocess | Parsing | Level
+    | TA | LA |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ComputeEdge Brockschmidt et al. ([2019](#bib.bib13)) | Rule | ✓ | ✗ | — |
+    — | AST | AST | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RefineRepresentation Bielik and Vechev ([2020](#bib.bib12)) | Rule | ✓ |
+    ✗ | Model | — | AST | AST | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Control Transformations Quiring et al. ([2019](#bib.bib91)) | Rule | ✓ |
+    ✗ | Prob | — | AST+CFG+UDG | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Declaration Transformations Quiring et al. ([2019](#bib.bib91)) | Rule |
+    ✓ | ✗ | Prob | — | AST+DRM | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| API Transformations Quiring et al. ([2019](#bib.bib91)) | Rule | ✓ | ✗ |
+    Prob | — | AST+CFG+DRM | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DAMP Yefet et al. ([2020](#bib.bib144)) | Rule | ✓ | ✗ | Model | — | AST
+    | Input | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| IBA Huang et al. ([2021](#bib.bib47)) | Rule | ✗ | ✓ | — | Tok | — | Embed
+    | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QRA Huang et al. ([2021](#bib.bib47)) | Rule | ✓ | ✗ | — | Tok | — | Input
+    | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MHM Zhang et al. ([2020a](#bib.bib150)) | Rule | ✗ | ✓ | Prob | — | AST |
+    Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mossad Devore-McDonald and Berger ([2020](#bib.bib25)) | Rule | ✓ | ✗ | Rule
+    | Tok | AST | Input | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AugmentedCode Bahrami et al. ([2021](#bib.bib11)) | Rule | ✓ | ✗ | — | Tok
+    | — | Input | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QMDP Tian et al. ([2021](#bib.bib116)) | Rule | ✓ | ✗ | Prob | Tok | AST
+    | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Transpiler Jain et al. ([2021](#bib.bib51)) | Rule | ✓ | ✗ | Prob | — | AST
+    | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BUGLAB-Aug Allamanis et al. ([2021](#bib.bib5)) | Rule | ✓ | ✗ | Prob | Tok
+    | AST | Input | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPAT Yu et al. ([2022b](#bib.bib148)) | Rule | ✓ | ✗ | Model | — | AST |
+    Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RoPGen Li et al. ([2022d](#bib.bib61)) | Rule | ✓ | ✗ | Model | — | AST |
+    Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ACCENT Zhou et al. ([2022](#bib.bib156)) | Rule | ✓ | ✗ | Rule | — | AST
+    | Input | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPACE Li et al. ([2022c](#bib.bib60)) | Rule | ✓ | ✗ | Model | Tok | AST
+    | Embed | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ALERT Yang et al. ([2022b](#bib.bib141)) | Rule | ✓ | ✗ | Model | Tok | AST
+    | Input | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| IRGen Li et al. ([2022f](#bib.bib63)) | Rule | ✓ | ✗ | Rule | — | AST+IR
+    | IR | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Binary Interpolation Li et al. ([2022a](#bib.bib55)) | EI | ✓ | ✓ | — | —
+    | — | Embeb | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Linear Extrapolation Li et al. ([2022a](#bib.bib55)) | EI | ✓ | ✓ | — | —
+    | — | Embeb | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gaussian Scaling Li et al. ([2022a](#bib.bib55)) | Rule | ✓ | ✓ | Model |
+    — | — | Embeb | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CodeTransformator Zubkov et al. ([2022](#bib.bib160)) | Rule | ✓ | ✗ | Rule
+    | — | AST | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RADAR Yang et al. ([2022a](#bib.bib138)) | Rule | ✓ | ✗ | Rule | — | AST
+    | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AC-GAN Mi et al. ([2021](#bib.bib76)) | Model | ✓ | ✗ | — | — | — | Input
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CDA-CS Song et al. ([2022](#bib.bib108)) | Model | ✗ | ✓ | Model | KWE |
+    — | Input | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| srcML-embed Li et al. ([2022e](#bib.bib62)) | Rule | ✓ | ✗ | — | — | AST
+    | Embed | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MultIPA Orvalho et al. ([2022](#bib.bib84)) | Rule | ✓ | ✗ | — | — | AST
+    | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ProgramTransformer Rabin and Alipour ([2022](#bib.bib92)) | Rule | ✓ | ✗
+    | — | — | AST | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Back-translation Ahmad et al. ([2023](#bib.bib1)) | Model | ✓ | ✗ | — | Tok
+    | — | Input | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MixCode Dong et al. ([2023a](#bib.bib29)) | Rule+EI | ✓ | ✓ | — | — | — |
+    Embed | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NP-GD [Shen et al.](#bib.bib101) | Model | ✓ | ✗ | Model | Tok | — | Embed
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ExploitGen Yang et al. ([2023a](#bib.bib137)) | Rule | ✗ | ✓ | — | — | —
+    | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SoDa Shi et al. ([2023](#bib.bib102)) | Model | ✓ | ✓ | — | — | AST | Input
+    | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Transcompiler Pinku et al. ([2023](#bib.bib88)) | Model | ✓ | ✗ | — | — |
+    — | Input | ✓ | ✗ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STRATA Springer et al. ([2021](#bib.bib109)) | Rule | ✓ | ✗ | Model | Tok
+    | AST | Input | ✓ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| KeyDAC Park et al. ([2023](#bib.bib86)) | Rule | ✓ | ✓ | — | KWE | AST |
+    Embed | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Simplex Interpolation Zhang et al. ([2022](#bib.bib153)) | EI | ✓ | ✗ | —
+    | — | AST+IR | Embed | ✗ | ✓ |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 1: Comparing a selection of DA methods by various aspects relating to
+    their applicability, dependencies, and requirements. PL, NL, TA, LA, EI, Prob,
+    Tok, and KWE stand for Programming Language, Natural Language, Example Interpolation,
+    Probability, Tokenization, Keyword Extraction, Task-Agnostic, and Language-Agnostic.
+    PL and NL determine if the DA method is applied to the programming language or
+    natural language context. Preprocess denotes preprocessing required besides the
+    program parsing. Parsing refers to the type of feature used by the DA method during
+    program parsing. Level denotes the depth at which data is modified by the DA.
+    TA and LA represent whether the DA method can be applied to different tasks or
+    programming languages. As most papers do not clearly state if their DA methods
+    are TA and LA, we subjectively denote the applicability.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.3 Rule-based Selection
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Rule-based selection stands as a powerful approach, featuring predetermined
+    fitness functions or rules. This method often relies on evaluation metrics for
+    decision-making. For instance, IRGen Li et al. ([2022f](#bib.bib63)) utilizes
+    a Genetic-Algorithm-based optimization technique with a fitness function based
+    on IR similarity. On the other hand, ACCENT Zhou et al. ([2022](#bib.bib156))
+    and RADAR apply evaluation metrics such as BLEU Papineni et al. ([2002](#bib.bib85))
+    and CodeBLEU Ren et al. ([2020](#bib.bib96)) respectively to guide the selection
+    and replacement process, aiming for maximum adversarial impact. Finally, STRATA Springer
+    et al. ([2021](#bib.bib109)) employs a rule-based technique to select high-impact
+    subtokens that significantly alter the model’s interpretation of the code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Scenarios
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section delves into several commonplace scenarios of source code scenarios,
+    where DA approaches can be applied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Adversarial Examples for Robustness
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Robustness presents a critical and complex dimension of software engineering,
+    necessitating the creation of semantically-preserved adversarial examples to discern
+    and mitigate vulnerabilities within source code models. There is a surge in designing
+    more effective DA techniques for generating these examples in recent years. Several
+    studies Yefet et al. ([2020](#bib.bib144)); Li et al. ([2022d](#bib.bib61)); [Srikant
+    et al.](#bib.bib110) ; Li et al. ([2022c](#bib.bib60)); [Anand et al.](#bib.bib8)
+    ; Henke et al. ([2022](#bib.bib44)); Tian et al. ([2023](#bib.bib117)); Yang et al.
+    ([2023b](#bib.bib139)); Li et al. ([2023c](#bib.bib59)); Gu et al. ([2023](#bib.bib38));
+    Gao et al. ([2023](#bib.bib36)) have utilized various DA methods for testing and
+    enhancing model robustness. Wang et al. ([2023b](#bib.bib124)) have gone a step
+    further to consolidate universally accepted code transformation rules to establish
+    the first benchmark for source code model robustness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Low-Resource Domains
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the domain of software engineering, the resources of programming languages
+    are severely imbalanced Orlanski et al. ([2023](#bib.bib83)). While some most
+    popular programming languages like Python and Java play major roles in the open-source
+    repositories, many languages like Rust Wu et al. ([2023](#bib.bib134)) are starkly
+    low-resource. As source code models are trained on open-source repositories and
+    forums, the programming language resource imbalance can adversely impact their
+    performance on the resource-scarce programming languages. Furthermore, the application
+    of DA methods within low-resource domains is a recurrent theme within the CV and
+    NLP communities Shorten and Khoshgoftaar ([2019](#bib.bib106)); Feng et al. ([2021](#bib.bib34)).
+    Yet, this scenario remains underexplored within the source code discipline.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to increase data in the low-resource domain for representation learning,
+    Li et al. ([2022f](#bib.bib63)) tend to add more training data to enhance source
+    code model embeddings by unleashing the power of compiler IR. Ahmad et al. ([2023](#bib.bib1))
+    propose to use source code models to perform Back-translation DA, taking into
+    consideration the scenario of low-resource programming languages. Meanwhile, Chen
+    and Lampouras ([2023](#bib.bib16)) underscore the fact that source code datasets
+    are markedly smaller than their NLP equivalents, which often encompass millions
+    of instances. As a result, they commence investigations into code completion tasks
+    under this context and experiment with Back-translation and variable renaming.
+    [Shen et al.](#bib.bib101) contend that the generation of bash comments is hampered
+    by a dearth of training data and thus explore model-based DA methods for this
+    task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Retrieval Augmentation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Increasing interest has been observed in the application of DA for retrieval
+    augmentation within NLP Mialon et al. ([2023](#bib.bib77)) and source code Lu
+    et al. ([2022](#bib.bib69)). These retrieval augmentation frameworks for source
+    code models incorporate retrieval-augmented examples from the training set when
+    pre-training or fine-tuning source code models. This form of augmentation enhances
+    the parameter efficiency of models, as they are able to store less knowledge within
+    their parameters and instead retrieve it. It is shown as a promising application
+    of DA in various source code downstream tasks, such as code summarization Zhang
+    et al. ([2020b](#bib.bib151)); [Liu et al.](#bib.bib66) ; Yu et al. ([2022a](#bib.bib147));
+    Choi et al. ([2023](#bib.bib19)); Ye et al. ([2023](#bib.bib143)), code completion Parvez
+    et al. ([2021](#bib.bib87)); Tang et al. ([2023](#bib.bib115)) and program repair Nashid
+    et al. ([2023](#bib.bib80)); Jin et al. ([2023](#bib.bib53)); Wang et al. ([2023c](#bib.bib127)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Contrastive Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another source code scenario to deploy DA methods is contrastive learning, where
+    it enables models to learn an embedding space in which similar samples are close
+    to each other while dissimilar ones are far apart Chen et al. ([2022](#bib.bib17));
+    Wang et al. ([2022c](#bib.bib128)); Zhang et al. ([2022](#bib.bib153)); Yang et al.
+    ([2023c](#bib.bib140)); Ding et al. ([2023](#bib.bib28)). As the training datasets
+    commonly contain limited sets of positive samples, DA methods are preferred to
+    construct similar samples as the positive ones. Liu et al. ([2023b](#bib.bib67))
+    make use of contrastive learning with DA to devise superior pre-training paradigms
+    for source code models, while some works study the advantages of this application
+    in some source code tasks like defect detection Cheng et al. ([2022](#bib.bib18)),
+    clone detection Zubkov et al. ([2022](#bib.bib160)); Wang et al. ([2022a](#bib.bib121))
+    and code search Shi et al. ([2022b](#bib.bib104), [2023](#bib.bib102)); Li et al.
+    ([2022b](#bib.bib58)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Downstream Tasks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we discuss several DA works for common source code tasks and
+    evaluation datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.1 Code Authorship Attribution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Code authorship attribution is the process of identifying the author of a given
+    code, usually achieved by source code models. Yang et al. ([2022b](#bib.bib141))
+    initially investigate generating adversarial examples on the Google Code Jam (GCJ)
+    dataset, which effectively fools source code models to identify the wrong author
+    of a given code snippet. By training with these augmented examples, the model’s
+    robustness can be further improved. Li et al. ([2022d](#bib.bib61)) propose another
+    DA method called RoPGen for the adversarial attack and demonstrate its efficacy
+    on GCJ. Dong et al. ([2023b](#bib.bib30)) empirically study the effectiveness
+    of several existing DA approaches for NLP on several source code tasks, including
+    authorship attribution on GCJ.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.2 Clone Detection
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Code clone detection refers to the task of identifying if the given code snippet
+    is cloned and modified from the original sample, and can be called plagiarism
+    detection in some cases Zubkov et al. ([2022](#bib.bib160)); Pinku et al. ([2023](#bib.bib88));
+    Hasija et al. ([2023](#bib.bib42)). This is a challenging downstream task as it
+    needs the source code model to understand the source code both syntactically and
+    semantically. Jain et al. ([2021](#bib.bib51)) propose correct-by-construction
+    DA via compiler information to generate many variants with equivalent functionality
+    of the training sample and show its effectiveness of improving the model robustness
+    on BigCloneBench Svajlenko et al. ([2014](#bib.bib113)) and a self-collected JavaScript
+    dataset. Jia et al. ([2023](#bib.bib52)) show that when training with adversarial
+    examples via obfuscation transformation, the robustness of source code models
+    can be significantly improved. Zubkov et al. ([2022](#bib.bib160)) provide the
+    comparison of multiple contrastive learning frameworks, combined with rule-based
+    transformations for the clone detection task. Pinku et al. ([2023](#bib.bib88))
+    later use Transcompiler to translate between limited source code in Python and
+    Java and increase the training data for cross-language code clone detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.3 Defect Detection and Repair
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Defect Detection and Repair, in other words, bug or vulnerability detection
+    and fix, is to capture the bugs in given code snippets Cheng et al. ([2022](#bib.bib18));
+    Dong et al. ([2023a](#bib.bib29)) and generate repaired versions Drain et al.
+    ([2021](#bib.bib31)); Yasunaga and Liang ([2021](#bib.bib142)); Wang et al. ([2022b](#bib.bib122)).
+    The task can be considered as the binary classification task, where the labels
+    are either true or false. Allamanis et al. ([2021](#bib.bib5)) implement BUGLAB-Aug,
+    a DA framework of self-supervised bug detection and repair. BUGLAB-Aug has two
+    sets of code transformation rules, one is a bug-inducing rewrite and the other
+    one is rewriting as DA. Their approach boosts the performance and robustness of
+    source code models simultaneously. Cheng et al. ([2022](#bib.bib18)) present a
+    path-sensitive code embedding technique called ContraFlow, which uses self-supervised
+    contrastive learning to detect defects based on value-flow paths. ContraFlow utilizes
+    DA to generate contrastive value-flow representations of three datasets (namely
+    D2A Zheng et al. ([2021](#bib.bib154)), Fan Fan et al. ([2020](#bib.bib33)) and
+    FFMPeg+Qemu Zhou et al. ([2019](#bib.bib155))) to learn the (dis)-similarity among
+    programs. Ding et al. ([2021](#bib.bib27)) present a novel self-supervised model
+    focusing on identifying (dis)similar functionalities of source code, which outperforms
+    the state-of-the-art models on REVEAL Chakraborty et al. ([2022](#bib.bib14))
+    and FFMPeg+Qemu Zhou et al. ([2019](#bib.bib155)). Specifically, they design code
+    transformation heuristics to automatically create bugged programs and similar
+    code for augmenting pre-training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.4 Code Summarization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Code summarization is considered as a task that generates a comment for a piece
+    of the source code, and is thus also named code comment generation. Zhang et al.
+    ([2020c](#bib.bib152)) apply MHM to perturb training examples and mix them with
+    the original ones for adversarial training, which effectively improves the robustness
+    of source code models in summarizing the adversarial code snippets. Zhang et al.
+    ([2020b](#bib.bib151)) develop a retrieval-augmentation framework for code summarization,
+    relying on similar code-summary pairs to generate the new summary on PCSD and
+    JCSD datasets Miceli-Barone and Sennrich ([2017](#bib.bib78)); Hu et al. ([2018](#bib.bib46)).
+    Based on this framework, [Liu et al.](#bib.bib66) leverage Hybrid GNN to propose
+    a novel retrieval-augmented code summarization method and use it during model
+    training on the self-collected CCSD dataset. Zhou et al. ([2022](#bib.bib156))
+    generate adversarial examples of a Python dataset Wan et al. ([2018](#bib.bib120))
+    and JSCD to evaluate and enhance the source code model robustness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.5 Code Search
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Code search, or code retrieval, is a text-code task that searches code snippets
+    based on the given natural language queries. The source code models on this task
+    need to map the semantics of the text to the source code Li et al. ([2022a](#bib.bib55),
+    [2023a](#bib.bib56)); Huang et al. ([2023](#bib.bib49)); Ma et al. ([2023](#bib.bib71)).
+    Bahrami et al. ([2021](#bib.bib11)) increase the code search queries by augmenting
+    the natural language context such as doc-string, code comments and commit messages.
+    Shi et al. ([2022b](#bib.bib104)) use AST-focused DA to replace the function and
+    variable names of the data in CodeSearchNet Husain et al. ([2019](#bib.bib50))
+    and CoSQA Huang et al. ([2021](#bib.bib47)). Shi et al. ([2023](#bib.bib102))
+    introduce soft data augmentation (SoDa), without external transformation rules
+    on code and text. With SoDa, the model predicts tokens based on dynamic masking
+    or replacement when processing CodeSearchNet. Instead of applying rule-based DA
+    techniques, Li et al. ([2022a](#bib.bib55)) manipulate the representation of the
+    input data by interpolating examples of CodeSearchNet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.6 Code Completion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Code completion requires source code models to generate lines of code to complete
+    given programming challenges Brockschmidt et al. ([2019](#bib.bib13)); Lu et al.
+    ([2022](#bib.bib69)); Wang et al. ([2022e](#bib.bib130)). [Anand et al.](#bib.bib8)
+    suggest that source code models are vulnerable to adversarial examples which are
+    perturbed with transformation rules. Lu et al. ([2022](#bib.bib69)) propose a
+    retrieval-augmented code completion framework composed of the rule-based DA module
+    to generate on PY150 Raychev et al. ([2016](#bib.bib95)) and GitHub Java Corpus
+    datasets Allamanis and Sutton ([2013](#bib.bib6)). Wang et al. ([2023b](#bib.bib124))
+    customize over 30 transformations specifically for code on docstrings, function
+    and variable names, code syntax, and code format and benchmark generative source
+    code models on HumanEval Chen et al. ([2021](#bib.bib15)) and MBPP Austin et al.
+    ([2021](#bib.bib10)). Yang et al. ([2022a](#bib.bib138)) devise transformations
+    on functional descriptions and signatures to attack source code models and show
+    that their performances are susceptible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.7 Code Translation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Similar to neural machine translation in NLP Stahlberg ([2020](#bib.bib111)),
+    the task is to translate source code written in a specific programming language
+    translation to another one. Ahmad et al. ([2023](#bib.bib1)) apply data augmentation
+    through back-translation to enhance unsupervised code translation. They use pre-trained
+    sequence-to-sequence models to translate code into natural language summaries
+    and then back into code in a different programming language, thereby creating
+    additional synthetic training data to improve model performance. Chen and Lampouras
+    ([2023](#bib.bib16)) utilize Back-translation and variable augmentation techniques
+    to yield the improvement in code translation on CodeTrans Lu et al. ([2021](#bib.bib70)).
+    Recently, Xie et al. ([2023](#bib.bib135)) have proposed two novel data augmentation
+    methods to generate code translation pairs with similar functionality, via model
+    training and back-translation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.8 Code Question Answering (CQA)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: CQA can be formulated as a task where the source code models are required to
+    generate a textual answer based on given a code snippet and a question. Huang
+    et al. ([2021](#bib.bib47)) incorporate two rule-base DA methods on code and text
+    to create examples for contrastive learning. Li et al. ([2022c](#bib.bib60)) explore
+    the efficacy of adversarial training on the continuous embedding space with rule-based
+    DA on CodeQA Liu and Wan ([2021](#bib.bib64)), a free-form CQA dataset. Park et al.
+    ([2023](#bib.bib86)) evaluate KeyDAC, a framework using query writing and variable
+    renaming as DA, on WebQueryTest of CodeXGLUE Lu et al. ([2021](#bib.bib70)). Different
+    from CodeQA, WebQueryTest is a CQA benchmark only containing Yes/No questions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.9 Code Classification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The task performs the categorization of programs regarding their functionality Zhang
+    et al. ([2020a](#bib.bib150)); Dong et al. ([2023a](#bib.bib29)) or readability Mi
+    et al. ([2021](#bib.bib76), [2022a](#bib.bib74), [2022b](#bib.bib75)). Wang et al.
+    ([2022c](#bib.bib128)) propose a novel AST hierarchy representation for contrastive
+    learning with the graph neural network. Specifically, they augment the node embeddings
+    in AST paths on OJ, a dataset containing 104 classes of programs. Zhang et al.
+    ([2022](#bib.bib153)) incorporate simplex interpolation, an example-interpolation
+    DA approach on IR, to create intermediate embeddings on POJ-104 from CodeXGLUE Lu
+    et al. ([2021](#bib.bib70)). Dong et al. ([2023a](#bib.bib29)) also explore the
+    example-interpolation DA to fuse the embeddings of code snippets. They evaluate
+    the method on two datasets, JAVA250 and Python800 Puri et al. ([2021](#bib.bib90)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.10 Method Name Prediction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The goal of method name prediction is to predict the name of a method given
+    the program. Yefet et al. ([2020](#bib.bib144)) attack and defense source code
+    models by using variable-name-replaced adversarial programs on the Code2Seq dataset Alon
+    et al. ([2019](#bib.bib7)). Pour et al. ([2021](#bib.bib89)) propose a search-based
+    testing framework specifically for adversarial robustness. They generate adversarial
+    examples of Java with ten popular refactoring operators widely used in Java. Rabin
+    et al. ([2021](#bib.bib93)) and Yu et al. ([2022b](#bib.bib148)) both implement
+    data augmentation frameworks and various transformation rules for processing Java
+    source code on the Code2Seq dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6.11 Type Prediction
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Type prediction, or type interference, aims to predict parameter and function
+    types in programs. Bielik and Vechev ([2020](#bib.bib12)) conduct adversarial
+    attacks on source code models with examples of transformed ASTs. They instantiate
+    the attack to type prediction on JavaScript and TypeScript. Jain et al. ([2021](#bib.bib51))
+    apply compiler transforms to generates many variants of programs in DeepTyper Hellendoorn
+    et al. ([2018](#bib.bib43)), with equivalent functionality with 11 rules. Li et al.
+    ([2022e](#bib.bib62)) incorporate srcML Collard et al. ([2013](#bib.bib20)) meta-grammar
+    embeddings to augment the syntactic features of examples in three datasets, DeepTyper,
+    Typilus Data Allamanis et al. ([2020](#bib.bib4)) and CodeSearchNet Husain et al.
+    ([2019](#bib.bib50)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7 Challenges and Opportunities
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When it comes to source code, DA faces significant challenges. Nonetheless,
+    it’s crucial to acknowledge that these challenges pave the way for new possibilities
+    and exciting opportunities in this area of work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Discussion on theory.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Currently, there’s a noticeable gap in the in-depth exploration and theoretical
+    understanding of DA methods in source code. Most existing research on DA is centered
+    around image processing and natural language fields, viewing data augmentation
+    as a way of applying pre-existing knowledge about data or task invariance Dao
+    et al. ([2019](#bib.bib22)); Wu et al. ([2020](#bib.bib133)); Shi et al. ([2022a](#bib.bib103)).
+    When shifting to source code, much of the previous work introduces new methods
+    or demonstrates how DA techniques can be effective for subsequent tasks. However,
+    these studies often overlook why and how particularly from a mathematical perspective.
+    With source code being discrete by nature, having a theoretical discussion becomes
+    even more important. It allows us to understand DA from a broader perspective,
+    not just by looking at experimental results. By exploring DA in this way, we can
+    better understand its underlying principles without being solely dependent on
+    experimental validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More study on pre-trained models.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In recent years, pre-trained source code models have been widely applied in
+    source code, containing rich knowledge through self-supervision on a huge scale
+    of corpora Feng et al. ([2020](#bib.bib35)); Guo et al. ([2021](#bib.bib39));
+    Zhuo ([2023](#bib.bib157)). Numerous studies have been conducted utilizing pre-trained
+    source code models for the purpose of DA, yet, most of these attempts are confined
+    to mask token replacement Shi et al. ([2023](#bib.bib102)), direct generation
+    after fine-tuning Ahmad et al. ([2023](#bib.bib1)); Pinku et al. ([2023](#bib.bib88)).
+    An emergent research opportunity lies in exploring the potential of DA in the
+    source code domain with the help of large language models (LLMs) trained on a
+    large amount of text and source code Chen et al. ([2021](#bib.bib15)); Li et al.
+    ([2023b](#bib.bib57)). LLMs have the capability of context generation based on
+    prompted instructions and provided examples, making them a choice to automate
+    the DA process in NLP Yoo et al. ([2021](#bib.bib146)); Wang et al. ([2021a](#bib.bib125)).
+    Different from the previous usages of pre-trained models in DA, these works open
+    the era of “prompt-based DA”. In contrast, the exploration of prompt-based DA
+    in source code domains remains a relatively untouched research area. Another direction
+    is to harness the internal knowledge encoded in pre-trained source code models.
+    For example, Karmakar and Robbes ([2021](#bib.bib54)); Wan et al. ([2022](#bib.bib119))
+    show that ASTs and code semantics can be induced from these models without the
+    static analysis tools. As most DA methods for source code models tend to predefine
+    the code transformation rules via program analysis, it is expected that the programming
+    knowledge inside these pre-trained source code models can automate the rule designs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Working with domain-specific data.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Our paper focuses on surveying DA techniques for common downstream tasks involving
+    processing source code. However, we are aware that there are a few works on other
+    task-specific data in the field of source code. For instance, API recommendation
+    and API sequence generation can be considered a part of source code tasks Huang
+    et al. ([2018](#bib.bib48)); Gu et al. ([2016](#bib.bib37)). DA methods covered
+    by our survey can not be directly generalized to these tasks, as most of them
+    only target program-level augmentation but not API-level. We observe a gap of
+    DA techniques between these two different layers Treude and Robillard ([2016](#bib.bib118));
+    Xu et al. ([2020](#bib.bib136)); Wang et al. ([2021b](#bib.bib131)), which provides
+    opportunities for future works to explore. Additionally, the source code modeling
+    has not fully justified DA for out-of-distribution generalization. Previous studies Hajipour
+    et al. ([2022](#bib.bib40)); Hu et al. ([2022](#bib.bib45)) assume the domain
+    as the programs with different complexity, syntax, and semantics. We argue that
+    this definition is not natural enough. Similar to the subdomains in NLP, like
+    biomedical and financial texts, the application subdomains of source code can
+    be diverse. For example, the programs to solve data science problems can significantly
+    differ from those for web design. We encourage SE and ML communities to study
+    the benefits of DA when applied to various application subdomains of source code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More exploration on project-level source code and low-resource programming languages.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The existing methods have made sufficient progress in function-level code snippets
+    and common programming languages. The emphasis on code snippets at the function
+    level fails to capture the intricacies and complexities of programming in real-world
+    scenarios, where developers often work with multiple files and folders simultaneously.
+    Therefore, we highlight the importance of exploring DA approaches on the project
+    level. The DA on source code projects can be distinct from the function-level
+    DA, as it may involve more information such as the interdependencies between different
+    code modules, high-level architectural considerations, and the often intricate
+    relationship between data structures and algorithms used across the project Mockus
+    et al. ([2002](#bib.bib79)). At the same time, limited by data resources Husain
+    et al. ([2019](#bib.bib50)); Orlanski et al. ([2023](#bib.bib83)), augmentation
+    methods of low-resource languages are scarce, although they have more demand for
+    DA. Exploration in these two directions is still limited, and they could be promising
+    directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mitigating social bias.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: As source code models have advanced software development, they may be used to
+    develop human-centric applications such as human resources and education, where
+    biased programs may result in unjustified and unethical decisions for underrepresented
+    people Zhuo et al. ([2023a](#bib.bib158)). While social bias in NLP has been well
+    studied and can be mitigated with DA Feng et al. ([2021](#bib.bib34)), the social
+    bias in source code has not been brought to attention. For example, Zhuo et al.
+    ([2023a](#bib.bib158)) and Liu et al. ([2023c](#bib.bib68)) find that LLMs of
+    source code have server bias in various demographics such as gender, sexuality,
+    and occupation when performing code generation based on the natural language queries.
+    To make these models more responsible in source code, we urge more research on
+    mitigating bias. As prior works in NLP suggested, DA may be an effective technique
+    to make source code models more responsible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Few-shot learning.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: In few-shot scenarios, models are required to achieve performance that rivals
+    that of traditional machine learning models, yet the amount of training data is
+    extremely limited. DA methods provide a direct solution to the problem. However,
+    limited works in few-shot scenarios have adopted DA methods Nashid et al. ([2023](#bib.bib80)).
+    Mainstream pre-trained source code models obtain rich semantic knowledge through
+    language modeling. Such knowledge even covers, to some extent, the semantic information
+    introduced by traditional paraphrasing-based DA methods. In other words, the improvement
+    space that traditional DA methods bring to pre-trained source code models has
+    been greatly compressed. Therefore, it is an interesting question how to provide
+    models with fast generalization and problem-solving capability by generating high-quality
+    augmented data in few-shot scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multimodal applications.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: It is important to note that the emphasis on function-level code snippets does
+    not accurately represent the intricacies and complexities of real-world programming
+    situations. In such scenarios, developers often work with multiple files and folders
+    simultaneously.s have also been developed. Wang et al. ([2021b](#bib.bib131))
+    and Liu et al. ([2023a](#bib.bib65)) explore the chart derendering with an emphasis
+    on source code and corresponding APIs. Surís et al. ([2023](#bib.bib112)) propose
+    a framework to generate Python programs to solve complex visual tasks including
+    images and videos. Although such multimodal applications are more and more popular,
+    no study has yet been conducted on applying DA methods to them. A potential challenge
+    for the multimodal source code task technique is to effectively bridge between
+    the embedding representations for each modality in source code models, which has
+    been investigated in vision-language multimodal tasks Ray et al. ([2019](#bib.bib94));
+    Tang et al. ([2020](#bib.bib114)); Hao et al. ([2023](#bib.bib41)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lack of unification.
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The current body of literature on data augmentation (DA) for source code presents
+    a challenging landscape, with the most popular methods often being portrayed in
+    a supplementary manner. A handful of empirical studies have sought to compare
+    DA methods for source code models de Paula Rodrigues et al. ([2023](#bib.bib23));
+    Dong et al. ([2023b](#bib.bib30)). However, none of these works leverages most
+    of the existing advanced DA methods for source code models. Whereas there are
+    well-accepted frameworks for DA for CV (e.g. default augmentation libraries in
+    PyTorch, RandAugment Cubuk et al. ([2020](#bib.bib21))) and DA for NLP (e.g. NL-Augmenter Dhole
+    et al. ([2021](#bib.bib26))), a corresponding library of generalized DA techniques
+    for source code models is conspicuously absent. Furthermore, as existent DA methods
+    are usually evaluated with various datasets, it is hard to determine the efficacy.
+    Therefore, we posit that the progression of DA research would be significantly
+    facilitated by the establishment of standardized and unified benchmark tasks,
+    along with datasets, for the purpose of contrasting and evaluating the effectiveness
+    of different augmentation methods. This would pave the way towards a more systematic
+    and comparative understanding of the benefits and limitations of these methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 8 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Our paper comprehensively analyzes data augmentation techniques in the context
+    of source code. We first explain the concept of data augmentation and its function.
+    We then examine the primary data augmentation methods commonly employed in source
+    code research and explore augmentation approaches for typical source code applications
+    and tasks. Finally, we conclude by outlining the current challenges in the field
+    and suggesting potential directions for future source code research. In presenting
+    this paper, we aim to assist source code researchers in selecting appropriate
+    data augmentation techniques and encourage further exploration and advancement
+    in this field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limitations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While the work presents in this paper has its merits, we acknowledge the several
+    limitations. Firstly, our work only surveys imperative programming languages used
+    for general-purpose programming. Therefore, some DA methods for declarative languages Zhuo
+    et al. ([2023b](#bib.bib159)) or minor downstream tasks like cryptography misuse
+    detection de Paula Rodrigues et al. ([2023](#bib.bib23)), including SQL. Secondly,
+    our focus has been primarily on function-level DA within the source code context.
+    As such, there remains a need for future development in project-level DA methods.
+    Nonetheless, this paper offers a valuable collection of general-purpose DA techniques
+    for source code models, and we hope that it can serve as an inspiration for further
+    research in this area. Thirdly, given the page limits, the descriptions presented
+    in this survey are essentially brief in nature. Our approach has been to offer
+    the works in meaningful structured groups rather than unstructured sequences,
+    to ensure comprehensive coverage. This work can be used as an index where more
+    detailed information can be found in the corresponding works. Lastly, it is worth
+    noting that this survey is purely qualitative and does not include any experiments
+    or empirical results. To provide more meaningful guidance, it would be helpful
+    to conduct comparative experiments across different DA strategies. We leave this
+    as a suggestion for future work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Ahmad et al. (2023) Wasi Uddin Ahmad, Saikat Chakraborty, Baishakhi Ray, and
+    Kai-Wei Chang. 2023. [Summarize and generate to back-translate: Unsupervised translation
+    of programming languages](https://aclanthology.org/2023.eacl-main.112). In *Proceedings
+    of the 17th Conference of the European Chapter of the Association for Computational
+    Linguistics*, pages 1528–1542, Dubrovnik, Croatia. Association for Computational
+    Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Allal et al. (2023) Loubna Ben Allal, Raymond Li, Denis Kocetkov, Chenghao
+    Mou, Christopher Akiki, Carlos Muñoz Ferrandis, Niklas Muennighoff, Mayank Mishra,
+    Alexander Gu, Manan Dey, Logesh Kumar Umapathi, Carolyn Jane Anderson, Yangtian
+    Zi, J. Poirier, Hailey Schoelkopf, Sergey Mikhailovich Troshin, Dmitry Abulkhanov,
+    Manuel Romero, Michael Franz Lappert, Francesco De Toni, Bernardo Garc’ia del
+    R’io, Qian Liu, Shamik Bose, Urvashi Bhattacharyya, Terry Yue Zhuo, Ian Yu, Paulo
+    Villegas, Marco Zocca, Sourab Mangrulkar, David Lansky, Huu Nguyen, Danish Contractor,
+    Luisa Villa, Jia Li, Dzmitry Bahdanau, Yacine Jernite, Sean Christopher Hughes,
+    Daniel Fried, Arjun Guha, Harm de Vries, and Leandro von Werra. 2023. Santacoder:
+    don’t reach for the stars! *ArXiv*, abs/2301.03988.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allamanis et al. (2017) Miltiadis Allamanis, Earl T. Barr, Premkumar T. Devanbu,
+    and Charles Sutton. 2017. A survey of machine learning for big code and naturalness.
+    *ACM Computing Surveys (CSUR)*, 51:1 – 37.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Allamanis et al. (2020) Miltiadis Allamanis, Earl T Barr, Soline Ducousso,
+    and Zheng Gao. 2020. Typilus: Neural type hints. In *Proceedings of the 41st acm
+    sigplan conference on programming language design and implementation*, pages 91–105.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allamanis et al. (2021) Miltiadis Allamanis, Henry Jackson-Flux, and Marc Brockschmidt.
+    2021. Self-supervised bug detection and repair. *Advances in Neural Information
+    Processing Systems*, 34:27865–27876.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allamanis and Sutton (2013) Miltiadis Allamanis and Charles Sutton. 2013. Mining
+    source code repositories at massive scale using language modeling. In *2013 10th
+    working conference on mining software repositories (MSR)*, pages 207–216\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Alon et al. (2019) Uri Alon, Omer Levy, and Eran Yahav. 2019. [code2seq: Generating
+    sequences from structured representations of code](https://openreview.net/forum?id=H1gKYo09tX).
+    In *International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (8) Mrinal Anand, Pratik Kayal, and Mayank Singh. Adversarial robustness of
+    program synthesis models. In *Advances in Programming Languages and Neurosymbolic
+    Systems Workshop*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Asyrofi et al. (2021) Muhammad Hilmi Asyrofi, Zhou Yang, Jieke Shi, Chu Wei
+    Quan, and David Lo. 2021. [Can differential testing improve automatic speech recognition
+    systems?](https://doi.org/10.1109/ICSME52107.2021.00079) In *2021 IEEE International
+    Conference on Software Maintenance and Evolution (ICSME)*, pages 674–678.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Austin et al. (2021) Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma,
+    Henryk Michalewski, David Dohan, Ellen Jiang, Carrie Cai, Michael Terry, Quoc
+    Le, et al. 2021. Program synthesis with large language models. *arXiv preprint
+    arXiv:2108.07732*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bahrami et al. (2021) Mehdi Bahrami, NC Shrikanth, Yuji Mizobuchi, Lei Liu,
+    Masahiro Fukuyori, Wei-Peng Chen, and Kazuki Munakata. 2021. Augmentedcode: Examining
+    the effects of natural language resources in code retrieval models. *arXiv preprint
+    arXiv:2110.08512*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bielik and Vechev (2020) Pavol Bielik and Martin Vechev. 2020. Adversarial robustness
+    for code. In *International Conference on Machine Learning*, pages 896–907\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brockschmidt et al. (2019) Marc Brockschmidt, Miltiadis Allamanis, Alexander L.
+    Gaunt, and Oleksandr Polozov. 2019. [Generative code modeling with graphs](https://openreview.net/forum?id=Bke4KsA5FX).
+    In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chakraborty et al. (2022) Saikat Chakraborty, Rahul Krishna, Yangruibo Ding,
+    and Baishakhi Ray. 2022. [Deep learning based vulnerability detection: Are we
+    there yet?](https://doi.org/10.1109/TSE.2021.3087402) *IEEE Transactions on Software
+    Engineering*, 48(9):3280–3296.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. (2021) Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique
+    Ponde, Jared Kaplan, Harrison Edwards, Yura Burda, Nicholas Joseph, Greg Brockman,
+    Alex Ray, Raul Puri, Gretchen Krueger, Michael Petrov, Heidy Khlaaf, Girish Sastry,
+    Pamela Mishkin, Brooke Chan, Scott Gray, Nick Ryder, Mikhail Pavlov, Alethea Power,
+    Lukasz Kaiser, Mohammad Bavarian, Clemens Winter, Philippe Tillet, Felipe Petroski
+    Such, David W. Cummings, Matthias Plappert, Fotios Chantzis, Elizabeth Barnes,
+    Ariel Herbert-Voss, William H. Guss, Alex Nichol, Igor Babuschkin, S. Arun Balaji,
+    Shantanu Jain, Andrew Carr, Jan Leike, Joshua Achiam, Vedant Misra, Evan Morikawa,
+    Alec Radford, Matthew M. Knight, Miles Brundage, Mira Murati, Katie Mayer, Peter
+    Welinder, Bob McGrew, Dario Amodei, Sam McCandlish, Ilya Sutskever, and Wojciech
+    Zaremba. 2021. Evaluating large language models trained on code. *ArXiv*, abs/2107.03374.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen and Lampouras (2023) Pinzhen Chen and Gerasimos Lampouras. 2023. Exploring
+    data augmentation for code generation tasks. In *Findings of the Association for
+    Computational Linguistics: EACL 2023*, pages 1497–1505.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. (2022) Qibin Chen, Jeremy Lacomis, Edward J Schwartz, Graham Neubig,
+    Bogdan Vasilescu, and Claire Le Goues. 2022. Varclr: Variable semantic representation
+    pre-training via contrastive learning. In *Proceedings of the 44th International
+    Conference on Software Engineering*, pages 2327–2339.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cheng et al. (2022) Xiao Cheng, Guanqin Zhang, Haoyu Wang, and Yulei Sui. 2022.
+    Path-sensitive code embedding via contrastive learning for software vulnerability
+    detection. In *Proceedings of the 31st ACM SIGSOFT International Symposium on
+    Software Testing and Analysis*, pages 519–531.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Choi et al. (2023) YunSeok Choi, CheolWon Na, Hyojun Kim, and Jee-Hyong Lee.
+    2023. Readsum: Retrieval-augmented adaptive transformer for source code summarization.
+    *IEEE Access*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Collard et al. (2013) Michael L Collard, Michael John Decker, and Jonathan I
+    Maletic. 2013. srcml: An infrastructure for the exploration, analysis, and manipulation
+    of source code: A tool demonstration. In *2013 IEEE International conference on
+    software maintenance*, pages 516–519\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cubuk et al. (2020) Ekin D Cubuk, Barret Zoph, Jonathon Shlens, and Quoc V
+    Le. 2020. Randaugment: practical automated data augmentation with a reduced search
+    space. In *Proceedings of the 34th International Conference on Neural Information
+    Processing Systems*, pages 18613–18624.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dao et al. (2019) Tri Dao, Albert Gu, Alexander Ratner, Virginia Smith, Chris
+    De Sa, and Christopher Ré. 2019. A kernel theory of modern data augmentation.
+    In *International Conference on Machine Learning*, pages 1528–1537\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'de Paula Rodrigues et al. (2023) Gustavo Eloi de Paula Rodrigues, Alexandre M
+    Braga, and Ricardo Dahab. 2023. Detecting cryptography misuses with machine learning:
+    Graph embeddings, transfer learning and data augmentation in source code related
+    tasks. *IEEE Transactions on Reliability*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devlin et al. (2019) Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+    Toutanova. 2019. Bert: Pre-training of deep bidirectional transformers for language
+    understanding. *ArXiv*, abs/1810.04805.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devore-McDonald and Berger (2020) Breanna Devore-McDonald and Emery D Berger.
+    2020. Mossad: Defeating software plagiarism detection. *Proceedings of the ACM
+    on Programming Languages*, 4(OOPSLA):1–28.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dhole et al. (2021) Kaustubh D. Dhole, Varun Gangal, Sebastian Gehrmann, Aadesh
+    Gupta, Zhenhao Li, Saad Mahamood, Abinaya Mahendiran, Simon Mille, Ashish Srivastava,
+    Samson Tan, Tongshuang Wu, Jascha Sohl-Dickstein, Jinho D. Choi, Eduard Hovy,
+    Ondrej Dusek, Sebastian Ruder, Sajant Anand, Nagender Aneja, Rabin Banjade, Lisa
+    Barthe, Hanna Behnke, Ian Berlot-Attwell, Connor Boyle, Caroline Brun, Marco Antonio Sobrevilla
+    Cabezudo, Samuel Cahyawijaya, Emile Chapuis, Wanxiang Che, Mukund Choudhary, Christian
+    Clauss, Pierre Colombo, Filip Cornell, Gautier Dagan, Mayukh Das, Tanay Dixit,
+    Thomas Dopierre, Paul-Alexis Dray, Suchitra Dubey, Tatiana Ekeinhor, Marco Di
+    Giovanni, Rishabh Gupta, Rishabh Gupta, Louanes Hamla, Sang Han, Fabrice Harel-Canada,
+    Antoine Honore, Ishan Jindal, Przemyslaw K. Joniak, Denis Kleyko, Venelin Kovatchev,
+    Kalpesh Krishna, Ashutosh Kumar, Stefan Langer, Seungjae Ryan Lee, Corey James
+    Levinson, Hualou Liang, Kaizhao Liang, Zhexiong Liu, Andrey Lukyanenko, Vukosi
+    Marivate, Gerard de Melo, Simon Meoni, Maxime Meyer, Afnan Mir, Nafise Sadat Moosavi,
+    Niklas Muennighoff, Timothy Sum Hon Mun, Kenton Murray, Marcin Namysl, Maria Obedkova,
+    Priti Oli, Nivranshu Pasricha, Jan Pfister, Richard Plant, Vinay Prabhu, Vasile
+    Pais, Libo Qin, Shahab Raji, Pawan Kumar Rajpoot, Vikas Raunak, Roy Rinberg, Nicolas
+    Roberts, Juan Diego Rodriguez, Claude Roux, Vasconcellos P. H. S., Ananya B. Sai,
+    Robin M. Schmidt, Thomas Scialom, Tshephisho Sefara, Saqib N. Shamsi, Xudong Shen,
+    Haoyue Shi, Yiwen Shi, Anna Shvets, Nick Siegel, Damien Sileo, Jamie Simon, Chandan
+    Singh, Roman Sitelew, Priyank Soni, Taylor Sorensen, William Soto, Aman Srivastava,
+    KV Aditya Srivatsa, Tony Sun, Mukund Varma T, A Tabassum, Fiona Anting Tan, Ryan
+    Teehan, Mo Tiwari, Marie Tolkiehn, Athena Wang, Zijian Wang, Gloria Wang, Zijie J.
+    Wang, Fuxuan Wei, Bryan Wilie, Genta Indra Winata, Xinyi Wu, Witold Wydmański,
+    Tianbao Xie, Usama Yaseen, M. Yee, Jing Zhang, and Yue Zhang. 2021. [Nl-augmenter:
+    A framework for task-sensitive natural language augmentation](http://arxiv.org/abs/2112.02721).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ding et al. (2021) Yangruibo Ding, Luca Buratti, Saurabh Pujar, Alessandro Morari,
+    Baishakhi Ray, and Saikat Chakraborty. 2021. Towards learning (dis)-similarity
+    of source code from program contrasts. In *Annual Meeting of the Association for
+    Computational Linguistics*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ding et al. (2023) Yangruibo Ding, Saikat Chakraborty, Luca Buratti, Saurabh
+    Pujar, Alessandro Morari, Gail Kaiser, and Baishakhi Ray. 2023. Concord: Clone-aware
+    contrastive learning for source code.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dong et al. (2023a) Zeming Dong, Qiang Hu, Yuejun Guo, Maxime Cordy, Mike Papadakis,
+    Zhenya Zhang, Yves Le Traon, and Jianjun Zhao. 2023a. Mixcode: Enhancing code
+    classification by mixup-based data augmentation. In *2023 IEEE International Conference
+    on Software Analysis, Evolution and Reengineering (SANER)*, pages 379–390\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dong et al. (2023b) Zeming Dong, Qiang Hu, Yuejun Guo, Zhenya Zhang, Maxime
+    Cordy, Mike Papadakis, Yves Le Traon, and Jianjun Zhao. 2023b. Boosting source
+    code learning with data augmentation: An empirical study. *arXiv preprint arXiv:2303.06808*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Drain et al. (2021) Dawn Drain, Colin B Clement, Guillermo Serrato, and Neel
+    Sundaresan. 2021. Deepdebug: Fixing python bugs using stack traces, backtranslation,
+    and code skeletons. *arXiv preprint arXiv:2105.09352*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fadaee et al. (2017) Marzieh Fadaee, Arianna Bisazza, and Christof Monz. 2017.
+    Data augmentation for low-resource neural machine translation. In *Annual Meeting
+    of the Association for Computational Linguistics*, pages 567–573\. Association
+    for Computational Linguistics (ACL).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fan et al. (2020) Jiahao Fan, Yi Li, Shaohua Wang, and Tien N Nguyen. 2020.
+    Ac/c++ code vulnerability dataset with code changes and cve summaries. In *Proceedings
+    of the 17th International Conference on Mining Software Repositories*, pages 508–512.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Feng et al. (2021) Steven Y Feng, Varun Gangal, Jason Wei, Sarath Chandar,
+    Soroush Vosoughi, Teruko Mitamura, and Eduard Hovy. 2021. A survey of data augmentation
+    approaches for nlp. In *Findings of the Association for Computational Linguistics:
+    ACL-IJCNLP 2021*, pages 968–988.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Feng et al. (2020) Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng
+    Feng, Ming Gong, Linjun Shou, Bing Qin, Ting Liu, Daxin Jiang, et al. 2020. Codebert:
+    A pre-trained model for programming and natural languages. In *Findings of the
+    Association for Computational Linguistics: EMNLP 2020*, pages 1536–1547.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gao et al. (2023) Fengjuan Gao, Yu Wang, and Ke Wang. 2023. Discrete adversarial
+    attack to models of code. *Proceedings of the ACM on Programming Languages*, 7(PLDI):172–195.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gu et al. (2016) Xiaodong Gu, Hongyu Zhang, Dongmei Zhang, and Sunghun Kim.
+    2016. Deep api learning. In *Proceedings of the 2016 24th ACM SIGSOFT international
+    symposium on foundations of software engineering*, pages 631–642.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gu et al. (2023) Yafeng Gu, Yiheng Shen, Xiang Chen, Shaoyu Yang, Yiling Huang,
+    and Zhixiang Cao. 2023. Apicom: Automatic api completion via prompt learning and
+    adversarial training-based data augmentation. In *Proceedings of the 14th Asia-Pacific
+    Symposium on Internetware*, pages 259–269.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Guo et al. (2021) Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Shujie
+    LIU, Long Zhou, Nan Duan, Alexey Svyatkovskiy, Shengyu Fu, Michele Tufano, Shao Kun
+    Deng, Colin Clement, Dawn Drain, Neel Sundaresan, Jian Yin, Daxin Jiang, and Ming
+    Zhou. 2021. [Graphcode{bert}: Pre-training code representations with data flow](https://openreview.net/forum?id=jLoC4ez43PZ).
+    In *International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hajipour et al. (2022) Hossein Hajipour, Ning Yu, Cristian-Alexandru Staicu,
+    and Mario Fritz. 2022. Simscood: Systematic analysis of out-of-distribution behavior
+    of source code models. *arXiv preprint arXiv:2210.04802*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hao et al. (2023) Xiaoshuai Hao, Yi Zhu, Srikar Appalaraju, Aston Zhang, Wanqian
+    Zhang, Bo Li, and Mu Li. 2023. Mixgen: A new multi-modal data augmentation. In
+    *Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision*,
+    pages 379–389.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hasija et al. (2023) Krishnam Hasija, Shrishti Pradhan, Manasi Patwardhan, Raveendra Kumar
+    Medicherla, Lovekesh Vig, and Ravindra Naik. 2023. Neuro-symbolic zero-shot code
+    cloning with cross-language intermediate representation. *arXiv preprint arXiv:2304.13350*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hellendoorn et al. (2018) Vincent J Hellendoorn, Christian Bird, Earl T Barr,
+    and Miltiadis Allamanis. 2018. Deep learning type inference. In *Proceedings of
+    the 2018 26th acm joint meeting on european software engineering conference and
+    symposium on the foundations of software engineering*, pages 152–162.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Henke et al. (2022) Jordan Henke, Goutham Ramakrishnan, Zi Wang, Aws Albarghouth,
+    Somesh Jha, and Thomas Reps. 2022. Semantic robustness of models of source code.
+    In *2022 IEEE International Conference on Software Analysis, Evolution and Reengineering
+    (SANER)*, pages 526–537\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. (2022) Qiang Hu, Yuejun Guo, Xiaofei Xie, Maxime Cordy, Lei Ma, Mike
+    Papadakis, and Yves Le Traon. 2022. Codes: A distribution shift benchmark dataset
+    for source code learning. *arXiv preprint arXiv:2206.05480*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hu et al. (2018) Xing Hu, Ge Li, Xin Xia, David Lo, Shuai Lu, and Zhi Jin. 2018.
+    Summarizing source code with transferred api knowledge. In *Proceedings of the
+    27th International Joint Conference on Artificial Intelligence*, pages 2269–2275.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Huang et al. (2021) Junjie Huang, Duyu Tang, Linjun Shou, Ming Gong, Ke Xu,
+    Daxin Jiang, Ming Zhou, and Nan Duan. 2021. Cosqa: 20,000+ web queries for code
+    search and question answering. In *Proceedings of the 59th Annual Meeting of the
+    Association for Computational Linguistics and the 11th International Joint Conference
+    on Natural Language Processing (Volume 1: Long Papers)*, pages 5690–5700.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2018) Qiao Huang, Xin Xia, Zhenchang Xing, David Lo, and Xinyu
+    Wang. 2018. Api method recommendation without worrying about the task-api knowledge
+    gap. In *Proceedings of the 33rd ACM/IEEE International Conference on Automated
+    Software Engineering*, pages 293–304.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2023) Xiangbing Huang, Yingwei Ma, Haifang Zhou, Zhijie Jiang,
+    Yuanliang Zhang, Teng Wang, and Shanshan Li. 2023. Towards better multilingual
+    code search through cross-lingual contrastive learning. In *Proceedings of the
+    14th Asia-Pacific Symposium on Internetware*, pages 22–32.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Husain et al. (2019) Hamel Husain, Ho-Hsiang Wu, Tiferet Gazit, Miltiadis Allamanis,
+    and Marc Brockschmidt. 2019. Codesearchnet challenge: Evaluating the state of
+    semantic code search. *arXiv preprint arXiv:1909.09436*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jain et al. (2021) Paras Jain, Ajay Jain, Tianjun Zhang, Pieter Abbeel, Joseph
+    Gonzalez, and Ion Stoica. 2021. Contrastive code representation learning. In *Proceedings
+    of the 2021 Conference on Empirical Methods in Natural Language Processing*, pages
+    5954–5971.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jia et al. (2023) Jinghan Jia, Shashank Srikant, Tamara Mitrovska, Chuang Gan,
+    Shiyu Chang, Sijia Liu, and Una-May O’Reilly. 2023. Clawsat: Towards both robust
+    and accurate code models. In *2023 IEEE International Conference on Software Analysis,
+    Evolution and Reengineering (SANER)*, pages 212–223\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jin et al. (2023) Matthew Jin, Syed Shahriar, Michele Tufano, Xin Shi, Shuai
+    Lu, Neel Sundaresan, and Alexey Svyatkovskiy. 2023. Inferfix: End-to-end program
+    repair with llms. *arXiv preprint arXiv:2303.07263*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Karmakar and Robbes (2021) Anjan Karmakar and Romain Robbes. 2021. What do pre-trained
+    code models know about code? In *2021 36th IEEE/ACM International Conference on
+    Automated Software Engineering (ASE)*, pages 1332–1336\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2022a) Haochen Li, Chunyan Miao, Cyril Leung, Yanxian Huang, Yuan
+    Huang, Hongyu Zhang, and Yanlin Wang. 2022a. [Exploring representation-level augmentation
+    for code search](https://aclanthology.org/2022.emnlp-main.327). In *Proceedings
+    of the 2022 Conference on Empirical Methods in Natural Language Processing*, pages
+    4924–4936, Abu Dhabi, United Arab Emirates. Association for Computational Linguistics.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2023a) Haochen Li, Xin Zhou, Luu Anh Tuan, and Chunyan Miao. 2023a.
+    Rethinking negative pairs in code search.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2023b) Raymond Li, Loubna Ben Allal, Yangtian Zi, Niklas Muennighoff,
+    Denis Kocetkov, Chenghao Mou, Marc Marone, Christopher Akiki, Jia Li, Jenny Chim,
+    Qian Liu, Evgenii Zheltonozhskii, Terry Yue Zhuo, Thomas Wang, Olivier Dehaene,
+    Mishig Davaadorj, Joel Lamy-Poirier, João Monteiro, Oleh Shliazhko, Nicolas Gontier,
+    Nicholas Meade, Armel Zebaze, Ming-Ho Yee, Logesh Kumar Umapathi, Jian Zhu, Benjamin
+    Lipkin, Muhtasham Oblokulov, Zhiruo Wang, Rudra Murthy, Jason Stillerman, Siva Sankalp
+    Patel, Dmitry Abulkhanov, Marco Zocca, Manan Dey, Zhihan Zhang, Nourhan Fahmy,
+    Urvashi Bhattacharyya, W. Yu, Swayam Singh, Sasha Luccioni, Paulo Villegas, Maxim
+    Kunakov, Fedor Zhdanov, Manuel Romero, Tony Lee, Nadav Timor, Jennifer Ding, Claire
+    Schlesinger, Hailey Schoelkopf, Jana Ebert, Tri Dao, Mayank Mishra, Alexander
+    Gu, Jennifer Robinson, Carolyn Jane Anderson, Brendan Dolan-Gavitt, Danish Contractor,
+    Siva Reddy, Daniel Fried, Dzmitry Bahdanau, Yacine Jernite, Carlos Muñoz Ferrandis,
+    Sean M. Hughes, Thomas Wolf, Arjun Guha, Leandro von Werra, and Harm de Vries.
+    2023b. Starcoder: may the source be with you! *ArXiv*, abs/2305.06161.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2022b) Xiaonan Li, Yeyun Gong, Yelong Shen, Xipeng Qiu, Hang Zhang,
+    Bolun Yao, Weizhen Qi, Daxin Jiang, Weizhu Chen, and Nan Duan. 2022b. Coderetriever:
+    A large scale contrastive pre-training method for code search. In *Proceedings
+    of the 2022 Conference on Empirical Methods in Natural Language Processing*, pages
+    2898–2910.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2023c) Yanzhou Li, Shangqing Liu, Kangjie Chen, Xiaofei Xie, Tianwei
+    Zhang, and Yang Liu. 2023c. Multi-target backdoor attacks for code pre-trained
+    models.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2022c) Yiyang Li, Hongqiu Wu, and Hai Zhao. 2022c. Semantic-preserving
+    adversarial code comprehension. In *Proceedings of the 29th International Conference
+    on Computational Linguistics*, pages 3017–3028.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2022d) Zhen Li, Guenevere Chen, Chen Chen, Yayi Zou, and Shouhuai
+    Xu. 2022d. Ropgen: Towards robust code authorship attribution via automatic coding
+    style transformation. In *Proceedings of the 44th International Conference on
+    Software Engineering*, pages 1906–1918.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2022e) Zhiming Li, Xiaofei Xie, Haoliang Li, Zhengzi Xu, Yi Li, and
+    Yang Liu. 2022e. Cross-lingual transfer learning for statistical type inference.
+    In *Proceedings of the 31st ACM SIGSOFT International Symposium on Software Testing
+    and Analysis*, pages 239–250.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2022f) Zongjie Li, Pingchuan Ma, Huaijin Wang, Shuai Wang, Qiyi Tang,
+    Sen Nie, and Shi Wu. 2022f. Unleashing the power of compiler intermediate representation
+    to enhance neural program embeddings. In *Proceedings of the 44th International
+    Conference on Software Engineering*, pages 2253–2265.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu and Wan (2021) Chenxiao Liu and Xiaojun Wan. 2021. Codeqa: A question answering
+    dataset for source code comprehension. In *Findings of the Association for Computational
+    Linguistics: EMNLP 2021*, pages 2618–2632.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2023a) Fangyu Liu, Francesco Piccinno, Syrine Krichene, Chenxi
+    Pang, Kenton Lee, Mandar Joshi, Yasemin Altun, Nigel Collier, and Julian Martin
+    Eisenschlos. 2023a. Matcha: Enhancing visual language pretraining with math reasoning
+    and chart derendering. In *Proceedings of the 61th Annual Meeting of the Association
+    for Computational Linguistics (Volume 1: Long Papers)*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (66) Shangqing Liu, Yu Chen, Xiaofei Xie, Jing Kai Siow, and Yang Liu. Retrieval-augmented
+    generation for code summarization via hybrid gnn. In *International Conference
+    on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2023b) Shangqing Liu, Bozhi Wu, Xiaofei Xie, Guozhu Meng, and Yang
+    Liu. 2023b. Contrabert: Enhancing code pre-trained models via contrastive learning.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu et al. (2023c) Yan Liu, Xiaokang Chen, Yan Gao, Zhe Su, Fengji Zhang, Daoguang
+    Zan, JianGuang Lou, PinYuChen, and TsungYiHo. 2023c. Uncovering and quantifyingsocialbiases
+    incodegeneration.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lu et al. (2022) Shuai Lu, Nan Duan, Hojae Han, Daya Guo, Seung-won Hwang,
+    and Alexey Svyatkovskiy. 2022. Reacc: A retrieval-augmented code completion framework.
+    In *Proceedings of the 60th Annual Meeting of the Association for Computational
+    Linguistics (Volume 1: Long Papers)*, pages 6227–6240.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lu et al. (2021) Shuai Lu, Daya Guo, Shuo Ren, Junjie Huang, Alexey Svyatkovskiy,
+    Ambrosio Blanco, Colin Clement, Dawn Drain, Daxin Jiang, Duyu Tang, Ge Li, Lidong
+    Zhou, Linjun Shou, Long Zhou, Michele Tufano, MING GONG, Ming Zhou, Nan Duan,
+    Neel Sundaresan, Shao Kun Deng, Shengyu Fu, and Shujie LIU. 2021. [CodeXGLUE:
+    A machine learning benchmark dataset for code understanding and generation](https://openreview.net/forum?id=6lE4dQXaUcb).
+    In *Thirty-fifth Conference on Neural Information Processing Systems Datasets
+    and Benchmarks Track (Round 1)*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ma et al. (2023) Yingwei Ma, Yue Yu, Shanshan Li, Zhouyang Jia, Jun Ma, Rulin
+    Xu, Wei Dong, and Xiangke Liao. 2023. Mulcs: Towards a unified deep representation
+    for multilingual code search. In *2023 IEEE International Conference on Software
+    Analysis, Evolution and Reengineering (SANER)*, pages 120–131\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: McBurney and McMillan (2014) Paul W McBurney and Collin McMillan. 2014. Automatic
+    documentation generation via source code summarization of method context. In *Proceedings
+    of the 22nd International Conference on Program Comprehension*, pages 279–290.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (73) Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher. Pointer
+    sentinel mixture models. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mi et al. (2022a) Qing Mi, Yiqun Hao, Maran Wu, and Liwei Ou. 2022a. An enhanced
+    data augmentation approach to support multi-class code readability classification.
+    In *International conference on software engineering and knowledge engineering*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mi et al. (2022b) Qing Mi, Luo Wang, Lisha Hu, Liwei Ou, and Yang Yu. 2022b.
+    Improving multi-class code readability classification with an enhanced data augmentation
+    approach (130). *International Journal of Software Engineering and Knowledge Engineering*,
+    32(11n12):1709–1731.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mi et al. (2021) Qing Mi, Yan Xiao, Zhi Cai, and Xibin Jia. 2021. The effectiveness
+    of data augmentation in code readability classification. *Information and Software
+    Technology*, 129:106378.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mialon et al. (2023) Grégoire Mialon, Roberto Dessì, Maria Lomeli, Christoforos
+    Nalmpantis, Ram Pasunuru, Roberta Raileanu, Baptiste Rozière, Timo Schick, Jane
+    Dwivedi-Yu, Asli Celikyilmaz, et al. 2023. Augmented language models: a survey.
+    *arXiv preprint arXiv:2302.07842*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Miceli-Barone and Sennrich (2017) Antonio Valerio Miceli-Barone and Rico Sennrich.
+    2017. A parallel corpus of python functions and documentation strings for automated
+    code documentation and code generation. In *Proceedings of the Eighth International
+    Joint Conference on Natural Language Processing (Volume 2: Short Papers)*, pages
+    314–319.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mockus et al. (2002) Audris Mockus, Roy T Fielding, and James D Herbsleb. 2002.
+    Two case studies of open source software development: Apache and mozilla. *ACM
+    Transactions on Software Engineering and Methodology (TOSEM)*, 11(3):309–346.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nashid et al. (2023) Noor Nashid, Mifta Sintaha, and Ali Mesbah. 2023. Retrieval-based
+    prompt selection for code-related few-shot learning. In *Proceedings of the 45th
+    International Conference on Software Engineering (ICSE’23)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Nijkamp et al. (2023) Erik Nijkamp, Bo Pang, Hiroaki Hayashi, Lifu Tu, Huan
+    Wang, Yingbo Zhou, Silvio Savarese, and Caiming Xiong. 2023. Codegen: An open
+    large language model for code with multi-turn program synthesis. *ICLR*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Odena et al. (2017) Augustus Odena, Christopher Olah, and Jonathon Shlens. 2017.
+    Conditional image synthesis with auxiliary classifier gans. In *International
+    conference on machine learning*, pages 2642–2651\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Orlanski et al. (2023) Gabriel Orlanski, Kefan Xiao, Xavier Garcia, Jeffrey
+    Hui, Joshua Howland, Jonathan Malmaud, Jacob Austin, Rishah Singh, and Michele
+    Catasta. 2023. Measuring the impact of programming language distribution. *arXiv
+    preprint arXiv:2302.01973*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Orvalho et al. (2022) Pedro Orvalho, Mikoláš Janota, and Vasco Manquinho. 2022.
+    Multipas: applying program transformations to introductory programming assignments
+    for data augmentation. In *Proceedings of the 30th ACM Joint European Software
+    Engineering Conference and Symposium on the Foundations of Software Engineering*,
+    pages 1657–1661.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Papineni et al. (2002) Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing
+    Zhu. 2002. Bleu: a method for automatic evaluation of machine translation. In
+    *Annual Meeting of the Association for Computational Linguistics*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park et al. (2023) Shinwoo Park, Youngwook Kim, and Yo-Sub Han. 2023. Contrastive
+    learning with keyword-based data augmentation for code search and code question
+    answering. In *Conference of the European Chapter of the Association for Computational
+    Linguistics*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Parvez et al. (2021) Md Rizwan Parvez, Wasi Ahmad, Saikat Chakraborty, Baishakhi
+    Ray, and Kai-Wei Chang. 2021. Retrieval augmented code generation and summarization.
+    In *Findings of the Association for Computational Linguistics: EMNLP 2021*, pages
+    2719–2734.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pinku et al. (2023) Subroto Nag Pinku, Debajyoti Mondal, and Chanchal K Roy.
+    2023. Pathways to leverage transcompiler based data augmentation for cross-language
+    clone detection. *arXiv preprint arXiv:2303.01435*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pour et al. (2021) Maryam Vahdat Pour, Zhuo Li, Lei Ma, and Hadi Hemmati. 2021.
+    A search-based testing framework for deep neural networks of source code embedding.
+    In *2021 14th IEEE Conference on Software Testing, Verification and Validation
+    (ICST)*, pages 36–46\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Puri et al. (2021) Ruchir Puri, David Kung, Geert Janssen, Wei Zhang, Giacomo
+    Domeniconi, Vladimir Zolotov, Julian Dolby, Jie Chen, Mihir Choudhury, Lindsey
+    Decker, et al. 2021. Codenet: A large-scale ai for code dataset for learning a
+    diversity of coding tasks. In *Annual Conference on Neural Information Processing
+    Systems*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Quiring et al. (2019) Erwin Quiring, Alwin Maier, Konrad Rieck, et al. 2019.
+    Misleading authorship attribution of source code using adversarial learning. In
+    *USENIX Security Symposium*, pages 479–496.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rabin and Alipour (2022) Md Rafiqul Islam Rabin and Mohammad Amin Alipour.
+    2022. Programtransformer: A tool for generating semantically equivalent transformed
+    programs. *Software Impacts*, 14:100429.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rabin et al. (2021) Md Rafiqul Islam Rabin, Nghi DQ Bui, Ke Wang, Yijun Yu,
+    Lingxiao Jiang, and Mohammad Amin Alipour. 2021. On the generalizability of neural
+    program models with respect to semantic-preserving program transformations. *Information
+    and Software Technology*, 135:106552.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ray et al. (2019) Arijit Ray, Karan Sikka, Ajay Divakaran, Stefan Lee, and Giedrius
+    Burachas. 2019. Sunny and dark outside?! improving answer consistency in vqa through
+    entailed question generation. In *Proceedings of the 2019 Conference on Empirical
+    Methods in Natural Language Processing and the 9th International Joint Conference
+    on Natural Language Processing (EMNLP-IJCNLP)*, pages 5860–5865.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Raychev et al. (2016) Veselin Raychev, Pavol Bielik, and Martin Vechev. 2016.
+    Probabilistic model for code with decision trees. *ACM SIGPLAN Notices*, 51(10):731–747.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ren et al. (2020) Shuo Ren, Daya Guo, Shuai Lu, Long Zhou, Shujie Liu, Duyu
+    Tang, Neel Sundaresan, Ming Zhou, Ambrosio Blanco, and Shuai Ma. 2020. Codebleu:
+    a method for automatic evaluation of code synthesis. *arXiv preprint arXiv:2009.10297*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Roziere et al. (2020) Baptiste Roziere, Marie-Anne Lachaux, Lowik Chanussot,
+    and Guillaume Lample. 2020. Unsupervised translation of programming languages.
+    *Advances in Neural Information Processing Systems*, 33:20601–20611.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Roziere et al. (2021) Baptiste Roziere, Jie Zhang, Francois Charton, Mark Harman,
+    Gabriel Synnaeve, and Guillaume Lample. 2021. Leveraging automated unit tests
+    for unsupervised code translation. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sennrich et al. (2015) Rico Sennrich, Barry Haddow, and Alexandra Birch. 2015.
+    Improving neural machine translation models with monolingual data. *arXiv preprint
+    arXiv:1511.06709*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sennrich et al. (2016) Rico Sennrich, Barry Haddow, and Alexandra Birch. 2016.
+    [Improving neural machine translation models with monolingual data](https://doi.org/10.18653/v1/P16-1009).
+    In *Proceedings of the 54th Annual Meeting of the Association for Computational
+    Linguistics (Volume 1: Long Papers)*, pages 86–96, Berlin, Germany. Association
+    for Computational Linguistics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (101) Yiheng Shen, Xiaolin JU, Xiang Chen, and Guang Yang. Bash comment generation
+    via data augmentation and semantic-aware codebert. *Available at SSRN 4385791*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shi et al. (2023) Ensheng Shi, Yanlin Wang, Wenchao Gu, Lun Du, Hongyu Zhang,
+    Shi Han, Dongmei Zhang, and Hongbin Sun. 2023. Cocosoda: Effective contrastive
+    learning for code search. In *Proceedings of the 45th International Conference
+    on Software Engineering*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shi et al. (2022a) Yiwen Shi, Taha ValizadehAslani, Jing Wang, Ping Ren, Yi Zhang,
+    Meng Hu, Liang Zhao, and Hualou Liang. 2022a. Improving imbalanced learning by
+    pre-finetuning with data augmentation. In *Fourth International Workshop on Learning
+    with Imbalanced Domains: Theory and Applications*, pages 68–82\. PMLR.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shi et al. (2022b) Zejian Shi, Yun Xiong, Xiaolong Zhang, Yao Zhang, Shanshan
+    Li, and Yangyong Zhu. 2022b. Cross-modal contrastive learning for code search.
+    In *2022 IEEE International Conference on Software Maintenance and Evolution (ICSME)*,
+    pages 94–105\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shiri et al. (2022) Fatemeh Shiri, Terry Yue Zhuo, Zhuang Li, Shirui Pan, Weiqing
+    Wang, Reza Haffari, Yuan-Fang Li, and Van Nguyen. 2022. Paraphrasing techniques
+    for maritime qa system. In *2022 25th International Conference on Information
+    Fusion (FUSION)*, pages 1–8\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shorten and Khoshgoftaar (2019) Connor Shorten and Taghi M. Khoshgoftaar. 2019.
+    A survey on image data augmentation for deep learning. *Journal of Big Data*,
+    6:1–48.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Silva et al. (2023) André Silva, João F Ferreira, He Ye, and Martin Monperrus.
+    2023. Mufin: Improving neural repair models with back-translation. *arXiv preprint
+    arXiv:2304.02301*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Song et al. (2022) Zixuan Song, Xiuwei Shang, Mengxuan Li, Rong Chen, Hui Li,
+    and Shikai Guo. 2022. Do not have enough data? an easy data augmentation for code
+    summarization. In *2022 IEEE 13th International Symposium on Parallel Architectures,
+    Algorithms and Programming (PAAP)*, pages 1–6\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Springer et al. (2021) Jacob M. Springer, Bryn Marie Reinstadler, and Una-May
+    O’Reilly. 2021. [Strata: Simple, gradient-free attacks for models of code](http://arxiv.org/abs/2009.13562).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: (110) Shashank Srikant, Sijia Liu, Tamara Mitrovska, Shiyu Chang, Quanfu Fan,
+    Gaoyuan Zhang, and Una-May OŔeilly. Generating adversarial computer programs using
+    optimized obfuscations. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Stahlberg (2020) Felix Stahlberg. 2020. Neural machine translation: A review.
+    *Journal of Artificial Intelligence Research*, 69:343–418.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Surís et al. (2023) Dídac Surís, Sachit Menon, and Carl Vondrick. 2023. Vipergpt:
+    Visual inference via python execution for reasoning. *arXiv preprint arXiv:2303.08128*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Svajlenko et al. (2014) Jeffrey Svajlenko, Judith F Islam, Iman Keivanloo, Chanchal K
+    Roy, and Mohammad Mamun Mia. 2014. Towards a big data curated benchmark of inter-project
+    code clones. In *2014 IEEE International Conference on Software Maintenance and
+    Evolution*, pages 476–480\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tang et al. (2020) Ruixue Tang, Chao Ma, Wei Emma Zhang, Qi Wu, and Xiaokang
+    Yang. 2020. Semantic equivalent adversarial data augmentation for visual question
+    answering. In *Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK,
+    August 23–28, 2020, Proceedings, Part XIX 16*, pages 437–453. Springer.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tang et al. (2023) Ze Tang, Jidong Ge, Shangqing Liu, Tingwei Zhu, Tongtong
+    Xu, Liguo Huang, and Bin Luo. 2023. Domain adaptive code completion via language
+    models and decoupled domain databases.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tian et al. (2021) Junfeng Tian, Chenxin Wang, Zhen Li, and Yu Wen. 2021. Generating
+    adversarial examples of source code classification models via q-learning-based
+    markov decision process. In *2021 IEEE 21st International Conference on Software
+    Quality, Reliability and Security (QRS)*, pages 807–818\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tian et al. (2023) Zhao Tian, Junjie Chen, and Zhi Jin. 2023. Adversarial attacks
+    on neural models of code via code difference reduction. *arXiv preprint arXiv:2301.02412*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Treude and Robillard (2016) Christoph Treude and Martin P Robillard. 2016. Augmenting
+    api documentation with insights from stack overflow. In *Proceedings of the 38th
+    International Conference on Software Engineering*, pages 392–403.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wan et al. (2022) Yao Wan, Wei Zhao, Hongyu Zhang, Yulei Sui, Guandong Xu, and
+    Hai Jin. 2022. What do they capture? a structural analysis of pre-trained language
+    models for source code. In *Proceedings of the 44th International Conference on
+    Software Engineering*, pages 2377–2388.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wan et al. (2018) Yao Wan, Zhou Zhao, Min Yang, Guandong Xu, Haochao Ying, Jian
+    Wu, and Philip S Yu. 2018. Improving automatic source code summarization via deep
+    reinforcement learning. In *Proceedings of the 33rd ACM/IEEE international conference
+    on automated software engineering*, pages 397–407.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2022a) Deze Wang, Zhouyang Jia, Shanshan Li, Yue Yu, Yun Xiong,
+    Wei Dong, and Xiangke Liao. 2022a. Bridging pre-trained models and downstream
+    tasks for source code understanding. In *Proceedings of the 44th International
+    Conference on Software Engineering*, pages 287–298.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2022b) Jianzong Wang, Shijing Si, Zhitao Zhu, Xiaoyang Qu, Zhenhou
+    Hong, and Jing Xiao. 2022b. Leveraging causal inference for explainable automatic
+    program repair. In *2022 International Joint Conference on Neural Networks (IJCNN)*,
+    pages 1–6\. IEEE.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2023a) Shangwen Wang, Bo Lin, Zhensu Sun, Ming Wen, Yepang Liu,
+    Yan Lei, and Xiaoguang Mao. 2023a. Two birds with one stone: Boosting code generation
+    and code search via a generative adversarial network. *Proceedings of the ACM
+    on Programming Languages*, 7(OOPSLA2):486–515.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2023b) Shiqi Wang, Zheng Li, Haifeng Qian, Chenghao Yang, Zijian
+    Wang, Mingyue Shang, Varun Kumar, Samson Tan, Baishakhi Ray, Parminder Bhatia,
+    Ramesh Nallapati, Murali Krishna Ramanathan, Dan Roth, and Bing Xiang. 2023b.
+    Recode: Robustness evaluation of code generation models. In *Proceedings of the
+    61th Annual Meeting of the Association for Computational Linguistics (Volume 1:
+    Long Papers)*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2021a) Shuohang Wang, Yang Liu, Yichong Xu, Chenguang Zhu, and
+    Michael Zeng. 2021a. Want to reduce labeling cost? gpt-3 can help. In *Findings
+    of the Association for Computational Linguistics: EMNLP 2021*, pages 4195–4205.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2016) Song Wang, Taiyue Liu, and Lin Tan. 2016. Automatically learning
+    semantic features for defect prediction. In *Proceedings of the 38th International
+    Conference on Software Engineering*, pages 297–308.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2023c) Weishi Wang, Yue Wang, Shafiq Joty, and Steven CH Hoi.
+    2023c. Rap-gen: Retrieval-augmented patch generation with codet5 for automatic
+    program repair.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2022c) Xiao Wang, Qiong Wu, Hongyu Zhang, Chen Lyu, Xue Jiang,
+    Zhuoran Zheng, Lei Lyu, and Songlin Hu. 2022c. Heloc: Hierarchical contrastive
+    learning of source code representation. In *Proceedings of the 30th IEEE/ACM International
+    Conference on Program Comprehension*, pages 354–365.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2022d) Xin Wang, Xiao Liu, Pingyi Zhou, Qixia Liu, Jin Liu, Hao
+    Wu, and Xiao Cui. 2022d. Test-driven multi-task learning with functionally equivalent
+    code transformation for neural code generation. *Proceedings of the 37th IEEE/ACM
+    International Conference on Automated Software Engineering*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2022e) Xin Wang, Xiao Liu, Pingyi Zhou, Qixia Liu, Jin Liu, Hao
+    Wu, and Xiaohui Cui. 2022e. Test-driven multi-task learning with functionally
+    equivalent code transformation for neural code generation. In *Proceedings of
+    the 37th IEEE/ACM International Conference on Automated Software Engineering*,
+    pages 1–6.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2021b) Zeyu Wang, Sheng Huang, Zhongxin Liu, Meng Yan, Xin Xia,
+    Bei Wang, and Dan Yang. 2021b. Plot2api: recommending graphic api from plot via
+    semantic parsing guided neural network. In *2021 IEEE International Conference
+    on Software Analysis, Evolution and Reengineering (SANER)*, pages 458–469\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wen et al. (2020) Qingsong Wen, Liang Sun, Xiaomin Song, Jing Gao, Xue Wang,
+    and Huan Xu. 2020. Time series data augmentation for deep learning: A survey.
+    In *International Joint Conference on Artificial Intelligence*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wu et al. (2020) Sen Wu, Hongyang Zhang, Gregory Valiant, and Christopher Ré.
+    2020. On the generalization effects of linear transformations in data augmentation.
+    In *International Conference on Machine Learning*, pages 10410–10420\. PMLR.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wu et al. (2023) Xingbo Wu, Nathanaël Cheriere, Cheng Zhang, and Dushyanth
+    Narayanan. 2023. Rustgen: An augmentation approach for generating compilable rust
+    code with large language models.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xie et al. (2023) Yiqing Xie, Atharva Naik, Daniel Fried, and Carolyn Rose.
+    2023. Data augmentation for code translation with comparable corpora and multiple
+    references.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xu et al. (2020) Frank F Xu, Zhengbao Jiang, Pengcheng Yin, Bogdan Vasilescu,
+    and Graham Neubig. 2020. Incorporating external knowledge through pre-training
+    for natural language to code generation. In *Proceedings of the 58th Annual Meeting
+    of the Association for Computational Linguistics*, pages 6045–6052.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. (2023a) Guang Yang, Yu Zhou, Xiang Chen, Xiangyu Zhang, Tingting
+    Han, and Taolue Chen. 2023a. Exploitgen: Template-augmented exploit code generation
+    based on codebert. *Journal of Systems and Software*, 197:111577.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2022a) Guang Yang, Yu Zhou, Wenhua Yang, Tao Yue, Xiang Chen, and
+    Taolue Chen. 2022a. How important are good method names in neural code generation?
+    a model robustness perspective. *arXiv preprint arXiv:2211.15844*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2023b) Guang Yang, Yu Zhou, Xiangyu Zhang, Xiang Chen, Tingting
+    Han, and Taolue Chen. 2023b. Assessing and improving syntactic adversarial robustness
+    of pre-trained models for code translation. *arXiv preprint arXiv:2310.18587*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2023c) Hongyu Yang, Jianma Hui, Min Hou, Shuanghong Shen, and Enhong
+    Chen. 2023c. A pre-training method for enhanced code representation based on multimodal
+    contrastive learning. *Journal of Software*, 35(4):0–0.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2022b) Zhou Yang, Jieke Shi, Junda He, and David Lo. 2022b. Natural
+    attack for pre-trained models of code. In *Proceedings of the 44th International
+    Conference on Software Engineering*, pages 1482–1493.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yasunaga and Liang (2021) Michihiro Yasunaga and Percy Liang. 2021. Break-it-fix-it:
+    Unsupervised learning for program repair. In *International Conference on Machine
+    Learning*, pages 11941–11952\. PMLR.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ye et al. (2023) Tong Ye, Lingfei Wu, Tengfei Ma, Xuhong Zhang, Yangkai Du,
+    Peiyu Liu, Wenhai Wang, and Shouling Ji. 2023. Tram: A token-level retrieval-augmented
+    mechanism for source code summarization. *arXiv preprint arXiv:2305.11074*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yefet et al. (2020) Noam Yefet, Uri Alon, and Eran Yahav. 2020. Adversarial
+    examples for models of code. *Proceedings of the ACM on Programming Languages*,
+    4(OOPSLA):1–30.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yin and Neubig (2017) Pengcheng Yin and Graham Neubig. 2017. A syntactic neural
+    model for general-purpose code generation. In *Proceedings of the 55th Annual
+    Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)*,
+    pages 440–450.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yoo et al. (2021) Kang Min Yoo, Dongju Park, Jaewook Kang, Sang-Woo Lee, and
+    Woomyoung Park. 2021. Gpt3mix: Leveraging large-scale language models for text
+    augmentation. In *Findings of the Association for Computational Linguistics: EMNLP
+    2021*, pages 2225–2239.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yu et al. (2022a) Chi Yu, Guang Yang, Xiang Chen, Ke Liu, and Yanlin Zhou.
+    2022a. Bashexplainer: Retrieval-augmented bash code comment generation based on
+    fine-tuned codebert. In *2022 IEEE International Conference on Software Maintenance
+    and Evolution (ICSME)*, pages 82–93\. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yu et al. (2022b) Shiwen Yu, Ting Wang, and Ji Wang. 2022b. Data augmentation
+    by program transformation. *Journal of Systems and Software*, 190:111304.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2018) Hongyi Zhang, Moustapha Cisse, Yann N. Dauphin, and David
+    Lopez-Paz. 2018. [mixup: Beyond empirical risk minimization](https://openreview.net/forum?id=r1Ddp1-Rb).
+    In *International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2020a) Huangzhao Zhang, Zhuo Li, Ge Li, Lei Ma, Yang Liu, and
+    Zhi Jin. 2020a. Generating adversarial examples for holding robustness of source
+    code processing models. In *Proceedings of the AAAI Conference on Artificial Intelligence*,
+    volume 34, pages 1169–1176.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2020b) Jian Zhang, Xu Wang, Hongyu Zhang, Hailong Sun, and Xudong
+    Liu. 2020b. Retrieval-based neural source code summarization. In *Proceedings
+    of the ACM/IEEE 42nd International Conference on Software Engineering*, pages
+    1385–1397.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2020c) Xiaoqing Zhang, Yu Zhou, Tingting Han, and Taolue Chen.
+    2020c. Training deep code comment generation models via data augmentation. In
+    *Proceedings of the 12th Asia-Pacific Symposium on Internetware*, pages 185–188.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhang et al. (2022) Yifan Zhang, Chen Huang, Yueke Zhang, Kevin Cao, Scott Thomas
+    Andersen, Huajie Shao, Kevin Leach, and Yu Huang. 2022. Combo: Pre-training representations
+    of binary code using contrastive learning. *arXiv preprint arXiv:2210.05102*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zheng et al. (2021) Yunhui Zheng, Saurabh Pujar, Burn Lewis, Luca Buratti,
+    Edward Epstein, Bo Yang, Jim Laredo, Alessandro Morari, and Zhong Su. 2021. D2a:
+    A dataset built for ai-based vulnerability detection methods using differential
+    analysis. In *2021 IEEE/ACM 43rd International Conference on Software Engineering:
+    Software Engineering in Practice (ICSE-SEIP)*, pages 111–120. IEEE.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhou et al. (2019) Yaqin Zhou, Shangqing Liu, Jingkai Siow, Xiaoning Du, and
+    Yang Liu. 2019. Devign: Effective vulnerability identification by learning comprehensive
+    program semantics via graph neural networks. *Advances in neural information processing
+    systems*, 32.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhou et al. (2022) Yu Zhou, Xiaoqing Zhang, Juanjuan Shen, Tingting Han, Taolue
+    Chen, and Harald Gall. 2022. Adversarial robustness of deep code comment generation.
+    *ACM Transactions on Software Engineering and Methodology (TOSEM)*, 31(4):1–30.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhuo (2023) Terry Yue Zhuo. 2023. Large language models are state-of-the-art
+    evaluators of code generation. *arXiv preprint arXiv:2304.14317*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhuo et al. (2023a) Terry Yue Zhuo, Yujin Huang, Chunyang Chen, and Zhenchang
+    Xing. 2023a. Exploring ai ethics of chatgpt: A diagnostic analysis. *arXiv preprint
+    arXiv:2301.12867*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhuo et al. (2023b) Terry Yue Zhuo, Zhuang Li, Yujin Huang, Fatemeh Shiri,
+    Weiqing Wang, Gholamreza Haffari, and Yuan-Fang Li. 2023b. On robustness of prompt-based
+    semantic parsing with large pre-trained language model: An empirical study on
+    codex. In *Proceedings of the 17th Conference of the European Chapter of the Association
+    for Computational Linguistics*, pages 1090–1102.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zubkov et al. (2022) Maksim Zubkov, Egor Spirin, Egor Bogomolov, and Timofey
+    Bryksin. 2022. Evaluation of contrastive learning with various code representations
+    for code clone detection. *arXiv preprint arXiv:2206.08726*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

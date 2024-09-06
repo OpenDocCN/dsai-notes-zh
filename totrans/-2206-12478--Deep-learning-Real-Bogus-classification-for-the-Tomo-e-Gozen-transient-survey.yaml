@@ -1,0 +1,1318 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:45:29'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2206.12478] Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2206.12478](https://ar5iv.labs.arxiv.org/html/2206.12478)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: \Received
+  prefs: []
+  type: TYPE_NORMAL
+- en: $\langle$reception date$\rangle$ \Accepted$\langle$acception date$\rangle$ \Published$\langle$publication
+    date$\rangle$
+  prefs: []
+  type: TYPE_NORMAL
+- en: \KeyWords
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'supernovae: general — methods: statistical — surveys'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Ichiro Takahashi¹¹affiliation: Astronomical Institute, Tohoku University, Sendai,
+    Miyagi 980-8578, Japan ^*^*affiliationmark:    Ryo Hamasaki²²affiliation: Department
+    of Physics, Faculty of Science and Engineering, Konan University, 8-9-1 Okamoto,
+    Kobe, Hyogo 658-8501, Japan    Naonori Ueda³³affiliation: NTT Communication Science
+    Laboratories, 2-4 Hikaridai, Seika-cho, Keihanna Science City, Kyoto 619-0237,
+    Japan    Masaomi Tanaka¹¹affiliationmark: ⁴⁴affiliation: Division for the Establishment
+    of Frontier Sciences, Organization for Advanced Studies, Tohoku University, Sendai,
+    Miyagi 980-8577, Japan ⁵⁵affiliation: Kavli Institute for the Physics and Mathematics
+    of the Universe (WPI), The University of Tokyo, 5-1-5 Kashiwanoha, Kashiwa, Chiba
+    277-8583, Japan    Nozomu Tominaga⁶⁶affiliation: National Astronomical Observatory
+    of Japan, 2-21-1 Osawa, Mitaka, Tokyo 181-8588, Japan ⁷⁷affiliation: Department
+    of Astronomical Science, School of Physical Sciences, The Graduate University
+    of Advanced Studies (SOKENDAI) 2-21-1 Osawa, Mitaka, Tokyo 181-8588, Japan ²²affiliationmark:
+    ⁵⁵affiliationmark:    Shigeyuki Sako⁸⁸affiliation: Institute of Astronomy, Graduate
+    School of Science, The University of Tokyo, 2-21-1 Osawa, Mitaka, Tokyo 181-0015,
+    Japan ⁹⁹affiliation: UTokyo Organization for Planetary Space Science, The University
+    of Tokyo, Hongo, Bunkyo-ku, Tokyo 113-0033, Japan ^(10)^(10)affiliation: Collaborative
+    Research Organization for Space Science and Technology, The University of Tokyo,
+    Hongo, Bunkyo-ku, Tokyo 113-0033, Japan    Ryou Ohsawa⁸⁸affiliationmark:    and
+    Naoki Yoshida^(11)^(11)affiliation: Department of Physics, Graduate School of
+    Science, The University of Tokyo, 7-3-1 Hongo, Bunkyo-ku, Tokyo 113-0033, Japan
+    ⁵⁵affiliationmark: ^(12)^(12)affiliation: Institute for Physics of Intelligence,
+    The University of Tokyo, 7-3-1 Hongo, Bunkyo-ku, Tokyo 113-0033, Japan [ichiro.takahashi@astr.tohoku.ac.jp](mailto:ichiro.takahashi@astr.tohoku.ac.jp)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: We present a deep neural network Real/Bogus classifier that improves classification
+    performance in the Tomo-e Gozen transient survey by handling label errors in the
+    training data. In the wide-field, high-frequency transient survey with Tomo-e
+    Gozen, the performance of conventional convolutional neural network classifier
+    is not sufficient as about $10^{6}$ bogus detections appear every night. In need
+    of a better classifier, we have developed a new two-stage training method. In
+    this training method, label errors in the training data are first detected by
+    normal supervised learning classification, and then they are unlabeled and used
+    for training of semi-supervised learning. For actual observed data, the classifier
+    with this method achieves an area under the curve (AUC) of 0.9998 and a false
+    positive rate (FPR) of 0.0002 at true positive rate (TPR) of 0.9. This training
+    method saves relabeling effort by humans and works better on training data with
+    a high fraction of label errors. By implementing the developed classifier in the
+    Tomo-e Gozen pipeline, the number of transient candidates was reduced to $\sim$40
+    objects per night, which is $\sim$1/130 of the previous version, while maintaining
+    the recovery rate of real transients. This enables more efficient selection of
+    targets for follow-up observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Time-domain astronomy has become an active area in the modern astronomy. Studies
+    of transient phenomena such as supernovae have been rapidly developing in recent
+    years. To observe transients efficiently, transient surveys have become more wide-field,
+    more sensitive, and more frequent. As a result, the number of discovered transients
+    has dramatically increased; the reported number of transients reach tens of thousands
+    per year. In the near future, hundreds of transient objects will be discovered
+    every night with e.g., the Vera C. Rubin Observatory ([[Ivezić et al. (2019)](#bib.bib15)]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To detect transients from large data, most of transient surveys implement image
+    subtraction method. It detects transients by subtracting the past reference image
+    from the observed new image. By image subtraction, only objects that change brightness,
+    such as transients, can be extracted. The subtraction method can efficiently detect
+    transients blended in galaxies. However, this method also has disadvantage, that
+    is, it tends to generate a large amount of fake detections (hereafter called Bogus).
+    Therefore, development of efficient methods to remove a large number of Bogus
+    has become important. In order to select the target for follow-up observations,
+    it is necessary to extract the real transients (hereafter called Real) from the
+    detected candidates that include Bogus. However, with the increase of the scale
+    of observations, the number of Bogus has increased to a level that is not feasible
+    for the human eyes to check. For example, in Palomar Transient Factory (PTF; [[Law
+    et al. (2009)](#bib.bib18)]), an order of $10^{6}$ potential candidates are detected
+    per night ([[Brink et al. (2013)](#bib.bib6)]). Among these, the number of Bogus
+    is estimated to be more than 1000 times greater than that of Real ([[Mahabal et al.
+    (2019)](#bib.bib19)]). Thus, conventional selection methods, such as the parameter
+    cutting, are no longer able to narrow down the candidates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Machine learning techniques are therefore gaining attention as an alternative
+    method. In the case of Real/Bogus classification, by allowing the machine to learn
+    the relationship between the data of detected objects and their classification
+    results, the machine can classify transient candidates. If trained in advance,
+    classification is fast and can be performed in real time for a large amount of
+    data. Various methods for Real/Bogus classification by machine learning have been
+    proposed and implemented in many transient surveys. In the early era, classification
+    was performed by inputting features extracted from images into Random Forest or
+    Neural Networks (e.g., [[Bloom et al. (2012)](#bib.bib5)]; [[Brink et al. (2013)](#bib.bib6)];
+    [[Wright et al. (2015)](#bib.bib30)]; [[Morii et al. (2016)](#bib.bib21)]). Recently,
+    the use of Convolutional Neural Networks (CNN), in which image data are directly
+    input and the machine itself learns features, has become mainstream (e.g., [[Gieseke
+    et al. (2017)](#bib.bib9)]; [[Turpin et al. (2020)](#bib.bib27)]; [[Killestein
+    et al. (2021)](#bib.bib16)]; [[Hosenie et al. (2021)](#bib.bib13)]). For example,
+    In the Zwicky Transient Facility (ZTF; [[Bellm et al. (2019)](#bib.bib4)]) survey,
+    a CNN-based classifier, braai ([[Duev et al. (2019)](#bib.bib7)]) is applied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Tomo-e Gozen transient survey is a time-domain survey project, which utilizes
+    a wide-field Tomo-e Gozen camera with 84 CMOS sensors covering a field of view
+    of 20 deg² per exposure ([[Sako et al. (2018)](#bib.bib24)]). The transient survey
+    is performed with a high cadence of about 3-4 times per night with a typical sensitivity
+    of 18 mag without filters. The survey is observing at a rate of $10^{5}$ images/day,
+    and as many as $10^{6}$ transient candidates are detected every night. Although
+    the CNN classifier was used to sort out real transients from these candidates,
+    which are mostly Bogus, the classification performance was not sufficient. There
+    was still a large amount of false positives (an order of $10^{3}$/day), i.e.,
+    Bogus classified as Real. Thus, we needed a new classifier with a higher performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To obtain a higher performance in classification, one can use more complex models.
+    In general, training of complex models requires large amounts of training data.
+    In such cases, the training is usually done by using simulated data rather than
+    real data. However, with millions of samples of simulated data, it becomes infeasible
+    to check their quality of simulation data manually. As a result, the training
+    data can be contaminated by label errors, e.g., Real mislabeled as Bogus. When
+    label errors are included in the training data, they cause an adverse impact on
+    performance (e.g., [[Ayyar et al. (2022)](#bib.bib2)]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This paper describes improvements in the Real/Bogus classification of the Tomo-e
+    Gozen transient survey by using complex machine learning model and by handling
+    label errors. The structure of this paper is as follows. We first introduce the
+    observational dataset used in this work in section 2. Then, the design of the
+    new classifiers is described in section 3. The performance of these classifiers
+    is presented in section 4. In section 5, we discuss key factors for improving
+    the performance and show improvements in the actual operation. Finally, we give
+    conclusions in section 6.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Observational data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we describe our transient survey and dataset used to develop
+    the machine learning classifier. We use the optical images from Tomo-e Gozen camera
+    mounted on the 1.05m Kiso Schmidt telescope ([[Sako et al. (2018)](#bib.bib24)]).
+    The Tomo-e Gozen camera is a mosaic camera equipped with 84 CMOS sensors. Thanks
+    to the fast CMOS readout, the survey data are taken with a rate of 2 frames/sec.
+    For the transient survey, 12 or 18 consecutive images (6 or 9 sec exposure) are
+    taken with no filter, and these images are stacked. A typical limiting magnitude
+    of the stacked image is 18 mag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For transient detection, image subtraction between the stacked image and the
+    reference image is performed. For image subtraction, we use the hotpants software
+    ([[Becker (2015)](#bib.bib3)]), which is based on the method by Alard & Lupton
+    ([1998](#bib.bib1)). We use Pan-STARRS1 (PS1) $r$-band data (Waters et al. ([2020](#bib.bib29));
+    Flewelling et al. ([2020](#bib.bib8))) as reference images. Since PS1 data have
+    better sensitivity and better seeing, the sensitivity of the Tomo-e Gozen image
+    is not degraded even after the image subtraction, which enables the efficient
+    transient detection. Also, as the Tomo-e Gozen camera is a newly developed camera,
+    there were no deep stacked images at the beginning of the operation. Thus, the
+    use of the existing PS1 data enables the transient survey even at the early stage
+    of the operation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thanks to the high observing rate, as many as $10^{5}$ stacked images are taken
+    every night in the Tomo-e Gozen transient survey. The number of transient candidates
+    can reach $10^{6}$ in one night. As in other transient surveys, the detected candidates
+    are by far dominated by Bogus detection. Also, image subtraction between different
+    telescopes/instruments tend to cause more Bogus due to the differences in various
+    factors of the data, for example, response functions or pixel scales. In this
+    paper, we show that this difficulty can be overcome by developing the high-performance,
+    complex machine learning classifier (section [3](#S3 "3 Method ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/47b4384a56ddd2158f064d63dbcd2ffc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: An example of input images (new, reference, and subtracted images
+    from left to right).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We here describe the dataset used to develop the machine learning classifier.
+    For the Real/Bogus classification, we use a set of three images: observed new
+    image, reference image, and subtracted image. For each, a cutout image around
+    the transient candidate (29 $\times$ 29 pixels) is used as a input of the classifier.
+    Figure [1](#S2.F1 "Figure 1 ‣ 2 Observational data ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey") shows an example of cutout
+    images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since we need large dataset for training of complex machine, we use artificial
+    objects as Real for training dataset. For this purpose, we constructed a point
+    spread function (PSF) for each image by measuring the shapes of stars in the image,
+    and then embedded the constructed PSF into the observational images with various
+    brightness. The artificial objects were embedded at two kinds of locations: (1)
+    uniform distribution around galaxies, and (2) random distribution for the entire
+    region of the images. Here, (1) and (2) mimic normal transients and hostless transients,
+    respectively. We prepared about $6\times 10^{5}$ samples for each case. When embedding
+    artificial sources around galaxies, we randomly selected objects registered as
+    extended sources in the Pan-STARRS catalog.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For Bogus samples of training data, we used actual Bogus objects which were
+    detected in the subtracted images of Tomo-e Gozen. Figure [2](#S2.F2 "Figure 2
+    ‣ 2 Observational data ‣ Deep-learning Real/Bogus classification for the Tomo-e
+    Gozen transient survey") shows examples of Bogus in our dataset. The total number
+    of the Bogus samples is $2\times 10^{6}$. The majority of them are false detections
+    due to failed subtraction ((a) and (b) in figure [2](#S2.F2 "Figure 2 ‣ 2 Observational
+    data ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey")). Other cases include the false detection due to the diffracted light
+    from bright stars (c), hot pixels of the sensor (d), and artificial noise patterns
+    due to malfunction of the data acquisition system ((e) and (f)). It is emphasized
+    that a small amount of Real transients can be included in the Bogus samples since
+    we assume that all the detected objects are Bogus (i.e., label error, see section [4.2](#S4.SS2
+    "4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5785e21594a964aad5b3f23aa3054cc1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Examples of Bogus detection.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the validation dataset, we used samples extracted from the actual observational
+    data from January to April 2021. The Real dataset includes 125 objects reported
+    to the Transient Name Server (TNS)¹¹1TNS $\langle$https://www.wis-tns.org$\rangle$.
+    that were observed by Tomo-e Gozen. Since some of them were detected multiple
+    times, the total number of Real samples is 363. As Bogus samples, we used Bogus
+    objects in the same images where the Real objects are detected. The total number
+    of Bogus is 255,777. The actual Bogus to Real ratio is much higher than this sample
+    ratio (see section [5.2](#S5.SS2 "5.2 Performance in actual operations ‣ 5 Discussion
+    ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey")).
+    Nevertheless, this sample ratio was adopted because the size of Bogus dataset
+    would exceed that of the training dataset if we adopt the actual ratio ($\sim$
+    1:$10^{6}$). The number of samples in training and validation dataset are summarized
+    in table [2](#S2 "2 Observational data ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we test our classifiers in the actual operation of the Tomo-e Gozen
+    transient survey (section [5.2](#S5.SS2 "5.2 Performance in actual operations
+    ‣ 5 Discussion ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen
+    transient survey")). For this purpose, we use the data taken for five nights,
+    which correspond to about $5\times 10^{5}$ images and $5\times 10^{6}$ detections
+    in total.
+  prefs: []
+  type: TYPE_NORMAL
+- en: \tbl
+  prefs: []
+  type: TYPE_NORMAL
+- en: Number of training and validation dataset. Dataset Number Note Training Real
+    1,224,773 Artificial Bogus 2,031,193 Actual Validation Real 363 TNS Bogus 255,777
+    Actual
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Method
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To improve the performance of the conventional classifier, we modify the neural
+    network into the one with a more complex structure (section [3.1](#S3.SS1 "3.1
+    Model architecture ‣ 3 Method ‣ Deep-learning Real/Bogus classification for the
+    Tomo-e Gozen transient survey")). In addition, in order to take advantage of neural
+    networks with complex structures, we propose a new training method²²2The source
+    code of our proposed method is available at $\langle$https://github.com/ichiro-takahashi/tomoe-realbogus$\rangle$.
+    devised for objective functions and dataset handling (section [3.2](#S3.SS2 "3.2
+    Training methods ‣ 3 Method ‣ Deep-learning Real/Bogus classification for the
+    Tomo-e Gozen transient survey")).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Model architecture
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This subsection describes the model structure of a simple conventional model,
+    which serves as a baseline, and a more complex model we propose. Hereafter, we
+    call them as “Simple model” and “Complex model”, respectively. Both models perform
+    binary classification (Real or Bogus) for a detected object by using three input
+    images. Since Real class is important here, Real class and Bogus class are defined
+    as positive class and negative class, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1 Simple model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As shown in figure [4](#footnote4 "footnote 4 ‣ Figure 3 ‣ 3.1.1 Simple model
+    ‣ 3.1 Model architecture ‣ 3 Method ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey"), the Simple model consists of two convolutional
+    layers in the first half and three fully connected layers in the second half.
+    This structure follows the VGG model (Simonyan & Zisserman ([2014](#bib.bib25))),
+    which is a basic model structure for image classification tasks using deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ddfd0e2580a2c7ed1aca8ca403d88a7d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Architecture diagram of the Simple model. Since no padding is performed
+    in the convolution layer, the spatial size of the features decreases with each
+    pass through the convolution layer. The model adopts kernel_size$=$5 for the first
+    convolutional layer and kernel_size$=$3 for the second convolutional layer. The
+    flatten layer collapses the input (6,6,64) features into a vector with a size
+    of 2304. In the dropout layer, the probability of the value being 0 is set to
+    0.3. This figure was generated by PlotNeuralNet ⁴⁴4PlotNeuralNet $\langle$https://github.com/HarisIqbal88/PlotNeuralNet$\rangle$.
+    and modified.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '⁴⁴footnotetext: PlotNeuralNet $\langle$https://github.com/HarisIqbal88/PlotNeuralNet$\rangle$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In order to keep the range of values inside the network consistent, we normalize
+    the input images. The normalization is performed on the original image $\mathbf{u}_{i,c}\in\mathcal{R}^{H\times
+    W}$ of the $c$th channel in the $i$th sample ($H$ and $W$ are the height and width
+    of each image) as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathbf{x}_{i,c}=\frac{\mathbf{u}_{i,c}-\min\left(\mathbf{u}_{i,c}\right)}{\max\left(\mathbf{u}_{i,c}\right)-\min\left(\mathbf{u}_{i,c}\right)},$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\max\left(\right)$ and $\min\left(\right)$ are functions that return
+    the maximum and minimum values of the image, respectively. The output of the network
+    is a two-dimensional vector. By normalizing the output vector with the softmax
+    function, it can be interpreted as a probability that the object is Real.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2 Complex model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: To achieve higher performance than the Simple model, we increase the number
+    of layers in the new Complex model. However, increasing the number of layers makes
+    training more difficult. One famous model that addresses this problem is ResNet
+    (He et al. ([2016a](#bib.bib10)); He et al. ([2016b](#bib.bib11))), which has
+    various extended versions. Among many extensions of ResNet, we have adopted SE-ResNet,
+    which includes a channel and spatial Squeeze & Excitation (csSE) layer (Roy et al.
+    ([2018](#bib.bib23))). Figure [4](#S3.F4 "Figure 4 ‣ 3.1.2 Complex model ‣ 3.1
+    Model architecture ‣ 3 Method ‣ Deep-learning Real/Bogus classification for the
+    Tomo-e Gozen transient survey") shows the architecture diagram of the Complex
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/01e800dffa49120035f56d439a2fb9b4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Architecture diagram of the Complex model. In the convolution layer,
+    the kernel size is 5 only in the first layer after input and it is 3 in the remaining
+    layers. Also, padding is performed to make the size in the spatial direction the
+    same for input and output. Each region with a light blue background is a Residual
+    Block. The third Residual Block from the input side has a convolution layer with
+    stride$=$2 in the skip connection to adjust the feature size. The global averaging
+    pooling calculates averages in the spatial direction for each channel and downsamples
+    features of size (4, 4, 256) into a 256-dimensional vector. This figure was generated
+    by PlotNeuralNet and modified.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ResNet is a network structure consisting of stacked Residual Blocks, each of
+    which consists of convolutional layers and a skip connection between the input
+    and the output of the block. The skip connection eliminates the vanishing gradient
+    problem and this facilitates performance of training. Since it is difficult to
+    learn the identity map only with convolutional layers, there is a problem that
+    too many convolutional layers degrade the performance. The skip connection makes
+    it easier to learn the identity map in the entire Residual Block. Therefore, high
+    performance can be achieved even in a deep network of stacked Residual Blocks.
+    Since the csSE layer emphasizes the effective parts of the features for classification,
+    SE-ResNet is expected to improve classification performance compared to the original
+    ResNet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One component of the Residual Block is the Batch Normalization layer (Ioffe
+    & Szegedy ([2015](#bib.bib14))). It has the effect of stabilizing and speeding
+    up training which contributes to the success in learning deep networks. However,
+    Batch Normalization has several weaknesses, one of which is its performance degrading
+    when the samples in a batch are highly correlated. This is a concern when there
+    are many similar images with a high correlation, such as astronomical images.
+    Therefore, instead of using Batch Normalization, we used Filter Response Normalization
+    (Singh & Krishnan ([2020](#bib.bib26))), which is not affected by the correlation
+    between samples because the normalization is done per channel and per sample.
+    The input to the network, its normalization method, and the format of the output
+    are the same as for the Simple model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Training methods
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This subsection describes the training methods for the conventional and new
+    classifiers. We test multiple methods for three phases of training: (1) how to
+    treat the training data, (2) which objective function is used, and (3) how to
+    handle label errors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Treatment of training data
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'For the treatment of training data, two methods are tested: the first one is
+    to prepare the training data for each CMOS sensor and prepare a classifier for
+    each sensor; the other is to combine the training data of all the sensors and
+    train a single classifier to classify the data of all the sensors. These tests
+    are performed because it is not obvious which option gives a better performance,
+    i.e, having each classifier specialized for each sensor to care the sensor diversity
+    or having a unified classifier for all the sensors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Objective functions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'For objective functions for training, three types of functions are used: the
+    cross-entropy function, exp-Cross-hinge function (Kurora et al. ([2020](#bib.bib17))),
+    and local distributional smoothness function (Miyato et al. ([2016](#bib.bib20))).
+    They are used for the purpose of loss function for individual samples, loss function
+    for the entire dataset, and loss function to make the classifier robust to input
+    perturbation, respectively. Each training image $\mathbf{x}$ prepared in section
+    [2](#S2 "2 Observational data ‣ Deep-learning Real/Bogus classification for the
+    Tomo-e Gozen transient survey") is paired with a teacher label $y$ indicating
+    whether the image is positive class or negative class. In this work, we dare to
+    ignore the labels of some of the training data (we call this procedure “unlabel”).
+    We describe why we ignore the labels and how to select them from the dataset in
+    section [3.2.3](#S3.SS2.SSS3 "3.2.3 Handling of label errors ‣ 3.2 Training methods
+    ‣ 3 Method ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey"). The objective function is defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L\left(\left\{\mathbf{x}_{l},y\right\},\left\{\mathbf{x}_{u}\right\};\boldsymbol{\theta}\right)$
+    | $\displaystyle=$ | $\displaystyle\lambda_{\mathrm{ce}}L_{\mathrm{ce}}\left(\left\{\mathbf{x}_{l},y\right\};\boldsymbol{\theta}\right)$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  |  | $\displaystyle+\lambda_{\mathrm{ech}}L_{\mathrm{ech}}\left(\left\{\mathbf{x}_{l},y\right\};\boldsymbol{\theta}\right)$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  |  | $\displaystyle+\lambda_{\mathrm{lds}}L_{\mathrm{lds}}\left(\left\{\mathbf{x}_{l}\right\}\cup\left\{\mathbf{x}_{u}\right\};\boldsymbol{\theta}\right).$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, $\left\{\mathbf{x}_{l},y\right\}$ is a set of pairs of labeled image and
+    its label, $\left\{\mathbf{x}_{u}\right\}$ is a set of unlabeled images, $\boldsymbol{\theta}$
+    is a set of trainable variables of the neural network, and $L_{\mathrm{ce}}$,
+    $L_{\mathrm{ech}}$, and $L_{\mathrm{lds}}$ are cross-entropy loss, exp-Cross-hinge
+    loss, and local distributional smoothness (LDS) loss, respectively. The exp-Cross-hinge
+    function is related to Area Under the Curve (AUC) maximization. The local distribution
+    smoothness function is a key component of the Virtual Adversarial Training (VAT).
+    The details of each term are described in the Appendix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Three scalar hyper-parameters $\lambda_{\mathrm{ce}}$, $\lambda_{\mathrm{ech}}$,
+    and $\lambda_{\mathrm{lds}}$ control the effect of each term. By setting one or
+    two $\lambda$ values in equation ([2](#S3.E2 "In 3.2.2 Objective functions ‣ 3.2
+    Training methods ‣ 3 Method ‣ Deep-learning Real/Bogus classification for the
+    Tomo-e Gozen transient survey")) to 0, we can create several variations of the
+    objective functions. The objective function of the Simple model corresponds to
+    the case $\left(\lambda_{\mathrm{ce}},\lambda_{\mathrm{ech}},\lambda_{\mathrm{lds}}\right)^{T}=\left(1,0,0\right)^{T}$,
+    which equals to cross-entropy function. In section [4.2](#S4.SS2 "4.2 Effects
+    of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey"), we test four patterns of objective functions
+    for training the Complex model, where $\lambda_{\mathrm{ce}}$ is always non-zero
+    and $\lambda_{\mathrm{ech}}$ and $\lambda_{\mathrm{lds}}$ can be zero or non-zero.
+    It is necessary to tune the none zero element of the hyper-parameter $\left(\lambda_{\mathrm{ce}},\lambda_{\mathrm{ech}},\lambda_{\mathrm{lds}}\right)^{T}$.
+    This tuning is performed by grid search, and multiple trials are made at each
+    grid point to avoid possible variations in the results due to model initial values
+    and other factors. The best combination of $\lambda$ values is the one that produces
+    the model with the highest performance among the results of these trials.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In training, $\boldsymbol{\theta}$ is updated using the stochastic gradient
+    descent to minimize the value of the objective function defined above.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.3 Handling of label errors
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The training data we prepare are not always perfect. Some of them have incorrect
+    labels or are difficult to label. It would be better to correct these label errors
+    and train the classifiers with a clean training dataset. However, for large dataset,
+    it is not practical to manually check and correct all of these samples as it requires
+    an enormous amount of human effort. Therefore, we split the training into two
+    stages to handle label errors. In the first stage of training, the machine finds
+    samples that are likely to be mislabeled. Then, the second stage of training is
+    performed by handling the samples found in the first stage. In both stages, the
+    Complex model is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To find label errors, we first train the classifier with the original training
+    data by utilizing the fact that the ratio of label errors to the training data
+    is sufficiently small. The classifier then classifies the training data themselves
+    and identifies label errors. Specifically, the training dataset is divided into
+    five categories: one is used for evaluation and the remaining four are used to
+    train the classifier. Since there are five different ways to select data for evaluation,
+    all the training data can be evaluated by five training and evaluation cycles
+    in total. This method is the same as in Northcutt et al. ([2021](#bib.bib22)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After classifying the training data themselves, we determine which samples are
+    likely to have label errors based on the output of the classifier. Unlike Northcutt
+    et al. ([2021](#bib.bib22)), we simply set the classification boundary to a probability
+    of 0.5, and regard all misclassified samples as samples with potential label errors.
+    Although the threshold value of 0.5 makes more samples to be potential label errors
+    than the value used by Northcutt et al. ([2021](#bib.bib22)), the number of potential
+    label errors is small ($\sim 1\%$) relative to the entire dataset in our case
+    (section [4.2](#S4.SS2 "4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey")). Since the
+    samples with potential label errors are used in semi-supervised learning as unlabeled
+    samples, the effect of the overestimation is minor in the second stage of training
+    described below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the second stage of training, we try two different methods to handle label
+    errors. The first method is simply to remove the samples with potential label
+    errors from the training dataset. The second method is setting the samples with
+    potential label errors as “unlabeled” and then performing semi-supervised learning.
+    The VAT does not use the labels in the computation of the objective function,
+    which allows semi-supervised learning. Semi-supervised learning avoids the adverse
+    effects of samples with label errors, while effectively utilizing them as training
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we summarize the Real/Bogus classification performance for
+    the validation dataset with the various combinations of the models and training
+    methods described in the previous sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Effects of training data treatments
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We compare the performance of the three cases of the Simple models: (1) the
+    model trained for each CMOS senor (Simple-each), (2) the model that has the same
+    total number of samples as (1) but trained with samples of all sensors (Simple-mix),
+    and (3) the model trained with the entire data for all sensors (Simple-all).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we examine the impact of the sample diversity from multiple sensors on
+    performance. The conventional classifier adopts the Simple-each approach and are
+    trained using only cross-entropy loss as the objective function. Classification
+    based on a dataset from a single sensor can cause overfitting, in which the unique
+    “habits” of the dataset are used to classify the data. By training on datasets
+    from multiple sensors, it is possible to learn more essential features that do
+    not depend on unique “habits”, and thus to obtain the effect of data augmentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second, we study the effect of the size of the training data. In the Simple-all
+    case, the total number of actual training data is larger than that of the Simple-each
+    case by a factor of 84 (the number of sensors).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The performance of the classifier can be evaluated by the Receiver Operating
+    Characteristic (ROC) curve.⁵⁵5ROC curve shows the true positive rate (TPR) and
+    false positive rate (FPR) values measured with different thresholds. The better
+    the classification performance is, the closer the ROC curve is to the upper left
+    corner of the plot. The AUC of the ROC curve indicates the overall performance.
+    For the Simple-each case, since a classifier is prepared and tested for each sensor,
+    we measure the performance of these cases by combining the results of all sensors.
+    Figures [5](#S4.F5 "Figure 5 ‣ 4.1 Effects of training data treatments ‣ 4 Results
+    ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey")
+    and [6](#S4.F6 "Figure 6 ‣ 4.1 Effects of training data treatments ‣ 4 Results
+    ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey")
+    show the AUC and FPR for each Simple model, respectively. To see the variation
+    of the results, we plot the results of five training runs with different initial
+    seed values for each case. The FPR in figure [6](#S4.F6 "Figure 6 ‣ 4.1 Effects
+    of training data treatments ‣ 4 Results ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey") is defined at a threshold when the TPR
+    is 0.9. Comparison between the Simple-each case and the Simple-mix case shows
+    that data-mixing with different sensors gives better results thanks to the data
+    augmentation effect for the same size training data. Furthermore, the Simple-all
+    case achieved better results. This means that both the larger size of the training
+    data and the mixing of data from multiple sensors contribute to the improvement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/29c2328de36a7e939aac4e47e838968d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Comparison of AUC for the Simple models. The five points in each
+    model represent the performance variation with different initial seed values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/134a3f60cb1258cf18b09bca776643f4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Same as figure [5](#S4.F5 "Figure 5 ‣ 4.1 Effects of training data
+    treatments ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e
+    Gozen transient survey"), but for FPR at TPR=0.9.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Effects of label error handling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We here investigate whether treatment of label errors improves the performance
+    of the Complex model. For the baseline of the performance comparison, we use the
+    performance of the Simple-all case. When multiple objective functions are combined,
+    optimal values for the weight of the functions, i.e., $\lambda_{\mathrm{ce}}$,
+    $\lambda_{\mathrm{ech}}$, and $\lambda_{\mathrm{lds}}$, are obtained from the
+    parameter search for each case. The optimal values in each case are summarized
+    in table [4.2](#S4.SS2 "4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: First of all, we estimate the fraction of label errors in the training data.
+    For the training data, we use the entire data from all the sensors, as in the
+    Simple-all case. The left panel of figure [7](#S4.F7 "Figure 7 ‣ 4.2 Effects of
+    label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification for
+    the Tomo-e Gozen transient survey") shows the score distribution when the training
+    data themselves are classified using a Complex model trained with cross-entropy
+    loss for the label error identification. The score here is defined by the score
+    function in equation ([9](#Ax1.E9 "In exp-Cross-hinge loss (AUC maximization)
+    ‣ Details of objective function ‣ Deep-learning Real/Bogus classification for
+    the Tomo-e Gozen transient survey")), not probability. We pay particular attention
+    to samples that the classifier misclassifies, i.e., those in the tail of the Real
+    and Bogus distributions. For these samples, we check the images by visual inspection.
+    Since there are a large number of samples even in the tail, we conducted a sample
+    survey to estimate the fraction of label errors. The fraction is evaluated by
+    visually counting the label errors from randomly selected samples for each score
+    bin. The right panel of figure [7](#S4.F7 "Figure 7 ‣ 4.2 Effects of label error
+    handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e
+    Gozen transient survey") shows the distribution of the scores and the fraction
+    of label errors in each score bin. In fact, we find that the fraction of label
+    errors also increases at the edges of the distributions. Based on the estimated
+    fractions of label errors, the contamination ratio of label errors in the training
+    data is about 0.6% for Bogus and 1% for Real.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Refer to caption](img/c0df7a0010f93eb42dfab0c60a5a1309.png)  ![Refer to
+    caption](img/525d374c58d1b987a4d839aa7b4f6f0d.png)  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Figure 7: Left: Score distribution of the training dataset. Right: Score distribution
+    (left axis) and fraction of label errors estimated from a sample survey by human
+    eyes (right axis). The sample survey is performed at the edges of the score distribution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [8](#S4.F8 "Figure 8 ‣ 4.2 Effects of label error handling ‣ 4 Results
+    ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey")
+    shows examples with label errors at the edge of the score distribution. Among
+    these, those mislabeled as Bogus clearly show objects that appear to be transients.
+    On the other hand, those mislabeled as Real have embedded artificial stars, but
+    with a distinct Bogus detection. In other words, the labels are not correct for
+    these samples and the machine actually classifies them correctly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/10e91f05d6b202d226da0680e500ecf5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Examples of the samples with label errors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then, we investigate the effect to the classification performance for two different
+    ways to handle label errors. First, we examine the method in which we simply remove
+    the samples with potential label errors. The AUC and FPR with potential label
+    errors (indices 2 and 4) and without potential label errors (indices 3 and 5)
+    are shown in figures [9](#S4.F9 "Figure 9 ‣ 4.2 Effects of label error handling
+    ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey") and [10](#S4.F10 "Figure 10 ‣ 4.2 Effects of label error handling ‣ 4
+    Results ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey"), respectively. Two classifiers are used in the comparison: one with CE
+    only and the other with CE+AUC as the objective function. In figures  [9](#S4.F9
+    "Figure 9 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey") and [10](#S4.F10 "Figure
+    10 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey"), the CE, AUC, and VAT columns
+    indicate whether or not $L_{\mathrm{ce}}$, $L_{\mathrm{ech}}$, and $L_{\mathrm{lds}}$
+    are used, respectively. Both classifiers perform better when the samples with
+    potential label errors are removed (indices 3 and 5). The FPR is significantly
+    lower when the samples with potential label errors are removed while the AUC shows
+    no significant difference due to high variation in each seed value. However, in
+    all the cases, the classifiers removing potential label errors do not perform
+    better than the Simple-all case.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we examine the semi-supervised learning method in which all samples with
+    potential label errors are unlabeled. The AUC and FPR for the model with CE+AUC+VAT
+    as the objective function in each case are shown as indices 8 and 9 in figures [9](#S4.F9
+    "Figure 9 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey") and [10](#S4.F10 "Figure
+    10 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey"). In this comparison, the
+    method that handles potential label errors by unlabeling and by performing semi-supervised
+    learning (index 9) shows better results than the supervised learning with potential
+    label errors remaining (index 8). Furthermore, the semi-supervised learning method
+    (index 9) yields a lower FPR at TPR=0.9 than the method that removes potential
+    label errors (indices 3 and 5) and the Simple-all case (index 1). This means that
+    the semi-supervised learning method can achieve good performance even if the training
+    data contain label errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we compare the classification performance in all the cases with different
+    objective function combinations and with/without handling label errors. AUC and
+    FPR for all the cases are summarized in figures [9](#S4.F9 "Figure 9 ‣ 4.2 Effects
+    of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey") and [10](#S4.F10 "Figure 10 ‣ 4.2 Effects
+    of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification
+    for the Tomo-e Gozen transient survey"). Comparing all the cases, the case combining
+    the three objective functions and using semi-supervised learning achieved the
+    best results (index 9). For comparison, the prediction distributions and confusion
+    matrices for the Simple-each case, the Simple-all case, and the best classifier
+    are shown in figure [11](#S4.F11 "Figure 11 ‣ 4.2 Effects of label error handling
+    ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey"). In the best classifier, the number of Bogus misclassified as Real is
+    further reduced as compared with the Simple-all case, and the false positive of
+    the confusion matrix is 1/23 of that of the Simple-each case. The ROC curve of
+    the best classifier is shown with the green line in figure [12](#S4.F12 "Figure
+    12 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey"), where the AUC reaches
+    to 0.9998. Similarly, the relationship between FPR and false negative rate (FNR$=1-$TPR)
+    is plotted as figure [13](#S4.F13 "Figure 13 ‣ 4.2 Effects of label error handling
+    ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient
+    survey"). The FPR decreases to 0.0002 when FNR=0.1 (TPR=0.9).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ad35f2f7c28981f4ea6bad82830ed572.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Summary of AUC for all the classifiers. Five points in each case
+    represent the performance variation with different initial seed values. The filled
+    points indicate the training with the highest AUC for each case. The CE, AUC,
+    and VAT columns indicate whether or not each term of the objective function is
+    used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/eb2fa376c84f62346e09be9bed4d604e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Same as figure [9](#S4.F9 "Figure 9 ‣ 4.2 Effects of label error
+    handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e
+    Gozen transient survey"), but for FPR at TPR=0.9.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \tbl
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary of classification performance. Model type Data type CE AUC VAT $\lambda_{\mathrm{ce}}$
+    $\lambda_{\mathrm{ech}}$ $\lambda_{\mathrm{lds}}$ AUC FPR@TPR=0.9 simple each
+    $\checkmark$ 1.0 0.0 0.0 0.9916 $9.868\times 10^{-3}$ simple mix $\checkmark$
+    1.0 0.0 0.0 0.9964 $5.028\times 10^{-3}$ simple all $\checkmark$ 1.0 0.0 0.0 0.9997
+    $3.323\times 10^{-4}$ complex all $\checkmark$ 1.0 0.0 0.0 0.9993 $7.272\times
+    10^{-4}$ complex removed $\checkmark$ 1.0 0.0 0.0 0.9993 $8.367\times 10^{-4}$
+    complex all $\checkmark$ $\checkmark$ 0.3 0.7 0.0 0.9992 $1.306\times 10^{-3}$
+    complex removed $\checkmark$ $\checkmark$ 0.4 0.6 0.0 0.9996 $5.083\times 10^{-4}$
+    complex all $\checkmark$ $\checkmark$ 0.4 0.0 0.6 0.9997 $1.603\times 10^{-4}$
+    complex unlabeled $\checkmark$ $\checkmark$ 0.6 0.0 0.4 0.9997 $1.838\times 10^{-4}$
+    complex all $\checkmark$ $\checkmark$ $\checkmark$ 0.3 0.3 0.4 0.9997 $2.541\times
+    10^{-4}$ complex unlabeled $\checkmark$ $\checkmark$ $\checkmark$ 0.9 0.05 0.05
+    0.9998 $1.994\times 10^{-4}$
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3d37a2d2151fd7b20d46e343b1a78f71.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: Upper panels: distribution of output probability (to be Real) for
+    each classifier. Red and blue colors show the histograms for Real and Bogus samples,
+    respectively. Lower panels: Confusion matrix of each classifier. The predicted
+    labels in all the classifiers are the ones with a threshold of 0.5\. The ratio
+    in each row is normalized to 1\. The numbers in parentheses represent the raw
+    numbers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4f11d8e1951c12e81190c61402e86c59.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: ROC curves of the Simple-each classifier and the best classifier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/69498ca314e492406d16e8bed9266787.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13: FNR against FPR for the Simple-each classifier and the best classifier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we review the performance improvement in our Real/Bogus classification
+    and discuss the key factors of the improvement, as well as the actual performance
+    after implementing the best classifier in the Tomo-e Gozen transient pipeline.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 Performance analysis
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following is a summary of the improvement in the Tomo-e Gozen Real/Bogus
+    classification performance. As shown in table [4.2](#S4.SS2 "4.2 Effects of label
+    error handling ‣ 4 Results ‣ Deep-learning Real/Bogus classification for the Tomo-e
+    Gozen transient survey"), the best performance is achieved when all of the following
+    conditions are satisfied:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Training data for all the sensors are combined.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All three objective functions are used.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Semi-supervised learning is applied.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Compared to the Simple-each case, the AUC improves from 0.9916 to 0.9998 and
+    FPR at TPR$=$0.9 decreases from 0.0099 to 0.0002. Comparing the performance with
+    the ZTF Real/Bogus classifier (FPR$=$0.017 at TPR$=$0.983, Duev et al. ([2019](#bib.bib7))),
+    our best classifier gives FPR$=$0.003 at the same TPR. Although exact comparisons
+    cannot be made between Tomo-e Gozen and ZTF because the instruments, pipelines,
+    and Real/Bogus ratio are different, we achieve FPR comparable to that of the ZTF
+    classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We then discuss key factors in improving classification performance. First,
+    combining training data for different sensors significantly improved performance.
+    This improvement is a result of the data augmentation effect by mixing data from
+    multiple sensors with different characteristics. Also, the increasing the number
+    of training data improves the performance, as expected. In addition, incorporating
+    LDS loss into the objective function improves classification performance with
+    the Complex model compared to the Simple-all case. The Complex model tends to
+    overfit the training data because it can handle complex representations, resulting
+    in lower performance on the validation data. On the other hand, when LDS loss
+    is included in the objective function, the LDS-based regularization avoids overfitting
+    and improves performance. We also show that, by setting the label error samples
+    to unlabeled samples and by performing semi-supervised learning, the performance
+    is further improved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We here investigate whether the proposed method also works when there are more
+    label errors in training data. The fraction of label errors in our original training
+    dataset is about 1%. We artificially increase the fraction of label errors by
+    inverting the labels based on the estimated fraction of label errors (figure [7](#S4.F7
+    "Figure 7 ‣ 4.2 Effects of label error handling ‣ 4 Results ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey")). We then classify the
+    data with our best method, semi-supervised learning with data containing unlabeled
+    samples, and compare the results with those obtained by training with label errors
+    remaining. Figures [14](#S5.F14 "Figure 14 ‣ 5.1 Performance analysis ‣ 5 Discussion
+    ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen transient survey")
+    and [15](#S5.F15 "Figure 15 ‣ 5.1 Performance analysis ‣ 5 Discussion ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey") compare the
+    AUC and FPR when the ratio of label errors is increased to about 5% and 10%. It
+    is found that the degree of improvement is higher as the fraction of label errors
+    increases. When the fraction of label errors is 1%, by handling label errors,
+    the average FPR decreases from 0.0004 to 0.0002, i.e., an improvement by a factor
+    of about 2. On the other hand, when the fraction of label errors is 10%, the average
+    FPR decreases from 0.0039 to 0.0003, which corresponds to the improvement by a
+    factor of 13. This means that our method is more effective for datasets with higher
+    fractions of label errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/d4b00db1cbba66ff79a16dbfabb6a1b9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14: AUC for different fractions of label errors.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/1071384b6f36ac5f2558f1dc690aded2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 15: Same as figure [14](#S5.F14 "Figure 14 ‣ 5.1 Performance analysis
+    ‣ 5 Discussion ‣ Deep-learning Real/Bogus classification for the Tomo-e Gozen
+    transient survey") but for FPR at TPR$=$0.9.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Performance in actual operations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Finally, we discuss the actual performance of our best classifier when implemented
+    in the data analysis pipeline of Tomo-e Gozen. Prior to implementation, we determined
+    the threshold for the classification in the actual operation. Figure [16](#S5.F16
+    "Figure 16 ‣ 5.2 Performance in actual operations ‣ 5 Discussion ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey") shows the variation
+    of each metric as a function of the threshold. We set the threshold score to be
+    0.85, which gives the best precision while keeping TPR above 0.9.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/19eaca928eef55bb44f247c3e91f6b7a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 16: Variation of each metric as a function of threshold for the best
+    classifier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We investigate the changes in the number of transient candidates registered
+    in the Tomo-e Gozen transient database before and after the implementation. Figure [17](#S5.F17
+    "Figure 17 ‣ 5.2 Performance in actual operations ‣ 5 Discussion ‣ Deep-learning
+    Real/Bogus classification for the Tomo-e Gozen transient survey") shows the number
+    of registrations to the database before and after implementation over a five-day
+    period. As a rule for registration in the database, objects detected for the first
+    time by the classifier are registered as “variable”. Among the variable candidates,
+    those detected twice at the same coordinates are registered as “transient”. After
+    the implementation of the new classifier, the average numbers of variable and
+    transient registrations were reduced to 1/160 and 1/130, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0fa3a2ff774e61f0a1a0f5fdb8fb38d6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 17: The number of objects registered in the Tomo-e transient database
+    before (left panel) and after (right panel) implementation of the best classifier.
+    The conventional classifier is trained in the same way as the Simple-each classifier.
+    Horizontal dotted lines show five-day averages.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To confirm that the new classifier does not miss real objects, we examined the
+    recovery rate of real objects. By matching registered transients with TNS objects,
+    we confirmed that the ratio of the number of matches to the number of TNS objects
+    is comparable before and after implementation. Furthermore, the fraction of the
+    TNS object rate among the registered transient candidates is 86 times higher after
+    the implementation. This indicates that Bogus, which are incorrectly registered
+    due to misclassification, are greatly reduced. The number of final transient candidates
+    are reduced from about about 5,000 to 40 objects per day. This rate is a level
+    at which human can check visually, and enables effective target selection for
+    follow-up observations in a short time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 6 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this paper, we have presented a new Real/Bogus classification scheme by
+    handling label errors in the training data for the Tomo-e Gozen transient survey.
+    In the wide-field, high-frequency survey with Tomo-e Gozen, which mainly targets
+    early supernovae and rapid transients, the performance of conventional CNN classifiers
+    was not sufficient to extract follow-up targets, because the number of Bogus was
+    an order of $10^{3}$ per day. Therefore, we developed a two-step training method:
+    (1) normal supervised learning to detect label errors in the training data, and
+    (2) semi-supervised learning with training data which include potential label
+    errors as unlabeled samples.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The best classifier with this method achieves an AUC of 0.9998 and FPR of 0.0002
+    at TPR$=$0.9 for validation data prepared from actual observations. Our training
+    method does not require human effort to relabel the samples with potential label
+    errors. We also show that our method gives a higher performance improvement when
+    the fraction of label errors is higher. Finally, we implemented the developed
+    classifier in the Tomo-e Gozen pipeline. After implementation, the number of registered
+    transient candidates was reduced by a factor of about 100, to 40 candidates per
+    day, while maintaining the recovery rate of real transients. This enables more
+    efficient selection of follow-up targets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{ack}'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We thank Yasuhiro Imoto for his significant contributions to the development
+    of the classifiers. We are grateful to the anonymous referee for insightful suggestions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This work has been supported by Japan Science and Technology Agency (JST) AIP
+    Acceleration Research Grant Number JP20317829 and the Japan Society for the Promotion
+    of Science (JSPS) KAKENHI grants 21H04491, 18H05223, and 17H06363.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This work is supported in part by the Optical and Near-Infrared Astronomy Inter-University
+    Cooperation Program.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Pan-STARRS1 Surveys (PS1) and the PS1 public science archive have been made
+    possible through contributions by the Institute for Astronomy, the University
+    of Hawaii, the Pan-STARRS Project Office, the Max-Planck Society and its participating
+    institutes, the Max Planck Institute for Astronomy, Heidelberg and the Max Planck
+    Institute for Extraterrestrial Physics, Garching, The Johns Hopkins University,
+    Durham University, the University of Edinburgh, the Queen’s University Belfast,
+    the Harvard-Smithsonian Center for Astrophysics, the Las Cumbres Observatory Global
+    Telescope Network Incorporated, the National Central University of Taiwan, the
+    Space Telescope Science Institute, the National Aeronautics and Space Administration
+    under Grant No. NNX08AR22G issued through the Planetary Science Division of the
+    NASA Science Mission Directorate, the National Science Foundation Grant No. AST-1238877,
+    the University of Maryland, Eotvos Lorand University (ELTE), the Los Alamos National
+    Laboratory, and the Gordon and Betty Moore Foundation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Details of objective function
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We here describe the details of the objective functions proposed in section [3.2.2](#S3.SS2.SSS2
+    "3.2.2 Objective functions ‣ 3.2 Training methods ‣ 3 Method ‣ Deep-learning Real/Bogus
+    classification for the Tomo-e Gozen transient survey").
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-entropy
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: ': The cross-entropy function is an objective function commonly used in training
+    classifiers. It works to match the output of the neural network to the teacher
+    label for each sample. The cross-entropy function is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L_{\mathrm{ce}}\left(\left\{\mathbf{x}_{l},y\right\};\boldsymbol{\theta}\right)$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=\frac{1}{N_{l}}\sum_{i=1}^{N_{l}}$ | $\displaystyle\left\{-I\left(y_{i}=c^{+}\right)\log
+    p\left(y=c^{+}\mid\mathbf{x}_{i};\boldsymbol{\theta}\right)\right.$ |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  |  | $\displaystyle\left.\;-I\left(y_{i}=c^{-}\right)\log p\left(y=c^{-}\mid\mathbf{x}_{i};\boldsymbol{\theta}\right)\right\},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | $\displaystyle p\left(y=c\mid\mathbf{x};\boldsymbol{\theta}\right)$ |  |
+    (4) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=$ | $\displaystyle\frac{\exp\left(f\left(y=c\mid\mathbf{x};\boldsymbol{\theta}\right)\right)}{\exp\left(f\left(y=c^{+}\mid\mathbf{x};\boldsymbol{\theta}\right)\right)+\exp\left(f\left(y=c^{-}\mid\mathbf{x};\boldsymbol{\theta}\right)\right)}.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here $N_{l}$ is the number of labeled samples, $I\left(\right)$ is the indicator
+    function, $c^{+}$ and $c^{-}$ are the labels of positive and negative examples,
+    respectively, and $f\left(y=c\mid\mathbf{x};\boldsymbol{\theta}\right)$ is the
+    output value corresponding to the label $c$ ($\mathbf{x}$ is input to the neural
+    network).
+  prefs: []
+  type: TYPE_NORMAL
+- en: exp-Cross-hinge loss (AUC maximization)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: ': If the sample ratio is highly biased, the apparent performance could be improved
+    by always predicting the dominant class regardless of the input data. For example,
+    in transient surveys, Bogus objects are always dominant over Real objects. In
+    such a case, a classifier that classifies all the input to be Bogus can achieve
+    a high score. However, obviously such a classifier is not useful to detect real
+    transients. Approaches to handle imbalanced dataset include down-sampling of the
+    majority class (e.g., Hosenie et al. ([2019](#bib.bib12))) and giving extra weight
+    to the minority class (e.g., van Roestel et al. ([2021](#bib.bib28))). In our
+    proposed method, we handle imbalanced data by incorporating exp-Cross-hinge loss
+    (Kurora et al. ([2020](#bib.bib17))) into the objective function, as described
+    below.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The exp-Cross-hinge loss is a loss function for pairs of positive and negative
+    examples in the dataset. When the score of the negative sample becomes larger
+    than the score of the positive sample, a loss corresponding to the difference
+    occurs. In contrast, when the score of the positive example is larger than the
+    score of the negative example, the hinge function prevents the loss of the set
+    from falling below a certain level. In addition, expanding the difference between
+    the negative and positive scores with the exponential function enables learning
+    even when the difference is small. For all pairs of positive and negative samples,
+    this loss function is minimized when the score of the positive sample is greater
+    than the score of the negative sample including the margin. The definition is
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L_{\mathrm{ech}}\left(\left\{\mathbf{x}^{+}\right\},\left\{\mathbf{x}^{-}\right\};\boldsymbol{\theta}\right)$
+    |  | (5) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=$ | $\displaystyle\frac{1}{N^{+}N^{-}}\sum_{i=1}^{N^{+}}\sum_{j=1}^{N^{-}}\exp\left\{\left[s\left(\mathbf{x}_{j}^{-};\boldsymbol{\theta}\right)-s\left(\mathbf{x}_{i}^{+};\boldsymbol{\theta}\right)+\xi\right]_{+}\right\}.$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, $s\left(\right)$ is the score function parameterized by $\boldsymbol{\theta}$,
+    $\mathbf{x}^{+}$ and $\mathbf{x}^{-}$ are the positive and negative samples, $N^{+}$
+    and $N^{-}$ are the numbers of positive and negative samples, respectively, and
+    $\xi$ is the margin between the positive and negative sample scores. In the equation,
+    $\left[\bullet\right]_{+}$ is the hinge function, defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\left[z\right]_{+}=\left\{\begin{array}[]{ll}z&amp;(z\geq
+    0)\\ 0&amp;(z<0)\end{array}\right..$ |  | (8) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We define the score function using the outputs of the neural network as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle s\left(\mathbf{x};\boldsymbol{\theta}\right)=f\left(y=c^{+}\mid\mathbf{x};\boldsymbol{\theta}\right)-f\left(y=c^{-}\mid\mathbf{x};\boldsymbol{\theta}\right).$
+    |  | (9) |'
+  prefs: []
+  type: TYPE_TB
+- en: The AUC is a measure for the performance of a binary classifier when we want
+    to maximize the true positive rate and minimize the false positive rate. AUC is
+    generally defined as the area under the ROC curve. Alternatively, it can be defined
+    as the ratio of pairs in which the score of the positive sample is greater than
+    the score of the negative sample among all pairs of positive and negative samples
+    in the dataset. Since AUC is a discontinuous function, it is difficult to maximize
+    AUC directly. On the other hand, since the exp-Cross-hinge function is a relaxation
+    of the AUC function to a continuous function, we expect to obtain an approximate
+    solution for AUC maximization by minimizing the exp-Cross-hinge function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Virtual Adversarial Training (VAT)
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: ': We perform the Virtual Adversarial Training (VAT) (Miyato et al. ([2016](#bib.bib20))).
+    The VAT is a training method with the local distributional smoothness (LDS) as
+    a regularization term. The LDS is a new notion of smoothness for the outputs of
+    models. In VAT, special perturbations that maximize the changes of the outputs
+    of the neural network are added to input images. The neural network is trained
+    to minimize the change of the outputs, thus smoothing regularization. Therefore,
+    it is expected to be robust to the influence of input perturbation. The objective
+    function is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle L_{\mathrm{lds}}\left(\left\{\mathbf{x}_{l}\right\}\cup\left\{\mathbf{x}_{u}\right\};\boldsymbol{\theta}\right)$
+    |  | (10) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=$ | $\displaystyle\frac{1}{N_{l}+N_{u}}\sum_{i=1}^{N_{l}+N_{u}}\mathrm{KL}\left[p\left(y\mid\mathbf{x}_{i};\boldsymbol{\theta}\right)\middle&#124;\middle&#124;p\left(y\mid\mathbf{x}_{i}+\mathbf{r}_{i};\boldsymbol{\theta}\right)\right],$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $N_{l}$ and $N_{u}$ are the numbers of labeled samples and unlabeled samples,
+    respectively, $\mathrm{KL}\left[\bullet\middle|\middle|\bullet\right]$ is KL divergence
+    which is a measure of the difference between two distributions, and $\mathbf{r}_{i}$
+    is the virtual adversarial perturbation of the $i$th sample. Here, $\mathbf{r}_{i}$
+    is a tiny perturbation that maximizes the change in the classifier output and
+    it is defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathbf{r}_{i}=\mathop{\rm arg~{}max}\limits_{\mathbf{r},\;\mathrm{w.r.t.}\left\&#124;\mathbf{r}\right\&#124;^{2}<\epsilon}\mathrm{KL}\left[p\left(y_{i}\mid\mathbf{x}_{i};\boldsymbol{\theta}\right)\middle&#124;\middle&#124;p\left(y_{i}\mid\mathbf{x}_{i}+\mathbf{r};\boldsymbol{\theta}\right)\right],$
+    |  | (11) |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\epsilon$ is the size of the perturbation. It is not practical to obtain
+    $\mathbf{r}_{i}$ exactly because it is computationally expensive. Instead, we
+    efficiently obtain the approximate virtual adversarial perturbation by using the
+    method shown in algorithm 1 of Miyato et al. ([2016](#bib.bib20)). Because no
+    label information is needed to compute $\mathbf{r}_{i}$, the VAT objective function
+    can be used even for samples without labels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Alard & Lupton (1998) Alard, C., & Lupton, R. H. 1998, ApJ, 503, 325
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ayyar et al. (2022) Ayyar, V., Knop, Robert, J., Awbrey, A., Anderson, A., &
+    Nugent, P. 2022, arXiv:2203.09908
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Becker (2015) Becker, A. 2015, Astrophysics Source Code Library, ascl:1504.004
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bellm et al. (2019) Bellm, E. C., et al. 2019, PASP, 131, 018002
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bloom et al. (2012) Bloom, J. S., et al. 2012, PASP, 124, 1175
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brink et al. (2013) Brink, H., Richards, J. W., Poznanski, D., Bloom, J. S.,
+    Rice, J., Negahban, S., & Wainwright, M. 2013, MNRAS, 435, 1047
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Duev et al. (2019) Duev, D. A., et al. 2019, MNRAS, 489, 3582
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Flewelling et al. (2020) Flewelling, H. A., et al. 2020, ApJS, 251, 7
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gieseke et al. (2017) Gieseke, F., et al. 2017, MNRAS, 472, 3101
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'He et al. (2016a) He, K., Zhang, X., Ren, S., & Sun, J. 2016a, in 2016 IEEE
+    Conf. on Computer Vision and Pattern Recognition (CVPR) (Los Alamitos, CA, USA:
+    IEEE Computer Society), 770'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'He et al. (2016b) He, K., Zhang, X., Ren, S., & Sun, J. 2016b, in Computer
+    Vision – ECCV 2016, ed. B. Leibe, J. Matas, N. Sebe, & M. Welling (Cham: Springer
+    International Publishing), 630'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hosenie et al. (2019) Hosenie, Z., Lyon, R. J., Stappers, B. W., & Mootoovaloo,
+    A. 2019, MNRAS, 488, 4858
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: "Hosenie et al. (2021) Hosenie, Z., et al. 2021, Experimental Astronomy, 51,\
+    \ 319â\x80\x93344"
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ioffe & Szegedy (2015) Ioffe, S., & Szegedy, C. 2015, in Proc. of the 32nd Int.
+    Conf. on Machine Learning - Volume 37, ICML’15 (JMLR.org), 448
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ivezić et al. (2019) Ivezić, Ž., et al. 2019, ApJ, 873, 111
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Killestein et al. (2021) Killestein, T. L., et al. 2021, MNRAS, 503, 4838
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kurora et al. (2020) Kurora, S., Hachiya, H., Shimada, U., & Ueda, N. 2020,
+    IBISML
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Law et al. (2009) Law, N. M., et al. 2009, PASP, 121, 1395
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mahabal et al. (2019) Mahabal, A., et al. 2019, PASP, 131, 038002
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Miyato et al. (2016) Miyato, T., ichi Maeda, S., Koyama, M., Nakae, K., & Ishii,
+    S. 2016, arXiv:1507.00677
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Morii et al. (2016) Morii, M., et al. 2016, PASJ, 68, 104
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Northcutt et al. (2021) Northcutt, C. G., Jiang, L., & Chuang, I. L. 2021, Journal
+    of Artificial Intelligence Research (JAIR), 70, 1373
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Roy et al. (2018) Roy, A. G., Navab, N., & Wachinger, C. 2018, in Medical Image
+    Computing and Computer Assisted Intervention – MICCAI 2018, ed. A. F. Frangi,
+    J. A. Schnabel, C. Davatzikos, C. Alberola-López, & G. Fichtinger (Cham: Springer
+    International Publishing), 421'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sako et al. (2018) Sako, S., et al. 2018, in Proc. SPIE Conf. Ser., Vol. 10702,
+    Ground-based and Airborne Instrumentation for Astronomy VII, ed. C. J. Evans,
+    L. Simard, & H. Takami, 107020J
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simonyan & Zisserman (2014) Simonyan, K., & Zisserman, A. 2014, arXiv:1409.1556
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Singh & Krishnan (2020) Singh, S., & Krishnan, S. 2020, in Proc. of the IEEE/CVF
+    Conf. on Computer Vision and Pattern Recognition (CVPR), 11234
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Turpin et al. (2020) Turpin, D., et al. 2020, MNRAS, 497, 2641
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: van Roestel et al. (2021) van Roestel, J., et al. 2021, AJ, 161, 267
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Waters et al. (2020) Waters, C. Z., et al. 2020, ApJS, 251, 4
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wright et al. (2015) Wright, D. E., et al. 2015, MNRAS, 449, 451
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

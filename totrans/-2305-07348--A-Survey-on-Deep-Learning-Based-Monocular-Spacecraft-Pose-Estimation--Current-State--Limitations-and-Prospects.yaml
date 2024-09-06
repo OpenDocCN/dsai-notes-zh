@@ -1,0 +1,3144 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:39:46'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2305.07348] A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2305.07348](https://ar5iv.labs.arxiv.org/html/2305.07348)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 1]organization=Interdisciplinary Centre for Security, Reliability and Trust
+    (SnT),addressline=University of Luxembourg, city=Luxembourg, postcode=L-1855,state=Luxembourg,country=Luxembourg
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Leo Pauly leo.pauly@uni.lu    Wassim Rharbaoui wassim.rharbaoui@uni.lu    Carl
+    Shneider carl.shneider@uni.lu    Arunkumar Rathinam arunkumar.rathinam@uni.lu
+       Vincent Gaudillière vincent.gaudilliere@uni.lu    Djamila Aouada djamila.aouada@uni.lu
+    [
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Estimating the pose of an uncooperative spacecraft is an important computer
+    vision problem for enabling the deployment of automatic vision-based systems in
+    orbit, with applications ranging from on-orbit servicing to space debris removal.
+    Following the general trend in computer vision, more and more works have been
+    focusing on leveraging Deep Learning (DL) methods to address this problem. However
+    and despite promising research-stage results, major challenges preventing the
+    use of such methods in real-life missions still stand in the way. In particular,
+    the deployment of such computation-intensive algorithms is still under-investigated,
+    while the performance drop when training on synthetic and testing on real images
+    remains to mitigate. The primary goal of this survey is to describe the current
+    DL-based methods for spacecraft pose estimation in a comprehensive manner. The
+    secondary goal is to help define the limitations towards the effective deployment
+    of DL-based spacecraft pose estimation solutions for reliable autonomous vision-based
+    applications. To this end, the survey first summarises the existing algorithms
+    according to two approaches: hybrid modular pipelines and direct end-to-end regression
+    methods. A comparison of algorithms is presented not only in terms of pose accuracy
+    but also with a focus on network architectures and models’ sizes keeping potential
+    deployment in mind. Then, current monocular spacecraft pose estimation datasets
+    used to train and test these methods are discussed. The data generation methods:
+    simulators and testbeds, the domain gap and the performance drop between synthetically
+    generated and lab/space collected images and the potential solutions are also
+    discussed. Finally, the paper presents open research questions and future directions
+    in the field, drawing parallels with other computer vision applications.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'keywords:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Spacecraft Pose Estimation, Algorithms, Deep Learning, Datasets, Simulators
+    and Testbeds, Domain adaptation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4150aa09f199bac768bf1dacdb1313eb.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Spacecraft pose estimation is the problem of finding the relative
+    position ($t_{BC}$) and orientation ($R_{BC}$) of the target spacecraft reference
+    frame (B) shown in red, with respect to the camera reference frame (C) shown in
+    blue, mounted on a chaser spacecraft.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In recent years, the number of satellites launched into orbit has increased
+    rapidly, aided by lower launch costs and minimal entry barriers, making space
+    more accessible than ever before [[65](#bib.bib65), [178](#bib.bib178)]. Each
+    space mission has a unique set of goals that influences the satellite’s size,
+    functions, and intended lifetime. In most mission scenarios, the satellites launched
+    into orbit will last for the entire mission life-cycle, and at the end of life,
+    they are either moved to the graveyard orbit or left to re-enter the Earth’s atmosphere.
+    However, a few space missions may encounter anomalies or malfunctions before their
+    full life span. These malfunctioned satellites may become non-cooperative and
+    threaten existing space infrastructure. To tackle such scenarios, the demand for
+    orbital missions targeting On-Orbit Servicing (OOS) and Active Debris Removal
+    (ADR) has steadily increased, as OOS and ADR are considered key spaceflight capabilities
+    for the next decade. OOS is defined as the process of inspection, maintenance,
+    and repair of a system as an in-space operation. Commercial OOS missions aim to
+    perform various functions, including providing life extension, maintaining the
+    spacecraft, rescuing and recovering satellites from deployment failures and assisting
+    astronauts with extravehicular activities [[73](#bib.bib73), [83](#bib.bib83)].
+    ADR is the process of removing obsolete space objects (such as satellites, rocket
+    bodies, or fragments of spacecraft) through an external disposal method, thus
+    minimizing the build-up of unnecessary objects and lowering the probability of
+    on-orbit collisions that can fuel a “collision cascade” [[176](#bib.bib176), [97](#bib.bib97)].
+    Several technology demonstration missions, including PROBA-3 by the European Space
+    Agency (ESA) [[89](#bib.bib89)], PRISMA by OHB Sweden [[156](#bib.bib156)], and
+    commercial missions such as MEV-1 by Northrop Grumman [[129](#bib.bib129)], had
+    been carried out successfully in recent years. Future missions such as Clearspace-1
+    by ESA and Clearspace [[11](#bib.bib11)] are already in preparation to demonstrate
+    ADR in 2026.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An important aspect of OOS and ADR missions is that it requires rendezvous and
+    proximity operations near the target before performing mission-specific operations.
+    To perform any rendezvous operations, it is essential to know the target spacecraft’s
+    position and orientation (i.e. pose), allowing the relative navigation algorithms
+    to generate real-time trajectories onboard the spacecraft. Several sensor options
+    are available to perform inference and observation of the target spacecraft state,
+    including Monocular RGB/Greyscale Cameras, Stereo Cameras, Thermal cameras, Range
+    Detection and Ranging (RADAR), Light Detection and Ranging (LIDAR), etc. Monocular
+    cameras are widely preferred over other active sensors (like LIDARs and RADARs)
+    due to their relative simplicity, small size, weight, power requirements, and
+    ability to be easily integrated into a wide range of spacecraft configurations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Recovering the relative pose between a camera and an observed object from a
+    single image is a fundamental computer vision problem [[96](#bib.bib96), [107](#bib.bib107),
+    [158](#bib.bib158)]. Given an image and the corresponding intrinsic camera parameters,
+    the relative pose estimation problem involves estimating the relative transformation,
+    i.e. translation and rotation, between the camera and the target object. The location
+    of the object in the camera reference frame is specified by $\mathit{t}\in\mathbb{R}^{3}$,
+    and its orientation is most often represented by a quaternion $\mathit{q}=(q_{0},q_{1},q_{2},q_{3})\in\mathbb{R}^{4}$.
+    The relative orientation (rotation) can also be represented using standard 3D
+    rotation representations such as rotation matrix or Euler’s Angles [[61](#bib.bib61)].
+    In [Figure 1](#S1.F1 "In 1 Introduction ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects"), a simple
+    illustration of the spacecraft pose estimation problem is presented, where axes
+    $x_{C},y_{C},z_{C}$ represent the camera reference frame mounted on the chaser
+    (C) spacecraft and $x_{B},y_{B},z_{B}$ represent the target spacecraft’s body
+    (B) reference frame. Spacecraft pose estimation is the problem of finding the
+    relative position ($t_{BC}$) and orientation ($R_{BC}$) of the reference frame
+    of a target spacecraft with respect to the reference frame of a camera mounted
+    on a chaser spacecraft, using a single image from a monocular camera.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the last decade, vision-based spacecraft pose estimation has utilized hand-engineered
+    features described using feature descriptors and detected using feature detectors
+    to detect these features in the 2D images and to finally use their 3D correspondences
+    to find the relative pose [[66](#bib.bib66), [30](#bib.bib30)]. Although the use
+    of feature correspondences between the detected features in the 2D image and 3D
+    feature locations, together with perspective transformation, aids in pose solution
+    convergence, the features are not robust to harsh lighting conditions encountered
+    in space. The feature-based approaches perform poorly in variable illumination
+    conditions, low signal-to-noise ratio, and high contrast characteristics encountered
+    in space imagery. This results in a poor estimation of the target state in many
+    scenarios. Spacecraft pose estimation before the evolution of deep learning algorithms
+    has been summarised in [[20](#bib.bib20), [105](#bib.bib105)]. With their gain
+    in popularity and exponential growth, Deep Learning (DL)-based approaches have
+    prompted many new developments in recent years. According to the findings of the
+    recent ESA’s Spacecraft Pose Estimation Challenges [[71](#bib.bib71), [112](#bib.bib112)],
+    DL-based methods have been the preferred option for tackling the problem of uncooperative
+    spacecraft pose estimation. However, investigated DL-based approaches still heavily
+    rely on annotated data that are cumbersome to obtain. While synthetic data generation
+    and laboratory data acquisition have been identified as the most tractable way
+    to train and test such algorithms, the performance drops significantly on the
+    test image domain compared to the train image domain, such problem being known
+    as the domain gap [[168](#bib.bib168)]. Dedicated strategies have therefore to
+    be investigated to mitigate it. In addition, the laboratory conditions under which
+    test images are acquired still differ from space-borne conditions, adding another
+    level of domain discrepancy that is yet to be addressed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A recent survey on the DL-based approaches for spacecraft relative navigation
+    [[151](#bib.bib151)] provides a general narrative across different use cases,
+    including spacecraft pose estimation. In this survey, we focus on monocular pose
+    estimation of non-cooperative targets using DL approaches and review the latest
+    developments in the field. In addition, we conduct a comparison between the two
+    main types of approaches and assess the still unmet needs that would enable the
+    deployment of DL-based algorithms in real space missions. Furthermore, we explore
+    the fundamental counterpart of any DL-based algorithm that is the data. We review
+    the existing datasets, generation engines and testbed facilities. We also analyse
+    the current validation procedure that consists in testing on laboratory-acquired
+    images algorithms trained on synthetic data, after discussing the methods proposed
+    to address this domain gap. Finally, we provide the reader with prospects on research
+    directions that could help making the leap to the deployment of reliable DL-based
+    spacecraft pose estimation algorithms for autonomous in-orbit operations. Note
+    that we mainly considered the works published until Dec 2022 for this survey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following sections are organized as follows. Section [2](#S2 "2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects") provides a comprehensive survey of the two
+    main types of DL-based algorithms for spacecraft pose estimation, before highlighting
+    their limitations. Section [3](#S3 "3 Datasets ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects")
+    presents the datasets, generation engines and testbed facilities. It also presents
+    the main existing methods to address the domain gap between synthetic and laboratory
+    images, and discuss the underlying validation procedure. Section [4](#S4 "4 Future
+    Research Directions ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose
+    Estimation: Current State, Limitations and Prospects") discusses open research
+    problems and future directions and finally, Section [5](#S5 "5 Conclusions ‣ A
+    Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current State,
+    Limitations and Prospects") concludes the survey.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <svg id="S1.F2.pic1" class="ltx_picture ltx_centering" height="353.05" overflow="visible"
+    version="1.1" width="1044.66"><g transform="translate(0,353.05) matrix(1 0 0 -1
+    0 0) translate(179.53,0) translate(0,131.27)" fill="#000000" stroke="#000000"><g
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -43.8 -37.36)" fill="#000000"
+    stroke="#000000"><foreignobject width="87.6" height="74.72" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">| Spacecraft |
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Pose |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Estimation |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0 41.21
+    61.07)" fill="#000000" stroke="#000000"><foreignobject width="75.07" height="74.72"
+    transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| Hybrid |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Modular |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Approach |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0 68.89
+    140.2)" fill="#000000" stroke="#000000"><foreignobject width="791.36" height="78.09"
+    transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| - Multi-stage detectors
+    [[23](#bib.bib23), [58](#bib.bib58), [126](#bib.bib126)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| - Single-stage detectors [[114](#bib.bib114), [60](#bib.bib60), [120](#bib.bib120),
+    [12](#bib.bib12), [29](#bib.bib29), [92](#bib.bib92), [81](#bib.bib81), [172](#bib.bib172)]
+    |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0 135.59 48.61)" fill="#000000"
+    stroke="#000000"><foreignobject width="594.95" height="99.63" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">| - Regression of keypoint locations [[58](#bib.bib58),
+    [115](#bib.bib115), [92](#bib.bib92)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| - Segmentation-driven approach [[41](#bib.bib41), [57](#bib.bib57), [75](#bib.bib75)]
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| - Heatmap prediction [[23](#bib.bib23), [126](#bib.bib126), [60](#bib.bib60),
+    [120](#bib.bib120), [29](#bib.bib29)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| - Bounding box prediction [[81](#bib.bib81), [172](#bib.bib172)] |</foreignobject></g>  <g
+    transform="matrix(1.0 0.0 0.0 1.0 112.16 -17.36)" fill="#000000" stroke="#000000"><foreignobject
+    width="728.44" height="78.24" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">|
+    - PnP solver [[23](#bib.bib23), [41](#bib.bib41), [115](#bib.bib115), [60](#bib.bib60),
+    [120](#bib.bib120), [58](#bib.bib58), [126](#bib.bib126), [12](#bib.bib12), [57](#bib.bib57),
+    [92](#bib.bib92), [81](#bib.bib81), [172](#bib.bib172)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| - Learning-based method [[75](#bib.bib75)] |</foreignobject></g>  <g transform="matrix(1.0
+    0.0 0.0 1.0 174.18 152.26)" fill="#000000" stroke="#000000"><foreignobject width="84.71"
+    height="49.81" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| Spacecraft
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| localisation |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0
+    176.98 73.52)" fill="#000000" stroke="#000000"><foreignobject width="79.1" height="49.81"
+    transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| Keypoint |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Prediction |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0 168.26
+    -5.22)" fill="#000000" stroke="#000000"><foreignobject width="96.55" height="49.81"
+    transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| Pose |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Computation |</foreignobject></g>  <g transform="matrix(1.0 0.0 0.0 1.0 -174.08
+    -124.99)" fill="#000000" stroke="#000000"><foreignobject width="702.5" height="101.76"
+    transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">| Direct End- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| to-end |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Approach[[145](#bib.bib145), [146](#bib.bib146), [110](#bib.bib110), [124](#bib.bib124),
+    [121](#bib.bib121), [38](#bib.bib38), [59](#bib.bib59), [119](#bib.bib119)] |</foreignobject></g></g></g></svg>'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 2: Tree diagram of spacecraft pose estimation algorithms reviewed in
+    this paper. Blue boxes show the two different categories of approaches: hybrid
+    modular and direct end-to-end. The yellow boxes and the sub-branches (grey boxes)
+    show the separate stages and the different methods used at each stage, respectively,
+    of the hybrid modular approach.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Algorithms
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The use of DL has had significant implications in developing computer vision
+    algorithms over the last decade  [[166](#bib.bib166)],  [[22](#bib.bib22)], improving
+    their performance and robustness for applications such as image classification
+    [[173](#bib.bib173)], segmentation [[99](#bib.bib99)], and object tracking [[26](#bib.bib26)].
+    Following this trend, the proposals of DL-based spacecraft pose estimation algorithms
+    have outnumbered [[151](#bib.bib151)],  [[20](#bib.bib20)] the classical feature-engineering-based
+    methods [[32](#bib.bib32), [148](#bib.bib148), [87](#bib.bib87), [147](#bib.bib147),
+    [135](#bib.bib135), [19](#bib.bib19)] in recent years. [Figure 2](#S1.F2 "In 1
+    Introduction ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects") presents an overview tree diagram of
+    the algorithms reviewed in this survey and [Figure 3](#S2.F3 "In 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects") shows their branching into different approaches.
+    DL-based spacecraft pose estimation algorithms broadly fall under two categories:
+    1) Hybrid modular approaches, and 2) Direct end-to-end approaches.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hybrid modular approaches (see [Figure 4](#S2.F4 "In 2 Algorithms ‣ A Survey
+    on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current State, Limitations
+    and Prospects")-A) combine multiple DL models and classical computer vision methods
+    for spacecraft pose estimation. On the other hand, direct end-to-end approaches
+    (see [Figure 4](#S2.F4 "In 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects")-B) only
+    use a single DL model for pose estimation, trained end-to-end. Each of these approaches
+    are discussed in detail ([Section 2.1](#S2.SS1 "2.1 Hybrid Modular Approaches
+    ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects") and [Section 2.2](#S2.SS2 "2.2 Direct
+    End-to-end Approaches ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects")), with
+    a comparative analysis ([Section 2.3](#S2.SS3 "2.3 Algorithm Comparison ‣ 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects")) and a discussion on limitations ([Section 2.4](#S2.SS4
+    "2.4 Limitations ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects")) below.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/860f03ae12ea3d00b3c7e86f597302ff.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Distribution of algorithms surveyed in this paper'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8523f610504f13498bbaefaf22e30b2b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Illustration of different approaches for spacecraft pose estimation.
+    A) Direct end-to-end approaches which use deep learning. B) Hybrid modular approaches
+    which consist of three steps: object detection/localisation, keypoint regression,
+    and pose computation. The first two steps use deep learning and the third step
+    uses a classical algorithm which performs outlier removal necessary for the PnP
+    solver and finally pose refinement.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4cd717bf2ff9576b6dc5990d9c3d7c92.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Hybrid modular approach for spacecraft pose estimation. The spacecraft
+    localisation stage is outlined in blue, the keypoint prediction stage is in red
+    and the pose computation stage is shown in green. Spacecraft image from the SPARK2
+    dataset is used for illustration [[127](#bib.bib127)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Hybrid Modular Approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This survey defines hybrid approaches as those using a combination of DL models
+    and classical computer vision methods for spacecraft pose estimation. The hybrid
+    algorithms have three common stages (see [Figure 5](#S2.F5 "In 2 Algorithms ‣
+    A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects")): (1) spacecraft localisation for detecting
+    and cropping the spacecraft region in the image, (2) keypoint prediction for predicting
+    2D keypoints locations of pre-defined 3D keypoints inside cropped regions and
+    (3) pose computation for computing the pose from these 2D-3D correspondences.
+    The following subsections describe each of these stages in detail.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1.1 Spacecraft Localisation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The spacecraft object size in the image varies considerably with changes in
+    the relative distance between the chaser and target spacecraft as illustrated
+    in [Figure 6](#S2.F6 "In 2.1.1 Spacecraft Localisation ‣ 2.1 Hybrid Modular Approaches
+    ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects"). This scale variance affects the performance
+    of the pose estimation algorithm [[71](#bib.bib71)]. The spacecraft localisation
+    stage uses a DL object detection framework to detect the spacecraft by predicting
+    bounding boxes around the object (spacecraft). These bounding boxes are then used
+    to crop out the region of interest (RoI) in the image containing the spacecraft.
+    The extracted RoI is then processed for pose estimation in the subsequent stages.
+    Based on literature [[64](#bib.bib64)], DL-based object detectors for spacecraft
+    localisation can be classified into two categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/61d40d512db253fbe27c33ab8020dbaa.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Illustrating variations in spacecraft size in captured images. The
+    bounding boxes predicted by an object detector are shown in green. These images
+    are taken from the SPARK2 [[127](#bib.bib127)] dataset, and show the Proba-2 spacecraft
+    class.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multi-stage object detectors
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Single-stage object detectors
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Multi-stage object detectors: In these detectors object detection proceeds
+    in multiple stages. The first stage generates region proposals, i.e. image areas
+    with a higher probability of containing objects to be detected. These region proposals
+    are then refined and classified in the second stage. Detectors of this kind generally
+    provide highly accurate detections. However, due to their multi-stage nature,
+    they suffer from longer image processing times (high latency) and higher number
+    of parameters making them resource-intensive. This can be particularly detrimental
+    in resource-constrained scenarios such as those encountered in space. Faster R-CNN [[133](#bib.bib133)]
+    and Mask R-CNN [[47](#bib.bib47)] are the commonly used multi-stage object detectors
+    for spacecraft localisation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Single-stage object detectors: These detectors, on the other hand, are lightweight
+    detectors with a reduced number of parameters and have lower latency for real-time
+    detection. YOLO [[130](#bib.bib130)] (and its derivatives), SSD [[88](#bib.bib88)],
+    and MobileDet [[182](#bib.bib182)] are the single-stage detectors applied in the
+    different spacecraft pose estimation algorithms reviewed this survey.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Several other object detectors have also been proposed in the wider computer
+    vision literature, which can be applied for spacecraft localisation. Zaidi et
+    al. [[185](#bib.bib185)] and Zou et al. [[186](#bib.bib186)] presented detailed
+    surveys on different classes of object detectors and their characteristics. The
+    modular nature of the hybrid approaches makes it easier to replace object detectors
+    in the pose estimation algorithms based on criteria such as the number of parameters,
+    resource utilisation, latency and real-time inference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1.2 Keypoint Prediction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/db9dbf4c50250aedca303ec671e0a17f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: (A) Keypoint heatmap prediction with a ResNet-UNet architecture [[29](#bib.bib29)]
+    (B) YOLO-like CNN detector with a heatmap regression subnetwork [[60](#bib.bib60)]
+    (C) Keypoint prediction is formulated as a keypoint bounding box detection problem [[81](#bib.bib81)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this stage, the 2D projections of a set of predefined 3D keypoints are predicted
+    from the cropped regions containing the spacecraft using a DL model (see [Figure 5](#S2.F5
+    "In 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects")). The 3D keypoints are generally defined
+    by the CAD model of the spacecraft. If the CAD model is not available, multiview
+    triangulation (as in [[24](#bib.bib24)] [[123](#bib.bib123)] [[60](#bib.bib60)])
+    or Structure from Motion (SfM) techniques [[46](#bib.bib46)] can be used for reconstructing
+    a wireframe 3D model of the spacecraft containing the 3D keypoints.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regression of keypoint locations: A common method for predicting keypoints
+    is to directly regress the keypoint locations. Huan et al. [[58](#bib.bib58)]
+    uses a CNN regression model with an HRNet[[169](#bib.bib169)] backbone for directly
+    regressing the 2D keypoint locations as a $1\times 1\times 2M$ vector, where $M$
+    is the number of keypoints. Park et al. [[115](#bib.bib115)] uses a YOLOv2[[131](#bib.bib131)]
+    based architecture with a MobileNetv2[[142](#bib.bib142)] backbone with only 5.64M
+    parameters for regressing keypoints. The lightweight nature of the model makes
+    it suitable for deployment in space hardware or edge devices. Similarly, Lotti
+    et al. [[92](#bib.bib92)] also propose a deployable CNN regression model for keypoint
+    regression with EfficientNet-Lite backbone [[161](#bib.bib161)], which is obtained
+    by removing operations not well supported for mobile applications (deployment)
+    from the original EfficientNets[[159](#bib.bib159)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Segmentation-driven approach: Algorithms in [[41](#bib.bib41)],[[57](#bib.bib57)]
+    and [[75](#bib.bib75)] follow the segmentation-driven approach from Hu et al. [[56](#bib.bib56)]
+    for regressing the keypoint locations, with a dual-headed (segmentation and regression)
+    network architecture and a shared backbone. The input image is divided into a
+    grid and the segmentation head separates the foreground grid cells (containing
+    the spacecraft) from the background. The regression head predicts the location
+    of each keypoint as an offset from the centre of each of the grid cells. Only
+    the predictions from foreground (spacecraft) grid cells contribute to the prediction
+    of the keypoint location, making predictions more accurate. Additionally, [[75](#bib.bib75)]
+    also presents different variants of the keypoint prediction model with a lower
+    number of parameters making it suitable for deployment in space hardware. The
+    model with the lowest number of parameters achieving sufficient keypoint prediction
+    accuracy uses a MobileNetv3[[53](#bib.bib53)] backbone that has only 7.8M parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Heatmap prediction: Another method for keypoint prediction is to regress the
+    heatmaps encoding probability of the keypoint locations. The pixel coordinates
+    are then obtained by extracting locations with the highest probability from these
+    heatmaps [[23](#bib.bib23)] [[126](#bib.bib126)] [[60](#bib.bib60)] [[120](#bib.bib120)] [[29](#bib.bib29)].
+    The ground truth heatmaps are generated as 2D normal distributions with means
+    equal to the ground truth keypoint locations and unit standard deviations. HRNet [[169](#bib.bib169)]
+    network architecture and its derivative, the HigherHRNet [[25](#bib.bib25)], is
+    used extensively for heatmap predictions in different algorithms. HRNet architectures
+    maintain high-resolution feature maps throughout the network making it suitable
+    for heatmap prediction tasks. UNet [[138](#bib.bib138)] architecture is also used
+    for predicting keypoint heatmaps [[29](#bib.bib29)] (see [Figure 7](#S2.F7 "In
+    2.1.2 Keypoint Prediction ‣ 2.1 Hybrid Modular Approaches ‣ 2 Algorithms ‣ A Survey
+    on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current State, Limitations
+    and Prospects")-A). Originally developed for image segmentation, UNet architecture
+    consists of a sequence of downsampling layers (contracting path) that captures
+    relevant semantic information. This is followed by symmetrical upsampling layers
+    (expanding path) for precise location predictions. The use of skip connections
+    in the architecture preserves spatial information during downsampling and subsequent
+    upsampling. Huo et al. [[60](#bib.bib60)] presented a lightweight hybrid architecture
+    for keypoint prediction combining a YOLO-like CNN spacecraft detector with a heatmap
+    regression subnetwork (see [Figure 7](#S2.F7 "In 2.1.2 Keypoint Prediction ‣ 2.1
+    Hybrid Modular Approaches ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects")-B). Sharing
+    the backbone network architecture between the object detection and the keypoint
+    prediction brings down the total number of parameters to $\sim$.89M, making it
+    suitable to deploy in resource-constrained space systems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Bounding box prediction: Recently, Li et al. [[81](#bib.bib81)] formulated
+    keypoint prediction as a keypoint bounding box detection problem. Instead of predicting
+    the keypoint locations or heatmaps, the enclosing bounding boxes over the keypoints
+    are predicted along with the confidence scores. Authors used CSPDarknet [[13](#bib.bib13)]
+    CNN backbone with a Feature Pyramid Network (FPN) [[85](#bib.bib85)] for multi-scale
+    feature extraction, followed by a detection head for the keypoint bounding box
+    detection (see [Figure 7](#S2.F7 "In 2.1.2 Keypoint Prediction ‣ 2.1 Hybrid Modular
+    Approaches ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects")-C). A similar method
+    is also used in [[172](#bib.bib172)]. Here, a counterfactual analysis [[117](#bib.bib117)]
+    framework is used to generate the FPN, which is then fed to the keypoint detector.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1.3 Pose Computation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The final stage is to compute the spacecraft pose using the 2D keypoints (from
+    the keypoint prediction stage) and the corresponding pre-defined 3D points [[94](#bib.bib94)].
+    One important step in the pose computation process is to remove the wrongly predicted
+    keypoints, referred to as outliers, since the Perspective-$n$-Point (P$n$P) [[35](#bib.bib35)]
+    solvers are sensitive to the presence of outliers. The RANdom SAmple Consensus
+    (RANSAC) [[153](#bib.bib153)] algorithm is commonly used for removing outliers.
+    IterativePnP [[104](#bib.bib104)] and EPnP[[80](#bib.bib80)] are the two solvers
+    extensively used in the different hybrid algorithms. Recently, Legrand et.al [[75](#bib.bib75)]
+    replaced the P$n$P solver with a Multi-Layer Perceptron (MLP) network architecture,
+    the Pose Inference Network (PIN) [[55](#bib.bib55)], for regressing the pose from
+    the predicted keypoints. This makes pose computation differentiable and it can
+    be trained with a pose loss function. In the final step, the estimated pose is
+    further refined by optimising a geometrical loss function [[67](#bib.bib67)] such
+    as the keypoint reprojection error [[23](#bib.bib23)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Direct End-to-end Approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/2523d29e877480747732ab4f0f812cd2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Network architecture used in [[119](#bib.bib119)]. A GoogLeNet [[157](#bib.bib157)]
+    based CNN architecture is used to regress the 7D pose vector $[x,y,z,q_{0},q_{1},q_{2},q_{3}]$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this survey, direct approaches refer to the use of only one DL model in an
+    end-to-end manner for regressing the spacecraft pose directly from the images
+    without relying on intermediate stages. The models are trained using loss functions
+    calculated from the pose error. Unlike hybrid algorithms, the approach does not
+    require any additional information like camera parameters or a 3D model of the
+    spacecraft apart from the ground truth pose labels. The camera parameters are
+    intrinsically learned by the models during the training process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Phisannupawong et al. [[119](#bib.bib119)] proposed a GoogLeNet-based [[157](#bib.bib157)]
+    CNN architecture for regressing the 7D pose vector representing position and orientation
+    quaternion (see [Figure 8](#S2.F8 "In 2.2 Direct End-to-end Approaches ‣ 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects")). The network was trained using different loss
+    functions, an exponential loss function and a weighted Euclidean-based loss function.
+    The experimental results show that the network offers better performance when
+    trained with the latter. However, directly regressing the orientation using a
+    norm-based loss of unit quaternions fails to achieve higher accuracies and results
+    in a larger error margin [[124](#bib.bib124)]. This is mainly due to the loss
+    function’s inability to represent the actual angular distance of any orientation
+    representation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sharma et al. [[145](#bib.bib145)] proposed discretising the pose space itself
+    into pose classification labels by quantising along four degrees of freedom as
+    illustrated in [Figure 9](#S2.F9 "In 2.2 Direct End-to-end Approaches ‣ 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects"). Two degrees of freedom controlling the position
+    of the camera (w.r.t. to the spacecraft) along the surface of the enclosing sphere,
+    one degree of freedom denoting the rotation of the camera along the bore-sight
+    angle and one degree of freedom determined by the distance of the camera from
+    the spacecraft. An AlexNet-based [[74](#bib.bib74)] CNN network is used for classifying
+    the spacecraft images into these discretised pose label classes, trained with
+    a Softmax loss function [[171](#bib.bib171)]. However, this is constrained by
+    the total number of pose class labels to be learned. A larger number of pose labels
+    will need an equivalent number of neurons in the final softmax layer, increasing
+    model size considerably. Also, the method provides an initial guess and requires
+    further refinement to produce more accurate pose estimations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/74cdb5ea07e790109d3fd2c9ad1e19ec.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Illustration of pose space discretisation along four degrees of freedom
+    used in [[145](#bib.bib145)]. Two degrees of freedom controlling the position
+    of the camera on the enclosing sphere, one degree of freedom from the rotation
+    of the camera along the bore-sight direction and one degree of freedom from the
+    distance of the camera to the spacecraft.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To overcome these limitations, Sharma et al. [[146](#bib.bib146)] later presented
+    Spacecraft Pose Network (SPN), a model with a five-layer CNN backbone followed
+    by three different sub-branches (see [Figure 10](#S2.F10 "In 2.2 Direct End-to-end
+    Approaches ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects")). The first branch
+    localises the spacecraft in the input image and returns the bounding box. The
+    second branch classifies the target orientation in terms of a probability distribution
+    of discrete classes. It minimises a standard cross entropy loss for a set of closest
+    orientation labels. Finally, the third branch takes the candidate orientation
+    class labels obtained from the previous branch and minimises another cross-entropy
+    loss to yield the relative weighting of each orientation class. The final refined
+    attitude is obtained via quaternion averaging with respect to the computed weights,
+    which represents a soft classification approach. The position is then estimated
+    from the constraints imposed by the detected bounding box and the estimated orientation,
+    using the Gauss–Newton optimisation algorithm [[100](#bib.bib100)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar network architecture is also used in [[59](#bib.bib59)]. A ResNet50
+    model [[48](#bib.bib48)] with a Squeeze-and-Excitation (SE) module [[54](#bib.bib54)]
+    is used as the base CNN network for feature extraction. The first sub-network,
+    the attitude-prediction-subnetwork, estimates the orientation by soft classification
+    and error quaternion regression. The second pose regression sub-network, predicts
+    the position of the spacecraft by direct regression. Finally, the object detection
+    sub-network detects the spacecraft by predicting the enclosing bounding box. The
+    bounding box is used to validate the position and orientation prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f47b13e10a6ebd71c34ccb5e046d5e48.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10: Network architecture used for spacecraft pose estimation in [[146](#bib.bib146)].
+    Branch 1 localises the spacecraft outputting the bounding box, branch 2 predicts
+    the probability distribution for orientation classification and branch 3 regresses
+    the weights for each orientation class.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Proença et al. [[124](#bib.bib124)] propose URSONet, a ResNet-based backbone
+    architecture followed by two separate branches for the estimation of the position
+    and orientation (see [Figure 11](#S2.F11 "In 2.2 Direct End-to-end Approaches
+    ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects")). The position estimation was carried
+    out through a simple regression branch with two fully connected layers while minimising
+    the relative error in the loss function. A continuous orientation estimation via
+    classification with soft-assignment coding was proposed for orientation estimation.
+    Each ground truth label is encoded as a Gaussian random variable in the orientation
+    discrete output space. The network was then trained to output the probability
+    mass function corresponding to the actual orientation. Poss et al. [[121](#bib.bib121)]
+    presented Mobile-URSONet, a mobile-friendly deployable lightweight version of
+    the URSONet. The ResNet backbone was replaced with a MobileNetv2 [[142](#bib.bib142)]
+    model, and the number of fully connected layers in the sub-branches was reduced
+    to one (from two). It reduced the number of parameters to a range of 2.2M to 7.4M,
+    13 times smaller than the URSONet. Moreover, this was achieved without a considerable
+    degradation in performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Recently, Park et al. [[110](#bib.bib110)] presented SPNv2, improving on the
+    original SPN [[146](#bib.bib146)] for addressing the domain gap problem. SPNv2
+    has a multi-scale multi-task network architecture with a shared feature extractor
+    following the EfficientPose [[16](#bib.bib16)] network, which is based on the
+    EfficientDet[[160](#bib.bib160)] feature encoder comprised of an EfficientNet[[159](#bib.bib159)]
+    backbone and a Bi-directional FPN (BiFPN) [[160](#bib.bib160)] for multi-scale
+    feature fusion. This is followed by multiple prediction heads for each of the
+    tasks learned: binary classification of spacecraft presence, bounding box prediction,
+    target position and orientation estimation, keypoint heatmap regression and pixel-wise
+    binary segmentation of the spacecraft foreground. The results show that joint
+    multi-task learning helps in domain generalisation by preventing the shared feature
+    extractor from learning task-specific features. The authors also propose an online
+    domain refinement (ODR) using target domain images (without labels) to be performed
+    on board spacecraft. The ODR fine-tunes SPNv2 on the target images by minimising
+    the Shannon entropy [[144](#bib.bib144)] on the segmentation task prediction head.
+    The paper also presents different variants of the algorithm by changing the number
+    of parameters in the EfficientNet backbone. The smallest variant with 3.8M parameters
+    has comparable performance to the best-performing variant with 52.5M parameters
+    on the SPEED+ synthetic dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/4e6acd506b3f7d5439840350bab55130.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11: Direct end-to-end approach for spacecraft pose estimation. The position
+    is regressed directly and the orientation is obtained with soft classification [[124](#bib.bib124)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/26a9c28c28fcb8c8ff543c05fe60382a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12: LSPnet architecture for spacecraft pose estimation [[38](#bib.bib38)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: .
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Garcia et al. [[38](#bib.bib38)] presented a network architecture with two
+    CNN modules: the translation and orientation modules, for pose estimation (see
+    [Figure 12](#S2.F12 "In 2.2 Direct End-to-end Approaches ‣ 2 Algorithms ‣ A Survey
+    on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current State, Limitations
+    and Prospects")). The translation module has a UNet architecture [[138](#bib.bib138)]
+    for predicting the 3D position $[x,y,z]$ of the target (from the intermediate
+    feature embedding layer) and the 2D spacecraft location in the image $[u,v]$ (from
+    the final heatmap output). This is then used to generate the enclosing bounding
+    box for the spacecraft and the RoI is cropped out. The orientation module with
+    a CNN regression network predicts the spacecraft orientation $[q_{0},q_{1},q_{2},q_{3}]$
+    from the cropped RoI.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, Musallam et al. evaluated their state-of-the-art absolute pose regression
+    network E-PoseNet [[103](#bib.bib103)] on the SPEED dataset. The model is based
+    on the PoseNet architecture [[69](#bib.bib69)], where the backbone is replaced
+    by a SE(2)-equivariant ResNet18 backbone [[175](#bib.bib175)]. The equivariant
+    features encode more geometric information about the input image. Moreover, equivariance
+    to planar transformations constrains the network in a way that can aid generalization,
+    especially due to the weights sharing. Finally, the rotation-equivariant ResNet
+    shows a significant reduction in model size compared to the regular ResNet architecture,
+    to obtain the same feature size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Algorithm Comparison
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8065828170ee71d2f827a28de53b0ef7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3d75c01ac1d386f35388c12bdd4c2c03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 13: Comparison of pose estimation algorithms in terms of number of parameters
+    versus (a) position error and (b) orientation error.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, different spacecraft pose estimation algorithms are compared.
+    LABEL:table:hybrid_approach_review and [Table 2](#S2.T2 "In 2.4.3 Robustness to
+    Illumination Conditions ‣ 2.4 Limitations ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects")
+    summarise different hybrid and direct algorithms, respectively, with a comparison
+    of DL models used, the total number of parameters, and the pose accuracy. The
+    performance of the pose estimation algorithm is expressed in terms of the mean
+    position and orientation errors. The position error is calculated as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E_{t}=&#124;&#124;t_{\text{predicted}}-t_{\text{groundtruth}}&#124;&#124;_{2}$
+    |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'and the orientation error is calculated as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $E_{R}=2*\mathrm{arccos}\left(&#124;<q_{\text{predicted}},q_{\text{groundtruth}}>&#124;\right)$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: where, $t_{\text{predicted}}$, $t_{\text{groundtruth}}$ are the predicted and
+    the ground truth translation vectors and $q_{\text{predicted}}$, $q_{\text{groundtruth}}$
+    are the predicted and the ground truth rotation quaternions respectively. $|<,>|$
+    indicates the absolute value of the vector dot product and $\|_{2}$ is the Euclidean
+    norm. The mean position and orientation error values on the SPEED [[71](#bib.bib71)]
+    synthetic test set are reported where available [[71](#bib.bib71)]. In other cases,
+    the error values on the corresponding synthetic published dataset are reported.
+    Similarly, in many instances, authors do not report the total number of parameters
+    in their algorithms. In such cases, an approximate number of parameters is estimated
+    based on the known backbone models and frameworks used. This survey is the first
+    attempt to compare different DL-based spacecraft pose estimation algorithms in
+    terms of performance reported on different datasets and the number of model parameters
+    with available information in the literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A key aspect of the spacecraft pose estimation algorithms is the deployment
+    on edge devices for their use in space. Unlike the commonly used resource-abundant
+    workstations, computing resources are scarce in space systems. Hence, deploying
+    large DL models that have a very large number of parameters is difficult. On the
+    other hand, using smaller DL models with a lower number of parameters leads to
+    a drop in performance. Thus, a trade-off is needed between the use of large, high-performing
+    models and smaller, deployable models. Based on LABEL:table:hybrid_approach_review
+    and [Table 2](#S2.T2 "In 2.4.3 Robustness to Illumination Conditions ‣ 2.4 Limitations
+    ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects"), [Figure 13(b)](#S2.F13.sf2 "In Figure
+    13 ‣ 2.3 Algorithm Comparison ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects")
+    shows this trade-off by plotting the algorithm performance against the total number
+    of model parameters. The results show that the algorithms [[93](#bib.bib93), [120](#bib.bib120),
+    [81](#bib.bib81)] and the SLAB Baseline [[115](#bib.bib115)] provide a good trade-off
+    in terms of the performance and the number of parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another factor of comparison for algorithms is the modular nature of the approaches
+    themselves. The hybrid algorithms are built by integrating three components: spacecraft
+    localisation, keypoint regression and pose computation. This helps to work and
+    improve each stage of the algorithms in isolation. For example, changes in the
+    camera model can be incorporated into the pose computation stage without retraining
+    the localisation and keypoint regression models. This provides more flexibility
+    in building the algorithms for different pose estimation applications. By contrast,
+    the direct algorithms comprise only a single DL model trained end-to-end. The
+    entire model has to be retrained to incorporate changes such as changes in camera
+    parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of performance comparison between the approaches, analysis of the top-10
+    methods from the first edition of ESA Kelvin Satellite Pose Estimation Challenge
+    (KSPEC’19) [[71](#bib.bib71)] show that the hybrid approaches perform comparatively
+    better than the direct approaches. The hybrid and direct algorithms have mean
+    position errors of $0.0083\pm 0.0269$ m and $0.0328\pm 0.0430$ m and mean orientation
+    errors of $1.31\pm 2.24\degree$ and $9.76\pm 18.51\degree$, respectively. Analysis
+    of the recently concluded second edition of the same challenge (KSPEC’21) [[112](#bib.bib112)]
+    also gives similar indications. Winning algorithms on both streams of the challenge
+    used the hybrid approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Limitations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Recently, several promising algorithms have been developed for DL-based spacecraft
+    pose estimation using both the hybrid and the direct approaches. However, these
+    algorithms still have several limitations that need to be considered and have
+    room for further improvement. This section highlights these limitations with discussions
+    on each topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4.1 Deployability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Deployability is a key aspect of any space algorithm. Despite the recent progress
+    in spacecraft pose estimation algorithm development, the deployment remains an
+    important open research question. The limitations of current algorithms in terms
+    of deployability refer to the challenges of implementing these algorithms in real-world
+    space missions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Among the current research works, only a small fraction of the developed algorithms
+    are tested and evaluated on edge systems for space deployment [[93](#bib.bib93),
+    [29](#bib.bib29), [172](#bib.bib172)]. Also, authors rarely report factors effecting
+    algorithm deployability such as latency, inference time, memory requirements,
+    power consumption and computational cost. These missing details are important
+    to understand the deployability of a model [[45](#bib.bib45), [4](#bib.bib4)],
+    on resource-constrained environment such in a space system with limited computational
+    capabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another limitation is the extensive use of off-the-shelf DL models and frameworks
+    (refer to LABEL:table:hybrid_approach_review and [Table 2](#S2.T2 "In 2.4.3 Robustness
+    to Illumination Conditions ‣ 2.4 Limitations ‣ 2 Algorithms ‣ A Survey on Deep
+    Learning-Based Monocular Spacecraft Pose Estimation: Current State, Limitations
+    and Prospects")). While these off-the-shelf models work well on a workstation,
+    they may not be suitable for space deployment due to several reasons. Primarily,
+    these models are designed to work on systems with abundant resources and are computationally
+    expensive, requiring significant processing power and memory. Secondly, these
+    models (or certain DL layers) may not be supported [[180](#bib.bib180)] by the
+    AI accelerators used in current space systems like FPGA-based [[36](#bib.bib36),
+    [77](#bib.bib77)] accelerators. Hence it is required to build algorithms with
+    architectures specifically customised for space applications and hardware.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4.2 Explainability
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Explainability refers to the ability to understand how an algorithm arrives
+    at its predictions, and it is an essential factor in building trust and ensuring
+    safety in critical applications such as space missions. This makes error analysis
+    and troubleshooting easier. A key limitation of the current DL-based spacecraft
+    pose estimation algorithms is their lack of explainability. In the direct approach,
+    the black-box nature of DL models in general [[2](#bib.bib2)] makes interpreting
+    the errors and failures very difficult. Comparably, the hybrid approach tackles
+    the spacecraft pose estimation problem in stages, providing better interpretability.
+    However, these algorithms still lack capabilities such as reasoning[[82](#bib.bib82)]
+    or modelling the uncertainty between the input data and the predictions made [[167](#bib.bib167)]
+    .
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4.3 Robustness to Illumination Conditions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/e3533cf84b500e82c061d73ebdc21542.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 14: . Visualization of the worst 3 predictions made by stream-1 winning
+    method of the KSPEC’21 challenge on lightbox (top-row) and sunlamp (bottom-row)
+    images [[112](#bib.bib112)]. These results show considerable drop in accuracy
+    of estimated poses (shown in green) under extreme lighting conditions, highlighting
+    a important limitation of vision-based spacecraft pose estimation algorithms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Monocular vision-based algorithms are in general sensitive to changes in lighting
+    conditions. This can affect the accuracy and robustness of the pose estimation,
+    especially in the dynamic illumination conditions in space. For example, shadows,
+    reflections and sun glare can all create visual noise and make it difficult to
+    identify and track features on the spacecraft. Analysis of the results (see [Figure 14](#S2.F14
+    "In 2.4.3 Robustness to Illumination Conditions ‣ 2.4 Limitations ‣ 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects")) from the latest edition of KSPEC (KSPEC’21) [[112](#bib.bib112)]
+    shows that even the best vision-based spacecraft pose estimation algorithms performs
+    poorly on images with extreme lighting conditions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Overcoming these limitations will require continued research and development
+    in areas including algorithm design, evaluation protocols on edge devices, sensor
+    technology and modelling of environmental factors. [Section 4](#S4 "4 Future Research
+    Directions ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects") outlines future directions of research
+    in spacecraft pose estimation algorithm development to address these challenges.
+    Finally, any DL-based algorithm development cannot be separated from the question
+    of the datasets, both for training and validating the algorithms. The next section
+    ([Section 3](#S3 "3 Datasets ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects")) presents a detailed
+    discussion of spacecraft pose estimation datasets ([Section 3.1](#S3.SS1 "3.1
+    Summary of Datasets, Simulators & Testbeds ‣ 3 Datasets ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects"))
+    with a focus on the domain gap problem ([Section 3.2](#S3.SS2 "3.2 Bridging the
+    Domain Gap ‣ 3 Datasets ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects")) and a discussion
+    on their limitations ([Section 3.3](#S3.SS3 "3.3 Limitations ‣ 3 Datasets ‣ A
+    Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current State,
+    Limitations and Prospects")).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Summary of the hybrid algorithms for spacecraft pose estimation. Details
+    of the object detector and keypoint prediction models (including the estimated
+    number of parameters) and the pose computation methods used are provided. The
+    mean position and orientation error values on the SPEED synthetic test set are
+    reported where available. In cases where the number of parameters is not reported
+    by the authors, estimated values based on the known backbone models and frameworks
+    are given. Additionally, the links to the publicly available algorithms are included
+    in [Section A.1](#A1.SS1 "A.1 Publicly available algorithm implementations ‣ Appendix
+    A Additional Information ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Ref | Object Detector | Parameters  (millions) | Keypoint Prediction | Parameters  (millions)
+    | Total Parameters  (millions) | Pose Computation | Mean position error (E[t])
+              (m) | Mean       orientation error (E[R])           (deg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| UniAdelaide [[23](#bib.bib23)] | Faster-RCNN [[133](#bib.bib133)] with HRNet-W18-C[[169](#bib.bib169)]
+    as the backbone | $\sim$21.3* [[155](#bib.bib155)] | Pose-HRNet-W32 [[154](#bib.bib154)]
+    | $\sim$28.5 [[154](#bib.bib154)] | $\sim$49.8 (176.2 [[92](#bib.bib92)]) | PnP
+    + RANSAC refined with a geometric loss optimized using SA-LMPE optimiser | 0.0320^+
+    | 0.4100^+ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EPFL_cvlab [[41](#bib.bib41)] | Not applied | -NA- | Yolov3 [[132](#bib.bib132)]
+    with DarkNet-53[[132](#bib.bib132)] as the backbone followed by a segmentation
+    and regression decoder branchers | $\sim$59.1[[90](#bib.bib90)] | $\sim$59.1 (89.2 [[92](#bib.bib92)])
+    | EPnP [[80](#bib.bib80)] + RANSAC | 0.0730^+ | 0.9100^+ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SLAB Baseline [[115](#bib.bib115)] | YOLOv3 [[132](#bib.bib132)] with MobileNetV2[[142](#bib.bib142)]
+    as the backbone | 5.53 | YOLOv2 [[131](#bib.bib131)] with MobileNetV2[[142](#bib.bib142)]
+    as the backbone | 5.64 | 11.2 | EPnP | 0.2090^+ | 2.6200^+ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huo et al. [[60](#bib.bib60)] | Tiny-YOLOv3 [[132](#bib.bib132)] architecture**
+    with a detection subnetwork | -NA- | Tiny-YOLOv3 [[132](#bib.bib132)] architecture**
+    with a regression subnetwork | -NA- | $\sim$0.89 | PnP+RANSAC refined with a Log-cosh
+    geometric loss optimized by Levenberg-Marquardt solver [[101](#bib.bib101)] |
+    0.0320 | 0.6812 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Piazza et al. [[120](#bib.bib120)] | YOLOv5 | 7.5 | HRNet32 [[154](#bib.bib154)]
+    | $\sim$28.6* [[25](#bib.bib25)] | $\sim$36.1 | EPnP refined with a geometric
+    loss optimised by Levenberg-Marquardt solver |  0.1036 | 2.2400 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huan et al. [[58](#bib.bib58)] | Cascade Mask R-CNN [[17](#bib.bib17)] with
+    HRNet as backbone | -NA- | HRNet [[154](#bib.bib154)] | $\sim$28.5 to $\sim$63.6 [[154](#bib.bib154)]
+    | -NA- | EPnP refined with a Huber style geometric loss optimised as non-linear
+    least-squares problem | 0.1823 | 2.8723 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STAR LAB keypoint method [[126](#bib.bib126)] | Faster-RCNN [[133](#bib.bib133)]
+    with RestNet50[[48](#bib.bib48)] backbone | $\sim$23.9* [[78](#bib.bib78)] | HigherHRNet [[25](#bib.bib25)]
+    with HRNet-W32[[154](#bib.bib154)] as the backbone | $\sim$28.6* [[25](#bib.bib25)]
+    | $\sim$54.2 | PnP + RANSAC | 0.3000 (URSO-OrViS dataset) | 4.9000 (URSO-OrViS
+    dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Black et al. [[12](#bib.bib12)] | SSD [[88](#bib.bib88)] MobileNetV2[[142](#bib.bib142)]
+    | -NA- | MobilePose [[52](#bib.bib52)] architecture with MobileNetV2[[142](#bib.bib142)]
+    as backbone | -NA- | 6.9 | EPnP + RANSAC | 1.0800 (Cygnus dataset) | 6.4500 (Cygnus
+    dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wide-Depth-Range [[57](#bib.bib57)] | Not applied | -NA- | FPN [[85](#bib.bib85)]
+    architecture with DarkNet-53[[132](#bib.bib132)] as the backbone | 51.5 | 51.5
+    | PnP + RANAC with and without a pose refinement strategy | -NA- | -NA- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cosmas et al. [[29](#bib.bib29)]† | YOLOv3 [[132](#bib.bib132)] | $\sim$59.1* [[91](#bib.bib91)]
+    | ResNet34-UNet [[48](#bib.bib48), [138](#bib.bib138)] architecture | $\sim$21.5* [[79](#bib.bib79)]
+    | $\sim$80.6 | -NA- | -NA- | -NA- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lotti et al. [[92](#bib.bib92)]† | MobileDet [[182](#bib.bib182)] | 3.3 |
+    Regression head with an EfficientNet-Lite [[159](#bib.bib159)] backbone | -NA-
+    | 15.4 | EPnP + RANSAC optimised by Levenberg-Marquardt solver | 0.0340 | 0.5200
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kecen et al. [[81](#bib.bib81)]† | YOLOX-Tiny [[40](#bib.bib40)] | $\sim$5.06 [[40](#bib.bib40)]
+    | FPN [[85](#bib.bib85)] architecture with CSPDarknet53[[13](#bib.bib13)] as the
+    backbone | $\sim$27.6 [[13](#bib.bib13)] | $\sim$32.66 | EPnP | 0.0049 | 0.0129
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CA-SpaceNet [[172](#bib.bib172)] | Not used | -NA- | Keypoint prediction
+    head having three FPNs [[85](#bib.bib85)] with two DarkNet-53[[132](#bib.bib132)]
+    networks as the backbones | -NA- | 51.29 M † | PnP | -NA- | -NA- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Legrand et al. [[75](#bib.bib75)]† | An ideal object detector assumed | -NA-
+    | DarkNet-53 [[132](#bib.bib132)] pre-trained on Linemod[[49](#bib.bib49)] with
+    two decoding heads - a segmentation head and a regression head | 71.2 | -NA- |
+    PIN architecture [[55](#bib.bib55)] consists of an MLP that aggregates local features
+    per keypoint into a single representation | 0.201 | 4.687 |'
+  prefs: []
+  type: TYPE_TB
+- en: ^+ Results from KSPEC first edition [[71](#bib.bib71)]
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Backbone shared between the object detector and the keypoint prediction model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: †Best performing variant considered
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 2: Summary of direct end-to-end algorithms for spacecraft pose estimation.
+    Details of the network architectures used, along with an estimated number of parameters,
+    are presented. The error values on the SPEED synthetic test set are reported where
+    available. In cases, the number of parameters is not reported by the authors,
+    an estimated number of parameters based on the backbone models used are given.
+    Additionally, the links to the publicly available algorithms are included in [Section A.1](#A1.SS1
+    "A.1 Publicly available algorithm implementations ‣ Appendix A Additional Information
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Reference | Model architecture | Parameters      (millions) | Mean position
+    error (E[t])       (m) | Mean rotation error (E[R])       (deg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sharma et al. [[145](#bib.bib145)]† | AlexNet [[74](#bib.bib74)] with half
+    as many kernels per layer as the original AlexNet architecture, with the last
+    fully connected layer containing as many neurons as the number of pose labels
+    | $\sim$20.8 | 0.83 (Imitation-25 dataset) | 14.35 (Imitation-25 dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPN [[146](#bib.bib146)] | A 5-layer CNN with 3 sub-branches for bounding
+    box classification and regression, relative orientation classification and relative
+    orientation weights regression. | -NA- | 0.7832 | 8.4254 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPNv2[[110](#bib.bib110)]† | Bi-directional Feature Pyramid Network (BiFPN) [[160](#bib.bib160)]
+    with EfficientNet[[159](#bib.bib159)] backbone and with multi-task head networks
+    shared by the features at all scales. | 52.5 | 0.031 (SPEED+) | 0.885 (SPEED+)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| URSONet [[124](#bib.bib124)] | ResNet18, ResNet34, ResNet50, ResNet101 [[48](#bib.bib48)]
+    base networks with 2 sub-branch networks for position regression and probabilistic
+    orientation estimation via soft classification. | $\sim$11.4 to $\sim$42.8 [[78](#bib.bib78)]
+    ($\sim$500**) | 0.1450^+ | 2.4900^+ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mobile-URSONet [[121](#bib.bib121)]† | MobileNet-v2 [[142](#bib.bib142)]
+    based network, pre-trained on ImageNet[[31](#bib.bib31)], with 2 sub-branches
+    for position regression and probabilistic orientation estimation via soft classification.
+    | 7.4 | 0.5600 | 6.2900 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LSPnet [[38](#bib.bib38)] | ResNet50 [[48](#bib.bib48)] base architecture
+    for position regression followed by an up-sampling CNN for object localisation
+    and a second ResNet50 for orientation regression. | $\sim$47.8 [[78](#bib.bib78)]
+    | 0.4560 | 13.9600 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huang et al. [[59](#bib.bib59)] | ResNet50 [[48](#bib.bib48)] base network
+    with 3 sub-branch networks for object detection, position regression and orientating
+    soft classification. | $\sim$23.9 [[78](#bib.bib78)] | 0.1715 (URSO-OrViS datast)
+    | 4.3820 (URSO-OrViS dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Phisannupawong et al. [[119](#bib.bib119)] | A modified version of GoogLeNet [[157](#bib.bib157)]
+    that forms a general pose estimation model as implemented in PoseNet[[70](#bib.bib70)].
+    The softmax classifiers in the original GoogLeNet were replaced with affine regressors
+    and each fully connected layer was modified to output a 7D pose vector. | $\sim$7.0
+    | 1.1915^# (URSO-OrViS dataset) | 13.7043^# (URSO-OrViS dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| E-PoseNet [[103](#bib.bib103)] | PoseNet architecture [[69](#bib.bib69)]
+    with SE(2)-equivariant ResNet18 backbone[[175](#bib.bib175)]. | 14.1 | 0.1806
+    | 2.3073 |'
+  prefs: []
+  type: TYPE_TB
+- en: †Details of the best-performing variant reported
+  prefs: []
+  type: TYPE_NORMAL
+- en: ^+Results from KSPEC first edition [[71](#bib.bib71)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Number of parameters in the best performing ensemble of models reported by
+    the authors'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ^#Median values reported
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 3: Review of recent spacecraft pose estimation datasets, sorted by year.
+    The Syn/Lab/Space column is, the number of synthetic, lab and space-borne images
+    in the dataset, respectively. The Spacecraft column specifies the spacecraft used
+    in the dataset. The resolution column corresponds to the width x height of the
+    images, in pixels. The I column indicates if the images are RGB (C) or grey-scale
+    (G). The Range column indicates the distance between the camera and the spacecraft.
+    The Tools column is a list of the rendering software used to generate the synthetic
+    data. Additionally, the links to the publicly available datasets are included
+    in [Section A.2](#A1.SS2 "A.2 Links to the publicly available datasets ‣ Appendix
+    A Additional Information ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Dataset | Year | Syn/Lab/Space | Spacecraft | Resolution | I | Range | Tools
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SHIRT [[109](#bib.bib109)] | 2022 | 5k/5k/- | Tango | 1920x1200 | G | $\leq$8m
+    | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPARK2-Stream2 [[127](#bib.bib127)] | 2022 | 30k / 900 / - | Proba-2 | 1440
+    x 1080 | C | [1.5m,10m] | Blender |'
+  prefs: []
+  type: TYPE_TB
+- en: '| COSMO [[93](#bib.bib93)] | 2022 | 15k / - / - | COSMO-SkyMed | 1920 x 1200
+    | C | [36m,70m] | Blender |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SwissCube [[57](#bib.bib57)] | 2021 | 50k / - / - | SwissCube | 1024 x 1024
+    | C | [0.1m, 1m] | Mitsuba 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPEED+ [[113](#bib.bib113)] | 2021 | 60k / 10k / - | Tango | 1920 × 1200
+    | G | $\leq$ 10m | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cygnus [[12](#bib.bib12)] | 2021 | 20k / - / 540 | Cygnus | 1024 × 1024 |
+    C | [35m,75m] | Blender |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPEED [[71](#bib.bib71)] | 2020 | 15k / 305 /- | Tango | 1920 × 1200 | G
+    | [3m,40.5m] | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| URSO [[124](#bib.bib124)] | 2019 | 15k / - / - | Dragon, Soyuz | 1080 x 960
+    | C | [10m,40m] | Unreal Engine 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PRISMA12K [[115](#bib.bib115)] | 2019 | 12k / - / - | Tango | 752 x 580 |
+    G | - | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PRISMA12K-TR [[115](#bib.bib115)] | 2019 | 12k / - / - | Tango | 752 x 580
+    | G | - | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sharma et. al. [[145](#bib.bib145)] | 2018 | 500k / - / - | Tango | 227 x
+    227 | C | [3m,12m] | OpenGL |'
+  prefs: []
+  type: TYPE_TB
+- en: 3 Datasets
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The use of DL models in spacecraft pose estimation necessitates proper training
+    to achieve the robust performance demanded by space applications. The quality
+    of the datasets is likely equally influential in DL model performance compared
+    to designing an effective DL algorithm to reach the intended performance. Large
+    datasets [[84](#bib.bib84), [140](#bib.bib140)] with a wide range of application
+    scenarios are usually considered to train DL models, which helps them generalise
+    well for unseen scenarios. Though DL algorithms are evolving towards few-shot
+    [[152](#bib.bib152)] and zero-shot [[18](#bib.bib18)] learning, solving 6 DoF
+    pose prediction problems with high accuracy still depends on large datasets with
+    images spanning a wide range of scenarios [[134](#bib.bib134), [179](#bib.bib179)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, there is a lack of publicly available space-borne image datasets.
+    This limits the application of DL models and their validation to specific targets
+    where actual space-borne images are available and to a limited range of operation
+    scenarios. To overcome this limitation, image rendering tools are the preferred
+    way to generate realistic space-borne images and testbeds are considered for on-ground
+    validation. The rendering tools help generate thousands of images for a wide range
+    of targets with annotations for any user-defined applications such as object detection,
+    semantic segmentation and 6 DoF pose estimation. These generation tools also provide
+    a lot of flexibility to adapt parameters such as camera models, orbital lighting
+    conditions, etc., depending on the final use-case application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Spacecraft pose estimation algorithms are usually part of vision-based navigation
+    systems and are validated in a dedicated testbed facility that can simulate the
+    orbital relative motion using robotic arms [[116](#bib.bib116), [108](#bib.bib108)]
+    or air-bearing [[141](#bib.bib141)] platforms under realistic space lighting conditions.
+    The target mock-up used in such facilities will be scaled or original depending
+    on various factors, including the size of the facility, mock-up size, application
+    scenario, etc. While synthetic imagery can be mass-produced to address any requirements,
+    the images produced from testbed scenarios are limited to a certain extent. It
+    includes the Earth in the background, the accurate position of the sun, earth’s
+    albedo; such characteristics differentiate the lab/testbed imagery from the actual
+    space imagery.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the above discussion, it is evident that the spacecraft pose estimation
+    deals with images from three domains (i.e., synthetic, lab and actual space imagery)
+    during the development, testing/validation and deployment phases. It is the nature
+    of the DL models to overfit the model to the features specific to the training
+    domain, and this challenge is well-known in the literature as domain gap [[34](#bib.bib34),
+    [170](#bib.bib170)] problem. So, the algorithms need to consider the aspect of
+    domain generalisation from the data viewpoint to improve the algorithm’s performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/5276e30977cdb110ab327ab8b270dd5a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a)
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8268777ac3436edf93bf69d77a9411d1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 15: (a) SnT Zero-G Lab at the University of Luxembourg [[116](#bib.bib116)]
+    (b) TRON facility at Stanford University [[108](#bib.bib108)]'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Summary of Datasets, Simulators & Testbeds
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This section provides a summary of the spacecraft pose estimation datasets,
+    simulators and rendering tools for synthetic image generation, and testbeds for
+    validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Datasets: [Table 3](#S2.T3 "In 2.4.3 Robustness to Illumination Conditions
+    ‣ 2.4 Limitations ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular Spacecraft
+    Pose Estimation: Current State, Limitations and Prospects") summarises the properties
+    of the major spacecraft pose estimation datasets. The properties of the datasets
+    include the number of images, the target spacecraft model, image resolution, annotations
+    and the rendering tools used for the synthetic image generation. The number of
+    images in the currently available spacecraft pose estimation datasets is between
+    $10^{4}$ and $10^{5}$. This is relatively low compared to some typical datasets
+    used for other machine learning tasks such as image classification and object
+    detection. The COCO [[86](#bib.bib86)] dataset, one of the standard datasets used
+    for object detection, contains ~300k images. ImageNet dataset [[31](#bib.bib31)]
+    primarily used for classification contains ~14M images. Similarly, YCB dataset
+    [[179](#bib.bib179)], a recent generic dataset for 6 DoF pose estimation, has
+    ~133k images.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The target spacecraft model used in the datasets also plays a vital role in
+    determining the dataset characteristics. For example, a smaller target size will
+    lead to a smaller operation range and vice-versa. The TANGO satellite [[33](#bib.bib33)]
+    model used in the multiple datasets [[113](#bib.bib113), [109](#bib.bib109), [71](#bib.bib71),
+    [115](#bib.bib115), [115](#bib.bib115), [145](#bib.bib145)] has a coarse dimension
+    of 80×75×32cm will lead to the operation range of ~10m. However, for Soyuz or
+    Cygnus models in other datasets increases the operating range to 40 ~ 80 m. Similar
+    constraints will apply to testbed data as well. A 1:1 mockup scale of TANGO spacecraft
+    in SPEED+ [[113](#bib.bib113)] leads to a lower range in the lab-generated images
+    due to the size constraint of the facility. Usually, a scaled mock-up is considered
+    a solution to increase the validation range in the testbed scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The level of annotations may vary for different datasets; for spacecraft pose
+    estimation applications, each image in the dataset must be appropriately annotated
+    with corresponding relative 6DoF pose labels. All the datasets mentioned in [Table 3](#S2.T3
+    "In 2.4.3 Robustness to Illumination Conditions ‣ 2.4 Limitations ‣ 2 Algorithms
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects") are adequately annotated with 6DoF pose labels.
+    However, the hybrid algorithm approach discussed in [Section 2.1](#S2.SS1 "2.1
+    Hybrid Modular Approaches ‣ 2 Algorithms ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects") demands
+    secondary annotations such as the bounding boxes and the keypoints. To recover
+    the secondary annotations from pose labels, it is necessary to have 3D information
+    on the edges or vertices of the target. Even for the standard datasets such as
+    SPEED [[71](#bib.bib71)] and SPEED+ [[113](#bib.bib113)], the only way to use
+    a hybrid approach is to recover the 3D locations of interested keypoints is via
+    the 3D reconstruction methods [[23](#bib.bib23)]. These recovered keypoints will
+    be used to construct secondary annotations such as bounding boxes, keypoints,
+    segmentation masks and even ellipse heatmap annotations [[39](#bib.bib39)]. The
+    lack of secondary annotations can be an issue for multi-task learning approaches
+    where the annotations (such as segmentation masks) could be used to define auxiliary
+    tasks intended to prevent learning domain-specific features to improve generalisation
+    [[110](#bib.bib110)]. Several learning-based approaches are evolving to generate
+    secondary annotation to address the label scarcity, such as depth estimation using
+    a single image depth estimator [[98](#bib.bib98)] and an image segmentation technique [[184](#bib.bib184)].
+    Some self-supervised approaches are evolving as an alternate way to get bounding
+    box annotations for a single target in the image [[174](#bib.bib174)]. Though
+    these approaches aid annotations, they cannot replace the properly calibrated
+    annotations recorded during synthetic data generation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Simulators and Rendering Tools: Computer graphics allow us to create realistic
+    images of objects based on high-quality textures using ray tracing. Ray Tracing
+    techniques mimic how light interacts with the real world and rely on evaluating
+    and simulating the path of view lines from the observer camera to objects in the
+    field of view. This simulation enables the calculation of the light intensity
+    of associated pixels. Several efforts were made towards creating simulators for
+    space applications. Realistic image simulation tools were used in previous missions
+    to aid vision-based navigation in space/planetary environments (such as the Lunar
+    environment, Asteroid surface), and it includes the PANGU (Planet and Asteroid
+    Natural scene Generation Utility) [[95](#bib.bib95)] and the SurRender [[14](#bib.bib14)]
+    by Airbus. The University of Dundee has developed the PANGU simulation tool, which
+    generates realistic, high-quality, synthetic surface images of planets and asteroids.
+    PANGU uses a custom GPU-based renderer to render the scene. Airbus’s Surrender
+    can be used in two modes of image rendering, ray tracing and OpenGL[[149](#bib.bib149)].
+    It can produce physically accurate images providing the known irradiance (each
+    pixel contains an irradiance value expressed in W/m2). Other general rendering
+    tools such as Blender [[93](#bib.bib93)], Unreal Engine [[124](#bib.bib124)],
+    and Mitsuba [[57](#bib.bib57)] were also used to generate synthetic images. The
+    main issue with these tools is that they are designed for general usage and are
+    not customised for space imagery. A brief comparison of rendering tools for synthetic
+    imagery was provided in [[128](#bib.bib128)]. Recently, efforts [[71](#bib.bib71)],
+    [[5](#bib.bib5)] have been made toward developing simulation tools specific for
+    the purpose of synthetic image generation for spacecraft pose estimation. SPEED
+    and SPEED+ images are obtained using the Optical Simulator [[8](#bib.bib8)], based
+    on an OpenGL rendering pipeline. The images from SPEED and SPEED+ are validated
+    against the real images of TANGO spacecraft from the PRISMA mission using histogram
+    comparison [[71](#bib.bib71)]. However, to our knowledge, no tool can be considered
+    a de facto standard to generate space imagery for spacecraft pose estimation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Testbeds: In spacecraft pose estimation, collecting images from space for training
+    and evaluating algorithms is extremely difficult and expensive. Laboratory testbeds
+    (see [Figure 15](#S3.F15 "In 3 Datasets ‣ A Survey on Deep Learning-Based Monocular
+    Spacecraft Pose Estimation: Current State, Limitations and Prospects")) are considered
+    as an alternative to replicate relative motion and orbital lighting conditions.
+    [Table 4](#S3.T4 "In 3.1 Summary of Datasets, Simulators & Testbeds ‣ 3 Datasets
+    ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation: Current
+    State, Limitations and Prospects"), summarises different laboratory testbed facilities
+    based on their size, manipulation capabilities, tracking systems, perception sensors
+    and orbital motion simulations. Some of the SoTA testbed includes The Robotic
+    Testbed for Rendezvous and Optical Navigation (TRON) at Stanford’s Space Rendezvous
+    Laboratory (SLAB) [[108](#bib.bib108)], STAR Lab at the University of Surrey [[128](#bib.bib128)],
+    SnT Zero-G Lab at the University of Luxembourg [[116](#bib.bib116)], GMV Platform-Art [[28](#bib.bib28),
+    [42](#bib.bib42)], German Aerospace Center European Proximity Operations Simulator
+    2.0 (DLR EPOS) [[10](#bib.bib10)] and European Space Agency’s GNC Rendezvous,
+    Approach and Landing Simulator (GRALS) [[21](#bib.bib21)]. These testbeds generally
+    have robotic manipulators to carry the payloads. The payloads can be different
+    target spacecraft mock-up models or mounted cameras mimicking a chaser. Different
+    lighting equipment has been used for simulating space conditions. For instance,
+    in SPEED+ [[113](#bib.bib113)], the images collected in a sunlamp setup replicate
+    the sun’s bright light, and those collected with a lightbox setup emulate the
+    diffused light of the earth’s albedo, respectively. Motion capture systems are
+    extensively used to collect pose labels based on the reflective markers attached
+    to the target and cameras. However, these motion capture systems should be carefully
+    calibrated [[108](#bib.bib108)] to generate accurate ground truth data, which
+    can be tedious and time-consuming.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next section discusses the major issue with the current spacecraft pose
+    estimation datasets: the domain gap between synthetic data used for training and
+    the real laboratory/ space-borne images used for testing/ validating and deploying
+    the DL-based algorithms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 4: Summary of different laboratory testbed facilities for evaluating
+    spacecraft pose estimation algorithms'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Facility | STAR Lab [[128](#bib.bib128)] | TRON [[108](#bib.bib108)] | SnT
+    Zero-G Lab [[116](#bib.bib116)] | GMV Platform-Art^© [[28](#bib.bib28)][[42](#bib.bib42)]
+    | DLR EPOS 2.0 [[10](#bib.bib10)] | GRALS [[21](#bib.bib21)] |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Illumination | • Forza 500 LED spotlight | •  LED panels (for diffused light)
+    • Metal-halide arc lamp (for sunlight) | •  Godox SL-60 LED Video Light • Aputure
+    LS 600d Pro | • Numerically controlled Sun emulator | • Osram ARRI Max 12/18 (with
+    a 12 kW hydrargyrum medium-arc iodide lamp) | •  Dimmable, uniform and collimated
+    light source |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Perception Sensor | • FLIR Blackfly (monocular camera) • 2D/3D LIDAR • Intel
+    RealSense D435i (RGBD camera) | • Point Grey Grasshopper 3 (monocular camera)
+    | • FLIR Blackfly (monocular camera) • Prophesee EKv4 (event camera) • Intel RealSense
+    D435i (RGBD camera) | • Optical navigation camera • Industrial laser sensor • A
+    set of GPS-like pseudolites | • Prosilica GC-655M (CCD camera) • PMDtec Camcube
+    3.0 (PMD camera) • Bluetechnix Argos3D-IRS1020 DLR Prototype (PMD LiDAR) | • Prosilica
+    GC2450 (monocular camera) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Manipulator (Robotic Arms) | • UR5 | • KUKA | • UR10e | • Mitsubishi PA10-6CE
+    • KUKA KR150-2 | • KUKA KR100HA • KUKA KR240-2 | • KUKA • UR5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tracking System | Qualisys | Vicon | OptiTrack | Model-based tracking algorithm
+    based on virtual visual servoing & Kanade-Lucas- Tomasi (KLT) feature tracker
+    algorithm | VIsion BAsed NAvigation Sensor System (VIBANASS) | VICON |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Background Material | Black background curtains | Light-absorbing black commando
+    curtains | Blind made of non-reflective black textile from inside and outside
+    | Black curtains fully covering the walls and ceiling | Black curtain and a black
+    wrapping of one of the robots made of Molton material | Black background curtains
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Simulated Operations | • Proximity | • Rendezvous • Proximity | • Proximity
+    • Rendezvous • Orbital maintenance operations | • Rendezvous • Proximity | • Rendezvous
+    • Docking/berthing • Proximity | • Rendezvous • Proximity |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Dimensions (WxLxH) | 3mx2mx2.5m | 8m×3m×3m (simulation room) and 6m (track)
+    | 5m×3m×2.3m | 15m | 25m (track) | 4m |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ROS [[125](#bib.bib125)] Supported | Yes | -NA- | Yes | No | No | No |'
+  prefs: []
+  type: TYPE_TB
+- en: 3.2 Bridging the Domain Gap
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Any DL-based algorithm trained on a synthetic dataset is likely to suffer from
+    a performance drop when tested on real images (whether acquired within a ground-based
+    laboratory or in space), which is referred to as the domain gap [[9](#bib.bib9)]
+    problem. Following the related computer vision terminology, the training dataset
+    arises from a source domain while the test dataset belongs to the target domain.
+    More subtly, a domain gap persists even when the real source and target datasets
+    are acquired under different (laboratory and space) environmental conditions  [[165](#bib.bib165)].
+    To ensure the reliable performance of DL-based spacecraft pose estimation algorithms
+    in real-world space missions, it is, therefore, crucial to bridge the domain gap.
+    Several methods have been used in spacecraft pose estimation literature for this
+    purpose. These methods are classified into two categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Data level methods: Expanding or adding diversity to the training data by applying
+    different techniques to alter the images, such as 1) data augmentation [[110](#bib.bib110)]
+    or 2) domain randomization [[115](#bib.bib115)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Algorithm level methods: Adapting the learning procedure of the model by using
+    different techniques, such as 3) multi-task learning [[111](#bib.bib111)] or 4)
+    adversarial learning [[113](#bib.bib113)], to make the features extracted from
+    images as less domain-dependent as possible'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 3.2.1 Data Augmentation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/98f5c1d23886a5715900498c8c8883b9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 16: Illustration of different data augmentation methods used on the
+    same reference image taken from SPARK2 [[127](#bib.bib127)] dataset. Images A,
+    B and C show examples of pixel-wise augmentation methods and images D, E and F
+    show the application of spatial augmentation methods. The captions refer to the
+    corresponding functions used by the Albumentations Python library.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This involves artificially creating additional training data by applying various
+    transformations to the existing data [[102](#bib.bib102)]. This is done to increase
+    the size and variations of the training set and to make the model more robust
+    to unseen variations in the input data, i.e. to improve the generalisation to
+    unseen domains. Data augmentation techniques used in spacecraft pose estimation
+    algorithms can be further categorised into:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pixel-wise data augmentations such as blurring, noising or changing the image
+    contrast
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Spatial-level data augmentations such as rotation or scaling
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The main difference between the two categories is their effect on the pose
+    labels. The pixel-level augmentations only affect the input image, whereas the
+    spatial-level augmentations require modifying both the input image as well as
+    the pose label, which can be difficult. Figure [16](#S3.F16 "Figure 16 ‣ 3.2.1
+    Data Augmentation ‣ 3.2 Bridging the Domain Gap ‣ 3 Datasets ‣ A Survey on Deep
+    Learning-Based Monocular Spacecraft Pose Estimation: Current State, Limitations
+    and Prospects") illustrates different data augmentation techniques (pixel and
+    spatial-level) applied to a reference image of PROBA-2 spacecraft from the SPARK2
+    [[127](#bib.bib127)] dataset. Finally, even though data augmentation generally
+    helps with the domain gap problem, there can be instances when applying data augmentation
+    can be counter-productive. For example, the Random Erase augmentation used by
+    Park et.al  [[110](#bib.bib110)] is shown to cause a drop in the pose estimation
+    performance. Consequently, finding the best set of augmentations for a given context
+    is a hard task in itself [[118](#bib.bib118)]. [Table 5](#S3.T5 "In 3.2.1 Data
+    Augmentation ‣ 3.2 Bridging the Domain Gap ‣ 3 Datasets ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects")
+    provides a summary of data augmentation methods used in spacecraft pose estimation
+    algorithms surveyed in this paper.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 5: Datasets used and data augmentations applied with different pose estimation
+    algorithms'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Algorithm | Datasets Used | Data Augmentations Applied |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EPFL_cvlab [[41](#bib.bib41)] | SPEED | Rotation, addition of random noise,
+    zooming and cropping |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SLAB Baseline [[115](#bib.bib115)] | SPEED, PRISMA12K, PRISMA25 | Random
+    variations in brightness and contrast, random flipping, rotation at 90 degree
+    intervals and addition of random Gaussian noise. Also, RoI enlargement and RoI
+    shifting are applied specifically for object detector training. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STAR LAB keypoint method [[126](#bib.bib126)] | SPEED, URSO-OrViS | Rotation,
+    translation, coarse dropout, addition of Gaussian noise, random brightness and
+    contrast variations applied for training keypoint prediction network |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Black et al. [[12](#bib.bib12)] | SPEED, Cygnus | Randomised flips, 90 degree
+    rotations and crops applied for object detector training. Random translation and
+    expansions, random flips, 90 degree rotations, brightness, contrast, and saturation
+    augmentations applied for keypoint prediction training. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Wide-Depth-Range [[57](#bib.bib57)] | SPEED, SwissCube | Random shift, scale
+    and rotation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LSPnet [[38](#bib.bib38)] | SPEED | Centre data augmentation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| URSONet [[124](#bib.bib124)] | SPEED, URSO-OrViS | Change in image exposure
+    and contrast, addition of Additive White Gaussian (AWG) noise, blurring and drop
+    out of patches, random camera orientation perturbations and random plane rotations
+    (only for SPEED dataset) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Mobile-URSONet [[121](#bib.bib121)] | SPEED | Random rotation of the camera
+    across the roll axis with a maximum magnitude of 25 degrees, Gaussian blur, random
+    changes to brightness, contrast, saturation, and hue |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Huang et al. [[59](#bib.bib59)] | SPEED, URSO | Change in image exposure
+    and contrast, addition of AWG noise, blurring and drop out patches, random camera
+    orientation perturbations and random plane rotations (only for SPEED) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Lotti et al. [[92](#bib.bib92)] | SPEED, CPD | Random image rotations, bounding
+    box enlargement and shifts, random brightness, and contrast adjustments |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kecen et al. [[81](#bib.bib81)] | SPEED | Same as SLAB Baseline |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SPNv2 [[110](#bib.bib110)] | SPEED+ | Style augmentation via neural style
+    transfer, brightness and contrast, random erase, sun flare, blur (motion blur,
+    median blur, glass blur), noise (Gaussian noise, ISO noise) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sharma et al. [[145](#bib.bib145)] | PRISMA (Imitation-25) | Horizontal reflection,
+    addition of zero mean white Gaussian noise |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CA-SpaceNet [[172](#bib.bib172)] | SPEED, SwissCube | Random shift, scale,
+    and rotation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Legrand et al. [[75](#bib.bib75)] | SPEED | Random variations in brightness
+    and contrast, Gaussian noise augmentations, random rotations, and random background
+    data augmentation |'
+  prefs: []
+  type: TYPE_TB
+- en: 3.2.2 Domain Randomization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The goal is to help the model generalise by training it on a set of sufficiently
+    randomized source data so that the target domain appears as just another randomization
+    to the model [[163](#bib.bib163)]. Hence, the expectation is that the model will
+    be less prone to the domain gap [[164](#bib.bib164)]. An example of domain randomization
+    in the context of spacecraft pose estimation is provided in [[115](#bib.bib115)],
+    where the spacecraft texture is randomized using the Neural Style Transfer (NST)
+    technique presented in [[62](#bib.bib62)]. Domain randomization can be seen as
+    a particular case of data augmentation: one does not search for a set of augmentations
+    relevant to a context, but for a sufficiently varied set of augmentations that
+    will make the actual scene appear as just another variation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.3 Multi-Task Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In this approach, a single DL model is trained to perform multiple related
+    tasks (a primary task and several secondary/ auxiliary tasks) simultaneously.
+    The assumption here is that the model will generalise better on the primary task
+    (spacecraft pose estimation in this context) by being less prone to the noise
+    induced by the primary task [[139](#bib.bib139)]. The most common way of implementing
+    multi-task learning is to have a shared backbone architecture extracting features
+    and feeding these features to the task-specific layers [[110](#bib.bib110)] (see
+    [Figure 17](#S3.F17 "In 3.2.3 Multi-Task Learning ‣ 3.2 Bridging the Domain Gap
+    ‣ 3 Datasets ‣ A Survey on Deep Learning-Based Monocular Spacecraft Pose Estimation:
+    Current State, Limitations and Prospects")). Here EfficientPose [[16](#bib.bib16)]
+    network architecture is modified with the addition of two heads: one for the segmentation
+    of the spacecraft and one to compute the 2D heatmaps associated with pre-designated
+    keypoints on the spacecraft. The results show that when the model is trained with
+    different head configurations, the best performance is reached when all the task
+    heads are enabled, thereby showing the effectiveness of multi-task learning. However,
+    the authors show that all the heads do not contribute to the same extent; the
+    segmentation head only improves the performance slightly. This highlights one
+    of the key challenges in multi-task learning: identifying the correct set of secondary
+    tasks that is relevant for a particular primary task [[150](#bib.bib150)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3346f3c421fcccd359bb98339032eb98.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 17: A model architecture used for multi-task learning, where some layers
+    are shared between all tasks, and some layers are dedicated to specific tasks.
+    Adopted from [[110](#bib.bib110)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.4 Domain-Adversarial Learning
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: This technique [[37](#bib.bib37)] is applied to spacecraft pose estimation [[113](#bib.bib113)]
+    to bridge the domain gap. The goal here is to help the model learn features that
+    are domain-invariant but discriminative with respect to the pose estimation task.
+    A domain classifier, whose purpose is to discriminate between the source and the
+    target domain, is attached to the model and its loss function maximised over the
+    learning phase. The underlying idea of this method is that the less this classifier
+    can distinguish between the source and the target domain, the more domain-invariant
+    the model becomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Limitations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Current datasets and evaluation procedures are still insufficient to enable
+    the deployment of DL-based spacecraft pose estimation algorithms in space missions.
+    We identify key limitations below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1 Realism of Synthetically Generated Datasets
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: One factor increasing the domain gap is the realism of the synthetic images
+    used to train the models. The question of rendering realistic images is a hard
+    topic in the context of space because it involves simulating the behaviour of
+    light and its interaction with various materials and surfaces in space. The lack
+    of reference points and the absence of an atmosphere make it difficult to create
+    realistic lighting and shading effects. To achieve a realistic depiction of space,
+    computer graphics techniques need to be tailored specifically to the unique properties
+    of space environments. Therefore, the question of how to render more realistic
+    synthetic space images is a challenging and open research topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 Algorithm Evaluation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: While several attempts have been made to mitigate the domain gap between synthetic
+    and laboratory images, there persists a one-order-of-magnitude difference between
+    the best pose scores in the 2019 (synthetic test images) and 2021 (laboratory
+    test images) editions of ESA’s Satellite Pose Estimation Challenge [[71](#bib.bib71),
+    [113](#bib.bib113)]. Moreover, ensuring that an algorithm trained on synthetic
+    images (source domain) performs well on laboratory images (target domain) does
+    not guarantee that the performance level will be maintained for space images,
+    mainly as a result of the domain gap between the two environments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Future Research Directions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Despite the recent progress in spacecraft pose estimation, there is room for
+    improvement in algorithm development and data generation (or collection). This
+    section summarises open research questions and possible future directions for
+    the field.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Deployability of Algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The end goal of developing spacecraft pose estimation algorithms is to deploy
+    them in space-borne hardware with limited resources. However, most existing algorithms
+    are tested on workstations and large server clusters and very limited evaluations
+    have been conducted on edge systems with FPGA [[36](#bib.bib36), [77](#bib.bib77)]
+    or GPU [[72](#bib.bib72), [122](#bib.bib122), [15](#bib.bib15)]-based AI accelerators
+    for space applications. In this context, this survey has made an effort to perform
+    a trade-off comparison between the number of parameters (which can be a measure
+    of resource consumption in the deployed hardware) in the DL models used and the
+    algorithm performance. However, the lack of relevant information reported makes
+    this difficult. In future works, it would be valuable for authors to report additional
+    metrics such as size, number of FLOPS and latency, which are suitable measures
+    for estimating the deployability of algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another future direction is to develop novel DL models specifically suited for
+    edge AI accelerators. Unlike commonplace Nvidia GPUs, AI accelerators for space
+    systems support only a limited number of network layers and operations [[181](#bib.bib181)].
+    DL models with unsupported layers will have difficulty to work on such devices.
+    Techniques like Neural Architecture Search (NAS) [[177](#bib.bib177)] can be used
+    for developing efficient DL models which are deployable in space systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Explainability of Algorithms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In real-world applications, the explainability of algorithms is a key factor
+    in determining their reliability and trustworthiness. Especially in safety-critical
+    applications like in space, it is important to know why and how a decision / prediction
+    was made. However, the black-box nature of DL models makes them weak for interpreting
+    their inference processes and final results. This makes explainability difficult
+    in DL-based spacecraft pose estimation, especially for direct end-to-end algorithms.
+    Recently, eXplainable-AI (XAI) [[44](#bib.bib44)] has become a hot research topic,
+    with new methods developed [[3](#bib.bib3), [183](#bib.bib183)]. Several of these
+    proposed methods, like Bayesian deep learning [[68](#bib.bib68)] or conformal
+    inference methods  [[143](#bib.bib143), [1](#bib.bib1), [162](#bib.bib162)] can
+    be applied to spacecraft pose estimation improving their explainability, which
+    are interesting directions for future research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Multi-Modal Spacecraft Pose Estimation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Most existing methods focus on visible-range images only. However, visible cameras
+    are likely to suffer from difficult acquisition conditions in space (e.g., low
+    light, overexposure). Therefore, other sensor such as thermal and time-of-flight
+    of event cameras need to be considered in order to extend the operational range
+    of classical computer vision methods. Till now, only a few works have investigated
+    multi-modality for spacecraft pose estimation [[63](#bib.bib63), [136](#bib.bib136),
+    [51](#bib.bib51), [137](#bib.bib137)] which is a direction of interest for the
+    future of vision-based navigation in space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.4 Generation of More Realistic Synthetic Data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As mentioned in section [3](#S3 "3 Datasets ‣ A Survey on Deep Learning-Based
+    Monocular Spacecraft Pose Estimation: Current State, Limitations and Prospects"),
+    the main issue with the application of machine learning to space applications
+    is the lack of data. Moreover, the ubiquitous resort to synthetic data is the
+    source of the current domain gap problem faced in the literature. Addressing this
+    problem could be done through a deep analysis of the rendering engines’ images
+    compared to actual space imagery. The results of this analysis could serve as
+    the starting point for developing a rendering engine dedicated to generating realistic
+    data for model training. To the best of our knowledge, PANGU [[95](#bib.bib95)]
+    is the only initiative on this track to date. Another approach for simulation-to-real,
+    is to introduce a physics informed layer into a deep learning system, as for example
+    in [[76](#bib.bib76)]. This may induce invariance to lighting conditions in images
+    of satellites that result from complex lighting and shadowing conditions for satellites
+    orbiting the Earth, such as from reflections from the satellite itself, from the
+    Earth’s surface, and from the moon’s surface.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.5 Domain Adaptation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the main obstacles to the deployment of DL-based pose estimation methods
+    in space is the performance gap when the models are trained on synthetic images
+    and tested on real ones. The second edition of the ESA Pose Estimation Challenge
+    [[113](#bib.bib113)] was specifically designed to address this challenge, with
+    one synthetic training and two lab test datasets. Winning methods [[112](#bib.bib112)]
+    have taken advantage of dedicated learning approaches, such as self-supervised,
+    multi-task or adversarial learning. Together with the generation of more realistic
+    synthetic datasets for training, domain adaptation is likely to receive much interest
+    in the coming years to overcome the domain gap problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.6 Beyond Target-Specific Spacecraft Pose Estimation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Current algorithms estimate the pose of a single type of spacecraft at a time.
+    For every additional spacecraft, a new dataset has to be generated and the algorithm
+    needs to be retrained. However, with the increasing number of spacecraft launched
+    yearly, a natural way forward is to develop more generic algorithms that are not
+    restricted to a particular spacecraft model. Especially in applications such as
+    debris removal, the original spacecraft structure can disintegrate into geometrical
+    shapes not seen by the algorithm during training. Generic 6D pose estimation methods
+    for unseen objects [[43](#bib.bib43)] [[106](#bib.bib106)] can be exploited to
+    develop spacecraft-agnostic pose estimation algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.7 Multi-Frame Spacecraft Pose Estimation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Multi-frame spacecraft pose estimation refers to determining the spacecraft
+    pose using consecutive images, thereby leveraging temporal information. Current
+    spacecraft pose estimation algorithms consider each image frame in isolation and
+    the pose is estimated from information extracted from this single image frame.
+    However, in space, pose estimation algorithms are commonly used in applications
+    such as autonomous navigation, where a sequence of consecutive images (trajectories)
+    is available. Hence using temporal information is key to higher pose estimation
+    accuracy and generating temporally consistent poses. Datasets like SPARK2 [[127](#bib.bib127)]
+    already provide pose estimation data as trajectories. In this direction, recently
+    proposed ChiNet [[137](#bib.bib137)] have used Long Short-Term Memory (LSTM) [[50](#bib.bib50)]
+    units in modelling sequences of data for estimating the spacecraft pose. However,
+    there is a rich history of video-based 6 DoF pose estimation methods leveraging
+    temporal information in general computer vision [[7](#bib.bib7), [6](#bib.bib6),
+    [27](#bib.bib27)]. In future, these methods can be in-cooperated into spacecraft
+    pose estimation, especially for applications such as spacecraft related navigation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Monocular vision-based spacecraft pose estimation has seen considerable progress
+    with the use of DL in recent years. However, there are still fundamental concerns
+    that need to be addressed before these algorithms are deployed in actual space
+    scenarios. This survey highlights these limitations, both in terms of algorithms
+    design and datasets used for training and validation/testing. With this aim, the
+    survey first summarised the existing algorithms according to two common approaches:
+    hybrid modular and direct end-to-end regression approaches. Algorithms were compared
+    in terms of performance as well as the size of the network architectures used
+    to help understand their deployability. Then the spacecraft pose estimation datasets
+    available for training and validating/testing these methods were discussed. The
+    data generation methods, simulators and testbeds, and strategies used to bridge
+    the domain gap problem were also discussed in detail. Finally, the survey provides
+    future research directions to address these limitations and to develop spacecraft
+    pose estimation algorithms deployable in real space missions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A Additional Information
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A.1 Publicly available algorithm implementations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/BoChenYS/satellite-pose-estimation](https://github.com/BoChenYS/satellite-pose-estimation) [[23](#bib.bib23)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://indico.esa.int/event/319/attachments/3561/4754/pose_gerard_segmentation.pdf](https://indico.esa.int/event/319/attachments/3561/4754/pose_gerard_segmentation.pdf) [[41](#bib.bib41)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/cvlab-epfl/wide-depth-range-pose](https://github.com/cvlab-epfl/wide-depth-range-pose) [[57](#bib.bib57)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/tpark94/speedplusbaseline](https://github.com/tpark94/speedplusbaseline) [[115](#bib.bib115)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/pedropro/UrsoNet](https://github.com/pedropro/UrsoNet) [[124](#bib.bib124)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/possoj/Mobile-URSONet](https://github.com/possoj/Mobile-URSONet) [[121](#bib.bib121)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/tpark94/spnv2](https://github.com/tpark94/spnv2) [[110](#bib.bib110)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://github.com/Shunli-Wang/CA-SpaceNet](https://github.com/Shunli-Wang/CA-SpaceNet) [[172](#bib.bib172)]'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A.2 Links to the publicly available datasets
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'SHIRT: [https://taehajeffpark.com/shirt/](https://taehajeffpark.com/shirt/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'SPARK2022: [https://cvi2.uni.lu/spark2022/registration/](https://cvi2.uni.lu/spark2022/registration/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'SwissCube: [https://github.com/cvlab-epfl/wide-depth-range-pose](https://github.com/cvlab-epfl/wide-depth-range-pose)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'SPEED+: [https://zenodo.org/record/5588480](https://zenodo.org/record/5588480)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'SPEED: [https://zenodo.org/record/6327547](https://zenodo.org/record/6327547)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'URSO-OrViS: [https://zenodo.org/record/3279632](https://zenodo.org/record/3279632)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Angelopoulos and Bates [2021] Angelopoulos, A.N., Bates, S., 2021. A gentle
+    introduction to conformal prediction and distribution-free uncertainty quantification.
+    arXiv preprint arXiv:2107.07511 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Azodi et al. [2020] Azodi, C.B., Tang, J., Shiu, S.H., 2020. Opening the black
+    box: interpretable machine learning for geneticists. Trends in genetics 36, 442–455.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bai et al. [2021] Bai, X., Wang, X., Liu, X., Liu, Q., Song, J., Sebe, N.,
+    Kim, B., 2021. Explainable deep learning for efficient and robust pattern recognition:
+    A survey of recent developments. Pattern Recognition 120, 108102.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Baller et al. [2021] Baller, S.P., Jindal, A., Chadha, M., Gerndt, M., 2021.
+    Deepedgebench: Benchmarking deep neural networks on edge devices, in: 2021 IEEE
+    International Conference on Cloud Engineering (IC2E), IEEE. pp. 20–30.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bechini et al. [2022] Bechini, M., Lunghi, P., Lavagna, M., et al., 2022. Spacecraft
+    pose estimation via monocular image processing: Dataset generation and validation,
+    in: 9th European Conference for Aerospace Sciences (EUCASS 2022), pp. 1–15.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beedu et al. [2022] Beedu, A., Alamri, H., Essa, I., 2022. Video based object
+    6d pose estimation using transformers. arXiv preprint arXiv:2210.13540 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Beedu et al. [2021] Beedu, A., Ren, Z., Agrawal, V., Essa, I., 2021. Videopose:
+    Estimating 6d object pose from videos. arXiv preprint arXiv:2111.10677 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beierle and D’Amico [2019] Beierle, C., D’Amico, S., 2019. Variable-magnification
+    optical stimulator for training and validation of spaceborne vision-based navigation.
+    Journal of Spacecraft and Rockets 56, 1060–1072.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ben-David et al. [2006] Ben-David, S., Blitzer, J., Crammer, K., Pereira, F.,
+    2006. Analysis of representations for domain adaptation. Advances in neural information
+    processing systems 19.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Benninghoff et al. [2017] Benninghoff, H., Rems, F., Risse, E.A., Mietner, C.,
+    2017. European proximity operations simulator 2.0 (epos) - a robotic-based rendezvous
+    and docking simulator. Journal of large-scale research facilities JLSRF 3, 107.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Biesbroek et al. [2021] Biesbroek, R., Aziz, S., Wolahan, A., Cipolla, S.f.,
+    Richard-Noca, M., Piguet, L., 2021. The clearspace-1 mission: Esa and clearspace
+    team up to remove debris, in: Proc. 8th Eur. Conf. Sp. Debris, pp. 1–3.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Black et al. [2021] Black, K., Shankar, S., Fonseka, D., Deutsch, J., Dhir,
+    A., Akella, M.R., 2021. Real-time, flight-ready, non-cooperative spacecraft pose
+    estimation using monocular imagery. arXiv preprint arXiv:2101.09553 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bochkovskiy et al. [2020] Bochkovskiy, A., Wang, C.Y., Liao, H.Y.M., 2020.
+    Yolov4: Optimal speed and accuracy of object detection. arXiv preprint arXiv:2004.10934
+    .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brochard et al. [2018] Brochard, R., Lebreton, J., Robin, C., Kanani, K., Jonniaux,
+    G., Masson, A., Despré, N., Berjaoui, A., 2018. Scientific image rendering for
+    space scenes with the surrender software. arXiv preprint arXiv:1810.01423 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bruhn et al. [2020] Bruhn, F.C., Tsog, N., Kunkel, F., Flordal, O., Troxel,
+    I., 2020. Enabling radiation tolerant heterogeneous gpu-based onboard data processing
+    in space. CEAS Space Journal 12, 551–564.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bukschat and Vetter [2020] Bukschat, Y., Vetter, M., 2020. Efficientpose: An
+    efficient, accurate and scalable end-to-end 6d multi object pose estimation approach.
+    arXiv preprint arXiv:2011.04307 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cai and Vasconcelos [2018] Cai, Z., Vasconcelos, N., 2018. Cascade r-cnn: Delving
+    into high quality object detection, in: Proceedings of the IEEE conference on
+    computer vision and pattern recognition, pp. 6154–6162.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cao et al. [2020] Cao, W., Zhou, C., Wu, Y., Ming, Z., Xu, Z., Zhang, J., 2020.
+    Research progress of zero-shot learning beyond computer vision, in: Algorithms
+    and Architectures for Parallel Processing: 20th International Conference, ICA3PP
+    2020, New York City, NY, USA, October 2–4, 2020, Proceedings, Part II 20, Springer.
+    pp. 538–551.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Capuano et al. [2019] Capuano, V., Alimo, S.R., Ho, A.Q., Chung, S.J., 2019.
+    Robust features extraction for on-board monocular-based spacecraft pose acquisition,
+    in: AIAA Scitech 2019 Forum, p. 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cassinis et al. [2019] Cassinis, L.P., Fonod, R., Gill, E., 2019. Review of
+    the robustness and applicability of monocular pose estimation systems for relative
+    navigation with an uncooperative spacecraft. Progress in Aerospace Sciences 110,
+    100548.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cassinis et al. [2021] Cassinis, L.P., Menicucci, A., Gill, E., Ahrns, I.,
+    Fernandez, J.G., 2021. On-ground validation of a cnn-based monocular pose estimation
+    system for uncooperative spacecraft, in: 8th European Conference on Space Debris.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chai et al. [2021] Chai, J., Zeng, H., Li, A., Ngai, E.W., 2021. Deep learning
+    in computer vision: A critical review of emerging techniques and application scenarios.
+    Machine Learning with Applications 6, 100134.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. [2019a] Chen, B., Cao, J., Parra, A., Chin, T.J., 2019a. Satellite
+    pose estimation with deep landmark regression and nonlinear pose refinement, in:
+    Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)
+    Workshops.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen et al. [2019b] Chen, B., Cao, J., Parra, A., Chin, T.J., 2019b. Satellite
+    pose estimation with deep landmark regression and nonlinear pose refinement, in:
+    Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops,
+    pp. 0–0.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cheng et al. [2020] Cheng, B., Xiao, B., Wang, J., Shi, H., Huang, T.S., Zhang,
+    L., 2020. Higherhrnet: Scale-aware representation learning for bottom-up human
+    pose estimation, in: Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition, pp. 5386–5395.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ciaparrone et al. [2020] Ciaparrone, G., Sánchez, F.L., Tabik, S., Troiano,
+    L., Tagliaferri, R., Herrera, F., 2020. Deep learning in video multi-object tracking:
+    A survey. Neurocomputing 381, 61–88.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Clark et al. [2017] Clark, R., Wang, S., Markham, A., Trigoni, N., Wen, H.,
+    2017. Vidloc: A deep spatio-temporal model for 6-dof video-clip relocalization,
+    in: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+    pp. 6856–6864.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Colmenarejo et al. [2019] Colmenarejo, P., Graziano, M., Novelli, G., Mora,
+    D., Serra, P., Tomassini, A., Seweryn, K., Prisco, G., Fernandez, J.G., 2019.
+    On ground validation of debris removal technologies. Acta Astronautica 158, 206–219.
+    URL: [https://www.sciencedirect.com/science/article/pii/S0094576517312845](https://www.sciencedirect.com/science/article/pii/S0094576517312845),
+    doi:[https://doi.org/10.1016/j.actaastro.2018.01.026](https:/doi.org/https://doi.org/10.1016/j.actaastro.2018.01.026).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cosmas and Kenichi [2020] Cosmas, K., Kenichi, A., 2020. Utilization of fpga
+    for onboard inference of landmark localization in cnn-based spacecraft pose estimation.
+    Aerospace 7, 159.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'D’ et al. [2014] D’, S., Amico, N., Benn, M., Jørgensen, J.L., 2014. Pose estimation
+    of an uncooperative spacecraft from actual space imagery. International Journal
+    of Space Science and Engineering 2, 171. URL: [http://www.inderscience.com/link.php?id=60600](http://www.inderscience.com/link.php?id=60600),
+    doi:[10.1504/IJSPACESE.2014.060600](https:/doi.org/10.1504/IJSPACESE.2014.060600).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Deng et al. [2009] Deng, J., Dong, W., Socher, R., Li, L.J., Li, K., Fei-Fei,
+    L., 2009. Imagenet: A large-scale hierarchical image database, in: 2009 IEEE conference
+    on computer vision and pattern recognition, Ieee. pp. 248–255.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: D’Amico et al. [2014] D’Amico, S., Benn, M., Jørgensen, J.L., 2014. Pose estimation
+    of an uncooperative spacecraft from actual space imagery. International Journal
+    of Space Science and Engineering 5 2, 171–189.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] (ESA), E.S.A., 2010. Prisma’s tango and mango satellites. [https://www.esa.int/ESA_Multimedia/Images/2010/10/Prisma_s_Tango_and_Mango_satellites](https://www.esa.int/ESA_Multimedia/Images/2010/10/Prisma_s_Tango_and_Mango_satellites).
+    Accessed: 05-April-2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fang et al. [2022] Fang, Y., Yap, P.T., Lin, W., Zhu, H., Liu, M., 2022. Source-free
+    unsupervised domain adaptation: A survey. arXiv preprint arXiv:2301.00265 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fischler and Bolles [1981] Fischler, M.A., Bolles, R.C., 1981. Random sample
+    consensus: a paradigm for model fitting with applications to image analysis and
+    automated cartography. Communications of the ACM 24, 381–395.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Furano et al. [2020] Furano, G., Meoni, G., Dunne, A., Moloney, D., Ferlet-Cavrois,
+    V., Tavoularis, A., Byrne, J., Buckley, L., Psarakis, M., Voss, K.O., et al.,
+    2020. Towards the use of artificial intelligence on the edge in space systems:
+    Challenges and opportunities. IEEE Aerospace and Electronic Systems Magazine 35,
+    44–56.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ganin et al. [2016] Ganin, Y., Ustinova, E., Ajakan, H., Germain, P., Larochelle,
+    H., Laviolette, F., Marchand, M., Lempitsky, V., 2016. Domain-adversarial training
+    of neural networks. The journal of machine learning research 17, 2096–2030.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Garcia et al. [2021] Garcia, A., Musallam, M.A., Gaudilliere, V., Ghorbel,
+    E., Al Ismaeil, K., Perez, M., Aouada, D., 2021. Lspnet: A 2d localization-oriented
+    spacecraft pose estimation neural network, in: Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition, pp. 2048–2056.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gaudillière et al. [2023] Gaudillière, V., Pauly, L., Rathinam, A., Sanchez,
+    A.G., Musallam, M.A., Aouada, D., 2023. 3d-aware object localization using gaussian
+    implicit occupancy function. arXiv preprint arXiv:2303.02058 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ge et al. [2021] Ge, Z., Liu, S., Wang, F., Li, Z., Sun, J., 2021. Yolox: Exceeding
+    yolo series in 2021. arXiv preprint arXiv:2107.08430 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gerard [2019] Gerard, K., 2019. Segmentation-Driven Satellite Pose Estimation.
+    Technical Report. Technical Report. EPFL. Available online at: https://indico.
+    esa. int/event ….'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: GMV [2018] GMV, 2018. platform-art. [https://satsearch.co/services/gmv-platform-art-for-satellite-orbit-simulation](https://satsearch.co/services/gmv-platform-art-for-satellite-orbit-simulation).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gou et al. [2022] Gou, M., Pan, H., Fang, H.S., Liu, Z., Lu, C., Tan, P., 2022.
+    Unseen object 6d pose estimation: a benchmark and baselines. arXiv preprint arXiv:2206.11808
+    .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gunning et al. [2019] Gunning, D., Stefik, M., Choi, J., Miller, T., Stumpf,
+    S., Yang, G.Z., 2019. Xai—explainable artificial intelligence. Science robotics
+    4, eaay7120.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hadidi et al. [2019] Hadidi, R., Cao, J., Xie, Y., Asgari, B., Krishna, T.,
+    Kim, H., 2019. Characterizing the deployment of deep neural networks on commercial
+    edge devices, in: 2019 IEEE International Symposium on Workload Characterization
+    (IISWC), IEEE. pp. 35–48.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hartley and Zisserman [2003] Hartley, R., Zisserman, A., 2003. Multiple view
+    geometry in computer vision. Cambridge university press.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'He et al. [2017] He, K., Gkioxari, G., Dollár, P., Girshick, R., 2017. Mask
+    r-cnn, in: Proceedings of the IEEE international conference on computer vision,
+    pp. 2961–2969.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'He et al. [2016] He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep residual learning
+    for image recognition, in: Proceedings of the IEEE conference on computer vision
+    and pattern recognition, pp. 770–778.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hinterstoißer et al. [2012] Hinterstoißer, S., Lepetit, V., Ilic, S., Holzer,
+    S., Bradski, G.R., Konolige, K., Navab, N., 2012. Model based training, detection
+    and pose estimation of texture-less 3d objects in heavily cluttered scenes, in:
+    Asian Conference on Computer Vision.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hochreiter and Schmidhuber [1997] Hochreiter, S., Schmidhuber, J., 1997. Long
+    short-term memory. Neural Comput. 9, 1735–1780. URL: [https://doi.org/10.1162/neco.1997.9.8.1735](https://doi.org/10.1162/neco.1997.9.8.1735),
+    doi:[10.1162/neco.1997.9.8.1735](https:/doi.org/10.1162/neco.1997.9.8.1735).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hogan et al. [2021] Hogan, M., Rondao, D., Aouf, N., Dubois-Matra, O., 2021.
+    Using convolutional neural networks for relative pose estimation of a non-cooperative
+    spacecraft with thermal infrared imagery. CoRR abs/2105.13789. URL: [https://arxiv.org/abs/2105.13789](https://arxiv.org/abs/2105.13789),
+    [arXiv:2105.13789](http://arxiv.org/abs/2105.13789).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hou et al. [2020] Hou, T., Ahmadyan, A., Zhang, L., Wei, J., Grundmann, M.,
+    2020. Mobilepose: Real-time pose estimation for unseen objects with weak shape
+    supervision. arXiv preprint arXiv:2003.03522 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Howard et al. [2019] Howard, A., Sandler, M., Chu, G., Chen, L.C., Chen, B.,
+    Tan, M., Wang, W., Zhu, Y., Pang, R., Vasudevan, V., et al., 2019. Searching for
+    mobilenetv3, in: Proceedings of the IEEE/CVF international conference on computer
+    vision, pp. 1314--1324.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. [2018] Hu, J., Shen, L., Sun, G., 2018. Squeeze-and-excitation networks,
+    in: Proceedings of the IEEE conference on computer vision and pattern recognition,
+    pp. 7132--7141.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. [2020] Hu, Y., Fua, P., Wang, W., Salzmann, M., 2020. Single-stage
+    6d object pose estimation, in: Proceedings of the IEEE/CVF conference on computer
+    vision and pattern recognition, pp. 2930--2939.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. [2019] Hu, Y., Hugonot, J., Fua, P., Salzmann, M., 2019. Segmentation-driven
+    6d object pose estimation, in: Proceedings of the IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition, pp. 3385--3394.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hu et al. [2021] Hu, Y., Speierer, S., Jakob, W., Fua, P., Salzmann, M., 2021.
+    Wide-depth-range 6d object pose estimation in space, in: Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition, pp. 15870--15879.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Huan et al. [2020] Huan, W., Liu, M., Hu, Q., 2020. Pose estimation for non-cooperative
+    spacecraft based on deep learning, in: 2020 39th Chinese Control Conference (CCC),
+    IEEE. pp. 3339--3343.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. [2021] Huang, H., Zhao, G., Gu, D., Bo, Y., 2021. Non-model-based
+    monocular pose estimation network for uncooperative spacecraft using convolutional
+    neural network. IEEE Sensors Journal 21, 24579--24590.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huo et al. [2020] Huo, Y., Li, Z., Zhang, F., 2020. Fast and accurate spacecraft
+    pose estimation from single shot space imagery using box reliability and keypoints
+    existence judgments. IEEE Access 8, 216283--216297.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Huynh [2009] Huynh, D.Q., 2009. Metrics for 3d rotations: Comparison and analysis.
+    Journal of Mathematical Imaging and Vision 35, 155--164.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jackson et al. [2018] Jackson, P.T.G., Abarghouei, A.A., Bonner, S., Breckon,
+    T.P., Obara, B., 2018. Style augmentation: Data augmentation via style randomization.
+    CoRR abs/1809.05375. URL: [http://arxiv.org/abs/1809.05375](http://arxiv.org/abs/1809.05375),
+    [arXiv:1809.05375](http://arxiv.org/abs/1809.05375).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jawaid et al. [2022] Jawaid, M., Elms, E., Latif, Y., Chin, T.J., 2022. Towards
+    bridging the space domain gap for satellite pose estimation using event sensing.
+    URL: [https://arxiv.org/abs/2209.11945](https://arxiv.org/abs/2209.11945), doi:[10.48550/ARXIV.2209.11945](https:/doi.org/10.48550/ARXIV.2209.11945).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jiao et al. [2019] Jiao, L., Zhang, F., Liu, F., Yang, S., Li, L., Feng, Z.,
+    Qu, R., 2019. A survey of deep learning-based object detection. IEEE access 7,
+    128837--128868.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jones [2018] Jones, H., 2018. The recent large reduction in space launch cost,
+    48th International Conference on Environmental Systems.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kelsey et al. [2006] Kelsey, J., Byrne, J., Cosgrove, M., Seereeram, S., Mehra,
+    R., 2006. Vision-based relative pose estimation for autonomous rendezvous and
+    docking, in: 2006 IEEE Aerospace Conference, pp. 20 pp.--. doi:[10.1109/AERO.2006.1655916](https:/doi.org/10.1109/AERO.2006.1655916).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kendall and Cipolla [2017] Kendall, A., Cipolla, R., 2017. Geometric loss functions
+    for camera pose regression with deep learning, in: Proceedings of the IEEE conference
+    on computer vision and pattern recognition, pp. 5974--5983.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kendall and Gal [2017] Kendall, A., Gal, Y., 2017. What uncertainties do we
+    need in bayesian deep learning for computer vision? Advances in neural information
+    processing systems 30.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kendall et al. [2015] Kendall, A., Grimes, M., Cipolla, R., 2015. Posenet:
+    A convolutional network for real-time 6-dof camera relocalization, in: Proceedings
+    of the IEEE International Conference on Computer Vision (ICCV).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kendall et al. [2015] Kendall, A., Grimes, M., Cipolla, R., 2015. PoseNet:
+    A Convolutional Network for Real-Time 6-DOF Camera Relocalization. arXiv e-prints
+    , arXiv:1505.07427[arXiv:1505.07427](http://arxiv.org/abs/1505.07427).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kisantal et al. [2020] Kisantal, M., Sharma, S., Park, T.H., Izzo, D., Märtens,
+    M., D’Amico, S., 2020. Satellite pose estimation challenge: Dataset, competition
+    design, and results. IEEE Transactions on Aerospace and Electronic Systems 56,
+    4083--4098.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kosmidis et al. [2020] Kosmidis, L., Rodriguez, I., Jover, Á., Alcaide, S.,
+    Lachaize, J., Abella, J., Notebaert, O., Cazorla, F.J., Steenari, D., 2020. Gpu4s:
+    Embedded gpus in space-latest project updates. Microprocessors and Microsystems
+    77, 103143.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kreisel [2002] Kreisel, J., 2002. On-orbit servicing of satellites (oos): its
+    potential market & impact, in: proceedings of 7th ESA Workshop on Advanced Space
+    Technologies for Robotics and Automation ‘ASTRA.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krizhevsky et al. [2012] Krizhevsky, A., Sutskever, I., Hinton, G.E., 2012.
+    Imagenet classification with deep convolutional neural networks. Communications
+    of the ACM 60, 84 -- 90.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] Legrand, A., Detry, R., De Vleeschouwer, C., . End-to-end neural estimation
+    of spacecraft pose with intermediate detection of keypoints .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lengyel et al. [2021] Lengyel, A., Garg, S., Milford, M., van Gemert, J.C.,
+    2021. Zero-shot day-night domain adaptation with a physics prior, in: Proceedings
+    of the IEEE/CVF International Conference on Computer Vision, pp. 4399--4409.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Leon et al. [2022] Leon, V., Lentaris, G., Soudris, D., Vellas, S., Bernou,
+    M., 2022. Towards employing fpga and asip acceleration to enable onboard ai/ml
+    in space applications, in: 2022 IFIP/IEEE 30th International Conference on Very
+    Large Scale Integration (VLSI-SoC), IEEE. pp. 1--4.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Leong et al. [2020a] Leong, M.C., Prasad, D.K., Lee, Y.T., Lin, F., 2020a. Semi-cnn
+    architecture for effective spatio-temporal learning in action recognition. Applied
+    Sciences 10, 557.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Leong et al. [2020b] Leong, M.C., Prasad, D.K., Lee, Y.T., Lin, F., 2020b. Semi-cnn
+    architecture for effective spatio-temporal learning in action recognition. Applied
+    Sciences 10, 557.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lepetit et al. [2009] Lepetit, V., Moreno-Noguer, F., Fua, P., 2009. Epnp:
+    An accurate o (n) solution to the pnp problem. International journal of computer
+    vision 81, 155.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2022] Li, K., Zhang, H., Hu, C., 2022. Learning-based pose estimation
+    of non-cooperative spacecrafts with uncertainty prediction. Aerospace 9. URL:
+    [https://www.mdpi.com/2226-4310/9/10/592](https://www.mdpi.com/2226-4310/9/10/592),
+    doi:[10.3390/aerospace9100592](https:/doi.org/10.3390/aerospace9100592).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2018] Li, O., Liu, H., Chen, C., Rudin, C., 2018. Deep learning
+    for case-based reasoning through prototypes: A neural network that explains its
+    predictions, in: Proceedings of the AAAI Conference on Artificial Intelligence.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. [2019] Li, W.J., Cheng, D.Y., Liu, X.G., Wang, Y.B., Shi, W.H., Tang,
+    Z.X., Gao, F., Zeng, F.M., Chai, H.Y., Luo, W.B., et al., 2019. On-orbit service
+    (oos) of spacecraft: A review of engineering developments. Progress in Aerospace
+    Sciences 108, 32--120.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lin et al. [2014a] Lin, T., Maire, M., Belongie, S.J., Hays, J., Perona, P.,
+    Ramanan, D., Dollár, P., Zitnick, C.L., 2014a. Microsoft COCO: common objects
+    in context, in: Fleet, D.J., Pajdla, T., Schiele, B., Tuytelaars, T. (Eds.), Computer
+    Vision - ECCV 2014 - 13th European Conference, Zurich, Switzerland, September
+    6-12, 2014, Proceedings, Part V, Springer. pp. 740--755. URL: [https://doi.org/10.1007/978-3-319-10602-1_48](https://doi.org/10.1007/978-3-319-10602-1_48),
+    doi:[10.1007/978-3-319-10602-1_48](https:/doi.org/10.1007/978-3-319-10602-1_48).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lin et al. [2017] Lin, T.Y., Dollár, P., Girshick, R., He, K., Hariharan, B.,
+    Belongie, S., 2017. Feature pyramid networks for object detection, in: Proceedings
+    of the IEEE conference on computer vision and pattern recognition, pp. 2117--2125.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lin et al. [2014b] Lin, T.Y., Maire, M., Belongie, S., Hays, J., Perona, P.,
+    Ramanan, D., Dollár, P., Zitnick, C.L., 2014b. Microsoft coco: Common objects
+    in context, in: Computer Vision--ECCV 2014: 13th European Conference, Zurich,
+    Switzerland, September 6-12, 2014, Proceedings, Part V 13, Springer. pp. 740--755.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Liu and Hu [2014] Liu, C., Hu, W., 2014. Relative pose estimation for cylinder-shaped
+    spacecrafts using single image. IEEE Transactions on Aerospace and Electronic
+    Systems 50, 3036--3056.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. [2016] Liu, W., Anguelov, D., Erhan, D., Szegedy, C., Reed, S.,
+    Fu, C.Y., Berg, A.C., 2016. Ssd: Single shot multibox detector, in: European conference
+    on computer vision, Springer. pp. 21--37.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Llorente et al. [2013] Llorente, J.S., Agenjo, A., Carrascosa, C., de Negueruela,
+    C., Mestreau-Garreau, A., Cropp, A., Santovincenzo, A., 2013. Proba-3: Precise
+    formation flying demonstration mission. Acta Astronautica 82, 38--46.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Long et al. [2020a] Long, X., Deng, K., Wang, G., Zhang, Y., Dang, Q., Gao,
+    Y., Shen, H., Ren, J., Han, S., Ding, E., et al., 2020a. Pp-yolo: An effective
+    and efficient implementation of object detector. arXiv preprint arXiv:2007.12099
+    .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Long et al. [2020b] Long, X., Deng, K., Wang, G., Zhang, Y., Dang, Q., Gao,
+    Y., Shen, H., Ren, J., Han, S., Ding, E., et al., 2020b. Pp-yolo: An effective
+    and efficient implementation of object detector. arXiv preprint arXiv:2007.12099
+    .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lotti et al. [2022] Lotti, A., Modenini, D., Tortora, P., Saponara, M., Perino,
+    M.A., 2022. Deep Learning for Real Time Satellite Pose Estimation on Low Power
+    Edge TPU. arXiv e-prints , arXiv:2204.03296[arXiv:2204.03296](http://arxiv.org/abs/2204.03296).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lotti et al. [2022] Lotti, A., Modenini, D., Tortora, P., Saponara, M., Perino,
+    M.A., 2022. Deep learning for real time satellite pose estimation on low power
+    edge tpu. arXiv preprint arXiv:2204.03296 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Marchand et al. [2015] Marchand, E., Uchiyama, H., Spindler, F., 2015. Pose
+    estimation for augmented reality: a hands-on survey. IEEE transactions on visualization
+    and computer graphics 22, 2633--2651.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Martin et al. [2019] Martin, I., Dunstan, M., Gestido, M.S., 2019. Planetary
+    surface image generation for testing future space missions with pangu, in: 2nd
+    RPI Space Imaging Workshop, Sensing, Estimation, and Automation Laboratory.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Marullo et al. [2022] Marullo, G., Tanzi, L., Piazzolla, P., Vezzetti, E.,
+    2022. 6d object position estimation from 2d images: a literature review. Multimedia
+    Tools and Applications , 1--39.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: May [2021] May, C., 2021. Triggers and effects of an active debris removal market.
+    The Aerospace Corporation, Center for Space Policy and Strategy, Tech. Rep , 2021--01.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mertan et al. [2022] Mertan, A., Duff, D.J., Unal, G., 2022. Single image depth
+    estimation: An overview. Digital Signal Processing , 103441.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Minaee et al. [2021] Minaee, S., Boykov, Y.Y., Porikli, F., Plaza, A.J., Kehtarnavaz,
+    N., Terzopoulos, D., 2021. Image segmentation using deep learning: A survey. IEEE
+    transactions on pattern analysis and machine intelligence .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mittelhammer et al. [2000] Mittelhammer, R.C., Judge, G.G., Miller, D.J., 2000.
+    Econometric foundations. Cambridge University Press.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Moré [1978] Moré, J.J., 1978. The levenberg-marquardt algorithm: implementation
+    and theory, in: Numerical analysis. Springer, pp. 105--116.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mumuni and Mumuni [2022] Mumuni, A., Mumuni, F., 2022. Data augmentation: A
+    comprehensive survey of modern approaches. Array 16, 100258. URL: [https://www.sciencedirect.com/science/article/pii/S2590005622000911](https://www.sciencedirect.com/science/article/pii/S2590005622000911),
+    doi:[https://doi.org/10.1016/j.array.2022.100258](https:/doi.org/https://doi.org/10.1016/j.array.2022.100258).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Musallam et al. [2022] Musallam, M.A., Gaudillière, V., del Castillo, M.O.,
+    Al Ismaeil, K., Aouada, D., 2022. Leveraging equivariant features for absolute
+    pose regression, in: Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition (CVPR), pp. 6876--6886.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] OpenCV, . Perspective-n-point (pnp) pose computation. URL: [https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html](https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Opromolla et al. [2017] Opromolla, R., Fasano, G., Rufino, G., Grassi, M., 2017.
+    A review of cooperative and uncooperative spacecraft pose determination techniques
+    for close-proximity operations. Progress in Aerospace Sciences 93, 53--72.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park et al. [2020] Park, K., Mousavian, A., Xiang, Y., Fox, D., 2020. Latentfusion:
+    End-to-end differentiable reconstruction and rendering for unseen object pose
+    estimation, in: Proceedings of the IEEE/CVF conference on computer vision and
+    pattern recognition, pp. 10710--10719.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park et al. [2019a] Park, K., Patten, T., Vincze, M., 2019a. Pix2pose: Pixel-wise
+    coordinate regression of objects for 6d pose estimation, in: Proceedings of the
+    IEEE/CVF International Conference on Computer Vision, pp. 7668--7677.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park et al. [2021] Park, T.H., Bosse, J., D’Amico, S., 2021. Robotic testbed
+    for rendezvous and optical navigation: Multi-source calibration and machine learning
+    use cases. arXiv preprint arXiv:2108.05529 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park and D’Amico [2022a] Park, T.H., D’Amico, S., 2022a. Adaptive neural network-based
+    unscented kalman filter for spacecraft pose tracking at rendezvous. arXiv preprint
+    arXiv:2206.03796 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park and D’Amico [2022b] Park, T.H., D’Amico, S., 2022b. Robust multi-task learning
+    and online refinement for spacecraft pose estimation across domain gap. arXiv
+    preprint arXiv:2203.04275 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park and D’Amico [2023] Park, T.H., D’Amico, S., 2023. Robust multi-task learning
+    and online refinement for spacecraft pose estimation across domain gap. Advances
+    in Space Research URL: [https://www.sciencedirect.com/science/article/pii/S0273117723002284](https://www.sciencedirect.com/science/article/pii/S0273117723002284),
+    doi:[https://doi.org/10.1016/j.asr.2023.03.036](https:/doi.org/https://doi.org/10.1016/j.asr.2023.03.036).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park et al. [2023a] Park, T.H., Märtens, M., Jawaid, M., Wang, Z., Chen, B.,
+    Chin, T.J., Izzo, D., D’Amico, S., 2023a. Satellite pose estimation competition
+    2021: Results and analyses. Acta Astronautica .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Park et al. [2023b] Park, T.H., Märtens, M., Jawaid, M., Wang, Z., Chen, B.,
+    Chin, T.J., Izzo, D., D’Amico, S., 2023b. Satellite pose estimation competition
+    2021: Results and analyses. Acta Astronautica 204, 640--665. URL: [https://www.sciencedirect.com/science/article/pii/S0094576523000048](https://www.sciencedirect.com/science/article/pii/S0094576523000048),
+    doi:[https://doi.org/10.1016/j.actaastro.2023.01.002](https:/doi.org/https://doi.org/10.1016/j.actaastro.2023.01.002).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park et al. [2019b] Park, T.H., Sharma, S., D’Amico, S., 2019b. Towards robust
+    learning-based pose estimation of noncooperative spacecraft. arXiv preprint arXiv:1909.00392
+    .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Park et al. [2019c] Park, T.H., Sharma, S., D’Amico, S., 2019c. Towards robust
+    learning-based pose estimation of noncooperative spacecraft. arXiv preprint arXiv:1909.00392
+    .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pauly et al. [2022] Pauly, L., Jamrozik, M.L., Del Castillo, M.O., Borgue, O.,
+    Singh, I.P., Makhdoomi, M.R., Christidi-Loumpasefski, O.O., Gaudilliere, V., Martinez,
+    C., Rathinam, A., et al., 2022. Lessons from a space lab--an image acquisition
+    perspective. arXiv preprint arXiv:2208.08865 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pearl and Mackenzie [2018] Pearl, J., Mackenzie, D., 2018. The book of why:
+    the new science of cause and effect. Basic books.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Peng et al. [2018] Peng, X., Tang, Z., Yang, F., Feris, R.S., Metaxas, D.,
+    2018. Jointly optimize data augmentation and network training: Adversarial data
+    augmentation in human pose estimation, in: Proceedings of the IEEE conference
+    on computer vision and pattern recognition, pp. 2226--2234.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Phisannupawong et al. [2020] Phisannupawong, T., Kamsing, P., Torteeka, P.,
+    Channumsin, S., Sawangwit, U., Hematulin, W., Jarawan, T., Somjit, T., Yooyen,
+    S., Delahaye, D., et al., 2020. Vision-based spacecraft pose estimation via a
+    deep convolutional neural network for noncooperative docking operations. Aerospace
+    7, 126.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Piazza et al. [2021] Piazza, M., Maestrini, M., Di Lizia, P., et al., 2021.
+    Deep learning-based monocular relative pose estimation of uncooperative spacecraft,
+    in: 8th European Conference on Space Debris, ESA/ESOC, ESA. pp. 1--13.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Posso et al. [2022] Posso, J., Bois, G., Savaria, Y., 2022. Mobile-ursonet:
+    an embeddable neural network for onboard spacecraft pose estimation. arXiv preprint
+    arXiv:2205.02065 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Powell et al. [2018] Powell, W., Campola, M., Sheets, T., Davidson, A., Welsh,
+    S., 2018. Commercial Off-The-Shelf GPU Qualification for Space Applications. Technical
+    Report.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Price and Yoshida [2021] Price, A., Yoshida, K., 2021. A monocular pose estimation
+    case study: The hayabusa2 minerva-ii2 deployment, in: Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition, pp. 1992--2001.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Proença and Gao [2020] Proença, P.F., Gao, Y., 2020. Deep learning for spacecraft
+    pose estimation from photorealistic rendering, in: 2020 IEEE International Conference
+    on Robotics and Automation (ICRA), IEEE. pp. 6007--6013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Quigley et al. [2009] Quigley, M., Conley, K., Gerkey, B., Faust, J., Foote,
+    T., Leibs, J., Wheeler, R., Ng, A.Y., et al., 2009. Ros: an open-source robot
+    operating system, in: ICRA workshop on open source software, Kobe, Japan. p. 5.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rathinam and Gao [2020] Rathinam, A., Gao, Y., 2020. On-orbit relative navigation
+    near a known target using monocular vision and convolutional neural networks for
+    pose estimation, in: International Symposium on Artificial Intelligence, Robotics
+    and Automation in Space (iSAIRAS), Virutal Conference (Pasadena, CA:), pp. 1--6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rathinam et al. [2022] Rathinam, A., Gaudilliere, V., Mohamed Ali, M.A., Ortiz
+    Del Castillo, M., Pauly, L., Aouada, D., 2022. SPARK 2022 Dataset : Spacecraft
+    Detection and Trajectory Estimation. URL: [https://doi.org/10.5281/zenodo.6599762](https://doi.org/10.5281/zenodo.6599762),
+    doi:[10.5281/zenodo.6599762](https:/doi.org/10.5281/zenodo.6599762).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rathinam et al. [2021] Rathinam, A., Hao, Z., Gao, Y., 2021. Autonomous visual
+    navigation for spacecraft on-orbit operations, in: Space Robotics and Autonomous
+    Systems: Technologies, advances and applications. Institution of Engineering and
+    Technology, pp. 125--157. URL: [https://doi.org/10.1049/PBCE131E_ch5](https://doi.org/10.1049/PBCE131E_ch5).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redd [2020] Redd, N.T., 2020. Bringing satellites back from the dead: Mission
+    extension vehicles give defunct spacecraft a new lease on life - [news]. IEEE
+    Spectrum 57, 6--7. doi:[10.1109/MSPEC.2020.9150540](https:/doi.org/10.1109/MSPEC.2020.9150540).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon et al. [2016] Redmon, J., Divvala, S., Girshick, R., Farhadi, A., 2016.
+    You only look once: Unified, real-time object detection, in: Proceedings of the
+    IEEE conference on computer vision and pattern recognition, pp. 779--788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon and Farhadi [2017] Redmon, J., Farhadi, A., 2017. Yolo9000: better,
+    faster, stronger, in: Proceedings of the IEEE conference on computer vision and
+    pattern recognition, pp. 7263--7271.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon and Farhadi [2018] Redmon, J., Farhadi, A., 2018. Yolov3: An incremental
+    improvement. arXiv preprint arXiv:1804.02767 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ren et al. [2015] Ren, S., He, K., Girshick, R., Sun, J., 2015. Faster r-cnn:
+    Towards real-time object detection with region proposal networks. Advances in
+    neural information processing systems 28.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rennie et al. [2016] Rennie, C., Shome, R., Bekris, K.E., Souza, A.F.D., 2016.
+    A dataset for improved rgbd-based object detection and pose estimation for warehouse
+    pick-and-place. IEEE Robotics Autom. Lett. 1, 1179--1185. URL: [https://doi.org/10.1109/LRA.2016.2532924](https://doi.org/10.1109/LRA.2016.2532924),
+    doi:[10.1109/LRA.2016.2532924](https:/doi.org/10.1109/LRA.2016.2532924).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rondao and Aouf [2018] Rondao, D., Aouf, N., 2018. Multi-view monocular pose
+    estimation for spacecraft relative navigation, in: 2018 AIAA Guidance, Navigation,
+    and Control Conference, p. 2100.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rondao et al. [2021] Rondao, D., Aouf, N., Richardson, M.A., 2021. Chinet:
+    Deep recurrent convolutional learning for multimodal spacecraft pose estimation.
+    CoRR abs/2108.10282. URL: [https://arxiv.org/abs/2108.10282](https://arxiv.org/abs/2108.10282),
+    [arXiv:2108.10282](http://arxiv.org/abs/2108.10282).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rondao et al. [2022] Rondao, D., Aouf, N., Richardson, M.A., 2022. Chinet:
+    Deep recurrent convolutional learning for multimodal spacecraft pose estimation.
+    IEEE Transactions on Aerospace and Electronic Systems .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ronneberger et al. [2015] Ronneberger, O., Fischer, P., Brox, T., 2015. U-net:
+    Convolutional networks for biomedical image segmentation, in: International Conference
+    on Medical image computing and computer-assisted intervention, Springer. pp. 234--241.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ruder [2017] Ruder, S., 2017. An overview of multi-task learning in deep neural
+    networks. arXiv preprint arXiv:1706.05098 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Russakovsky et al. [2015] Russakovsky, O., Deng, J., Su, H., Krause, J., Satheesh,
+    S., Ma, S., Huang, Z., Karpathy, A., Khosla, A., Bernstein, M.S., Berg, A.C.,
+    Fei-Fei, L., 2015. Imagenet large scale visual recognition challenge. Int. J.
+    Comput. Vis. 115, 211--252. URL: [https://doi.org/10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y),
+    doi:[10.1007/s11263-015-0816-y](https:/doi.org/10.1007/s11263-015-0816-y).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sabatini et al. [2015] Sabatini, M., Palmerini, G.B., Gasbarri, P., 2015. A
+    testbed for visual based navigation and control during space rendezvous operations.
+    Acta Astronautica 117, 184--196. URL: [https://www.sciencedirect.com/science/article/pii/S0094576515003070](https://www.sciencedirect.com/science/article/pii/S0094576515003070),
+    doi:[https://doi.org/10.1016/j.actaastro.2015.07.026](https:/doi.org/https://doi.org/10.1016/j.actaastro.2015.07.026).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sandler et al. [2018] Sandler, M., Howard, A., Zhu, M., Zhmoginov, A., Chen,
+    L.C., 2018. Mobilenetv2: Inverted residuals and linear bottlenecks, in: Proceedings
+    of the IEEE conference on computer vision and pattern recognition, pp. 4510--4520.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shafer and Vovk [2008] Shafer, G., Vovk, V., 2008. A tutorial on conformal prediction.
+    Journal of Machine Learning Research 9.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shannon [1948] Shannon, C.E., 1948. A mathematical theory of communication.
+    The Bell system technical journal 27, 379--423.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sharma et al. [2018a] Sharma, S., Beierle, C., D’Amico, S., 2018a. Pose estimation
+    for non-cooperative spacecraft rendezvous using convolutional neural networks,
+    in: 2018 IEEE Aerospace Conference, IEEE. pp. 1--12.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sharma and D’Amico [2019] Sharma, S., D’Amico, S., 2019. Pose estimation for
+    non-cooperative rendezvous using neural networks. arXiv preprint arXiv:1906.09868
+    .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sharma et al. [2018b] Sharma, S., Ventura, J., D’Amico, S., 2018b. Robust model-based
+    monocular pose initialization for noncooperative spacecraft rendezvous. Journal
+    of Spacecraft and Rockets 55, 1414--1429.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shi et al. [2016] Shi, J., Ulrich, S., Ruel, S., 2016. Spacecraft pose estimation
+    using a monocular camera, in: 67th International Astronautical Congress, Guadalajara.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shreiner et al. [2009] Shreiner, D., Group, B.T.K.O.A.W., et al., 2009. OpenGL
+    programming guide: the official guide to learning OpenGL, versions 3.0 and 3.1.
+    Pearson Education.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Shui et al. [2019] Shui, C., Abbasi, M., Robitaille, L.É., Wang, B., Gagné,
+    C., 2019. A principled approach for learning task similarity in multitask learning.
+    arXiv preprint arXiv:1903.09109 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Song et al. [2022a] Song, J., Rondao, D., Aouf, N., 2022a. Deep learning-based
+    spacecraft relative navigation methods: A survey. Acta Astronautica 191, 22--40.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Song et al. [2022b] Song, Y., Wang, T., Mondal, S.K., Sahoo, J.P., 2022b. A
+    comprehensive survey of few-shot learning: Evolution, applications, challenges,
+    and opportunities. arXiv preprint arXiv:2205.06743 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Strutz [2011] Strutz, T., 2011. Data fitting and uncertainty: A practical introduction
+    to weighted least squares and beyond. Springer.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sun et al. [2019a] Sun, K., Xiao, B., Liu, D., Wang, J., 2019a. Deep high-resolution
+    representation learning for human pose estimation, in: Proceedings of the IEEE/CVF
+    conference on computer vision and pattern recognition, pp. 5693--5703.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sun et al. [2019b] Sun, K., Zhao, Y., Jiang, B., Cheng, T., Xiao, B., Liu, D.,
+    Mu, Y., Wang, X., Liu, W., Wang, J., 2019b. High-resolution representations for
+    labeling pixels and regions. arXiv preprint arXiv:1904.04514 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] Sweden, O., . Prisma. [https://www.ohb-sweden.se/space-missions/prisma](https://www.ohb-sweden.se/space-missions/prisma).
+    Accessed: April 5, 2023.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Szegedy et al. [2015] Szegedy, C., Liu, W., Jia, Y., Sermanet, P., Reed, S.,
+    Anguelov, D., Erhan, D., Vanhoucke, V., Rabinovich, A., 2015. Going deeper with
+    convolutions, in: Proceedings of the IEEE conference on computer vision and pattern
+    recognition, pp. 1--9.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Szeliski [2022] Szeliski, R., 2022. Computer vision: algorithms and applications.
+    Springer Nature.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan and Le [2019] Tan, M., Le, Q., 2019. Efficientnet: Rethinking model scaling
+    for convolutional neural networks, in: International conference on machine learning,
+    PMLR. pp. 6105--6114.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan et al. [2020] Tan, M., Pang, R., Le, Q.V., 2020. Efficientdet: Scalable
+    and efficient object detection, in: Proceedings of the IEEE/CVF conference on
+    computer vision and pattern recognition, pp. 10781--10790.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[161] Tensorflow, . Tpu/models/official/efficientnet/lite at master · tensorflow/tpu.
+    URL: [https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet/lite](https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet/lite).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tibshirani et al. [2019] Tibshirani, R.J., Foygel Barber, R., Candes, E., Ramdas,
+    A., 2019. Conformal prediction under covariate shift, in: Wallach, H., Larochelle,
+    H., Beygelzimer, A., d''Alché-Buc, F., Fox, E., Garnett, R. (Eds.), Advances in
+    Neural Information Processing Systems, Curran Associates, Inc. URL: [https://proceedings.neurips.cc/paper/2019/file/8fb21ee7a2207526da55a679f0332de2-Paper.pdf](https://proceedings.neurips.cc/paper/2019/file/8fb21ee7a2207526da55a679f0332de2-Paper.pdf).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tobin et al. [2017a] Tobin, J., Fong, R., Ray, A., Schneider, J., Zaremba, W.,
+    Abbeel, P., 2017a. Domain randomization for transferring deep neural networks
+    from simulation to the real world. 2017 IEEE/RSJ International Conference on Intelligent
+    Robots and Systems (IROS) , 23--30.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tobin et al. [2017b] Tobin, J., Fong, R., Ray, A., Schneider, J., Zaremba,
+    W., Abbeel, P., 2017b. Domain randomization for transferring deep neural networks
+    from simulation to the real world, in: 2017 IEEE/RSJ international conference
+    on intelligent robots and systems (IROS), IEEE. pp. 23--30.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Toft et al. [2020] Toft, C., Maddern, W., Torii, A., Hammarstrand, L., Stenborg,
+    E., Safari, D., Okutomi, M., Pollefeys, M., Sivic, J., Pajdla, T., et al., 2020.
+    Long-term visual localization revisited. IEEE Transactions on Pattern Analysis
+    and Machine Intelligence .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Voulodimos et al. [2018] Voulodimos, A., Doulamis, N., Doulamis, A., Protopapadakis,
+    E., 2018. Deep learning for computer vision: A brief review. Computational intelligence
+    and neuroscience 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang and Yeung [2020] Wang, H., Yeung, D.Y., 2020. A survey on bayesian deep
+    learning. ACM computing surveys (csur) 53, 1--37.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. [2022a] Wang, J., Lan, C., Liu, C., Ouyang, Y., Qin, T., Lu, W.,
+    Chen, Y., Zeng, W., Yu, P., 2022a. Generalizing to unseen domains: A survey on
+    domain generalization. IEEE Transactions on Knowledge and Data Engineering .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2020] Wang, J., Sun, K., Cheng, T., Jiang, B., Deng, C., Zhao,
+    Y., Liu, D., Mu, Y., Tan, M., Wang, X., et al., 2020. Deep high-resolution representation
+    learning for visual recognition. IEEE transactions on pattern analysis and machine
+    intelligence 43, 3349--3364.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang and Deng [2018] Wang, M., Deng, W., 2018. Deep visual domain adaptation:
+    A survey. Neurocomputing 312, 135--153.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. [2022b] Wang, Q., Ma, Y., Zhao, K., Tian, Y., 2022b. A comprehensive
+    survey of loss functions in machine learning. Annals of Data Science 9, 187--212.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. [2022] Wang, S., Wang, S., Jiao, B., Yang, D., Su, L., Zhai, P.,
+    Chen, C., Zhang, L., 2022. CA-SpaceNet: Counterfactual Analysis for 6D Pose Estimation
+    in Space. arXiv e-prints , arXiv:2207.07869[arXiv:2207.07869](http://arxiv.org/abs/2207.07869).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. [2019] Wang, W., Yang, Y., Wang, X., Wang, W., Li, J., 2019. Development
+    of convolutional neural network and its application in image classification: a
+    survey. Optical Engineering 58, 040901--040901.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. [2022] Wang, Y., Shen, X., Hu, S.X., Yuan, Y., Crowley, J.L., Vaufreydaz,
+    D., 2022. Self-supervised transformers for unsupervised object discovery using
+    normalized cut, in: Proceedings of the IEEE/CVF Conference on Computer Vision
+    and Pattern Recognition, pp. 14543--14553.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Weiler and Cesa [2019] Weiler, M., Cesa, G., 2019. General e(2)-equivariant
+    steerable cnns, in: Wallach, H., Larochelle, H., Beygelzimer, A., d''Alché-Buc,
+    F., Fox, E., Garnett, R. (Eds.), Advances in Neural Information Processing Systems.
+    URL: [https://proceedings.neurips.cc/paper_files/paper/2019/file/45d6637b718d0f24a237069fe41b0db4-Paper.pdf](https://proceedings.neurips.cc/paper_files/paper/2019/file/45d6637b718d0f24a237069fe41b0db4-Paper.pdf).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wijayatunga et al. [2023] Wijayatunga, M.C., Armellin, R., Holt, H., Pirovano,
+    L., Lidtke, A.A., 2023. Design and guidance of a multi-active debris removal mission.
+    Astrodynamics URL: [https://link.springer.com/10.1007/s42064-023-0159-3](https://link.springer.com/10.1007/s42064-023-0159-3),
+    doi:[10.1007/s42064-023-0159-3](https:/doi.org/10.1007/s42064-023-0159-3).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wistuba et al. [2019] Wistuba, M., Rawat, A., Pedapati, T., 2019. A survey on
+    neural architecture search. arXiv preprint arXiv:1905.01392 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Witze [2023] Witze, A., 2023. 2022 was a record year for space launches. URL:
+    [https://www.nature.com/articles/d41586-023-00048-7](https://www.nature.com/articles/d41586-023-00048-7).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xiang et al. [2018] Xiang, Y., Schmidt, T., Narayanan, V., Fox, D., 2018. Posecnn:
+    A convolutional neural network for 6d object pose estimation in cluttered scenes,
+    in: Kress-Gazit, H., Srinivasa, S.S., Howard, T., Atanasov, N. (Eds.), Robotics:
+    Science and Systems XIV, Carnegie Mellon University, Pittsburgh, Pennsylvania,
+    USA, June 26-30, 2018. URL: [http://www.roboticsproceedings.org/rss14/p19.html](http://www.roboticsproceedings.org/rss14/p19.html),
+    doi:[10.15607/RSS.2018.XIV.019](https:/doi.org/10.15607/RSS.2018.XIV.019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xilinx [2022] Xilinx, 2022. Product guide: Dpuczdx8g for zynq ultrascale+ mpsocs.
+    URL: [https://www.xilinx.com/content/dam/xilinx/support/documents/ip_documentation/dpu/v4_0/pg338-dpu.pdf](https://www.xilinx.com/content/dam/xilinx/support/documents/ip_documentation/dpu/v4_0/pg338-dpu.pdf).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Xilinx [15 Jun 2022] Xilinx, A., 15 Jun 2022. Vitis ai user guide. [https://www.xilinx.com/content/dam/xilinx/support/documents/sw_manuals/vitis_ai/2_5/ug1414-vitis-ai.pdf](https://www.xilinx.com/content/dam/xilinx/support/documents/sw_manuals/vitis_ai/2_5/ug1414-vitis-ai.pdf).
+    [Online; accessed 30-Jan-2023].
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xiong et al. [2021] Xiong, Y., Liu, H., Gupta, S., Akin, B., Bender, G., Wang,
+    Y., Kindermans, P.J., Tan, M., Singh, V., Chen, B., 2021. Mobiledets: Searching
+    for object detection architectures for mobile accelerators, in: Proceedings of
+    the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 3825--3834.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xu et al. [2019] Xu, F., Uszkoreit, H., Du, Y., Fan, W., Zhao, D., Zhu, J.,
+    2019. Explainable ai: A brief survey on history, research areas, approaches and
+    challenges, in: Natural Language Processing and Chinese Computing: 8th CCF International
+    Conference, NLPCC 2019, Dunhuang, China, October 9--14, 2019, Proceedings, Part
+    II 8, Springer. pp. 563--574.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yuheng and Hao [2017] Yuheng, S., Hao, Y., 2017. Image segmentation algorithms
+    overview. arXiv preprint arXiv:1707.02051 .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zaidi et al. [2022] Zaidi, S.S.A., Ansari, M.S., Aslam, A., Kanwal, N., Asghar,
+    M., Lee, B., 2022. A survey of modern deep learning based object detection models.
+    Digital Signal Processing , 103514.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zou et al. [2019] Zou, Z., Shi, Z., Guo, Y., Ye, J., 2019. Object detection
+    in 20 years: A survey. arXiv preprint arXiv:1905.05055 .'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

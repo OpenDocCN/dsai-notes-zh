@@ -1,0 +1,2385 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:01:26'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2004.12254] Privacy in Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2004.12254](https://ar5iv.labs.arxiv.org/html/2004.12254)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Privacy in Deep Learning: A Survey'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Fatemehsadat Mireshghallah¹, Mohammadkazem Taram¹, Praneeth Vepakomma²,
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abhishek Singh², Ramesh Raskar², Hadi Esmaeilzadeh¹,
+  prefs: []
+  type: TYPE_NORMAL
+- en: ¹ University of California San Diego, ² Massachusetts Institute of Technology
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{fatemeh, mtaram, hadi}@ucsd.edu,'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '{vepakom, abhi24, raskar}@mit.edu'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: The ever-growing advances of deep learning in many areas including vision, recommendation
+    systems, natural language processing, etc., have led to the adoption of Deep Neural
+    Networks (DNNs) in production systems. The availability of large datasets and
+    high computational power are the main contributors to these advances. The datasets
+    are usually crowdsourced and may contain sensitive information. This poses serious
+    privacy concerns as this data can be misused or leaked through various vulnerabilities.
+    Even if the cloud provider and the communication link is trusted, there are still
+    threats of inference attacks where an attacker could speculate properties of the
+    data used for training, or find the underlying model architecture and parameters.
+    In this survey, we review the privacy concerns brought by deep learning, and the
+    mitigating techniques introduced to tackle these issues. We also show that there
+    is a gap in the literature regarding test-time inference privacy, and propose
+    possible future research directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The success of Deep Neural Networks (DNNs) in various fields including vision,
+    medicine, recommendation systems, natural language processing, etc., has resulted
+    in their deployment in numerous production systems [[1](#bib.bib1), [2](#bib.bib2),
+    [3](#bib.bib3), [4](#bib.bib4)]. In the world of medicine, learning is used to
+    find patterns in patient histories and to recognize abnormalities in medical imaging
+    which help with disease diagnosis and prognosis. The use of machine learning in
+    healthcare can compromise patient privacy, for instance by exposing the patient’s
+    genetic markers, as shown by Fredrikson et al. [[5](#bib.bib5)]. Deep learning
+    is also widely used in finance for predicting prices or creating portfolios, among
+    many other applications. In these cases, usually, an entity trains its own model
+    and the model parameters are considered confidential. Being able to find or infer
+    them is considered a breach of privacy [[6](#bib.bib6)]. Ease of access to large
+    datasets and high computational power (GPUs and TPUs) have paved the way for the
+    aforementioned advances. These datasets are usually crowdsourced and might contain
+    sensitive information. This poses serious privacy concerns, as neural networks
+    are used in different aspects of our lives [[7](#bib.bib7), [5](#bib.bib5), [8](#bib.bib8),
+    [9](#bib.bib9), [10](#bib.bib10), [11](#bib.bib11), [12](#bib.bib12)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [1](#S2.F1 "Figure 1 ‣ 2.1 Direct Information Exposure ‣ 2 Existing
+    Threats ‣ Privacy in Deep Learning: A Survey") shows a classification of possible
+    threats to deep learning. One threat is the direct intentional or unintentional
+    exposure of sensitive information, through untrusted data curator, communication
+    link, or cloud [[13](#bib.bib13), [14](#bib.bib14)]. This information can be the
+    training data, inference queries or model parameters or hyperparameters. If we
+    assume that information cannot be attained directly, there is still the threat
+    of information exposure through inference, indirectly. Membership inference attacks [[15](#bib.bib15)]
+    can infer whether a given data instance was part of the training process of a
+    model. Model inversion and attribute inference attacks can infer sensitive features
+    about a data instance, from observed predictions of a trained model, and other
+    non-sensitive features of that data instance [[16](#bib.bib16), [17](#bib.bib17)].
+    Some attacks are targeted towards stealing information about a deployed model,
+    such as its architecture [[18](#bib.bib18)], trained parameters [[19](#bib.bib19)]
+    or a general property of the data it was trained on, for instance, if the images
+    used for training were all taken outdoor [[20](#bib.bib20)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is a myriad of methods proposed to tackle these threats. The majority
+    of these methods focus on the data aggregation/dataset publishing and training
+    stages of deep learning. We classify these methods into three classes. The first
+    class of methods focuses on sanitizing the data and trying to remove sensitive
+    information from it while maintaining the statistical trends [[21](#bib.bib21),
+    [22](#bib.bib22)]. The second class focuses on making the DNN training phase private
+    and protecting the data used for training [[23](#bib.bib23), [24](#bib.bib24),
+    [25](#bib.bib25), [26](#bib.bib26), [27](#bib.bib27), [28](#bib.bib28)]. The last
+    class, of which there is only a handful of works, attempts to protect the privacy
+    of the test-time inference phase by protecting the input data (request) that the
+    user sends to a deployed DNN [[29](#bib.bib29), [30](#bib.bib30), [31](#bib.bib31)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this paper, we first briefly discuss existing attacks and privacy threats
+    against deep learning. Then, we focus on the existing privacy-preserving methods
+    for deep learning and demonstrate that there is a gap in the literature regarding
+    test-time inference privacy. There are few other security vulnerabilities which
+    can be exploited in a deep learning model such as adversarial attacks [[32](#bib.bib32)],
+    data poisoning [[33](#bib.bib33)]. This work focuses only on privacy specific
+    vulnerability and other such attacks are out of scope of this paper.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2 Existing Threats
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we map the space of existing threats against privacy in deep
+    learning and machine learning in general. While the focus of this survey is privacy-preserving
+    techniques, we provide a brief summary of attacks to better situate the need for
+    privacy protection. Figure [1](#S2.F1 "Figure 1 ‣ 2.1 Direct Information Exposure
+    ‣ 2 Existing Threats ‣ Privacy in Deep Learning: A Survey") shows the landscape
+    of these threats, which we have divided into two main categories of direct and
+    indirect information exposure hazards. Direct threats are those where the attacker
+    can gain access to the actual information. In indirect attacks, however, the attacker
+    tries to infer or guess the information and does not have access to the actual
+    information.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Direct Information Exposure
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Direct intentional or unintentional data breaches can occur in many different
+    settings and are not limited to machine learning. Dataset breaches through data
+    curators or entities housing the data can be caused unintentionally by hackers,
+    malware, virus, or social engineering, by tricking individuals into handing over
+    sensitive data to adversaries [[13](#bib.bib13)]. A study by Intel Security [[34](#bib.bib34)]
+    demonstrated that employees are responsible for 43% of data leakage, half of which
+    is believed to be unintentional. A malicious party can exploit a system’s backdoor
+    to bypass a server’s authentication mechanism and gain direct access to sensitive
+    datasets, or sensitive parameters and models [[35](#bib.bib35), [36](#bib.bib36),
+    [37](#bib.bib37)]. The recent hacking of Equifax, for instance, exploited a vulnerability
+    in the Apache Struts software, which was used by Equifax [[35](#bib.bib35)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data sharing by transmitting confidential data without proper encryption is
+    an example of data exposure through communication link [[38](#bib.bib38)]. Kaspersky
+    Labs reported in 2018 that they found four million Android apps that were sending
+    unencrypted user profile data to advertisers’ servers [[39](#bib.bib39)]. Private
+    data can also be exposed through the cloud service that receives it to run a process
+    on it, for instance, Machine Learning as a Service (MLaaS). Some of these services
+    do not clarify what happens to the data once the process is finished, nor do they
+    even mention that they are sending the user’s data to the cloud, and not processing
+    it locally [[8](#bib.bib8)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table 1: Properties of some notable attacks against machine learning privacy.
+    MIA denotes Model Inversion Attack in the table.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Attack | Membership | Model | Hyperparam | Parameter | Property | Access
+    | Access |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | Inference | Inversion | Inference | Inference | Inference | to Model |
+    to Output |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Membership Inference [[15](#bib.bib15)] | ● | ○ | ○ | ○ | ○ | Blackbox |
+    Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Measuring Membership Privacy[[40](#bib.bib40)] | ● | ○ | ○ | ○ | ○ | Blackbox
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ML-Leaks[[41](#bib.bib41)] | ● | ○ | ○ | ○ | ○ | Blackbox | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| The Natural Auditor [[42](#bib.bib42)] | ● | ○ | ○ | ○ | ○ | Blackbox | Label
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LOGAN [[43](#bib.bib43)] | ● | ○ | ○ | ○ | ○ | Both | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Data Provenance [[44](#bib.bib44)] | ● | ○ | ○ | ○ | ○ | Blackbox | Logits
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Privacy Risk in ML [[17](#bib.bib17)] | ● | ● | ○ | ○ | ○ | Whitebox | Logits+Auxilary
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fredrikson et al. [[5](#bib.bib5)] | ○ | ● | ○ | ○ | ○ | Blackbox | Logits
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MIA w/ Confidence Values [[16](#bib.bib16)] | ○ | ● | ○ | ○ | ○ | Both |
+    Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adversarial NN Inversion [[45](#bib.bib45)] | ○ | ● | ○ | ○ | ○ | Blackbox
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Updates-Leak [[46](#bib.bib46)] | ○ | ● | ○ | ○ | ○ | Blackbox | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Collaborative Inference MIA [[47](#bib.bib47)] | ○ | ● | ○ | ○ | ○ | Both
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| The Secret Sharer [[48](#bib.bib48)] | ○ | ○ | ○ | ○ | ● | Blackbox | Logits
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Property Inference on FCNNs [[20](#bib.bib20)] | ○ | ○ | ○ | ○ | ● | Whitebox
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hacking Smart Machines w [[49](#bib.bib49)] | ○ | ○ | ○ | ○ | ● | Whitebox
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cache Telepathy [[18](#bib.bib18)] | ○ | ○ | ○ | ● | ○ | Blackbox | Logits
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stealing Hyperparameters [[50](#bib.bib50)] | ○ | ○ | ○ | ● | ○ | Blackbox
+    | Logits |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stealing ML Models [[19](#bib.bib19)] | ○ | ○ | ● | ● | ○ | Blackbox | Label
+    | ![Refer to caption](img/478f15d3f996391ed818748abfb2c3a3.png)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 1: Categorization of existing threats against deep learning'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Indirect (Inferred) Information Exposure
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As shown in figure [1](#S2.F1 "Figure 1 ‣ 2.1 Direct Information Exposure ‣
+    2 Existing Threats ‣ Privacy in Deep Learning: A Survey"), we categorize indirect
+    attacks into 5 main groups of membership inference, model inversion, hyperparameter
+    inference, parameter inference, and property inference attacks. Table [1](#S2.T1
+    "Table 1 ‣ 2.1 Direct Information Exposure ‣ 2 Existing Threats ‣ Privacy in Deep
+    Learning: A Survey") shows a summary of different attacks and their properties.
+    The “Access to Model” column determines whether the attack needs white-box or
+    black-box access to model to successfully mount. White-box access assumes access
+    to the full target model, whereas black-box assumes only query access to the model,
+    without knowledge on the architecture or parameters of the target model. The last
+    column shows whether the attacker needs access to the output confidence values
+    of the model (the probabilities, logits), or whether only the predicted labels
+    suffice.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2.1 Membership Inference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Given a data instance and (black-box or white-box) access to a pre-trained
+    target model, a membership inference attack speculates whether or not the given
+    data instance has contributed to the training step of the target model. Shokri
+    et al. [[15](#bib.bib15)] propose the first membership inference attack on machine
+    learning where they consider an attacker who has black-box query access to the
+    target model and can obtain confidence scores (probability vector) for the queried
+    input. The attacker uses this confidence score to deduce the participation of
+    given data in training. They first train shadow models on a labeled dataset that
+    can be generated using three methods: model inversion attack (we will see next),
+    statistics-based synthesis (through assumptions about the underlying distribution
+    of training set), or noisy real data. Using these shadow models, the attacker
+    trains an “attack model” that distinguishes the participation of a data instance
+    in the training set of the shadow models. Lastly, for the main inference attack,
+    the attacker makes queries to the target deployed model to receive confidence
+    scores for each given input data instance and infers whether or not the input
+    was part of the target training data. This attack is built on the assumption that
+    if a record was used in the training of a model, it would yield a higher confidence
+    score, than a record which was not seen before by the model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some studies  [[51](#bib.bib51), [52](#bib.bib52), [17](#bib.bib17)] attribute
+    membership inference attacks to the generalization gap, the over-fitting of the
+    model, and data memorization capabilities of neural networks. Deep neural networks
+    have been shown to memorize the training data [[53](#bib.bib53), [54](#bib.bib54),
+    [55](#bib.bib55)], rather than learning the latent properties of the data, which
+    means they often tend to over-fit to the training data. Long et al.  [[40](#bib.bib40)]
+    propose an approach which more accurately tests the membership of a given instance.
+    They train the shadow models with and without this given instance, and then at
+    inference time the attacker tests to see if the instance was used for training
+    the target model, similar to Shokri et al.’s approach. More recently, Salem et
+    al. [[41](#bib.bib41)] propose a more generic attack that could relax the main
+    requirements in previous attacks (such as using multiple shadow models, knowledge
+    of the target model structure, and having a dataset from the same distribution
+    as the target model’s training data), and show that such attacks are also applicable
+    at a lower cost, without significantly degrading their effectiveness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Membership inference attacks do not always need access to the confidence values
+    (logits) of the target model, as shown by Song & Shmatikov in a recent attack [[42](#bib.bib42)],
+    which can detect with very few queries to a model if a particular user’s texts
+    were used to train it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yeom et al [[17](#bib.bib17)] suggest a membership inference attack for cases
+    where the attacker can have white-box access to the target model and know the
+    average training loss of the model. In this attack, for an input record, the attacker
+    evaluates the loss of the model and if the loss is smaller than a threshold (the
+    average loss on the training set), the input record is deemed part of the training
+    set. Membership inference attacks can also be applied to Generative Adversarial
+    Networks (GANs), as shown by Hayes et al. [[43](#bib.bib43)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/9717f32e8fdc63b6e4eb8b450023e215.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: The image on the left was recovered using the model inversion attack
+    of Fredrikson et al. [[16](#bib.bib16)]. The image on the right shows an image
+    from the training set. The attacker is given only the person’s name and access
+    to a facial recognition system that returns a class confidence score [[16](#bib.bib16)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2.2 Model Inversion and Attribute Inference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Model inversion and attribute inference attacks are against attribute privacy,
+    where an adversary tries to infer sensitive attributes of given data instances
+    from a released model and the instance’s non-sensitive attributes [[56](#bib.bib56)].
+    The most prominent of these attacks is against a publicly-released linear regression
+    model, where Fredrikson et al. [[5](#bib.bib5)] invert the model of a medicine
+    (Warfarin) dosage prediction task. They recover genomic information about the
+    patient, based on the model output and several other non-sensitive attributes
+    (e.g., height, age, weight). This attack can be applied with only black-box API
+    access to the target model. Fredrikson et al. formalize this attack as maximizing
+    the posterior probability estimate of the sensitive attribute. In other words,
+    the attacker assumes that features $f_{1}$ to $f_{d-1}$, of the $f_{d}$ features
+    of each data instance are non-sensitive. the attacker then tries to maximize the
+    posterior probability of feature $f_{d}$, given the nonsensitive features of $f_{1}$
+    to $f_{d-1}$, and the model output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In another work, given white-box access to a neural network, Fredrikson et
+    al. [[16](#bib.bib16)] show that they could extract instances of training data,
+    from observed model predictions. Figure [2](#S2.F2 "Figure 2 ‣ 2.2.1 Membership
+    Inference ‣ 2.2 Indirect (Inferred) Information Exposure ‣ 2 Existing Threats
+    ‣ Privacy in Deep Learning: A Survey") shows a recovered face image that is similar
+    to the input image and was reconstructed by utilizing the confidence score of
+    the target model. Yeom et al. [[17](#bib.bib17)] also propose an attribute inference
+    attack, built upon the same principle used for their membership inference attack,
+    mentioned in Section [2.2.1](#S2.SS2.SSS1 "2.2.1 Membership Inference ‣ 2.2 Indirect
+    (Inferred) Information Exposure ‣ 2 Existing Threats ‣ Privacy in Deep Learning:
+    A Survey"). The attacker evaluates the model’s loss on the input instance for
+    different values of the sensitive attribute and infers the value that yields a
+    loss value similar to that outputted by the original data, as the sensitive value.
+    Salem et al. [[46](#bib.bib46)] suggest a model inversion attack on online-learning,
+    using a generative adversarial network and based on the difference between a model,
+    before and after a gradient update. In the same direction, Brockschmidt et al. [[57](#bib.bib57)]
+    demonstrate the information leakage of updates to language models. More recently,
+    He et al. [[47](#bib.bib47)] propose a new set of attacks to compromise the privacy
+    of test-time inference queries, in collaborative deep learning systems where a
+    DNN is split and distributed to different participants. This scheme is called
+    split learning [[58](#bib.bib58)], which is discussed in Section [4](#S4 "4 Privacy-Enhancing
+    Execution Models and Environments ‣ Privacy in Deep Learning: A Survey"). They
+    demonstrate that with their attack, one malicious participant can recover an arbitrary
+    input fed into this system, even with no access to other participants’ data or
+    computations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '2.2.3 Model Stealing: Hyperparameter and Parameter Inference'
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Trained models are considered intellectual properties of their owners and can
+    be considered confidential in many cases [[6](#bib.bib6)], therefore extracting
+    the model can be considered a privacy breach. Apart from this, as discussed earlier,
+    DNNs are shown to memorize information about their training data, therefore exposing
+    the model parameters could lead to exposure of training data. A model stealing
+    attack is meant to recover the model parameters via black-box access to the target
+    model. Tramer et al. [[19](#bib.bib19)] devise an attack that finds parameters
+    of a model given the observation of its predictions (confidence values). Their
+    attack tries to find parameters of the model through equation solving, based on
+    pairs of input-outputs. This attack cannot be mounted in a setting where the confidence
+    values are not provided. Hyperparameter stealing attacks try to find the hyperparameters
+    used during the model training, such as the regularization coefficient  [[50](#bib.bib50)]
+    or model architecture [[18](#bib.bib18)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2.4 Property Inference
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: This class of attacks tries to infer specific patterns of information from the
+    target model. An example of these attacks is the memorization attack that aims
+    to find sensitive patterns in the training data of a target model [[48](#bib.bib48)].
+    These attacks have been mounted on Hidden Markov Models (HMM) and Support Vector
+    Machines (SVM)  [[49](#bib.bib49)] and neural networks [[20](#bib.bib20)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3 Privacy-Preserving Mechanisms
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we review the literature of privacy-preserving mechanisms
+    for deep learning and machine learning in general. Figure [3](#S3.F3 "Figure 3
+    ‣ 3.2 Training Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy in Deep Learning:
+    A Survey") shows our classification of the landscape of this field. We divide
+    the literature into three main groups. The first is private data aggregation methods,
+    which aim at collecting data and forming datasets, while preserving the privacy
+    of the contributors [[21](#bib.bib21), [22](#bib.bib22)]. The second group, which
+    is comprised of a large body of work focuses on devising mechanisms that make
+    the training process of models private so that sensitive information about the
+    participants of the training dataset would not be exposed. Finally, the last group
+    aims at the test-time inference phase of deep learning. It tries to protect the
+    privacy of users of deployed models, who send their data to a trained model for
+    having a given inference service carried out.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1 Data Aggregation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Here, we introduce the most prominent data privacy-preserving mechanisms. Not
+    all these methods are applied to deep learning, but we briefly discuss them for
+    the sake of comprehensiveness. These methods can be broadly divided into two groups
+    of context-free privacy and context-aware. Context-free privacy solutions, such
+    as differential privacy, are unaware of the specific context or the purpose that
+    the data will be used for. Whereas context-aware privacy solutions, such as information-theoretic
+    privacy, are aware of the context where the data is going to be used, and can
+    achieve an improved privacy-utility tradeoff [[59](#bib.bib59)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.1 Naive Data Anonymization
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: What we mean by naive anonymization in this survey is the removal of identifiers
+    from data, such as the names, addresses, and full postcodes of the participants,
+    to protect privacy. This method was used for protecting patients while processing
+    medical data and has been shown to fail on many occasions [[60](#bib.bib60), [21](#bib.bib21),
+    [61](#bib.bib61)]. Perhaps the most prominent failure is the Netflix prize case,
+    where Narayanan & Shmatikov apply their de-anonymization technique to the Netflix
+    Prize dataset. This dataset contains anonymous movie ratings of 500,000 subscribers
+    of Netflix. They showed that an adversary with auxiliary knowledge (from the publicly
+    available Internet Movie Database records) about individual subscribers can easily
+    identify the user and uncover potentially sensitive information [[60](#bib.bib60)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.2 K-Anonymity
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A dataset has k-anonymity property if each participant’s information cannot
+    be distinguished from at least $k-1$ other participants whose information is in
+    the dataset [[21](#bib.bib21)]. K-anonymity means that for any given combination
+    of attributes that are available to the adversary (these attributes are called
+    quasi-identifiers), there are at least k rows with the exact same set of attributes.
+    K-anonymity has the objective of impeding re-identification. However, k-anonymization
+    has been shown to perform poorly on the anonymization of high-dimensional datasets [[62](#bib.bib62)].
+    This has led to privacy notions such as l-diversity [[63](#bib.bib63)] and t-closeness [[64](#bib.bib64)],
+    which are out of the scope of this survey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.3 Differential Privacy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Definition 3.1.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: '$\epsilon$-Differential Privacy ($\epsilon$-DP). For $\epsilon\geq 0$, an algorithm
+    $A$ satisfies $\epsilon$-DP [[65](#bib.bib65), [22](#bib.bib22)] if and only if
+    for any pair of datasets $D$ and $D^{\prime}$ that differ in only one element:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\mathcal{P}[A(D)=t]\leq e^{\epsilon}\mathcal{P}[A(D^{\prime})=t]\;\;\;\forall
+    t$ |  | (1) |'
+  prefs: []
+  type: TYPE_TB
+- en: where, $\mathcal{P}[A(D)=t]$ denotes the probability that the algorithm $A$
+    outputs $t$. In this setup, the quantity $ln\frac{\mathcal{P}[A(D)=t]}{\mathcal{P}[A(D^{\prime})=t]}$
+    is named the privacy loss. DP tries to approximate the effect of an individual
+    opting out of contributing to the dataset, by ensuring that any effect due to
+    the inclusion of one’s data is small. One of the widely used DP mechanisms when
+    dealing with numerical data is the Laplace mechanism.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Definition 3.2.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Laplace Mechanism. [[22](#bib.bib22)] Given a target function $f$ and a fixed
+    $\epsilon\geq 0$, the randomizing algorithm $A_{f}(D)=f(D)+x$ where $x$ is a perturbation
+    random variable drawn from a Laplace distribution $Lap(\mu,\frac{\Delta_{f}}{\epsilon})$,
+    is called the Laplace Mechanism and is $\epsilon$-DP. Here, $\Delta_{f}$ is the
+    global sensitivity of function $f$, and is defined as $\Delta_{f}=\sup|f(D)-f(D^{\prime})|$
+    over all the dataset pairs $(D,D^{\prime})$ that differ in only one element. Finding
+    this sensitivity is not always trivial, specifically if the function $f$ is a
+    deep neural network, or even a number of layers of it [[66](#bib.bib66)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Differential privacy satisfies a composition property that states when two
+    mechanisms with privacy budgets $\epsilon_{1}$ and $\epsilon_{2}$ are applied
+    to the same datasets, together they use a privacy budget of $\epsilon_{1}$ + $\epsilon_{2}$.
+    As such, composing multiple differentially private mechanisms consumes a linearly
+    increasing privacy budget. It has been shown that tighter privacy bound for composition
+    can be reached, so that the privacy budget decreases sub-linearly [[67](#bib.bib67),
+    [68](#bib.bib68)]. There are multiple variants of the conventional $\epsilon$-differential
+    privacy which have been proposed to provide a tighter analysis of the privacy
+    budget under composition. One of them is differential privacy with Advanced Composition
+    (AC) [[69](#bib.bib69)], which allows an additive leakage probability parameter
+    $\delta$ to the right-hand side of Equation [1](#S3.E1 "In Definition 3.1\. ‣
+    3.1.3 Differential Privacy ‣ 3.1 Data Aggregation ‣ 3 Privacy-Preserving Mechanisms
+    ‣ Privacy in Deep Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Differential privacy can also be achieved without the need to trust a centralized
+    server by having each participant apply a differentially private randomization
+    to their data themselves, before sharing it. This model is named the local model
+    of differential privacy, and the method “randomized response” is shown to be locally
+    differentially private [[70](#bib.bib70)]. Local differential privacy has been
+    deployed on many systems for gathering statistics privately [[71](#bib.bib71),
+    [72](#bib.bib72)]. For instance, Google uses a technique named RAPPOR [[71](#bib.bib71)]
+    to allow web browser developers to privately collect usage statistics. A large
+    body of Differentially private mechanisms has been proposed for various applications [[73](#bib.bib73),
+    [24](#bib.bib24), [74](#bib.bib74)]. Triastcyn & Faltings present a technique
+    that generates synthetic datasets that still have statistical properties of the
+    real data while providing differential privacy guarantees with respect to this
+    data [[75](#bib.bib75)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A generalized version of differential privacy called Pufferfish was proposed
+    by [[76](#bib.bib76)]. The Pufferfish framework can be used to create new privacy
+    definitions tailored for specific applications [[77](#bib.bib77)], such as Census
+    data release. Another framework that is also an adaptation of differential privacy
+    for location obfuscation is dubbed geo-indistinguishablity [[78](#bib.bib78)].
+    Geo-indistinguishablity relaxes differential privacy’s guarantees by introducing
+    a distance metric, $d$, which is multiplied by $\epsilon$ in Equation [1](#S3.E1
+    "In Definition 3.1\. ‣ 3.1.3 Differential Privacy ‣ 3.1 Data Aggregation ‣ 3 Privacy-Preserving
+    Mechanisms ‣ Privacy in Deep Learning: A Survey"). This distance permits adjusting
+    the obfuscation such that the probability of being obfuscated to a closer point
+    (being mapped to a point closer to the real value) is higher than being obfuscated
+    to a far point.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.4 Semantic Security and Encryption
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Semantic security [[79](#bib.bib79)] (computationally secure) is a standard
+    privacy requirement of encryption schemes which states that the advantage (a measure
+    of how successfully an adversary can attack a cryptographic algorithm) of an adversary
+    with background information should be cryptographically small. Semantic security
+    is theoretically possible to break but it is infeasible to do so by any known
+    practical means [[80](#bib.bib80)]. Secure Multiparty Computation (SMC), which
+    we discuss in Section [3.2](#S3.SS2 "3.2 Training Phase ‣ 3 Privacy-Preserving
+    Mechanisms ‣ Privacy in Deep Learning: A Survey"), is based on semantic security
+    definition [[81](#bib.bib81)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1.5 Information-Theoretic Privacy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Information-theoretic privacy is a context-aware privacy solution. Context-aware
+    solutions explicitly model the dataset statistics, unlike context-free solutions
+    that assume worst-case dataset statistics and adversaries. There is a body of
+    work studying information-theoretic based methods for both privacy and fairness,
+    where privacy and fairness are provided through information degradation, through
+    obfuscation or adversarial learning and demonstrated by mutual information reduction
+     [[82](#bib.bib82), [83](#bib.bib83), [59](#bib.bib59), [84](#bib.bib84), [85](#bib.bib85),
+    [86](#bib.bib86), [87](#bib.bib87), [88](#bib.bib88), [89](#bib.bib89), [90](#bib.bib90),
+    [91](#bib.bib91)]. Huang et al. introduce a context-aware privacy framework called
+    generative adversarial privacy (GAP), which leverages generative adversarial networks
+    (GANs) to generate privatized datasets. Their scheme comprises of a sanitizer
+    that tries to remove private attributes, and an adversary that tries to infer
+    them [[59](#bib.bib59)]. They show that the privacy mechanisms learned from data
+    (in a generative adversarial fashion) match the theoretically optimal ones.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2 Training Phase
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Table 2: Categorization of some notable privacy-preserving mechanisms for training.
+    In the table, the following abbreviations have been used: ERM for Empirical Risk
+    Minimization, GM for Generative Model, AE for Auto Encoder, LIR for Linear Regression,
+    LOR for Logistic Regression, LM for Linear Means, FLD for Fisher’s Linear Discriminant,
+    NB for Naive Bayes and RF for Random Forest.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | DP | SMC | HE | Dataset(s) | Task |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DPSGD [[24](#bib.bib24)] | ● | ○ | ○ | MNIST, CIFAR-10 | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP LSTM [[92](#bib.bib92)] | ● | ○ | ○ | Reddit Posts | Language Model w/
+    LSTMs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP LOR [[93](#bib.bib93)] | ● | ○ | ○ | Artificial Data | Logistic Regression
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP ERM [[94](#bib.bib94)] | ● | ○ | ○ | Adult, KDD-99 | Classification w/
+    ERM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP GAN [[95](#bib.bib95)] | ● | ○ | ○ | MNIST, MIMIC-III | Data Generation
+    w/ GAN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP GM [[96](#bib.bib96)] | ● | ○ | ○ | MNIST, CDR, TRANSIT | Data Generation
+    w/ GM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP AE [[97](#bib.bib97)] | ● | ○ | ○ | Health Social Network Data | Behaviour
+    Prediction w/ AE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP Belief Network[[98](#bib.bib98)] | ● | ○ | ○ | YesiWell, MNIST | Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Adaptive Laplace Mechanism[[99](#bib.bib99)] | ● | ○ | ○ | MNIST, CIFAR-10
+    | Image Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PATE [[25](#bib.bib25)] | ● | ○ | ○ | MNIST, SVHN | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Scalable Learning w/ PATE [[100](#bib.bib100)] | ● | ○ | ○ | MNIST, SVHN,
+    Adult, Glyph | Image Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP Ensemble [[26](#bib.bib26)] | ● | ○ | ○ | KDD-99, UCI-HAR, URLs | Classification
+    w/ ERM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SecProbe [[101](#bib.bib101)] | ● | ○ | ○ | US, MNIST, SVHN | Regress. &
+    Class. w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Distributed DP [[102](#bib.bib102)] | ● | ○ | ○ | eICU, TCGA | Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP model publishing [[103](#bib.bib103)] | ● | ○ | ○ | MNIST, CIFAR | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DP federated learning [[104](#bib.bib104)] | ● | ○ | ○ | MNIST | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ScalarDP, PrivUnit [[105](#bib.bib105)] | ● | ○ | ○ | MNIST, CIFAR | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DSSGD [[23](#bib.bib23)] | ● | ○ | ○ | MNIST, SVHN | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Private Collaborative NN [[106](#bib.bib106)] | ● | ● | ○ | MNIST | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Secure Aggregation for ML [[107](#bib.bib107)] | ○ | ● | ○ | - | Federated
+    Learning |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QUOTIENT [[108](#bib.bib108)] | ○ | ● | ○ | MNIST, Thyroid, Credit | Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SecureNN [[109](#bib.bib109)] | ○ | ● | ○ | MNIST | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ABY3 [[110](#bib.bib110)] | ○ | ● | ○ | MNIST | LIR, LOR, NN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Trident [[111](#bib.bib111)] | ○ | ● | ○ | MNIST, Boston Housing | LIR, LOR,
+    NN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SecureML [[112](#bib.bib112)] | ○ | ● | ● | MNIST, Gisette, Arcene | LIR,
+    LOR, NN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Deep Learning w/ AHE [[113](#bib.bib113)] | ○ | ○ | ● | MNIST | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ML Confidential [[114](#bib.bib114)] | ○ | ○ | ● | Wisconsin Breast Cancer
+    | LM, FLD |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Encrypted Statistical ML [[115](#bib.bib115)] | ○ | ○ | ● | 20 datasets from
+    UCI ML | LOR, NB, RF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CryptoDL [[27](#bib.bib27)] | ○ | ○ | ● | MNIST, CIFAR-10 | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DPHE [[116](#bib.bib116)] | ○ | ○ | ● | Caltech101/256, CelebA | Image Classification
+    w/ SVM |'
+  prefs: []
+  type: TYPE_TB
+- en: '![Refer to caption](img/24d9ef525b023d78e16d767b1436f28d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Categorization of privacy-preserving schemes for deep learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The literature surrounding private training of deep learning, and machine learning
+    can be categorized based on the guarantee that these methods provide, which is
+    most commonly either based on differential privacy (Section [3.1.3](#S3.SS1.SSS3
+    "3.1.3 Differential Privacy ‣ 3.1 Data Aggregation ‣ 3 Privacy-Preserving Mechanisms
+    ‣ Privacy in Deep Learning: A Survey")) or semantic security and encryption (Section [3.1.4](#S3.SS1.SSS4
+    "3.1.4 Semantic Security and Encryption ‣ 3.1 Data Aggregation ‣ 3 Privacy-Preserving
+    Mechanisms ‣ Privacy in Deep Learning: A Survey")). Privacy using encryption is
+    achieved by doing computation over encrypted data. The two most common methods
+    for this are Homomorphic Encryption (HE) and Secure Multi-Party Computation (SMC).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Homomorphic Encryption (HE). HE [[117](#bib.bib117)] allows computation over
+    encrypted data. A client can send their data, in an encrypted format, to a server
+    and the server can compute over this data without decrypting it, and then send
+    a ciphertext (encrypted result) to the client for decryption. HE is extremely
+    compute-intensive and is therefore not yet deployed in many production systems [[118](#bib.bib118),
+    [119](#bib.bib119)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Secure Multi-Party Computation (SMC). SMC attempts at designing a network of
+    computing parties (not all of which the user necessarily has to trust) that carry
+    out a given computation and makes sure no data leaks. Each party in this network
+    has access to only an encrypted part of the data. SMC ensures that as long as
+    the owner of the data trusts at least one of the computing systems in the network,
+    their input data remain secret. Simple functions can easily be computed using
+    this scheme. Arbitrarily complex function computations can also be supported,
+    but with an often prohibitive computational cost [[119](#bib.bib119)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this survey, we divided the literature of private training into three groups
+    of methods that employ: 1) Differential Privacy (DP), 2) Homomorphic Encryption
+    (HE) and 3) Secure Multi-Party Computation (SMC). Table [2](#S3.T2 "Table 2 ‣
+    3.2 Training Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy in Deep Learning:
+    A Survey") shows this categorization for the literature we discuss in this section.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.1 Differential Privacy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/faded9920da43df1b9f5491bc7cbac8b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: Overview of how a deep learning framework works and how differential
+    privacy can be applied to different parts of the pipeline.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This section briefly discusses methods for modifying deep learning algorithms
+    to satisfy differential privacy. Figure [4](#S3.F4 "Figure 4 ‣ 3.2.1 Differential
+    Privacy ‣ 3.2 Training Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy in Deep
+    Learning: A Survey") shows an overview of a deep learning framework. As can be
+    seen, the randomization required for differential privacy (or the privacy-preserving
+    noise) can be inserted in five places: to the input, to the loss/objective function,
+    to the gradient updates, to the output (the optimized parameters of the trained
+    model) and to the labels [[25](#bib.bib25)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Input perturbations can be considered equivalent to using a sanitized dataset
+    (discussed in Section [3.1](#S3.SS1 "3.1 Data Aggregation ‣ 3 Privacy-Preserving
+    Mechanisms ‣ Privacy in Deep Learning: A Survey")) for training. objective function
+    perturbation and output perturbation are explored for machine learning tasks with
+    convex objective functions. For instance in the case of logistic regression, Chaudhuri
+    et al. prove that objective perturbation requires sampling noise in the scale
+    of $\frac{2}{n\epsilon}$, and output perturbation requires sampling noise in the
+    scale of $\frac{2}{n\lambda\epsilon}$, where $n$ is the number of samples and
+    $\lambda$ is the regularization coefficient [[94](#bib.bib94)]. More recently,
+    Iyengar et al [[120](#bib.bib120)] propose a more practical and general objective
+    perturbation approach, and benchmark it using high-dimensional real-world data.
+    In deep learning tasks, due to the non-convexity of the objective function, calculating
+    the sensitivity of the function (which is needed to determine the intensity of
+    the added noise) becomes non-trivial. One solution is replacing the non-convex
+    function with an approximate convex polynomial function  [[97](#bib.bib97), [98](#bib.bib98),
+    [99](#bib.bib99)] and then using objective function perturbation. This approximation
+    limits the capabilities and the utility that a conventional DNN would have. Given
+    discussed limitations, gradient perturbation is the approach that is widely used
+    for private training in deep learning. Applying perturbations on the gradients
+    requires the gradient norms to be bounded, and since in deep learning tasks the
+    gradient could be unbounded, clipping is usually used to alleviate this issue.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Shokri et al. showed that deep neural networks can be trained in a distributed
+    manner and with perturbed parameters to achieve privacy [[23](#bib.bib23)], but
+    their implementation requires $\epsilon$ proportional to the size of the target
+    model, which can be in the order of couple millions. Abadi et al. [[24](#bib.bib24)]
+    propose a mechanism dubbed the “moments accountant (MA)”, for bounding the cumulative
+    privacy budget of sequentially applied differentially private algorithms, over
+    deep neural networks. The moments accountant uses the moment generating function
+    of the privacy loss random variable to keep track of a bound on the privacy loss
+    during composition. MA operates in three steps: first, it calculates the moment
+    generating functions for the algorithms $A_{1}$, $A_{2}$,.., which are the randomizing
+    algorithms. It then composes the moments together through a composition theorem,
+    and finally, finds the best leakage parameter ($\delta$) for a given privacy budget
+    of $\epsilon$. The moments accountant is widely used in different DP mechanisms
+    for private deep learning. Papernot et al. use MA to aid bounding the privacy
+    budget for their teacher ensemble method that uses noisy voting and label perturbation [[25](#bib.bib25),
+    [100](#bib.bib100)]. MA is also employed by the works [[102](#bib.bib102), [103](#bib.bib103),
+    [104](#bib.bib104), [95](#bib.bib95), [96](#bib.bib96), [105](#bib.bib105)] all
+    of which use perturbed gradients.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recently, Bu et al. apply the Gaussian Differential Privacy (GDP) notion
+    introduced by Dong et al. [[121](#bib.bib121)] to deep learning [[122](#bib.bib122)]
+    to achieve a more refined analysis of neural network training, compared to that
+    of Abadi et al. [[24](#bib.bib24)]. They analyze the privacy budget exhaustion
+    of private DNN training using Adam optimizer, without the need of developing sophisticated
+    techniques such as the moments accountant. They demonstrate that GDP allows for
+    a new privacy analysis that improves on the moments accountant analysis and provides
+    better guarantees (i.e. lower $\epsilon$ values).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inherently, applying differential privacy to deep learning yields loss of utility
+    due to the addition of noise and clipping. Bagdasaryan et al. have demonstrated
+    that this loss in utility is disparate across different sub-groups of the population,
+    with different sizes [[123](#bib.bib123)]. They experimentally show that sub-groups
+    with less training samples (less representation) lose more accuracy, compared
+    to well-represented groups, i.e. the poor get poorer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is a body of work that tries to experimentally measure and audit the privacy
+    brought by differentially private learning algorithms [[124](#bib.bib124), [125](#bib.bib125)].
+    Jagielski et al. [[124](#bib.bib124)] investigate whether DP-SGD offers better
+    privacy in practice than what is guaranteed by its analysis, using data poisoning
+    attacks. Jayaraman et al [[125](#bib.bib125)] apply membership and attribute inference
+    attacks on multiple differentially private machine learning and deep learning
+    algorithms, and compare their performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.2 Homomorphic Encryption
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There are only a handful of works that exploit solely homomorphic encryption
+    for private training of machine learning models [[114](#bib.bib114), [115](#bib.bib115),
+    [27](#bib.bib27)]. Graepel et al. use a Somewhat HE (SHE) scheme to train Linear
+    Means (LM) and Fisher’s Linear Discriminate (FLD) classifiers [[114](#bib.bib114)].
+    HE algorithms have some limitations in terms of the functions they can compute
+    (for instance they cannot implement non-linearities). For that reason, Graepel
+    et al. propose division-free algorithms and focus on simple classifiers and not
+    complex algorithms such as neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hesamifard et al. [[27](#bib.bib27)] try to exploit HE for deep learning tasks.
+    They introduce methods for approximating the most commonly used neural network
+    activation functions (ReLU, Sigmoid, and Tanh) with low degree polynomials. This
+    is a crucial step for designing efficient homomorphic encryption schemes. They
+    then train convolutional neural networks with those approximate polynomial functions
+    and finally, implement convolutional neural networks over encrypted data and measure
+    the performance of the models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2.3 Secure Multi-Party Computation (SMC)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: A trend in research on private and secure computation consists of designing
+    custom protocols for applications such as linear and logistic regression  [[112](#bib.bib112)]
+    and neural network training and inference [[112](#bib.bib112), [108](#bib.bib108),
+    [126](#bib.bib126)]. These methods usually target settings where different datasets
+    from different places are set to train a model together, or where computation
+    is off-loaded to a group of computing servers that do not collude with each other.
+    SMC requires that all participants be online at all times, which requires a significant
+    amount of communication [[127](#bib.bib127)]. Mohassel & Zhang proposed SecureML
+    which is a privacy-preserving stochastic gradient descent-based method to privately
+    train machine learning algorithms such as linear regression, logistic regression
+    and neural networks in multiparty computation settings. SecureML uses secret sharing
+    to achieve privacy during training. In a more recent work [[110](#bib.bib110)],
+    Mohassel et al design protocols for secure three-party training of DNNs with a
+    majority of honest parties. Agrawal et al. propose QUOTIENT [[108](#bib.bib108)]
+    where their goal is to design an optimization algorithm alongside a secure computation
+    protocol customized for it, instead of a conventional approach which is using
+    encryption on top of existing optimization algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3 Inference Phase
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Table 3: Categorization of some notable privacy-preserving mechanisms for inference.
+    In this table, NB is short for Naive Bayes, and DT is short for Decision Tree.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | DP | SMC | HE | IT | Dataset(s) | Task |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ARDEN [[128](#bib.bib128)] | ● | ○ | ○ | ○ | MNIST, CIFAR-10, SVHN | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cryptonets [[129](#bib.bib129)] | ○ | ○ | ● | ○ | MNIST | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Private Classification [[130](#bib.bib130)] | ○ | ○ | ● | ○ | MNIST | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TAPAS [[131](#bib.bib131)] | ○ | ○ | ● | ○ | MNIST, Faces, Cancer, Diabetes
+    | Image Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| FHE–DiNN [[132](#bib.bib132)] | ○ | ○ | ● | ○ | MNIST | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Face Match [[133](#bib.bib133)] | ○ | ○ | ● | ○ | LFW, IJB-A, IJB-B, CASIA
+    | Face recognition with CNNs |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cheetah [[134](#bib.bib134)] | ○ | ○ | ● | ○ | MNIST, Imagenet | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EPIC [[119](#bib.bib119)] | ○ | ● | ○ | ○ | CIFAR-10, MIT, Caltech | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DeepSecure [[135](#bib.bib135)] | ○ | ● | ○ | ○ | MNIST, UCI-HAR | Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| XONN [[118](#bib.bib118)] | ○ | ● | ○ | ○ | MNIST, CIFAR-10 | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chameleon [[136](#bib.bib136)] | ○ | ● | ○ | ○ | MNIST, Credit Approval |
+    Classification w/ DNN and SVM |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CRYPTFLOW [[137](#bib.bib137)] | ○ | ● | ○ | ○ | MNIST,CIFAR, ImageNet |
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Classification over Encrypted Data[[138](#bib.bib138)] | ○ | ● | ● | ○ |
+    Wisconsin Breast Cancer | Classification w/ NB, DT |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MiniONN [[139](#bib.bib139)] | ○ | ● | ● | ○ | MNIST, CIFAR-10 | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| GAZELLE [[140](#bib.bib140)] | ○ | ● | ● | ○ | MNIST, CIFAR-10 | Image Classification
+    w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DELPHI [[141](#bib.bib141)] | ○ | ● | ● | ○ | CIFAR-10, CIFAR-100 | Image
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shredder [[31](#bib.bib31)] | ○ | ○ | ○ | ● | SVHN, VGG-Face, ImageNet |
+    Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sensor Data Obfuscation [[142](#bib.bib142)] | ○ | ○ | ○ | ● | Iphone 6s
+    Accelerometer Data | Activity Recognition w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Olympus [[143](#bib.bib143)] | ○ | ○ | ○ | ● | Driving images | Activity
+    Recognition w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DPFE [[29](#bib.bib29)] | ○ | ○ | ○ | ● | CelebA | Image Classification w/
+    DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cloak [[144](#bib.bib144)] | ○ | ○ | ○ | ● | CIFAR-100, CelebA, UTKFace |
+    Image Classification w/ DNN |'
+  prefs: []
+  type: TYPE_TB
+- en: 'As shown in Table [3](#S3.T3 "Table 3 ‣ 3.3 Inference Phase ‣ 3 Privacy-Preserving
+    Mechanisms ‣ Privacy in Deep Learning: A Survey") there are fewer works in the
+    field of inference privacy, compared to training. Inference privacy targets systems
+    that are deployed to offer Inference-as-a-Service. In these cases, the deployed
+    system is assumed to be trained and is not to learn anything new from the data
+    provided by the user. It is only supposed to carry out its designated inference
+    task. The categorization of literature for inference privacy is similar to training,
+    except that there is one extra group here, named Information-Theoretic (IT) privacy.
+    The works in this group usually offer information-theoretic mathematical or empirical
+    evidence of how their methods operate and help privacy. These works are based
+    on the context-aware privacy definition of Section [3.1.5](#S3.SS1.SSS5 "3.1.5
+    Information-Theoretic Privacy ‣ 3.1 Data Aggregation ‣ 3 Privacy-Preserving Mechanisms
+    ‣ Privacy in Deep Learning: A Survey"), and they aim at decreasing the information
+    content in the data sent to the service provider for inference so that there is
+    only as much information in the input as needed for the service and not more.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One notable difference between training and inference privacy is the difference
+    in the amount of literature on different categories. There seems to be a trend
+    of using differential privacy for training, and encryption methods (HE and SMC)
+    for inference. One underlying reason could be computational complexity and implementation.
+    Encryption methods, specifically homomorphic encryption, are shown to be at least
+    two orders of magnitude slower than conventional execution [[140](#bib.bib140)].
+    That’s why adopting them for training will increase training time significantly.
+    Also, as mentioned in Section [3.2.2](#S3.SS2.SSS2 "3.2.2 Homomorphic Encryption
+    ‣ 3.2 Training Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy in Deep Learning:
+    A Survey"), due to approximating non-linear functions, the capabilities of neural
+    networks in terms of performance become limited during training on encrypted data.
+    For inference, however, adopting encryption is more trivial, since the model is
+    already trained. Employing differential privacy, and noise addition, however,
+    is less trivial for inference, since it could damage the accuracy of the trained
+    model, if not done meticulously. Below we delve deeper into the literature of
+    each category.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.1 Differential Privacy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: There are very few works using differential privacy for inference. The main
+    reason is that differential privacy offers a worst-case guarantee which requires
+    high-intensity noise (noise with high standard deviation) to be applied to all
+    the segments of the input. This inherently causes performance degradation on pre-trained
+    networks. Wang et al. [[128](#bib.bib128)] propose Arden, a data nullification
+    and differentially private noise injection mechanism for inference. Arden partitions
+    the DNN across edge device and the cloud. A simple data transformation is performed
+    on the mobile device, while the computation heavy and complex inference relies
+    on the cloud data center. Arden uses data nullification, and noise injection to
+    make different queries indistinguishable so that the privacy of the clients is
+    preserved. The proposed scheme requires noisy retraining of the entire network,
+    with noise injected at different layers. Since it is complicated to calculate
+    the global sensitivity at each layer of the neural network, the input to the noise
+    injection layer is clipped to the largest possible value created by a member of
+    the training set, on the trained network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.2 Homomorphic Encryption
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: CryptoNets is one of the first works in HE inference [[129](#bib.bib129)]. Dowlin
+    et al. present a method for converting a trained neural network into an encrypted
+    one, named a CryptoNet. This allows the clients of an inference service to send
+    their data in an encrypted format and receive the result, without their data being
+    decrypted. CryptoNets allows the use of SIMD (Single Instruction Multiple Data)
+    operations, which increase the throughput of the deployed system. However, for
+    single queries, the latency of this scheme is still high.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chabanne et al. [[130](#bib.bib130)] approximate the ReLu non-linear activation
+    function using low-degree polynomials and provide a normalization layer before
+    the activation function, which offers high accuracy. However, they do not show
+    results on the latency of their method. More recently, Juvekar et al. propose
+    GAZELLE [[140](#bib.bib140)], a system with lower latency (compared to prior work)
+    for secure and private neural network inference. GAZELLE combines homomorphic
+    encryption with traditional two-party computation techniques (such as garbled
+    circuits). With the help of its homomorphic linear algebra kernels, which map
+    neural network operations to optimized homomorphic matrix-vector multiplication
+    and convolutions, GAZELLE is shown to be three orders of magnitude faster than
+    CryptoNets. Sanyal et al. leverage binarized neural networks to speed-up their
+    HE inference method. They claim that unlike CryptoNets which only protects the
+    data, their proposed scheme can protect the privacy of the model as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.3 Secure Multi-Party Computation (SMC)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Liu et al. propose MiniONN [[139](#bib.bib139)], which uses additively homomorphic
+    encryption (AHE) in a preprocessing step, unlike GAZELLE which uses AHE to speed
+    up linear algebra directly. MiniONN demonstrates a significant performance improvement
+    compared to CryptoNets, without loss of accuracy. However, it is only a two-party
+    computation scheme and does not support computation over multiple parties. Riazi
+    et al. introduce Chameleon, a two-party computation framework whose vector dot
+    product of signed fixed-point numbers improves the efficiency of prediction in
+    classification methods based upon heavy matrix multiplications. Chameleon achieves
+    a 4.2$\times$ latency improvement over MiniONN. Most of the efforts in the field
+    of SMC for deep learning are focused on speeding up the computation, as demonstrated
+    above, and also by  [[118](#bib.bib118)],  [[119](#bib.bib119)],  [[135](#bib.bib135)].
+    The accuracy loss of the aforementioned methods, compared to their pre-trained
+    models is negligible (less than 1%).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.3.4 Information Theoretic Privacy
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Privacy-preserving schemes that rely on information-theoretic approaches usually
+    assume a non-sensitive task, the task that the service is supposed to execute
+    and try to degrade any excessive information in the input data that is not needed
+    for the main inference task [[142](#bib.bib142), [145](#bib.bib145), [143](#bib.bib143),
+    [29](#bib.bib29), [31](#bib.bib31), [146](#bib.bib146)].  [[142](#bib.bib142),
+    [143](#bib.bib143), [145](#bib.bib145)] propose anynymization schemes for protecting
+    temporal sensory data through obfuscation. Malekzadeh et al. [[142](#bib.bib142)]
+    propose a multi-objective loss function for training deep autoencoders to extract
+    and obfuscate user identity-related information, while preserving the utility
+    of the sensor data. The training process regulates the encoder to disregard user-identifiable
+    patterns and tunes the decoder to shape the output independently of users in the
+    training set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another body of work [[31](#bib.bib31), [147](#bib.bib147), [29](#bib.bib29),
+    [144](#bib.bib144)] propose such schemes for computer vision tasks and preserving
+    privacy of images. Osia et al. propose Deep Private Feature Extraction (DPFE) [[29](#bib.bib29)]
+    which aims at obfuscating input images to hinder the classification of given sensitive
+    (private) labels, by modifying the network topology and re-training all the model
+    parameters. DPFE partitions the network in two partitions, first partition to
+    be deployed on the edge and the second on the cloud. It also modifies the network
+    architecture by adding an auto-encoder in the middle and then re-training the
+    entire network with its loss function. The encoder part of the auto-encoder is
+    deployed on the edge device, and the decoder is deployed on the server. The auto-encoder
+    aims to reduce the dimensions of the sent data which decreases the communication
+    cost, alongside decreasing the amount of information that is sent, which helps
+    the privacy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DPFE’s loss function can be seen in Equation [2](#S3.E2 "In 3.3.4 Information
+    Theoretic Privacy ‣ 3.3 Inference Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy
+    in Deep Learning: A Survey"). It is composed of three terms, first, the cross-entropy
+    loss for a classification problem consisting of M classes ($y_{o,c}$ indicates
+    whether the observation $o$ belongs to class $c$ and $p_{o,c}$ is the probability
+    given by the network for the observation to belong to class $c$). This term aims
+    at maintaining accuracy. Second, a term that tries to decrease the distance between
+    intermediate activations of inputs with different private labels, and a final
+    term which tries to increase the distance between intermediate activations of
+    inputs with the same private label. $\gamma$ is a constant which depends on the
+    number of dimensions and the training data, it is used as a normalization factor.
+    $k$ is also a constant which depends on the training data. $i$ and $j$ are iterators
+    over the main batch and a random batch, respectively and $Y$ is the private label
+    for that batch member.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\begin{split}-\sum_{c=1}^{M}y_{o,c}log(p_{o,c})+\gamma(\sum_{(i,j):Y_{i}\neq
+    Y_{j}}&#124;&#124;a^{\prime}_{i}-a^{\prime}_{j}&#124;&#124;_{2}\\ +\sum_{(i,j):Y_{i}=Y_{j}}(k-&#124;&#124;a^{\prime}_{i}-a^{\prime}_{j}&#124;&#124;_{2}))\end{split}$
+    |  | (2) |'
+  prefs: []
+  type: TYPE_TB
+- en: DPFE retrains the given neural network and the auto-encoder with this loss function.
+    The training can be seen as an attempt to create clustered representations of
+    data, where the inputs with the same private labels go in different clusters,
+    and inputs with different labels are pushed to the same cluster, to mislead any
+    adversary who tries to infer the private labels. Given its loss function, DPFE
+    cannot operate without the private labels. Therefore, if there is a setting in
+    which no sensitive labels are provided, DPFE cannot be used. After training, for
+    each inference request, a randomly generated noise is added to the intermediate
+    results on the fly. This noise is not there to achieve differential privacy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More recently, Mireshghallah et al. suggested Shredder [[31](#bib.bib31)], a
+    framework that without altering the topology or the weights of a pre-trained network,
+    heuristically learns additive noise distributions that reduce the information
+    content of communicated data while incurring minimal loss to the inference accuracy.
+    Shredder’s approach also consists of cutting the neural network and executing
+    a part of it on the edge device, similar to DPFE. This approach has been shown
+    to decrease the overall execution time in some cases [[31](#bib.bib31)], compared
+    to running the entire neural network on the cloud, since the communication takes
+    the bulk of time and sensing intermediate representations can sometimes save on
+    the communication since there are fewer dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Shredder initializes a noise tensor, with the same dimension as the intermediate
+    activation, by sampling from a Laplace distribution with location of $0$, and
+    scale of $b$, which is a hyperparameter. Then, using the loss function shown in
+    Equation [3](#S3.E3 "In 3.3.4 Information Theoretic Privacy ‣ 3.3 Inference Phase
+    ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy in Deep Learning: A Survey"), it tries
+    to maintain the accuracy of the model (first term), while increasing the amount
+    of additive noise (second term). $\lambda$ is a knob that provides an accuracy-privacy
+    trade-off.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $-\sum_{c=1}^{M}y_{o,c}log(p_{o,c})-\lambda\sum_{i=1}^{N}{&#124;n_{i}&#124;}$
+    |  | (3) |'
+  prefs: []
+  type: TYPE_TB
+- en: Once the training is terminated, a Laplace distribution is fit to the trained
+    tensor, and the parameters of that distribution, alongside the order of the elements,
+    are saved. A collection of these distributions are gathered. During inference,
+    noise is sampled from one of the saved distributions and re-ordered to match the
+    saved order. This noise tensor is then added to the intermediate representation,
+    before being sent to the cloud.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both DPFE and Shredder empirically demonstrate a reduction in the number of
+    mutual information bits between the original data and the sent intermediate representation.
+    DPFE can only be effective if the user knows what s/he wants to protect against,
+    whereas Shredder offers a more general approach that tries to obliterate any information
+    that is irrelevant to the primary task. Empirical evaluations showed that Shredder
+    can in average loose more mutual information, compared to DPFE. However, in the
+    task of inferring private labels, DPFE performs slightly better by causing a higher
+    misclassification rate for the adversary since it has access to the private labels
+    during training time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More recently, Mireshghallah et al. propose a non-intrusive interpretable approach
+    dubbed Cloak, in which there is no need to change/retrain the network parameters,
+    nor partition it. This work attempts to explain the decision making process of
+    deep neural networks (DNNs) by separating the subset of input features that are
+    essential and unessential for the decisions made by the DNN during test-time inference.
+    This separation is made possible through the adoption of information-theoretic
+    bounds for different set of features. After identifying the essential subset,
+    Cloak suppresses the rest of the features using learned values, and only sends
+    the essential ones. In this respect, Cloak offers an interpretable privacy-preserving
+    mechanism. An example of representations produced by Cloak and the conducive/non-conducive
+    feature separation can be seen in Figure [5](#S3.F5 "Figure 5 ‣ 3.3.4 Information
+    Theoretic Privacy ‣ 3.3 Inference Phase ‣ 3 Privacy-Preserving Mechanisms ‣ Privacy
+    in Deep Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3aa0f36225ec10b5ec18676b33b0e281.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Cloak’s discovered features for target DNN classifiers (VGG-16) for
+    black-hair color, eyeglasses, gender, and smile detection. The colored features
+    are conducive to the task. The 3 sets of features depicted for each task correspond
+    to different suppression ratios (SR). AL denotes the range of accuracy loss imposed
+    by the suppression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4 Privacy-Enhancing Execution Models and Environments
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Apart from privacy-preserving schemes which are methods that directly optimize
+    for a given definition of privacy, there are given execution models and environments
+    that help enhance privacy and are not by themselves privacy-preserving. In this
+    section, we will briefly discuss federated learning, split learning and trusted
+    execution environments, which have been used to enhance privacy. These methods
+    are usually accompanied by privacy-preserving schemes from the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Federated Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/8ddbdc78609dd4ae525bee1c92cb020a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: The workflow of federated learning model [[127](#bib.bib127)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Federated learning (FL) is a machine learning setting where many clients collaboratively
+    train a model under the administration of a central server while keeping the training
+    data local. Federated learning is built on the principles of focused collection
+    and data minimization which can alleviate the privacy risks of centralized machine
+    learning [[127](#bib.bib127)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The workflow of federated learning can be seen in Figure [6](#S4.F6 "Figure
+    6 ‣ 4.1 Federated Learning ‣ 4 Privacy-Enhancing Execution Models and Environments
+    ‣ Privacy in Deep Learning: A Survey"). This workflow is broken into six stages [[127](#bib.bib127)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Problem identification: The problem that is to be solved using federated learning
+    should first be defined.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Client instrumentation: The clients can be instructed to save the data needed
+    for training. For example, the applications running on the edge devices might
+    need to locally save some metadata (e.g. user interaction data) alongside the
+    main data (for instance text messages).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Simulation prototyping (optional): The engineer who is deploying the system
+    might need to prototype different architectures and try different hyperparameters
+    in a federated learning simulation.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Federated model training: Multiple federated training tasks are initiated which
+    train different variations of the model or use different optimization hyperparameters.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '5.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Model evaluation: When the tasks are done with the training phase (usually
+    after a few days), the models are analyzed and evaluated, either on standard centralized
+    datasets or on local client data.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '6.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Deployment: When the analysis is finished and a model is selected, the launch
+    process is initiated. This process consists of live A/B testing, manual quality
+    assurance, and a staged roll-out.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Federated learning is being widely used with SMC and differential Privacy [[127](#bib.bib127),
+    [107](#bib.bib107), [148](#bib.bib148)].Bonawitz et al. apply Secure aggregation
+    to privately combine the outputs of local machine learning on user devices in
+    the federated learning setup, to update a global model. Secure aggregation refers
+    to the computation of a sum in a multiparty setting, where no party reveals its
+    update in the clear, even to the aggregator. When Secure Aggregation is added
+    to Federated Learning, the aggregation of model updates is performed by a virtual
+    incorruptible third party induced by secure multiparty communication. With this
+    setup, the cloud provider learns only the aggregated model update. There are also
+    bodies of work that consider shuffling of user data, so as to hide the origin
+    of each data item.The works of Cheu et al., and Balle et al. have proposed secure
+    aggregation protocols that satisfy differential privacy guarantees in the shuffle
+    model [[149](#bib.bib149), [150](#bib.bib150)]. More recent work [[151](#bib.bib151)]
+    mitigates the incurred error and communication overheads in shuffle model. More
+    in-depth details of federated learning workflow and integration is out of the
+    scope of this survey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 Split Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/0fb15fe2595fb4d9a7361960df428612.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (a) Vanilla split learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/7712c1501696467db22f722a4e2e5800.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: (b) Boomerang split learning
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure 7: The vanilla configuration of split learning where raw data is not
+    shared between client and server, and boomerang (U-shaped) configuration where
+    neither raw data nor the labels are shared between client and server [[152](#bib.bib152)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Split-learning is an execution model where the neural network is split, between
+    the client and the server [[58](#bib.bib58)]. This is very similar to the neural
+    network partitioning described in Shredder [[31](#bib.bib31)] and DPFE [[29](#bib.bib29)].
+    Vanilla split learning is formed by each client computing the forward pass through
+    a deep neural network up to a specific layer, called the cut layer. The outputs
+    of the cut layer, referred to as smashed data, are sent from the edge device to
+    another entity (either the server or another client), which completes the rest
+    of the computation. With this execution scheme, a round of forward pass is computed
+    without sharing raw data. The gradients can then be backpropagated from the server
+    to the cut layer in a similar fashion. The gradients at the cut layer are transferred
+    back to the clients, where the rest of the backpropagation is completed. In this
+    fashion, the training or inference is done without having clients directly access
+    each other’s raw data. An instantiation of this setup where labels are also not
+    shared along with raw data is shown in Figure [7](#S4.F7 "Figure 7 ‣ 4.2 Split
+    Learning ‣ 4 Privacy-Enhancing Execution Models and Environments ‣ Privacy in
+    Deep Learning: A Survey").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Trusted Execution Environments (TEEs)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Trusted execution environments, also referred to as secure enclaves, provide
+    opportunities to move parts of decentralized learning or inference processes into
+    a trusted environment in the cloud, whose code can be attested and verified. Recently,
+    Mo et al. have suggested a framework that uses an edge device’s Trusted Execution
+    Environment (TEE) in conjunction with model partitioning to limit the attack surface
+    against DNNs [[153](#bib.bib153)]. TEEs can provide integrity and confidentiality
+    during execution. TEEs have been deployed in many forms, including Intel’s SGX-enabled
+    CPUs [[154](#bib.bib154), [155](#bib.bib155), [156](#bib.bib156), [157](#bib.bib157)],
+    Arm’s TrustZone [[158](#bib.bib158)]. This execution model, however, requires
+    the users to send their data to an enclave running on remote servers which allows
+    the remote server to have access to the raw data and as the new breaches in hardware [[37](#bib.bib37),
+    [36](#bib.bib36), [159](#bib.bib159), [160](#bib.bib160), [161](#bib.bib161),
+    [162](#bib.bib162)] show, the access can lead to comprised privacy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5 Conclusion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The surge in the use of machine learning is due to the growth in data and compute.
+    The data mostly comes from people [[7](#bib.bib7)] and includes an abundance of
+    sensitive information. This work tries to provide a comprehensive and systematic
+    summary of the efforts made to protect privacy of users in deep learning settings.
+    We find an apparent disparity in the number of efforts between data aggregation,
+    training, and inference phases. In particular, little attention has been made
+    to privacy of the users during inference phase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] S. Laine, T. Karras, T. Aila, A. Herva, S. Saito, R. Yu, H. Li, and J. Lehtinen,
+    “Production-level facial performance capture using deep convolutional neural networks,”
+    in Proceedings of the ACM SIGGRAPH / Eurographics Symposium on Computer Animation,
+    SCA ’17, (New York, NY, USA), Association for Computing Machinery, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] V. Këpuska and G. Bohouta, “Next-generation of virtual personal assistants
+    (microsoft cortana, apple siri, amazon alexa and google home),” 2018 IEEE 8th
+    Annual Computing and Communication Workshop and Conference (CCWC), pp. 99–103,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] G. A. Kaissis, M. R. Makowski, D. Rückert, and R. F. Braren, “Secure, privacy-preserving
+    and federated machine learning in medical imaging,” Nature Machine Intelligence,
+    pp. 1–7, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] S. Singh, H. Sikka, S. Kotti, and A. Trask, “Benchmarking differentially
+    private residual networks for medical imagery,” arXiv preprint arXiv:2005.13099,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] M. Fredrikson, E. Lantz, S. Jha, S. Lin, D. Page, and T. Ristenpart, “Privacy
+    in pharmacogenetics: An end-to-end case study of personalized warfarin dosing,”
+    in Proceedings of the 23rd USENIX Conference on Security Symposium, SEC’14, (USA),
+    p. 17–32, USENIX Association, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] R. J. Bolton and D. J. Hand, “Statistical fraud detection: A review,” Statist.
+    Sci., vol. 17, pp. 235–255, 08 2002.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] S. A. Thompson and C. Warzel, “The privacy project: Twelve million phones,
+    one dataset, zero privacy,” 2019. online accessed February 2020 [https://www.nytimes.com/interactive/2019/12/19/opinion/location-tracking-cell-phone.html](https://www.nytimes.com/interactive/2019/12/19/opinion/location-tracking-cell-phone.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] C. Warzel, “The privacy project: Faceapp shows we care about privacy but
+    don’t understand it,” 2019. online accessed February 2020 [https://www.nytimes.com/2019/07/18/opinion/faceapp-privacy.html](https://www.nytimes.com/2019/07/18/opinion/faceapp-privacy.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] A. Newcomb, “Facebook data harvesting scandal widens to 87 million people,”
+    2018. online accessed February 2020 [https://www.nbcnews.com/tech/tech-news/facebook-data-harvesting-scandal-widens-87-million-people-n862771](https://www.nbcnews.com/tech/tech-news/facebook-data-harvesting-scandal-widens-87-million-people-n862771).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] A. Frome, G. Cheung, A. Abdulkader, M. Zennaro, B. Wu, A. Bissacco, H. Adam,
+    H. Neven, and L. Vincent, “Large-scale privacy protection in google street view,”
+    2009 IEEE 12th International Conference on Computer Vision, pp. 2373–2380, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] J. Schiff, M. Meingast, D. K. Mulligan, S. S. Sastry, and K. Goldberg,
+    “Respectful cameras: Detecting visual markers in real-time to address privacy
+    concerns,” in Protecting Privacy in Video Surveillance, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] A. Senior, S. Pankanti, A. Hampapur, L. Brown, Ying-Li Tian, A. Ekin,
+    J. Connell, Chiao Fe Shu, and M. Lu, “Enabling video privacy through computer
+    vision,” IEEE Security Privacy, vol. 3, no. 3, pp. 50–57, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] L. Cheng, F. Liu, and D. D. Yao, “Enterprise data breach: causes, challenges,
+    prevention, and future directions,” WIREs Data Mining and Knowledge Discovery,
+    vol. 7, no. 5, p. e1211, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] T. Armerding, “The 18 biggest data breaches of the 21st century,” 2018.
+    online accessed February 2020 [https://www.csoonline.com/article/2130877/the-biggest-data-breaches-of-the-21st-century.html](https://www.csoonline.com/article/2130877/the-biggest-data-breaches-of-the-21st-century.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] R. Shokri, M. Stronati, and V. Shmatikov, “Membership inference attacks
+    against machine learning models,” CoRR, vol. abs/1610.05820, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] M. Fredrikson, S. Jha, and T. Ristenpart, “Model inversion attacks that
+    exploit confidence information and basic countermeasures,” in Proceedings of the
+    22nd ACM SIGSAC Conference on Computer and Communications Security, CCS ’15, (New
+    York, NY, USA), p. 1322–1333, Association for Computing Machinery, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] S. Yeom, I. Giacomelli, M. Fredrikson, and S. Jha, “Privacy risk in machine
+    learning: Analyzing the connection to overfitting,” in 2018 IEEE 31st Computer
+    Security Foundations Symposium (CSF), pp. 268–282, July 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] M. Yan, C. W. Fletcher, and J. Torrellas, “Cache telepathy: Leveraging
+    shared resource attacks to learn dnn architectures,” ArXiv, vol. abs/1808.04761,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] F. Tramèr, F. Zhang, A. Juels, M. K. Reiter, and T. Ristenpart, “Stealing
+    machine learning models via prediction apis,” CoRR, vol. abs/1609.02943, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] K. Ganju, Q. Wang, W. Yang, C. A. Gunter, and N. Borisov, “Property inference
+    attacks on fully connected neural networks using permutation invariant representations,”
+    in Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications
+    Security, CCS ’18, (New York, NY, USA), p. 619–633, Association for Computing
+    Machinery, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] L. Sweeney, “k-anonymity: A model for protecting privacy,” International
+    Journal of Uncertainty, Fuzziness and Knowledge-Based Systems, vol. 10, no. 05,
+    pp. 557–570, 2002.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] C. Dwork, F. McSherry, K. Nissim, and A. Smith, “Calibrating noise to
+    sensitivity in private data analysis,” in Proceedings of the Third Conference
+    on Theory of Cryptography, TCC’06, (Berlin, Heidelberg), pp. 265–284, Springer-Verlag,
+    2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] R. Shokri and V. Shmatikov, “Privacy-preserving deep learning,” in Proceedings
+    of the 22nd ACM SIGSAC Conference on Computer and Communications Security, CCS
+    ’15, (New York, NY, USA), p. 1310–1321, Association for Computing Machinery, 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] M. Abadi, A. Chu, I. Goodfellow, H. B. McMahan, I. Mironov, K. Talwar,
+    and L. Zhang, “Deep learning with differential privacy,” in Proceedings of the
+    2016 ACM SIGSAC Conference on Computer and Communications Security, CCS ’16, (New
+    York, NY, USA), p. 308–318, Association for Computing Machinery, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] N. Papernot, M. Abadi, Úlfar Erlingsson, I. Goodfellow, and K. Talwar,
+    “Semi-supervised knowledge transfer for deep learning from private training data,”
+    2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] J. Hamm, P. Cao, and M. Belkin, “Learning privately from multiparty data,”
+    CoRR, vol. abs/1602.03552, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] E. Hesamifard, H. Takabi, and M. Ghasemi, “Cryptodl: Deep neural networks
+    over encrypted data,” CoRR, vol. abs/1711.05189, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] T. Zhang, Z. He, and R. B. Lee, “Privacy-preserving machine learning through
+    data obfuscation,” ArXiv, vol. abs/1807.01860, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] S. A. Ossia, A. Taheri, A. S. Shamsabadi, K. Katevas, H. Haddadi, and
+    H. R. Rabiee, “Deep private-feature extraction,” IEEE Transactions on Knowledge
+    and Data Engineering, vol. 32, pp. 54–66, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] N. Dowlin, R. Gilad-Bachrach, K. Laine, K. Lauter, M. Naehrig, and J. Wernsing,
+    “Cryptonets: Applying neural networks to encrypted data with high throughput and
+    accuracy,” in Proceedings of the 33rd International Conference on International
+    Conference on Machine Learning - Volume 48, ICML’16, pp. 201–210, JMLR.org, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] F. Mireshghallah, M. Taram, A. Jalali, D. Tullsen, and H. Esmaeilzadeh,
+    “Shredder: Learning noise distributions to protect inference privacy,” in Proceedings
+    of the Twenty-Fifth International Conference on Architectural Support for Programming
+    Languages and Operating Systems, ASPLOS ’20, (New York, NY, USA), Association
+    for Computing Machinery, March 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] A. Chakraborty, M. Alam, V. Dey, A. Chattopadhyay, and D. Mukhopadhyay,
+    “Adversarial attacks and defences: A survey,” CoRR, vol. abs/1810.00069, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] B. Biggio, B. Nelson, and P. Laskov, “Poisoning attacks against support
+    vector machines,” in Proceedings of the 29th International Coference on International
+    Conference on Machine Learning, ICML’12, (Madison, WI, USA), p. 1467–1474, Omnipress,
+    2012.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] I. Security, “Data exfiltration study: actors, tactics, and detection
+    (2015),” 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] C. Warzel, “Chinese hacking is alarming. so are data brokers.,” 2020.
+    online accessed February 2020 [https://www.nytimes.com/2020/02/10/opinion/equifax-breach-china-hacking.html](https://www.nytimes.com/2020/02/10/opinion/equifax-breach-china-hacking.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] M. Lipp, M. Schwarz, D. Gruss, T. Prescher, W. Haas, A. Fogh, J. Horn,
+    S. Mangard, P. Kocher, D. Genkin, Y. Yarom, and M. Hamburg, “Meltdown: Reading
+    kernel memory from user space,” in 27th USENIX Security Symposium (USENIX Security
+    18), 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] P. Kocher, J. Horn, A. Fogh, , D. Genkin, D. Gruss, W. Haas, M. Hamburg,
+    M. Lipp, S. Mangard, T. Prescher, M. Schwarz, and Y. Yarom, “Spectre attacks:
+    Exploiting speculative execution,” in 40th IEEE Symposium on Security and Privacy
+    (S&P’19), 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] A. Whitten and J. D. Tygar, “Why johnny can’t encrypt: A usability evaluation
+    of pgp 5.0,” in Proceedings of the 8th Conference on USENIX Security Symposium
+    - Volume 8, SSYM’99, (USA), p. 14, USENIX Association, 1999.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] R. Unuchek, “Leaking ads – is user data truly secure?,” April 2018. online
+    accessed February 2020 [https://published-prd.lanyonevents.com/published/rsaus18/sessionsFiles/8161/ASEC-T08-Leaking-Ads-Is-User-Data-Truly-Secure.pdf](https://published-prd.lanyonevents.com/published/rsaus18/sessionsFiles/8161/ASEC-T08-Leaking-Ads-Is-User-Data-Truly-Secure.pdf).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] Y. Long, V. Bindschaedler, and C. A. Gunter, “Towards measuring membership
+    privacy,” ArXiv, vol. abs/1712.09136, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] A. Salem, Y. Zhang, M. Humbert, M. Fritz, and M. Backes, “Ml-leaks: Model
+    and data independent membership inference attacks and defenses on machine learning
+    models,” ArXiv, vol. abs/1806.01246, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] C. Song and V. Shmatikov, “The natural auditor: How to tell if someone
+    used your words to train their model,” ArXiv, vol. abs/1811.00513, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] J. Hayes, L. Melis, G. Danezis, and E. D. Cristofaro, “LOGAN: evaluating
+    privacy leakage of generative models using generative adversarial networks,” CoRR,
+    vol. abs/1705.07663, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] C. Song and V. Shmatikov, “Auditing data provenance in text-generation
+    models,” in Proceedings of the 25th ACM SIGKDD International Conference on Knowledge
+    Discovery and Data Mining, KDD ’19, (New York, NY, USA), p. 196–206, Association
+    for Computing Machinery, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] Z. Yang, E.-C. Chang, and Z. Liang, “Adversarial neural network inversion
+    via auxiliary knowledge alignment,” ArXiv, vol. abs/1902.08552, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] A. Salem, A. Bhattacharyya, M. Backes, M. Fritz, and Y. Zhang, “Updates-leak:
+    Data set inference and reconstruction attacks in online learning,” CoRR, vol. abs/1904.01067,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] Z. He, T. Zhang, and R. B. Lee, “Model inversion attacks against collaborative
+    inference,” in Proceedings of the 35th Annual Computer Security Applications Conference,
+    ACSAC ’19, (New York, NY, USA), p. 148–162, Association for Computing Machinery,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] N. Carlini, C. Liu, J. Kos, Ú. Erlingsson, and D. Song, “The secret sharer:
+    Measuring unintended neural network memorization & extracting secrets,” CoRR,
+    vol. abs/1802.08232, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] G. Ateniese, G. Felici, L. V. Mancini, A. Spognardi, A. Villani, and D. Vitali,
+    “Hacking smart machines with smarter ones: How to extract meaningful data from
+    machine learning classifiers,” CoRR, vol. abs/1306.4447, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] B. Wang and N. Z. Gong, “Stealing hyperparameters in machine learning,”
+    2018 IEEE Symposium on Security and Privacy (SP), pp. 36–52, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] A. Sablayrolles, M. Douze, Y. Ollivier, C. Schmid, and H. Jégou, “White-box
+    vs black-box: Bayes optimal strategies for membership inference,” 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] S. Truex, L. Liu, M. E. Gursoy, L. Yu, and W. Wei, “Towards demystifying
+    membership inference attacks,” ArXiv, vol. abs/1807.09173, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] D. Arpit, S. Jastrzundefinedbski, N. Ballas, D. Krueger, E. Bengio, M. S.
+    Kanwal, T. Maharaj, A. Fischer, A. Courville, Y. Bengio, and et al., “A closer
+    look at memorization in deep networks,” in Proceedings of the 34th International
+    Conference on Machine Learning - Volume 70, ICML’17, p. 233–242, JMLR.org, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] C. R. Meehan, K. Chaudhuri, and S. Dasgupta, “A non-parametric test to
+    detect data-copying in generative models,” ArXiv, vol. abs/2004.05675, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] Z. Izzo, M. A. Smart, K. Chaudhuri, and J. Zou, “Approximate data deletion
+    from machine learning models: Algorithms and evaluations,” ArXiv, vol. abs/2002.10077,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] X. Wu, M. Fredrikson, S. Jha, and J. F. Naughton, “A methodology for formalizing
+    model-inversion attacks,” in 2016 IEEE 29th Computer Security Foundations Symposium
+    (CSF), pp. 355–370, June 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] M. Brockschmidt, B. Köpf, O. Ohrimenko, A. Paverd, V. Rühle, S. Tople,
+    L. Wutschitz, and S. Zanella-Béguelin, “Analyzing information leakage of updates
+    to natural language models,” 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] O. Gupta and R. Raskar, “Distributed learning of deep neural network over
+    multiple agents,” J. Netw. Comput. Appl., vol. 116, pp. 1–8, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] C. Huang, P. Kairouz, X. Chen, L. Sankar, and R. Rajagopal, “Context-aware
+    generative adversarial privacy,” CoRR, vol. abs/1710.09549, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[60] A. Narayanan and V. Shmatikov, “Robust de-anonymization of large sparse
+    datasets,” in 2008 IEEE Symposium on Security and Privacy (sp 2008), pp. 111–125,
+    May 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[61] N. Homer, S. Szelinger, M. Redman, D. Duggan, W. Tembe, J. Muehling, J. V.
+    Pearson, D. A. Stephan, S. F. Nelson, and D. W. Craig, “Resolving individuals
+    contributing trace amounts of dna to highly complex mixtures using high-density
+    snp genotyping microarrays,” PLoS genetics, vol. 4, no. 8, 2008.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[62] C. C. Aggarwal, “On k-anonymity and the curse of dimensionality,” in Proceedings
+    of the 31st International Conference on Very Large Data Bases, VLDB ’05, p. 901–909,
+    VLDB Endowment, 2005.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[63] A. Machanavajjhala, D. Kifer, J. Gehrke, and M. Venkitasubramaniam, “L-diversity:
+    Privacy beyond k-anonymity,” ACM Trans. Knowl. Discov. Data, vol. 1, p. 3–es,
+    Mar. 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[64] N. Li, T. Li, and S. Venkatasubramanian, “t-closeness: Privacy beyond
+    k-anonymity and l-diversity,” in 2007 IEEE 23rd International Conference on Data
+    Engineering, pp. 106–115, IEEE, 2007.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[65] C. Dwork, K. Kenthapadi, F. McSherry, I. Mironov, and M. Naor, “Our data,
+    ourselves: Privacy via distributed noise generation,” in Proceedings of the 24th
+    Annual International Conference on The Theory and Applications of Cryptographic
+    Techniques, EUROCRYPT’06, (Berlin, Heidelberg), pp. 486–503, Springer-Verlag,
+    2006.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[66] M. Lécuyer, V. Atlidakis, R. Geambasu, D. Hsu, and S. Jana, “Certified
+    robustness to adversarial examples with differential privacy,” 2019 IEEE Symposium
+    on Security and Privacy (SP), pp. 656–672, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[67] C. Dwork, G. Rothblum, and S. Vadhan, “Boosting and differential privacy,”
+    in Proceedings of the 51st Annual IEEE Symposium on Foundations of Computer Science
+    (FOCS ‘10), (Las Vegas, NV), p. 51–60, IEEE, IEEE, 23–26 October 2010.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[68] S. Oh and P. Viswanath, “The composition theorem for differential privacy,”
+    CoRR, vol. abs/1311.0776, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[69] C. Dwork and A. Roth, “The algorithmic foundations of differential privacy,”
+    Found. Trends Theor. Comput. Sci., vol. 9, pp. 211–407, Aug. 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[70] P. Kairouz, S. Oh, and P. Viswanath, “Extremal mechanisms for local differential
+    privacy,” CoRR, vol. abs/1407.1338, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[71] Ú. Erlingsson, A. Korolova, and V. Pihur, “RAPPOR: randomized aggregatable
+    privacy-preserving ordinal response,” CoRR, vol. abs/1407.6981, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[72] J. Geumlek and K. Chaudhuri, “Profile-based privacy for locally private
+    computations,” 2019 IEEE International Symposium on Information Theory (ISIT),
+    pp. 537–541, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[73] S. Gopi, P. Gulhane, J. Kulkarni, J. H. Shen, M. Shokouhi, and S. Yekhanin,
+    “Differentially private set union,” ArXiv, vol. abs/2002.09745, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[74] H. B. McMahan, D. Ramage, K. Talwar, and L. Zhang, “Learning differentially
+    private recurrent language models,” arXiv preprint arXiv:1710.06963, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[75] A. Triastcyn and B. Faltings, “Generating differentially private datasets
+    using gans,” CoRR, vol. abs/1803.03148, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[76] D. Kifer and A. Machanavajjhala, “Pufferfish: A framework for mathematical
+    privacy definitions,” ACM Trans. Database Syst., vol. 39, Jan. 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[77] Y. Wang, S. Song, and K. Chaudhuri, “Privacy-preserving analysis of correlated
+    data,” CoRR, vol. abs/1603.03977, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[78] M. E. Andrés, N. E. Bordenabe, K. Chatzikokolakis, and C. Palamidessi,
+    “Geo-indistinguishability: Differential privacy for location-based systems,” in
+    Proceedings of the 2013 ACM SIGSAC Conference on Computer and Communications Security,
+    CCS ’13, (New York, NY, USA), p. 901–914, Association for Computing Machinery,
+    2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[79] S. Goldwasser and S. Micali, “Probabilistic encryption,” Journal of computer
+    and system sciences, vol. 28, no. 2, pp. 270–299, 1984.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[80] K. Nissim and A. Wood, “Is privacy privacy?,” Philosophical Transactions
+    of the Royal Society A: Mathematical, Physical and Engineering Sciences, vol. 376,
+    no. 2128, p. 20170358, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[81] J. Liu, L. Xiong, and J. Luo, “Semantic security: Privacy definitions
+    revisited.,” Trans. Data Privacy, vol. 6, no. 3, pp. 185–198, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[82] M. Diaz, H. Wang, F. P. Calmon, and L. Sankar, “On the robustness of information-theoretic
+    privacy measures and mechanisms,” CoRR, vol. abs/1811.06057, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[83] A. Pinceti, O. Kosut, and L. Sankar, “Data-driven generation of synthetic
+    load datasets preserving spatio-temporal features,” in 2019 IEEE Power Energy
+    Society General Meeting (PESGM), pp. 1–5, Aug 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[84] P. Kairouz, J. Liao, C. Huang, and L. Sankar, “Censored and fair universal
+    representations using generative adversarial models,” 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[85] D. P. Varodayan and A. Khisti, “Smart meter privacy using a rechargeable
+    battery: Minimizing the rate of information leakage,” 2011 IEEE International
+    Conference on Acoustics, Speech and Signal Processing (ICASSP), pp. 1932–1935,
+    2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[86] H. L. Hsu, S. Asoodeh, and F. du Pin Calmon, “Obfuscation via information
+    density estimation,” ArXiv, vol. abs/1910.08109, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[87] A. Li, J. Guo, H. Yang, and Y. Chen, “Deepobfuscator: Adversarial training
+    framework for privacy-preserving image classification,” ArXiv, vol. abs/1909.04126,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[88] V. Mirjalili, S. Raschka, and A. Ross, “Flowsan: Privacy-enhancing semi-adversarial
+    networks to confound arbitrary face-based gender classifiers,” IEEE Access, vol. 7,
+    pp. 99735–99745, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[89] P. C. Roy and V. N. Boddeti, “Mitigating information leakage in image
+    representations: A maximum entropy approach,” 2019 IEEE/CVF Conference on Computer
+    Vision and Pattern Recognition (CVPR), pp. 2581–2589, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[90] Z. Wu, Z. Wang, Z. Wang, and H. Jin, “Towards privacy-preserving visual
+    recognition via adversarial training: A pilot study,” ArXiv, vol. abs/1807.08379,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[91] C. Xu, J. Ren, D. Zhang, Y. Zhang, Z. Qin, and K. Ren, “Ganobfuscator:
+    Mitigating information leakage under gan via differential privacy,” IEEE Transactions
+    on Information Forensics and Security, vol. 14, pp. 2358–2371, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[92] H. B. McMahan, D. Ramage, K. Talwar, and L. Zhang, “Learning differentially
+    private language models without losing accuracy,” CoRR, vol. abs/1710.06963, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[93] K. Chaudhuri and C. Monteleoni, “Privacy-preserving logistic regression,”
+    in Advances in Neural Information Processing Systems 21 (D. Koller, D. Schuurmans,
+    Y. Bengio, and L. Bottou, eds.), pp. 289–296, Curran Associates, Inc., 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[94] K. Chaudhuri, C. Monteleoni, and A. D. Sarwate, “Differentially private
+    empirical risk minimization,” J. Mach. Learn. Res., vol. 12, p. 1069–1109, July
+    2011.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[95] L. Xie, K. Lin, S. Wang, F. Wang, and J. Zhou, “Differentially private
+    generative adversarial network,” CoRR, vol. abs/1802.06739, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[96] G. Ács, L. Melis, C. Castelluccia, and E. D. Cristofaro, “Differentially
+    private mixture of generative neural networks,” CoRR, vol. abs/1709.04514, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[97] N. Phan, Y. Wang, X. Wu, and D. Dou, “Differential privacy preservation
+    for deep auto-encoders: An application of human behavior prediction,” in Proceedings
+    of the Thirtieth AAAI Conference on Artificial Intelligence, AAAI’16, p. 1309–1316,
+    AAAI Press, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[98] N. Phan, X. Wu, and D. Dou, “Preserving differential privacy in convolutional
+    deep belief networks,” Mach. Learn., vol. 106, p. 1681–1704, Oct. 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[99] N. Phan, X. Wu, H. Hu, and D. Dou, “Adaptive laplace mechanism: Differential
+    privacy preservation in deep learning,” CoRR, vol. abs/1709.05750, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[100] N. Papernot, S. Song, I. Mironov, A. Raghunathan, K. Talwar, and Úlfar
+    Erlingsson, “Scalable private learning with pate,” 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[101] L. Zhao, Y. Zhang, Q. Wang, Y. Chen, C. Wang, and Q. Zou, “Privacy-preserving
+    collaborative deep learning with irregular participants,” CoRR, vol. abs/1812.10113,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[102] B. K. Beaulieu-Jones, W. Yuan, S. G. Finlayson, and Z. S. Wu, “Privacy-preserving
+    distributed deep learning for clinical data,” CoRR, vol. abs/1812.01484, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[103] L. Yu, L. Liu, C. Pu, M. E. Gursoy, and S. Truex, “Differentially private
+    model publishing for deep learning,” CoRR, vol. abs/1904.02200, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[104] R. C. Geyer, T. Klein, and M. Nabi, “Differentially private federated
+    learning: A client level perspective,” CoRR, vol. abs/1712.07557, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[105] A. Bhowmick, J. C. Duchi, J. Freudiger, G. Kapoor, and R. Rogers, “Protection
+    against reconstruction and its applications in private federated learning,” ArXiv,
+    vol. abs/1812.00984, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[106] M. Chase, R. Gilad-Bachrach, K. Laine, K. E. Lauter, and P. Rindal, “Private
+    collaborative neural network learning,” IACR Cryptology ePrint Archive, vol. 2017,
+    p. 762, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[107] K. Bonawitz, V. Ivanov, B. Kreuter, A. Marcedone, H. B. McMahan, S. Patel,
+    D. Ramage, A. Segal, and K. Seth, “Practical secure aggregation for privacy-preserving
+    machine learning,” in Proceedings of the 2017 ACM SIGSAC Conference on Computer
+    and Communications Security, CCS ’17, (New York, NY, USA), p. 1175–1191, Association
+    for Computing Machinery, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[108] N. Agrawal, A. S. Shamsabadi, M. J. Kusner, and A. Gascón, “QUOTIENT:
+    two-party secure neural network training and prediction,” CoRR, vol. abs/1907.03372,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[109] S. Wagh, D. Gupta, and N. Chandran, “Securenn: 3-party secure computation
+    for neural network training,” Proceedings on Privacy Enhancing Technologies, vol. 2019,
+    pp. 26 – 49, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[110] P. Mohassel and P. Rindal, “Aby3: A mixed protocol framework for machine
+    learning,” in Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications
+    Security, CCS ’18, (New York, NY, USA), p. 35–52, Association for Computing Machinery,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[111] R. Rachuri and A. Suresh, “Trident: Efficient 4pc framework for privacy
+    preserving machine learning,” IACR Cryptol. ePrint Arch., vol. 2019, p. 1315,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[112] P. Mohassel and Y. Zhang, “Secureml: A system for scalable privacy-preserving
+    machine learning,” in 2017 IEEE Symposium on Security and Privacy (SP), pp. 19–38,
+    May 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[113] L. T. Phong, Y. Aono, T. Hayashi, L. Wang, and S. Moriai, “Privacy-preserving
+    deep learning via additively homomorphic encryption,” IEEE Transactions on Information
+    Forensics and Security, vol. 13, pp. 1333–1345, May 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[114] T. Graepel, K. Lauter, and M. Naehrig, “Ml confidential: Machine learning
+    on encrypted data,” in Information Security and Cryptology – ICISC 2012 (T. Kwon,
+    M.-K. Lee, and D. Kwon, eds.), (Berlin, Heidelberg), pp. 1–21, Springer Berlin
+    Heidelberg, 2013.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[115] L. J. M. Aslett, P. M. Esperança, and C. C. Holmes, “Encrypted statistical
+    machine learning: new privacy preserving methods,” 2015.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[116] R. Yonetani, V. N. Boddeti, K. M. Kitani, and Y. Sato, “Privacy-preserving
+    visual learning using doubly permuted homomorphic encryption,” 2017 IEEE International
+    Conference on Computer Vision (ICCV), pp. 2059–2069, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[117] C. Gentry, “Fully homomorphic encryption using ideal lattices,” in In
+    Proc. STOC, pp. 169–178, 2009.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[118] M. S. Riazi, M. Samragh, H. Chen, K. Laine, K. Lauter, and F. Koushanfar,
+    “Xonn: Xnor-based oblivious deep neural network inference,” in Proceedings of
+    the 28th USENIX Conference on Security Symposium, SEC’19, (USA), p. 1501–1518,
+    USENIX Association, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[119] E. Makri, D. Rotaru, N. P. Smart, and F. Vercauteren, “Epic: Efficient
+    private image classification (or: Learning from the masters),” in CT-RSA, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[120] R. Iyengar, J. P. Near, D. Song, O. Thakkar, A. Thakurta, and L. Wang,
+    “Towards practical differentially private convex optimization,” in 2019 IEEE Symposium
+    on Security and Privacy (SP), pp. 299–316, IEEE, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[121] J. Dong, A. Roth, and W. Su, “Gaussian differential privacy,” ArXiv,
+    vol. abs/1905.02383, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[122] Z. Bu, J. Dong, Q. Long, and W. Su, “Deep learning with gaussian differential
+    privacy,” ArXiv, vol. abs/1911.11607, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[123] E. Bagdasaryan, O. Poursaeed, and V. Shmatikov, “Differential privacy
+    has disparate impact on model accuracy,” in Advances in Neural Information Processing
+    Systems, pp. 15479–15488, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[124] M. Jagielski, J. Ullman, and A. Oprea, “Auditing differentially private
+    machine learning: How private is private sgd?,” ArXiv, vol. abs/2006.07709, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[125] B. Jayaraman and D. Evans, “Evaluating differentially private machine
+    learning in practice,” in 28th $\{$USENIX$\}$ Security Symposium ($\{$USENIX$\}$
+    Security 19), pp. 1895–1912, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[126] A. S. Shamsabadi, A. Gascón, H. Haddadi, and A. Cavallaro, “Privedge:
+    From local to distributed private training and prediction,” ArXiv, vol. abs/2004.05574,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[127] P. Kairouz, H. B. McMahan, B. Avent, A. Bellet, M. Bennis, A. N. Bhagoji,
+    K. Bonawitz, Z. Charles, G. Cormode, R. Cummings, R. G. L. D’Oliveira, S. E. Rouayheb,
+    D. Evans, J. Gardner, Z. A. Garrett, A. Gascón, B. Ghazi, P. B. Gibbons, M. Gruteser,
+    Z. Harchaoui, C. He, L. He, Z. Huo, B. Hutchinson, J. Hsu, M. Jaggi, T. Javidi,
+    G. Joshi, M. Khodak, J. Konecný, A. Korolova, F. Koushanfar, O. Koyejo, T. Lepoint,
+    Y. Liu, P. Mittal, M. Mohri, R. Nock, A. Özgür, R. Pagh, M. Raykova, H. Qi, D. Ramage,
+    R. Raskar, D. X. Song, W. Song, S. U. Stich, Z. Sun, A. T. Suresh, F. Tramèr,
+    P. Vepakomma, J. Wang, L. Xiong, Z. Xu, Q. Yang, F. X. Yu, H. Yu, and S. Zhao,
+    “Advances and open problems in federated learning,” ArXiv, vol. abs/1912.04977,
+    2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[128] J. Wang, J. Zhang, W. Bao, X. Zhu, B. Cao, and P. S. Yu, “Not just privacy,”
+    Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery
+    and Data Mining, Jul 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[129] N. Dowlin, R. Gilad-Bachrach, K. Laine, K. Lauter, M. Naehrig, and J. Wernsing,
+    “Cryptonets: Applying neural networks to encrypted data with high throughput and
+    accuracy,” Tech. Rep. MSR-TR-2016-3, February 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[130] H. Chabanne, A. de Wargny, J. Milgram, C. Morel, and E. Prouff, “Privacy-preserving
+    classification on deep neural network,” IACR Cryptology ePrint Archive, vol. 2017,
+    p. 35, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[131] A. Sanyal, M. J. Kusner, A. Gascón, and V. Kanade, “TAPAS: tricks to
+    accelerate (encrypted) prediction as a service,” CoRR, vol. abs/1806.03461, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[132] F. Bourse, M. Minelli, M. Minihold, and P. Paillier, “Fast homomorphic
+    evaluation of deep discretized neural networks,” in CRYPTO, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[133] V. N. Boddeti, “Secure face matching using fully homomorphic encryption,”
+    ArXiv, vol. abs/1805.00577, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[134] B. Reagen, W. Choi, Y. Ko, V. Lee, G.-Y. Wei, H.-H. S. Lee, and D. Brooks,
+    “Cheetah: Optimizing and accelerating homomorphic encryption for private inference,”
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[135] B. D. Rouhani, M. S. Riazi, and F. Koushanfar, “Deepsecure: Scalable
+    provably-secure deep learning,” CoRR, vol. abs/1705.08963, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[136] M. S. Riazi, C. Weinert, O. Tkachenko, E. M. Songhori, T. Schneider,
+    and F. Koushanfar, “Chameleon: A hybrid secure computation framework for machine
+    learning applications,” CoRR, vol. abs/1801.03239, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[137] N. Kumar, M. Rathee, N. Chandran, D. Gupta, A. Rastogi, and R. Sharma,
+    “Cryptflow: Secure tensorflow inference,” 2020 IEEE Symposium on Security and
+    Privacy (SP), pp. 336–353, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[138] R. Bost, R. A. Popa, S. Tu, and S. Goldwasser, “Machine learning classification
+    over encrypted data,” IACR Cryptology ePrint Archive, vol. 2014, p. 331, 2014.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[139] J. Liu, M. Juuti, Y. Lu, and N. Asokan, “Oblivious neural network predictions
+    via minionn transformations,” in Proceedings of the 2017 ACM SIGSAC Conference
+    on Computer and Communications Security, CCS ’17, (New York, NY, USA), p. 619–631,
+    Association for Computing Machinery, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[140] C. Juvekar, V. Vaikuntanathan, and A. Chandrakasan, “Gazelle: A low latency
+    framework for secure neural network inference,” in Proceedings of the 27th USENIX
+    Conference on Security Symposium, SEC’18, (USA), p. 1651–1668, USENIX Association,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[141] P. Mishra, R. T. Lehmkuhl, A. Srinivasan, W. Zheng, and R. A. Popa, “Delphi:
+    A cryptographic inference service for neural networks,” IACR Cryptology ePrint
+    Archive, vol. 2020, p. 50, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[142] M. Malekzadeh, R. G. Clegg, A. Cavallaro, and H. Haddadi, “Mobile sensor
+    data anonymization,” in Proceedings of the International Conference on Internet
+    of Things Design and Implementation, IoTDI ’19, (New York, NY, USA), p. 49–58,
+    Association for Computing Machinery, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[143] N. Raval, A. Machanavajjhala, and J. Pan, “Olympus: sensor privacy through
+    utility aware obfuscation,” Proceedings on Privacy Enhancing Technologies, vol. 2019,
+    no. 1, pp. 5–25, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[144] F. Mireshghallah, M. Taram, A. Jalali, A. T. Elthakeb, D. M. Tullsen,
+    and H. Esmaeilzadeh, “A principled approach to learning stochastic representations
+    for privacy in deep neural inference,” ArXiv, vol. abs/2003.12154, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[145] M. Malekzadeh, R. G. Clegg, A. Cavallaro, and H. Haddadi, “Protecting
+    sensory data against sensitive inferences,” in Proceedings of the 1st Workshop
+    on Privacy by Design in Distributed Systems, W-P2DS’18, (New York, NY, USA), Association
+    for Computing Machinery, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[146] M. Malekzadeh, R. G. Clegg, A. Cavallaro, and H. Haddadi, “Privacy and
+    utility preserving sensor-data transformations,” Pervasive and Mobile Computing,
+    p. 101132, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[147] S. A. Osia, A. S. Shamsabadi, S. Sajadmanesh, A. Taheri, K. Katevas,
+    H. R. Rabiee, N. D. Lane, and H. Haddadi, “A hybrid deep learning architecture
+    for privacy-preserving mobile analytics,” IEEE Internet of Things Journal, pp. 1–1,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[148] B. Hitaj, G. Ateniese, and F. Pérez-Cruz, “Deep models under the gan:
+    Information leakage from collaborative deep learning,” in CCS ’17, 2017.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[149] A. Cheu, A. D. Smith, J. Ullman, D. Zeber, and M. Zhilyaev, “Distributed
+    differential privacy via shuffling,” IACR Cryptology ePrint Archive, vol. 2019,
+    p. 245, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[150] B. Balle, J. Bell, A. Gascón, and K. Nissim, “The privacy blanket of
+    the shuffle model,” in CRYPTO, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[151] B. Ghazi, R. Pagh, and A. Velingker, “Scalable and differentially private
+    distributed aggregation in the shuffled model,” ArXiv, vol. abs/1906.08320, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[152] P. Vepakomma, O. Gupta, T. Swedish, and R. Raskar, “Split learning for
+    health: Distributed deep learning without sharing raw patient data,” ArXiv, vol. abs/1812.00564,
+    2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[153] F. Mo, A. S. Shamsabadi, K. Katevas, S. Demetriou, I. Leontiadis, A. Cavallaro,
+    and H. Haddadi, “Darknetz: Towards model privacy at the edge using trusted execution
+    environments,” ArXiv, vol. abs/2004.05703, 2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[154] V. Costan and S. Devadas, “Intel sgx explained,” IACR Cryptology ePrint
+    Archive, vol. 2016, p. 86, 2016.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[155] K. G. Narra, Z. Lin, Y. Wang, K. Balasubramaniam, and M. Annavaram, “Privacy-preserving
+    inference in machine learning services using trusted execution environments,”
+    ArXiv, vol. abs/1912.03485, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[156] H. Hashemi, Y. Wang, and M. Annavaram, “Darknight: A data privacy scheme
+    for training and inference of deep neural networks,” ArXiv, vol. abs/2006.01300,
+    2020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[157] F. Tramer and D. Boneh, “Slalom: Fast, verifiable and private execution
+    of neural networks in trusted hardware,” in International Conference on Learning
+    Representations, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[158] A. inc., “Arm trustzone technology.” online accessed February 2020 [https://developer.arm.com/ip-products/security-ip/trustzone](https://developer.arm.com/ip-products/security-ip/trustzone).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[159] O. Weisse, J. Van Bulck, M. Minkin, D. Genkin, B. Kasikci, F. Piessens,
+    M. Silberstein, R. Strackx, T. F. Wenisch, and Y. Yarom, “Foreshadow-NG: Breaking
+    the virtual memory abstraction with transient out-of-order execution,” Technical
+    report, 2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[160] C. Canella, D. Genkin, L. Giner, D. Gruss, M. Lipp, M. Minkin, D. Moghimi,
+    F. Piessens, M. Schwarz, B. Sunar, J. Van Bulck, and Y. Yarom, “Fallout: Leaking
+    data on meltdown-resistant cpus,” in Proceedings of the ACM SIGSAC Conference
+    on Computer and Communications Security (CCS), ACM, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[161] M. Taram, A. Venkat, and D. M. Tullsen, “Packet chasing: Spying on network
+    packets over a cache side-channel,” ArXiv, vol. abs/1909.04841, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[162] M. Taram, A. Venkat, and D. Tullsen, “Context-sensitive fencing: Securing
+    speculative execution via microcode customization,” in Proceedings of the Twenty-Fourth
+    International Conference on Architectural Support for Programming Languages and
+    Operating Systems, ASPLOS ’19, (New York, NY, USA), p. 395–410, Association for
+    Computing Machinery, 2019.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

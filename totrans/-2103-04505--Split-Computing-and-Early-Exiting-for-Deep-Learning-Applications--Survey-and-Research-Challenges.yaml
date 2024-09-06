@@ -1,0 +1,3541 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 19:56:32'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2103.04505] Split Computing and Early Exiting for Deep Learning Applications:
+    Survey and Research Challenges'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2103.04505](https://ar5iv.labs.arxiv.org/html/2103.04505)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: '02115'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Yoshitomo Matsubara [yoshitom@uci.edu](mailto:yoshitom@uci.edu) [0000-0002-5620-0760](https://orcid.org/0000-0002-5620-0760
+    "ORCID identifier") ,  Marco Levorato [levorato@uci.edu](mailto:levorato@uci.edu)
+    University of California, IrvineIrvineCaliforniaUSA92697  and  Francesco Restuccia
+    Northeastern University360 Huntington AveBostonMassachusettsUSA [f.restuccia@northeastern.edu](mailto:f.restuccia@northeastern.edu)(2021)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: Mobile devices such as smartphones and autonomous vehicles increasingly rely
+    on DNN s to execute complex inference tasks such as image classification and speech
+    recognition, among others. However, continuously executing the entire DNN on mobile
+    devices can quickly deplete their battery. Although task offloading to cloud/edge
+    servers may decrease the mobile device’s computational burden, erratic patterns
+    in channel quality, network, and edge server load can lead to a significant delay
+    in task execution. Recently, approaches based on split computing (SC) have been
+    proposed, where the DNN is split into a head and a tail model, executed respectively
+    on the mobile device and on the edge server. Ultimately, this may reduce bandwidth
+    usage as well as energy consumption. Another approach, called early exiting (EE),
+    trains models to embed multiple “exits” earlier in the architecture, each providing
+    increasingly higher target accuracy. Therefore, the trade-off between accuracy
+    and delay can be tuned according to the current conditions or application demands.
+    In this paper, we provide a comprehensive survey of the state of the art in SC
+    and EE strategies by presenting a comparison of the most relevant approaches.
+    We conclude the paper by providing a set of compelling research challenges.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Split Computing, Edge Computing, Early Exit, Neural Networks, Deep Learning^†^†copyright:
+    acmcopyright^†^†journalyear: 2021^†^†doi: 10.1145/1122445.1122456^†^†journal:
+    CSUR^†^†journalvolume: 37^†^†journalnumber: 4^†^†article: 0^†^†publicationmonth:
+    8^†^†ccs: Human-centered computing Ubiquitous and mobile computing^†^†ccs: Computer
+    systems organization Embedded and cyber-physical systems^†^†ccs: Computing methodologies Neural
+    networks'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1\. Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The field of deep learning (DL) has evolved at an impressive pace over the last
+    few years (LeCun et al., [2015](#bib.bib69)), with new breakthroughs continuously
+    appearing in domains such as computer vision (CV), natural language processing
+    (NLP), digital signal processing (DSP), and wireless networking (Jagannath et al.,
+    [2019](#bib.bib57); Restuccia and Melodia, [2020](#bib.bib119)) among others –
+    we refer to (Pouyanfar et al., [2018](#bib.bib111)) for a comprehensive survey
+    on DL. For example, today’s state of the art deep neural networks (DNNs) can classify
+    thousands of images with unprecedented accuracy (Huang et al., [2017](#bib.bib52)),
+    while bleeding-edge advances in deep reinforcement learning (DRL) have shown to
+    provide near-human capabilities in a multitude of complex optimization tasks,
+    from playing dozens of Atari video games (Mnih et al., [2013](#bib.bib100)) to
+    winning games of Go against top-tier players (Silver et al., [2017](#bib.bib128)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: As DL-based classifiers improve their predictive accuracy, mobile applications
+    such as speech recognition in smartphones (Deng et al., [2013](#bib.bib21); Hinton
+    et al., [2012](#bib.bib46)), real-time unmanned navigation (Padhy et al., [2018](#bib.bib106))
+    and drone-based surveillance (Singh et al., [2018](#bib.bib130); Zhang et al.,
+    [2020](#bib.bib171)) are increasingly using DNN s to perform complex inference
+    tasks. However, state-of-the-art DNN models present computational requirements
+    that cannot be satisfied by the majority of the mobile devices available today.
+    In fact, many state-of-the-art DNN models for difficult tasks – such as computer
+    vision and natural language processing – are extremely complex. For instance,
+    the EfficientDet (Tan et al., [2020](#bib.bib140)) family offers the best performance
+    for object detection tasks. While EfficientDet-D7 achieves a mean average precision
+    (mAP) of 52.2%, it involves 52M parameters and will take seconds to be executed
+    on strong embedded devices equipped with GPUs such as the NVIDIA Jetson Nano and
+    Raspberry Pi. Notably, the execution of such complex models significantly increases
+    energy consumption. While lightweight models specifically designed for mobile
+    devices exist (Tan et al., [2019](#bib.bib139); Sandler et al., [2018](#bib.bib123)),
+    the reduced computational burden usually comes to the detriment of the model accuracy.
+    For example, compared to ResNet-152 (He et al., [2016](#bib.bib44)), the networks
+    MnasNet (Tan et al., [2019](#bib.bib139)) and MobileNetV2 (Sandler et al., [2018](#bib.bib123))
+    present up to 6.4% accuracy loss on the ImageNet dataset. YOLO-Lite (Redmon and
+    Farhadi, [2018](#bib.bib117)) achieves a frame rate of 22 frames per second on
+    some embedded devices but has a mean average precision (mAP) of 12.36% on the
+    COCO dataset (Lin et al., [2014b](#bib.bib84)). To achieve 33.8% mAP on the COCO
+    dataset, even the simplest model in the EfficientDet family, EfficientDet-D0,
+    requires 3 times more FLOPs (2.5B) ¹¹1In Tan et al. ([2020](#bib.bib140)), FLOP
+    denotes number of multiply-adds. than SSD-MobileNetV2 (Sandler et al., [2018](#bib.bib123))
+    (0.8B FLOPs). While SSD-MobileNetV2 is a lower-performance DNN specifically designed
+    for mobile platforms and can process up to 6 fps, its mAP on COCO dataset is 20%
+    and keeping the model running on a mobile device significantly increases power
+    consumption. On the other hand, due to excessive end-to-end latency, cloud-based
+    approaches are hardly applicable in most of the latency-constrained applications
+    where mobile devices usually operate. Most of the techniques we overview in the
+    survey can be applied to both mobile device to edge server and edge server to
+    cloud offloading. For the sake of clarity, we primarily refer to the former to
+    explain the frameworks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recently, edge computing (EC) approaches (Mao et al., [2017](#bib.bib89); Chen
+    and Ran, [2019](#bib.bib11)) have attempted to address the “latency vs computation”
+    conundrum by completely offloading the DNN execution to servers located very close
+    to the mobile device, i.e., at the “edge” of the network. However, canonical EC
+    does not consider that the quality of wireless links – although providing high
+    throughput on the average – can suddenly fluctuate due to the presence of erratic
+    noise and interference patterns, which may impair performance in latency-bound
+    applications. For example, mobility and impaired propagation have been shown to
+    decrease throughput even in high-bandwidth wireless links (Zhang et al., [2019](#bib.bib170);
+    Mateo et al., [2019](#bib.bib90)) while many Internet of Things (IoT) systems
+    are based on communication technologies such as Long Range (LoRa) (Samie et al.,
+    [2016](#bib.bib122)), which has a maximum data rate of 37.5 Kbps due to duty cycle
+    limitations (Adelantado et al., [2017](#bib.bib2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The severe offloading limitations of some mobile devices, coupled with the instability
+    of the wireless channel (*e.g.*, UAV network (Gupta et al., [2015](#bib.bib37))),
+    imply that the amount of data offloaded to edge should be decreased, while at
+    the same time keep the model accuracy as close as possible to the original. For
+    this reason, split computing (SC) (Kang et al., [2017](#bib.bib61)) and early
+    exiting (EE) strategies (Teerapittayanon et al., [2016](#bib.bib141)) have been
+    proposed to provide an intermediate option between EC and local computing. The
+    key intuition behind SC and EE is similar to the one behind model pruning (Han
+    et al., [2016](#bib.bib39); Li et al., [2016](#bib.bib75); He et al., [2017b](#bib.bib45);
+    Yang et al., [2017](#bib.bib161)) and knowledge distillation (Hinton et al., [2014](#bib.bib47);
+    Kim and Rush, [2016](#bib.bib62); Mirzadeh et al., [2020](#bib.bib99)) – since
+    modern DNN s are heavily over-parameterized (Yu et al., [2020](#bib.bib167); Yu
+    and Principe, [2019](#bib.bib166)), their accuracy can be preserved even with
+    substantial reduction in the number of weights and filters, and thus representing
+    the input with fewer parameters. Specifically, SC divide a larger DNN into head
+    and tail models, which are respectively executed by the mobile device and edge
+    server. EE, on the other hand, proposes the introduction of “subbranches” into
+    the early layers of DNN models, so that the full computation of the model can
+    be halted – and a prediction result provided – if the classifiers in the current
+    subbranches have high confidence with the specific model input.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Motivation and Novel Contributions. The proliferation of DL-based mobile applications
+    in the IoT and 5G landscapes implies that techniques such as SC and EE are not
+    simply “nice-to-have” features, but will become fundamental computational components
+    in the years to come. Although a significant amount of research work has been
+    done in SC and EE, to the best of our knowledge, a comprehensive survey of the
+    state of the art has not been conducted yet. Moreover, there are still a series
+    of research challenges that need to be addressed to take SC and EE to the next
+    level. For this reason, this paper makes the following novel contributions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We summarize SC and EE studies with respect to approaches, tasks, and models.
+    We first provide an overview of local, edge, split computing, and early-exit models
+    in Section [2](#S2 "2\. Overview of Local, Edge, Split Computing and Early-Exit
+    Models ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges"), by highlighting similarities and difference among them;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We then discuss and compare the various approaches to SC and EE in Sections
+    [4](#S4 "4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for
+    Deep Learning Applications: Survey and Research Challenges") and [5](#S5 "5\.
+    Early Exiting: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges"), by highlighting the training strategies
+    and applications. Since code availability is fundamental for replicability/reproducibility (Gundersen
+    and Kjensmo, [2018](#bib.bib35))²²2To address this problem, major machine learning
+    venues (*e.g.*, ICML, NeurIPS, CVPR, ECCV, NAACL, ACL, and EMNLP) adopt a reproducibility
+    checklist as part of official review process such as ML Code Completeness Checklist.
+    See [https://github.com/paperswithcode/releasing-research-code](https://github.com/paperswithcode/releasing-research-code).,
+    we provide for each work its corresponding code repository, if available, so that
+    interested readers can reproduce and learn from existing studies;'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: •
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We conclude the paper by discussing in Section [6](#S6 "6\. Split Computing
+    and Early Exiting: Research Challenges ‣ Split Computing and Early Exiting for
+    Deep Learning Applications: Survey and Research Challenges") a compelling agenda
+    of research challenges in SC and EE, hoping to spur further contributions in these
+    exciting and timely fields.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 2\. Overview of Local, Edge, Split Computing and Early-Exit Models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we provide an overview of local, edge, split computing, and
+    early-exit models, which are the main computational paradigms that will be discussed
+    in the paper. Figure [1](#S2.F1 "Figure 1 ‣ 2\. Overview of Local, Edge, Split
+    Computing and Early-Exit Models ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges") provides a graphical overview of
+    the approaches.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/fe710448876b88d93ce20c56ef09b93b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1\. Overview of (a) local, (b) edge, (c) split computing, and (d) early
+    exiting: image classification as an example.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All these techniques operate on a DNN model $\mathcal{M}(\cdot)$ whose task
+    is to produce the inference output $\mathbf{y}$ from an input $\mathbf{x}$. Typically,
+    $\mathbf{x}$ is a high-dimensional variable, whereas the output $\mathbf{y}$ has
+    significantly lower dimensionality (Tishby and Zaslavsky, [2015](#bib.bib144)).
+    Split computing and early exit approaches are contextualized in a setting where
+    the system is composed of a mobile device and an edge server interconnected via
+    a wireless channel. The overall goal of the system is to produce the inference
+    output $\mathbf{y}$ from the input $\mathbf{x}$ acquired by the mobile device,
+    by means of the DNN $\mathbf{y}{=}\mathcal{M}(\mathbf{x})$ under – possibly time
+    varying – constraints on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Resources: (*i*) the computational capacity (roughly expressed as number operations
+    per second) $C_{\rm md}$ and $C_{\rm es}$ of the mobile device and edge server,
+    respectively, (*ii*) the capacity $\phi$, in bits per second, of the wireless
+    channel connecting the mobile device to the edge server;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Performance: (*i*) the absolute of average value of the time from the generation
+    of $\mathbf{x}$ to the availability of $\mathbf{y}$, (*ii*) the degradation of
+    the “quality” of the output $\mathbf{y}$.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Split, edge, local, and early-exiting strategies strive to find suitable operating
+    points with respect to accuracy, end-to-end delay, and energy consumption, which
+    are inevitably influenced by the characteristics of the underlying system. It
+    is generally assumed that the computing and energy capacities of the mobile device
+    are smaller than that of the edge server. As a consequence, if part of the workload
+    is allocated to the mobile device, then the execution time increases while battery
+    lifetime decreases. However, as explained later, the workload executed by the
+    mobile device may result in a reduced amount of data to be transferred over the
+    wireless channel, possibly compensating for the larger execution time and leading
+    to smaller end-to-end delays.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1\. Local and Edge Computing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We start with an overview of local and edge computing. In local computing (LC),
+    the function $\mathcal{M}(\mathbf{x})$ is entirely executed by the mobile device.
+    This approach eliminates the need to transfer data over the wireless channel.
+    However, the complexity of the best performing DNN s most likely exceeds the computing
+    capacity and energy consumption available at the mobile device. Usually, simpler
+    models $\hat{\mathcal{M}}(\mathbf{x})$ are used, such as MobileNet (Sandler et al.,
+    [2018](#bib.bib123)) and MnasNet (Tan et al., [2019](#bib.bib139)) which often
+    have a degraded accuracy performance. Besides designing lightweight neural models
+    executable on mobile devices, the widely used techniques to reduce the complexity
+    of models are knowledge distillation (Hinton et al., [2014](#bib.bib47)) and model
+    pruning/quantization (Jacob et al., [2018](#bib.bib56); Li et al., [2018a](#bib.bib74))
+    – described in Section [3.2](#S3.SS2 "3.2\. Model Compression ‣ 3\. Background
+    of Deep Learning for Mobile Applications ‣ Split Computing and Early Exiting for
+    Deep Learning Applications: Survey and Research Challenges"). Some of the techniques
+    are also leveraged in SC studies to introduce bottlenecks without sacrificing
+    model accuracy as will be described in the following sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In EC, the input $\mathbf{x}$ is transferred to the edge server, which then
+    executes the original model $\mathcal{M}(\mathbf{x})$. In this approach, which
+    preserves full accuracy, the mobile device is not allocated computing workload,
+    but the full input $\mathbf{x}$ needs to be transferred to the edge server. This
+    may lead to an excessive end-to-end delay in degraded channel conditions and erasure
+    of the task in extreme conditions. A possible approach to reduce the load imposed
+    to the wireless channel, and thus also transmission delay and erasure probability,
+    is to compress the input $\mathbf{x}$. We define, then, the encoder and decoder
+    models $\mathbf{z}{=}F(\mathbf{x})$ and $\hat{\mathbf{x}}{=}G(\mathbf{z})$, which
+    are executed at the mobile device and edge server, respectively. The distance
+    $d(\mathbf{x},\hat{\mathbf{x}})$ defines the performance of the encoding-decoding
+    process $\hat{\mathbf{x}}{=}G(F(\mathbf{x}))$, a metric which is separate, but
+    may influence, the accuracy loss of $\mathcal{M}(\hat{\mathbf{x}})$ with respect
+    to $\mathcal{M}(\mathbf{x})$, that is, of the model executed with the reconstructed
+    input with respect to the model executed with the original input. Clearly, the
+    encoding/decoding functions increase the computing load both at the mobile device
+    and edge server side. A broad range of different compression approaches exists
+    ranging from low-complexity traditional compression (*e.g.*, JPEG compression
+    for images in EC (Nakahara et al., [2021](#bib.bib102))) to neural compression
+    models (Ballé et al., [2017](#bib.bib5); Ballé et al., [2018](#bib.bib6); Yang
+    et al., [2020a](#bib.bib163)). We remark that while the compressed input data
+    *e.g.*, JPEG objects, can reduce the data transfer time in EC, those representations
+    are designed to allow the accurate reconstruction of the input signal. Therefore,
+    these approaches may (*i*) decrease privacy as a “reconstructable” representation
+    is transferred to the edge server (Wang et al., [2020a](#bib.bib148)); (*ii*)
+    result in larger amount of data to be transmitted over the channel compared to
+    representation specifically designed for the computing task as in bottleneck-based
+    SC as explained in the following sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2\. Split Computing and Early Exiting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Split computing (SC) aims at achieving the following goals: (*i*) the computing
+    load is distributed across the mobile device and edge server; and (*ii*) establishes
+    a task-oriented compression to reduce data transfer delays. We consider a neural
+    model $\mathcal{M}(\cdot)$ with $L$ layers, and define $\mathbf{z}_{\ell}$ the
+    output of the $\ell$-th layer. Early implementations of SC select a layer $\ell$
+    and divide the model $\mathcal{M}(\cdot)$ to define the head and tail submodels
+    $\mathbf{z}_{\ell}{=}\mathcal{M}_{H}(\mathbf{x})$ and $\mathbf{\hat{y}}{=}\mathcal{M}_{T}(\mathbf{z}_{\ell})$,
+    executed at the mobile device and edge server, respectively. In early instances
+    of SC, the architecture and weights of the head and tail model are exactly the
+    same as the first $\ell$ layers and last $L-\ell$ layers of $\mathcal{M}(\cdot)$.
+    This simple approach preserves accuracy but allocates part of the execution of
+    $\mathcal{M}(\cdot)$ to the mobile device, whose computing power is expected to
+    be smaller than that of the edge server, so that the total execution time may
+    be larger. The transmission time of $\mathbf{z}_{\ell}$ may be larger or smaller
+    compared to that of transmitting the input $\mathbf{x}$, depending on the size
+    of the tensor $\mathbf{z}_{\ell}$. However, we note that in most relevant applications
+    the size of $\mathbf{z}_{\ell}$ becomes smaller than that of $\mathbf{x}$ only
+    in later layers, which would allocate most of the computing load to the mobile
+    device. More recent SC frameworks introduce the notion of *bottleneck* to achieve
+    *in-model* compression toward the global task (Matsubara et al., [2019](#bib.bib91)).
+    As formally described in the next section, a bottleneck is a compression point
+    at one layer in the model, which can be realized by reducing the number of nodes
+    of the target layer, and/or by quantizing its output. We note that as SC realizes
+    a task-oriented compression, it guarantees a higher degree of privacy compared
+    to EC. In fact, the representation may lack information needed to fully reconstruct
+    the original input data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another approach to enable mobile computing is referred to early exiting (EE).
+    The core idea is to create models with multiple “exits” across the model, where
+    each exit can produce the model output. Then, the first exit providing a target
+    confidence on the output is selected. This approach tunes the computational complexity,
+    determined by the exit point, to the sample or to system conditions. Formally,
+    we can define a sequence of models $\mathcal{M}_{i}$ and $\mathcal{B}_{i}$, $i{=}1,\ldots,N$.
+    Model $\mathcal{M}_{i}$ takes as input $\mathbf{z}_{i-1}$ (the output of model
+    $\mathcal{M}_{i-1}$) and outputs $\mathbf{z}_{i}$, where we set $\mathbf{z}_{0}{=}\mathbf{x}$.
+    The branch models $\mathcal{B}_{i}$ take as input $\mathbf{z}_{i}$ and produce
+    the estimate of the desired output $\mathbf{y}_{i}$. Thus, the concatenation of
+    $\mathcal{M}_{1},\ldots,\mathcal{M}_{N}$ results into an output analogous to that
+    of the original model. Intuitively, the larger the number of models used to produce
+    the output $\mathbf{y}_{i}$, the better the accuracy. Thus, while SC optimizes
+    intermediate representations to preserve information toward the final task (*e.g.*,
+    classification) for the whole dataset, early exit models take a “per sample” control
+    perspective. Each sample will be sequentially analyzed by concatenations of $\mathcal{M}_{i}$
+    and $\mathcal{B}_{i}$ sections until a predefined confidence level is reached.
+    The hope is that a portion of the samples will require a smaller number of sections
+    compared to executing the whole sequence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3\. Background of Deep Learning for Mobile Applications
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we provide an overview of recent approaches to reduce the
+    computational complexity of DNN models for resource-constrained mobile devices.
+    These approaches can be categorized into two main classes: (*i*) approaches that
+    attempt to directly design lightweight models and (*ii*) model compression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.1\. Lightweight Models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: From a conceptual perspective, The design of small deep learning models is one
+    of the simplest ways to reduce inference cost. However, there is a trade-off between
+    model complexity and model accuracy, which makes this approach practically challenging
+    when aiming at high model performance. The MobileNet series (Howard et al., [2017](#bib.bib49);
+    Sandler et al., [2018](#bib.bib123); Howard et al., [2019](#bib.bib48)) is one
+    among the most popular lightweight models for computer vision tasks, where Howard
+    et al. ([2017](#bib.bib49)) describes the first version MobileNetV1. By using
+    a pair of depth-wise and point-wise convolution layers in place of standard convolution
+    layers, the design drastically reduces model size, and thus computing load. Following
+    this study, Sandler et al. ([2018](#bib.bib123)) proposed MobileNetV2, which achieves
+    an improved accuracy. The design is based on MobileNetV1 (Howard et al., [2017](#bib.bib49)),
+    and uses the bottleneck residual block, a resource-efficient block with inverted
+    residuals and linear bottlenecks. Howard et al. ([2019](#bib.bib48)) presents
+    MobileNetV3, which further improves the model accuracy and is designed by a hardware-aware
+    neural architecture search (Tan et al., [2019](#bib.bib139)) with NetAdapt (Yang
+    et al., [2018](#bib.bib162)). The largest variant of MobileNetV3, MobileNetV3-Large
+    1.0, achieves a comparable accuracy of ResNet-34 (He et al., [2016](#bib.bib44))
+    for the ImageNet dataset, while reducing by about 75% the model parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While many of the lightweight neural networks are often manually designed,
+    there are also studies on automating the neural architecture search (NAS) (Zoph
+    and Le, [2017](#bib.bib174)). For instance, Zoph et al. ([2018](#bib.bib175))
+    designs a novel search space through experiments with the CIFAR-10 dataset (Krizhevsky,
+    [2009](#bib.bib64)), that is then scaled to larger, higher resolution image datasets
+    such as the ImageNet dataset (Russakovsky et al., [2015](#bib.bib121)), to design
+    their proposed model: NASNet. Leveraging the concept of NAS, some studies design
+    lightweight models in a platform-aware fashion. Dong et al. ([2018](#bib.bib24))
+    proposes the Device-aware Progressive Search for Pareto-optimal Neural Architectures
+    (DDP-Net) framework, that optimizes the network design with respect to two objectives:
+    device-related (*e.g.*, inference latency and memory usage) and device-agnostic
+    (*e.g.*, accuracy and model size) objectives. Similarly, Tan et al. ([2019](#bib.bib139))
+    propose an automated mobile neural architecture search (MNAS) method and design
+    the MnasNet models by optimizing both model accuracy and inference time.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 3.2\. Model Compression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A different approach to produce small DNN models is to “compress” a large model.
+    Model pruning and quantization (Han et al., [2015](#bib.bib40), [2016](#bib.bib39);
+    Jacob et al., [2018](#bib.bib56); Li et al., [2020](#bib.bib80)) are the dominant
+    model compression approaches. The former removes parameters from the model, while
+    the latter uses fewer bits to represent them. In both these approaches, a large
+    model is trained first and then compressed, rather than directly designing a lightweight
+    model followed by training. In Jacob et al. ([2018](#bib.bib56)), the authors
+    empirically show that their quantization technique leads to an improved tradeoff
+    between inference time and accuracy on MobileNet (Howard et al., [2017](#bib.bib49))
+    for image classification tasks on Qualcomm Snapdragon 835 and 821 compared to
+    the original, float-only MobileNet. For what concerns model pruning, Li et al.
+    ([2017](#bib.bib76)); Liu et al. ([2021](#bib.bib87)) demonstrates that it is
+    difficult for model pruning itself to accelerate inference while achieving strong
+    performance guarantees on general-purpose hardware due to the unstructured sparsity
+    of the pruned model and/or kernels in layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Knowledge distillation (Buciluǎ et al., [2006](#bib.bib9); Hinton et al., [2014](#bib.bib47))
+    is another popular model compression method. While model pruning and quantization
+    make trained models smaller, the concept of knowledge distillation is to provide
+    outputs extracted from the trained model (called “teacher”) as informative signals
+    to train smaller models (called “student”) in order to improve the accuracy of
+    predesigned small models. Thus, the goal of the process is that of *distilling
+    knowledge of a trained teacher model into a smaller student model* for boosting
+    accuracy of the smaller model without increasing model complexity. For instance,
+    Ba and Caruana ([2014](#bib.bib4)) proposes a method to train small neural networks
+    by mimicking the detailed behavior of larger models. The experimental results
+    show that models trained by this mimic learning method achieve performance close
+    to that of deeper neural networks on some phoneme recognition and image recognition
+    tasks. The formulation of some knowledge distillation methods will be described
+    in Section [4.4](#S4.SS4 "4.4\. SC with Bottlenecks: Training Methodologies ‣
+    4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4\. Split Computing: A Survey'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This section discusses existing state of of the art in SC. Figure [2](#S4.F2
+    "Figure 2 ‣ 4.1\. Split Computing without DNN Modification ‣ 4\. Split Computing:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges") illustrates the existing SC approaches. They can be
+    categorized into either (i) *without network modification* or (ii) *with bottleneck
+    injection*. We first present SC approaches without DNN modification in Section
+    [4.1](#S4.SS1 "4.1\. Split Computing without DNN Modification ‣ 4\. Split Computing:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges"). We then discuss the motivations behind the introduction
+    of SC with bottlenecks in Section [4.2](#S4.SS2 "4.2\. The Need for Bottleneck
+    Injection ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges"), which are then
+    discussed in details in Section [4.3](#S4.SS3 "4.3\. Split Computing with Bottleneck
+    Injection ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges"). Since the latter
+    require specific training procedures, we devote Section [4.4](#S4.SS4 "4.4\. SC
+    with Bottlenecks: Training Methodologies ‣ 4\. Split Computing: A Survey ‣ Split
+    Computing and Early Exiting for Deep Learning Applications: Survey and Research
+    Challenges") to their discussion.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1\. Split Computing without DNN Modification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this class of approaches, the architecture and weights of the head $\mathcal{M}_{H}(\cdot)$
+    and tail $\mathcal{M}_{T}(\cdot)$ models are exactly the same as the first $\ell$
+    layers and last $L-\ell$ layers of $\mathcal{M}(\cdot)$. To the best of our knowledge, Kang
+    et al. ([2017](#bib.bib61)) proposed the first SC approach (called “Neurosurgeon”),
+    which searches for the best partitioning layer in a DNN model for minimizing total
+    (end-to-end) latency or energy consumption. Formally, inference time in SC is
+    the sum of processing time on mobile device, delay of communication between mobile
+    device and edge server, and the processing time on edge server.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/f268c5d12a52363f0fe614ec74ea34e1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 2\. Two different SC approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Interestingly, their experimental results show that the best partitioning (splitting)
+    layers in terms of energy consumption and total latency for most of the considered
+    models result in either their input or output layers. In other words, deploying
+    the whole model on either a mobile device or an edge server (*i.e.,* local computing
+    or EC) would be the best option for such DNN models. Following the work by Kang
+    et al. ([2017](#bib.bib61)), the research communities explored various SC approaches
+    mainly focused on CV tasks such as image classification. Table [1](#S4.T1 "Table
+    1 ‣ 4.1\. Split Computing without DNN Modification ‣ 4\. Split Computing: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges") summarizes the studies on SC without architectural modifications.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 1\. Studies on SC without architectural modifications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Work | Task(s) | Dataset(s) | Model(s) | Metrics | Code |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Kang et al. ([2017](#bib.bib61)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2017) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification Speech recognition Part-of-speech tagging Named entity
+    recognition Word chunking | N/A (No task-specific metrics) | AlexNet (Krizhevsky
+    et al., [2012](#bib.bib65)) VGG-19 (Simonyan and Zisserman, [2015](#bib.bib129))
+    DeepFace (Taigman et al., [2014](#bib.bib138)) LeNet-5 (LeCun et al., [1998](#bib.bib70))
+    Kaldi (Povey et al., [2011](#bib.bib112)) SENNA (Collobert et al., [2011](#bib.bib18))
+    | D, E, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Li et al. ([2018b](#bib.bib77)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2018) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | N/A (No task-specific metrics) | AlexNet (Krizhevsky
+    et al., [2012](#bib.bib65)) | C, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Jeong et al. ([2018](#bib.bib59)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2018) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | N/A (No task-specific metrics) | GoogLeNet (Szegedy
+    et al., [2015](#bib.bib136)) AgeNet (Levi and Hassner, [2015](#bib.bib73)) GenderNet (Levi
+    and Hassner, [2015](#bib.bib73)) | D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Li et al. ([2018a](#bib.bib74)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2018) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | ImageNet (Russakovsky et al., [2015](#bib.bib121))
+    | AlexNet (Krizhevsky et al., [2012](#bib.bib65)) VGG-16 (Simonyan and Zisserman,
+    [2015](#bib.bib129)) ResNet-18 (He et al., [2016](#bib.bib44)) GoogLeNet (Szegedy
+    et al., [2015](#bib.bib136)) | A, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Choi and Bajić ([2018](#bib.bib14)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2018) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object detection | VOC 2007 (Everingham et al., [[n.d.]](#bib.bib29)) | YOLO9000 (Redmon
+    and Farhadi, [2017](#bib.bib116)) | A, C, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Eshratifar et al. ([2019a](#bib.bib26)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification Speech recognition | N/A (No task-specific metrics)
+    | AlexNet (Krizhevsky et al., [2012](#bib.bib65)) OverFeat (Sermanet et al., [2014](#bib.bib126))
+    NiN (Lin et al., [2014a](#bib.bib81)) VGG-16 (Simonyan and Zisserman, [2015](#bib.bib129))
+    ResNet-50 (He et al., [2016](#bib.bib44)) | D, E, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Zeng et al. ([2019](#bib.bib169)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10 (Krizhevsky, [2009](#bib.bib64)) | AlexNet (Krizhevsky
+    et al., [2012](#bib.bib65)) | A, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Cohen et al. ([2020](#bib.bib17)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification Object detection | ImageNet (2012) (Russakovsky et al.,
+    [2015](#bib.bib121)) COCO 2017 (Lin et al., [2014b](#bib.bib84)) | VGG-16 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) ResNet-50 (He et al., [2016](#bib.bib44))
+    YOLOv3 (Redmon and Farhadi, [2018](#bib.bib117)) | A, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Pagliari et al. ([2020](#bib.bib107)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Natural language inference Reading comprehension Sentiment analysis | N/A
+    (No task-specific metrics) | RNNs | E, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Itahara et al. ([2021](#bib.bib54)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10 (Krizhevsky, [2009](#bib.bib64)) | VGG-16 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) | A, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'A: Model accuracy, C: Model complexity, D: Transferred data size, E: Energy
+    consumption, L: Latency, T: Training cost'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Jeong et al. ([2018](#bib.bib59)) used this partial offloading approach as a
+    privacy-preserving way for computation offloading to blind the edge server to
+    the original data captured by client. Leveraging neural network quantization techniques,
+    Li et al. ([2018a](#bib.bib74)) discussed best splitting point in DNN models to
+    minimize inference latency, and showed quantized DNN models did not degrade accuracy
+    comparing to the (pre-quantized) original models. Choi and Bajić ([2018](#bib.bib14))
+    proposed a feature compression strategy for object detection models that introduces
+    a quantization/video-coding based compressor to the intermediate features in YOLO9000 (Redmon
+    and Farhadi, [2017](#bib.bib116)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Eshratifar et al. ([2019a](#bib.bib26)) propose JointDNN for collaborative computation
+    between mobile device and cloud, and demonstrate that using either local computing
+    only or cloud computing only is not an optimal solution in terms of inference
+    time and energy consumption. Different from (Kang et al., [2017](#bib.bib61)),
+    they consider not only discriminative deep learning models (*e.g.*, classifiers),
+    but also generative deep learning models and autoencoders as benchmark models
+    in their experimental evaluation. Cohen et al. ([2020](#bib.bib17)) introduce
+    a technique to code the output of the head portion in a split DNN to a wide range
+    of bit-rates, and demonstrate the performance for image classification and object
+    detection tasks. Pagliari et al. ([2020](#bib.bib107)) first discuss the collaborative
+    inference for simple recurrent neural networks, and their proposed scheme is designed
+    to automatically select the best inference device for each input data in terms
+    of total latency or end-device energy. Itahara et al. ([2021](#bib.bib54)) use
+    dropout layers (Srivastava et al., [2014](#bib.bib134)) to emulate a packet loss
+    scenario rather than for the sake of compression and discuss the robustness of
+    VGG-based models (Simonyan and Zisserman, [2015](#bib.bib129)) for split computing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While only a few studies in Table [1](#S4.T1 "Table 1 ‣ 4.1\. Split Computing
+    without DNN Modification ‣ 4\. Split Computing: A Survey ‣ Split Computing and
+    Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    heuristically choose splitting points (Choi and Bajić, [2018](#bib.bib14); Cohen
+    et al., [2020](#bib.bib17)), most of the other studies (Kang et al., [2017](#bib.bib61);
+    Li et al., [2018b](#bib.bib77); Jeong et al., [2018](#bib.bib59); Li et al., [2018a](#bib.bib74);
+    Eshratifar et al., [2019a](#bib.bib26); Zeng et al., [2019](#bib.bib169); Pagliari
+    et al., [2020](#bib.bib107)) in Table [1](#S4.T1 "Table 1 ‣ 4.1\. Split Computing
+    without DNN Modification ‣ 4\. Split Computing: A Survey ‣ Split Computing and
+    Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    analyze various types of cost (*e.g.*, computational load and energy consumption
+    on mobile device, communication cost, and/or privacy risk) to partition DNN models
+    at each of their splitting points. Based on the analysis, performance profiles
+    of the split DNN models are derived to inform selection. Concerning metrics, many
+    of the studies in Table [1](#S4.T1 "Table 1 ‣ 4.1\. Split Computing without DNN
+    Modification ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges") do not discuss
+    task-specific performance metrics such as accuracy. This is in part because the
+    proposed approaches do not modify the input or intermediate representations in
+    the models (*i.e.*, the final prediction will not change). On the other hand,
+    Li et al. ([2018a](#bib.bib74)); Choi and Bajić ([2018](#bib.bib14)); Cohen et al.
+    ([2020](#bib.bib17)) introduce lossy compression techniques to intermediate stages
+    in DNN models, which may affect the final prediction results. Thus, discussing
+    trade-off between compression rate and task-specific performance metrics would
+    be essential for such studies. As shown in the table, such trade-off is discussed
+    only for CV tasks, and many of the models considered in such studies have weak
+    performance compared with state-of-the-art models and complexity within reach
+    of modern mobile devices. Specific to image classification tasks, most of the
+    models considered in the studies listed in Table [1](#S4.T1 "Table 1 ‣ 4.1\. Split
+    Computing without DNN Modification ‣ 4\. Split Computing: A Survey ‣ Split Computing
+    and Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    are more complex and/or the accuracy is comparable to or lower than that of lightweight
+    baseline models such as MobileNetV2 (Sandler et al., [2018](#bib.bib123)) and
+    MnasNet (Tan et al., [2019](#bib.bib139)). Thus, in future work, more accurate
+    models should be considered to discuss the performance trade-off and further motivate
+    SC approaches.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2\. The Need for Bottleneck Injection
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Table 2\. Statistics of image classification datasets in SC studies
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | MNIST | CIFAR-10 | CIFAR-100 | ImageNet (2012) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| # labeled train/dev(test) samples: | 60k/10k | 50k/10k | 50k/10k | 1,281k/50k
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| # object categories | 10 | 10 | 100 | 1,000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Input tensor size | $1\times 32\times 32$ | $3\times 32\times 32$ | $3\times
+    32\times 32$ | $3\times 224\times 224$* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| JPEG data size [KB/sample] | 0.9657 | 1.790 | 1.793 | 44.77 |'
+  prefs: []
+  type: TYPE_TB
+- en: '* A standard (resized) input tensor size for DNN models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While Kang et al. ([2017](#bib.bib61)) empirically show that executing the
+    whole model on either mobile device or edge server would be best in terms of total
+    inference and energy consumption for most of their considered DNN models, their
+    proposed approach find the best partitioning layers inside some of their considered
+    CV models (convolutional neural networks (CNNs)) to minimize the total inference
+    time. There are a few trends observed from their experimental results: (i) communication
+    delay to transfer data from mobile device to edge server is a key component in
+    SC to reduce total inference time; (ii) all the neural models they considered
+    for NLP tasks are relatively small (consisting of only a few layers), that potentially
+    resulted in finding the output layer is the best partition point (*i.e.*, local
+    computing) according to their proposed approach; (iii) similarly, not only DNN
+    models they considered (except VGG (Simonyan and Zisserman, [2015](#bib.bib129)))
+    but also the size of the input data to the models (See Table [2](#S4.T2 "Table
+    2 ‣ 4.2\. The Need for Bottleneck Injection ‣ 4\. Split Computing: A Survey ‣
+    Split Computing and Early Exiting for Deep Learning Applications: Survey and Research
+    Challenges")) are relatively small, which gives more advantage to EC (fully offloading
+    computation). In other words, it highlights that complex CV tasks requiring large
+    (high-resolution) images for models to achieve high accuracy such as ImageNet
+    and COCO datasets would be essential to discuss the trade-off between accuracy
+    and execution metrics to be minimized (*e.g.*, total latency, energy consumption)
+    for SC studies. The key issue is that straightforward SC approaches like Kang
+    et al. ([2017](#bib.bib61)) rely on the existence of *natural bottlenecks* – that
+    is, intermediate layers whose output $\mathbf{z}_{\ell}$ tensor size is smaller
+    than the input – inside the model. Without such natural bottlenecks in the model,
+    straightforward splitting approaches would fail to improve performance in most
+    settings (Barbera et al., [2013](#bib.bib7); Guo, [2018](#bib.bib36)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some models, such as AlexNet (Krizhevsky et al., [2012](#bib.bib65)), VGG (Simonyan
+    and Zisserman, [2015](#bib.bib129)) and DenseNet (Huang et al., [2017](#bib.bib52)),
+    possess such layers (Matsubara et al., [2019](#bib.bib91)). However, recent DNN
+    models such as ResNet (He et al., [2016](#bib.bib44)), Inception-v3 (Szegedy et al.,
+    [2016](#bib.bib137)), Faster R-CNN (Ren et al., [2015](#bib.bib118)) and Mask
+    R-CNN (He et al., [2017a](#bib.bib43)) do not have natural bottlenecks in the
+    early layers, that is, splitting the model would result in compression only when
+    assigning a large portion of the workload to the mobile device. As discussed earlier,
+    reducing the communication delay is a key to minimize total inference time in
+    SC. For these reasons, introducing *artificial bottlenecks* to DNN models by modifying
+    their architecture is a recent trend and has been attracting attention from the
+    research community. Since the main role of such encoders in SC is to compress
+    intermediate features rather than to complete inference, the encoders usually
+    consist of only a few layers. Also, the resulting encoders in SC to be executed
+    on constrained mobile devices are often much smaller (*e.g.,* 10K parameters in
+    the encoder of ResNet-based SC model (Matsubara and Levorato, [2021](#bib.bib95))),
+    than lightweight models such as MobileNetV2 (Sandler et al., [2018](#bib.bib123))
+    (3.5M parameters) and MnasNet (Tan et al., [2019](#bib.bib139)) (4.4M parameters).
+    Thus, even if the model accuracy is either degraded or comparable to such small
+    models, SC models are still beneficial in terms of computational burden and energy
+    consumption at the mobile devices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3\. Split Computing with Bottleneck Injection
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'This class of models can be described as composed of $3$ sections: $\mathcal{M}_{E}$,
+    $\mathcal{M}_{D}$ and $\mathcal{M}_{T}$. We define $\mathbf{z}_{\ell}|\mathbf{x}$
+    as the output of the $\ell$-th layer of the original model given the input $\mathbf{x}$.
+    The concatenation of the $\mathcal{M}_{E}$ and $\mathcal{M}_{D}$ models is designed
+    to produce a possibly noisy version $\hat{\mathbf{z}}_{\ell}|\mathbf{x}$ of $\mathbf{z}_{\ell}|\mathbf{x}$,
+    which is taken as input by $\mathcal{M}_{T}$ to produce the output $\hat{\mathbf{y}}$,
+    on which the accuracy degradation with respect to $\mathbf{y}$ is measured. The
+    models $\mathcal{M}_{E}$, $\mathcal{M}_{D}$ function as specialized encoders and
+    decoders in the form $\hat{\mathbf{z}}_{\ell}{=}\mathcal{M}_{D}(\mathcal{M}_{E}(\mathbf{x}))$,
+    where $\mathcal{M}_{E}(\mathbf{x})$ produces the latent variable $\mathbf{z}$.
+    In worlds, the two first sections of the modified model transform the input $\mathbf{x}$
+    into a version of the output of the $\ell$-th layer via the intermediate representation
+    $\mathbf{z}$, thus functioning as encoder/decoder functions. The model is split
+    after the first section, that is, $\mathcal{M}_{E}$ is the head model, and the
+    concatenation of $\mathcal{M}_{D}$ and $\mathcal{M}_{T}$ is the tail model. Then,
+    the tensor $\mathbf{z}$ is transmitted over the channel. The objective of the
+    architecture is to minimize the size of $\mathbf{z}$ to reduce the communication
+    time while also minimizing the complexity of $\mathcal{M}_{E}$ (that is, the part
+    of the model executed at the – weaker – mobile device) and the discrepancy between
+    $\mathbf{y}$ and $\hat{\mathbf{y}}$. The layer between $\mathcal{M}_{E}$ and $\mathcal{M}_{D}$
+    is the injected bottleneck.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Table [3](#S4.T3 "Table 3 ‣ 4.3\. Split Computing with Bottleneck Injection
+    ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges") summarizes SC studies with bottleneck
+    injected strategies. To the best of our knowledge, the papers in (Eshratifar et al.,
+    [2019b](#bib.bib27)) and (Matsubara et al., [2019](#bib.bib91)) were the first
+    to propose altering existing DNN architectures to design relatively small bottlenecks
+    at early layers in DNN models, instead of introducing compression techniques (*e.g.*,
+    quantization, autoencoder) to the models, so that communication delay (cost) and
+    total inference time can be further reduced. Following these studies, Hu and Krishnamachari
+    ([2020](#bib.bib50)) introduce bottlenecks to MobileNetV2 (Sandler et al., [2018](#bib.bib123))
+    (modified for CIFAR datasets) in a similar way for SC, and discuss end-to-end
+    performance evaluation. Choi et al. ([2020](#bib.bib15)) combine multiple compression
+    techniques such as quantization and tiling besides convolution/deconvolution layers,
+    and design a feature compression approach for object detectors. Similar to the
+    concept of bottleneck injection, Shao and Zhang ([2020](#bib.bib127)) find that
+    over-compression of intermediate features and inaccurate communication between
+    computing devices can be tolerated unless the prediction performance of the models
+    are significantly degraded by them. Also, Jankowski et al. ([2020](#bib.bib58))
+    propose introducing a reconstruction-based bottleneck to DNN models, which is
+    similar to the concept of BottleNet (Eshratifar et al., [2019b](#bib.bib27)).
+    A comprehensive discussion on the delay/complexity/accuracy tradeoff can be found
+    in (Yao et al., [2020](#bib.bib165); Matsubara et al., [2020a](#bib.bib92)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 3\. Studies on SC with bottleneck injection strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Work | Task(s) | Dataset(s) | Base Model(s) | Training | Metrics | Code |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Eshratifar et al. ([2019b](#bib.bib27)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | miniImageNet (Snell et al., [2017](#bib.bib131)) |
+    ResNet-50 (He et al., [2016](#bib.bib44)) VGG-16 (Simonyan and Zisserman, [2015](#bib.bib129))
+    | CE-based | A, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Matsubara et al. (Matsubara et al., [2019](#bib.bib91), [2020a](#bib.bib92))
+    &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019, 2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | Caltech 101 (Fei-Fei et al., [2006](#bib.bib30)) ImageNet
+    (2012) (Russakovsky et al., [2015](#bib.bib121)) | DenseNet-169 (Huang et al.,
+    [2017](#bib.bib52)) DenseNet-201 (Huang et al., [2017](#bib.bib52)) ResNet-152 (He
+    et al., [2016](#bib.bib44)) Inception-v3 (Szegedy et al., [2016](#bib.bib137))
+    | HND KD CE-based | A, C, D, L, T | [Link](https://github.com/yoshitomo-matsubara/head-network-distillation)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Hu and Krishnamachari ([2020](#bib.bib50)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)) | MobileNetV2 (Sandler
+    et al., [2018](#bib.bib123)) | CE-based | A, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Choi et al. ([2020](#bib.bib15)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object detection | COCO 2014 (Lin et al., [2014b](#bib.bib84)) | YOLOv3 (Redmon
+    and Farhadi, [2018](#bib.bib117)) | Reconstruct. | A, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Shao and Zhang ([2020](#bib.bib127)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) | ResNet-50 (He
+    et al., [2016](#bib.bib44)) VGG-16 (Simonyan and Zisserman, [2015](#bib.bib129))
+    | CE-based (Multi-stage) | A, C, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Jankowski et al. ([2020](#bib.bib58)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) | VGG-16 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) | CE + $\mathcal{L}_{2}$ (Multi-stage) | A,
+    C, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Matsubara et al. (Matsubara and Levorato, [2020](#bib.bib94), [2021](#bib.bib95))
+    &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object detection Keypoint detection | COCO 2017 (Lin et al., [2014b](#bib.bib84))
+    | Faster R-CNN (Ren et al., [2015](#bib.bib118)) Mask R-CNN (He et al., [2017a](#bib.bib43))
+    Keypoint R-CNN (He et al., [2017a](#bib.bib43)) | HND GHND | A, C, D, L | [Link](https://github.com/yoshitomo-matsubara/hnd-ghnd-object-detectors)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Yao et al. ([2020](#bib.bib165)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification Speech recognition | ImageNet (2012) (Russakovsky et al.,
+    [2015](#bib.bib121)) LibriSpeech (Panayotov et al., [2015](#bib.bib108)) | ResNet-50 (He
+    et al., [2016](#bib.bib44)) Deep Speech (Hannun et al., [2014](#bib.bib41)) |
+    Reconstruct. + KD | A, D, E, L, T | [Link](https://github.com/CPS-AI/Deep-Compressive-Offloading)*
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Assine et al. ([2021](#bib.bib3)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object detection | COCO 2017 (Lin et al., [2014b](#bib.bib84)) | EfficientDet (Tan
+    et al., [2020](#bib.bib140)) | GHND-based | A, C, D | [Link](https://github.com/jsiloto/adaptive-cod)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Sbai et al. ([2021](#bib.bib125)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | Subset of ImageNet (Russakovsky et al., [2015](#bib.bib121))
+    (700 out of 1,000 classes) | MobileNetV1 (Howard et al., [2017](#bib.bib49)) VGG-16 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) | Reconstruct. + KD | A, C, D |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Lee et al. ([2021](#bib.bib71)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object detection | COCO 2017 (Lin et al., [2014b](#bib.bib84)) | YOLOv5 (Ultralytics,
+    [[n.d.]](#bib.bib145)) | CE-based | A, C, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Matsubara et al. ([2022a](#bib.bib93)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2022) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image Classification | ImageNet (2012) (Russakovsky et al., [2015](#bib.bib121))
+    | DenseNet-169 (Huang et al., [2017](#bib.bib52)) DenseNet-201 (Huang et al.,
+    [2017](#bib.bib52)) ResNet-152 (He et al., [2016](#bib.bib44)) | Reconst. HND
+    GHND CE/KD (Multi-stage) | A, C, D, E  L | [Link](https://github.com/yoshitomo-matsubara/bottlefit-split_computing)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Matsubara et al. (Matsubara et al., [2022c](#bib.bib98), [b](#bib.bib97))
+    &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021, 2022) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image Classification Object detection Semantic Segmentation | ImageNet (2012) (Russakovsky
+    et al., [2015](#bib.bib121)) COCO 2017 (Lin et al., [2014b](#bib.bib84)) PASCAL
+    VOC (2012) (Everingham et al., [2012](#bib.bib28)) | ResNet-50 (He et al., [2016](#bib.bib44))
+    ResNet-101 (He et al., [2016](#bib.bib44)) RegNetY-6.4GF (Radosavovic et al.,
+    [2020](#bib.bib114)) Hybrid ViT (Steiner et al., [2021](#bib.bib135)) RetinaNet (Lin
+    et al., [2017b](#bib.bib83)) Faster R-CNN (Ren et al., [2015](#bib.bib118)) DeepLabv3 (Chen
+    et al., [2017](#bib.bib12)) | GHND CE/KD+Rate (Multi-stage) | A, C, D, L | [Link
+    (2021)](https://github.com/yoshitomo-matsubara/supervised-compression) [Link (2022)](https://github.com/yoshitomo-matsubara/sc2-benchmark)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'A: Model accuracy, C: Model complexity, D: Transferred data size, E: Energy
+    consumption, L: Latency, T: Training cost'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '* The repository is incomplete and lacks of instructions to reproduce the reported
+    results for vision and speech datasets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These studies are all focused on image classification. Other CV tasks present
+    further challenges. For instance, state of the art object detectors such as R-CNN
+    models have more narrow range of layers that we can introduce bottlenecks due
+    to the network architecture, which has multiple forward paths to forward outputs
+    from intermediate layers to feature pyramid network (FPN) (Lin et al., [2017a](#bib.bib82)).
+    The head network distillation training approach – discussed later in this section
+    – was used in Matsubara and Levorato ([2021](#bib.bib95)) to address some of these
+    challenges and reduce the amount of data transmitted over the channel by $94$%
+    while degrading mAP (mean average precision) loss by $1$ point. Assine et al.
+    ([2021](#bib.bib3)) introduce bottlenecks to the EfficientDet-D2 (Tan et al.,
+    [2020](#bib.bib140)) object detector, and apply the training method based on the
+    generalized head network distillation (Matsubara and Levorato, [2021](#bib.bib95))
+    and mutual learning (Yang et al., [2020c](#bib.bib160)) to the modified model.
+    Following the studies on SC for resource-constrained edge computing systems (Matsubara
+    et al., [2019](#bib.bib91), [2020a](#bib.bib92); Yao et al., [2020](#bib.bib165)),
+    Sbai et al. ([2021](#bib.bib125)) introduce autoencoder to small classifiers and
+    train them on a subset of the ImageNet dataset in a similar manner. These studies
+    discuss the trade-off between accuracy and memory size on mobile devices, considering
+    communication constraints based 3G and LoRa technologies (Samie et al., [2016](#bib.bib122)).
+    Similar to (Matsubara and Levorato, [2020](#bib.bib94), [2021](#bib.bib95); Assine
+    et al., [2021](#bib.bib3)), Lee et al. ([2021](#bib.bib71)) design a lightweight
+    encoder for object detector on mobile device followed by both a module to amplify
+    the compressed feature and the object detector to be executed on edge server.
+    Matsubara et al. ([2022a](#bib.bib93)) empirically show that bottleneck-injected
+    models can be further improved by elaborating the methods to train the models.
+    The resulting models outperform models with autoencoder-based feature compression
+    (*e.g.*, Fig. [5](#S4.F5 "Figure 5 ‣ Reconstruction-based training ‣ 4\. Split
+    Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications:
+    Survey and Research Challenges")) in terms of the tradeoff between model accuracy
+    and transferred data size.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Matsubara et al. ([2022c](#bib.bib98)) propose a supervised compression method
+    for resource-constrained edge computing systems, which adapts ideas from knowledge
+    distillation and neural image compression (Ballé et al., [2017](#bib.bib5); Ballé
+    et al., [2018](#bib.bib6)). Their student model (namely, *Entropic Student*) contains
+    a lightweight encoder with a learnable prior, which quantizes and entropy-codes
+    latent representations under a prior probability model for efficiently saving
+    the size of data to be offloaded to edge server. By adjusting a balancing weight
+    in their loss function during training, we can control the tradeoff between data
+    size (rate) and model accuracy (distortion). The performance of the entropic student
+    model was demonstrated for three large-scale downstream supervised tasks: image
+    classification (ImageNet), object detection (COCO), and semantic segmentation
+    (COCO, PASCAL VOC). Notably, the representation produced by a single trained encoder
+    of the entropic student model can serve multiple downstream tasks. Following the
+    study, Matsubara et al. ([2022b](#bib.bib97)) further investigate this approach
+    and empirically show that it generalizes to other reference models (*e.g.*, ResNet-101 (He
+    et al., [2016](#bib.bib44)), RegNetY-6.4GF (Radosavovic et al., [2020](#bib.bib114)),
+    Hybrid ViT (Steiner et al., [2021](#bib.bib135))). Through experiments, the study
+    also points out that simply introducing such bottleneck layers at later layers
+    in a model can improve the conventional rate-distortion (R-D) tradeoff, which
+    will result in most of the computational load will be assigned to a weak mobile
+    device.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast to SC studies without bottlenecks in Table [1](#S4.T1 "Table 1
+    ‣ 4.1\. Split Computing without DNN Modification ‣ 4\. Split Computing: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges"), many of the studies on bottleneck injection strategies
+    in Table [3](#S4.T3 "Table 3 ‣ 4.3\. Split Computing with Bottleneck Injection
+    ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges") are published with code that would
+    help the research communities replicate/reproduce the experimental results and
+    build on existing studies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '4.4\. SC with Bottlenecks: Training Methodologies'
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Given that recent SC studies with bottleneck injection strategies result in
+    more or less accuracy loss comparing to the original models (*i.e.*, without injected
+    bottlenecks), various training methodologies are used and/or proposed in such
+    studies. Some of the training methods are designed specifically for architectures
+    with injected bottlenecks. We now summarize the differences between the various
+    training methodologies used in recent SC studies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We recall that $\mathbf{x}$ and $\mathbf{y}$ are an input (*e.g.*, an RGB image)
+    and the corresponding label (*e.g.*, one-hot vector) respectively. Given an input
+    $\mathbf{x}$, a DNN model $\mathcal{M}$ returns its output $\mathbf{\hat{y}}=\mathcal{M}(\mathbf{x})$
+    such as class probabilities in classification task. Each of the $L$ layers of
+    model $\mathcal{M}$ can be either low-level (*e.g.*, convolution (LeCun et al.,
+    [1998](#bib.bib70)), batch normalization (Ioffe and Szegedy, [2015](#bib.bib53))),
+    ReLU (Nair and Hinton, [2010](#bib.bib101))) or high-level layers (*e.g.*, residual
+    block in ResNet (He et al., [2016](#bib.bib44)) and dense block in DenseNet (Huang
+    et al., [2017](#bib.bib52))) which are composed by multiple low-level layers.
+    $\mathcal{M}(\mathbf{x})$ is a sequence of the $L$ layer functions $\mathrm{f}_{j}$’s,
+    and the $j^{\text{th}}$ layer transforms $\mathbf{z}_{j-1}$, the output from the
+    previous ${(j-1)}^{\text{th}}$ layer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (1) |  | <math id="S4.E1.m1.6" class="ltx_Math" alttext="\mathbf{z}_{j}=\left\{\begin{array}[]{ll}\mathbf{x}&amp;j=0\\
+    \mathrm{f}_{j}(\mathbf{z}_{j-1},\mathbf{\theta}_{j})&amp;1\leq j<L~{},\\'
+  prefs: []
+  type: TYPE_NORMAL
+- en: \mathrm{f}_{L}(\mathbf{z}_{L-1},\mathbf{\theta}_{L})=\mathcal{M}(\mathbf{x})=\mathbf{\hat{y}}&amp;j=L\end{array}\right."
+    display="block"><semantics id="S4.E1.m1.6a"><mrow id="S4.E1.m1.6.7" xref="S4.E1.m1.6.7.cmml"><msub
+    id="S4.E1.m1.6.7.2" xref="S4.E1.m1.6.7.2.cmml"><mi id="S4.E1.m1.6.7.2.2" xref="S4.E1.m1.6.7.2.2.cmml">𝐳</mi><mi
+    id="S4.E1.m1.6.7.2.3" xref="S4.E1.m1.6.7.2.3.cmml">j</mi></msub><mo id="S4.E1.m1.6.7.1"
+    xref="S4.E1.m1.6.7.1.cmml">=</mo><mrow id="S4.E1.m1.6.7.3.2" xref="S4.E1.m1.6.7.3.1.cmml"><mo
+    id="S4.E1.m1.6.7.3.2.1" xref="S4.E1.m1.6.7.3.1.1.cmml">{</mo><mtable columnspacing="5pt"
+    displaystyle="true" rowspacing="0pt" id="S4.E1.m1.6.6" xref="S4.E1.m1.6.6.cmml"><mtr
+    id="S4.E1.m1.6.6a" xref="S4.E1.m1.6.6.cmml"><mtd class="ltx_align_left" columnalign="left"
+    id="S4.E1.m1.6.6b" xref="S4.E1.m1.6.6.cmml"><mi id="S4.E1.m1.6.6.7.1.1" xref="S4.E1.m1.6.6.7.1.1.cmml">𝐱</mi></mtd><mtd
+    class="ltx_align_left" columnalign="left" id="S4.E1.m1.6.6c" xref="S4.E1.m1.6.6.cmml"><mrow
+    id="S4.E1.m1.6.6.7.2.1" xref="S4.E1.m1.6.6.7.2.1.cmml"><mi id="S4.E1.m1.6.6.7.2.1.2"
+    xref="S4.E1.m1.6.6.7.2.1.2.cmml">j</mi><mo id="S4.E1.m1.6.6.7.2.1.1" xref="S4.E1.m1.6.6.7.2.1.1.cmml">=</mo><mn
+    id="S4.E1.m1.6.6.7.2.1.3" xref="S4.E1.m1.6.6.7.2.1.3.cmml">0</mn></mrow></mtd></mtr><mtr
+    id="S4.E1.m1.6.6d" xref="S4.E1.m1.6.6.cmml"><mtd class="ltx_align_left" columnalign="left"
+    id="S4.E1.m1.6.6e" xref="S4.E1.m1.6.6.cmml"><mrow id="S4.E1.m1.2.2.2.2.2" xref="S4.E1.m1.2.2.2.2.2.cmml"><msub
+    id="S4.E1.m1.2.2.2.2.2.4" xref="S4.E1.m1.2.2.2.2.2.4.cmml"><mi mathvariant="normal"
+    id="S4.E1.m1.2.2.2.2.2.4.2" xref="S4.E1.m1.2.2.2.2.2.4.2.cmml">f</mi><mi id="S4.E1.m1.2.2.2.2.2.4.3"
+    xref="S4.E1.m1.2.2.2.2.2.4.3.cmml">j</mi></msub><mo lspace="0em" rspace="0em"
+    id="S4.E1.m1.2.2.2.2.2.3" xref="S4.E1.m1.2.2.2.2.2.3.cmml">​</mo><mrow id="S4.E1.m1.2.2.2.2.2.2.2"
+    xref="S4.E1.m1.2.2.2.2.2.2.3.cmml"><mo stretchy="false" id="S4.E1.m1.2.2.2.2.2.2.2.3"
+    xref="S4.E1.m1.2.2.2.2.2.2.3.cmml">(</mo><msub id="S4.E1.m1.1.1.1.1.1.1.1.1" xref="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"><mi
+    id="S4.E1.m1.1.1.1.1.1.1.1.1.2" xref="S4.E1.m1.1.1.1.1.1.1.1.1.2.cmml">𝐳</mi><mrow
+    id="S4.E1.m1.1.1.1.1.1.1.1.1.3" xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.cmml"><mi id="S4.E1.m1.1.1.1.1.1.1.1.1.3.2"
+    xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.2.cmml">j</mi><mo id="S4.E1.m1.1.1.1.1.1.1.1.1.3.1"
+    xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.1.cmml">−</mo><mn id="S4.E1.m1.1.1.1.1.1.1.1.1.3.3"
+    xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.3.cmml">1</mn></mrow></msub><mo id="S4.E1.m1.2.2.2.2.2.2.2.4"
+    xref="S4.E1.m1.2.2.2.2.2.2.3.cmml">,</mo><msub id="S4.E1.m1.2.2.2.2.2.2.2.2" xref="S4.E1.m1.2.2.2.2.2.2.2.2.cmml"><mi
+    id="S4.E1.m1.2.2.2.2.2.2.2.2.2" xref="S4.E1.m1.2.2.2.2.2.2.2.2.2.cmml">θ</mi><mi
+    id="S4.E1.m1.2.2.2.2.2.2.2.2.3" xref="S4.E1.m1.2.2.2.2.2.2.2.2.3.cmml">j</mi></msub><mo
+    stretchy="false" id="S4.E1.m1.2.2.2.2.2.2.2.5" xref="S4.E1.m1.2.2.2.2.2.2.3.cmml">)</mo></mrow></mrow></mtd><mtd
+    class="ltx_align_left" columnalign="left" id="S4.E1.m1.6.6f" xref="S4.E1.m1.6.6.cmml"><mrow
+    id="S4.E1.m1.3.3.3.3.1.1" xref="S4.E1.m1.3.3.3.3.1.1.1.cmml"><mrow id="S4.E1.m1.3.3.3.3.1.1.1"
+    xref="S4.E1.m1.3.3.3.3.1.1.1.cmml"><mn id="S4.E1.m1.3.3.3.3.1.1.1.2" xref="S4.E1.m1.3.3.3.3.1.1.1.2.cmml">1</mn><mo
+    id="S4.E1.m1.3.3.3.3.1.1.1.3" xref="S4.E1.m1.3.3.3.3.1.1.1.3.cmml">≤</mo><mi id="S4.E1.m1.3.3.3.3.1.1.1.4"
+    xref="S4.E1.m1.3.3.3.3.1.1.1.4.cmml">j</mi><mo id="S4.E1.m1.3.3.3.3.1.1.1.5" xref="S4.E1.m1.3.3.3.3.1.1.1.5.cmml"><</mo><mi
+    id="S4.E1.m1.3.3.3.3.1.1.1.6" xref="S4.E1.m1.3.3.3.3.1.1.1.6.cmml">L</mi></mrow><mo
+    lspace="0.330em" id="S4.E1.m1.3.3.3.3.1.1.2" xref="S4.E1.m1.3.3.3.3.1.1.1.cmml">,</mo></mrow></mtd></mtr><mtr
+    id="S4.E1.m1.6.6g" xref="S4.E1.m1.6.6.cmml"><mtd class="ltx_align_left" columnalign="left"
+    id="S4.E1.m1.6.6h" xref="S4.E1.m1.6.6.cmml"><mrow id="S4.E1.m1.6.6.6.3.3" xref="S4.E1.m1.6.6.6.3.3.cmml"><mrow
+    id="S4.E1.m1.6.6.6.3.3.3" xref="S4.E1.m1.6.6.6.3.3.3.cmml"><msub id="S4.E1.m1.6.6.6.3.3.3.4"
+    xref="S4.E1.m1.6.6.6.3.3.3.4.cmml"><mi mathvariant="normal" id="S4.E1.m1.6.6.6.3.3.3.4.2"
+    xref="S4.E1.m1.6.6.6.3.3.3.4.2.cmml">f</mi><mi id="S4.E1.m1.6.6.6.3.3.3.4.3" xref="S4.E1.m1.6.6.6.3.3.3.4.3.cmml">L</mi></msub><mo
+    lspace="0em" rspace="0em" id="S4.E1.m1.6.6.6.3.3.3.3" xref="S4.E1.m1.6.6.6.3.3.3.3.cmml">​</mo><mrow
+    id="S4.E1.m1.6.6.6.3.3.3.2.2" xref="S4.E1.m1.6.6.6.3.3.3.2.3.cmml"><mo stretchy="false"
+    id="S4.E1.m1.6.6.6.3.3.3.2.2.3" xref="S4.E1.m1.6.6.6.3.3.3.2.3.cmml">(</mo><msub
+    id="S4.E1.m1.5.5.5.2.2.2.1.1.1" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.cmml"><mi id="S4.E1.m1.5.5.5.2.2.2.1.1.1.2"
+    xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.2.cmml">𝐳</mi><mrow id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3"
+    xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.cmml"><mi id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.2"
+    xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.2.cmml">L</mi><mo id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.1"
+    xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.1.cmml">−</mo><mn id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.3"
+    xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.3.cmml">1</mn></mrow></msub><mo id="S4.E1.m1.6.6.6.3.3.3.2.2.4"
+    xref="S4.E1.m1.6.6.6.3.3.3.2.3.cmml">,</mo><msub id="S4.E1.m1.6.6.6.3.3.3.2.2.2"
+    xref="S4.E1.m1.6.6.6.3.3.3.2.2.2.cmml"><mi id="S4.E1.m1.6.6.6.3.3.3.2.2.2.2" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2.2.cmml">θ</mi><mi
+    id="S4.E1.m1.6.6.6.3.3.3.2.2.2.3" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2.3.cmml">L</mi></msub><mo
+    stretchy="false" id="S4.E1.m1.6.6.6.3.3.3.2.2.5" xref="S4.E1.m1.6.6.6.3.3.3.2.3.cmml">)</mo></mrow></mrow><mo
+    id="S4.E1.m1.6.6.6.3.3.5" xref="S4.E1.m1.6.6.6.3.3.5.cmml">=</mo><mrow id="S4.E1.m1.6.6.6.3.3.6"
+    xref="S4.E1.m1.6.6.6.3.3.6.cmml"><mi class="ltx_font_mathcaligraphic" id="S4.E1.m1.6.6.6.3.3.6.2"
+    xref="S4.E1.m1.6.6.6.3.3.6.2.cmml">ℳ</mi><mo lspace="0em" rspace="0em" id="S4.E1.m1.6.6.6.3.3.6.1"
+    xref="S4.E1.m1.6.6.6.3.3.6.1.cmml">​</mo><mrow id="S4.E1.m1.6.6.6.3.3.6.3.2" xref="S4.E1.m1.6.6.6.3.3.6.cmml"><mo
+    stretchy="false" id="S4.E1.m1.6.6.6.3.3.6.3.2.1" xref="S4.E1.m1.6.6.6.3.3.6.cmml">(</mo><mi
+    id="S4.E1.m1.4.4.4.1.1.1" xref="S4.E1.m1.4.4.4.1.1.1.cmml">𝐱</mi><mo stretchy="false"
+    id="S4.E1.m1.6.6.6.3.3.6.3.2.2" xref="S4.E1.m1.6.6.6.3.3.6.cmml">)</mo></mrow></mrow><mo
+    id="S4.E1.m1.6.6.6.3.3.7" xref="S4.E1.m1.6.6.6.3.3.7.cmml">=</mo><mover accent="true"
+    id="S4.E1.m1.6.6.6.3.3.8" xref="S4.E1.m1.6.6.6.3.3.8.cmml"><mi id="S4.E1.m1.6.6.6.3.3.8.2"
+    xref="S4.E1.m1.6.6.6.3.3.8.2.cmml">𝐲</mi><mo id="S4.E1.m1.6.6.6.3.3.8.1" xref="S4.E1.m1.6.6.6.3.3.8.1.cmml">^</mo></mover></mrow></mtd><mtd
+    class="ltx_align_left" columnalign="left" id="S4.E1.m1.6.6i" xref="S4.E1.m1.6.6.cmml"><mrow
+    id="S4.E1.m1.6.6.6.4.1" xref="S4.E1.m1.6.6.6.4.1.cmml"><mi id="S4.E1.m1.6.6.6.4.1.2"
+    xref="S4.E1.m1.6.6.6.4.1.2.cmml">j</mi><mo id="S4.E1.m1.6.6.6.4.1.1" xref="S4.E1.m1.6.6.6.4.1.1.cmml">=</mo><mi
+    id="S4.E1.m1.6.6.6.4.1.3" xref="S4.E1.m1.6.6.6.4.1.3.cmml">L</mi></mrow></mtd></mtr></mtable></mrow></mrow><annotation-xml
+    encoding="MathML-Content" id="S4.E1.m1.6b"><apply id="S4.E1.m1.6.7.cmml" xref="S4.E1.m1.6.7"><apply
+    id="S4.E1.m1.6.7.2.cmml" xref="S4.E1.m1.6.7.2"><csymbol cd="ambiguous" id="S4.E1.m1.6.7.2.1.cmml"
+    xref="S4.E1.m1.6.7.2">subscript</csymbol><ci id="S4.E1.m1.6.7.2.2.cmml" xref="S4.E1.m1.6.7.2.2">𝐳</ci><ci
+    id="S4.E1.m1.6.7.2.3.cmml" xref="S4.E1.m1.6.7.2.3">𝑗</ci></apply><apply id="S4.E1.m1.6.7.3.1.cmml"
+    xref="S4.E1.m1.6.7.3.2"><csymbol cd="latexml" id="S4.E1.m1.6.7.3.1.1.cmml" xref="S4.E1.m1.6.7.3.2.1">cases</csymbol><matrix
+    id="S4.E1.m1.6.6.cmml" xref="S4.E1.m1.6.6"><matrixrow id="S4.E1.m1.6.6a.cmml"
+    xref="S4.E1.m1.6.6"><ci id="S4.E1.m1.6.6.7.1.1.cmml" xref="S4.E1.m1.6.6.7.1.1">𝐱</ci><apply
+    id="S4.E1.m1.6.6.7.2.1.cmml" xref="S4.E1.m1.6.6.7.2.1"><ci id="S4.E1.m1.6.6.7.2.1.2.cmml"
+    xref="S4.E1.m1.6.6.7.2.1.2">𝑗</ci><cn type="integer" id="S4.E1.m1.6.6.7.2.1.3.cmml"
+    xref="S4.E1.m1.6.6.7.2.1.3">0</cn></apply></matrixrow><matrixrow id="S4.E1.m1.6.6b.cmml"
+    xref="S4.E1.m1.6.6"><apply id="S4.E1.m1.2.2.2.2.2.cmml" xref="S4.E1.m1.2.2.2.2.2"><apply
+    id="S4.E1.m1.2.2.2.2.2.4.cmml" xref="S4.E1.m1.2.2.2.2.2.4"><csymbol cd="ambiguous"
+    id="S4.E1.m1.2.2.2.2.2.4.1.cmml" xref="S4.E1.m1.2.2.2.2.2.4">subscript</csymbol><ci
+    id="S4.E1.m1.2.2.2.2.2.4.2.cmml" xref="S4.E1.m1.2.2.2.2.2.4.2">f</ci><ci id="S4.E1.m1.2.2.2.2.2.4.3.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.4.3">𝑗</ci></apply><interval closure="open" id="S4.E1.m1.2.2.2.2.2.2.3.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.2.2"><apply id="S4.E1.m1.1.1.1.1.1.1.1.1.cmml" xref="S4.E1.m1.1.1.1.1.1.1.1.1"><csymbol
+    cd="ambiguous" id="S4.E1.m1.1.1.1.1.1.1.1.1.1.cmml" xref="S4.E1.m1.1.1.1.1.1.1.1.1">subscript</csymbol><ci
+    id="S4.E1.m1.1.1.1.1.1.1.1.1.2.cmml" xref="S4.E1.m1.1.1.1.1.1.1.1.1.2">𝐳</ci><apply
+    id="S4.E1.m1.1.1.1.1.1.1.1.1.3.cmml" xref="S4.E1.m1.1.1.1.1.1.1.1.1.3"><ci id="S4.E1.m1.1.1.1.1.1.1.1.1.3.2.cmml"
+    xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.2">𝑗</ci><cn type="integer" id="S4.E1.m1.1.1.1.1.1.1.1.1.3.3.cmml"
+    xref="S4.E1.m1.1.1.1.1.1.1.1.1.3.3">1</cn></apply></apply><apply id="S4.E1.m1.2.2.2.2.2.2.2.2.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.2.2.2"><csymbol cd="ambiguous" id="S4.E1.m1.2.2.2.2.2.2.2.2.1.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.2.2.2">subscript</csymbol><ci id="S4.E1.m1.2.2.2.2.2.2.2.2.2.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.2.2.2.2">𝜃</ci><ci id="S4.E1.m1.2.2.2.2.2.2.2.2.3.cmml"
+    xref="S4.E1.m1.2.2.2.2.2.2.2.2.3">𝑗</ci></apply></interval></apply><apply id="S4.E1.m1.3.3.3.3.1.1.1.cmml"
+    xref="S4.E1.m1.3.3.3.3.1.1"><apply id="S4.E1.m1.3.3.3.3.1.1.1b.cmml" xref="S4.E1.m1.3.3.3.3.1.1"><cn
+    type="integer" id="S4.E1.m1.3.3.3.3.1.1.1.2.cmml" xref="S4.E1.m1.3.3.3.3.1.1.1.2">1</cn><ci
+    id="S4.E1.m1.3.3.3.3.1.1.1.4.cmml" xref="S4.E1.m1.3.3.3.3.1.1.1.4">𝑗</ci></apply><apply
+    id="S4.E1.m1.3.3.3.3.1.1.1c.cmml" xref="S4.E1.m1.3.3.3.3.1.1"><ci id="S4.E1.m1.3.3.3.3.1.1.1.6.cmml"
+    xref="S4.E1.m1.3.3.3.3.1.1.1.6">𝐿</ci></apply></apply></matrixrow><matrixrow id="S4.E1.m1.6.6c.cmml"
+    xref="S4.E1.m1.6.6"><apply id="S4.E1.m1.6.6.6.3.3.cmml" xref="S4.E1.m1.6.6.6.3.3"><apply
+    id="S4.E1.m1.6.6.6.3.3b.cmml" xref="S4.E1.m1.6.6.6.3.3"><apply id="S4.E1.m1.6.6.6.3.3.3.cmml"
+    xref="S4.E1.m1.6.6.6.3.3.3"><apply id="S4.E1.m1.6.6.6.3.3.3.4.cmml" xref="S4.E1.m1.6.6.6.3.3.3.4"><csymbol
+    cd="ambiguous" id="S4.E1.m1.6.6.6.3.3.3.4.1.cmml" xref="S4.E1.m1.6.6.6.3.3.3.4">subscript</csymbol><ci
+    id="S4.E1.m1.6.6.6.3.3.3.4.2.cmml" xref="S4.E1.m1.6.6.6.3.3.3.4.2">f</ci><ci id="S4.E1.m1.6.6.6.3.3.3.4.3.cmml"
+    xref="S4.E1.m1.6.6.6.3.3.3.4.3">𝐿</ci></apply><interval closure="open" id="S4.E1.m1.6.6.6.3.3.3.2.3.cmml"
+    xref="S4.E1.m1.6.6.6.3.3.3.2.2"><apply id="S4.E1.m1.5.5.5.2.2.2.1.1.1.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1"><csymbol
+    cd="ambiguous" id="S4.E1.m1.5.5.5.2.2.2.1.1.1.1.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1">subscript</csymbol><ci
+    id="S4.E1.m1.5.5.5.2.2.2.1.1.1.2.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.2">𝐳</ci><apply
+    id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3"><ci
+    id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.2.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.2">𝐿</ci><cn
+    type="integer" id="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.3.cmml" xref="S4.E1.m1.5.5.5.2.2.2.1.1.1.3.3">1</cn></apply></apply><apply
+    id="S4.E1.m1.6.6.6.3.3.3.2.2.2.cmml" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2"><csymbol
+    cd="ambiguous" id="S4.E1.m1.6.6.6.3.3.3.2.2.2.1.cmml" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2">subscript</csymbol><ci
+    id="S4.E1.m1.6.6.6.3.3.3.2.2.2.2.cmml" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2.2">𝜃</ci><ci
+    id="S4.E1.m1.6.6.6.3.3.3.2.2.2.3.cmml" xref="S4.E1.m1.6.6.6.3.3.3.2.2.2.3">𝐿</ci></apply></interval></apply><apply
+    id="S4.E1.m1.6.6.6.3.3.6.cmml" xref="S4.E1.m1.6.6.6.3.3.6"><ci id="S4.E1.m1.6.6.6.3.3.6.2.cmml"
+    xref="S4.E1.m1.6.6.6.3.3.6.2">ℳ</ci><ci id="S4.E1.m1.4.4.4.1.1.1.cmml" xref="S4.E1.m1.4.4.4.1.1.1">𝐱</ci></apply></apply><apply
+    id="S4.E1.m1.6.6.6.3.3c.cmml" xref="S4.E1.m1.6.6.6.3.3"><apply id="S4.E1.m1.6.6.6.3.3.8.cmml"
+    xref="S4.E1.m1.6.6.6.3.3.8"><ci id="S4.E1.m1.6.6.6.3.3.8.1.cmml" xref="S4.E1.m1.6.6.6.3.3.8.1">^</ci><ci
+    id="S4.E1.m1.6.6.6.3.3.8.2.cmml" xref="S4.E1.m1.6.6.6.3.3.8.2">𝐲</ci></apply></apply></apply><apply
+    id="S4.E1.m1.6.6.6.4.1.cmml" xref="S4.E1.m1.6.6.6.4.1"><ci id="S4.E1.m1.6.6.6.4.1.2.cmml"
+    xref="S4.E1.m1.6.6.6.4.1.2">𝑗</ci><ci id="S4.E1.m1.6.6.6.4.1.3.cmml" xref="S4.E1.m1.6.6.6.4.1.3">𝐿</ci></apply></matrixrow></matrix></apply></apply></annotation-xml><annotation
+    encoding="application/x-tex" id="S4.E1.m1.6c">\mathbf{z}_{j}=\left\{\begin{array}[]{ll}\mathbf{x}&j=0\\
+    \mathrm{f}_{j}(\mathbf{z}_{j-1},\mathbf{\theta}_{j})&1\leq j<L~{},\\ \mathrm{f}_{L}(\mathbf{z}_{L-1},\mathbf{\theta}_{L})=\mathcal{M}(\mathbf{x})=\mathbf{\hat{y}}&j=L\end{array}\right.</annotation></semantics></math>
+    |  |
+  prefs: []
+  type: TYPE_NORMAL
+- en: where $\mathbf{\theta}_{j}$ denotes the $j^{\text{th}}$ layer’s hyperparameters
+    and parameters to be optimized during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross entropy-based training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To optimize parameters in a DNN model, we first need to define a loss function
+    and update the parameters by minimizing the loss value with an optimizer such
+    as stochastic gradient descent and Adam (Kingma and Ba, [2015](#bib.bib63)) during
+    training. In image classification, a standard method is to train a DNN model $\mathcal{M}$
+    in an end-to-end manner using the cross entropy like many of the studies (Eshratifar
+    et al., [2019b](#bib.bib27); Hu and Krishnamachari, [2020](#bib.bib50); Matsubara
+    et al., [2020a](#bib.bib92)) in Table [3](#S4.T3 "Table 3 ‣ 4.3\. Split Computing
+    with Bottleneck Injection ‣ 4\. Split Computing: A Survey ‣ Split Computing and
+    Early Exiting for Deep Learning Applications: Survey and Research Challenges").
+    For simplicity, here we focus on the categorical cross entropy and assume $c\equiv\mathbf{y}$
+    is the correct class index given a model input $\mathbf{x}$. Given a pair of $\mathbf{x}$
+    and $c$, we obtain the model output $\mathbf{\hat{y}}=\mathcal{M}(\mathbf{x})$,
+    and then the (categorical) cross entropy loss is defined as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (2) |  | $\mathcal{L}_{\text{CE}}(\mathbf{\hat{y}},c)=-\log\left(\frac{\exp\left(\hat{\mathbf{y}}_{c}\right)}{\sum_{j\in\mathcal{C}}\exp\left(\hat{\mathbf{y}}_{j}\right)}\right),$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\hat{\mathbf{y}}_{j}$ is the class probability for the class index $j$,
+    and $\mathcal{C}$ is a set of considered classes ($c\in\mathcal{C}$).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/6e68ba06e54a5c5d9cfcdc1cf7113c57.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 3\. Cross entropy-based training for bottleneck-injected DNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As shown in Eq. ([2](#S4.E2 "In Cross entropy-based training ‣ 4\. Split Computing:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges")), the loss function used in cross entropy-based training
+    methods are used as a function of the final output $\mathbf{\hat{y}}$, and thus
+    are not designed for SC frameworks. While Eshratifar et al. ([2019b](#bib.bib27));
+    Hu and Krishnamachari ([2020](#bib.bib50)); Shao and Zhang ([2020](#bib.bib127));
+    Lee et al. ([2021](#bib.bib71)) use cross entropy to train bottleneck-injected
+    DNN models in end-to-end manners (Fig. [3](#S4.F3 "Figure 3 ‣ Cross entropy-based
+    training ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for
+    Deep Learning Applications: Survey and Research Challenges")), Matsubara et al.
+    ([2020a](#bib.bib92)) empirically show that these methods cause a larger accuracy
+    loss in complex tasks such as ImageNet dataset (Russakovsky et al., [2015](#bib.bib121))
+    compared to other more advanced techniques, including knowledge distillation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Knowledge distillation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Complex DNN models are usually trained to learn parameters for discriminating
+    between a large number of classes (*e.g.*, $1,000$ in ImageNet dataset), and are
+    often overparameterized. Knowledge distillation (KD) (Li et al., [2014](#bib.bib79);
+    Ba and Caruana, [2014](#bib.bib4); Hinton et al., [2014](#bib.bib47)) is a training
+    scheme to address this problem, and trains a DNN model (called “student”) using
+    additional signals from a pretrained DNN model (called “teacher” and often larger
+    than the student). In standard cross entropy-based training – that is, using “hard
+    targets” (*e.g.*, one-hot vectors) – we face a side-effect that the trained models
+    assign probabilities to all of the incorrect classes. From the relative probabilities
+    of incorrect classes, we can see how large models tend to generalize.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/24482a162a4c4a7ae9fe0a6d2f4b9ca9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 4\. Knowledge distillation for bottleneck-injected DNN (student), using
+    a pretrained model as teacher.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As illustrated in Fig. [4](#S4.F4 "Figure 4 ‣ Knowledge distillation ‣ 4\.
+    Split Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges"), by distilling the knowledge from
+    a pretrained complex model (teacher), a student model can be more generalized
+    and avoid overfitting to the training dataset, using the outputs of the teacher
+    model as “soft targets” in addition to the hard targets (Hinton et al., [2014](#bib.bib47)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (3) |  | $\mathcal{L}_{\text{KD}}(\hat{\mathbf{y}}^{\text{S}},\hat{\mathbf{y}}^{\text{T}},\mathbf{y})=\alpha\mathcal{L}_{\text{task}}(\hat{\mathbf{y}}^{\text{S}},\mathbf{y})+(1-\alpha)\tau^{2}\mathrm{KL}\left(\mathrm{q}(\hat{\mathbf{y}}^{\text{S}}),\mathrm{p}(\hat{\mathbf{y}}^{\text{T}})\right),$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $\alpha$ is a balancing factor (hyperparameter) between *hard target*
+    (left term) and *soft target* (right term) losses, and $\tau$ is another hyperparameter
+    called *temperature* to soften the outputs of teacher and student models in Eq. ([4](#S4.E4
+    "In Knowledge distillation ‣ 4\. Split Computing: A Survey ‣ Split Computing and
+    Early Exiting for Deep Learning Applications: Survey and Research Challenges")).
+    $\mathcal{L}_{\text{task}}$ is a task-specific loss function, and it is a cross
+    entropy loss in image classification tasks *i.e.*, $\mathcal{L}_{\text{task}}=\mathcal{L}_{\text{CE}}$.
+    $\mathrm{KL}$ is the Kullback-Leibler divergence function, where $\mathrm{q}(\hat{\mathbf{y}}^{\text{S}})$
+    and $\mathrm{p}(\hat{\mathbf{y}}^{\text{T}})$ are probability distributions of
+    student and teacher models for an input $\mathbf{x}$, that is, $\mathrm{q}(\hat{\mathbf{y}}^{\text{S}})=[\mathrm{q}_{1}(\hat{\mathbf{y}}^{\text{S}}),\cdots,\mathrm{q}_{|\mathcal{C}|}(\hat{\mathbf{y}}^{\text{S}})]$
+    and $\mathrm{p}(\hat{\mathbf{y}}^{\text{T}})=[\mathrm{p}_{1}(\hat{\mathbf{y}}^{\text{S}}),\cdots,\mathrm{p}_{|C|}(\hat{\mathbf{y}}^{\text{T}})]$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (4) |  | $\mathrm{q}_{k}(\hat{\mathbf{y}}^{\text{S}})=\frac{\exp\left(\frac{\hat{\mathbf{y}}^{\text{S}}_{k}}{\tau}\right)}{\sum_{j\in\mathcal{C}}\exp\left(\frac{\hat{\mathbf{y}}^{\text{S}}_{j}}{\tau}\right)},~{}~{}\mathrm{p}_{k}(\hat{\mathbf{y}}^{\text{T}})=\frac{\exp\left(\frac{\hat{\mathbf{y}}^{\text{T}}_{k}}{\tau}\right)}{\sum_{j\in\mathcal{C}}\exp\left(\frac{\hat{\mathbf{y}}^{\text{T}}_{j}}{\tau}\right)},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Using the ImageNet dataset, it is empirically shown in Matsubara et al. ([2020a](#bib.bib92))
+    that all the considered bottleneck-injected student models trained with their
+    teacher models (original models without injected bottlenecks) consistently outperform
+    those trained without the teacher models. This result matches a widely known trend
+    in knowledge distillation reported in Ba and Caruana ([2014](#bib.bib4)). However,
+    similar to cross entropy, the knowledge distillation is still not aware of bottlenecks
+    we introduce to DNN models and may result in significant accuracy loss as suggested
+    by Matsubara et al. ([2020a](#bib.bib92)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reconstruction-based training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As illustrated in Fig. [5](#S4.F5 "Figure 5 ‣ Reconstruction-based training
+    ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges"), Choi et al. ([2020](#bib.bib15));
+    Jankowski et al. ([2020](#bib.bib58)); Yao et al. ([2020](#bib.bib165)); Sbai
+    et al. ([2021](#bib.bib125)) inject Autoencoder (AE) models into existing DNN
+    models, and train the injected components by minimizing the reconstruction error.
+    First manually an intermediate layer in a DNN model (say its $j^{\text{th}}$ layer)
+    is chosen, and the output of the $j^{\text{th}}$ layer $\mathbf{z}_{j}$ is fed
+    to the encoder $\mathrm{f}_{\text{enc}}$ whose role is to compress $\mathbf{z}_{j}$.
+    The encoder’s output $\mathbf{z}_{\text{enc}}$ is a compressed representation,
+    *i.e.*, bottleneck to be transferred to edge server and the following decoder
+    $\mathrm{f}_{\text{dec}}$ decompresses the compressed representation and returns
+    $\mathbf{z}_{\text{dec}}$. As the decoder is designed to reconstruct $\mathbf{z}_{j}$,
+    its output $\mathbf{z}_{\text{dec}}$ should share the same dimensionality with
+    $\mathbf{z}_{j}$. Then, the injected AE are trained by minimizing the following
+    reconstruction loss:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/43bae28bbc07925de9fca3d828939811.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 5\. Reconstruction-based training to compress intermediate output (here
+    $\mathbf{z}_{2}$) in DNN by AE (yellow).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | $\displaystyle\mathcal{L}_{\text{Recon.}}\left(\mathbf{z}_{j}\right)$
+    | $\displaystyle=$ | $\displaystyle\&#124;\mathbf{z}_{j}-\mathrm{f}_{\text{dec}}\left(\mathrm{f}_{\text{enc}}\left(\mathbf{z}_{j};\theta_{\text{enc}}\right);\mathbf{\theta_{\text{dec}}}\right)+\epsilon\&#124;_{n}^{m},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | $\displaystyle=$ | $\displaystyle\&#124;\mathbf{z}_{j}-\mathbf{z}_{\text{dec}}+\epsilon\&#124;_{n}^{m},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\|\mathbf{z}\|_{n}^{m}$ denotes $m^{\text{th}}$ power of $n$-norm of
+    $\mathbf{z}$, and $\epsilon$ is an optional regularization constant. For example,
+    Choi et al. ([2020](#bib.bib15)) set $m=1$, $n=2$ and $\epsilon=10^{-6}$, and
+    Jankowski et al. ([2020](#bib.bib58)) use $m=n=1$ and $\epsilon=0$. Inspired by
+    the idea of knowledge distillation (Hinton et al., [2014](#bib.bib47)), Yao et al.
+    ([2020](#bib.bib165)) also consider additional squared errors between intermediate
+    feature maps from models with and without bottlenecks as additional loss terms
+    like generalized head network distillation (Matsubara and Levorato, [2021](#bib.bib95))
+    described later. While Yao et al. ([2020](#bib.bib165)) shows high compression
+    rate with small accuracy loss by injecting encoder-decoder architectures to existing
+    DNN models, such strategies (Choi et al., [2020](#bib.bib15); Jankowski et al.,
+    [2020](#bib.bib58); Yao et al., [2020](#bib.bib165); Sbai et al., [2021](#bib.bib125))
+    increase computational complexity as a result. Suppose the encoder and decoder
+    consist of $L_{\text{enc}}$ and $L_{\text{dec}}$ layers respectively, then the
+    total number of layers in the altered DNN model is $L+L_{\text{enc}}+L_{\text{dec}}$.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Head network distillation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The training methods described above are focused on either end-to-end or encoder-decoder
+    training. The first approach often requires hard targets such as one-hot vectors
+    and more training cost while the latter can focus on the injected components (encoder
+    and decoder) during training, but the additional components (layers) will increase
+    the complexity of the DNN model. To reduce both training cost and model complexity
+    while preserving accuracy, it is proposed in Matsubara et al. ([2019](#bib.bib91))
+    to use head network distillation (HND) to distill the head portion of the DNN–
+    which contains a bottleneck – leveraging pretrained DNN models. Figure [6](#S4.F6
+    "Figure 6 ‣ Head network distillation ‣ 4\. Split Computing: A Survey ‣ Split
+    Computing and Early Exiting for Deep Learning Applications: Survey and Research
+    Challenges") illustrates this approach.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/3bc35a9931fd28d13478300dd37786a3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 6\. Head network distillation for bottleneck-injected DNN (student),
+    using a pretrained model as teacher. The student model’s tail portion is copied
+    from that of its teacher model with respect to the architecture and pretrained
+    parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The original pretrained DNN (consisting of $L$ layers) is used as a starting
+    point, whose architecture (in the head part) is simplified. As only the teacher’s
+    head portion is altered, the tail portion of the student model is identical to
+    that of the teacher model with respect to architecture and the same pretrained
+    parameters can be maintained. Thus, head network distillation requires only the
+    first layers of the teacher and student models in training session as the student
+    head model $\mathrm{f}_{\text{head}}^{\text{S}}$ will be trained to mimic behavior
+    of teacher’s head model $\mathrm{f}_{\text{head}}^{\text{T}}$ given an input $\mathbf{x}$:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (6) |  | $\mathcal{L}_{\text{HND}}(\mathbf{x})=\&#124;\mathrm{f}_{\text{head}}^{\text{S}}(\mathbf{x};\mathbf{\theta}_{\text{head}}^{\text{S}})-\mathrm{f}_{\text{head}}^{\text{T}}(\mathbf{x};\mathbf{\theta}_{\text{head}}^{\text{T}})\&#124;^{2},$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $\mathrm{f}_{\text{head}}^{\text{S}}$ and $\mathrm{f}_{\text{head}}^{\text{T}}$
+    are sequences of the first $L_{\text{head}}^{\text{S}}$ and $L_{\text{head}}^{\text{T}}$
+    layers in student and teacher models ($L_{\text{head}}^{\text{S}}\ll L^{\text{S}}$,
+    and $L_{\text{head}}^{\text{T}}\ll L$ ), respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Experimental results with the ImageNet (ILSVRC 2012) dataset show that given
+    a bottleneck-introduced model, the head network distillation method consistently
+    outperforms cross entropy-based training (Eshratifar et al., [2019b](#bib.bib27);
+    Hu and Krishnamachari, [2020](#bib.bib50); Shao and Zhang, [2020](#bib.bib127))
+    and knowledge distillation methods in terms of not only training cost but also
+    accuracy of the trained model. This method is extended in Matsubara and Levorato
+    ([2021](#bib.bib95)), where the generalized head network distillation technique
+    (GHND) is proposed for complex object detection tasks and models. We note that
+    these tasks require finer feature maps mimicking those at intermediate layers
+    in the original pretrained object detectors. The loss function in this approach
+    is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (7) |  | $\mathcal{L}_{\text{GHND}}(\mathbf{x})=\sum_{j\in\mathcal{J}}\lambda_{j}\cdot\mathcal{L}_{j}(\mathbf{x},\mathrm{f}_{1-L_{j}^{\text{S}}}^{\text{S}},\mathrm{f}_{1-L_{j}}^{\text{T}}),$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where $j$ is loss index, $\lambda_{j}$ is a scale factor (hyperparameter) associated
+    with loss $\mathcal{L}_{j}$, and $\mathrm{f}_{1-L_{j}^{\text{S}}}^{\text{S}}$
+    and $\mathrm{f}_{1-L_{j}^{\text{T}}}^{\text{T}}$ indicate the corresponding sequences
+    of the first $L_{j}^{\text{S}}$ and $L_{j}^{\text{T}}$ layers in the student and
+    teacher models (functions of input data $\mathbf{x}$), respectively. The total
+    loss, then, is a linear combination of $|\mathcal{J}|$ weighted losses. Following
+    Eq. ([7](#S4.E7 "In Head network distillation ‣ 4\. Split Computing: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges")), the previously proposed head network distillation technique (Matsubara
+    et al., [2019](#bib.bib91)) can be seen as a special case of generalized head
+    network distillation (GHND). GHND significantly improved the object detection
+    performance in bottleneck-injected R-CNN models on COCO 2017 dataset while achieving
+    a high compression rate.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '5\. Early Exiting: A Survey'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This section presents a survey of the state of the art in EE strategies. We
+    first provide a compendium of work focused on CV and NLP applications in Sections [5.2](#S5.SS2
+    "5.2\. EE for CV Applications ‣ 5\. Early Exiting: A Survey ‣ Split Computing
+    and Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    and [5.3](#S5.SS3 "5.3\. EE for NLP Applications ‣ 5\. Early Exiting: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges"), respectively. Section [5.4](#S5.SS4 "5.4\. Training Methodologies
+    for EE Strategies ‣ 5\. Early Exiting: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges") summarizes training
+    methodologies used in the EE studies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1\. Rationale behind EE
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The core idea of EE, first proposed in Teerapittayanon et al. ([2016](#bib.bib141)),
+    is to circumvent the need to make DNN models smaller by introducing early exits
+    in the DNN, where execution is terminated at the first exit achieving the desired
+    confidence on the input sample. For instance, some samples in test datasets (and
+    in real-world problems) will be easy for a DNN model, but others may not be, depending
+    on ML models we use. Thus, EE ends the inference process with fewer transforms
+    (layers) for such easy samples so that the overall inference time and computation
+    cost are reduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/711803046e7b395bf52aaa0dbfc1f3b5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 7\. Illustration of two early exits (green) introduced to DNN.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [7](#S5.F7 "Figure 7 ‣ 5.1\. Rationale behind EE ‣ 5\. Early Exiting:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges") illustrates an example of early classifiers (subbranches)
+    introduced in a DNN model. In this example, the second early classifier has sufficient
+    confidence in its output (class probability is 0.85 out of 1.0) to terminate the
+    inference for the input sample so that the following layers are not executed.
+    Note that all the exits are executed until the desired confidence is reached,
+    that is, the computational complexity up to that point increases. Thus, the classifiers
+    added to the DNN model need to be simple, that is, they need to have fewer layers
+    than the layers after the branches. Otherwise, the overall inference cost will
+    increase on average rather than decrease. Teerapittayanon et al. ([2017](#bib.bib142))
+    also applies this idea to mobile-edge-cloud computing systems; the smallest neural
+    model is allocated to the mobile device, and if that model’s confidence for the
+    input is not large enough, the intermediate output is forwarded to the edge server,
+    where inference will continue using a mid-sized neural model with another exit.
+    If the output still does not reach the target confidence, the intermediate layer’s
+    output is forwarded to the cloud, which executes the largest neural model. EE
+    strategies have been widely investigated in the literature, as summarized in Table [4](#S5.T4
+    "Table 4 ‣ 5.1\. Rationale behind EE ‣ 5\. Early Exiting: A Survey ‣ Split Computing
+    and Early Exiting for Deep Learning Applications: Survey and Research Challenges").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As shown in Tables [1](#S4.T1 "Table 1 ‣ 4.1\. Split Computing without DNN
+    Modification ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges") and [3](#S4.T3
+    "Table 3 ‣ 4.3\. Split Computing with Bottleneck Injection ‣ 4\. Split Computing:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges"), most of the studies on SC were focused on computer
+    vision. For EE, we can confirm a good balance between the studies with computer
+    vision and NLP applications as summarized in Table [4](#S5.T4 "Table 4 ‣ 5.1\.
+    Rationale behind EE ‣ 5\. Early Exiting: A Survey ‣ Split Computing and Early
+    Exiting for Deep Learning Applications: Survey and Research Challenges"), with
+    structural/conceptual differences between the two domains. Moreover, CNN (*e.g.*,
+    AlexNet (Krizhevsky et al., [2012](#bib.bib65)) and ResNet (He et al., [2016](#bib.bib44)))
+    and Transformer-based models (*e.g.*, BERT (Devlin et al., [2019](#bib.bib22)))
+    are mostly discussed in the EE studies for computer vision and NLP, respectively.
+    For these reasons, we categorize the EE papers by task domain in Sections [5.2](#S5.SS2
+    "5.2\. EE for CV Applications ‣ 5\. Early Exiting: A Survey ‣ Split Computing
+    and Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    and [5.3](#S5.SS3 "5.3\. EE for NLP Applications ‣ 5\. Early Exiting: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges").'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 4\. Studies on early exiting strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Work | Task(s) | Dataset(s) | Base Model(s) | Metrics | Code |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Teerapittayanon et al. ([2016](#bib.bib141)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2016) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | MNIST (LeCun et al., [1998](#bib.bib70)) CIFAR-10 (Krizhevsky,
+    [2009](#bib.bib64)) | LeNet-5 (LeCun et al., [1998](#bib.bib70)) AlexNet (Krizhevsky
+    et al., [2012](#bib.bib65)) ResNet (He et al., [2016](#bib.bib44)) | A, L | [Link](https://gitlab.com/kunglab/branchynet)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Teerapittayanon et al. ([2017](#bib.bib142)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2017) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification* | Multi-camera multi-object detection (Roig et al.,
+    [2011](#bib.bib120)) | Distributed DNNs | A, D | [Link](https://github.com/kunglab/ddnn)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Lo et al. ([2017](#bib.bib88)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2017) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)) | NiN (Lin
+    et al., [2014a](#bib.bib81)) ResNet (He et al., [2016](#bib.bib44)) WRN (Zagoruyko
+    and Komodakis, [2016](#bib.bib168)) | A, C |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Neshatpour et al. ([2019](#bib.bib103)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | ImageNet (Russakovsky et al., [2015](#bib.bib121))
+    | AlexNet (Krizhevsky et al., [2012](#bib.bib65)) | A, C, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Zeng et al. ([2019](#bib.bib169)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10 (Krizhevsky, [2009](#bib.bib64)) | AlexNet (Krizhevsky
+    et al., [2012](#bib.bib65)) | A, D, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Wang et al. ([2019a](#bib.bib149)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)) | ResNet (He
+    et al., [2016](#bib.bib44)) | A, C |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Li et al. ([2019](#bib.bib78)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)) ImageNet
+    (2012) (Russakovsky et al., [2015](#bib.bib121)) | MSDNet (Huang et al., [2018](#bib.bib51))
+    | A, C | [Link](https://github.com/kalviny/IMTA) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Phuong and Lampert ([2019](#bib.bib109)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2019) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) ImageNet
+    (2012) (Russakovsky et al., [2015](#bib.bib121)) | MSDNet (Huang et al., [2018](#bib.bib51))
+    | A | [Link](https://github.com/mary-phuong/multiexit-distillation) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Elbayad et al. ([2020](#bib.bib25)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Machine translation | IWSLT’14 De-En WMT’14 En-Fr | Transformer (Vaswani
+    et al., [2017](#bib.bib146)) | A, C |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Wang et al. ([2020b](#bib.bib151)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) ImageNet
+    (2012) (Russakovsky et al., [2015](#bib.bib121)) | ResNet (He et al., [2016](#bib.bib44))
+    DenseNet (Huang et al., [2017](#bib.bib52)) | A, C, E |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Yang et al. ([2020b](#bib.bib159)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)) ImageNet (Russakovsky
+    et al., [2015](#bib.bib121)) | RANet | A, C | [Link](https://github.com/yangle15/RANet-pytorch)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Soldaini and Moschitti ([2020](#bib.bib133)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Text ranking | WikiQA (Yang et al., [2015](#bib.bib164)), TREC QA (Wang et al.,
+    [2007](#bib.bib150)), ASNQ (Garg et al., [2020](#bib.bib33)), GPD | RoBERTa (Liu
+    et al., [2019](#bib.bib86)) | A, C | [Link](https://github.com/alexa/wqa-cascade-transformers)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Liu et al. ([2020](#bib.bib85)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Text classification | ChnSentiCorp, Book review (Qiu et al., [2018](#bib.bib113)),
+    Shopping review, Weibo, THUCNews, Ag.News, Amz.F, DBpedia, Yahoo, Yelp.F, Yelp.P (Zhang
+    et al., [2015](#bib.bib172)) | BERT (Devlin et al., [2019](#bib.bib22)) | A, C,
+    T | [Link](https://github.com/autoliuweijie/FastBERT) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Xin et al. ([2020b](#bib.bib157)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| GLUE (Wang et al., [2019b](#bib.bib147)) | SST-2 (Socher et al., [2013](#bib.bib132)),
+    MRPC (Dolan and Brockett, [2005](#bib.bib23)), QQP (Iyer et al., [[n.d.]](#bib.bib55)),
+    MNLI (Williams et al., [2018](#bib.bib153)), QNLI (Rajpurkar et al., [2016](#bib.bib115)),
+    RTE (Dagan et al., [2005](#bib.bib19); Haim et al., [2006](#bib.bib38); Giampiccolo
+    et al., [2007](#bib.bib34); Bentivogli et al., [2009](#bib.bib8)) | BERT (Devlin
+    et al., [2019](#bib.bib22)) RoBERTa (Liu et al., [2019](#bib.bib86)) | A, C |
+    [Link](https://github.com/castorini/DeeBERT) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Xing et al. ([2020](#bib.bib158)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Quality enhancement | RAISE (Dang-Nguyen et al., [2015](#bib.bib20)) | Dynamic
+    DNN | A, C | [Link](https://github.com/RyanXingQL/RBQE) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Laskaridis et al. ([2020](#bib.bib68)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) ImageNet
+    (2012) (Russakovsky et al., [2015](#bib.bib121)) | ResNet-56 (He et al., [2016](#bib.bib44))
+    ResNet-50 (He et al., [2016](#bib.bib44)) Inception-v3 (Szegedy et al., [2016](#bib.bib137))
+    | A, E, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Xin et al. ([2020a](#bib.bib156)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Text ranking | MS MARCO (Nguyen et al., [2016](#bib.bib105)) ASNQ (Garg et al.,
+    [2020](#bib.bib33)) | BERT (Devlin et al., [2019](#bib.bib22)) | A, L | [Link](https://github.com/castorini/earlyexiting-monobert)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Zhou et al. ([2020](#bib.bib173)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| GLUE (Wang et al., [2019b](#bib.bib147)) | CoLA (Warstadt et al., [2019](#bib.bib152)),
+    SST-2 (Socher et al., [2013](#bib.bib132)), MRPC (Dolan and Brockett, [2005](#bib.bib23)),
+    STS-B (Cer et al., [2017](#bib.bib10)), QQP (Iyer et al., [[n.d.]](#bib.bib55)),
+    MNLI (Williams et al., [2018](#bib.bib153)), QNLI (Rajpurkar et al., [2016](#bib.bib115)),
+    WNLI (Levesque et al., [2012](#bib.bib72)), RTE (Dagan et al., [2005](#bib.bib19);
+    Haim et al., [2006](#bib.bib38); Giampiccolo et al., [2007](#bib.bib34); Bentivogli
+    et al., [2009](#bib.bib8)) | BERT (Devlin et al., [2019](#bib.bib22)) ALBERT (Lan
+    et al., [2019](#bib.bib67)) | A, C, L, T | [Link](https://github.com/JetRunner/PABEE)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Matsubara and Levorato ([2021](#bib.bib95)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2020) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Keypoint detection | COCO 2017 (Lin et al., [2014b](#bib.bib84)) | Keypoint
+    R-CNN (He et al., [2017a](#bib.bib43)) | A, D, L | [Link](https://github.com/yoshitomo-matsubara/hnd-ghnd-object-detectors)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Garg and Moschitti ([2021](#bib.bib32)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Text ranking Question answering | WikiQA (Yang et al., [2015](#bib.bib164)),
+    ASNQ (Garg et al., [2020](#bib.bib33)) SQuAD 1.1 (Rajpurkar et al., [2016](#bib.bib115))
+    | BERT (Devlin et al., [2019](#bib.bib22)) RoBERTa (Liu et al., [2019](#bib.bib86))
+    ELECTRA (Clark et al., [2019](#bib.bib16)) | A, L | [Link](https://github.com/alexa/wqa-question-filtering)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Wołczyk et al. ([2021](#bib.bib154)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-10/100 (Krizhevsky, [2009](#bib.bib64)), Tiny
+    ImageNet | ResNet-56 (He et al., [2016](#bib.bib44)) MobileNet (Howard et al.,
+    [2017](#bib.bib49)) WideResNet (Zagoruyko and Komodakis, [2016](#bib.bib168))
+    VGG-16BN (Simonyan and Zisserman, [2015](#bib.bib129)) | A, L | [Link](https://github.com/gmum/Zero-Time-Waste)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Chiang et al. ([2021](#bib.bib13)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | CIFAR-100 (Krizhevsky, [2009](#bib.bib64)) | VGG-11 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) VGG-13 (Simonyan and Zisserman, [2015](#bib.bib129))
+    VGG-16 (Simonyan and Zisserman, [2015](#bib.bib129)) VGG-19 (Simonyan and Zisserman,
+    [2015](#bib.bib129)) | A, L |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Pomponi et al. ([2021](#bib.bib110)) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; (2021) &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Image classification | SVHN (Netzer et al., [[n.d.]](#bib.bib104)), CIFAR-10/100 (Krizhevsky,
+    [2009](#bib.bib64)) | AlexNet (Krizhevsky et al., [2012](#bib.bib65)) VGG-11 (Simonyan
+    and Zisserman, [2015](#bib.bib129)) ResNet-20 (He et al., [2016](#bib.bib44))
+    | A | [Link](https://github.com/jaryP/ConfidenceBranchNetwok) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'A: Model accuracy, C: Model complexity, D: Transferred data size, E: Energy
+    consumption, L: Latency, T: Training cost'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*  The authors extract annotated objects from the original dataset for multi-camera
+    object detection, and use the extracted images for an image classification task.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2\. EE for CV Applications
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Similar to the SC studies we discussed in Session [4](#S4 "4\. Split Computing:
+    A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey
+    and Research Challenges"), the research community mainly focused on EE approaches
+    applied to CV tasks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Design approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Wang et al. ([2020b](#bib.bib151)) propose a unified Dual Dynamic Inference
+    that introduces the following features to a DNN model: Input-Adaptive Dynamic
+    Inference (IADI) and Resource-Adaptive Dynamic Inference (RADI). The IADI dynamically
+    determines which sub-networks to be executed for cost-efficient inference, and
+    the RADI leverages the concept of EE to offer “anytime classification”. Using
+    the concept of EE, Lo et al. ([2017](#bib.bib88)) proposes two different methods:
+    (i) authentic operation, and (ii) dynamic network sizing. The first approach is
+    used to determine whether the model input is transferred to the edge server, and
+    the latter dynamically adjusts the number of layers to be used as an auxiliary
+    neural model deployed on mobile device for efficient usage of communication channels
+    in EC systems. Neshatpour et al. ([2019](#bib.bib103)) decomposes a DNN’s inference
+    pipeline into multiple stages, and introduce EE (termination) points for energy-efficient
+    inference.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Wang et al. ([2019a](#bib.bib149)) focus on training methods for DNN s with
+    an early exit and observes that prior EE approaches suffered from the burden of
+    manually tuning balancing weights of early exit losses to find a good trade-off
+    between computational complexity and overall accuracy. To address this problem,
+    the authors propose a strategy to dynamically adjust the loss weights for the
+    ResNet models they consider. Li et al. ([2019](#bib.bib78)) and Phuong and Lampert
+    ([2019](#bib.bib109)) introduce multiple early exits to DNN models and apply knowledge
+    distillation to each of the early exits as students, using their final classifiers
+    as teacher models. Similar to other studies, the DNN s with early exits are designed
+    to finish inference for “easy” samples by early sub-classifiers based on confidence
+    thresholds defined beforehand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inference approaches
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Yang et al. ([2020b](#bib.bib159)) leverage EE strategies for multi-scale inputs,
+    and propose an approach to classify “easy” samples with smaller neural models.
+    Different from prior studies, their proposed approach scales up the input image
+    (use higher-resolution image as input), depending on the classification difficulty
+    of the sample. Laskaridis et al. ([2020](#bib.bib68)) design a distributed inference
+    system that employs synergistic device-cloud computation for collaborative inference,
+    including an EE strategy (referred to as progressive inference in their work).
+    Xing et al. ([2020](#bib.bib158)) apply EE strategies to quality enhancement tasks
+    and propose a resource-efficient blind quality enhancement approach for compressed
+    images. By identifying “easy” samples in the tasks, they dynamically process input
+    samples with/without early exits. Zeng et al. ([2019](#bib.bib169)) combine EE
+    and SC approaches, and propose a framework named Boomerang, which is designed
+    to automate end-to-end DNN inference planning for IoT scenarios; they introduce
+    multiple early exits in AlexNet (Krizhevsky et al., [2012](#bib.bib65)). Their
+    proposed framework profiles the model to decide its partition (splitting) point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to introducing and training bottleneck points for object detector,
+    Matsubara and Levorato ([2021](#bib.bib95)) introduce a *neural filter* in an
+    early stage of the head-distilled Keypoint R-CNN model. Similarly to EE frameworks,
+    the filter identifies pictures without objects of interest and trigger termination
+    of the execution before the output of the bottleneck is forwarded. Wołczyk et al.
+    ([2021](#bib.bib154)) propose Zero Time Waste, a method in which each early exit
+    reuses predictions returned by its predecessors. The method adds direct connections
+    between early exits and combines outputs of the previous early exits like an ensemble
+    model. Through experiments with multiple image classification datasets and model
+    architectures, they demonstrate that their proposed method improves a tradeoff
+    between accuracy and inference time comparing to other early exit methods. Extending
+    the idea of BranchyNet (Teerapittayanon et al., [2016](#bib.bib141)), Chiang et al.
+    ([2021](#bib.bib13)) formulate the early-exit (branch) placement problem. They
+    propose a dynamic programming algorithm to address the problem and discuss the
+    tradeoff between model accuracy and inference time. Pomponi et al. ([2021](#bib.bib110))
+    introduce multiple early exits to a classifier and train the entire multi-exit
+    model jointly. Using multiple base models, they discuss various early-exit stopping
+    criteria. Many studies on EE for CV tasks publish their source code to ensure
+    replicability of their work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3\. EE for NLP Applications
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Interestingly, EE approaches have been widely studied not only in CV tasks
+    – the main application of SC– but also NLP tasks. Recent studies introduce subbranches
+    (early exits) to transformer-based models such as BERT (Devlin et al., [2019](#bib.bib22)).
+    While these transformer-based models achieve state of the art performance in NLP
+    tasks, they have an extremely large number of parameters, *e.g.*, BERT (Devlin
+    et al., [2019](#bib.bib22)) has up to 355 million parameters where the largest
+    image classification model used in SC studies (Tables  [1](#S4.T1 "Table 1 ‣ 4.1\.
+    Split Computing without DNN Modification ‣ 4\. Split Computing: A Survey ‣ Split
+    Computing and Early Exiting for Deep Learning Applications: Survey and Research
+    Challenges") and  [3](#S4.T3 "Table 3 ‣ 4.3\. Split Computing with Bottleneck
+    Injection ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges")), ResNet-152,
+    has 60 million parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Elbayad et al. ([2020](#bib.bib25)) an EE technique for NLP tasks is developed
+    for transformer sequence-to-sequence models (Vaswani et al., [2017](#bib.bib146))
+    in machine translation tasks. The decoder networks in the considered transformer
+    models can be trained by either aligned training or mixed training methods. The
+    former method optimizes all classifiers in the decoder network simultaneously.
+    However, when a different classifier (exit) is chosen for each token (*e.g.*,
+    word) at test time, some of the hidden states from previous time steps may be
+    missed and then the input states to the following decoder network will be misaligned
+    (mismatched). The latter method addresses this issue. In mixed sample training,
+    several paths of random exits are sampled at which the model is assumed to have
+    exited for reducing the mismatch by feeding hidden states from different decoder
+    depths of previous time steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For different tasks, Soldaini and Moschitti ([2020](#bib.bib133)), Xin et al.
+    ([2020b](#bib.bib157)) and Liu et al. ([2020](#bib.bib85)) propose EE frameworks
+    based on BERT (Devlin et al., [2019](#bib.bib22)) and RoBERTa (Liu et al., [2019](#bib.bib86))
+    that share almost the same network architecture. Focused on text ranking, specifically
+    answer sentence selection tasks with question answering datasets, Soldaini and
+    Moschitti ([2020](#bib.bib133)) add classification layers to intermediate stages
+    of RoBERTa to build sequential (neural) rerankers (Matsubara et al., [2020b](#bib.bib96))
+    inside as early exits, and propose the Cascade Transformer models. Focusing on
+    powerful transformer models for industrial scenarios, Liu et al. ([2020](#bib.bib85))
+    discuss the effectiveness on twelve (six English and six Chinese) NLP datasets
+    of BERT models when early classifiers are introduced. Similar to the studies by
+    Li et al. ([2019](#bib.bib78)) and Phuong and Lampert ([2019](#bib.bib109)), Liu
+    et al. ([2020](#bib.bib85)) leverage knowledge distillation (Hinton et al., [2014](#bib.bib47))
+    to train early classifiers, treating the final classifier of the BERT model and
+    their introduced early classifiers as a teacher and student classifiers, respectively.
+    Xin et al. ([2020b](#bib.bib157)) target general language understanding evaluation
+    (GLUE) tasks (Wang et al., [2019b](#bib.bib147)), and introduce early exits after
+    each of 12 transformer blocks in BERT and RoBERTa models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While the Cascade Transformer (Soldaini and Moschitti, [2020](#bib.bib133))
+    disregards a fixed portion of candidates (samples) given a query in answer sentence
+    selection tasks, Xin et al. ([2020a](#bib.bib156)) use a score-based EE strategy
+    for a BERT architecture for text ranking tasks. Zhou et al. ([2020](#bib.bib173))
+    introduce early classifiers to BERT and ALBERT (Lan et al., [2019](#bib.bib67))
+    models and discusses adversarial robustness using the ALBERT models with and without
+    the early exits. Using an adversarial attack method (Jin et al., [2020](#bib.bib60)),
+    the authors feed perturbed input data (called adversarial examples (Kurakin et al.,
+    [2016](#bib.bib66))) to their trained models and show how robust their models
+    are against the adversarial attack, compared to those without early classifiers.
+    Garg and Moschitti ([2021](#bib.bib32)) propose an approach to filter out questions
+    in answer sentence selection and question answering tasks. Leveraging the concept
+    of knowledge distillation, they train a question filter model (student), whose
+    input is a query, by mimicking the top-1 candidate score of the answer model (teacher),
+    whose input is a pair of query and the list of the candidate answers. When the
+    trained question filter model finds a query answerable for the answer model, the
+    subsequent inference pipeline will be executed. Otherwise, the question filter
+    model terminates the inference process for the query (*i.e.*, early exit) to save
+    the overall inference cost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Most of the studies on EE for NLP tasks in Table [4](#S5.T4 "Table 4 ‣ 5.1\.
+    Rationale behind EE ‣ 5\. Early Exiting: A Survey ‣ Split Computing and Early
+    Exiting for Deep Learning Applications: Survey and Research Challenges") are published
+    with source code to assure replicable results. Notably, this application domain
+    enjoys a well-generalized open source framework – Huggingface’s Transformers (Wolf
+    et al., [2020](#bib.bib155)) – which provides state-of-the-art (pretrained) Transformer
+    models, including the BERT, RoBERTa, and ALBERT models used in the above studies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4\. Training Methodologies for EE Strategies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To introduce EE strategies, the early classifiers need to be trained in addition
+    to the base models. We can categorize the training methodologies used in EE studies
+    into two main classes: *joint training* and *separate training*, illustrated in
+    Fig. [8](#S5.F8 "Figure 8 ‣ 5.4\. Training Methodologies for EE Strategies ‣ 5\.
+    Early Exiting: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges") and described in the next sections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/08e6990391de97ac011da0dbdc0dc170.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8\. Examples of joint and separate training methods for DNN with early
+    exits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Joint training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Most of the training methods used in existing works belong to this category.
+    Joint training trains all the (early) classifiers in a model simultaneously (left
+    part of Fig. [8](#S5.F8 "Figure 8 ‣ 5.4\. Training Methodologies for EE Strategies
+    ‣ 5\. Early Exiting: A Survey ‣ Split Computing and Early Exiting for Deep Learning
+    Applications: Survey and Research Challenges")). Specifically, these studies (Teerapittayanon
+    et al., [2016](#bib.bib141), [2017](#bib.bib142); Lo et al., [2017](#bib.bib88);
+    Zeng et al., [2019](#bib.bib169); Wang et al., [2019a](#bib.bib149); Elbayad et al.,
+    [2020](#bib.bib25); Wang et al., [2020b](#bib.bib151); Yang et al., [2020b](#bib.bib159);
+    Soldaini and Moschitti, [2020](#bib.bib133); Xing et al., [2020](#bib.bib158);
+    Laskaridis et al., [2020](#bib.bib68); Xin et al., [2020a](#bib.bib156); Zhou
+    et al., [2020](#bib.bib173); Pomponi et al., [2021](#bib.bib110)) define a loss
+    function for each of the classifier, and minimize the weighted sum of cross entropy
+    losses per sample as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (8) |  | $\mathcal{L}_{\text{Joint}}([\mathbf{\hat{y}}^{1},\cdots,\mathbf{\hat{y}}^{N}],c)=\sum_{j=1}^{N}\lambda_{j}\mathcal{L}_{\text{CE}}(\mathbf{\hat{y}}^{j},c),$
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where $[\mathbf{\hat{y}}^{1},\cdots,\mathbf{\hat{y}}^{N}]$ indicates outputs
+    from $N$ (early) classifiers, and the correct label $c$ is shared across all the
+    classifiers in a model. Note that the base model (final classifier) is also counted
+    as one of the $N$ classifiers, and $N-1$ early classifiers are introduced to the
+    base model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead, Li et al. ([2019](#bib.bib78)); Phuong and Lampert ([2019](#bib.bib109))
+    use a knowledge distillation-based loss such as Eq. ([3](#S4.E3 "In Knowledge
+    distillation ‣ 4\. Split Computing: A Survey ‣ Split Computing and Early Exiting
+    for Deep Learning Applications: Survey and Research Challenges")) by treating
+    the final classifier (last exit) as teacher model and all the early classifiers
+    as student models. This approach is based on the assumption that the last classifier
+    will achieve the highest accuracy among all the (early) classifiers in the model,
+    and early classifiers (students) could learn from the last classifier as a teacher
+    model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Separate training
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A few studies (Liu et al., [2020](#bib.bib85); Xin et al., [2020b](#bib.bib157);
+    Matsubara and Levorato, [2021](#bib.bib95); Garg and Moschitti, [2021](#bib.bib32))
+    suggest training the early classifiers separately. This approach can be interpreted
+    as a two-stage training paradigm that trains a model in the first stage and then
+    trains the early classifiers introduced to the pretrained model whose parameters
+    are fixed in the second stage (See Fig. [8](#S5.F8 "Figure 8 ‣ 5.4\. Training
+    Methodologies for EE Strategies ‣ 5\. Early Exiting: A Survey ‣ Split Computing
+    and Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    (right)). For instance, Xin et al. ([2020b](#bib.bib157)) fine-tune a BERT model
+    in the first stage following Devlin et al. ([2019](#bib.bib22)). Then, the early
+    classifiers are introduced in the model and trained while all the parameters of
+    the BERT model learnt in the first stage are kept frozen. Liu et al. ([2020](#bib.bib85))
+    adopt a similar approach, but in the second training stage, knowledge distillation
+    is used to train the early classifiers. Different from SC studies using knowledge
+    distillation, the teacher model is fixed, and only the additional parameters corresponding
+    to the early classifiers are trained. Wołczyk et al. ([2021](#bib.bib154)) introduce
+    early exits to a pretrained model. Using the cross entropy loss, they train the
+    introduced early exits.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '6\. Split Computing and Early Exiting: Research Challenges'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we describe some of the research challenges in the SC and EE
+    domains.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evaluation of SC and EE in more practical settings
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Due to the cross-disciplinary nature of this research area, it is essential
+    to design practical and convincing evaluation settings to demonstrate the effectiveness
+    of proposed approaches. As shown in Tables [3](#S4.T3 "Table 3 ‣ 4.3\. Split Computing
+    with Bottleneck Injection ‣ 4\. Split Computing: A Survey ‣ Split Computing and
+    Early Exiting for Deep Learning Applications: Survey and Research Challenges")
+    and [4](#S5.T4 "Table 4 ‣ 5.1\. Rationale behind EE ‣ 5\. Early Exiting: A Survey
+    ‣ Split Computing and Early Exiting for Deep Learning Applications: Survey and
+    Research Challenges"), the techniques proposed in many of the recent related studies
+    are validated only on small-scale datasets such as MNIST and CIFAR datasets, which
+    leads to some concerns on the input data size in relation with compression. Indeed,
+    Table [2](#S4.T2 "Table 2 ‣ 4.2\. The Need for Bottleneck Injection ‣ 4\. Split
+    Computing: A Survey ‣ Split Computing and Early Exiting for Deep Learning Applications:
+    Survey and Research Challenges") suggests that the input data size in many of
+    such datasets is relatively small (*e.g.*, smaller than 2 kilobytes per image
+    with a resolution of $32\times 32$ pixels). The low-resolution of the input size
+    may enable conventional EC, where the mobile device fully offloads the computing
+    task by transferring the input data to an edge server. In fact, the transmission
+    of such a small amount of data would require a short time even in settings with
+    limited communication capacity. As a consequence, executing even small head models
+    on a resource-limited mobile device could lead to an overall delay increase.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on the above discussion, it becomes apparent that the models and datasets,
+    in addition to the wireless and computing environments, are of paramount importance
+    when assessing the performance of SC and EE schemes. Of particular relevance is
+    the evaluation of accuracy, which is not provided in some of the early studies
+    (*e.g.*, (Sandler et al., [2018](#bib.bib123); He et al., [2016](#bib.bib44);
+    Simonyan and Zisserman, [2015](#bib.bib129))) and the consideration of state-of-the-art
+    models and datasets which are largely used in the machine learning community.
+    For instance, the use of small models, such as MobileNetV2, ResNet-50, VGG-16,
+    which are likely overparameterized for simple classification tasks, could lead
+    to wrong conclusions when injecting bottlenecks. Conversely, it was shown in (Matsubara
+    et al., [2019](#bib.bib91)) how challenging it is to inject bottlenecks when considering
+    complex vision tasks such as classification on the ImageNet dataset (Russakovsky
+    et al., [2015](#bib.bib121)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optimization of bottleneck design and placement in SC
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The study of the architecture and placement of the bottleneck in a DNN model
+    is also of considerable importance. As suggested in (Matsubara et al., [2022b](#bib.bib97)),
+    important metrics include: (i) bottleneck data size (or compression rate), (ii)
+    complexity of head model executed on mobile device, and (iii) resulting model
+    accuracy. As a principle, the smaller the bottleneck representation is, the lower
+    the communication cost between mobile device and edge server will be. In general,
+    the objective of SC is to generate a bottleneck whose data size is smaller than
+    that of input data such as JPEG file size of input data, which is in turn much
+    smaller than data size of input tensor (32-bit floating point), as the communication
+    delay is a key component to reduce overall inference time (Matsubara et al., [2019](#bib.bib91);
+    Yang et al., [2020b](#bib.bib159); Matsubara et al., [2020a](#bib.bib92); Matsubara
+    and Levorato, [2021](#bib.bib95)). Secondly, since mobile devices often have limited
+    computing resources and may have other constraints such as energy consumption
+    due to their battery capacities, SC should aim at minimizing their computational
+    load by making head models as lightweight as possible. For instance, designing
+    a small bottleneck at a very early stage of the DNN model enables a reduction
+    in the computational complexity of the head model (Matsubara and Levorato, [2020](#bib.bib94),
+    [2021](#bib.bib95)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On top of these two criteria, the resulting model accuracy by the bottleneck
+    injection should not be compromised as the introduced bottleneck removes more
+    or less information at the placement compared to the original model. A reasonable
+    lower bound of the model accuracy in SC would be that of widely recognized lightweight
+    models *e.g.,* MobileNetV2 (Sandler et al., [2018](#bib.bib123)) for ImageNet
+    dataset, considering a local computing system where such lightweight models can
+    be efficiently executed. In general, it is challenging to optimize bottleneck
+    design and placement with respect to all the three different metrics, and existing
+    studies empirically design the bottlenecks and determine the placements. Thus,
+    theoretical discussion on bottleneck design and placement should be an interesting
+    research topic for future work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dynamic control of exits in EE
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In most of the recent studies, early exits are used when one of the introduced
+    early classifiers (exits) is confident enough in its prediction. However, users
+    are required to determine a threshold for each of the classifiers beforehand at
+    least for one early classifier in the original model where we introduce the early
+    classifier to. For example, if the first classifier’s prediction score is greater
+    than 0.9 in range of 0.0 and 1.0, then the inference for the input is terminated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To achieve more efficient inference without significantly sacrificing the accuracy
+    of the original model, the system needs to find a balance between (early) classifiers.
+    As recent studies introduce multiple early exits to a model at different stages,
+    such optimizations are challenging. In addition to manually defining such a threshold
+    for each of the classifiers based on empirical results, a possibly interesting
+    direction is the optimization of the decision-making process, that is, at which
+    (early) classifier we should terminate the inference for a given input, without
+    a set of thresholds defined beforehand based on system characteristics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expanding the Application Domain of SC and EE
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The application domains of SC and (in minor part) EE remain primarily focused
+    on image classification. This focus may be explained by the size of the input,
+    which makes compression a relevant problem in many settings and the complexity
+    of the models and tasks. However, there are many other unexplored domains which
+    SC would benefit. Real-time health conditions monitoring via wearable sensors
+    is a notable example of application where a significant amount of data is transferred
+    from sensors to edge servers such as cellular phones and home hubs. For instance,
+    the detection and monitoring of heart anomalies (*e.g.*, arrhythmia) from (ECG) (Gadaleta
+    et al., [2018](#bib.bib31)) require the processing of high-rate samples (*e.g.*,
+    $100$-$1000$ per heart cycle) using high complexity DNN models(Hannun et al.,
+    [2019](#bib.bib42)). Health monitoring applications pose different challenges
+    compared to CV-based applications. Indeed, in the former, both the computing capacity
+    and the bandwidth available to the system are often smaller compared to the latter
+    scenario, and conceptual advancements are required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Toward an Information-Theoretic Perspective
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The key intuition behind the success of SC and EE is similar to what has led
+    to the success of techniques such as model pruning (Han et al., [2016](#bib.bib39);
+    Li et al., [2016](#bib.bib75); He et al., [2017b](#bib.bib45); Yang et al., [2017](#bib.bib161))
+    and knowledge distillation (Hinton et al., [2014](#bib.bib47); Kim and Rush, [2016](#bib.bib62);
+    Mirzadeh et al., [2020](#bib.bib99)): most state-of-the-art DNN s are significantly
+    over-parameterized (Yu et al., [2020](#bib.bib167); Yu and Principe, [2019](#bib.bib166)).
+    A possible approach to justify SC and EE can be found in the study of *information
+    bottlenecks* (IB), which were introduced in (Tishby et al., [2000](#bib.bib143))
+    as a compression technique in which a random variable $\mathbf{X}$ is compressed
+    while preserving relevant information about another random variable $\mathbf{Y}$.
+    The IB method has been applied in (Tishby and Zaslavsky, [2015](#bib.bib144))
+    to quantify mutual information between the network layers and derive an information
+    theory limit on DNN efficiency. This has led to attempts at explaining the behavior
+    of deep neural networks with the information bottleneck formalism (Saxe et al.,
+    [2019](#bib.bib124)).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Despite these early attempts, a strong connection between this relatively new
+    perspective and the techniques described in this paper is still elusive. Some
+    of the approaches and architectures discussed in this paper are meaningful attempts
+    to efficiently extract a compressed representation of the input and provide sufficient
+    information toward a certain task early in the network layers. The emerging IB
+    formalism is a promising approach to enable the first moves in the information
+    theoretic analysis of neural networks-based transformations. We believe that this
+    interpretation could serve as a foundation for an in-depth study of structural
+    properties for both SC and EE.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7\. Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Mobile devices such as smartphones and drones have now become an integral part
+    of our daily lives. These devices increasingly utilize deep neural networks (DNNs)
+    to execute complex inference tasks such as image classification and speech recognition,
+    among others. For this reason, in this paper, we provided a comprehensive survey
+    of the state of the art in split computing (SC) and early exiting (EE) by presenting
+    a thorough comparison of the most relevant approaches. We also provided a set
+    of compelling research challenges that need to be addressed to improve existing
+    work in the field. We hope this survey will elicit further research in these emerging
+    fields.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledgements.
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: This work was partially supported by the NSF under grant IIS-1724331, MLWiNS-2003237,
+    CCF-2140154, and CNS-2134567.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: (1)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adelantado et al. (2017) Ferran Adelantado, Xavier Vilajosana, Pere Tuset-Peiro,
+    Borja Martinez, Joan Melia-Segui, and Thomas Watteyne. 2017. Understanding the
+    Limits of LoRaWAN. *IEEE Communications Magazine* 55, 9 (2017), 34–40.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Assine et al. (2021) Juliano S Assine, Eduardo Valle, et al. 2021. Single-Training
+    Collaborative Object Detectors Adaptive to Bandwidth and Computation. *arXiv preprint
+    arXiv:2105.00591* (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ba and Caruana (2014) Jimmy Ba and Rich Caruana. 2014. Do deep nets really need
+    to be deep?. In *NIPS 2014*. 2654–2662.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ballé et al. (2017) Johannes Ballé, Valero Laparra, and Eero P Simoncelli. 2017.
+    End-to-end Optimized Image Compression. In *International Conference on Learning
+    Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ballé et al. (2018) Johannes Ballé, David Minnen, Saurabh Singh, Sung Jin Hwang,
+    and Nick Johnston. 2018. Variational image compression with a scale hyperprior.
+    In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Barbera et al. (2013) Marco V Barbera, Sokol Kosta, Alessandro Mei, and Julinda
+    Stefa. 2013. To offload or not to offload? the bandwidth and energy costs of mobile
+    cloud computing. In *Proceedings of IEEE INFOCOM 2013*. 1285–1293.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bentivogli et al. (2009) Luisa Bentivogli, Peter Clark, Ido Dagan, and Danilo
+    Giampiccolo. 2009. The Fifth PASCAL Recognizing Textual Entailment Challenge..
+    In *Proceedings of Text Analysis Conference (TAC’09*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Buciluǎ et al. (2006) Cristian Buciluǎ, Rich Caruana, and Alexandru Niculescu-Mizil.
+    2006. Model compression. In *Proceedings of the 12th ACM SIGKDD international
+    conference on Knowledge discovery and data mining*. 535–541.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Cer et al. (2017) Daniel Cer, Mona Diab, Eneko Agirre, Iñigo Lopez-Gazpio,
+    and Lucia Specia. 2017. SemEval-2017 Task 1: Semantic Textual Similarity Multilingual
+    and Cross-lingual Focused Evaluation. In *Proceedings of the 11th International
+    Workshop on Semantic Evaluation (SemEval-2017)*. 1–14.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chen and Ran (2019) Jiasi Chen and Xukan Ran. 2019. Deep Learning With Edge
+    Computing: A Review. *Proc. IEEE* 107, 8 (2019), 1655–1674.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chen et al. (2017) Liang-Chieh Chen, George Papandreou, Florian Schroff, and
+    Hartwig Adam. 2017. Rethinking Atrous Convolution for Semantic Image Segmentation.
+    *arXiv preprint arXiv:1706.05587* (2017).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Chiang et al. (2021) Chang-Han Chiang, Pangfeng Liu, Da-Wei Wang, Ding-Yong
+    Hong, and Jan-Jan Wu. 2021. Optimal Branch Location for Cost-effective Inference
+    on Branchynet. In *2021 IEEE International Conference on Big Data (Big Data)*.
+    IEEE, 5071–5080.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Choi and Bajić (2018) Hyomin Choi and Ivan V Bajić. 2018. Deep Feature Compression
+    for Collaborative Object Detection. In *2018 25th IEEE International Conference
+    on Image Processing (ICIP)*. IEEE, 3743–3747.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Choi et al. (2020) Hyomin Choi, Robert A Cohen, and Ivan V Bajić. 2020. Back-And-Forth
+    Prediction for Deep Tensor Compression. In *ICASSP 2020-2020 IEEE International
+    Conference on Acoustics, Speech and Signal Processing (ICASSP)*. IEEE, 4467–4471.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Clark et al. (2019) Kevin Clark, Minh-Thang Luong, Quoc V Le, and Christopher D
+    Manning. 2019. ELECTRA: Pre-training Text Encoders as Discriminators Rather Than
+    Generators. In *International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cohen et al. (2020) Robert A Cohen, Hyomin Choi, and Ivan V Bajić. 2020. Lightweight
+    Compression Of Neural Network Feature Tensors For Collaborative Intelligence.
+    In *2020 IEEE International Conference on Multimedia and Expo (ICME)*. IEEE, 1–6.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Collobert et al. (2011) Ronan Collobert, Jason Weston, Léon Bottou, Michael
+    Karlen, Koray Kavukcuoglu, and Pavel Kuksa. 2011. Natural language processing
+    (almost) from scratch. *Journal of machine learning research* 12 (2011), 2493–2537.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dagan et al. (2005) Ido Dagan, Oren Glickman, and Bernardo Magnini. 2005. The
+    PASCAL recognising textual entailment challenge. In *Proceedings of the First
+    international conference on Machine Learning Challenges: evaluating Predictive
+    Uncertainty Visual Object Classification, and Recognizing Textual Entailment*.
+    177–190.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dang-Nguyen et al. (2015) Duc-Tien Dang-Nguyen, Cecilia Pasquini, Valentina
+    Conotter, and Giulia Boato. 2015. RAISE: A raw images dataset for digital image
+    forensics. In *Proceedings of the 6th ACM multimedia systems conference*. 219–224.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Deng et al. (2013) Li Deng, Geoffrey Hinton, and Brian Kingsbury. 2013. New
+    types of deep neural network learning for speech recognition and related applications:
+    An overview. In *2013 IEEE international conference on acoustics, speech and signal
+    processing*. IEEE, 8599–8603.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Devlin et al. (2019) Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina
+    Toutanova. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language
+    Understanding. In *Proceedings of the 2019 Conference of the North American Chapter
+    of the Association for Computational Linguistics: Human Language Technologies,
+    Volume 1 (Long and Short Papers)*. 4171–4186.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dolan and Brockett (2005) William B Dolan and Chris Brockett. 2005. Automatically
+    constructing a corpus of sentential paraphrases. In *Proceedings of the Third
+    International Workshop on Paraphrasing (IWP2005)*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Dong et al. (2018) Jin-Dong Dong, An-Chieh Cheng, Da-Cheng Juan, Wei Wei, and
+    Min Sun. 2018. DPP-Net: Device-aware Progressive Search for Pareto-optimal Neural
+    Architectures. In *Proceedings of the European Conference on Computer Vision (ECCV)*.
+    517–531.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Elbayad et al. (2020) Maha Elbayad, Jiatao Gu, E. Grave, and M. Auli. 2020.
+    Depth-Adaptive Transformer. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Eshratifar et al. (2019a) Amir Erfan Eshratifar, Mohammad Saeed Abrishami,
+    and Massoud Pedram. 2019a. JointDNN: An Efficient Training and Inference Engine
+    for Intelligent Mobile Cloud Computing Services. *IEEE Transactions on Mobile
+    Computing* (2019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Eshratifar et al. (2019b) Amir Erfan Eshratifar, Amirhossein Esmaili, and Massoud
+    Pedram. 2019b. BottleNet: A Deep Learning Architecture for Intelligent Mobile
+    Cloud Computing Services. In *2019 IEEE/ACM Int. Symposium on Low Power Electronics
+    and Design (ISLPED)*. 1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Everingham et al. (2012) Mark Everingham, Luc Van Gool, CKI Williams, John Winn,
+    and Andrew Zisserman. 2012. The PASCAL Visual Object Classes Challenge 2012 (VOC2012).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Everingham et al. ([n.d.]) M. Everingham, L. Van Gool, C. K. I. Williams, J.
+    Winn, and A. Zisserman. [n.d.]. The PASCAL Visual Object Classes Challenge 2007
+    (VOC2007) Results. http://www.pascal-network.org/challenges/VOC/voc2007/workshop/index.html.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fei-Fei et al. (2006) Li Fei-Fei, Rob Fergus, and Pietro Perona. 2006. One-shot
+    learning of object categories. *IEEE transactions on pattern analysis and machine
+    intelligence* 28, 4 (2006), 594–611.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gadaleta et al. (2018) Matteo Gadaleta, Michele Rossi, Steven R Steinhubl, and
+    Giorgio Quer. 2018. Deep learning to detect atrial fibrillation from short noisy
+    ECG segments measured with wireless sensors. *Circulation* 138, Suppl_1 (2018),
+    A16177–A16177.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Garg and Moschitti (2021) Siddhant Garg and Alessandro Moschitti. 2021. Will
+    this Question be Answered? Question Filtering via Answer Model Distillation for
+    Efficient Question Answering. In *Proceedings of the 2021 Conference on Empirical
+    Methods in Natural Language Processing*. 7329–7346.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Garg et al. (2020) Siddhant Garg, Thuy Vu, and Alessandro Moschitti. 2020.
+    TANDA: Transfer and adapt pre-trained transformer models for answer sentence selection.
+    In *Proceedings of the AAAI Conference on Artificial Intelligence*, Vol. 34\.
+    7780–7788.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Giampiccolo et al. (2007) Danilo Giampiccolo, Bernardo Magnini, Ido Dagan, and
+    William B Dolan. 2007. The third pascal recognizing textual entailment challenge.
+    In *Proceedings of the ACL-PASCAL workshop on textual entailment and paraphrasing*.
+    1–9.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Gundersen and Kjensmo (2018) Odd Erik Gundersen and Sigbjørn Kjensmo. 2018.
+    State of the Art: Reproducibility in Artificial Intelligence. In *Proceedings
+    of the AAAI Conference on Artificial Intelligence*, Vol. 32.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Guo (2018) Tian Guo. 2018. Cloud-Based or On-Device: An Empirical Study of
+    Mobile Deep Inference. In *2018 IEEE Int. Conference on Cloud Engineering (IC2E)*.
+    IEEE, 184–190.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gupta et al. (2015) Lav Gupta, Raj Jain, and Gabor Vaszkun. 2015. Survey of
+    Important Issues in UAV Communication Networks. *IEEE Communications Surveys &
+    Tutorials* 18, 2 (2015), 1123–1152.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Haim et al. (2006) R Bar Haim, Ido Dagan, Bill Dolan, Lisa Ferro, Danilo Giampiccolo,
+    Bernardo Magnini, and Idan Szpektor. 2006. The second pascal recognising textual
+    entailment challenge. In *Proceedings of the Second PASCAL Challenges Workshop
+    on Recognising Textual Entailment*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Han et al. (2016) Song Han, Huizi Mao, and William J Dally. 2016. Deep Compression:
+    Compressing Deep Neural Networks with Pruning, Trained Quantization and Huffman
+    Coding. In *Fourth International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Han et al. (2015) Song Han, Jeff Pool, John Tran, and William Dally. 2015. Learning
+    both Weights and Connections for Efficient Neural Network. *Advances in Neural
+    Information Processing Systems* 28 (2015).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hannun et al. (2014) Awni Hannun, Carl Case, Jared Casper, Bryan Catanzaro,
+    Greg Diamos, Erich Elsen, Ryan Prenger, Sanjeev Satheesh, Shubho Sengupta, Adam
+    Coates, et al. 2014. Deep speech: Scaling up end-to-end speech recognition. *arXiv
+    preprint arXiv:1412.5567* (2014).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hannun et al. (2019) Awni Y Hannun, Pranav Rajpurkar, Masoumeh Haghpanahi, Geoffrey H
+    Tison, Codie Bourn, Mintu P Turakhia, and Andrew Y Ng. 2019. Cardiologist-level
+    arrhythmia detection and classification in ambulatory electrocardiograms using
+    a deep neural network. *Nature medicine* 25, 1 (2019), 65–69.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. (2017a) Kaiming He, Georgia Gkioxari, Piotr Dollár, and Ross Girshick.
+    2017a. Mask R-CNN. In *Proceedings of the IEEE International Conference on Computer
+    Vision*. 2961–2969.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. (2016) Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016.
+    Deep residual learning for image recognition. In *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*. 770–778.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: He et al. (2017b) Yihui He, Xiangyu Zhang, and Jian Sun. 2017b. Channel Pruning
+    for Accelerating Very Deep Neural Networks. In *Proceedings of the IEEE International
+    Conference on Computer Vision*. 1389–1397.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hinton et al. (2012) Geoffrey Hinton, Li Deng, Dong Yu, George E Dahl, Abdel-rahman
+    Mohamed, Navdeep Jaitly, Andrew Senior, Vincent Vanhoucke, Patrick Nguyen, Tara N
+    Sainath, et al. 2012. Deep neural networks for acoustic modeling in speech recognition:
+    The shared views of four research groups. *IEEE Signal processing magazine* 29,
+    6 (2012), 82–97.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hinton et al. (2014) Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. 2014. Distilling
+    the Knowledge in a Neural Network. In *Deep Learning and Representation Learning
+    Workshop: NIPS 2014*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Howard et al. (2019) Andrew Howard, Mark Sandler, Grace Chu, Liang-Chieh Chen,
+    Bo Chen, Mingxing Tan, Weijun Wang, Yukun Zhu, Ruoming Pang, Vijay Vasudevan,
+    et al. 2019. Searching for MobileNetV3\. In *Proceedings of the IEEE/CVF International
+    Conference on Computer Vision*. 1314–1324.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Howard et al. (2017) Andrew G Howard, Menglong Zhu, Bo Chen, Dmitry Kalenichenko,
+    Weijun Wang, Tobias Weyand, Marco Andreetto, and Hartwig Adam. 2017. MobileNets:
+    Efficient Convolutional Neural Networks for Mobile Vision Applications. *arXiv
+    preprint arXiv:1704.04861* (2017).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hu and Krishnamachari (2020) Diyi Hu and Bhaskar Krishnamachari. 2020. Fast
+    and Accurate Streaming CNN Inference via Communication Compression on the Edge.
+    In *2020 IEEE/ACM Fifth Int. Conference on Internet-of-Things Design and Implementation
+    (IoTDI)*. IEEE, 157–163.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2018) Gao Huang, Danlu Chen, T. Li, Felix Wu, L. V. D. Maaten,
+    and Kilian Q. Weinberger. 2018. Multi-Scale Dense Networks for Resource Efficient
+    Image Classification. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Huang et al. (2017) Gao Huang, Zhuang Liu, Laurens Van Der Maaten, and Kilian Q
+    Weinberger. 2017. Densely connected convolutional networks. In *Proceedings of
+    the IEEE conference on computer vision and pattern recognition*. 4700–4708.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ioffe and Szegedy (2015) Sergey Ioffe and Christian Szegedy. 2015. Batch Normalization:
+    Accelerating Deep Network Training by Reducing Internal Covariate Shift. In *International
+    Conference on Machine Learning*. PMLR, 448–456.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Itahara et al. (2021) Sohei Itahara, Takayuki Nishio, and Koji Yamamoto. 2021.
+    Packet-Loss-Tolerant Split Inference for Delay-Sensitive Deep Learning in Lossy
+    Wireless Networks. *arXiv preprint arXiv:2104.13629* (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Iyer et al. ([n.d.]) Shankar Iyer, Nikhil Dandekar, and Kornél Csernai. [n.d.].
+    First Quora Dataset Release: Question Pairs. [https://www.quora.com/q/quoradata/First-Quora-Dataset-Release-Question-Pairs](https://www.quora.com/q/quoradata/First-Quora-Dataset-Release-Question-Pairs)
+    [Online; Accessed on Januray 25, 2021].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jacob et al. (2018) Benoit Jacob, Skirmantas Kligys, Bo Chen, Menglong Zhu,
+    Matthew Tang, Andrew Howard, Hartwig Adam, and Dmitry Kalenichenko. 2018. Quantization
+    and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference.
+    In *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*.
+    2704–2713.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Jagannath et al. (2019) Jithin Jagannath, Nicholas Polosky, Anu Jagannath,
+    Francesco Restuccia, and Tommaso Melodia. 2019. Machine Learning for Wireless
+    Communications in the Internet of Things: A Comprehensive Survey. *Ad Hoc Networks*
+    93 (2019), 101913.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jankowski et al. (2020) Mikolaj Jankowski, Deniz Gündüz, and Krystian Mikolajczyk.
+    2020. Joint Device-Edge Inference over Wireless Links with Pruning. In *2020 IEEE
+    21st International Workshop on Signal Processing Advances in Wireless Communications
+    (SPAWC)*. IEEE, 1–5.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jeong et al. (2018) Hyuk-Jin Jeong, InChang Jeong, Hyeon-Jae Lee, and Soo-Mook
+    Moon. 2018. Computation Offloading for Machine Learning Web Apps in the Edge Server
+    Environment. In *2018 IEEE 38th International Conference on Distributed Computing
+    Systems (ICDCS)*. 1492–1499.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Jin et al. (2020) Di Jin, Zhijing Jin, Joey Tianyi Zhou, and Peter Szolovits.
+    2020. Is BERT Really Robust? A Strong Baseline for Natural Language Attack on
+    Text Classification and Entailment. In *Proceedings of the AAAI conference on
+    artificial intelligence*, Vol. 34\. 8018–8025.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kang et al. (2017) Yiping Kang, Johann Hauswald, Cao Gao, Austin Rovinski,
+    Trevor Mudge, Jason Mars, and Lingjia Tang. 2017. Neurosurgeon: Collaborative
+    Intelligence Between the Cloud and Mobile Edge. In *Proceedings of the Twenty-Second
+    International Conference on Architectural Support for Programming Languages and
+    Operating Systems* (Xi’an, China). 615–629. [https://doi.org/10.1145/3037697.3037698](https://doi.org/10.1145/3037697.3037698)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kim and Rush (2016) Yoon Kim and Alexander M Rush. 2016. Sequence-Level Knowledge
+    Distillation. In *Proceedings of the 2016 Conference on Empirical Methods in Natural
+    Language Processing*. 1317–1327.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kingma and Ba (2015) Diederik P. Kingma and Jimmy Ba. 2015. Adam: A Method
+    for Stochastic Optimization. In *Third International Conference on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krizhevsky (2009) Alex Krizhevsky. 2009. Learning Multiple Layers of Features
+    from Tiny Images. (2009).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Krizhevsky et al. (2012) Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton.
+    2012. ImageNet Classification with Deep Convolutional Neural Networks. In *Advances
+    in Neural Information Processing Systems 25*, F. Pereira, C. J. C. Burges, L. Bottou,
+    and K. Q. Weinberger (Eds.). 1097–1105.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Kurakin et al. (2016) Alexey Kurakin, Ian Goodfellow, and Samy Bengio. 2016.
+    Adversarial examples in the physical world. *arXiv preprint arXiv:1607.02533*
+    (2016).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lan et al. (2019) Zhenzhong Lan, Mingda Chen, Sebastian Goodman, Kevin Gimpel,
+    Piyush Sharma, and Radu Soricut. 2019. ALBERT: A Lite BERT for Self-supervised
+    Learning of Language Representations. In *International Conference on Learning
+    Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Laskaridis et al. (2020) Stefanos Laskaridis, Stylianos I Venieris, Mario Almeida,
+    Ilias Leontiadis, and Nicholas D Lane. 2020. SPINN: Synergistic Progressive Inference
+    of Neural Networks over Device and Cloud. In *Proceedings of the 26th Annual International
+    Conference on Mobile Computing and Networking*. 1–15.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LeCun et al. (2015) Yann LeCun, Yoshua Bengio, and Geoffrey Hinton. 2015. Deep
+    learning. *Nature* 521, 7553 (2015), 436.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LeCun et al. (1998) Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner.
+    1998. Gradient-based learning applied to document recognition. *Proc. IEEE* 86,
+    11 (1998), 2278–2324.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lee et al. (2021) Joo Chan Lee, Yongwoo Kim, SungTae Moon, and Jong Hwan Ko.
+    2021. A Splittable DNN-Based Object Detector for Edge-Cloud Collaborative Real-Time
+    Video Inference. In *2021 17th IEEE International Conference on Advanced Video
+    and Signal Based Surveillance (AVSS)*. IEEE, 1–8.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Levesque et al. (2012) Hector J Levesque, Ernest Davis, and Leora Morgenstern.
+    2012. The Winograd schema challenge. In *Proceedings of the Thirteenth International
+    Conference on Principles of Knowledge Representation and Reasoning*. 552–561.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Levi and Hassner (2015) Gil Levi and Tal Hassner. 2015. Age and gender classification
+    using convolutional neural networks. In *Proceedings of the IEEE conference on
+    computer vision and pattern recognition workshops*. 34–42.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2018a) Guangli Li, Lei Liu, Xueying Wang, Xiao Dong, Peng Zhao, and
+    Xiaobing Feng. 2018a. Auto-tuning Neural Network Quantization Framework for Collaborative
+    Inference Between the Cloud and Edge. In *Int. Conference on Artificial Neural
+    Networks*. 402–411.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2016) Hao Li, Asim Kadav, Igor Durdanovic, Hanan Samet, and Hans Peter
+    Graf. 2016. Pruning Filters for Efficient ConvNets. In *Fourth International Conference
+    on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2017) Hao Li, Asim Kadav, Igor Durdanovic, Hanan Samet, and Hans Peter
+    Graf. 2017. Pruning Filters for Efficient ConvNets. In *Fifth International Conference
+    on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2018b) He Li, Kaoru Ota, and Mianxiong Dong. 2018b. Learning IoT
+    in edge: Deep learning for the Internet of Things with edge computing. *IEEE network*
+    32, 1 (2018), 96–101.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2019) Hao Li, Hong Zhang, Xiaojuan Qi, Ruigang Yang, and Gao Huang.
+    2019. Improved Techniques for Training Adaptive Deep Networks. In *2019 IEEE/CVF
+    International Conference on Computer Vision (ICCV)*. 1891–1900.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Li et al. (2014) Jinyu Li, Rui Zhao, Jui-Ting Huang, and Yifan Gong. 2014. Learning
+    Small-Size DNN with Output-Distribution-Based Criteria. In *Fifteenth annual conference
+    of the international speech communication association*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Li et al. (2020) Zhuohan Li, Eric Wallace, Sheng Shen, Kevin Lin, Kurt Keutzer,
+    Dan Klein, and Joey Gonzalez. 2020. Train big, then compress: Rethinking model
+    size for efficient training and inference of transformers. In *International Conference
+    on Machine Learning*. PMLR, 5958–5968.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2014a) Min Lin, Qiang Chen, and Shuicheng Yan. 2014a. Network in
+    network. (2014).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2017a) Tsung-Yi Lin, Piotr Dollár, Ross Girshick, Kaiming He, Bharath
+    Hariharan, and Serge Belongie. 2017a. Feature pyramid networks for object detection.
+    In *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*.
+    2117–2125.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lin et al. (2017b) Tsung-Yi Lin, Priya Goyal, Ross Girshick, Kaiming He, and
+    Piotr Dollár. 2017b. Focal Loss for Dense Object Detection. In *Proceedings of
+    the IEEE international conference on computer vision*. 2980–2988.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lin et al. (2014b) Tsung-Yi Lin, Michael Maire, Serge Belongie, James Hays,
+    Pietro Perona, Deva Ramanan, Piotr Dollár, and C Lawrence Zitnick. 2014b. Microsoft
+    coco: Common objects in context. In *European conference on computer vision*.
+    Springer, 740–755.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2020) Weijie Liu, Peng Zhou, Zhiruo Wang, Zhe Zhao, Haotang Deng,
+    and QI JU. 2020. FastBERT: a Self-distilling BERT with Adaptive Inference Time.
+    In *Proceedings of the 58th Annual Meeting of the Association for Computational
+    Linguistics*. 6035–6044.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2019) Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi,
+    Danqi Chen, Omer Levy, Mike Lewis, Luke Zettlemoyer, and Veselin Stoyanov. 2019.
+    RoBERTa: A robustly optimized bert pretraining approach. *arXiv preprint arXiv:1907.11692*
+    (2019).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Liu et al. (2021) Zejian Liu, Fanrong Li, Gang Li, and Jian Cheng. 2021. EBERT:
+    Efficient BERT Inference with Dynamic Structured Pruning. In *Findings of the
+    Association for Computational Linguistics: ACL-IJCNLP 2021*. 4814–4823.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lo et al. (2017) Chi Lo, Yu-Yi Su, Chun-Yi Lee, and Shih-Chieh Chang. 2017.
+    A Dynamic Deep Neural Network Design for Efficient Workload Allocation in Edge
+    Computing. In *2017 IEEE International Conference on Computer Design (ICCD)*.
+    273–280.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Mao et al. (2017) Yuyi Mao, Changsheng You, Jun Zhang, Kaibin Huang, and Khaled B
+    Letaief. 2017. A Survey on Mobile Edge Computing: The Communication Perspective.
+    *IEEE Communications Surveys & Tutorials* 19, 4 (2017), 2322–2358.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mateo et al. (2019) Pablo Jiménez Mateo, Claudio Fiandrino, and Joerg Widmer.
+    2019. Analysis of TCP performance in 5G mm-wave mobile networks. In *2019 IEEE
+    International Conference on Communications (IEEE ICC)*. IEEE, 1–7.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matsubara et al. (2019) Yoshitomo Matsubara, Sabur Baidya, Davide Callegaro,
+    Marco Levorato, and Sameer Singh. 2019. Distilled Split Deep Neural Networks for
+    Edge-Assisted Real-Time Systems. In *Proc. of the 2019 MobiCom Workshop on Hot
+    Topics in Video Analytics and Intelligent Edges*. 21–26.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Matsubara et al. (2020a) Yoshitomo Matsubara, Davide Callegaro, Sabur Baidya,
+    Marco Levorato, and Sameer Singh. 2020a. Head Network Distillation: Splitting
+    Distilled Deep Neural Networks for Resource-Constrained Edge Computing Systems.
+    *IEEE Access* 8 (2020), 212177–212193. [https://doi.org/10.1109/ACCESS.2020.3039714](https://doi.org/10.1109/ACCESS.2020.3039714)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Matsubara et al. (2022a) Yoshitomo Matsubara, Davide Callegaro, Sameer Singh,
+    Marco Levorato, and Francesco Restuccia. 2022a. BottleFit: Learning Compressed
+    Representations in Deep Neural Networks for Effective and Efficient Split Computing.
+    *arXiv preprint arXiv:2201.02693* (2022).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Matsubara and Levorato (2020) Yoshitomo Matsubara and Marco Levorato. 2020.
+    Split Computing for Complex Object Detectors: Challenges and Preliminary Results.
+    In *Proceedings of the 4th International Workshop on Embedded and Mobile Deep
+    Learning*. 7–12.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matsubara and Levorato (2021) Yoshitomo Matsubara and Marco Levorato. 2021.
+    Neural Compression and Filtering for Edge-assisted Real-time Object Detection
+    in Challenged Networks. In *2020 25th International Conference on Pattern Recognition
+    (ICPR)*. 2272–2279.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matsubara et al. (2020b) Yoshitomo Matsubara, Thuy Vu, and Alessandro Moschitti.
+    2020b. Reranking for efficient transformer-based answer selection. In *Proceedings
+    of the 43rd International ACM SIGIR Conference on Research and Development in
+    Information Retrieval*. 1577–1580.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Matsubara et al. (2022b) Yoshitomo Matsubara, Ruihan Yang, Marco Levorato,
+    and Stephan Mandt. 2022b. SC2: Supervised Compression for Split Computing. *arXiv
+    preprint arXiv:2203.08875* (2022).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Matsubara et al. (2022c) Yoshitomo Matsubara, Ruihan Yang, Marco Levorato, and
+    Stephan Mandt. 2022c. Supervised Compression for Resource-Constrained Edge Computing
+    Systems. In *Proceedings of the IEEE/CVF Winter Conference on Applications of
+    Computer Vision*. 2685–2695.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mirzadeh et al. (2020) Seyed Iman Mirzadeh, Mehrdad Farajtabar, Ang Li, Nir
+    Levine, Akihiro Matsukawa, and Hassan Ghasemzadeh. 2020. Improved Knowledge Distillation
+    via Teacher Assistant. In *Proceedings of the AAAI Conference on Artificial Intelligence*,
+    Vol. 34. 5191–5198.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mnih et al. (2013) Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves,
+    Ioannis Antonoglou, Daan Wierstra, and Martin Riedmiller. 2013. Playing Atari
+    with Deep Reinforcement Learning. *arXiv preprint arXiv:1312.5602* (2013).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nair and Hinton (2010) Vinod Nair and Geoffrey E Hinton. 2010. Rectified linear
+    units improve restricted boltzmann machines. In *Proceedings of the 27th International
+    Conference on International Conference on Machine Learning*. 807–814.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Nakahara et al. (2021) Mutsuki Nakahara, Daisuke Hisano, Mai Nishimura, Yoshitaka
+    Ushiku, Kazuki Maruta, and Yu Nakayama. 2021. Retransmission Edge Computing System
+    Conducting Adaptive Image Compression Based on Image Recognition Accuracy. In
+    *2021 IEEE 94rd Vehicular Technology Conference (VTC2021-Fall)*. IEEE, 1–5.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neshatpour et al. (2019) Katayoun Neshatpour, Farnaz Behnia, Houman Homayoun,
+    and Avesta Sasan. 2019. Exploiting Energy-Accuracy Trade-off through Contextual
+    Awareness in Multi-Stage Convolutional Neural Networks. In *20th International
+    Symposium on Quality Electronic Design (ISQED)*. 265–270.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Netzer et al. ([n.d.]) Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco,
+    Bo Wu, and Andrew Y Ng. [n.d.]. Reading digits in natural images with unsupervised
+    feature learning. In *NIPS Workshop on Deep Learning and Unsupervised Feature
+    Learning 2011*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Nguyen et al. (2016) Tri Nguyen, Mir Rosenberg, Xia Song, Jianfeng Gao, Saurabh
+    Tiwary, Rangan Majumder, and Li Deng. 2016. MS MARCO: A human generated machine
+    reading comprehension dataset. In *CoCo@ NIPS*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Padhy et al. (2018) Ram Prasad Padhy, Sachin Verma, Shahzad Ahmad, Suman Kumar
+    Choudhury, and Pankaj Kumar Sa. 2018. Deep Neural Network for Autonomous UAV Navigation
+    in Indoor Corridor Environments. *Procedia computer science* 133 (2018), 643–650.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pagliari et al. (2020) Daniele Jahier Pagliari, Roberta Chiaro, Enrico Macii,
+    and Massimo Poncino. 2020. CRIME: Input-Dependent Collaborative Inference for
+    Recurrent Neural Networks. *IEEE Trans. Comput.* (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Panayotov et al. (2015) Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev
+    Khudanpur. 2015. LibriSpeech: An ASR corpus based on public domain audio books.
+    In *2015 IEEE International Conference on Acoustics, Speech and Signal Processing
+    (ICASSP)*. IEEE, 5206–5210.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Phuong and Lampert (2019) Mary Phuong and Christoph H. Lampert. 2019. Distillation-Based
+    Training for Multi-Exit Architectures. In *2019 IEEE/CVF International Conference
+    on Computer Vision (ICCV)*. 1355–1364.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pomponi et al. (2021) Jary Pomponi, Simone Scardapane, and Aurelio Uncini. 2021.
+    A Probabilistic Re-Intepretation of Confidence Scores in Multi-Exit Models. *Entropy*
+    24, 1 (2021), 1.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pouyanfar et al. (2018) Samira Pouyanfar, Saad Sadiq, Yilin Yan, Haiman Tian,
+    Yudong Tao, Maria Presa Reyes, Mei-Ling Shyu, Shu-Ching Chen, and SS Iyengar.
+    2018. A Survey on Deep Learning: Algorithms, Techniques, and Applications. *ACM
+    Computing Surveys (CSUR)* 51, 5 (2018), 1–36.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Povey et al. (2011) Daniel Povey, Arnab Ghoshal, Gilles Boulianne, Lukas Burget,
+    Ondrej Glembek, Nagendra Goel, Mirko Hannemann, Petr Motlicek, Yanmin Qian, Petr
+    Schwarz, et al. 2011. The Kaldi speech recognition toolkit. In *IEEE 2011 workshop
+    on automatic speech recognition and understanding*. IEEE Signal Processing Society.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Qiu et al. (2018) Y. Qiu, Hongzheng Li, Shen Li, Yingdi Jiang, Renfen Hu, and
+    L. Yang. 2018. Revisiting Correlations between Intrinsic and Extrinsic Evaluations
+    of Word Embeddings. In *CCL*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Radosavovic et al. (2020) Ilija Radosavovic, Raj Prateek Kosaraju, Ross Girshick,
+    Kaiming He, and Piotr Dollár. 2020. Designing Network Design Spaces. In *Proceedings
+    of the IEEE/CVF Conference on Computer Vision and Pattern Recognition*. 10428–10436.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Rajpurkar et al. (2016) Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and
+    Percy Liang. 2016. SQuAD: 100,000+ Questions for Machine Comprehension of Text.
+    In *Proceedings of the 2016 Conference on Empirical Methods in Natural Language
+    Processing*. 2383–2392.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon and Farhadi (2017) Joseph Redmon and Ali Farhadi. 2017. YOLO9000: better,
+    faster, stronger. In *Proceedings of the IEEE conference on computer vision and
+    pattern recognition*. 7263–7271.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Redmon and Farhadi (2018) Joseph Redmon and Ali Farhadi. 2018. YOLOv3: An incremental
+    improvement. *arXiv preprint arXiv:1804.02767* (2018).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ren et al. (2015) Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun. 2015.
+    Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks.
+    In *Advances in neural information processing systems*. 91–99.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Restuccia and Melodia (2020) Francesco Restuccia and Tommaso Melodia. 2020.
+    Deep Learning at the Physical Layer: System Challenges and Applications to 5G
+    and Beyond. *IEEE Communications Magazine* 58, 10 (2020), 58–64. [https://doi.org/10.1109/MCOM.001.2000243](https://doi.org/10.1109/MCOM.001.2000243)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Roig et al. (2011) Gemma Roig, Xavier Boix, Horesh Ben Shitrit, and Pascal Fua.
+    2011. Conditional random fields for multi-camera object detection. In *2011 International
+    Conference on Computer Vision*. IEEE, 563–570.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Russakovsky et al. (2015) Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause,
+    Sanjeev Satheesh, Sean Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael
+    Bernstein, Alexander C. Berg, and Li Fei-Fei. 2015. ImageNet Large Scale Visual
+    Recognition Challenge. *International Journal of Computer Vision* 115, 3 (2015),
+    211–252.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Samie et al. (2016) Farzad Samie, Lars Bauer, and Jörg Henkel. 2016. IoT Technologies
+    for Embedded Computing: A Survey. In *2016 International Conference on Hardware/Software
+    Codesign and System Synthesis (CODES+ ISSS)*. IEEE, 1–10.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sandler et al. (2018) Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov,
+    and Liang-Chieh Chen. 2018. MobileNetV2: Inverted Residuals and Linear Bottlenecks.
+    In *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*.
+    4510–4520.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Saxe et al. (2019) Andrew M Saxe, Yamini Bansal, Joel Dapello, Madhu Advani,
+    Artemy Kolchinsky, Brendan D Tracey, and David D Cox. 2019. On the information
+    bottleneck theory of deep learning. *Journal of Statistical Mechanics: Theory
+    and Experiment* 2019, 12 (2019), 124020.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sbai et al. (2021) Marion Sbai, Muhamad Risqi U Saputra, Niki Trigoni, and
+    Andrew Markham. 2021. Cut, Distil and Encode (CDE): Split Cloud-Edge Deep Inference.
+    In *2021 18th Annual IEEE International Conference on Sensing, Communication,
+    and Networking (SECON)*. IEEE, 1–9.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sermanet et al. (2014) Pierre Sermanet, David Eigen, Xiang Zhang, Michaël Mathieu,
+    Rob Fergus, and Yann LeCun. 2014. OverFeat: Integrated recognition, localization
+    and detection using convolutional networks. In *Second International Conference
+    on Learning Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shao and Zhang (2020) Jiawei Shao and Jun Zhang. 2020. BottleNet++: An End-to-End
+    Approach for Feature Compression in Device-Edge Co-Inference Systems. In *2020
+    IEEE International Conference on Communications Workshops (ICC Workshops)*. IEEE,
+    1–6.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Silver et al. (2017) David Silver, Julian Schrittwieser, Karen Simonyan, Ioannis
+    Antonoglou, Aja Huang, Arthur Guez, Thomas Hubert, Lucas Baker, Matthew Lai, Adrian
+    Bolton, et al. 2017. Mastering the Game of Go Without Human Knowledge. *Nature*
+    550, 7676 (2017), 354.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simonyan and Zisserman (2015) Karen Simonyan and Andrew Zisserman. 2015. Very
+    deep convolutional networks for large-scale image recognition. In *Third International
+    Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Singh et al. (2018) Amarjot Singh, Devendra Patil, and SN Omkar. 2018. Eye
+    in the sky: Real-time Drone Surveillance System (DSS) for violent individuals
+    identification using ScatterNet Hybrid Deep Learning network. In *Proceedings
+    of the IEEE Conference on Computer Vision and Pattern Recognition Workshops*.
+    1629–1637.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Snell et al. (2017) Jake Snell, Kevin Swersky, and Richard Zemel. 2017. Prototypical
+    networks for few-shot learning. In *Advances in neural information processing
+    systems*. 4077–4087.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Socher et al. (2013) Richard Socher, Alex Perelygin, Jean Wu, Jason Chuang,
+    Christopher D Manning, Andrew Y Ng, and Christopher Potts. 2013. Recursive deep
+    models for semantic compositionality over a sentiment treebank. In *Proceedings
+    of the 2013 conference on empirical methods in natural language processing*. 1631–1642.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Soldaini and Moschitti (2020) Luca Soldaini and Alessandro Moschitti. 2020.
+    The Cascade Transformer: an Application for Efficient Answer Sentence Selection.
+    In *Proceedings of the 58th Annual Meeting of the Association for Computational
+    Linguistics*. 5697–5708.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Srivastava et al. (2014) Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky,
+    Ilya Sutskever, and Ruslan Salakhutdinov. 2014. Dropout: A Simple Way to Prevent
+    Neural Networks from Overfitting. *The journal of machine learning research* 15,
+    1 (2014), 1929–1958.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Steiner et al. (2021) Andreas Steiner, Alexander Kolesnikov, Xiaohua Zhai, Ross
+    Wightman, Jakob Uszkoreit, and Lucas Beyer. 2021. How to train your ViT? Data,
+    Augmentation, and Regularization in Vision Transformers. *arXiv preprint arXiv:2106.10270*
+    (2021).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Szegedy et al. (2015) Christian Szegedy, Wei Liu, Yangqing Jia, Pierre Sermanet,
+    Scott Reed, Dragomir Anguelov, Dumitru Erhan, Vincent Vanhoucke, and Andrew Rabinovich.
+    2015. Going deeper with convolutions. In *Proceedings of the IEEE conference on
+    computer vision and pattern recognition*. 1–9.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Szegedy et al. (2016) Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jon
+    Shlens, and Zbigniew Wojna. 2016. Rethinking the inception architecture for computer
+    vision. In *Proceedings of the IEEE conference on computer vision and pattern
+    recognition*. 2818–2826.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Taigman et al. (2014) Yaniv Taigman, Ming Yang, Marc’Aurelio Ranzato, and Lior
+    Wolf. 2014. Deepface: Closing the gap to human-level performance in face verification.
+    In *Proceedings of the IEEE conference on computer vision and pattern recognition*.
+    1701–1708.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan et al. (2019) Mingxing Tan, Bo Chen, Ruoming Pang, Vijay Vasudevan, Mark
+    Sandler, Andrew Howard, and Quoc V Le. 2019. MnasNet: Platform-Aware Neural Architecture
+    Search for Mobile. In *Proceedings of the IEEE Conf. on Computer Vision and Pattern
+    Recognition*. 2820–2828.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Tan et al. (2020) Mingxing Tan, Ruoming Pang, and Quoc V Le. 2020. EfficientDet:
+    Scalable and Efficient Object Detection. In *Proceedings of the IEEE/CVF conference
+    on computer vision and pattern recognition*. 10781–10790.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Teerapittayanon et al. (2016) Surat Teerapittayanon, Bradley McDanel, and Hsiang-Tsung
+    Kung. 2016. BranchyNet: Fast Inference via Early Exiting from Deep Neural Networks.
+    In *2016 23rd International Conference on Pattern Recognition (ICPR)*. IEEE, 2464–2469.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Teerapittayanon et al. (2017) Surat Teerapittayanon, Bradley McDanel, and H. T.
+    Kung. 2017. Distributed Deep Neural Networks Over the Cloud, the Edge and End
+    Devices. In *2017 IEEE 37th International Conference on Distributed Computing
+    Systems (ICDCS)*. 328–339.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tishby et al. (2000) Naftali Tishby, Fernando C Pereira, and William Bialek.
+    2000. The information bottleneck method. *arXiv preprint physics/0004057* (2000).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tishby and Zaslavsky (2015) Naftali Tishby and Noga Zaslavsky. 2015. Deep learning
+    and the information bottleneck principle. In *2015 IEEE Information Theory Workshop
+    (ITW)*. IEEE, 1–5.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ultralytics ([n.d.]) Ultralytics. [n.d.]. YOLOv5. https://github.com/ultralytics/yolov5.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vaswani et al. (2017) Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit,
+    Llion Jones, Aidan N Gomez, Ł ukasz Kaiser, and Illia Polosukhin. 2017. Attention
+    is All you Need. In *Advances in Neural Information Processing Systems*, I. Guyon,
+    U. V. Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett
+    (Eds.), Vol. 30\. Curran Associates, Inc., 5998–6008.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2019b) Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill,
+    Omer Levy, and Samuel R Bowman. 2019b. GLUE: A Multi-Task Benchmark and Analysis
+    Platform for Natural Language Understanding. In *International Conference on Learning
+    Representations*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2020a) Fei Wang, Boyu Diao, Tao Sun, and Yongjun Xu. 2020a. Data
+    security and privacy challenges of computing offloading in fins. *IEEE Network*
+    34, 2 (2020), 14–20.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2019a) Meiqi Wang, Jianqiao Mo, Jun Lin, Zhongfeng Wang, and Li
+    Du. 2019a. DynExit: A Dynamic Early-Exit Strategy for Deep Residual Networks.
+    In *2019 IEEE International Workshop on Signal Processing Systems (SiPS)*. IEEE,
+    178–183.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang et al. (2007) Mengqiu Wang, Noah A Smith, and Teruko Mitamura. 2007. What
+    is the Jeopardy model? A quasi-synchronous grammar for QA. In *Proceedings of
+    the 2007 Joint Conference on Empirical Methods in Natural Language Processing
+    and Computational Natural Language Learning (EMNLP-CoNLL)*. 22–32.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wang et al. (2020b) Yue Wang, Jianghao Shen, Ting-Kuei Hu, P. Xu, Tan Nguyen,
+    Richard Baraniuk, Zhangyang Wang, and Yingyan Lin. 2020b. Dual Dynamic Inference:
+    Enabling More Efficient, Adaptive, and Controllable Deep Inference. *IEEE Journal
+    of Selected Topics in Signal Processing* 14 (2020), 623–633.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Warstadt et al. (2019) Alex Warstadt, Amanpreet Singh, and Samuel Bowman. 2019.
+    Neural Network Acceptability Judgments. *Transactions of the Association for Computational
+    Linguistics* 7 (2019), 625–641.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Williams et al. (2018) Adina Williams, Nikita Nangia, and Samuel Bowman. 2018.
+    A Broad-Coverage Challenge Corpus for Sentence Understanding through Inference.
+    In *Proceedings of the 2018 Conference of the North American Chapter of the Association
+    for Computational Linguistics: Human Language Technologies, Volume 1 (Long Papers)*.
+    1112–1122.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wołczyk et al. (2021) Maciej Wołczyk, Bartosz Wójcik, Klaudia Bałazy, Igor
+    Podolak, Jacek Tabor, Marek Śmieja, and Tomasz Trzcinski. 2021. Zero Time Waste:
+    Recycling Predictions in Early Exit Neural Networks. *Advances in Neural Information
+    Processing Systems* 34 (2021).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Wolf et al. (2020) Thomas Wolf, Julien Chaumond, Lysandre Debut, Victor Sanh,
+    Clement Delangue, Anthony Moi, Pierric Cistac, Morgan Funtowicz, Joe Davison,
+    Sam Shleifer, et al. 2020. Transformers: State-of-the-art natural language processing.
+    In *Proceedings of the 2020 Conference on Empirical Methods in Natural Language
+    Processing: System Demonstrations*. 38–45.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xin et al. (2020a) Ji Xin, Rodrigo Nogueira, Yaoliang Yu, and Jimmy Lin. 2020a.
+    Early Exiting BERT for Efficient Document Ranking. In *Proceedings of SustaiNLP:
+    Workshop on Simple and Efficient Natural Language Processing*. 83–88.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xin et al. (2020b) Ji Xin, Raphael Tang, Jaejun Lee, Yaoliang Yu, and Jimmy
+    Lin. 2020b. DeeBERT: Dynamic Early Exiting for Accelerating BERT Inference. In
+    *Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics*.
+    2246–2251.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Xing et al. (2020) Qunliang Xing, Mai Xu, Tianyi Li, and Zhenyu Guan. 2020.
+    Early Exit Or Not: Resource-Efficient Blind Quality Enhancement for Compressed
+    Images. In *Computer Vision – ECCV 2020*. Springer International Publishing.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2020b) L. Yang, Yizeng Han, X. Chen, Shiji Song, Jifeng Dai, and
+    Gao Huang. 2020b. Resolution Adaptive Networks for Efficient Inference. In *2020
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*. 2366–2375.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. (2020c) Taojiannan Yang, Sijie Zhu, Chen Chen, Shen Yan, Mi Zhang,
+    and Andrew Willis. 2020c. MutualNet: Adaptive convnet via mutual learning from
+    network width and resolution. In *European conference on computer vision*. Springer,
+    299–315.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2017) Tien-Ju Yang, Yu-Hsin Chen, and Vivienne Sze. 2017. Designing
+    energy-efficient convolutional neural networks using energy-aware pruning. In
+    *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*.
+    5687–5695.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. (2018) Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go,
+    Mark Sandler, Vivienne Sze, and Hartwig Adam. 2018. NetAdapt: Platform-Aware Neural
+    Network Adaptation for Mobile Applications. In *Proceedings of the European Conference
+    on Computer Vision (ECCV)*. 285–300.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yang et al. (2020a) Yibo Yang, Robert Bamler, and Stephan Mandt. 2020a. Variational
+    bayesian quantization. In *International Conference on Machine Learning*. PMLR,
+    10670–10680.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yang et al. (2015) Yi Yang, Wen-tau Yih, and Christopher Meek. 2015. WikiQA:
+    A challenge dataset for open-domain question answering. In *Proceedings of the
+    2015 conference on empirical methods in natural language processing*. 2013–2018.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yao et al. (2020) Shuochao Yao, Jinyang Li, Dongxin Liu, Tianshi Wang, Shengzhong
+    Liu, Huajie Shao, and Tarek Abdelzaher. 2020. Deep compressive offloading: speeding
+    up neural network inference by trading edge computation for network latency. In
+    *Proceedings of the 18th Conference on Embedded Networked Sensor Systems*. 476–488.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Yu and Principe (2019) Shujian Yu and Jose C Principe. 2019. Understanding autoencoders
+    with information theoretic concepts. *Neural Networks* 117 (2019), 104–123.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Yu et al. (2020) Shujian Yu, Kristoffer Wickstrøm, Robert Jenssen, and José C
+    Príncipe. 2020. Understanding convolutional neural networks with information theory:
+    An initial exploration. *IEEE transactions on neural networks and learning systems*
+    (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zagoruyko and Komodakis (2016) Sergey Zagoruyko and Nikos Komodakis. 2016. Wide
+    Residual Networks. In *Proceedings of the British Machine Vision Conference (BMVC)*.
+    BMVA Press, 87.1–87.12.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zeng et al. (2019) Liekang Zeng, En Li, Zhi Zhou, and X. Chen. 2019. Boomerang:
+    On-Demand Cooperative Deep Neural Network Inference for Edge Intelligence on the
+    Industrial Internet of Things. *IEEE Network* 33 (2019), 96–103.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2019) Menglei Zhang, Michele Polese, Marco Mezzavilla, Jing Zhu,
+    Sundeep Rangan, Shivendra Panwar, and Michele Zorzi. 2019. Will TCP work in mmWave
+    5G cellular networks? *IEEE Communications Magazine* 57, 1 (2019), 65–71.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2020) Shizhou Zhang, Qi Zhang, Yifei Yang, Xing Wei, Peng Wang,
+    Bingliang Jiao, and Yanning Zhang. 2020. Person Re-identification in Aerial imagery.
+    *IEEE Transactions on Multimedia* 23 (2020), 281–291.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zhang et al. (2015) X. Zhang, J. Zhao, and Y. LeCun. 2015. Character-level Convolutional
+    Networks for Text Classification. In *NIPS*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zhou et al. (2020) Wangchunshu Zhou, Canwen Xu, Tao Ge, Julian McAuley, Ke
+    Xu, and Furu Wei. 2020. BERT Loses Patience: Fast and Robust Inference with Early
+    Exit. *Advances in Neural Information Processing Systems* 33 (2020).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zoph and Le (2017) Barret Zoph and Quoc Le. 2017. Neural Architecture Search
+    with Reinforcement Learning. In *International Conference on Learning Representations*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zoph et al. (2018) Barret Zoph, Vijay Vasudevan, Jonathon Shlens, and Quoc V
+    Le. 2018. Learning Transferable Architectures for Scalable Image Recognition.
+    In *Proceedings of the IEEE conference on computer vision and pattern recognition*.
+    8697–8710.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

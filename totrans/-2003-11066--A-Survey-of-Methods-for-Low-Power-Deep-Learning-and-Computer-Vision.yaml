@@ -1,0 +1,1035 @@
+- en: <!--yml
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'category: 未分类'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'date: 2024-09-06 20:01:58'
+  prefs: []
+  type: TYPE_NORMAL
+- en: -->
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[2003.11066] A Survey of Methods for Low-Power Deep Learning and Computer Vision'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2003.11066](https://ar5iv.labs.arxiv.org/html/2003.11066)
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: A Survey of Methods for Low-Power Deep Learning and Computer Vision
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Abhinav Goel, Caleb Tung, Yung-Hsiang Lu, and George K. Thiruvathukal2 {goel39,
+    tung3, yunglu}@purdue.edu, gkt@cs.luc.edu School of Electrical and Computer Engineering,
+    Purdue University 2Department of Computer Science, Loyola University Chicago
+  prefs: []
+  type: TYPE_NORMAL
+- en: Abstract
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: 'Deep neural networks (DNNs) are successful in many computer vision tasks. However,
+    the most accurate DNNs require millions of parameters and operations, making them
+    energy, computation and memory intensive. This impedes the deployment of large
+    DNNs in low-power devices with limited compute resources. Recent research improves
+    DNN models by reducing the memory requirement, energy consumption, and number
+    of operations without significantly decreasing the accuracy. This paper surveys
+    the progress of low-power deep learning and computer vision, specifically in regards
+    to inference, and discusses the methods for compacting and accelerating DNN models.
+    The techniques can be divided into four major categories: (1) parameter quantization
+    and pruning, (2) compressed convolutional filters and matrix factorization, (3)
+    network architecture search, and (4) knowledge distillation. We analyze the accuracy,
+    advantages, disadvantages, and potential solutions to the problems with the techniques
+    in each category. We also discuss new evaluation metrics as a guideline for future
+    research.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Index Terms:'
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+- en: neural networks, computer vision, low-power
+  prefs: []
+  type: TYPE_NORMAL
+- en: I Introduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Deep Neural Networks (DNNs) are widely used in computer vision tasks like object
+    detection, classification, and segmentation [[1](#bib.bibx1), [2](#bib.bibx2)].
+    DNNs are designated as “Deep” because they are made of many layers with a large
+    spread of connections between layers. This gives DNNs a tremendous range of variability
+    that can be fine-tuned for accurate inference through training. Unfortunately,
+    DNNs are also computation-heavy and energy-expensive as a result. VGG-16 [[3](#bib.bibx3)]
+    needs 15 billion operations to perform image classification on a single image [[4](#bib.bibx4)].
+    Similarly, YOLOv3 performs 39 billion operations to process one image [[5](#bib.bibx5)].
+    These many computations require significant compute resources and lead to a high
+    energy cost [[6](#bib.bibx6)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This presents a problem for DNNs: how can they be meaningfully deployed on
+    low-power embedded systems and mobile devices? Such machines are often constrained
+    by battery power or obtain energy through low-current USB connections [[7](#bib.bibx7)].
+    They also do not usually come with GPUs. Offloading computing to the cloud is
+    a solution [[8](#bib.bibx8)], but many DNN applications need to be performed on
+    low-power devices, e.g., computer vision deployed on drones flying in areas without
+    reliable network coverage to offload computation, or in satellites where offloading
+    is too expensive [[9](#bib.bibx9)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some low-power computer vision techniques remove redundancies from DNNs to reduce
+    the number of operations by 75% and the inference time by 50% with negligible
+    loss in accuracy. To deploy DNNs on small embedded computers, more such optimizations
+    are necessary. Therefore, pursuing low-power improvements in deep learning for
+    efficient inference is worthwhile and is a growing area of research [[10](#bib.bibx10)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This paper surveys the literature and reports state-of-the-art solutions for
+    low-power computer vision. We focus specifically on low-power DNN inference, not
+    training, as the goal is to attain high throughput. The paper classifies the low-power
+    inference methods into four categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Parameter Quantization and Pruning: Lowers the memory and computation costs
+    by reducing the number of bits used to store the parameters of DNN models.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Compressed Convolutional Filters and Matrix Factorization: Decomposes large
+    DNN layers into smaller layers to decrease the memory requirement and the number
+    of redundant matrix operations.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Network Architecture Search: Builds DNNs with different combinations of layers
+    automatically to find a DNN architecture that achieves the desired performance.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Knowledge Distillation: Trains a compact DNN that mimics the outputs, features,
+    and activations of a more computation-heavy DNN.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: TABLE [I](#S1.T1 "TABLE I ‣ I Introduction ‣ A Survey of Methods for Low-Power
+    Deep Learning and Computer Vision") summarizes these methods. This survey will
+    focus on the above mentioned software-based low-power computer vision techniques,
+    without considering low-power hardware optimizations (e.g. hardware accelerators,
+    spiking DNNs). This paper uses results reported in the existing literature to
+    analyze the advantages, disadvantages, and propose potential improvements to the
+    four methods. We also suggest an additional set of evaluation metrics to guide
+    future research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Technique | Description | Advantages | Disadvantages |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Quantization and Pruning | Reduces precision/completely removes the redundant
+    parameters and connections from a DNN. | Negligible accuracy loss with small model
+    size. Highly efficient arithmetic operations. | Difficult to implement on CPUs
+    and GPUs because of matrix sparsity. High training costs. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Filter Compression and Matrix Factorization | Decreases the size of DNN filters
+    and layers to improve efficiency. | High accuracy. Compatible with other optimization
+    techniques. | Compact convolutions can be memory- inefficient. Matrix factorization
+    is computationally expensive. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Network Architecture Search | Automatically finds a DNN architecture that
+    meets performance and accuracy requirements on a target device. | State-of-the-art
+    accuracy with low energy consumption. | Prohibitively high training costs. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Knowledge Distillation | Trains a small DNN with the knowledge of a larger
+    DNN to reduce model size. | Low computation cost with few DNN parameters. | Strict
+    assumptions on DNN structure. Only compatible with softmax outputs. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE I: Comparison of different techniques for performing low-power computer
+    vision.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II Parameter Quantization and Pruning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Memory accesses contribute significantly to the energy consumption of DNNs [[4](#bib.bibx4),
+    [11](#bib.bibx11)]. To build low-power DNNs, recent research has looked into the
+    tradeoff between accuracy and the number of memory accesses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-A Quantization of Deep Neural Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One method to reduce the number of memory accesses is to decrease the size of
+    DNN parameters. Some methods [[12](#bib.bibx12), [13](#bib.bibx13)] show that
+    it is possible to have negligible accuracy loss even when the precision of the
+    DNN parameters is reduced. Courbariaux et al. [[13](#bib.bibx13)] experiment with
+    parameters stored in different fixed-point formats to demonstrate that reduced
+    bit-widths are sufficient for training DNNs. Fig. [1](#S2.F1 "Figure 1 ‣ II-A
+    Quantization of Deep Neural Networks ‣ II Parameter Quantization and Pruning ‣
+    A Survey of Methods for Low-Power Deep Learning and Computer Vision") compares
+    the energy consumption and test error of different DNN architectures with varying
+    levels of quantization. Here, as the parameter bit-width decreases, the energy
+    consumption decreases at the expense of increasing test error. Building on these
+    findings, LightNN [[14](#bib.bibx14)], CompactNet [[15](#bib.bibx15)], and FLightNN [[11](#bib.bibx11)]
+    find the optimal bit-width for different parameters of a DNN, given an accuracy
+    constraint. Moons et al. [[16](#bib.bibx16)] also use DNNs with parameters in
+    different integer formats. Binarized neural networks proposed in Courbariaux el
+    al. [[17](#bib.bibx17)] and Rastegari et al. [[18](#bib.bibx18)] train DNNs with
+    binary parameters and activations. In binarized neural networks each parameter
+    is represented with a single bit. Because of the major reduction in precision,
+    these DNNs require many layers to obtain high accuracy. In Fig. [1](#S2.F1 "Figure
+    1 ‣ II-A Quantization of Deep Neural Networks ‣ II Parameter Quantization and
+    Pruning ‣ A Survey of Methods for Low-Power Deep Learning and Computer Vision"),
+    for a given DNN architecture, the 1-bit quantization (binarized neural networks)
+    consumes the least energy and has the highest error. To improve the accuracy of
+    binarized DNNs, Zhou et al. [[19](#bib.bibx19)] quantize the back propagation
+    gradients for better training convergence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Often, parameter quantization is used along with compression to further reduce
+    the memory requirement of DNNs. Han et al. [[4](#bib.bibx4)] first quantize the
+    parameters into discrete bins. Huffman coding is then used to compress these bins
+    to reduce the model size by approximately 89%, with negligible accuracy loss.
+    Similarly, HashedNet [[20](#bib.bibx20)] quantizes the DNN connections into hash
+    buckets such that all connections grouped to the same hash bucket share a single
+    parameter. However, because these techniques have a high training cost, their
+    adoption is limited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: When the bit-widths of the parameters decrease, the prediction
+    performance of DNNs remains constant [[13](#bib.bibx13), [21](#bib.bibx21)]. This
+    is because constraining parameters has a regularization effect in the training
+    process. Moreover, when designing custom hardware for DNNs, quantization allows
+    power-hungry multiply-accumulate operations to be replaced with shift [[15](#bib.bibx15)]
+    or XNOR [[18](#bib.bibx18)] operations: leading to a reduction in circuit area
+    and energy requirements. Disadvantages and Potential Improvements: DNNs employing
+    quantization techniques need to be retrained multiple times, making the training
+    process very expensive [[19](#bib.bibx19)]. The training cost must be reduced
+    to make these techniques easier more practical. Furthermore, different layers
+    in DNNs are sensitive to different features. A constant bit-width for all layers
+    can lead to poor performance [[11](#bib.bibx11)]. In order to select a different
+    parameter precision for each connection of the DNN (depending on its importance
+    to the output), the precision value can be represented in a differentiable manner
+    and be included in the training process. Thus, during training, each connection
+    will learn its parameter value and the parameter precision.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Refer to caption](img/ec2c616baad9555f4c565246522c488e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Pareto analysis of DNNs with varying levels of quantization on the
+    MNIST dataset. Lower-left is better because it indicates low energy and smaller
+    error. The annotations ^(1,2,3) on the data-points represent three different DNN
+    architectures for each quantization technique used in the experiments [[15](#bib.bibx15)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: II-B Pruning Parameters and Connections
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Removing the unimportant parameters and connections from DNNs can reduce the
+    number of memory accesses. The Hessian-weighted distortion measure can be used
+    to identify the importance of parameters in a DNN [[22](#bib.bibx22)]. Some techniques [[23](#bib.bibx23),
+    [24](#bib.bibx24)] use this measure to remove redundant parameters and reduce
+    the DNN size. These measure-based pruning methods only operate on the fully-connected
+    layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Method | LeNet 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; LeNet &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; 300-100 &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| AlexNet | VGG-16 |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; Training &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Time &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Unoptimized | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| P | 0.080 | 0.080 | 0.090 | 0.075 | 4.000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| P+Q | 0.031 | 0.030 | 0.037 | 0.032 | 6.000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| P+Q+C | 0.025 | 0.025 | 0.028 | 0.020 | 6.000 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE II: Comparison of model compression rates with different DNNs [[4](#bib.bibx4)].
+    Note that training time increases as models are compressed. P: Pruning, Q: Quantization,
+    C: Compression.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To extend pruning to convolutional layers, Anwar et al. [[25](#bib.bibx25)]
+    use particle filtering to locate the pruning candidates. Polyak et al. [[26](#bib.bibx26)]
+    use sample input data and prune the sparsely activated connections. Han et al. [[27](#bib.bibx27)]
+    use a new loss function to learn both parameters and connections in DNNs. Yu et
+    al. [[28](#bib.bibx28)] use an algorithm that propagates importance scores to
+    measure the importance of each parameter with respect to the final output. By
+    performing pruning, quantization, and encoding, Deep Compression [[4](#bib.bibx4)]
+    reduces the model size by $95\%$. Path-level pruning is also seen in tree-based
+    hierarchical DNNs [[29](#bib.bibx29), [30](#bib.bibx30)]. Although these techniques
+    can identify the unimportant connections, they create unwanted sparsity in DNNs.
+    Sparse matrices require special data structures (unavailable in deep learning
+    libraries), and are difficult to map onto modern GPUs. To overcome this issue,
+    some methods [[31](#bib.bibx31), [32](#bib.bibx32)] concentrate on building pruned
+    DNNs with sparsity constraints.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: As seen in TABLE [II](#S2.T2 "TABLE II ‣ II-B Pruning Parameters
+    and Connections ‣ II Parameter Quantization and Pruning ‣ A Survey of Methods
+    for Low-Power Deep Learning and Computer Vision"), pruning can be combined with
+    quantization and encoding for significant performance gains. When the three techniques
+    are used together, the VGG-16 model size decreases to $2\%$ of its original size.
+    Furthermore, pruning reduces the complexity of DNNs, and thus reduces overfitting.
+    Disadvantages and Potential Improvements: The training effort associated with
+    DNN pruning is considerable because DNNs have to be pruned and trained multiple
+    times. TABLE [II](#S2.T2 "TABLE II ‣ II-B Pruning Parameters and Connections ‣
+    II Parameter Quantization and Pruning ‣ A Survey of Methods for Low-Power Deep
+    Learning and Computer Vision") shows that the training time increases by 600%
+    when using pruning and quantization together. This problem is exacerbated when
+    the DNNs are pruned with sparsity constraints [[33](#bib.bibx33)]. Also, the advantages
+    of pruning are noticed only when using custom hardware or special data structures
+    for sparse matrices [[33](#bib.bibx33)]. Channel-level pruning is a potential
+    improvement to the existing connection-level pruning techniques, because it can
+    be performed without any special data structures and does not create unintended
+    matrix sparsity. By developing techniques to automatically identify unimportant
+    channels, it is possible to perform channel-level pruning without a significant
+    training overhead.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III Convolutional Filter Compression and Matrix Factorization
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Convolution operations contribute to the bulk of the computations in DNNs, and
+    the fully connected layers contain around 89% of the parameters in DNNs like AlexNet [[32](#bib.bibx32)].
+    To reduce the power consumption of DNNs, researchers have focused on reducing
+    the computations in convolution layers, and the number of parameters in fully
+    connected layers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-A Convolutional Filter Compression
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '| Method |'
+  prefs: []
+  type: TYPE_TB
+- en: '&#124; ImageNet &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Top-1 Acc &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Number of &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Parameters &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Number of &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '&#124; Operations &#124;'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AlexNet [[34](#bib.bibx34)] | 57.20% | 60.00 M | 727 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SqueezeNet 1.0 [[35](#bib.bibx35)] | 57.50% | 1.24 M | 837 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SqueezeNet 1.1 [[35](#bib.bibx35)] | 58.00% | 1.24 M | 360 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MobileNet v3 Large [[36](#bib.bibx36)] | 75.20% | 5.40 M | 219 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MobileNet v3 Small [[36](#bib.bibx36)] | 67.40% | 2.50 M | 56 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ShiftNet-A [[37](#bib.bibx37)] | 70.10% | 4.10 M | 1,400 M |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shift Attention Layer [[38](#bib.bibx38)] | 71.00% | 3.30 M | 538 M |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TABLE III: Comparison of convolutional filter compression techniques (accuracy,
+    number of parameters and operations).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Smaller convolution filters have considerably fewer parameters and lower computation
+    costs than larger filters. For example, a 1$\times$1 filter has only 11% parameters
+    of a 3$\times$3 filter. However, removing all large convolution layers affects
+    the translation invariance property of a DNN and lowers its accuracy [[39](#bib.bibx39)].
+    Some studies identify and replace redundant filters with smaller filters for DNN
+    acceleration. SqueezeNet [[35](#bib.bibx35)] is one such technique that uses three
+    strategies to convert $3\times 3$ convolutions into $1\times 1$ convolutions to
+    reduce the number of parameters. TABLE [III](#S3.T3 "TABLE III ‣ III-A Convolutional
+    Filter Compression ‣ III Convolutional Filter Compression and Matrix Factorization
+    ‣ A Survey of Methods for Low-Power Deep Learning and Computer Vision") compares
+    the performance of different convolutional filter compression techniques: SqueezeNet
+    has 98% ($1-\frac{1.24}{60}$) fewer parameters than AlexNet, at the expense of
+    a greater number of operations. MobileNets [[36](#bib.bibx36)] and SqueezeNet 1.1
+    reduce the number of operations along with the number of parameters [[10](#bib.bibx10)].
+    MobileNets use depthwise separable convolutions along with bottleneck layers to
+    decrease the computation, latency, and the number of parameters. MobileNets achieve
+    high accuracy by maintaining a small feature size and only expanding to a larger
+    feature space when performing the depthwise separable convolutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: Bottleneck convolutional filters reduce the memory and latency
+    requirements of DNNs significantly. For most computer vision tasks, these techniques
+    obtain state-of-the-art accuracy. Filter compaction is orthogonal to pruning and
+    quantization techniques. The three techniques can be used together to further
+    reduce energy consumption. Disadvantages and Potential Improvements: It has been
+    shown that the $1\times 1$ convolutions are computationally expensive in small
+    DNNs, and lead to poor accuracy [[40](#bib.bibx40)]. It is also difficult to implement
+    depthwise separable convolutions efficiently because their arithmetic intensity
+    (ratio of number of operations to memory accesses) is too low to efficiently utilize
+    the hardware [[37](#bib.bibx37)]. The arithmetic intensity of depthwise separable
+    convolutions can be increased by managing memory more effectively. By optimizing
+    the spatial and temporal locality of the parameters in the cache, the number of
+    memory accesses can be reduced.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: III-B Matrix Factorization
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Tensor decompositions and matrix factorizations represent the DNN operations
+    in a sum-product form for acceleration [[41](#bib.bibx41), [42](#bib.bibx42)].
+    Such techniques factorize multi-dimensional tensors (in convolutional and fully-connected
+    layers) into smaller matrices to eliminate redundant computation. Some factorizations
+    accelerate DNNs up to 4$\times$ because they create dense parameter matrices and
+    avoid the locality problem of non-structured sparse multiplications [[33](#bib.bibx33)].
+    To minimize the accuracy loss, matrix factorizations are performed one layer at
+    a time. After factorizing the parameters of one layer, subsequent layers are then
+    factorized based on some reconstruction error. The layer-by-layer optimization
+    approach makes it difficult to scale these techniques to large DNNs because the
+    number of factorization hyper-parameters increases exponentially with DNN depth.
+    To apply these methods in large DNNs, Wen et al. [[33](#bib.bibx33)] enforce compact
+    kernel shapes and depth structures to reduce the number of factorization hyper-parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are multiple matrix factorization techniques. Kolda et al. [[43](#bib.bibx43)]
+    show that most factorization techniques can be applied to DNNs for acceleration.
+    However, some techniques do not necessarily provide the optimal tradeoff between
+    accuracy and computation complexity [[43](#bib.bibx43)]. Canonical Polyadic Decomposition
+    (CPD) and Batch Normalization Decomposition (BMD) are the best performing decompositions
+    in terms of accuracy, while the Tucker-2 Decomposition and the Singular Value
+    Decomposition (SVD) result in poor accuracy [[44](#bib.bibx44), [45](#bib.bibx45)].
+    CPD compresses the DNN more than BMD, and thus accelerates the DNN to a greater
+    extent. The accuracy obtained with BMD is higher than CPD. Moreover, the optimization
+    problem associated with CPD is sometimes unsolvable, making the factorization
+    impossible [[45](#bib.bibx45)]. On the other hand, BMD is a stable factorization
+    and it always exists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: Matrix factorizations are methods to reduce the computation costs
+    in DNNs. The same factorizations can be used in both convolutional layers and
+    fully connected layers. The performance gain when using CPD and BMD is significant,
+    with small accuracy loss. Disadvantages and Potential Improvements: Because of
+    the lack of theoretical understanding, it is difficult to say why some decompositions
+    (e.g. CPD and BMD) obtain high accuracy, while other decompositions (e.g. Tucker-2
+    Decomposition and SVD) do not. Furthermore, the computation costs associated with
+    matrix factorization often offset the performance gains obtained from performing
+    fewer operations. Matrix factorizations are also difficult to implement in large
+    DNNs because the training time increases exponentially with increasing depth.
+    The high training time is mainly attributed to the fact that the search space
+    for finding the correct decomposition hyper-parameters is large. Instead of searching
+    through the entire space, the hyper-parameters can be included in the training
+    process and be learned to accelerate training for large DNNs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IV Network Architecture Search
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are many different DNN architectures and optimization techniques to consider
+    when designing low-power computer vision applications. It is often difficult to
+    manually find the best DNN for a particular task when there are many architectural
+    possibilities. Network Architecture Search (NAS) is a technique that automates
+    DNN architecture design for various tasks. NAS uses a Recurrent Neural Network
+    (RNN) controller and uses reinforced learning to compose candidate DNN architectures.
+    These candidate architectures are trained and then tested with the validation
+    set. The validation accuracy is used as a reward function to then optimize the
+    controller’s next candidate architecture. NASNet [[46](#bib.bibx46)] and AmoebaNet [[47](#bib.bibx47)]
+    demonstrate the effectiveness of NAS to obtain state-of-the-art accuracy. To automatically
+    find efficient DNNs for mobile devices, Tan et al. [[48](#bib.bibx48)] propose
+    MNasNet. This technique uses a multi-objective reward function in the controller
+    to find a DNN architecture that achieves the desired accuracy and latency (when
+    deployed on a target mobile device) requirements. MNasNet is $2.3\times$ faster
+    than NASNet with $4.8\times$ fewer parameters and $10\times$ fewer operations.
+    Moreover, MNasNet is also more accurate than NASNet. Despite the remarkable results,
+    most NAS algorithms are prohibitively computation-intensive, requiring to train
+    thousands of candidate architectures for a single task. MNasNet requires 50,000
+    GPU hours to find an efficient DNN architecture on the ImageNet dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To reduce the computation costs associated with NAS, some researchers propose
+    to search for candidate architectures based on proxy tasks and rewards, such as
+    working with a smaller dataset (e.g. CIFAR-10) or approximating the device latency
+    with the number of DNN parameters. FBNet [[49](#bib.bibx49)] is one such technique
+    that uses a proxy task (optimizing over a smaller dataset) to find efficient architectures
+    $420\times$ faster than MNasNet. Cai et al. [[50](#bib.bibx50)] show that DNN
+    architectures optimized on proxy tasks are not guaranteed to be optimal on the
+    target task, especially when hardware metrics like latency are approximated with
+    the number of operations or the number of parameters. They also propose Proxyless-NAS
+    to overcome the limitations with proxy-based NAS solutions. Proxyless-NAS uses
+    path-level pruning to reduce the number of candidate architectures and a gradient-based
+    approach for handling objectives like latency to find an efficient architecture
+    in approximately 300 GPU hours. A technique called Single-Path NAS [[51](#bib.bibx51)]
+    reduces the architecture search time to 4 hours. This speedup comes at the cost
+    of reduced accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: NAS automatically balances the trade-offs between accuracy, memory,
+    and latency by searching through the space of all possible architectures without
+    any human intervention. NAS achieves state-of-the-art performance in terms of
+    accuracy and energy efficiency on many mobile devices. Disadvantages and Potential
+    Improvements: The computational demand of NAS algorithms makes it difficult to
+    search for architectures that are optimized for large datasets. To find an architecture
+    that meets the performance requirements, each candidate architecture must be trained
+    (to check accuracy) and run on the target device (to check latency/energy) to
+    generate the reward function. The time taken to train and measure the performance
+    of each candidate architecture is significant - leading to high computation costs.
+    To reduce the training time, the candidate DNNs can be trained in parallel with
+    different subsets of the data. The gradients obtained from the different data
+    subsets can be merged to produce one trained DNN. However, such parallel training
+    techniques generally result in low accuracy. Accuracy can be increased by using
+    adaptive learning rates while maintaining high convergence rates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: V Knowledge Transfer and Distillation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Large DNNs are more accurate than small DNNs because the greater numbers of
+    parameters allow large DNNs to learn complex functions [[52](#bib.bibx52)]. Training
+    small DNNs to learn such functions is challenging with the conventional back propagation
+    algorithm. However, some methods train small DNNs to learn complex functions by
+    making the small DNNs mimic larger pre-trained DNNs. These techniques transfer
+    the “knowledge” of a large DNN to a small DNN through a process called Knowledge
+    Transfer (KT). Some early techniques utilizing KT [[53](#bib.bibx53), [54](#bib.bibx54)]
+    have been widely used to perform DNN compression. Here, the small DNN is trained
+    on data labeled by a large DNN in order to learn complex functions. The key idea
+    behind such techniques is that the data labeled by the large DNN contains a lot
+    of information that is useful for the small DNN. For example, if the large DNN
+    outputs a moderately high probability to multiple categories for a single input
+    image, then it might mean that those categories might share some visual features.
+    By forcing the small DNN to mimic these probabilities, the small DNN learns more
+    than what is available in the training data [[55](#bib.bibx55)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hinton et al. [[56](#bib.bibx56)] propose another class of techniques called
+    Knowledge Distillation (KD), where the training process is significantly simpler
+    than KT based techniques. In their work, the small DNN is trained using a student-teacher
+    paradigm. The small DNN is the student, and an ensemble of specialized DNNs is
+    the teacher. By training the student to mimic the output of the teacher, the authors
+    show that the small DNN can perform the task of the ensemble with some loss in
+    accuracy. To improve the accuracy of the small DNN, Li et al. [[57](#bib.bibx57)]
+    minimize the Euclidean distance of feature vectors between the teacher and the
+    student. Similarly, FitNet [[58](#bib.bibx58)] builds small and thin DNNs by making
+    each layer in the student mimic a feature map in the teacher. However, the metrics
+    used in Li et al. [[57](#bib.bibx57)] and FitNet [[58](#bib.bibx58)] require strict
+    assumptions on the structure of the student and are not sufficient to build energy-efficient
+    student DNNs. To solve this problem and improve generalizability, Peng et al. [[59](#bib.bibx59)]
+    utilize the correlation between the metrics as the optimization problem during
+    training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Advantages: KT- and KD-based techniques can reduce the computation costs of
+    large pre-trained DNNs significantly. Prior research has shown that the concepts
+    used in KD can be used outside computer vision as well [[55](#bib.bibx55)] (e.g.
+    semi-supervised learning, domain adaptation, etc.) Disadvantages and Potential
+    Improvements: KD often places strict assumptions on the structure and the size
+    of the student and the teacher, making it difficult to generalize to all applications.
+    Moreover, the current KD techniques rely heavily on the softmax output and do
+    not work with different output layers. Instead of making the student just mimic
+    the outputs of neurons and layers from the teacher, the student can learn the
+    sequence in which the neurons are activated. This removes the requirement that
+    the student and the teacher have the same DNN structure (thus improving generalizability)
+    and reduces the reliance on softmax output layers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: VI Discussion
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: VI-A Guidelines for Low-Power Computer Vision
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There is no single technique to build efficient DNNs for computer vision. Most
+    techniques are complementary and can be used together for better energy efficiency.
+    We include some general guidelines to consider for low-power computer vision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Quantization and reduced parameter precision decrease the model size and the
+    complexity of arithmetic operations significantly, but unfortunately, it is difficult
+    to manually implement quantization in most machine learning libraries. NVIDIA’s
+    TensorRT library provides an interface for such optimizations.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When optimizing large pre-trained DNNs, pruning and model compression are effective
+    options.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When training a new DNN from scratch, compressed convolutional filters and matrix
+    factorizations should be used to reduce the model size and computation.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: NAS finds DNNs that are optimized for individual devices with performance guarantees.
+    DNNs with several branches (e.g. Proxyless-NAS, MNasNet, etc.) frequently require
+    expensive kernel launches and synchronizations on GPUs and CPUs.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '5.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Knowledge distillation should be used with small or medium-sized datasets. This
+    is because fewer assumptions on the DNN architectures of the student and the teacher
+    are required, leading to higher accuracy.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: VI-B Evaluation Metrics
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Low-power DNNs for computer vision need to be evaluated on more aspects beyond
+    just accuracy. We list some of the major metrics that should be considered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '1.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The test accuracy should be evaluated on large datasets like ImageNet, CIFAR,
+    COCO, etc. K-folds cross-validation is necessary if the training dataset is small.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '2.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The number of parameters is generally associated with the memory requirement
+    of the DNN. It is important to compare both these metrics when working with quantization
+    and pruning techniques.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '3.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The number of operations should be evaluated to find the computation costs.
+    When using low precision DNNs, the cost of each operation reduces. In this case,
+    it is important to also measure the energy consumption.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '4.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The number of parameters and operations are not always proportional to the energy
+    consumption of the DNN [[10](#bib.bibx10)]. To find the energy consumption, DNNs
+    should be deployed on a device connected to a power meter.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: VII Summary And Conclusions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'DNNs are powerful tools for performing many computer vision tasks. However,
+    because the best-performing (most accurate) DNNs are designed for situations where
+    computational resources are readily available, they are difficult to deploy on
+    embedded and mobile devices. There has been significant research that focuses
+    on reducing the energy consumption of these DNNs with minimal accuracy loss to
+    make them better suited for low-power devices. This survey paper investigates
+    the research landscape for low-power computer vision and identifies four categories
+    of techniques: Quantization and Pruning, Filter Compression and Matrix Factorization,
+    Network Architecture Search, and Knowledge Distillation. These techniques have
+    their own strengths and weaknesses, with no clear winner. Continued research on
+    improving the state-of-the-art low-power techniques will make computer vision
+    deployable on embedded and mobile devices in the future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '[1] Z. Zhao al. “Object Detection With Deep Learning: A Review” In *IEEE TNNLS*
+    30.11, 2019, pp. 3212–3232'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[2] X. Liu al. “Recent progress in semantic image segmentation” In *arXiv:1809.10198*,
+    2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[3] K. Simonyan al. “Very Deep Convolutional Networks for Large-Scale Image
+    Recognition” In *arXiv:1409.1556*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[4] S. Han al. “Deep Compression: Compressing Deep Neural Networks with Pruning,
+    Trained Quantization and Huffman Coding” In *arXiv:1510.00149*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[5] J. Redmon al. “You Only Look Once: Unified, Real-Time Object Detection”
+    In *2016 IEEE CVPR*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[6] D. T. Nguyen al. “A High-Throughput and Power-Efficient FPGA Implementation
+    of YOLO CNN for Object Detection” In *2019 IEEE Transactions on VLSI Systems*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[7] A. Mohan et al. “Internet of Video Things in 2030: A World with Many Cameras”
+    In *2017 IEEE ISCA*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[8] K. Kumar al. “Cloud Computing for Mobile Users: Can Offloading Computation
+    Save Energy?” In *2010 Computer*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[9] S. Anup al. “Visual Positioning System for Automated Indoor/Outdoor Navigation”
+    In *2017 IEEE TENCON*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[10] S. Alyamkin et al. “Low-Power Computer Vision: Status, Challenges, and
+    Opportunities” In *2019 IEEE JETCAS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[11] R. Ding et al. “FLightNNs: Lightweight Quantized Deep Neural Networks
+    for Fast and Accurate Inference” In *2019 ACM DAC*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[12] N. Wang et al. “Training Deep Neural Networks with 8-bit Floating Point
+    Numbers” In *2018 NeurIPS*, pp. 7675–7684'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[13] M. Courbariaux al. “Training Deep Neural Networks with Low Precision Multiplications”
+    In *arXiv:1412.7024*, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[14] R. Ding et al. “LightNN: Filling the Gap between Conventional Deep Neural
+    Networks and Binarized Networks” In *2017 GGVLSI*, pp. 35–40'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[15] A. Goel al. “CompactNet: High Accuracy Deep Neural Network Optimized for
+    On-Chip Implementation” In *2018 IEEE Big Data*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[16] B. Moons, Koen Goetschalckx, Nick Van Berckelaer and Marian Verhelst “Minimum
+    Energy Quantized Neural Networks” In *arXiv:1711.00215*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[17] M. Courbariaux et al. “Binarized Neural Networks: Training Deep Neural
+    Networks with Weights and Activations Constrained to +1 or -1” In *arXiv:1602.02830
+    [cs]*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[18] M. Rastegari, Vicente Ordonez, Joseph Redmon and Ali Farhadi “XNOR-Net:
+    ImageNet Classification Using Binary Convolutional Neural Networks” In *arXiv:1603.05279*,
+    2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[19] S. Zhou et al. “DoReFa-Net: Training Low Bitwidth Convolutional Neural
+    Networks with Low Bitwidth Gradients” In *arXiv:1606.06160*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[20] W. Chen et al. “Compressing Neural Networks with the Hashing Trick” In
+    *arXiv:1504.04788*, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[21] P. Merolla al. “Deep Neural Networks are Robust to Weight Binarization
+    and Other Non-Linear Distortions” In *arXiv:1606.01981*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[22] Y. Choi al. “Towards the Limit of Network Quantization” In *arXiv:1612.01543*,
+    2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[23] Y. LeCun al. “Optimal Brain Damage” In *1990 NeurIPS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[24] B. Hassibi al. “Optimal Brain Surgeon and General Network Pruning” In
+    *1993 IEEE Intl. Conference on Neural Networks*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[25] S. Anwar al. “Structured Pruning of Deep Convolutional Neural Networks”
+    In *arXiv:1512.08571*, 2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[26] A. Polyak al. “Channel-Level Acceleration of Deep Face Representations”
+    In *2015 IEEE Access*, pp. 2163–2175'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[27] S. Han al. “Learning both Weights and Connections for Efficient Neural
+    Network” In *2015 NeurIPS*, pp. 1135–1143'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[28] R. Yu et al. “NISP: Pruning Networks Using Neuron Importance Score Propagation”
+    In *2018 IEEE CVPR*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[29] V. Peluso al. “Scalable-Effort ConvNets for Multilevel Classification”
+    In *2018 IEEE/ACM ICCAD*, pp. 1–8'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[30] J. Deng al. “Fast and Balanced: Efficient Label Tree Learning for Large
+    Scale Object Recognition” In *2011 NeurIPS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[31] H. Li al. “Pruning Filters for Efficient ConvNets” In *arXiv:1608.08710
+    [cs]*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[32] H. Zhou al. “Less Is More: Towards Compact CNNs” In *2016 ECCV*, pp. 662–677'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[33] W. Wen et al. “Learning Structured Sparsity in Deep Neural Networks” In
+    *2016 NeurIPS*, pp. 2074–2082'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[34] A. Krizhevsky al. “ImageNet Classification with Deep Convolutional Neural
+    Networks” In *2012 NeurIPS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[35] F. N. Iandola et al. “SqueezeNet: AlexNet-level accuracy with 50x fewer
+    parameters and <0.5MB model size” In *arXiv:1602.07360*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[36] A Howard et al. “Searching for MobileNetV3” In *arXiv:1905.02244*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[37] B. Wu et al. “Shift: A Zero FLOP, Zero Parameter Alternative to Spatial
+    Convolutions” In *arXiv:1711.08141*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[38] G. B. Hacene et al. “Attention Based Pruning for Shift Networks” In *arXiv:1905.12300*,
+    2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[39] H. Li al. “Multi-Bias Non-linear Activation in Deep Neural Networks” In
+    *arXiv:1604.00676*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[40] X. Zhang al. “ShuffleNet: An Extremely Efficient Convolutional Neural
+    Network for Mobile Devices” In *arXiv:1707.01083*, 2017'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[41] M. Jaderberg al. “Speeding up Convolutional Neural Networks with Low Rank
+    Expansions” In *arXiv:1405.3866*, 2014'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[42] E. Denton al. “Exploiting Linear Structure Within Convolutional Networks
+    for Efficient Evaluation” In *2014 NeurIPS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[43] T.G. Kolda al. “Tensor Decompositions and Applications” In *SIAM Review*,
+    2009, pp. 455–500'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[44] K. Hayashi, Taiki Yamaguchi, Yohei Sugawara and Shin-ichi Maeda “Exploring
+    Unexplored Tensor Network Decompositions for Convolutional Neural Networks” In
+    *2019 NeurIPS*, pp. 5553–5563'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[45] C. Tai et al. “Convolutional Neural Networks with Low-Rank Regularization”
+    In *arXiv:1511.06067*, 2016'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[46] B. Zoph al. “Learning Transferable Architectures for Scalable Image Recognition”
+    In *arXiv:1707.07012*, 2018'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[47] E. Real al. “Regularized Evolution for Image Classifier Architecture Search”
+    In *arXiv:1802.01548*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[48] M. Tan al. “MnasNet: Platform-Aware Neural Architecture Search for Mobile”
+    In *arXiv:1807.11626*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[49] B. Wu al. “FBNet: Hardware-Aware Efficient ConvNet Design via Differentiable
+    Neural Architecture Search” In *arXiv:1812.03443*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[50] H. Cai al. “ProxylessNAS: Direct Neural Architecture Search on Target
+    Task and Hardware” In *arXiv:1812.00332*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[51] D. Stamoulis al. “Single-Path NAS: Designing Hardware-Efficient ConvNets
+    in less than 4 Hours” In *arXiv:1904.02877*, 2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[52] Y. Bengio al. “Representation Learning: A Review and New Perspectives”
+    In *arXiv:1206.5538*, 2014'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[53] J. Ba al. “Do Deep Nets Really Need to be Deep?” In *2014 NeurIPS*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[54] C. Bucilua al. “Model Compression” In *2006 ACM Intl. Conference on Knowledge
+    Discovery and Data Mining*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[55] J. H.Cho al. “On the Efficacy of Knowledge Distillation” In *arXiv:1910.01348*,
+    2019'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[56] G. Hinton al. “Distilling the Knowledge in a Neural Network” In *arXiv:1503.02531*,
+    2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[57] Q. Li al. “Mimicking Very Efficient Network for Object Detection” In *2017
+    IEEE CVPR*, pp. 7341–7349'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[58] A. Romero al. “FitNets: Hints for Thin Deep Nets” In *arXiv:1412.6550*,
+    2015'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[59] B. Peng al. “Correlation Congruence for Knowledge Distillation” In *2019
+    ICCV*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
