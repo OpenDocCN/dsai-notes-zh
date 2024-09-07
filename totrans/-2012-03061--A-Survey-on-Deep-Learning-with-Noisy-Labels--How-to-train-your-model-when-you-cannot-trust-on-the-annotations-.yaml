@@ -1,0 +1,1730 @@
+- en: <!--yml
+  id: totrans-0
+  prefs: []
+  type: TYPE_NORMAL
+  zh: <!--yml
+- en: 'category: 未分类'
+  id: totrans-1
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 分类：未分类
+- en: 'date: 2024-09-06 19:57:49'
+  id: totrans-2
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 日期：2024-09-06 19:57:49
+- en: -->
+  id: totrans-3
+  prefs: []
+  type: TYPE_NORMAL
+  zh: -->
+- en: '[2012.03061] A Survey on Deep Learning with Noisy Labels: How to train your
+    model when you cannot trust on the annotations?'
+  id: totrans-4
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: '[2012.03061] 关于深度学习中的噪声标签的调查：当你无法信任标注时如何训练你的模型？'
+- en: 来源：[https://ar5iv.labs.arxiv.org/html/2012.03061](https://ar5iv.labs.arxiv.org/html/2012.03061)
+  id: totrans-5
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+  zh: 来源：[https://ar5iv.labs.arxiv.org/html/2012.03061](https://ar5iv.labs.arxiv.org/html/2012.03061)
+- en: 'A Survey on Deep Learning with Noisy Labels: How to train your model when you
+    cannot trust on the annotations?'
+  id: totrans-6
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 关于深度学习中的噪声标签的调查：当你无法信任标注时如何训练你的模型？
+- en: Filipe R. Cordeiro1 and Gustavo Carneiro2 1Department of Computing, Federal
+    Rural University of Pernambuco, Brazil 2School of Computer Science, Australian
+    Institute for Machine Learning, University of Adelaide, Australia
+  id: totrans-7
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Filipe R. Cordeiro1 和 Gustavo Carneiro2 1巴西佩南布哥联邦农村大学计算机系 2澳大利亚阿德莱德大学计算机科学学院
+- en: 'Email: filipe.rolim@ufrpe.br, gustavo.carneiro@adelaide.edu.au'
+  id: totrans-8
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 邮箱：filipe.rolim@ufrpe.br, gustavo.carneiro@adelaide.edu.au
+- en: Abstract
+  id: totrans-9
+  prefs:
+  - PREF_H6
+  type: TYPE_NORMAL
+  zh: 摘要
+- en: 'Noisy Labels are commonly present in data sets automatically collected from
+    the internet, mislabeled by non-specialist annotators, or even specialists in
+    a challenging task, such as in the medical field. Although deep learning models
+    have shown significant improvements in different domains, an open issue is their
+    ability to memorize noisy labels during training, reducing their generalization
+    potential. As deep learning models depend on correctly labeled data sets and label
+    correctness is difficult to guarantee, it is crucial to consider the presence
+    of noisy labels for deep learning training. Several approaches have been proposed
+    in the literature to improve the training of deep learning models in the presence
+    of noisy labels. This paper presents a survey on the main techniques in literature,
+    in which we classify the algorithm in the following groups: robust losses, sample
+    weighting, sample selection, meta-learning, and combined approaches. We also present
+    the commonly used experimental setup, data sets, and results of the state-of-the-art
+    models.'
+  id: totrans-10
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 噪声标签通常出现在从互联网自动收集的数据集中，由非专业标注员或者在具有挑战性的任务（如医学领域）的专家错误标注。尽管深度学习模型在不同领域显示了显著的进步，但一个悬而未决的问题是它们在训练过程中记忆噪声标签的能力，这降低了它们的泛化潜力。由于深度学习模型依赖于正确标注的数据集，而标注的正确性难以保证，因此在深度学习训练中考虑噪声标签的存在至关重要。文献中提出了几种方法来改善在噪声标签存在下的深度学习模型训练。本文对文献中的主要技术进行了综述，并将算法分类为以下几组：鲁棒损失、样本加权、样本选择、元学习和组合方法。我们还介绍了常用的实验设置、数据集和最新模型的结果。
+- en: I Introduction
+  id: totrans-11
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: I 引言
+- en: Deep Neural Networks (DNNs) have shown great performance to deal with different
+    computer vision tasks, such as image classification [[1](#bib.bib1)], segmentation
+    [[2](#bib.bib2)] and object detection [[3](#bib.bib3)], to different areas of
+    applications [[4](#bib.bib4), [5](#bib.bib5), [6](#bib.bib6)]. One of the factors
+    that improve the performance of deep learning models is the use of large-scale
+    datasets, such as ImageNet [[7](#bib.bib7)]. Unfortunately, the labeling process
+    of large-scale datasets is expensive and time-consuming, and researchers sometimes
+    resort to cheaper alternatives, such as online queries [[8](#bib.bib8)] and crowdsourcing
+    [[9](#bib.bib9)], which can produce datasets with incorrect or noisy labels. Incorrect
+    labels may also be present in small datasets, where the labeling task is difficult
+    or have divergent opinions between annotators, such as medical images [[10](#bib.bib10),
+    [11](#bib.bib11)].
+  id: totrans-12
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 深度神经网络（DNNs）在处理不同计算机视觉任务（如图像分类 [[1](#bib.bib1)]、分割 [[2](#bib.bib2)] 和目标检测 [[3](#bib.bib3)]）方面表现出色，应用领域也非常广泛
+    [[4](#bib.bib4)、[5](#bib.bib5)、[6](#bib.bib6)]。提高深度学习模型性能的一个因素是使用大规模数据集，如 ImageNet
+    [[7](#bib.bib7)]。不幸的是，大规模数据集的标注过程既昂贵又耗时，研究人员有时会采用更便宜的替代方案，如在线查询 [[8](#bib.bib8)]
+    和众包 [[9](#bib.bib9)]，这些方法可能会产生带有错误或噪声标签的数据集。小数据集中也可能存在错误标签，尤其是在标注任务困难或标注者意见不一致的情况下，如医学图像
+    [[10](#bib.bib10)、[11](#bib.bib11)]。
+- en: 'As stated in [[12](#bib.bib12)], noisy labels may occur naturally when human
+    annotators are involved. Frenay et al. [[13](#bib.bib13)] summarize the main sources
+    of noisy labels into four types: 1) insufficient information to provide reliable
+    labeling, such as poor quality images; 2) mistake made by experts; 3) variability
+    in the labeling by several experts; and 4) data encoding or communication problems
+    (e.g., accidental click). Figure [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ A Survey
+    on Deep Learning with Noisy Labels: How to train your model when you cannot trust
+    on the annotations?") illustrates the labeling strategies and sources of noisy
+    labels.'
+  id: totrans-13
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '正如[[12](#bib.bib12)]所述，当涉及到人工标注者时，嘈杂标签可能自然出现。Frenay等人[[13](#bib.bib13)]将嘈杂标签的主要来源总结为四种类型：1）提供可靠标注的信息不足，例如质量差的图像；2）专家的错误；3）多个专家标注的差异；4）数据编码或通信问题（例如，意外点击）。图[1](#S1.F1
+    "Figure 1 ‣ I Introduction ‣ A Survey on Deep Learning with Noisy Labels: How
+    to train your model when you cannot trust on the annotations?")展示了标注策略和嘈杂标签的来源。'
+- en: Most of the solutions using DNN assume that either the labels were annotated
+    by experts or were curated and therefore, would have been perfectly annotated.
+    However, that is not a realistic assumption, mainly when dealing with data collected
+    in an unsupervised way (eg., web queries). As a consequence, a DNN trained with
+    noisy labels might decrease the accuracy and require larger training sets [[14](#bib.bib14)].
+  id: totrans-14
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 大多数使用DNN的解决方案假设标签是由专家注释的，或者是经过策划的，因此会被完美标注。然而，这种假设并不现实，特别是在处理以无监督方式收集的数据时（例如，网络查询）。因此，用嘈杂标签训练的DNN可能会降低准确性，并需要更大的训练集[[14](#bib.bib14)]。
+- en: Noisy labels are also related to semi-supervised learning. As observed by Wang
+    et al. [[15](#bib.bib15)], when missing labels are incorrectly labeled in a semi-supervised
+    approach, the challenge of semi-supervised learning approximates to noisy labels.
+    The same can be said about pseudo-labeling techniques, where samples can be mislabeled.
+    However, the noisy label problem is even more challenging than previous problems
+    because we do not have information about which samples have clean labels.
+  id: totrans-15
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 嘈杂标签也与半监督学习相关。正如Wang等人所观察到的[[15](#bib.bib15)]，当缺失标签在半监督方法中被错误标记时，半监督学习的挑战就近似于嘈杂标签。伪标签技术也是如此，其中样本可能被错误标记。然而，嘈杂标签问题比之前的问题更加具有挑战性，因为我们没有关于哪些样本有干净标签的信息。
+- en: Zhang et al. [[14](#bib.bib14)] have shown that Convolutional Neural Networks
+    (CNNs) can easily fit any ratio of noisy labels, leading to poor generalization
+    performance. However, it was shown that easy patterns, corresponding to easy samples
+    with clean labels, are learned first, while difficult patterns, which are closer
+    to noisy labels, are learned later. Based on this observation, many proposed methods
+    are based on the small-loss trick, which consists of selecting the samples with
+    small loss to be used as clean samples [[16](#bib.bib16), [17](#bib.bib17), [18](#bib.bib18)].
+  id: totrans-16
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Zhang等人[[14](#bib.bib14)]已经证明卷积神经网络（CNNs）可以轻松适应任何比例的嘈杂标签，这会导致较差的泛化性能。然而，已经证明，易于识别的模式，即对应于具有干净标签的易样本，首先被学习，而难以识别的模式，即接近嘈杂标签的难样本，后来才被学习。基于这一观察，许多提出的方法基于小损失技巧，即选择小损失的样本作为干净样本[[16](#bib.bib16),
+    [17](#bib.bib17), [18](#bib.bib18)]。
+- en: 'Most of the works proposed to deal with noisy labels try to answer the following
+    questions: How to identify the noisy samples?, or more generally: How to effectively
+    train on noisy labeled datasets? [[19](#bib.bib19)]. To address this problem,
+    different strategies have been proposed: robust losses [[20](#bib.bib20), [21](#bib.bib21)],
+    label cleansing [[22](#bib.bib22), [23](#bib.bib23)], weighting [[24](#bib.bib24)],
+    meta-learning [[25](#bib.bib25)], ensemble learning [[26](#bib.bib26)], and others
+    [[9](#bib.bib9), [27](#bib.bib27), [28](#bib.bib28)]. This survey describes the
+    main approaches proposed in the literature related to training deep neural networks
+    in the presence of noisy labels.'
+  id: totrans-17
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 大多数提出处理嘈杂标签的工作试图回答以下问题：如何识别嘈杂样本？或者更普遍地说：如何有效地在嘈杂标签数据集上进行训练？[[19](#bib.bib19)]。为了解决这个问题，提出了不同的策略：鲁棒损失[[20](#bib.bib20),
+    [21](#bib.bib21)]、标签清理[[22](#bib.bib22), [23](#bib.bib23)]、加权[[24](#bib.bib24)]、元学习[[25](#bib.bib25)]、集成学习[[26](#bib.bib26)]以及其他方法[[9](#bib.bib9),
+    [27](#bib.bib27), [28](#bib.bib28)]。这项调查描述了文献中提出的与嘈杂标签存在下训练深度神经网络相关的主要方法。
+- en: '![Refer to caption](img/e9285f5a6890a659a4deee23c78a25dc.png)'
+  id: totrans-18
+  prefs: []
+  type: TYPE_IMG
+  zh: '![参见说明](img/e9285f5a6890a659a4deee23c78a25dc.png)'
+- en: 'Figure 1: Labeling process and noise sources.'
+  id: totrans-19
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图1：标注过程和噪声来源。
+- en: 'II Label noise: Definition and Taxonomy'
+  id: totrans-20
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: II 标签噪声：定义与分类
+- en: II-A Definition
+  id: totrans-21
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: II-A 定义
+- en: In this document, we refer to noisy samples as the ones whose labels are different
+    from their true class. For these samples, we denote their labels as noisy labels,
+    which means their labels are wrong. Therefore, when referring to noisy samples
+    in the scope of this paper, it means that the noise is present only in the labels
+    and not in the input data.
+  id: totrans-22
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本文档中，我们将有噪声的样本称为其标签与真实类别不同的样本。对于这些样本，我们将其标签称为噪声标签，意味着它们的标签是错误的。因此，在本文的范围内提到有噪声的样本时，意味着噪声仅存在于标签中，而不存在于输入数据中。
+- en: II-B Problem statement
+  id: totrans-23
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: II-B 问题陈述
+- en: Lets consider a classification problem with a training set $D=\{(x_{1},y_{1}),...,(x_{n},y_{n})\}$,
+    where $x_{i}\in\mathcal{X}$ is the $i^{th}$ image and $y_{i}\in Y$ is a one-hot
+    vector representing the label over $c$ classes. In a noisy label scenario, the
+    labels might be wrong and we denote $y\in Y$ as the observed labels, which may
+    contain noise (i.e., incorrect labels). We denote the true label of $x_{i}$ as
+    $y_{i}^{*}$. We denote the distribution of different labels for sample $x$ by
+    $p(c|x)$, and $\sum_{c=1}^{C}p(c|x)=1$.
+  id: totrans-24
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 让我们考虑一个分类问题，训练集为 $D=\{(x_{1},y_{1}),...,(x_{n},y_{n})\}$，其中 $x_{i}\in\mathcal{X}$
+    是第 $i$ 张图像，$y_{i}\in Y$ 是表示 $c$ 个类别的 one-hot 向量。在噪声标签场景中，标签可能是错误的，我们将 $y\in Y$
+    表示为观测标签，这可能包含噪声（即不正确的标签）。我们将 $x_{i}$ 的真实标签表示为 $y_{i}^{*}$。我们用 $p(c|x)$ 表示样本 $x$
+    不同标签的分布，且 $\sum_{c=1}^{C}p(c|x)=1$。
+- en: 'A supervised classification learns a function $f:\mathcal{X}\to\mathcal{Y}$
+    that maps the input space to the label space. Training the classifier has as objective
+    to find the optimal parameters $\theta$ that minimize an empirical risk defined
+    by a loss function. Given a loss function, $L$, and a classifier, $f(.)$, the
+    empirical risk is defined as follows:'
+  id: totrans-25
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 监督分类学习一个函数 $f:\mathcal{X}\to\mathcal{Y}$，该函数将输入空间映射到标签空间。训练分类器的目标是找到使经验风险最小化的最佳参数
+    $\theta$，该风险由损失函数定义。给定一个损失函数 $L$ 和一个分类器 $f(.)$，经验风险定义如下：
+- en: '|  | $R_{L}(f)=\mathbb{E}_{(x,y)\in D}[L(f(x),y)]=\mathbb{E}_{x,y_{x}}[L(f(x),y_{x})],$
+    |  | (1) |'
+  id: totrans-26
+  prefs: []
+  type: TYPE_TB
+  zh: '|  | $R_{L}(f)=\mathbb{E}_{(x,y)\in D}[L(f(x),y)]=\mathbb{E}_{x,y_{x}}[L(f(x),y_{x})],$
+    |  | (1) |'
+- en: where $\mathbb{E}$ denotes the Monte-Carlo expectation using the training set
+    $D$.
+  id: totrans-27
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 其中 $\mathbb{E}$ 表示使用训练集 $D$ 的蒙特卡洛期望。
+- en: II-C Types of noise
+  id: totrans-28
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: II-C 噪声类型
+- en: 'We denote the overall noise rate by $\eta\in[0,1]$ and $\eta_{jc}$ represents
+    the probability of a class $j$ be flipped to class $c$, as $p(y_{i}=c|y_{i}^{*}=j)$.
+    The main types of noise studied in literature are described as follow:'
+  id: totrans-29
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们用 $\eta\in[0,1]$ 表示整体噪声率，$\eta_{jc}$ 表示类别 $j$ 被翻转为类别 $c$ 的概率，即 $p(y_{i}=c|y_{i}^{*}=j)$。文献中研究的主要噪声类型如下：
+- en: II-C1 Symmetric Noise
+  id: totrans-30
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: II-C1 对称噪声
+- en: 'Symmetric noise is also called random noise or uniform noise, and it represents
+    a noise process when a label has equal probability to flip to another class. Among
+    the symmetric noise definition, there are two variations: symm-inc and symm-exc
+    [[27](#bib.bib27)]. In symm-inc, the true label is included into the label flipping
+    options, which means that in $\eta_{jc}=\frac{\eta}{C-1},\forall j\in Y$, while
+    in the symm-exc the true label is not included, which means $\eta_{jc}=\frac{\eta}{C-1},j\neq
+    c$. The symmetric noise, or random noise, is unlikely to represent a realistic
+    scenario for noisy labels, but it is the main baseline for noisy labels experiments.
+    Figure [2](#S2.F2 "Figure 2 ‣ II-C2 Asymmetric Noise ‣ II-C Types of noise ‣ II
+    Label noise: Definition and Taxonomy ‣ A Survey on Deep Learning with Noisy Labels:
+    How to train your model when you cannot trust on the annotations?") (a) shows
+    the transition matrix for symmetric noise, with $\eta=0.4$.'
+  id: totrans-31
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '对称噪声也称为随机噪声或均匀噪声，表示标签有相等的概率被翻转到另一个类别。在对称噪声的定义中，有两种变体：symm-inc 和 symm-exc [[27](#bib.bib27)]。在
+    symm-inc 中，真实标签被包括在标签翻转选项中，这意味着在 $\eta_{jc}=\frac{\eta}{C-1},\forall j\in Y$；而在
+    symm-exc 中，真实标签不被包括在内，这意味着 $\eta_{jc}=\frac{\eta}{C-1},j\neq c$。对称噪声或随机噪声不太可能代表真实的噪声标签场景，但它是噪声标签实验的主要基准。图
+    [2](#S2.F2 "Figure 2 ‣ II-C2 Asymmetric Noise ‣ II-C Types of noise ‣ II Label
+    noise: Definition and Taxonomy ‣ A Survey on Deep Learning with Noisy Labels:
+    How to train your model when you cannot trust on the annotations?") (a) 显示了对称噪声的转换矩阵，$\eta=0.4$。'
+- en: II-C2 Asymmetric Noise
+  id: totrans-32
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: II-C2 非对称噪声
+- en: ': The asymmetric noise, as described in [[29](#bib.bib29)], is closer to a
+    real-world label noise based on flipping labels between similar classes. For example,
+    using CIFAR10 dataset [[30](#bib.bib30)], the asymmetric noise maps TRUCK$\to$
+    AUTOMOBILE, BIRD $\to$ PLANE, DEER $\to$ HORSE, as mapped by [[31](#bib.bib31)].
+    For MNIST, [[29](#bib.bib29)] maps $2\to 7$, $3\to 8$, $7\to 1$ and $5\to 6$.
+    For asymmetric noise, $\eta_{jc}$ is class conditional. Figure [2](#S2.F2 "Figure
+    2 ‣ II-C2 Asymmetric Noise ‣ II-C Types of noise ‣ II Label noise: Definition
+    and Taxonomy ‣ A Survey on Deep Learning with Noisy Labels: How to train your
+    model when you cannot trust on the annotations?") (b) shows the transition matrix
+    for asymmetric noise, with $\eta=0.4$.'
+  id: totrans-33
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ': 不对称噪声，如[[29](#bib.bib29)]中描述的那样，是基于在相似类别之间翻转标签的真实世界标签噪声。例如，使用 CIFAR10 数据集[[30](#bib.bib30)]，不对称噪声将
+    TRUCK$\to$ AUTOMOBILE，BIRD $\to$ PLANE，DEER $\to$ HORSE，正如[[31](#bib.bib31)]所映射的。对于
+    MNIST，[[29](#bib.bib29)] 将 $2\to 7$，$3\to 8$，$7\to 1$ 和 $5\to 6$。对于不对称噪声，$\eta_{jc}$
+    是类条件的。图 [2](#S2.F2 "Figure 2 ‣ II-C2 Asymmetric Noise ‣ II-C Types of noise ‣
+    II Label noise: Definition and Taxonomy ‣ A Survey on Deep Learning with Noisy
+    Labels: How to train your model when you cannot trust on the annotations?") (b)
+    显示了不对称噪声的转换矩阵，$\eta=0.4$。'
+- en: '![Refer to caption](img/63763efc298251fe5e321853c2829d35.png)'
+  id: totrans-34
+  prefs: []
+  type: TYPE_IMG
+  zh: '![参考标题](img/63763efc298251fe5e321853c2829d35.png)'
+- en: 'Figure 2: Transition matrix of different noisy types: (a) symmetric, and (b)
+    asymmetric, for $\eta=0.4$ and 5 classes.'
+  id: totrans-35
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 2：不同噪声类型的转换矩阵：（a）对称噪声，（b）不对称噪声，$\eta=0.4$ 和 5 个类别。
+- en: II-C3 Open-set Noise
+  id: totrans-36
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+  zh: II-C3 开放集噪声
+- en: ': The noisy label problem can fall into two categories: closed-set and open-set.
+    A closed-set noisy problem is when all the true labels belong to the known classes.
+    For example, for MNIST, if a subset of samples has the labels flipped to wrong
+    labels, their original images, and corresponding true classes belong to MNIST.'
+  id: totrans-37
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ': 噪声标签问题可以分为两类：封闭集和开放集。封闭集噪声问题是指所有真实标签都属于已知类别。例如，对于 MNIST 数据集，如果样本子集的标签被错误地更改为其他标签，那么它们的原始图像及其对应的真实类别仍然属于
+    MNIST。'
+- en: The open-set noise is when a sample has a true class that is not contained in
+    the known classes of the training data. For example, if an image from CIFAR is
+    contained in MNIST training with an incorrect label of 7, it will be trained as
+    a class 7, but it would be an open-set sample. This type of noise is commonly
+    found when obtaining images from automatic web search engines (e.g., Google Images).
+  id: totrans-38
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 开放集噪声是指样本的真实类别不包含在训练数据的已知类别中。例如，如果 CIFAR 中的一张图像以错误的标签 7 出现在 MNIST 训练集中，它将被训练为类别
+    7，但它将是一个开放集样本。这种类型的噪声通常出现在从自动网页搜索引擎（例如，Google Images）获取图像时。
+- en: III Literature Review
+  id: totrans-39
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: III 文献综述
+- en: 'Learning in the presence of noisy labels is a problem studied during the last
+    decades [[32](#bib.bib32)], and several strategies have been proposed to make
+    models more robust to noise [[13](#bib.bib13)]. In this work, we are grouping
+    the main approaches in the area in the following groups: noise transition matrix,
+    robust losses, sample weighting, sample selection, meta-learning, and combined
+    approaches. Each category is described below:'
+  id: totrans-40
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在噪声标签存在的情况下进行学习是过去几十年研究的问题[[32](#bib.bib32)]，并且提出了几种策略以使模型对噪声更具鲁棒性[[13](#bib.bib13)]。在这项工作中，我们将该领域的主要方法分为以下几类：噪声转换矩阵、鲁棒损失、样本加权、样本选择、元学习和组合方法。每个类别的描述如下：
+- en: III-A Noise Transition Matrix
+  id: totrans-41
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-A 噪声转换矩阵
+- en: 'Most of the first approaches proposed to deal with noisy labels were based
+    on estimating a noise transition matrix to learn how labels switch between classes,
+    as illustrated in Figure [2](#S2.F2 "Figure 2 ‣ II-C2 Asymmetric Noise ‣ II-C
+    Types of noise ‣ II Label noise: Definition and Taxonomy ‣ A Survey on Deep Learning
+    with Noisy Labels: How to train your model when you cannot trust on the annotations?").
+    The cross-entropy loss with transition matrix is defined as follows:'
+  id: totrans-42
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '处理噪声标签的最初方法大多基于估计噪声转换矩阵，以了解标签在类别之间的转换情况，如图 [2](#S2.F2 "Figure 2 ‣ II-C2 Asymmetric
+    Noise ‣ II-C Types of noise ‣ II Label noise: Definition and Taxonomy ‣ A Survey
+    on Deep Learning with Noisy Labels: How to train your model when you cannot trust
+    on the annotations?") 所示。带有转换矩阵的交叉熵损失定义如下：'
+- en: '|  | $\mathcal{L(\theta)}=\frac{1}{N}\sum_{n=1}^{N}-log~{}p(y=y_{n}&#124;x_{n},\theta),$
+    |  | (2) |'
+  id: totrans-43
+  prefs: []
+  type: TYPE_TB
+  zh: '|  | $\mathcal{L(\theta)}=\frac{1}{N}\sum_{n=1}^{N}-log~{}p(y=y_{n}&#124;x_{n},\theta),$
+    |  | (2) |'
+- en: where
+  id: totrans-44
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 其中
+- en: '|  | $\mathcal{L(\theta)}=\frac{1}{N}\sum_{n=1}^{N}-log(\sum_{i}^{c}p(y=y_{n}&#124;y^{*}=i)p(y^{*}=i&#124;x_{n},\theta)).$
+    |  | (3) |'
+  id: totrans-45
+  prefs: []
+  type: TYPE_TB
+  zh: '|  | $\mathcal{L(\theta)}=\frac{1}{N}\sum_{n=1}^{N}-log(\sum_{i}^{c}p(y=y_{n}&#124;y^{*}=i)p(y^{*}=i&#124;x_{n},\theta)).$
+    |  | (3) |'
+- en: Several methods have been proposed to estimate the transition matrix. Patrini
+    et al. [[29](#bib.bib29)] estimate this matrix using a pre-trained model. Hendricks
+    et al. [[33](#bib.bib33)] use a clean validation set to calculate the transition
+    matrix, while Sukhbaatar et al. [[34](#bib.bib34)] propose the use of the difference
+    between the transition matrices calculated from clean and noisy data.
+  id: totrans-46
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 已经提出了几种方法来估计转移矩阵。Patrini 等人 [[29](#bib.bib29)] 使用预训练模型来估计这个矩阵。Hendricks 等人 [[33](#bib.bib33)]
+    使用干净的验证集来计算转移矩阵，而 Sukhbaatar 等人 [[34](#bib.bib34)] 提出了使用从干净数据和噪声数据计算出的转移矩阵之间的差异。
+- en: Reed et al. [[35](#bib.bib35)] uses a transition matrix combined with a regularized
+    loss that uses a combination of the noisy labels and labels predicted by the model.
+    Goldberger et al. [[36](#bib.bib36)] use the expectation-maximization (EM) algorithm
+    to find the optimal parameters of both network and the noise. The use of transition
+    matrices has been further explored in different ways [[37](#bib.bib37), [38](#bib.bib38),
+    [39](#bib.bib39)].
+  id: totrans-47
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Reed 等人 [[35](#bib.bib35)] 使用了一个转移矩阵，并结合了一个正则化损失，这个损失使用了噪声标签和模型预测标签的组合。Goldberger
+    等人 [[36](#bib.bib36)] 使用期望最大化 (EM) 算法来找到网络和噪声的最优参数。转移矩阵的使用在不同方式下得到了进一步的探索 [[37](#bib.bib37),
+    [38](#bib.bib38), [39](#bib.bib39)]。
+- en: III-B Robust Losses
+  id: totrans-48
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-B 强健损失
+- en: Loss correction approaches usually add a regularization or modify the network
+    probabilities to penalize less the low confident predictions, which may be related
+    to noisy samples. One of the advantages of these approaches is that they can be
+    used with any model. Most of the methods treat the noisy and clean samples the
+    same way, but penalise less the low confident prediction samples, compared to
+    the standard cross-entropy [[3](#bib.bib3)].
+  id: totrans-49
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 损失修正方法通常会添加正则化或修改网络概率，以减少对低置信度预测的惩罚，这些低置信度预测可能与噪声样本有关。这些方法的一个优点是它们可以与任何模型一起使用。大多数方法将噪声样本和干净样本以相同的方式处理，但相对于标准交叉熵
+    [[3](#bib.bib3)]，对低置信度预测样本的惩罚较少。
+- en: Manwani et al. [[40](#bib.bib40)] show that 0-1 losses are more noise-tolerant
+    than commonly used convex losses. [[41](#bib.bib41)] compare categorical cross-entropy
+    (CCE) with mean absolute value of error (MAE) losses, and show that MAE is more
+    noise tolerant because MAE treats all data points equally. However, training with
+    MAE usually leads to underfit, and it may not be beneficial using it depending
+    on the noise type. Zhang and Sabuncu [[31](#bib.bib31)] propose a generalized
+    cross-entropy loss by combining the benefits of mean absolute error and cross-entropy
+    losses. Wang et al. [[20](#bib.bib20)] propose an improved version of MAE (IMAE),
+    which uses hyperparameters to adjust the weighting variance of MAE. Wang et al.
+    [[21](#bib.bib21)] propose the symmetric cross-entropy, based on the fact that
+    CCE is not symmetric. By adding symmetry to the loss, they show that it helps
+    to deal with noisy labels. Ziyin et al. [[42](#bib.bib42)] propose the use of
+    a loss function that encourages the model to abstain from learning samples with
+    noisy labels. This idea is similar to re-weighting or sample selection, where
+    the noisy samples can be observed as having zero weight or removed. Similarly,
+    [[43](#bib.bib43)] also proposes a loss function that permits abstention during
+    training. Although some approaches benefit from removing noisy samples, using
+    them through relabelling or giving a lower weight has shown to improve results.
+  id: totrans-50
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Manwani 等人 [[40](#bib.bib40)] 证明了 0-1 损失比常用的凸损失对噪声的容忍度更高。[[41](#bib.bib41)]
+    比较了分类交叉熵 (CCE) 和平均绝对误差 (MAE) 损失，并表明 MAE 更具噪声容忍性，因为 MAE 对所有数据点的处理是相同的。然而，使用 MAE
+    进行训练通常会导致欠拟合，且根据噪声类型，其效果可能不佳。Zhang 和 Sabuncu [[31](#bib.bib31)] 通过结合均方误差和交叉熵损失的优点，提出了一种广义交叉熵损失。Wang
+    等人 [[20](#bib.bib20)] 提出了改进版的 MAE (IMAE)，通过使用超参数调整 MAE 的加权方差。Wang 等人 [[21](#bib.bib21)]
+    提出了对称交叉熵，基于 CCE 不对称的事实。通过向损失函数中添加对称性，他们表明这有助于处理噪声标签。Ziyin 等人 [[42](#bib.bib42)]
+    提出了使用一种损失函数，鼓励模型回避学习带有噪声标签的样本。这个想法类似于重新加权或样本选择，其中噪声样本可以被观察为零权重或被移除。同样，[[43](#bib.bib43)]
+    也提出了一种允许在训练期间回避的损失函数。尽管一些方法通过移除噪声样本获得了好处，但通过重新标记或赋予较低权重的方式使用这些样本已被证明能提高结果。
+- en: Ma et al. [[44](#bib.bib44)] propose a robust loss function called Active Passive
+    Loss (APL) that combines two robust loss functions that mutually boost each other.
+    Ma et al. identify that existing robust loss functions can deal with noisy labels,
+    but suffer from the problem of underfitting. Their proposal addresses this problem
+    by combining losses that cause overfit, such as CCE, with one that causes underfit,
+    as MAE.
+  id: totrans-51
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Ma等人[[44](#bib.bib44)]提出了一种称为Active Passive Loss (APL)的鲁棒损失函数，它结合了两种相互增强的鲁棒损失函数。Ma等人指出，现有的鲁棒损失函数可以处理噪声标签，但存在欠拟合的问题。他们的提议通过将导致过拟合的损失（如CCE）与导致欠拟合的损失（如MAE）结合来解决这一问题。
+- en: Liu et al. [[45](#bib.bib45)] propose a peer loss function inspired in a peer
+    prediction mechanism. They show that peer loss functions on the noisy data lead
+    to the optimal or a near-optimal classifier as if performing training over the
+    clean training data.
+  id: totrans-52
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Liu等人[[45](#bib.bib45)]提出了一种受同行预测机制启发的同行损失函数。他们表明，在噪声数据上的同行损失函数能够导致一个最优或接近最优的分类器，就像在干净的训练数据上训练一样。
+- en: III-C Sample Weighting
+  id: totrans-53
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-C 样本加权
+- en: Wang et al. [[46](#bib.bib46)] propose a weighting scheme to reduce the contribution
+    of the noisy samples. Similarly, [[47](#bib.bib47)] uses a method based on Curriculum
+    Learning, which defines a weight to each sample based on an unsupervised estimation
+    of data complexity.
+  id: totrans-54
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Wang等人[[46](#bib.bib46)]提出了一种加权方案，以减少噪声样本的贡献。同样地，[[47](#bib.bib47)]使用了一种基于课程学习的方法，该方法根据对数据复杂性的无监督估计为每个样本定义一个权重。
+- en: Xue et al. [[48](#bib.bib48)] use a probabilistic Local Outlier Factor algorithm
+    (pLOF), which is used as an outlier detector, to estimate a probability value
+    of a sample be an outlier (i.e., noisy sample). [[46](#bib.bib46)] also uses the
+    pLOF, but combined with a Siamese Network training. Using siamese networks encourages
+    the model to learn similar features between clean samples of the same class and
+    different ones among clean and noisy samples.
+  id: totrans-55
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Xue等人[[48](#bib.bib48)]使用了一种概率局部异常因子算法（pLOF），作为异常检测器，用于估计样本作为异常值（即噪声样本）的概率值。[[46](#bib.bib46)]也使用pLOF，但与Siamese网络训练相结合。使用Siamese网络鼓励模型学习同一类别的干净样本之间的相似特征，以及干净样本与噪声样本之间的不同特征。
+- en: Harutyunyan et al. [[49](#bib.bib49)] show that the memorization of label noise
+    can be reduced by reducing the mutual information between weights. In their proposal,
+    they update the weights based on the gradients of final layers, without accessing
+    the labels.
+  id: totrans-56
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Harutyunyan等人[[49](#bib.bib49)]展示了通过减少权重之间的互信息，可以降低标签噪声的记忆。在他们的提议中，他们基于最终层的梯度更新权重，而不需要访问标签。
+- en: Lee et al. propose the CleanNet [[50](#bib.bib50)], which uses a predefined
+    subset of reference images. The visual features of the reference subset are extracted
+    using autoencoder and each new sample for training is compared with the features
+    from the reference set. Based on the distance, a weight is set for each sample
+    and the weighted cross-entropy is calculated.
+  id: totrans-57
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Lee等人提出了CleanNet[[50](#bib.bib50)]，它使用预定义的参考图像子集。参考子集的视觉特征通过自编码器提取，每个新的训练样本都与参考集中的特征进行比较。根据距离，为每个样本设置一个权重，并计算加权交叉熵。
+- en: III-D Sample Selection
+  id: totrans-58
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-D 样本选择
+- en: Jiang et al. [[16](#bib.bib16)] proposes MentorNet, which uses a curriculum
+    scheme by learning first the samples, which are probably correct. MentorNet learns
+    a data-driven curriculum dynamically with a second network, called StudentNet.
+  id: totrans-59
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Jiang等人[[16](#bib.bib16)]提出了MentorNet，它使用一种课程方案，首先学习那些可能正确的样本。MentorNet通过第二个网络，称为StudentNet，动态地学习数据驱动的课程。
+- en: Co-teaching is proposed by Han et al. [[51](#bib.bib51)] and trains two deep
+    models simultaneously, and each network selects the batch of data for each other,
+    based on the samples with a small loss. Later, they propose Co-teaching+ [[17](#bib.bib17)],
+    that uses the samples with a small loss, but that disagree on the predictions,
+    to select the data to each other. Wei et al. [[52](#bib.bib52)] uses the same
+    idea of CoTeaching, but it uses the joint agreements instead of disagreement and
+    calculates a joint loss with Co-Regularization.
+  id: totrans-60
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Co-teaching由Han等人提出[[51](#bib.bib51)]，它同时训练两个深度模型，每个网络根据具有小损失的样本选择彼此的数据批次。后来，他们提出了Co-teaching+[[17](#bib.bib17)]，该方法使用具有小损失但对预测结果不一致的样本来选择数据。Wei等人[[52](#bib.bib52)]采用了Co-teaching的相同思想，但使用了联合一致性而不是不一致，并通过Co-Regularization计算了联合损失。
+- en: Nguyen et al. propose an algorithm called SELF [[53](#bib.bib53)]. SELF uses
+    a filtering mechanism based on a model ensemble learning the remove the noisy
+    samples from the supervised training. However, they still use the removed samples
+    to leverage the learning using an unsupervised loss. The ensemble mechanism is
+    based on the model’s predictions in different epochs, using an exponential moving
+    average of model snapshots. Different from most of the state of the art methods,
+    SELF requires a small clean validation set to perform well.
+  id: totrans-61
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Nguyen 等人提出了一种名为 SELF [[53](#bib.bib53)] 的算法。SELF 使用基于模型集成的过滤机制来从监督训练中移除噪声样本。然而，他们仍然使用移除的样本来利用无监督损失进行学习。集成机制基于不同训练周期中的模型预测，使用模型快照的指数移动平均。不同于大多数最先进的方法，SELF
+    需要一个较小的干净验证集来表现良好。
+- en: III-E Meta Learning
+  id: totrans-62
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-E 元学习
+- en: The methods described here use as main approach Meta-Learning models to deal
+    with noisy labels. Although in the end they use meta-learning to reweight or filter
+    samples, we grouped them here because they use a different approach to address
+    the problem.
+  id: totrans-63
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这里描述的方法主要使用元学习模型来处理噪声标签。虽然最终他们使用元学习来重新加权或过滤样本，我们将它们归类在一起，因为它们采用了不同的方法来解决问题。
+- en: Ren et al. [[24](#bib.bib24)] use a Meta-Learning paradigm to reweight the training
+    samples based on their gradients directions. They perform a meta gradient descent
+    step to minimize the loss on a clean validation set. In [[54](#bib.bib54)] it
+    is also used a meta-learning approach with a clean validation set, but they use
+    a multi-layer perceptron to learn a loss-weighting function.
+  id: totrans-64
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Ren 等人 [[24](#bib.bib24)] 使用元学习范式根据梯度方向重新加权训练样本。他们执行元梯度下降步骤以最小化在干净验证集上的损失。在
+    [[54](#bib.bib54)] 中也使用了元学习方法与干净验证集，但他们使用多层感知机来学习损失加权函数。
+- en: Li et al. [[19](#bib.bib19)] propose optimize a meta-objective before conventional
+    training. By generating synthetic noisy labels, they aim to optimize a model that
+    does not overfit to a wide spectrum of artificially generated label noise. By
+    training the model in several generated synthetic noisy, they aim to have a noise-tolerant
+    model able to consistently learn the underlying knowledge from data despite different
+    label noise.
+  id: totrans-65
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Li 等人 [[19](#bib.bib19)] 提出在传统训练之前优化一个元目标。通过生成合成噪声标签，他们旨在优化一个不对广泛范围的人工生成标签噪声过拟合的模型。通过在几个生成的合成噪声中训练模型，他们旨在获得一个噪声容忍的模型，能够一致地从数据中学习潜在知识，尽管存在不同的标签噪声。
+- en: III-F Combined Approaches
+  id: totrans-66
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+  zh: III-F 组合方法
+- en: Mixup [[55](#bib.bib55)] is a technique proposed for data augmentation, that
+    uses a linear combination between samples and labels. Their paper shows that their
+    method is noise-tolerant, and recent literature methods started to incorporate
+    Mixup as an important part of their algorithms. Zhang et al. [[56](#bib.bib56)]
+    combine the reweighting approach using meta-learning, proposed by [[24](#bib.bib24)],
+    with pseudo-label estimation and Mixup. Although they achieve state of the art
+    for high noise regimes, it requires a small clean validation set.
+  id: totrans-67
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Mixup [[55](#bib.bib55)] 是一种用于数据增强的技术，它利用样本和标签之间的线性组合。他们的论文表明，他们的方法具有抗噪声能力，最近的文献方法开始将
+    Mixup 作为其算法的重要部分。Zhang 等人 [[56](#bib.bib56)] 将 [[24](#bib.bib24)] 提出的基于元学习的重新加权方法与伪标签估计和
+    Mixup 结合起来。尽管他们在高噪声环境下实现了最先进的成果，但这需要一个较小的干净验证集。
+- en: 'Kim et al. [[27](#bib.bib27)] propose the use of the learning method called
+    Negative Learning (NL), where it is used as a complementary label (i.e., a label
+    that is different from the annotation). By using complementary labels, the chances
+    of selecting a true label as a complementary are low, and NL decreases the risk
+    of providing incorrect information. Therefore, training with NL is more robust
+    to noise. However, this approach requires a longer training time, and the chance
+    of providing incorrect information increases as the number of classes in the problem
+    increases. In their approach, they propose three stages: Negative Learning, Positive
+    Learning (standard training), and fine-tuning with relabeled samples.'
+  id: totrans-68
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Kim 等人 [[27](#bib.bib27)] 提出了使用名为负学习（Negative Learning, NL）的学习方法，其中使用互补标签（即与注释不同的标签）。通过使用互补标签，选择真实标签作为互补标签的机会较低，因此
+    NL 减少了提供错误信息的风险。因此，使用 NL 进行训练对噪声更具鲁棒性。然而，这种方法需要更长的训练时间，并且随着问题中类别数量的增加，提供错误信息的机会也会增加。他们的方法中提出了三个阶段：负学习、正学习（标准训练）和使用重新标记样本的微调。
+- en: Han et al. [[57](#bib.bib57)] propose to estimate class prototypes using an
+    iterative training divided into two stages. The first stage train the network
+    with the original noisy labels and the modified labels from the second stage.
+    The second stage uses the trained network from the first stage and refines the
+    prototypes, relabelling samples. With the automatic identification of prototypes,
+    it does not need the use of a clean auxiliary set.
+  id: totrans-69
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Han 等人 [[57](#bib.bib57)] 提出了使用迭代训练估计类别原型的方法，该方法分为两个阶段。第一阶段使用原始噪声标签和第二阶段的修改标签训练网络。第二阶段使用第一阶段训练的网络并精炼原型，重新标记样本。通过自动识别原型，该方法无需使用干净的辅助集。
+- en: The DivideMix approach [[58](#bib.bib58)] combines several methods used in literature
+    to deal with the noisy label problem. It first separates the samples in clean
+    and noise based on Arazo’s approach [[18](#bib.bib18)], using Mixture of Gaussians.
+    At the same time, it uses the co-training strategy, where it trains two networks
+    at the same time to avoid error accumulation. After it splits the data in clean
+    and noisy, it trains the model in a semi-supervised approach, using MixMatch [[59](#bib.bib59)].
+    The whole process is repeated at each epoch.
+  id: totrans-70
+  prefs: []
+  type: TYPE_NORMAL
+  zh: DivideMix 方法 [[58](#bib.bib58)] 结合了文献中用于处理噪声标签问题的几种方法。它首先基于 Arazo 方法 [[18](#bib.bib18)]
+    使用高斯混合模型将样本分为干净和噪声样本。同时，它使用协同训练策略，即同时训练两个网络以避免错误积累。在将数据分为干净和噪声样本后，它在半监督方法中使用 MixMatch
+    [[59](#bib.bib59)] 训练模型。整个过程在每个周期重复进行。
+- en: 'The main approaches described in this section are summarized in Table [I](#S3.T1
+    "TABLE I ‣ III-F Combined Approaches ‣ III Literature Review ‣ A Survey on Deep
+    Learning with Noisy Labels: How to train your model when you cannot trust on the
+    annotations?") that shows the combined strategies used by the methods of the state-of-the-art.
+    Table [II](#S3.T2 "TABLE II ‣ III-F Combined Approaches ‣ III Literature Review
+    ‣ A Survey on Deep Learning with Noisy Labels: How to train your model when you
+    cannot trust on the annotations?") shows the main components of the combined techniques
+    in the state-of-the-art and the difference between them.'
+  id: totrans-71
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '本节描述的主要方法总结在表格[I](#S3.T1 "TABLE I ‣ III-F Combined Approaches ‣ III Literature
+    Review ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?")中，该表展示了最先进方法所使用的组合策略。表格[II](#S3.T2
+    "TABLE II ‣ III-F Combined Approaches ‣ III Literature Review ‣ A Survey on Deep
+    Learning with Noisy Labels: How to train your model when you cannot trust on the
+    annotations?")展示了最先进技术中组合技术的主要组件及其差异。'
+- en: 'TABLE I: Main approaches in the literature to deal with noisy labels.'
+  id: totrans-72
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 表格 I：文献中处理噪声标签的主要方法。
+- en: '| Approaches | Methods | Advantages | Disadvantages |'
+  id: totrans-73
+  prefs: []
+  type: TYPE_TB
+  zh: '| 方法 | 方法 | 优势 | 劣势 |'
+- en: '| --- | --- | --- | --- |'
+  id: totrans-74
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- |'
+- en: '| Transition Matrix | [[29](#bib.bib29), [33](#bib.bib33), [34](#bib.bib34),
+    [35](#bib.bib35), [36](#bib.bib36), [37](#bib.bib37), [38](#bib.bib38), [39](#bib.bib39)]
+    | Easy to implement. | Difficult and complex to estimate the transition matrix
+    in practice. |'
+  id: totrans-75
+  prefs: []
+  type: TYPE_TB
+  zh: '| 转移矩阵 | [[29](#bib.bib29), [33](#bib.bib33), [34](#bib.bib34), [35](#bib.bib35),
+    [36](#bib.bib36), [37](#bib.bib37), [38](#bib.bib38), [39](#bib.bib39)] | 实现简单。
+    | 实际中估计转移矩阵困难且复杂。 |'
+- en: '| Robust Losses | [[40](#bib.bib40), [41](#bib.bib41), [31](#bib.bib31), [20](#bib.bib20),
+    [21](#bib.bib21), [42](#bib.bib42), [43](#bib.bib43), [44](#bib.bib44), [45](#bib.bib45)]
+    | It can be easily added to any training model. | Requires to be combined with
+    other strategies to be competitive with state-of-the-art. |'
+  id: totrans-76
+  prefs: []
+  type: TYPE_TB
+  zh: '| 鲁棒损失 | [[40](#bib.bib40), [41](#bib.bib41), [31](#bib.bib31), [20](#bib.bib20),
+    [21](#bib.bib21), [42](#bib.bib42), [43](#bib.bib43), [44](#bib.bib44), [45](#bib.bib45)]
+    | 可以轻松添加到任何训练模型中。 | 需要与其他策略结合，以便与最先进技术竞争。 |'
+- en: '| Sample Weighting | [[47](#bib.bib47), [48](#bib.bib48), [46](#bib.bib46),
+    [49](#bib.bib49), [50](#bib.bib50)] | Reduces the influence of noisy samples,
+    but still uses information from it. | Hard to define a correct weighting without
+    the need of a clean auxiliary set. |'
+  id: totrans-77
+  prefs: []
+  type: TYPE_TB
+  zh: '| 样本加权 | [[47](#bib.bib47), [48](#bib.bib48), [46](#bib.bib46), [49](#bib.bib49),
+    [50](#bib.bib50)] | 降低噪声样本的影响，但仍使用其信息。 | 难以在没有干净辅助集的情况下定义正确的加权。 |'
+- en: '| Sample Selection | [[16](#bib.bib16), [51](#bib.bib51), [17](#bib.bib17),
+    [52](#bib.bib52), [53](#bib.bib53)] | Filter clean samples. | Not competitive
+    with state-of-the-art because do not use the noisy samples in an unsupervised
+    way. |'
+  id: totrans-78
+  prefs: []
+  type: TYPE_TB
+  zh: '| 样本选择 | [[16](#bib.bib16), [51](#bib.bib51), [17](#bib.bib17), [52](#bib.bib52),
+    [53](#bib.bib53)] | 筛选干净样本。 | 由于未以无监督方式使用噪声样本，因此与最先进技术相比竞争力不足。 |'
+- en: '| Meta-Learning | [[24](#bib.bib24), [19](#bib.bib19), [54](#bib.bib54)] |
+    Has big potential of generalization among different tasks. | Usually requires
+    a clean validation set. |'
+  id: totrans-79
+  prefs: []
+  type: TYPE_TB
+  zh: '| 元学习 | [[24](#bib.bib24), [19](#bib.bib19), [54](#bib.bib54)] | 在不同任务之间具有很大的泛化潜力。
+    | 通常需要一个干净的验证集。 |'
+- en: '| Combined | [[55](#bib.bib55), [56](#bib.bib56), [24](#bib.bib24), [27](#bib.bib27),
+    [58](#bib.bib58), [18](#bib.bib18)] | Good performance, being the state-of-the-art.
+    | Use a set of combined methods that adds complexity to the solution. |'
+  id: totrans-80
+  prefs: []
+  type: TYPE_TB
+  zh: '| 组合 | [[55](#bib.bib55), [56](#bib.bib56), [24](#bib.bib24), [27](#bib.bib27),
+    [58](#bib.bib58), [18](#bib.bib18)] | 性能良好，处于最先进水平。 | 使用一组组合方法，增加了解决方案的复杂性。 |'
+- en: 'TABLE II: State-of-the-art approaches and combined techniques'
+  id: totrans-81
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 表 II：最先进的方法和组合技术
+- en: '| Method | Mixup (Data aug.) | Weighting | filtering | robust loss | regularization
+    | Emsemble | Pseudo-labeling | val. set |'
+  id: totrans-82
+  prefs: []
+  type: TYPE_TB
+  zh: '| 方法 | Mixup（数据增强） | 加权 | 过滤 | 稳健损失 | 正则化 | 集成 | 伪标签 | 验证集 |'
+- en: '| NLNL [[27](#bib.bib27)] |  |  |  | ✓ | ✓ |  | ✓ |  |'
+  id: totrans-83
+  prefs: []
+  type: TYPE_TB
+  zh: '| NLNL [[27](#bib.bib27)] |  |  |  | ✓ | ✓ |  | ✓ |  |'
+- en: '| SELF [[53](#bib.bib53)] |  |  | ✓ | ✓ |  |  | ✓ | ✓ |'
+  id: totrans-84
+  prefs: []
+  type: TYPE_TB
+  zh: '| SELF [[53](#bib.bib53)] |  |  | ✓ | ✓ |  |  | ✓ | ✓ |'
+- en: '| M-correction [[18](#bib.bib18)] |  |  | ✓ |  | ✓ |  |  |  |'
+  id: totrans-85
+  prefs: []
+  type: TYPE_TB
+  zh: '| M-correction [[18](#bib.bib18)] |  |  | ✓ |  | ✓ |  |  |  |'
+- en: '| Zhang [[56](#bib.bib56)] | ✓ | ✓ |  |  | ✓ |  |  | ✓ |'
+  id: totrans-86
+  prefs: []
+  type: TYPE_TB
+  zh: '| Zhang [[56](#bib.bib56)] | ✓ | ✓ |  |  | ✓ |  |  | ✓ |'
+- en: '| Coteaching+ [[17](#bib.bib17)] |  |  | ✓ |  |  | ✓ |  |  |'
+  id: totrans-87
+  prefs: []
+  type: TYPE_TB
+  zh: '| Coteaching+ [[17](#bib.bib17)] |  |  | ✓ |  |  | ✓ |  |  |'
+- en: '| DivideMix [[58](#bib.bib58)] | ✓ |  | ✓ |  | ✓ | ✓ |  |  |'
+  id: totrans-88
+  prefs: []
+  type: TYPE_TB
+  zh: '| DivideMix [[58](#bib.bib58)] | ✓ |  | ✓ |  | ✓ | ✓ |  |  |'
+- en: IV Experimental Setup
+  id: totrans-89
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: IV 实验设置
+- en: Most of the papers in the literature evaluate their methods by generating synthetic
+    noise on commonly used data sets and by using data set with images collected from
+    the internet, which may contain closed-set and open-set noise. The most used data
+    sets used for robust model evaluations in literature are CIFAR-10/CIFAR-100 [[30](#bib.bib30)],
+    Clothing1M [[60](#bib.bib60)], Webvision [[61](#bib.bib61)] and Food101-N [[50](#bib.bib50)].
+  id: totrans-90
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 大多数文献中的论文通过在常用数据集上生成合成噪声和使用从互联网收集的图像数据集来评估其方法，这些数据集可能包含封闭集和开放集噪声。文献中用于鲁棒模型评估的最常用数据集是
+    CIFAR-10/CIFAR-100 [[30](#bib.bib30)], Clothing1M [[60](#bib.bib60)], Webvision
+    [[61](#bib.bib61)] 和 Food101-N [[50](#bib.bib50)]。
+- en: CIFAR-10 has 10 classes with 5000 32$\times$32 pixel training images per class
+    (forming a total of 50000 training images), and a testing set with 10000 32$\times$32
+    pixel images with 1000 images per class. CIFAR-100 has 50000 training images,
+    but with 100 classes with 5000 32$\times$32 pixel images per class. This data
+    set was curated and it is assumed not to have any noisy label. Therefore, it is
+    a common approach to add synthetic noise and evaluate the robustness of the model
+    in a noisy data set compared to the original clean version.
+  id: totrans-91
+  prefs: []
+  type: TYPE_NORMAL
+  zh: CIFAR-10 有 10 个类别，每个类别有 5000 张 32$\times$32 像素的训练图像（总共 50000 张训练图像），还有一个测试集，包括
+    10000 张 32$\times$32 像素的图像，每个类别 1000 张。CIFAR-100 有 50000 张训练图像，但有 100 个类别，每个类别
+    5000 张 32$\times$32 像素的图像。这个数据集经过整理，假设没有任何噪声标签。因此，常见的做法是添加合成噪声，并与原始干净版本相比评估模型的鲁棒性。
+- en: Clothing1M consists of 1 million training images acquired from online shopping
+    websites, with labels generated by surrounding texts provided by sellers. The
+    images from the data set may vary in size, but a common approach is to resize
+    the images to 256$\times$256 for training. This data set contains real-world error
+    on the labels and it is composed of 14 classes.
+  id: totrans-92
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Clothing1M 由 100 万张从在线购物网站获取的训练图像组成，标签由卖家提供的周围文本生成。数据集中的图像可能大小不一，但通常的做法是将图像调整为
+    256$\times$256 以进行训练。该数据集包含标签上的现实世界错误，共有 14 个类别。
+- en: The Webvision contains 2.4 million images collected from the internet, with
+    the same classes from ILSVRC12, from ImageNet [[7](#bib.bib7)]. The images from
+    the data set are not all with the same size, being a common approach to resize
+    the images to 256$\times$256 for training. Although ImageNet has 1000 classes,
+    most of the papers use only the 50 first classes for training, because they contain
+    most part of the the noise. The evaluation from the models trained using Webvision
+    is usually done using both Webvision and ILSVRC12 validation sets.
+  id: totrans-93
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Webvision 包含从互联网收集的 240 万张图像，与 ILSVRC12 的类别相同，来源于 ImageNet [[7](#bib.bib7)]。数据集中的图像大小不一，通常的做法是将图像调整为
+    256$\times$256 以进行训练。尽管 ImageNet 有 1000 个类别，但大多数论文只使用前 50 个类别进行训练，因为这些类别包含了大部分噪声。使用
+    Webvision 训练的模型的评估通常使用 Webvision 和 ILSVRC12 验证集。
+- en: Food101-N [[50](#bib.bib50)] is an image data set containing about 310009 training
+    images of food recipes classified in 101 classes and 25000 images for the testing
+    set. As the image size vary may vary, a common approach to resize the images to
+    256$\times$256 for training. Its also a real-world data set, with an estimated
+    noise rate of 20%, and it is based on the Food101 data set [[62](#bib.bib62)],
+    but it has more images and it is more noisy.
+  id: totrans-94
+  prefs: []
+  type: TYPE_NORMAL
+  zh: Food101-N [[50](#bib.bib50)] 是一个图像数据集，包含约 310009 张食谱图像，分为 101 个类别，以及 25000 张测试图像。由于图像尺寸可能有所不同，通常的做法是将图像调整为
+    256$\times$256 进行训练。它也是一个真实世界的数据集，估计噪声率为 20%，基于 Food101 数据集 [[62](#bib.bib62)]，但图像数量更多且噪声更大。
+- en: 'Table [III](#S4.T3 "TABLE III ‣ IV Experimental Setup ‣ A Survey on Deep Learning
+    with Noisy Labels: How to train your model when you cannot trust on the annotations?")
+    shows the main information about the most used data sets for evaluation of solutions
+    in noisy label environments.'
+  id: totrans-95
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '表 [III](#S4.T3 "TABLE III ‣ IV Experimental Setup ‣ A Survey on Deep Learning
+    with Noisy Labels: How to train your model when you cannot trust on the annotations?")
+    显示了在嘈杂标签环境中评估解决方案时最常用数据集的主要信息。'
+- en: 'TABLE III: Main data sets used in literature for noisy labels.'
+  id: totrans-96
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 表 III：文献中用于嘈杂标签的主要数据集。
+- en: '| Data set | # of training | # of testing | # of class | estimated noise |'
+  id: totrans-97
+  prefs: []
+  type: TYPE_TB
+  zh: '| 数据集 | 训练样本数 | 测试样本数 | 类别数 | 估计噪声 |'
+- en: '| --- | --- | --- | --- | --- |'
+  id: totrans-98
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- |'
+- en: '| CIFAR-10 [[30](#bib.bib30)] | 50000 | 10000 | 10 | 0% |'
+  id: totrans-99
+  prefs: []
+  type: TYPE_TB
+  zh: '| CIFAR-10 [[30](#bib.bib30)] | 50000 | 10000 | 10 | 0% |'
+- en: '| CIFAR-100 [[30](#bib.bib30)] | 50000 | 10000 | 100 | 0% |'
+  id: totrans-100
+  prefs: []
+  type: TYPE_TB
+  zh: '| CIFAR-100 [[30](#bib.bib30)] | 50000 | 10000 | 100 | 0% |'
+- en: '| Clothing1M [[60](#bib.bib60)] | 1M | 10000 | 14 | 38.46% |'
+  id: totrans-101
+  prefs: []
+  type: TYPE_TB
+  zh: '| Clothing1M [[60](#bib.bib60)] | 1M | 10000 | 14 | 38.46% |'
+- en: '| Webvision [[61](#bib.bib61)] | 1M | 50000 | 1000 | 20% |'
+  id: totrans-102
+  prefs: []
+  type: TYPE_TB
+  zh: '| Webvision [[61](#bib.bib61)] | 1M | 50000 | 1000 | 20% |'
+- en: '| Food101-N [[50](#bib.bib50)] | 310000 | 55000 | 101 | 19.66% |'
+  id: totrans-103
+  prefs: []
+  type: TYPE_TB
+  zh: '| Food101-N [[50](#bib.bib50)] | 310000 | 55000 | 101 | 19.66% |'
+- en: V State-of-the-art Results
+  id: totrans-104
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: V 先进技术结果
+- en: 'Most of the state-of-the-art methods use the fact that CNN tends to learn easy
+    patterns first and then fit the hardest ones [[63](#bib.bib63)]. Arazo et al.
+    [[18](#bib.bib18)] showed in his paper how the values of loss are different among
+    clean and noisy samples. Figure [3](#S5.F3 "Figure 3 ‣ V State-of-the-art Results
+    ‣ A Survey on Deep Learning with Noisy Labels: How to train your model when you
+    cannot trust on the annotations?") shows the behavior of loss function for clean
+    and noisy, reported in [[18](#bib.bib18)]. The strategy of filtering the samples
+    based on loss is called small trick and has been exploited to identify clean and
+    noisy samples. However, the main problem is that hard samples with correct labels
+    can behave like noisy samples, and at the same time, some noisy samples can behave
+    like a clean sample. Therefore, this approach can not be used to filter all samples,
+    but it helps identify most of the noise. Arazo et al. proposes the use of a Gaussian
+    Mixture Model (GMM) to separate the clean and noise during the training, based
+    on the loss value of each sample. For the samples predicted as clean, it uses
+    standard training, with regular cross-entropy, while the the samples predict as
+    noisy are used to regularize the model in an unsupervised way.'
+  id: totrans-105
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '大多数最先进的方法利用 CNN 首先学习简单模式，然后适应更困难模式的事实 [[63](#bib.bib63)]。Arazo 等人 [[18](#bib.bib18)]
+    在他的论文中展示了干净样本和嘈杂样本之间损失值的不同。图 [3](#S5.F3 "Figure 3 ‣ V State-of-the-art Results
+    ‣ A Survey on Deep Learning with Noisy Labels: How to train your model when you
+    cannot trust on the annotations?") 显示了干净和嘈杂样本的损失函数行为，报告在 [[18](#bib.bib18)] 中。根据损失值对样本进行过滤的策略称为小技巧，并已被用于识别干净和嘈杂样本。然而，主要问题是带有正确标签的困难样本可能表现得像嘈杂样本，同时，一些嘈杂样本可能表现得像干净样本。因此，这种方法不能用于过滤所有样本，但有助于识别大部分噪声。Arazo
+    等人建议在训练过程中使用高斯混合模型 (GMM) 来分离干净样本和噪声，基于每个样本的损失值。对于被预测为干净的样本，使用标准训练，采用常规的交叉熵，而被预测为嘈杂的样本则以无监督的方式用于正则化模型。'
+- en: '![Refer to caption](img/563758542552cf8af5d8c980bffe5af2.png)'
+  id: totrans-106
+  prefs: []
+  type: TYPE_IMG
+  zh: '![参见说明](img/563758542552cf8af5d8c980bffe5af2.png)'
+- en: 'Figure 3: Cross-Entropy loss of clean and noisy samples, for 80% noisy rate,
+    for CIFAR-10\. Figure from Arazo’s paper [[18](#bib.bib18)].'
+  id: totrans-107
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 3：CIFAR-10 的干净样本和嘈杂样本的交叉熵损失，80% 嘈杂率。图源自 Arazo 的论文 [[18](#bib.bib18)]。
+- en: 'DivideMix achieves a better split of clean and noisy samples by using the small
+    trick combined with Mixup algorithm. Figure [4](#S5.F4 "Figure 4 ‣ V State-of-the-art
+    Results ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?") shows the results of the split for
+    80% symmetric noise rate for CIFAR-10.'
+  id: totrans-108
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 'DivideMix 通过将小技巧与 Mixup 算法结合，实现在干净和噪声样本之间的更好分离。图 [4](#S5.F4 "Figure 4 ‣ V State-of-the-art
+    Results ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?") 显示了在 CIFAR-10 上 80% 对称噪声率的分离结果。'
+- en: '![Refer to caption](img/9a645e028bab9b8ee5f70b564b7f1ade.png)'
+  id: totrans-109
+  prefs: []
+  type: TYPE_IMG
+  zh: '![参见说明](img/9a645e028bab9b8ee5f70b564b7f1ade.png)'
+- en: (a) Epoch 1
+  id: totrans-110
+  prefs: []
+  type: TYPE_NORMAL
+  zh: (a) 训练轮次 1
+- en: '![Refer to caption](img/d9b9cde4c8657583f943b200a6f5bbff.png)'
+  id: totrans-111
+  prefs: []
+  type: TYPE_IMG
+  zh: '![参见说明](img/d9b9cde4c8657583f943b200a6f5bbff.png)'
+- en: (b) Epoch 300
+  id: totrans-112
+  prefs: []
+  type: TYPE_NORMAL
+  zh: (b) 训练轮次 300
+- en: 'Figure 4: Loss histogram for clean and noisy samples, using DivideMix, for
+    80% noise rate, symmetric noise, for CIFAR-10\.'
+  id: totrans-113
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 4：使用 DivideMix 处理 80% 噪声率、对称噪声的干净和噪声样本的损失直方图，针对 CIFAR-10。
+- en: DivideMix is currently the state-of-the-art for noisy labels, considering symmetric
+    and asymmetric closed-set noise, without requiring a clean validation set. As
+    described in section III, DivideMix is a combination of methods, which combines
+    Arazo’s approach, using GMM to separate clean and noisy samples, Mixup data augmentation
+    and co-training strategy. It also uses standard data augmentation, such as rotation
+    and flipping, as most of the methods described. The main idea of DivideMix is
+    to separate the clean and noisy samples, using GMM, and then treat the problem
+    as a semi-supervised problem, using MixMatch algorithm, that is a variation of
+    the Mixup method proposed for semi-supervised problem. Furthermore, the co-training
+    strategy helps with the noisy training.
+  id: totrans-114
+  prefs: []
+  type: TYPE_NORMAL
+  zh: DivideMix 目前是处理噪声标签的最先进方法，考虑了对称和不对称的闭集噪声，无需干净的验证集。正如第 III 节所述，DivideMix 是一种方法的组合，结合了
+    Arazo 的方法，使用 GMM 来分离干净和噪声样本，Mixup 数据增强和共同训练策略。它还使用了标准的数据增强方法，如旋转和翻转，与大多数方法类似。DivideMix
+    的主要思想是使用 GMM 分离干净和噪声样本，然后将问题视为半监督问题，使用 MixMatch 算法，它是针对半监督问题提出的 Mixup 方法的变体。此外，共同训练策略有助于处理噪声训练。
+- en: 'As different methods in literature use different model architectures and sometimes
+    different data sets, it is hard to make a fair comparison between most of them.
+    In Table [IV](#S5.T4 "TABLE IV ‣ V State-of-the-art Results ‣ A Survey on Deep
+    Learning with Noisy Labels: How to train your model when you cannot trust on the
+    annotations?") we show the state-of-the-art for CIFAR-10, CIFAR-100, Webvision
+    and Clothing1M, using PreActResNet18 (PRN18). We did not include the methods which
+    use an auxiliar clean validation set, such as in [[53](#bib.bib53)] and [[56](#bib.bib56)],
+    to make a fair comparison, and only the methods that use PRN18 in the original
+    paper. Table [VI](#S5.T6 "TABLE VI ‣ V State-of-the-art Results ‣ A Survey on
+    Deep Learning with Noisy Labels: How to train your model when you cannot trust
+    on the annotations?") shows the SOTA results for Clothing1M. Table [V](#S5.T5
+    "TABLE V ‣ V State-of-the-art Results ‣ A Survey on Deep Learning with Noisy Labels:
+    How to train your model when you cannot trust on the annotations?") shows the
+    SOTA results for Webvision and ImageNet. Table [VII](#S5.T7 "TABLE VII ‣ V State-of-the-art
+    Results ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?") shows the SOTA results for Food-101N.
+    All the results are the ones reported in the original papers. The original code
+    for reproduction of the results are also available and reported in original papers.'
+  id: totrans-115
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '由于文献中使用了不同的模型架构和有时不同的数据集，比较大多数方法是困难的。在表 [IV](#S5.T4 "TABLE IV ‣ V State-of-the-art
+    Results ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?") 中，我们展示了使用 PreActResNet18 (PRN18) 的
+    CIFAR-10、CIFAR-100、Webvision 和 Clothing1M 的最先进结果。我们没有包括使用辅助干净验证集的方法，如 [[53](#bib.bib53)]
+    和 [[56](#bib.bib56)]，以便进行公平比较，只包括原文中使用 PRN18 的方法。表 [VI](#S5.T6 "TABLE VI ‣ V State-of-the-art
+    Results ‣ A Survey on Deep Learning with Noisy Labels: How to train your model
+    when you cannot trust on the annotations?") 显示了 Clothing1M 的 SOTA 结果。表 [V](#S5.T5
+    "TABLE V ‣ V State-of-the-art Results ‣ A Survey on Deep Learning with Noisy Labels:
+    How to train your model when you cannot trust on the annotations?") 显示了 Webvision
+    和 ImageNet 的 SOTA 结果。表 [VII](#S5.T7 "TABLE VII ‣ V State-of-the-art Results ‣
+    A Survey on Deep Learning with Noisy Labels: How to train your model when you
+    cannot trust on the annotations?") 显示了 Food-101N 的 SOTA 结果。所有结果均为原文报告的结果。原始代码也可用，并在原文中报告。'
+- en: 'TABLE IV: SOTA results for CIFAR-10 and CIFAR-100, using PRN18\. Comparison
+    results adapted from [[58](#bib.bib58)]'
+  id: totrans-116
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 表 IV：使用 PRN18 的 CIFAR-10 和 CIFAR-100 的 SOTA 结果。比较结果改编自 [[58](#bib.bib58)]
+- en: . Data set CIFAR-10 CIFAR-100 Noise type sym. asym. sym. Method/ noise ratio
+    20% 50% 80% 90% 40% 20% 50% 80% 90% Cross-Entropy [[58](#bib.bib58)] 86.8 79.4
+    62.9 42.7 85.0 62.0 46.7 19.9 10.1 Coteaching+ [[17](#bib.bib17)] 89.5 85.7 67.4
+    47.9 - 65.6 51.8 27.9 13.7 Mixup [[55](#bib.bib55)] 95.6 87.1 71.6 52.2 - 67.8
+    57.3 30.8 14.6 PENCIL [[64](#bib.bib64)] 92.4 89.1 77.5 58.9 88.5 69.4 57.5 31.1
+    15.3 Meta-Learning [[19](#bib.bib19)] 92.9 89.3 77.4 58.7 89.2 68.5 59.2 42.4
+    19.5 M-correction [[18](#bib.bib18)] 94.0 92.0 86.8 69.1 87.4 73.9 66.1 48.2 24.3
+    DivideMix [[58](#bib.bib58)] 96.1 94.6 93.2 76.0 93.4 77.3 74.6 60.2 31.5
+  id: totrans-117
+  prefs: []
+  type: TYPE_NORMAL
+  zh: . 数据集 CIFAR-10 CIFAR-100 噪声类型 对称 非对称 对称 方法/噪声比例 20% 50% 80% 90% 40% 20% 50%
+    80% 90% Cross-Entropy [[58](#bib.bib58)] 86.8 79.4 62.9 42.7 85.0 62.0 46.7 19.9
+    10.1 Coteaching+ [[17](#bib.bib17)] 89.5 85.7 67.4 47.9 - 65.6 51.8 27.9 13.7
+    Mixup [[55](#bib.bib55)] 95.6 87.1 71.6 52.2 - 67.8 57.3 30.8 14.6 PENCIL [[64](#bib.bib64)]
+    92.4 89.1 77.5 58.9 88.5 69.4 57.5 31.1 15.3 Meta-Learning [[19](#bib.bib19)]
+    92.9 89.3 77.4 58.7 89.2 68.5 59.2 42.4 19.5 M-correction [[18](#bib.bib18)] 94.0
+    92.0 86.8 69.1 87.4 73.9 66.1 48.2 24.3 DivideMix [[58](#bib.bib58)] 96.1 94.6
+    93.2 76.0 93.4 77.3 74.6 60.2 31.5
+- en: 'TABLE V: SOTA results for Webvision and ImageNet ILSVRC12\. Results are adapted
+    from [[58](#bib.bib58)].'
+  id: totrans-118
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '表 V: Webvision 和 ImageNet ILSVRC12 的最新结果。结果来自 [[58](#bib.bib58)]。'
+- en: '| Method | Webvision | ILSVRC12 |'
+  id: totrans-119
+  prefs: []
+  type: TYPE_TB
+  zh: '| 方法 | Webvision | ILSVRC12 |'
+- en: '| --- | --- | --- |'
+  id: totrans-120
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- | --- |'
+- en: '| F-correction [[29](#bib.bib29)] | 61.12 | 57.36 |'
+  id: totrans-121
+  prefs: []
+  type: TYPE_TB
+  zh: '| F-correction [[29](#bib.bib29)] | 61.12 | 57.36 |'
+- en: '| MentorNet [[16](#bib.bib16)] | 63.00 | 57.80 |'
+  id: totrans-122
+  prefs: []
+  type: TYPE_TB
+  zh: '| MentorNet [[16](#bib.bib16)] | 63.00 | 57.80 |'
+- en: '| Co-teaching [[51](#bib.bib51)] | 63.58 | 61.48 |'
+  id: totrans-123
+  prefs: []
+  type: TYPE_TB
+  zh: '| Co-teaching [[51](#bib.bib51)] | 63.58 | 61.48 |'
+- en: '| Iterative-CV [[65](#bib.bib65)] | 65.24 | 61.60 |'
+  id: totrans-124
+  prefs: []
+  type: TYPE_TB
+  zh: '| Iterative-CV [[65](#bib.bib65)] | 65.24 | 61.60 |'
+- en: '| DivideMix [[58](#bib.bib58)] | 77.32 | 75.20 |'
+  id: totrans-125
+  prefs: []
+  type: TYPE_TB
+  zh: '| DivideMix [[58](#bib.bib58)] | 77.32 | 75.20 |'
+- en: 'TABLE VI: SOTA results for Clothing1M. Results are adapted from [[58](#bib.bib58)].'
+  id: totrans-126
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '表 VI: Clothing1M 的最新结果。结果来自 [[58](#bib.bib58)]。'
+- en: '| Method | Test Accuracy |'
+  id: totrans-127
+  prefs: []
+  type: TYPE_TB
+  zh: '| 方法 | 测试准确率 |'
+- en: '| --- | --- |'
+  id: totrans-128
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- |'
+- en: '| Cross-Entropy [[58](#bib.bib58)] | 69.21 |'
+  id: totrans-129
+  prefs: []
+  type: TYPE_TB
+  zh: '| Cross-Entropy [[58](#bib.bib58)] | 69.21 |'
+- en: '| M-correction [[18](#bib.bib18)] | 71.00 |'
+  id: totrans-130
+  prefs: []
+  type: TYPE_TB
+  zh: '| M-correction [[18](#bib.bib18)] | 71.00 |'
+- en: '| PENCIL[[64](#bib.bib64)] | 73.49 |'
+  id: totrans-131
+  prefs: []
+  type: TYPE_TB
+  zh: '| PENCIL[[64](#bib.bib64)] | 73.49 |'
+- en: '| DeepSelf [[57](#bib.bib57)] | 74.45 |'
+  id: totrans-132
+  prefs: []
+  type: TYPE_TB
+  zh: '| DeepSelf [[57](#bib.bib57)] | 74.45 |'
+- en: '| CleanNet [[50](#bib.bib50)] | 74.69 |'
+  id: totrans-133
+  prefs: []
+  type: TYPE_TB
+  zh: '| CleanNet [[50](#bib.bib50)] | 74.69 |'
+- en: '| DivideMix [[58](#bib.bib58)] | 74.76 |'
+  id: totrans-134
+  prefs: []
+  type: TYPE_TB
+  zh: '| DivideMix [[58](#bib.bib58)] | 74.76 |'
+- en: 'TABLE VII: SOTA results for Food-101N.'
+  id: totrans-135
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '表 VII: Food-101N 的最新结果。'
+- en: '| Method | Food101-N |'
+  id: totrans-136
+  prefs: []
+  type: TYPE_TB
+  zh: '| 方法 | Food101-N |'
+- en: '| --- | --- |'
+  id: totrans-137
+  prefs: []
+  type: TYPE_TB
+  zh: '| --- | --- |'
+- en: '| Cross-Entropy[[50](#bib.bib50)] | 81.44 |'
+  id: totrans-138
+  prefs: []
+  type: TYPE_TB
+  zh: '| Cross-Entropy[[50](#bib.bib50)] | 81.44 |'
+- en: '| CleanNet [[50](#bib.bib50)] | 83.95 |'
+  id: totrans-139
+  prefs: []
+  type: TYPE_TB
+  zh: '| CleanNet [[50](#bib.bib50)] | 83.95 |'
+- en: '| DeepSelf [[57](#bib.bib57)] | 85.11 |'
+  id: totrans-140
+  prefs: []
+  type: TYPE_TB
+  zh: '| DeepSelf [[57](#bib.bib57)] | 85.11 |'
+- en: VI Conclusion
+  id: totrans-141
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: VI 结论
+- en: Several studies have been proposed in the literature to address the noise label
+    problem. Different strategies have been investigated to make the training of deep
+    learning models more robust to noise labels. Combined strategies based on data
+    augmentation, robust loss, sample filtering, and semi-supervised approaches are
+    currently state-of-the-art. Although we have seen an increasing interest in noisy
+    label problems, there is still much room for improvement, mainly related to asymmetric
+    noise and open-set noise.
+  id: totrans-142
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 文献中提出了几项研究来解决噪声标签问题。研究了不同的策略以使深度学习模型对噪声标签更具鲁棒性。目前基于数据增强、鲁棒损失、样本过滤和半监督方法的组合策略是最先进的。尽管我们看到对噪声标签问题的兴趣不断增加，但仍有很大的改进空间，主要与非对称噪声和开放集噪声相关。
+- en: Addressing the noisy label problem also impacts other areas, such as pseudo-labeling,
+    semi-supervised and unsupervised training, where recent proposals use predicted
+    labels to improve the training, and these labels can potentially be incorrect.
+    At the same time, many recent strategies from these fields are also applied to
+    noisy labels.
+  id: totrans-143
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 解决噪声标签问题也会影响其他领域，例如伪标签、半监督学习和无监督训练，近期的提案使用预测标签来改进训练，而这些标签可能是错误的。同时，许多来自这些领域的近期策略也被应用于噪声标签。
+- en: Recent advances have shown that the loss values of samples, mainly at the beginning
+    of training, can help separate the clean and noisy samples. Moreover, data augmentation
+    strategies, such as Mixup, can prevent the model from easily memorizing the noisy
+    samples. However, it is an open question of how to differentiate hard clean samples
+    from noisy samples. Also, semantic noise and open-set noise must be more investigated
+    in future works.
+  id: totrans-144
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最近的进展表明，样本的损失值，主要是在训练开始时，可以帮助区分干净样本和噪声样本。此外，数据增强策略，例如 Mixup，可以防止模型轻易记住噪声样本。然而，如何区分难以清洗的样本与噪声样本仍然是一个悬而未决的问题。此外，语义噪声和开放集噪声在未来的研究中需要进一步探讨。
+- en: References
+  id: totrans-145
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 参考文献
+- en: '[1] W. Rawat and Z. Wang, “Deep convolutional neural networks for image classification:
+    A comprehensive review,” *Neural computation*, vol. 29, no. 9, pp. 2352–2449,
+    2017.'
+  id: totrans-146
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[1] W. Rawat 和 Z. Wang, “图像分类的深度卷积神经网络：全面综述”，*神经计算*，第29卷，第9期，第2352–2449页，2017年。'
+- en: '[2] F. Lateef and Y. Ruichek, “Survey on semantic segmentation using deep learning
+    techniques,” *Neurocomputing*, vol. 338, pp. 321–348, 2019.'
+  id: totrans-147
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[2] F. Lateef 和 Y. Ruichek, “使用深度学习技术进行语义分割的调查”，*神经计算*，第338卷，第321–348页，2019年。'
+- en: '[3] L. Liu, W. Ouyang, X. Wang, P. Fieguth, J. Chen, X. Liu, and M. Pietikäinen,
+    “Deep learning for generic object detection: A survey,” *International journal
+    of computer vision*, vol. 128, no. 2, pp. 261–318, 2020.'
+  id: totrans-148
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[3] L. Liu, W. Ouyang, X. Wang, P. Fieguth, J. Chen, X. Liu, 和 M. Pietikäinen,
+    “通用目标检测的深度学习：综述”，*计算机视觉国际期刊*，第128卷，第2期，第261–318页，2020年。'
+- en: '[4] T. J. Brinker, A. Hekler, A. H. Enk, C. Berking, S. Haferkamp, A. Hauschild,
+    M. Weichenthal, J. Klode, D. Schadendorf, T. Holland-Letz *et al.*, “Deep neural
+    networks are superior to dermatologists in melanoma image classification,” *European
+    Journal of Cancer*, vol. 119, pp. 11–17, 2019.'
+  id: totrans-149
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[4] T. J. Brinker, A. Hekler, A. H. Enk, C. Berking, S. Haferkamp, A. Hauschild,
+    M. Weichenthal, J. Klode, D. Schadendorf, T. Holland-Letz *等*，“深度神经网络在黑色素瘤图像分类中的表现优于皮肤科医生”，*欧洲癌症杂志*，第119卷，第11–17页，2019年。'
+- en: '[5] Y. Li, C. Huang, L. Ding, Z. Li, Y. Pan, and X. Gao, “Deep learning in
+    bioinformatics: Introduction, application, and perspective in the big data era,”
+    *Methods*, vol. 166, pp. 4–21, 2019.'
+  id: totrans-150
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[5] Y. Li, C. Huang, L. Ding, Z. Li, Y. Pan, 和 X. Gao, “生物信息学中的深度学习：介绍、应用及大数据时代的展望”，*方法*，第166卷，第4–21页，2019年。'
+- en: '[6] S. Mahdavifar and A. A. Ghorbani, “Application of deep learning to cybersecurity:
+    A survey,” *Neurocomputing*, vol. 347, pp. 149–176, 2019.'
+  id: totrans-151
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[6] S. Mahdavifar 和 A. A. Ghorbani, “深度学习在网络安全中的应用：综述”，*神经计算*，第347卷，第149–176页，2019年。'
+- en: '[7] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, and L. Fei-Fei, “Imagenet:
+    A large-scale hierarchical image database,” in *2009 IEEE conference on computer
+    vision and pattern recognition*.   Ieee, 2009, pp. 248–255.'
+  id: totrans-152
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[7] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, 和 L. Fei-Fei, “Imagenet：大规模分层图像数据库”，见于
+    *2009年IEEE计算机视觉与模式识别会议*。IEEE，2009年，第248–255页。'
+- en: '[8] X. Xie, J. Mao, Y. Liu, M. de Rijke, Q. Ai, Y. Huang, M. Zhang, and S. Ma,
+    “Improving web image search with contextual information,” in *Proceedings of the
+    28th ACM International Conference on Information and Knowledge Management*, 2019,
+    pp. 1683–1692.'
+  id: totrans-153
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[8] X. Xie, J. Mao, Y. Liu, M. de Rijke, Q. Ai, Y. Huang, M. Zhang, 和 S. Ma,
+    “通过上下文信息改善网页图像搜索”，见于 *第28届ACM国际信息与知识管理大会论文集*，2019年，第1683–1692页。'
+- en: '[9] X. Yu, T. Liu, M. Gong, and D. Tao, “Learning with biased complementary
+    labels,” in *Proceedings of the European Conference on Computer Vision (ECCV)*,
+    2018, pp. 68–83.'
+  id: totrans-154
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[9] X. Yu, T. Liu, M. Gong, 和 D. Tao, “有偏的互补标签学习”，见于 *欧洲计算机视觉会议（ECCV）论文集*，2018年，第68–83页。'
+- en: '[10] E. Barkan, A. Hazan, and V. Ratner, “Reduce discrepancy of human annotators
+    in medical imaging by automatic visual comparison to similar cases,” Oct. 31 2019,
+    uS Patent App. 15/963,120.'
+  id: totrans-155
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[10] E. Barkan, A. Hazan, 和 V. Ratner, “通过自动视觉比较类似病例减少医学影像标注者的差异”，2019年10月31日，美国专利申请
+    15/963,120。'
+- en: '[11] K. Ma, X. Liu, Y. Fang, and E. P. Simoncelli, “Blind image quality assessment
+    by learning from multiple annotators,” in *2019 IEEE International Conference
+    on Image Processing (ICIP)*.   IEEE, 2019, pp. 2344–2348.'
+  id: totrans-156
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[11] K. Ma, X. Liu, Y. Fang, 和 E. P. Simoncelli, “通过从多个标注者学习进行盲图像质量评估”，见于 *2019年IEEE国际图像处理会议（ICIP）*。IEEE，2019年，第2344–2348页。'
+- en: '[12] D. McNicol, *A primer of signal detection theory*.   Psychology Press,
+    2005.'
+  id: totrans-157
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[12] D. McNicol, *信号检测理论概论*。心理学出版社，2005年。'
+- en: '[13] B. Frénay and M. Verleysen, “Classification in the presence of label noise:
+    a survey,” *IEEE transactions on neural networks and learning systems*, vol. 25,
+    no. 5, pp. 845–869, 2013.'
+  id: totrans-158
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[13] B. Frénay 和 M. Verleysen, “标签噪声下的分类：综述”，*IEEE神经网络与学习系统汇刊*，第25卷，第5期，第845–869页，2013年。'
+- en: '[14] C. Zhang, S. Bengio, M. Hardt, B. Recht, and O. Vinyals, “Understanding
+    deep learning requires rethinking generalization,” 2018.'
+  id: totrans-159
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[14] C. Zhang, S. Bengio, M. Hardt, B. Recht, 和 O. Vinyals, “理解深度学习需要重新思考泛化”，2018年。'
+- en: '[15] X. Wang, Y. Hua, E. Kodirov, and N. M. Robertson, “Proselflc: Progressive
+    self label correction for training robust deep neural networks,” *arXiv preprint
+    arXiv:2005.03788*, 2020.'
+  id: totrans-160
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[15] X. Wang, Y. Hua, E. Kodirov, 和 N. M. Robertson, “Proselflc：渐进自我标签修正以训练强健的深度神经网络”，*arXiv预印本
+    arXiv:2005.03788*，2020年。'
+- en: '[16] L. Jiang, Z. Zhou, T. Leung, L.-J. Li, and L. Fei-Fei, “Mentornet: Learning
+    data-driven curriculum for very deep neural networks on corrupted labels,” in
+    *International Conference on Machine Learning*, 2018, pp. 2304–2313.'
+  id: totrans-161
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[16] L. Jiang, Z. Zhou, T. Leung, L.-J. Li, 和 L. Fei-Fei， “Mentornet：在损坏标签上为非常深的神经网络学习数据驱动的课程，”
+    见于 *国际机器学习会议*，2018年，第2304–2313页。'
+- en: '[17] X. Yu, B. Han, J. Yao, G. Niu, I. W. Tsang, and M. Sugiyama, “How does
+    disagreement help generalization against label corruption?” *arXiv preprint arXiv:1901.04215*,
+    2019.'
+  id: totrans-162
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[17] X. Yu, B. Han, J. Yao, G. Niu, I. W. Tsang, 和 M. Sugiyama， “不一致如何帮助对标签污染的泛化？”
+    *arXiv预印本 arXiv:1901.04215*，2019年。'
+- en: '[18] E. Arazo, D. Ortego, P. Albert, N. O’Connor, and K. Mcguinness, “Unsupervised
+    label noise modeling and loss correction,” in *International Conference on Machine
+    Learning*, 2019, pp. 312–321.'
+  id: totrans-163
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[18] E. Arazo, D. Ortego, P. Albert, N. O’Connor, 和 K. Mcguinness， “无监督标签噪声建模与损失修正，”
+    见于 *国际机器学习会议*，2019年，第312–321页。'
+- en: '[19] J. Li, Y. Wong, Q. Zhao, and M. S. Kankanhalli, “Learning to learn from
+    noisy labeled data,” in *Proceedings of the IEEE Conference on Computer Vision
+    and Pattern Recognition*, 2019, pp. 5051–5059.'
+  id: totrans-164
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[19] J. Li, Y. Wong, Q. Zhao, 和 M. S. Kankanhalli， “从噪声标注数据中学习，” 见于 *IEEE计算机视觉与模式识别会议论文集*，2019年，第5051–5059页。'
+- en: '[20] X. Wang, Y. Hua, E. Kodirov, and N. M. Robertson, “Imae for noise-robust
+    learning: Mean absolute error does not treat examples equally and gradient magnitude’s
+    variance matters,” *arXiv preprint arXiv:1903.12141*, 2019.'
+  id: totrans-165
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[20] X. Wang, Y. Hua, E. Kodirov, 和 N. M. Robertson， “用于抗噪学习的Imae：均方绝对误差不平等对待示例且梯度幅度的方差很重要，”
+    *arXiv预印本 arXiv:1903.12141*，2019年。'
+- en: '[21] Y. Wang, X. Ma, Z. Chen, Y. Luo, J. Yi, and J. Bailey, “Symmetric cross
+    entropy for robust learning with noisy labels,” in *Proceedings of the IEEE International
+    Conference on Computer Vision*, 2019, pp. 322–330.'
+  id: totrans-166
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[21] Y. Wang, X. Ma, Z. Chen, Y. Luo, J. Yi, 和 J. Bailey， “对噪声标签进行鲁棒学习的对称交叉熵，”
+    见于 *IEEE国际计算机视觉会议论文集*，2019年，第322–330页。'
+- en: '[22] L. Jaehwan, Y. Donggeun, and K. Hyo-Eun, “Photometric transformer networks
+    and label adjustment for breast density prediction,” in *Proceedings of the IEEE
+    International Conference on Computer Vision Workshops*, 2019, pp. 0–0.'
+  id: totrans-167
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[22] L. Jaehwan, Y. Donggeun, 和 K. Hyo-Eun， “用于乳腺密度预测的光度变换网络和标签调整，” 见于 *IEEE国际计算机视觉会议研讨会论文集*，2019年，第0–0页。'
+- en: '[23] B. Yuan, J. Chen, W. Zhang, H.-S. Tai, and S. McMains, “Iterative cross
+    learning on noisy labels,” in *2018 IEEE Winter Conference on Applications of
+    Computer Vision (WACV)*.   IEEE, 2018, pp. 757–765.'
+  id: totrans-168
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[23] B. Yuan, J. Chen, W. Zhang, H.-S. Tai, 和 S. McMains， “对噪声标签进行迭代交叉学习，”
+    见于 *2018 IEEE冬季计算机视觉应用会议（WACV）*。IEEE，2018年，第757–765页。'
+- en: '[24] M. Ren, W. Zeng, B. Yang, and R. Urtasun, “Learning to reweight examples
+    for robust deep learning,” in *International Conference on Machine Learning*,
+    2018, pp. 4334–4343.'
+  id: totrans-169
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[24] M. Ren, W. Zeng, B. Yang, 和 R. Urtasun， “学习重标定示例以提高深度学习的鲁棒性，” 见于 *国际机器学习会议*，2018年，第4334–4343页。'
+- en: '[25] B. Han, G. Niu, J. Yao, X. Yu, M. Xu, I. Tsang, and M. Sugiyama, “Pumpout:
+    A meta approach for robustly training deep neural networks with noisy labels,”
+    2018.'
+  id: totrans-170
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[25] B. Han, G. Niu, J. Yao, X. Yu, M. Xu, I. Tsang, 和 M. Sugiyama， “Pumpout：一种针对噪声标签的深度神经网络鲁棒训练的元方法，”
+    2018年。'
+- en: '[26] Q. Miao, Y. Cao, G. Xia, M. Gong, J. Liu, and J. Song, “Rboost: Label
+    noise-robust boosting algorithm based on a nonconvex loss function and the numerically
+    stable base learners,” *IEEE transactions on neural networks and learning systems*,
+    vol. 27, no. 11, pp. 2216–2228, 2015.'
+  id: totrans-171
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[26] Q. Miao, Y. Cao, G. Xia, M. Gong, J. Liu, 和 J. Song， “Rboost：基于非凸损失函数和数值稳定基础学习者的标签噪声鲁棒提升算法，”
+    *IEEE神经网络与学习系统交易*，第27卷，第11期，第2216–2228页，2015年。'
+- en: '[27] Y. Kim, J. Yim, J. Yun, and J. Kim, “Nlnl: Negative learning for noisy
+    labels,” in *Proceedings of the IEEE International Conference on Computer Vision*,
+    2019, pp. 101–110.'
+  id: totrans-172
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[27] Y. Kim, J. Yim, J. Yun, 和 J. Kim， “Nlnl：针对噪声标签的负学习，” 见于 *IEEE国际计算机视觉会议论文集*，2019年，第101–110页。'
+- en: '[28] W. Zhang, Y. Wang, and Y. Qiao, “Metacleaner: Learning to hallucinate
+    clean representations for noisy-labeled visual recognition,” in *Proceedings of
+    the IEEE Conference on Computer Vision and Pattern Recognition*, 2019, pp. 7373–7382.'
+  id: totrans-173
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[28] W. Zhang, Y. Wang, 和 Y. Qiao， “Metacleaner：学习为噪声标注的视觉识别生成干净表示，” 见于 *IEEE计算机视觉与模式识别会议论文集*，2019年，第7373–7382页。'
+- en: '[29] G. Patrini, A. Rozza, A. Krishna Menon, R. Nock, and L. Qu, “Making deep
+    neural networks robust to label noise: A loss correction approach,” in *Proceedings
+    of the IEEE Conference on Computer Vision and Pattern Recognition*, 2017, pp.
+    1944–1952.'
+  id: totrans-174
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[29] G. Patrini, A. Rozza, A. Krishna Menon, R. Nock, 和 L. Qu， “使深度神经网络对标签噪声具有鲁棒性：一种损失修正方法，”
+    见于 *IEEE计算机视觉与模式识别会议论文集*，2017年，第1944–1952页。'
+- en: '[30] A. Krizhevsky, G. Hinton *et al.*, “Learning multiple layers of features
+    from tiny images,” 2009.'
+  id: totrans-175
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[30] A. Krizhevsky, G. Hinton *等*，“从微小图像中学习多个特征层，”2009年。'
+- en: '[31] Z. Zhang and M. Sabuncu, “Generalized cross entropy loss for training
+    deep neural networks with noisy labels,” in *Advances in neural information processing
+    systems*, 2018, pp. 8778–8788.'
+  id: totrans-176
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[31] Z. Zhang 和 M. Sabuncu, “用于训练具有噪声标签的深度神经网络的广义交叉熵损失，”发表于*神经信息处理系统进展*，2018年，第8778–8788页。'
+- en: '[32] D. Angluin and P. Laird, “Learning from noisy examples,” *Machine Learning*,
+    vol. 2, no. 4, pp. 343–370, 1988.'
+  id: totrans-177
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[32] D. Angluin 和 P. Laird, “从噪声示例中学习，” *机器学习*，第2卷，第4期，第343–370页，1988年。'
+- en: '[33] D. Hendrycks, M. Mazeika, D. Wilson, and K. Gimpel, “Using trusted data
+    to train deep networks on labels corrupted by severe noise,” in *Advances in neural
+    information processing systems*, 2018, pp. 10 456–10 465.'
+  id: totrans-178
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[33] D. Hendrycks, M. Mazeika, D. Wilson, 和 K. Gimpel, “利用可信数据训练深度网络以应对严重噪声标签，”发表于*神经信息处理系统进展*，2018年，第10 456–10 465页。'
+- en: '[34] S. Sukhbaatar and R. Fergus, “Learning from noisy labels with deep neural
+    networks,” *arXiv preprint arXiv:1406.2080*, vol. 2, no. 3, p. 4, 2014.'
+  id: totrans-179
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[34] S. Sukhbaatar 和 R. Fergus, “使用深度神经网络从噪声标签中学习，” *arXiv 预印本 arXiv:1406.2080*，第2卷，第3期，第4页，2014年。'
+- en: '[35] S. E. Reed, H. Lee, D. Anguelov, C. Szegedy, D. Erhan, and A. Rabinovich,
+    “Training deep neural networks on noisy labels with boostrapping,” *arXiv preprint
+    arXiv:1412.6596*, 2014.'
+  id: totrans-180
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[35] S. E. Reed, H. Lee, D. Anguelov, C. Szegedy, D. Erhan, 和 A. Rabinovich,
+    “在噪声标签上训练深度神经网络的引导方法，” *arXiv 预印本 arXiv:1412.6596*，2014年。'
+- en: '[36] J. Goldberger and E. Ben-Reuven, “Training deep neural-networks using
+    a noise adaptation layer,” *ICLR*, 2017.'
+  id: totrans-181
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[36] J. Goldberger 和 E. Ben-Reuven, “使用噪声适应层训练深度神经网络，” *ICLR*，2017年。'
+- en: '[37] X. Chen and A. Gupta, “Webly supervised learning of convolutional networks,”
+    in *Proceedings of the IEEE International Conference on Computer Vision*, 2015,
+    pp. 1431–1439.'
+  id: totrans-182
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[37] X. Chen 和 A. Gupta, “卷积网络的Webly监督学习，”发表于*IEEE计算机视觉国际会议论文集*，2015年，第1431–1439页。'
+- en: '[38] A. J. Bekker and J. Goldberger, “Training deep neural-networks based on
+    unreliable labels,” in *2016 IEEE International Conference on Acoustics, Speech
+    and Signal Processing (ICASSP)*.   IEEE, 2016, pp. 2682–2686.'
+  id: totrans-183
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[38] A. J. Bekker 和 J. Goldberger, “基于不可靠标签的深度神经网络训练，”发表于*2016 IEEE国际声学、语音与信号处理会议
+    (ICASSP)*，IEEE，2016年，第2682–2686页。'
+- en: '[39] X. Xia, T. Liu, N. Wang, B. Han, C. Gong, G. Niu, and M. Sugiyama, “Are
+    anchor points really indispensable in label-noise learning?” in *Advances in Neural
+    Information Processing Systems*, 2019, pp. 6838–6849.'
+  id: totrans-184
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[39] X. Xia, T. Liu, N. Wang, B. Han, C. Gong, G. Niu, 和 M. Sugiyama, “锚点在标签噪声学习中真的不可或缺吗？”发表于*神经信息处理系统进展*，2019年，第6838–6849页。'
+- en: '[40] N. Manwani and P. Sastry, “Noise tolerance under risk minimization,” *IEEE
+    transactions on cybernetics*, vol. 43, no. 3, pp. 1146–1151, 2013.'
+  id: totrans-185
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[40] N. Manwani 和 P. Sastry, “在风险最小化下的噪声容忍度，” *IEEE网络控制论交易*，第43卷，第3期，第1146–1151页，2013年。'
+- en: '[41] A. Ghosh, H. Kumar, and P. Sastry, “Robust loss functions under label
+    noise for deep neural networks,” in *Thirty-First AAAI Conference on Artificial
+    Intelligence*, 2017.'
+  id: totrans-186
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[41] A. Ghosh, H. Kumar, 和 P. Sastry, “深度神经网络下的鲁棒损失函数应对标签噪声，”发表于*第三十一届AAAI人工智能大会*，2017年。'
+- en: '[42] L. Ziyin, B. Chen, R. Wang, P. P. Liang, R. Salakhutdinov, L.-P. Morency,
+    and M. Ueda, “Learning not to learn in the presence of noisy labels,” *arXiv preprint
+    arXiv:2002.06541*, 2020.'
+  id: totrans-187
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[42] L. Ziyin, B. Chen, R. Wang, P. P. Liang, R. Salakhutdinov, L.-P. Morency,
+    和 M. Ueda, “在噪声标签存在下的无学习学习，” *arXiv 预印本 arXiv:2002.06541*，2020年。'
+- en: '[43] S. Thulasidasan, T. Bhattacharya, J. Bilmes, G. Chennupati, and J. Mohd-Yusof,
+    “Combating label noise in deep learning using abstention,” in *International Conference
+    on Machine Learning*, 2019, pp. 6234–6243.'
+  id: totrans-188
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[43] S. Thulasidasan, T. Bhattacharya, J. Bilmes, G. Chennupati, 和 J. Mohd-Yusof,
+    “在深度学习中使用弃权来应对标签噪声，”发表于*国际机器学习大会*，2019年，第6234–6243页。'
+- en: '[44] X. Ma, H. Huang, Y. Wang, S. Romano, S. Erfani, and J. Bailey, “Normalized
+    loss functions for deep learning with noisy labels,” *ICML*, 2020.'
+  id: totrans-189
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[44] X. Ma, H. Huang, Y. Wang, S. Romano, S. Erfani, 和 J. Bailey, “用于深度学习的归一化损失函数与噪声标签，”
+    *ICML*，2020年。'
+- en: '[45] Y. Liu and H. Guo, “Peer loss functions: Learning from noisy labels without
+    knowing noise rates,” *ICML*, 2019.'
+  id: totrans-190
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[45] Y. Liu 和 H. Guo, “同行损失函数：在不了解噪声率的情况下从噪声标签中学习，” *ICML*，2019年。'
+- en: '[46] Y. Wang, W. Liu, X. Ma, J. Bailey, H. Zha, L. Song, and S.-T. Xia, “Iterative
+    learning with open-set noisy labels,” in *Proceedings of the IEEE Conference on
+    Computer Vision and Pattern Recognition*, 2018, pp. 8688–8696.'
+  id: totrans-191
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[46] Y. Wang, W. Liu, X. Ma, J. Bailey, H. Zha, L. Song, 和 S.-T. Xia, “在开放集噪声标签下的迭代学习，”发表于*IEEE计算机视觉与模式识别会议论文集*，2018年，第8688–8696页。'
+- en: '[47] S. Guo, W. Huang, H. Zhang, C. Zhuang, D. Dong, M. R. Scott, and D. Huang,
+    “Curriculumnet: Weakly supervised learning from large-scale web images,” in *Proceedings
+    of the European Conference on Computer Vision (ECCV)*, 2018, pp. 135–150.'
+  id: totrans-192
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[47] S. Guo, W. Huang, H. Zhang, C. Zhuang, D. Dong, M. R. Scott, 和 D. Huang，“Curriculumnet：从大规模网络图像中进行弱监督学习”，在*欧洲计算机视觉会议（ECCV）*中，2018年，页135–150。'
+- en: '[48] C. Xue, Q. Dou, X. Shi, H. Chen, and P.-A. Heng, “Robust learning at noisy
+    labeled medical images: Applied to skin lesion classification,” in *2019 IEEE
+    16th International Symposium on Biomedical Imaging (ISBI 2019)*.   IEEE, 2019,
+    pp. 1280–1283.'
+  id: totrans-193
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[48] C. Xue, Q. Dou, X. Shi, H. Chen, 和 P.-A. Heng，“在带噪声标记的医学图像中进行鲁棒学习：应用于皮肤病变分类”，在*2019
+    IEEE第16届国际生物医学成像研讨会（ISBI 2019）*中。IEEE，2019年，页1280–1283。'
+- en: '[49] H. Harutyunyan, K. Reing, G. Ver Steeg, and A. Galstyan, “Improving generalization
+    by controlling label-noise information in neural network weights,” *ICML*, 2020.'
+  id: totrans-194
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[49] H. Harutyunyan, K. Reing, G. Ver Steeg, 和 A. Galstyan，“通过控制神经网络权重中的标签噪声信息来提高泛化能力”，*ICML*，2020年。'
+- en: '[50] K.-H. Lee, X. He, L. Zhang, and L. Yang, “Cleannet: Transfer learning
+    for scalable image classifier training with label noise,” in *Proceedings of the
+    IEEE Conference on Computer Vision and Pattern Recognition*, 2018, pp. 5447–5456.'
+  id: totrans-195
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[50] K.-H. Lee, X. He, L. Zhang, 和 L. Yang，“Cleannet：用于带标签噪声的可扩展图像分类器训练的迁移学习”，在*IEEE计算机视觉与模式识别会议论文集*中，2018年，页5447–5456。'
+- en: '[51] B. Han, Q. Yao, X. Yu, G. Niu, M. Xu, W. Hu, I. Tsang, and M. Sugiyama,
+    “Co-teaching: Robust training of deep neural networks with extremely noisy labels,”
+    in *Advances in neural information processing systems*, 2018, pp. 8527–8537.'
+  id: totrans-196
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[51] B. Han, Q. Yao, X. Yu, G. Niu, M. Xu, W. Hu, I. Tsang, 和 M. Sugiyama，“Co-teaching：用极端噪声标签进行深度神经网络的鲁棒训练”，在*神经信息处理系统进展*中，2018年，页8527–8537。'
+- en: '[52] H. Wei, L. Feng, X. Chen, and B. An, “Combating noisy labels by agreement:
+    A joint training method with co-regularization,” in *Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition*, 2020, pp. 13 726–13 735.'
+  id: totrans-197
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[52] H. Wei, L. Feng, X. Chen, 和 B. An，“通过一致性应对噪声标签：一种带共同正则化的联合训练方法”，在*IEEE/CVF计算机视觉与模式识别大会论文集*中，2020年，页13 726–13 735。'
+- en: '[53] T. Nguyen, C. Mummadi, T. Ngo, L. Beggel, and T. Brox, “Self: learning
+    to filter noisy labels with self-ensembling,” in *International Conference on
+    Learning Representations (ICLR)*, 2020.'
+  id: totrans-198
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[53] T. Nguyen, C. Mummadi, T. Ngo, L. Beggel, 和 T. Brox，“Self：通过自我集成学习过滤噪声标签”，在*国际表示学习会议（ICLR）*中，2020年。'
+- en: '[54] J. Shu, Q. Xie, L. Yi, Q. Zhao, S. Zhou, Z. Xu, and D. Meng, “Meta-weight-net:
+    Learning an explicit mapping for sample weighting,” in *Advances in Neural Information
+    Processing Systems*, 2019, pp. 1919–1930.'
+  id: totrans-199
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[54] J. Shu, Q. Xie, L. Yi, Q. Zhao, S. Zhou, Z. Xu, 和 D. Meng，“Meta-weight-net：学习样本加权的显式映射”，在*神经信息处理系统进展*中，2019年，页1919–1930。'
+- en: '[55] H. Zhang, M. Cisse, Y. N. Dauphin, and D. Lopez-Paz, “mixup: Beyond empirical
+    risk minimization,” in *International Conference on Learning Representations*,
+    2018.'
+  id: totrans-200
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[55] H. Zhang, M. Cisse, Y. N. Dauphin, 和 D. Lopez-Paz，“mixup：超越经验风险最小化”，在*国际表示学习会议*中，2018年。'
+- en: '[56] Z. Zhang, H. Zhang, S. O. Arik, H. Lee, and T. Pfister, “Distilling effective
+    supervision from severe label noise,” in *Proceedings of the IEEE/CVF Conference
+    on Computer Vision and Pattern Recognition*, 2020, pp. 9294–9303.'
+  id: totrans-201
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[56] Z. Zhang, H. Zhang, S. O. Arik, H. Lee, 和 T. Pfister，“从严重标签噪声中提取有效监督”，在*IEEE/CVF计算机视觉与模式识别大会论文集*中，2020年，页9294–9303。'
+- en: '[57] J. Han, P. Luo, and X. Wang, “Deep self-learning from noisy labels,” in
+    *Proceedings of the IEEE International Conference on Computer Vision*, 2019, pp.
+    5138–5147.'
+  id: totrans-202
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[57] J. Han, P. Luo, 和 X. Wang，“从噪声标签中进行深度自学习”，在*IEEE国际计算机视觉会议论文集*中，2019年，页5138–5147。'
+- en: '[58] J. Li, R. Socher, and S. C. Hoi, “Dividemix: Learning with noisy labels
+    as semi-supervised learning,” *arXiv preprint arXiv:2002.07394*, 2020.'
+  id: totrans-203
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[58] J. Li, R. Socher, 和 S. C. Hoi，“Dividemix：作为半监督学习的噪声标签学习”，*arXiv预印本arXiv:2002.07394*，2020年。'
+- en: '[59] D. Berthelot, N. Carlini, I. Goodfellow, N. Papernot, A. Oliver, and C. A.
+    Raffel, “Mixmatch: A holistic approach to semi-supervised learning,” in *Advances
+    in Neural Information Processing Systems*, 2019, pp. 5049–5059.'
+  id: totrans-204
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[59] D. Berthelot, N. Carlini, I. Goodfellow, N. Papernot, A. Oliver, 和 C.
+    A. Raffel，“Mixmatch：一种整体半监督学习方法”，在*神经信息处理系统进展*中，2019年，页5049–5059。'
+- en: '[60] T. Xiao, T. Xia, Y. Yang, C. Huang, and X. Wang, “Learning from massive
+    noisy labeled data for image classification,” in *Proceedings of the IEEE conference
+    on computer vision and pattern recognition*, 2015, pp. 2691–2699.'
+  id: totrans-205
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[60] T. Xiao, T. Xia, Y. Yang, C. Huang, 和 X. Wang，“从大规模噪声标记数据中学习进行图像分类”，在*IEEE计算机视觉与模式识别会议论文集*中，2015年，页2691–2699。'
+- en: '[61] W. Li, L. Wang, W. Li, E. Agustsson, and L. V. Gool, “Webvision database:
+    Visual learning and understanding from web data.” *CoRR*, 2017.'
+  id: totrans-206
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[61] W. Li, L. Wang, W. Li, E. Agustsson 和 L. V. Gool，"Webvision数据库：从网络数据中进行视觉学习和理解。"
+    *CoRR*，2017年。'
+- en: '[62] L. Bossard, M. Guillaumin, and L. Van Gool, “Food-101–mining discriminative
+    components with random forests,” in *European conference on computer vision*.   Springer,
+    2014, pp. 446–461.'
+  id: totrans-207
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[62] L. Bossard, M. Guillaumin 和 L. Van Gool，"Food-101–通过随机森林挖掘判别性组件"，载于 *欧洲计算机视觉会议*。Springer，2014年，第446–461页。'
+- en: '[63] C. Zhang, S. Bengio, M. Hardt, B. Recht, and O. Vinyals, “Understanding
+    deep learning requires rethinking generalization,” *International Conference On
+    Learning Representations (ICLR)*, vol. abs/1611.03530, 2017.'
+  id: totrans-208
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[63] C. Zhang, S. Bengio, M. Hardt, B. Recht 和 O. Vinyals，"理解深度学习需要重新思考泛化"，*国际学习表征会议（ICLR）*，第abs/1611.03530卷，2017年。'
+- en: '[64] K. Yi and J. Wu, “Probabilistic end-to-end noise correction for learning
+    with noisy labels,” in *Proceedings of the IEEE Conference on Computer Vision
+    and Pattern Recognition*, 2019, pp. 7017–7025.'
+  id: totrans-209
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[64] K. Yi 和 J. Wu，"用于带噪标签学习的概率端到端噪声校正"，载于 *IEEE计算机视觉与模式识别会议论文集*，2019年，第7017–7025页。'
+- en: '[65] P. Chen, B. Liao, G. Chen, and S. Zhang, “Understanding and utilizing
+    deep neural networks trained with noisy labels,” *arXiv preprint arXiv:1905.05040*,
+    2019.'
+  id: totrans-210
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[65] P. Chen, B. Liao, G. Chen 和 S. Zhang，"理解和利用带噪标签训练的深度神经网络"，*arXiv预印本 arXiv:1905.05040*，2019年。'
