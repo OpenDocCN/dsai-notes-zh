@@ -2613,15 +2613,20 @@
   id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管搜索空间较大，PBA 表明，搜索调度要比强制执行固定规则效率高得多。这是由于几个因素。在传统的 AutoDA 方法（如 AA）中，评估采样策略极为耗时。这一过程需要通过对一个子模型进行完整训练来完成，因为数据增强技术主要在模型训练的后期生效。为了估计固定策略的有效性，子模型必须训练一定数量的周期，直到模型能够真正从该策略中受益。然而，测试应用调度策略则完全不同。如果两个新采样的策略共享相同的前缀
+    TFs，评估算法可以重用之前的训练权重来评估这两个策略。这类似于 AWS [tian2020improving](#bib.bib30) 中的权重共享思想，但更为可靠。此外，[ho2019population](#bib.bib23)
+    还指出，利用调度信息可以提供更好的准确性结果。不同类型的增强 TFs 可能适用于模型训练中的不同周期。根据训练阶段选择最合适的增强函数是一个自然的想法。
 - en: '![Refer to caption](img/34ee0c80c44bbeb73f625214e51f8e1b.png)'
   id: totrans-242
   prefs: []
   type: TYPE_IMG
+  zh: '![参考图注](img/34ee0c80c44bbeb73f625214e51f8e1b.png)'
 - en: 'Figure 6: Population Based Augmentation workflow [ho2019population](#bib.bib23)
     . Upper/lower sections indicate the policy generation/application stage respectively.'
   id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6：基于人口的增强工作流程 [ho2019population](#bib.bib23)。上部/下部区域分别表示策略生成/应用阶段。
 - en: The basic workflow of PBA is displayed in Fig. [6](#S5.F6 "Figure 6 ‣ 5.1.5
     Population-Based Augmentation (PBA) ‣ 5.1 Gradient-free Optimization ‣ 5 Two-stage
     Approaches ‣ A Survey of Automated Data Augmentation Algorithms for Deep Learning-based
@@ -2640,6 +2645,13 @@
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: PBA 的基本工作流程如图 [6](#S5.F6 "Figure 6 ‣ 5.1.5 Population-Based Augmentation (PBA)
+    ‣ 5.1 Gradient-free Optimization ‣ 5 Two-stage Approaches ‣ A Survey of Automated
+    Data Augmentation Algorithms for Deep Learning-based Image Classification Tasks")
+    所示。首先，初始化并同时训练多个子模型，即人口。每个子模型负责评估一个单一的增强策略。在 $3$ 个训练周期后，PBA 通过在验证数据集上测试所有子模型来运行一个梯度下降（GD）周期。验证准确率估计了用于训练每个子模型的各个策略的性能。在获得所有子模型及其对应
+    DA 策略的性能排名后，PBA 采用经典的“利用与探索”程序来更新策略，其中低排名的模型复制高排名模型的参数。具体而言，PBA 使用 Truncation
+    Selection [jaderberg2017population](#bib.bib67) 进行利用。为了探索，PBA 在采样和利用过程中随机扰动参数值。PBA
+    不会从头开始重新初始化子模型，这大大降低了计算成本。
 - en: The improvement of PBA for search efficiency is substantial. It is approximately
     $1,000$ times faster than AA while still preserving similar accuracy. This is
     mainly due to the joint optimization of the child model and policy hyper-parameters.
@@ -2882,6 +2894,9 @@
   id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，AutoDA方法在图像级别上搜索增强策略。相同的DA策略用于转换整个图像。然而，根据图像中不同区域的内容，最佳TF可能会有所不同。将图像视为一个整体可能忽略其内部区域的差异，这限制了增强数据的多样性
+    [gontijo2020affinity](#bib.bib78) 。此外，过于激进的增强函数可能会修改或移除语义特征，造成标签保留方面的安全隐患。为了解决上述问题，提出了一种更精细化的方法——Patch
+    AutoAugment (PAA) [lin2021local](#bib.bib65) 。PAA将图像视为若干补丁的组合，并在补丁级别上优化DA策略。为了充分表示每个补丁之间的内在关系，PAA将AutoDA任务表述为一个多代理强化学习（MARL）问题，其中每个代理处理一个单独的补丁，并共同更新最终的DA策略。
 - en: Similar to AA, the problem modelling in PAA follows the basic use of Reinforcement
     Learning (RL) model. In a standard RL framework, given a current state, the agent/controller
     samples a DA policy and receives the corresponding reward signal from the child
@@ -2895,6 +2910,8 @@
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 与AA类似，PAA中的问题建模遵循强化学习（RL）模型的基本使用。在标准的RL框架中，给定当前状态，代理/控制器会采样一个DA策略，并从子模型训练中接收相应的奖励信号。然后，PAA模型根据奖励更新策略，并移动到下一个状态。PAA中代理的优化目标是最大化奖励，以寻找最佳表现的DA策略。此外，PAA借鉴了MARL的思想
+    [boutilier1996planning](#bib.bib79) ，使用多个代理在单个图像上进行搜索。每个代理处理原始图片中的一个子区域，并共享一个全局奖励，以协同更新下一个增强策略。
 - en: In PAA, the augmentation policy model consists of a global state, local observations
     and actions. Firstly, an input image is divided into several non-overlapping patches
     of equal size. Each patch is controlled by one policy agent for the policy optimization.
@@ -3013,15 +3030,24 @@
   id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 受到OHL-AA中二级优化的启发，[lin2019online](#bib.bib54) ，Faster AA 采用了一个可微分的框架来进行 DA 策略搜索，这大大加快了搜索速度。Faster
+    AA 的关键修改是通过直通估计器 [bengio2013estimating](#bib.bib81) ; [oord2017neural](#bib.bib82)
+    近似策略梯度，这一思想源于 DARTS [williams1992simple](#bib.bib55) 。DARTS 在 NAS 领域的成功使其适用于 AutoDA
+    任务。在 Faster AA 中，增强超参数的分布被近似为放松伯努利分布 [jang2016categorical](#bib.bib70) 。在搜索空间放松后，每个增强策略中的
+    TF 可以针对概率和幅度超参数 [bengio2013estimating](#bib.bib81) ; [oord2017neural](#bib.bib82)
+    进行可微分。这使得在 Faster AA 中更容易计算它们的梯度。使用梯度估计技术，Faster AA 可以直接基于梯度优化 DA 策略。这使得 DA 策略优化具有端到端的可微性，从而相比于之前的黑箱优化方法（如
+    AA 中的强化学习 [cubuk2019autoaugment](#bib.bib20) ）提供了更高的控制力。
 - en: '![Refer to caption](img/af181b41aaed0845d53626c64e64190f.png)'
   id: totrans-270
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/af181b41aaed0845d53626c64e64190f.png)'
 - en: 'Figure 8: Faster AutoAugment workflow [hataya2020faster](#bib.bib22) . Upper/lower
     sections indicate the policy generation/application stage respectively.'
   id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 8: Faster AutoAugment 工作流程 [hataya2020faster](#bib.bib22) 。上/下部分分别表示策略生成/应用阶段。'
 - en: 'To further reduce the search cost, inspired by Fast AA [lim2019fast](#bib.bib21)
     , Faster AA also applies a density matching technique during policy evaluation.
     The objective of optimization is to minimize the distance between data distributions
@@ -3043,6 +3069,14 @@
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步降低搜索成本，受到 Fast AA [lim2019fast](#bib.bib21) 的启发，Faster AA 在策略评估期间还应用了密度匹配技术。优化的目标是最小化原始数据和增强数据之间的数据分布距离。Faster
+    AA 还采用了对抗框架来帮助策略采样。由于使用了密度匹配，Faster AA 的整体工作流程与 Fast AA 相似，如图 [8](#S5.F8 "Figure
+    8 ‣ 5.2.1 Faster AutoAugment (Faster AA) ‣ 5.2 Gradient-based Optimization ‣ 5
+    Two-stage Approaches ‣ A Survey of Automated Data Augmentation Algorithms for
+    Deep Learning-based Image Classification Tasks") 所示。然而，Faster AA 使用了一个减少的数据集 $D$
+    作为输入，以进一步提高搜索效率。输入数据 $D$ 首先被分成两部分：用于准备评估模型的训练集 $D_{M}$ 和用于策略搜索的增强集 $D_{A}$。预训练模型
+    $M$ 被用于估计 Faster AA 第一阶段中采样的 DA 策略 $P$ 的性能。Faster AA 模型以基于梯度的方式检查搜索空间，以识别最佳 DA
+    策略。搜索完成后，最终策略将应用于增强整个数据集并训练分类模型 $M$。在搜索和训练阶段，Faster AA 训练相同的目标模型 $M$ 以提供更可靠的评估。
 - en: Faster AA is the first two-stage AutoDA model that resorts to gradient approximation
     to achieve faster searches than other state-of-the-art algorithms, such as Fast
     AA [lim2019fast](#bib.bib21) and PBA [ho2019population](#bib.bib23) . Importantly,
@@ -3063,16 +3097,25 @@
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: Faster AA 是第一个两阶段的 AutoDA 模型，通过梯度近似实现比其他先进算法（如 Fast AA [lim2019fast](#bib.bib21)
+    和 PBA [ho2019population](#bib.bib23)）更快的搜索。重要的是，它引入了直通估计器 [bengio2013estimating](#bib.bib81)
+    来近似不可微分的 AutoDA 任务的梯度。通过放宽策略超参数的原始分布，Faster AA 可以直接反向传播增强过程，并基于梯度优化 DA 策略。因此，传统两阶段
+    AutoDA 模型中使用的黑箱优化被转化为一个更加透明和可控的过程，从而显著提高了搜索速度。此外，Faster AA 遵循了 Fast AA [lim2019fast](#bib.bib21)
+    的密度匹配思想，完全去除了第一阶段中重复训练模型的过程。相反，通过最小化原始数据和增强数据之间的分布距离来进行策略评估。因此，与 AA [cubuk2019autoaugment](#bib.bib20)
+    相比，Faster AA 可以显著减少所需的计算资源。实验结果 [hataya2020faster](#bib.bib22) 显示，Faster AA 在搜索效率和最终准确性方面与其他
+    AutoDA 方法相比具有竞争力的性能。
 - en: 5.3 Search-free
   id: totrans-274
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 5.3 无需搜索
 - en: 5.3.1 RandAugment (RA)
   id: totrans-275
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.3.1 RandAugment (RA)
 - en: RandAugment (RA) [cubuk2020randaugment](#bib.bib31) is the first search-free
     scheme in the AutoDA field. To reduce the cost of the search phase, the parameter
     space in RA is significantly smaller, defined by only two hyper-parameters. This
@@ -3092,6 +3135,11 @@
   id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: RandAugment (RA) [cubuk2020randaugment](#bib.bib31) 是 AutoDA 领域中第一个无需搜索的方案。为了降低搜索阶段的成本，RA
+    中的参数空间显著较小，仅由两个超参数定义。这一简化的空间使 RA 能够直接从完整的数据集中学习 DA 策略，而无需依赖单独的代理任务。事实上，RA 中策略超参数的简化程度非常高，以至于简单的网格搜索就足以输出有效的
+    DA 策略。因此，RA 中的策略生成阶段与其他方法中的经典搜索方案有很大不同，后者通常涉及选择性采样和昂贵的评估。根据 [cubuk2020randaugment](#bib.bib31)
+    的说法，可以使用更先进的采样方法而非简单的网格搜索，这可能进一步降低计算成本。因此，RA 可以被认为是一个无需搜索的 AutoDA 模型。此外，RA 还能够根据不同规模的分类模型和训练数据优化
+    DA 策略。实验结果 [cubuk2020randaugment](#bib.bib31) 也表明，与其他基于搜索的 AutoDA 方法相比，RA 可以产生具有竞争力的准确性结果。
 - en: The primary goal of RA is to reduce the complexity caused by the separate policy
     search stage in the earlier two-stage AutoDA methods. To do so, RA eliminates
     the need for expensive policy searches by greatly simplifying the search problem.
@@ -3117,6 +3165,13 @@
   id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: RA 的主要目标是减少早期两阶段 AutoDA 方法中由单独策略搜索阶段引起的复杂性。为此，RA 通过大幅简化搜索问题，消除了对昂贵策略搜索的需求。在
+    RA 中，出于效率考虑，传统 AutoDA 方法中的整个搜索阶段被移除。这是因为大多数计算工作负载来自第一阶段，当模型重复采样 DA 策略并进行评估时。进行策略搜索和网络训练同时进行也是一个复杂的双层优化问题。先前基于搜索的方法的另一个缺点在于搜索过程中使用的代理任务。在代理任务中，AutoDA
+    模型在原始训练数据的一个简化子集上进行搜索，并使用一个更简单的网络评估采样的增广策略。这两种简化措施旨在降低搜索成本。该框架的一个主要前提是，代理任务能够反映目标任务的一些核心特征，从而使最终策略也是全量训练数据的最佳增广方案。虽然通过代理任务找到的
+    DA 策略能够产生有前景的性能 [cubuk2019autoaugment](#bib.bib20) ; [ho2019population](#bib.bib23)
+    ; [lim2019fast](#bib.bib21) ; [zoph2020learning](#bib.bib26) ，但它很可能是一个次优结果 [cubuk2020randaugment](#bib.bib31)
+    。根据 [cubuk2020randaugment](#bib.bib31) 的说法，增广策略的最佳强度取决于训练集和网络的大小。因此，在代理任务上搜索 DA
+    策略只能产生适合解决代理任务的结果，而不是目标任务，这导致次优解决方案。
 - en: To avoid sub-optimal results, AutoDA models need to directly search for DA policies
     over the full training set. However, this is usually computationally infeasible
     in practice as the traditional search space in AA [cubuk2019autoaugment](#bib.bib20)
@@ -3132,6 +3187,11 @@
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了避免次优结果，AutoDA 模型需要在整个训练集上直接搜索 DA 策略。然而，在实践中，这通常计算上不可行，因为传统的 AA [cubuk2019autoaugment](#bib.bib20)
+    搜索空间极其庞大。为了缓解这种效率问题，RA 大大减少了需要优化的超参数数量。在 RA 中，搜索空间的缩减通过两种方式解决，包括对现有公式的简化和新参数的提出。在先前的方法
+    [cubuk2019autoaugment](#bib.bib20) ; [lim2019fast](#bib.bib21) ; [ho2019population](#bib.bib23)
+    中，增广策略中的每个 TF 都由两个超参数控制，即概率和幅度。而在 RA 中，所有图像操作以均匀概率进行选择，这完全依赖于搜索空间中可用 TF 的总数。例如，在
+    RA 中给定 $K$ 个不同的 TF，每个操作的概率是 $\frac{1}{K}$。
 - en: To further reduce the search space, RA simplifies the magnitude hyper-parameter
     as well. The value range of the magnitude hyper-parameter follows the same setting
     as in original AA [cubuk2019autoaugment](#bib.bib20) , with $11$ discrete values
@@ -3153,6 +3213,10 @@
   id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步减少搜索空间，RA也简化了幅度超参数。幅度超参数的值范围与原始AA中的设置相同 [cubuk2019autoaugment](#bib.bib20)，共有$11$个离散值，范围从$0$到$10$。在之前的AutoDA模型中，每个变换函数的规模也由其相应的幅度指定。然而，在检查每个操作幅度在搜索过程中的变化
+    [ho2019population](#bib.bib23) 后，RA的作者指出所有幅度值都遵循类似的时间表。因此，RA假设使用一个共享的幅度超参数$M$对所有TF可能是足够的。因此，在RA中，所有DA策略中的图像操作共享相同的概率和幅度超参数，这大大减少了参数空间。除了重新定义搜索空间，RA还提出了一个新的自由参数以提升性能增益，即一个增强策略中的TF数量$N$。$N$在大多数流行的AutoDA方法中
+    [cubuk2019autoaugment](#bib.bib20) ; [ho2019population](#bib.bib23) ; [lim2019fast](#bib.bib21)
+    通常是人工决定的，因为计算资源有限。而在RA中，由于参数空间极大地减少，$N$的自动搜索变得可行。优化TF数量$N$可以消除人为偏差，并进一步提高性能。
 - en: 'After the re-parameterization of parameter space, there are only two hyper-parameters
     to optimize in RA: the number of TFs $N$ to form a complete augmentation policy,
     and the global magnitude value $M$ to control all TFs. Both hyper-parameters can
@@ -3166,6 +3230,9 @@
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 在参数空间重新参数化之后，RA中只需要优化两个超参数：形成完整增强策略的TF数量$N$和控制所有TF的全局幅度值$M$。这两个超参数都容易被人类解释，因此较大的$N$和$M$值表示更激进的增强策略，而较小的值则代表更保守的方案。在RA重新定义了整个搜索问题之后，各种先进的算法可以用于执行标准的超参数优化
+    [snoek2012practical](#bib.bib83)。然而，由于RA中的最终搜索空间极小，RA的作者建议简单的网格搜索就能获得足够的性能提升，这一点得到了实验的支持
+    [cubuk2020randaugment](#bib.bib31)。
 - en: RA makes several noteworthy contributions to the AutoDA task. Via re-parameterization
     of standard AutoDA problem, RA employs a reduced search space, which is only controlled
     by two hyper-parameters, $N$ and $M$. $N$ indicates how many TFs are contained
@@ -3192,11 +3259,20 @@
   id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: RA 对 AutoDA 任务做出了几个值得注意的贡献。通过对标准 AutoDA 问题的重新参数化，RA 采用了一个仅由两个超参数 $N$ 和 $M$ 控制的简化搜索空间。$N$
+    表示单个 DA 策略中包含的 TF 数量，而 $M$ 指的是所有图像操作的统一失真参数。在 RA 中，$N$ 和 $M$ 的优化是通过简单的网格搜索实现的。这一特性使
+    RA 能够轻松扩展到更大的数据集和更深的模型，而不会显著增加搜索成本。此外，RA 在各种数据集上表现出色，与之前的 AutoDA 模型包括 AA [cubuk2019autoaugment](#bib.bib20)、Fast
+    AA [lim2019fast](#bib.bib21) 和 PBA [ho2019population](#bib.bib23) 相匹配甚至超越。这一发现展示了基于代理任务的先前方法的局限性。[cubuk2020randaugment](#bib.bib31)
+    中的实验结果也与这一发现一致，表明最佳 DA 策略取决于训练数据和判别网络的规模。从简化的代理任务中学到的 DA 策略可能会导致性能下降。在移除昂贵的搜索阶段后，RA
+    通过对目标数据集和分类模型进行直接搜索，避免了学习到的 DA 策略的次优性。最后，[cubuk2020randaugment](#bib.bib31) 中的结果揭示了增强策略与数据集和模型规模之间的关系。大多数现有的
+    AutoDA 方法通过使用减少的数据和较小的模型来优化 DA 策略，以加速搜索 [cubuk2019autoaugment](#bib.bib20)；[lim2019fast](#bib.bib21)；[ho2019population](#bib.bib23)，然而这导致了次优的性能。在实际应用中，搜索完整数据集可能在计算上不可行。因此，[cubuk2020randaugment](#bib.bib31)
+    中的发现刺激了未来的创新，旨在平衡效果和效率。
 - en: 5.3.2 UniformAugment (UA)
   id: totrans-282
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.3.2 UniformAugment (UA)
 - en: UniformAugment (UA) [lingchen2020uniformaugment](#bib.bib58) is another search-free
     method that also significantly reduces the parameter space. Unlike RA which employs
     a grid search to tune its augmentation parameters, UA completely eliminates the
@@ -3217,6 +3293,10 @@
   id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: UniformAugment (UA) [lingchen2020uniformaugment](#bib.bib58) 是另一种无需搜索的方法，也显著减少了参数空间。与RA通过网格搜索调整增广参数不同，UA完全消除了超参数优化的需要。相反，UA限制了策略超参数可以采样的值范围，以便所有落在该范围内的DA策略可以保留大多数数据的原始标签。这样的范围在UA中被定义为一个近似不变的增广空间。从不变空间中进行简单的均匀采样可以生成有效的DA策略，并最终带来足够的性能提升。因此，UA在效率方面大大超越了所有现有的AutoDA模型。UA的有效性也通过广泛的实验
+    [cubuk2020randaugment](#bib.bib31) 得到了证明。使用与AA [cubuk2019autoaugment](#bib.bib20)
+    和其他方法 [lim2019fast](#bib.bib21) ; [ho2019population](#bib.bib23) ; [cubuk2020randaugment](#bib.bib31)
+    中实现的相同的$15$个增广TF，UA在模型准确性上达到了可比的改进。此外，由于去除了搜索阶段，UA迄今为止是最具可扩展性的AutoDA方法，可以轻松应用于现实世界中的不同任务。
 - en: The key concept in UA is the introduction of invariant augmentation space. In
     [lingchen2020uniformaugment](#bib.bib58) , an approximately invariant space is
     defined as a selected value range for the policy hyper-parameters. Each DA policy
@@ -3237,6 +3317,10 @@
   id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: UA中的关键概念是引入不变增广空间。在 [lingchen2020uniformaugment](#bib.bib58) 中，近似不变空间被定义为策略超参数的选定值范围。从这样一个空间中采样的每个DA策略在变换后能够保留原始数据的代表性特征。换句话说，大多数增广数据仍然可以保持在原始训练集的分布范围内，标签信息不会改变。从群论的角度
+    [chen2020group](#bib.bib84) 看，给定这样的不变增广空间，在这个空间内进一步优化策略超参数只能带来有限的性能提升，因此在实践中是没有必要的。在这种情况下，简单的随机采样方法也可能导致有效的策略，从而避免昂贵的计算成本。[lingchen2020uniformaugment](#bib.bib58)
+    的实验展示了UA的良好性能，支持了不变性假设。然而，UA的前提是已经知道一个不变增广空间。而在UA中，不变范围实际上是通过前期工作的经验证据手动决定的 [cubuk2019autoaugment](#bib.bib20)
+    ; [lim2019fast](#bib.bib21) ; [ho2019population](#bib.bib23) ; [cubuk2020randaugment](#bib.bib31)。
 - en: Similar to RA [cubuk2020randaugment](#bib.bib31) , UA also explores the influence
     of two hyper-parameters $M$ and $N$, where $M$ refers to the operation magnitude
     and $N$ is the total number of TFs in a given policy. According to empirical evidence
@@ -3254,6 +3338,9 @@
   id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于RA [cubuk2020randaugment](#bib.bib31)，UA也探讨了两个超参数$M$和$N$的影响，其中$M$指操作幅度，$N$是给定策略中的TF总数。根据实证证据和理论分析
+    [perez2017effectiveness](#bib.bib36) ; [deng2009imagenet](#bib.bib28)，一个好的增强策略应该在生成分布内数据时近似不变，同时能够最大化数据多样性
+    [lingchen2020uniformaugment](#bib.bib58)。通常，如果模型在更多样化的数据上进行训练，则分类网络的泛化能力可以得到提高。这一假设强调了幅度$M$值范围的重要性。将$M$限制在狭窄范围内可能会导致数据多样性有限，而从较宽的$M$范围中采样的策略可能会产生过于激进的TF，从而删除原始标签信息。这两种结果都被认为是次优的，这表明在数据增强策略的多样性和正确性之间存在权衡。
 - en: A similar trade-off can be found during the experiments on hyper-parameter $N$.
     Usually, optimizing $N$ is impractical in most prior AutoDA methods due to limited
     computational resources. However, it is possible to examine various $N$ values
@@ -3272,6 +3359,9 @@
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 在超参数$N$的实验中可以发现类似的权衡。通常，由于计算资源的限制，大多数先前的AutoDA方法中优化$N$是不切实际的。然而，可以在无搜索模型如RA
+    [cubuk2020randaugment](#bib.bib31) 和UA中检查各种$N$值。从[lingchen2020uniformaugment](#bib.bib58)中的结果来看，较小的$N$值通常表示安全性更高的增强策略，对图像数据应用的TF较少。转换后的数据往往较少多样化。相反，较大的$N$值可能对训练数据施加更强的DA操作，从而有可能破坏原始标签。为了获得最佳的数据增强强度，AutoDA模型在选择$N$时需要在效果和安全性特征之间取得平衡。在[lingchen2020uniformaugment](#bib.bib58)中对$N$值进行系统实验后，UA中的$N$设置为$2$。这足以有效提高模型性能，同时在增强后保持相同的数据分布。此外，$N=2$也符合AA
+    [cubuk2019autoaugment](#bib.bib20)的最初提议。
 - en: The contribution of UA has been revolutionary in the field of AutoDA. It not
     only proposes an effective automated DA scheme, but also substantially surpasses
     all existing approaches in terms of efficiency. More importantly, the hypothesis
@@ -3288,6 +3378,10 @@
   id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: UA 的贡献在 AutoDA 领域具有革命性。它不仅提出了一个有效的自动化 DA 方案，而且在效率上大大超越了现有的所有方法。更重要的是，[lingchen2020uniformaugment](#bib.bib58)
+    中的增强不变性假设挑战了 AutoDA 领域的核心前提。大多数之前的 AutoDA 模型是为了在给定数据集上自动搜索最佳增强超参数，以取代有偏且次优的手动设计。然而，[lingchen2020uniformaugment](#bib.bib58)
+    对这种搜索的必要性提出了质疑。UA 的作者提出了一个不变增强空间的定义，以便在该空间内优化 DA 超参数变得不再必要。这个假设在 [chen2020group](#bib.bib84)
+    中得到了群论的理论支持。UA 的可比性能也为数据增强中不变性假设的有效性提供了实证证据。
 - en: However, how to decide an approximately invariant space for augmentation policy
     remains an open question. The efficacy of UA is mainly based on the application
     of domain knowledge, adapted from previous works [cubuk2019autoaugment](#bib.bib20)
@@ -3306,11 +3400,15 @@
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，如何为增强策略决定一个大致不变的空间仍然是一个悬而未决的问题。UA 的有效性主要基于领域知识的应用，该知识来源于之前的工作 [cubuk2019autoaugment](#bib.bib20)；[lim2019fast](#bib.bib21)；[ho2019population](#bib.bib23)；[cubuk2020randaugment](#bib.bib31)。然而，在实际场景中，给定的任务和领域可能是未知的。此外，由于缺乏对其选择策略的理论支持，UA
+    预定义的空间也不能保证是不变的。尽管 UA 在实证研究中取得了积极结果，但通过使用更可靠的策略空间，分类模型的最终性能很可能会进一步提高。根据 [cubuk2020randaugment](#bib.bib31)，在给定特定数据集时，开发一个系统的方法来确定不变的策略空间是重要的。一旦确定了这样的范围，就不再需要对
+    DA 超参数进行昂贵的搜索。从不变空间中采样的任何增强策略应该足够有效，以便在给定任务中产生令人满意的性能提升。
 - en: 6 One-stage Approaches
   id: totrans-289
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 6 一阶段方法
 - en: After the pioneering AutoDA works such as AutoAugment (AA) [cubuk2019autoaugment](#bib.bib20)
     , it is intuitive to approach AutoDA problems from a two-stage perspective. In
     the first policy generation phase, AutoDA models generate the optimal DA policy
@@ -3324,6 +3422,9 @@
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开创性的 AutoDA 工作如 AutoAugment (AA) [cubuk2019autoaugment](#bib.bib20) 之后，从两阶段的角度处理
+    AutoDA 问题是直观的。在第一个策略生成阶段，AutoDA 模型为给定数据集生成最佳 DA 策略。在第二阶段，学习到的策略随后在训练集上应用以进行模型训练。策略超参数和网络权重的优化是严格顺序执行的。然而，两阶段方法中的单独生成阶段导致了额外的计算复杂性，这也是它们效率问题的主要原因。例如，原始的
+    AA [cubuk2019autoaugment](#bib.bib20) 需要数千小时的 GPU 时间才能学习到比基线更有效的增强策略。
 - en: To improve the efficiency of AutoDA models, one idea is to perform the policy
     generation and application simultaneously, thus forgoing the extra computation
     in two stages. Despite inefficiency of the two-stage methods, it is inherently
@@ -3338,6 +3439,9 @@
   id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了提高 AutoDA 模型的效率，一个想法是同时进行策略生成和应用，从而省略两个阶段的额外计算。尽管两阶段方法效率低下，但将两个阶段合并并优化 DA
+    策略与分类模型本质上是不切实际的。这是因为根据模型性能调优策略超参数并不是一个可微分优化问题。换句话说，增强超参数的梯度无法直接计算或优化，从而排除了联合优化的可能性。然而，随着梯度近似技术在超参数优化（HPO）领域的进步，放宽原始分布并估计策略梯度是可行的，从而实现了一阶段的
+    AutoDA 模型。
 - en: This section reviews existing one-stage AutoDA methods including Online Hyper-parameter
     Learning AutoAugment (OHL-AA) [lin2019online](#bib.bib54) , Adversarial AutoAugment
     (AAA) [zhang2019adversarial](#bib.bib53) , Differentiable Automatic Data Augmentation
@@ -3350,16 +3454,22 @@
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节回顾了现有的一阶段 AutoDA 方法，包括 Online Hyper-parameter Learning AutoAugment (OHL-AA)
+    [lin2019online](#bib.bib54)，Adversarial AutoAugment (AAA) [zhang2019adversarial](#bib.bib53)，Differentiable
+    Automatic Data Augmentation (DADA) [li2020dada](#bib.bib57) 和 Automated Dataset
+    Optimization (AutoDO) [gudovskiy2021autodo](#bib.bib62)。这些方法都基于通过使用可微分框架的梯度近似。我们讨论了每种方法中的优化问题的公式。特别地，我们关注梯度近似，这是一个阶段模型中的核心技术。最后，我们讨论了每种方法的主要贡献和局限性。
 - en: 6.1 Gradient-based Optimization
   id: totrans-293
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 6.1 基于梯度的优化
 - en: 6.1.1 Online Hyper-parameter Learning AutoAugment (OHL-AA)
   id: totrans-294
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 6.1.1 Online Hyper-parameter Learning AutoAugment (OHL-AA)
 - en: Before the proposal of Online Hyper-parameter Learning AutoAugment (OHL-AA)
     [lin2019online](#bib.bib54) , the majority of the works in automated DA optimization
     followed the basic two-stage procedure [cubuk2019autoaugment](#bib.bib20) ; [lim2019fast](#bib.bib21)
@@ -3379,6 +3489,9 @@
   id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 在提出在线超参数学习 AutoAugment（OHL-AA）[lin2019online](#bib.bib54)之前，大多数自动化数据增强（DA）优化工作都遵循基本的两阶段程序
+    [cubuk2019autoaugment](#bib.bib20) ; [lim2019fast](#bib.bib21) ; [ho2019population](#bib.bib23)。尽管表现令人鼓舞，但大多数两阶段方法在搜索时间和成本方面存在严重瓶颈。OHL-AA的作者认为，效率问题的主要原因是离线搜索，即策略搜索与最终模型训练是独立进行的。相比之下，OHL-AA模型采用在线方案，其中策略超参数和网络权重在单次传递中联合优化。在OHL-AA中，策略超参数被制定为概率分布。此外，DA策略的梯度通过使用REINFORCE估计器
+    [williams1992simple](#bib.bib55) 进行近似，这允许在模型训练期间进行直接优化。OHL-AA的最终输出不仅包括给定任务的最佳DA策略，还包含完全训练好的分类网络。通过结合搜索和训练阶段，OHL-AA模型减少了由于两个阶段而产生的额外计算成本，同时仍然保持了可比的性能。
 - en: Following the problem formulation in AA [cubuk2019autoaugment](#bib.bib20) ,
     OHL-AA also approaches AutoDA problem from the perspective of hyper-parameter
     optimization, but using a different optimization framework. Specifically, the
@@ -3400,15 +3513,21 @@
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 在AA [cubuk2019autoaugment](#bib.bib20)的问问题形式化之后，OHL-AA也从超参数优化的角度处理AutoDA问题，但使用了不同的优化框架。具体而言，OHL-AA中的DA策略是从参数化概率分布中采样的，其参数被视为与网络权重一起优化的DA超参数。通过双层框架
+    [colson2007overview](#bib.bib71) 实现联合优化。在这种双层设置中，有两个优化层次。内层目标是分类模型的训练，而外层目标是通过使用REINFORCE梯度近似器
+    [williams1992simple](#bib.bib55) 来优化策略超参数。由于这种双层优化，OHL-AA也被认为是一个在线AutoDA模型，其中DA策略与分类网络一起更新。通过同时优化DA策略和任务模型，OHL-AA完全抛弃了在小代理任务上的搜索。与先前的两阶段方法
+    [cubuk2019autoaugment](#bib.bib20) ; [ho2019population](#bib.bib23) 不同，OHL-AA中的策略优化不再需要成千上万的评估，例如替代模型的训练。OHL-AA可以通过经典的梯度下降算法直接优化DA策略，这大大提高了搜索效率。
 - en: '![Refer to caption](img/aa8aebfb1c2cadb875b5b01396466d9b.png)'
   id: totrans-297
   prefs: []
   type: TYPE_IMG
+  zh: '![参见标题](img/aa8aebfb1c2cadb875b5b01396466d9b.png)'
 - en: 'Figure 9: Online Hyper-parameter Learning AutoAugment (OHL-AA) workflow [lin2019online](#bib.bib54)
     .'
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 图9：在线超参数学习 AutoAugment（OHL-AA）工作流程 [lin2019online](#bib.bib54)。
 - en: Inspired by [franceschi2017forward](#bib.bib85) , policy hyper-parameters in
     OHL-AA are updated in a forward manner. Specifically, the network weights after
     a certain number $I$ of epochs of inner optimization are forwarded to the outer
@@ -3427,6 +3546,11 @@
   id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 受到 [franceschi2017forward](#bib.bib85) 启发，OHL-AA中的策略超参数以前向方式进行更新。具体而言，经过一定数量$I$的内部优化周期后，网络权重会被转发到外部优化中进行更新。在其他
+    words，内部目标在两个相邻的外部级别更新之间更新了$I$步。OHL-AA的整体工作流程如图 [9](#S6.F9 "Figure 9 ‣ 6.1.1 Online
+    Hyper-parameter Learning AutoAugment (OHL-AA) ‣ 6.1 Gradient-based Optimization
+    ‣ 6 One-stage Approaches ‣ A Survey of Automated Data Augmentation Algorithms
+    for Deep Learning-based Image Classification Tasks") 所示。OHL-AA中的双层优化问题由两个重叠的循环表示。在内部循环中，使用不同的DA策略并行训练一组相同的分类模型，每个模型设计用于评估相关增强策略的效果。在$I$个训练周期后，所有模型在验证集上进行评估。在这些模型中，选择验证准确度最高的模型，并将其广播到其他模型以同步网络权重。
 - en: Outer optimization is performed along with the inner procedures. In the outer
     loop, after the same $I$ number of inner updates, accuracy values are used to
     optimize the probability distributions of the DA policy. To be specific, after
@@ -3443,6 +3567,8 @@
   id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 外部优化与内部程序同时进行。在外部循环中，在经过相同数量的内部更新后，使用准确度值来优化DA策略的概率分布。具体而言，在获得模型的验证准确度后，OHL-AA首先使用分布超参数（通过REINFORCE算法
+    [williams1992simple](#bib.bib55)）计算它们的平均梯度。然后，利用这些梯度来更新策略分布，作为梯度上升的一步。更新后，从更新后的分布中采样新的增强策略，然后用这些策略训练一组同步网络。整个过程会迭代进行，直到网络或策略分布最终收敛。总体而言，OHL-AA旨在找到可以生成最佳DA策略的最优策略分布。这个框架大大减少了搜索成本，因为策略超参数是通过仅仅$I$步模型优化而不是完整训练来更新的。
 - en: The biggest contribution of OHL-AA is the proposal of the bi-level framework.
     It is also considered to be the first one-stage AutoDA model that optimizes both
     the DA policy and the network weights in a single pass. The removal of repetitive
@@ -3457,11 +3583,17 @@
   id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: OHL-AA 的最大贡献是提出了双层框架。它还被认为是第一个在单次操作中优化 DA 策略和网络权重的单阶段 AutoDA 模型。通过去除重复的模型训练和代理任务，显著降低了整体搜索成本。根据
+    [lin2019online](#bib.bib54) 的结果，OHL-AA 在 CIFAR-10 上比原始的 AA [cubuk2019autoaugment](#bib.bib20)
+    快 $60\times$，在 ImageNet 数据上快 $24\times$，同时保持了相当的模型性能。此外，OHL-AA 中 DA 策略的概率分布为估计
+    AutoDA 问题的策略梯度提供了可行的区分方法，这刺激了后续单阶段方法的创新，如 DADA [li2020dada](#bib.bib57) 和 AutoDO
+    [gudovskiy2021autodo](#bib.bib62)。
 - en: 6.1.2 Adversarial AutoAugment (AAA)
   id: totrans-302
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 6.1.2 对抗性 AutoAugment (AAA)
 - en: Adversarial AutoAugment (AAA) [zhang2019adversarial](#bib.bib53) is another
     one-stage AutoDA model that simultaneously optimizes the target network and augmentation
     policy. In additional to gradient approximation of DA policy, AAA innovatively
@@ -3475,6 +3607,9 @@
   id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 对抗性 AutoAugment (AAA) [zhang2019adversarial](#bib.bib53) 是另一个同时优化目标网络和增强策略的单阶段
+    AutoDA 模型。除了 DA 策略的梯度近似外，AAA 创新性地采用了 GAN 的对抗性概念，从而实现了更具计算效率的 AutoDA 方法。AAA 方法的最终目标是最佳地训练目标分类模型，而不是搜索最优的
+    DA 策略。与 OHL-AA [lin2019online](#bib.bib54) 类似，AAA 的训练和搜索以在线方式进行，其中增强策略在辨别模型训练的过程中动态更新。这种过程避免了重新训练分类模型，从而显著降低了计算成本。
 - en: AAA preserves the standard formulation of the AutoDA problem in AA [cubuk2019autoaugment](#bib.bib20)
     . In AAA, a complete augmentation policy for full dataset contains $5$ sub-policies.
     Each sub-policy is applied on one data batch before training the target model.
@@ -3493,6 +3628,11 @@
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: AAA 保留了 AA [cubuk2019autoaugment](#bib.bib20) 中 AutoDA 问题的标准公式。在 AAA 中，完整数据集的增强策略包含
+    $5$ 个子策略。每个子策略在训练目标模型之前应用于一个数据批次。一个子策略由两个独立的增强变换函数组成，每个函数由两个超参数控制，即概率和幅度。为了获得更好的性能并便于与原始
+    AA [cubuk2019autoaugment](#bib.bib20) 进行比较，AAA 在训练过程中排除了增强操作的概率因子。根据 [zhang2019adversarial](#bib.bib53)，这种超参数需要一定数量的训练轮次才能生效。这对像
+    AA [cubuk2019autoaugment](#bib.bib20) 这样的离线框架有效，因为策略模型是基于对子模型的全面训练结果更新的。然而，在在线
+    AAA 模型中，DA 策略随着目标网络的训练动态演变。每次更新的训练轮次不足以充分展示图像操作的随机性，这可能会限制奖励信号的最佳强度。
 - en: In AAA, network training and DA policy generation is performed simultaneously.
     Different from standard two-stage approaches, the augmentation policy is dynamically
     updated rather than fixed during model training. As with other one-stage AutoDA
@@ -3514,6 +3654,9 @@
   id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 在AAA中，网络训练和DA策略生成是同时进行的。不同于标准的两阶段方法，增强策略在模型训练过程中是动态更新的，而不是固定的。与其他单阶段AutoDA方法一样，AAA还需要对DA超参数进行梯度近似，以支持在不可微分框架中的联合优化
+    [wang2017fast](#bib.bib86) ; [peng2018jointly](#bib.bib87) 。具体而言，AAA中应用了REINFORCE算法
+    [williams1992simple](#bib.bib55) 来估计策略梯度。AAA的整体框架遵循标准的GAN结构，包括一个策略模型和一个目标模型。这两个模型的训练被表述为一种对抗性最小-最大游戏。这里的策略模型被视为对手。在训练过程中，目标网络的目标是最小化输入数据上的训练损失，而策略网络的目标是通过生成对抗性DA策略来最大化目标模型的训练损失。这些对抗性策略迫使目标模型从更困难的数据样本中学习，从而显著提高其泛化能力。在更新策略网络时，使用的奖励信号来自经过归一化后的目标网络训练损失。这些损失值与不同的增强策略相关联，以分别指示DA策略的有效性。
 - en: The major motivation for proposing AAA is the limited randomness of traditional
     policy search. Although the enormous search space in most AA-based approaches
     allows for a large variety of policy candidates [cubuk2019autoaugment](#bib.bib20)
@@ -3531,6 +3674,10 @@
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 提出AAA的主要动机是传统策略搜索的随机性有限。尽管大多数基于AA的方法的庞大搜索空间允许多种策略候选 [cubuk2019autoaugment](#bib.bib20)
+    ; [lim2019fast](#bib.bib21) ，在整个模型训练过程中固定采样的策略通常会导致不可避免的过拟合问题 [ho2019population](#bib.bib23)
+    。为了解决这个问题，AAA选择使用动态增强策略，该策略基于训练期间目标模型的状态进行更新。动态DA策略的概念最早在PBA中提出 [ho2019population](#bib.bib23)
+    ，其中特别强调了通过共享TF前缀来应用TF的时间表。而在AAA中，策略搜索的随机性得到了进一步增强，因为整个DA策略在模型训练过程中不断更新，而不仅仅是一个策略中的部分TF。策略采样的随机性增加为增强数据提供了更多的多样性，从而更好地训练目标模型。
 - en: Another motivation of AAA is the efficiency problem existing in most AutoDA
     methods. The first AutoDA model AA [cubuk2019autoaugment](#bib.bib20) was largely
     criticized due to its excessive training time. Later works such as PBA [ho2019population](#bib.bib23)
@@ -3549,6 +3696,7 @@
   id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: AAA的另一个动机是大多数AutoDA方法中存在的效率问题。第一个AutoDA模型AA[cubuk2019autoaugment](#bib.bib20)由于训练时间过长而受到广泛批评。后来如PBA[ho2019population](#bib.bib23)等工作通过以时间换空间加速了整个过程。尽管整体搜索时间显著减少，但同时训练大量子模型仍需大量计算资源。然而，AAA被认为是计算高效且资源友好的。在AAA的搜索过程中，目标模型只需要训练一次。通过重用训练中的先前计算，策略网络基于目标模型的中间状态而非最终结果进行更新。在训练结束时，目标网络应该通过对抗策略得到优化。由于计算成本和时间开销的减少，AAA可以直接在完整数据上使用目标网络进行搜索。直接搜索不仅保证了AAA的有效性，还消除了使用代理任务可能导致的潜在次优性。
 - en: The most significant innovation in AAA is its adversarial framework. In fact,
     adversarial learning is not the first time it has been utilized in AutoDA problems.
     The earliest TANDA approach [ratner2017learning](#bib.bib52) also employed standard
@@ -3567,6 +3715,7 @@
   id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: AAA中最重要的创新是其对抗框架。实际上，对抗学习并不是第一次在AutoDA问题中被利用。最早的TANDA方法[ratner2017learning](#bib.bib52)也使用了标准的GAN结构，该结构使用策略模型作为生成器来采样DA策略，而另一个判别网络则用于从原始数据中识别增强样本以进行策略评估。相反，AAA将策略模型作为对抗目标模型训练的对手。在AAA中，策略模型生成的对抗性DA策略会最大化训练损失。这些策略转化的数据通常更为扭曲，使目标模型更难区分，从而通过对抗学习让目标模型学习到更强健的特征。AAA的最终目标不仅仅是找到给定数据集上的最佳策略。相反，AAA更强调目标模型训练的最终结果。通过输入变形的示例，AAA训练分类网络，使其对各种数据点更加有弹性，从而大大增强了其泛化能力。
 - en: In addition, AAA also outperforms previous AutoDA methods in terms of evaluation.
     AAA directly evaluates the performance of target model via training loss, while
     in methods such as TANDA [ratner2017learning](#bib.bib52) or Fast AA [lim2019fast](#bib.bib21)
@@ -3581,11 +3730,14 @@
   id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，AAA在评估方面也优于之前的AutoDA方法。AAA通过训练损失直接评估目标模型的性能，而在如TANDA [ratner2017learning](#bib.bib52)
+    或Fast AA [lim2019fast](#bib.bib21) 等方法中，DA策略的有效性是通过增强数据与原始数据的相似性来估计的。一般认为，如果转换后的图像类似于原始样本，则该策略是有效的。然而，这种近似可能由于学习策略缺乏多样性而导致性能下降。尽管如此，AAA通过使用训练损失作为直观标准来评估目标模型，能够在很大程度上缓解这个问题。[xie2020adversarial](#bib.bib77)中的实验结果也表明，AAA训练的分类网络比之前的方法具有更高的准确率。
 - en: 6.1.3 Differentiable Automatic Data Augmentation (DADA)
   id: totrans-310
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 6.1.3 可微分自动数据增强（DADA）
 - en: Motivated by the development of differentiable NAS [dong2019searching](#bib.bib88)
     ; [liu2018darts](#bib.bib56) ; [simonyan2014very](#bib.bib3) , a number of one-stage
     AutoDA approaches have been proposed following OHL-AA [lin2019online](#bib.bib54)
@@ -3600,6 +3752,9 @@
   id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 受可微分NAS [dong2019searching](#bib.bib88) ; [liu2018darts](#bib.bib56) ; [simonyan2014very](#bib.bib3)
+    的发展激励，提出了多个单阶段AutoDA方法，继承了OHL-AA [lin2019online](#bib.bib54) 。可微分自动数据增强（DADA）是一种有效的方法，它依赖于梯度近似来同时优化模型权重和DA策略。DADA中使用的基本梯度估计器是Gumbel-Softmax梯度估计器
+    [jang2016categorical](#bib.bib70) 。此外，DADA还提出了一种名为RELAX的新估计器，旨在解决训练数据的不平衡问题。通过结合两种梯度近似器，DADA提出了一种有效且高效的DA策略学习方法，更能抵抗偏倚或噪声数据。
 - en: The formulation of the DA policy in DADA follows the standard setting of AA
     [cubuk2019autoaugment](#bib.bib20) . A complete augmentation policy is comprised
     of $25$ sub-policies, each of which will be used to augment one data batch of
@@ -3624,6 +3779,12 @@
   id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: DADA中DA策略的制定遵循了AA [cubuk2019autoaugment](#bib.bib20) 的标准设置。完整的增强策略由$25$个子策略组成，每个子策略将用于增强一个训练集的数据批次。一个子策略包含两个TF，这两个TF由两个超参数（概率和幅度）描述。类似于AAA
+    [zhang2019adversarial](#bib.bib53) ，DADA在采样DA策略时也使用概率分布来编码增强TF。子策略是从类别分布中采样的，每个变换的超参数被近似为伯努利分布。经过搜索空间的重新参数化，AutoDA任务在DADA中被公式化为蒙特卡罗优化问题
+    [mohamed2020monte](#bib.bib89) 。在这个双层优化框架内，可以同时进行DA策略的搜索和分类训练。然而，类别分布和伯努利分布都不可导。为了直接优化策略超参数，有必要在策略搜索之前对这些不可导分布进行梯度近似。受DARTS
+    [liu2018darts](#bib.bib56) 启发，DADA采用了Gumbel-Softmax梯度估计器 [jang2016categorical](#bib.bib70)
+    ，它也被称为具体分布 [maddison2016concrete](#bib.bib90) 。这种梯度估计器用于放松增强操作的分布。至于操作超参数，即操作概率和幅度，使用无偏估计器RELAX
+    [grathwohl2017backpropagation](#bib.bib91) 来获得它们相对于模型性能的梯度。
 - en: The gradient relaxation in DADA consists of two parts, including the re-parameterization
     of categorical distribution for sub-policy selection, and the approximation of
     Bernoulli distributions for image operation hyper-parameters. In DADA, the sub-policy
@@ -3645,6 +3806,10 @@
   id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: DADA中的梯度放松包括两个部分：类别分布的再参数化用于子策略选择，以及对图像操作超参数的Bernoulli分布的近似。在DADA中，数据批次的增广子策略是从类别分布中选择的。每个子策略的偏好使用概率参数定义。在优化了类别分布的参数后，与较高概率相关的子策略将被选中以形成最终的DA策略。然而，子策略的参数符合非可微分的分布。受到其在NAS领域成功的启发
+    [xie2018snas](#bib.bib92)；[dong2019searching](#bib.bib88)，DADA采用了Gumbel-Softmax估计器
+    [jang2016categorical](#bib.bib70) 来近似子策略选择参数的梯度。对于描述增广TF的超参数，应用概率和幅度都从Bernoulli分布中采样。类似于类别分布，Bernoulli分布是不可微的。为克服梯度问题，对Bernoulli分布应用相同的放松过程以获得TF超参数的梯度。此外，为了减轻梯度近似带来的偏差，DADA采用了RELAX估计器
+    [grathwohl2017backpropagation](#bib.bib91) 实现无偏梯度估计，进一步改进了策略搜索。
 - en: The major contribution of DADA is the innovation regarding gradient approximation.
     Instead of using a standard Gumbel-Softmax approximator, DADA applies unbiased
     RELAX estimator [grathwohl2017backpropagation](#bib.bib91) , which estimates gradients
@@ -3666,11 +3831,15 @@
   id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: DADA的主要贡献在于梯度近似的创新。DADA不使用标准的Gumbel-Softmax近似器，而是应用了无偏的RELAX估计器 [grathwohl2017backpropagation](#bib.bib91)，该估计器能更准确地估计梯度。通过大量实验
+    [li2020dada](#bib.bib57)，使用RELAX梯度估计器的DADA模型实现了更高的准确性，特别是相比于使用Gumbel-Softmax的模型。DADA不仅提供了增强的模型性能，还显著加速了搜索过程，相比于其他AutoDA方法。由于其提高的效率，DADA中的DA策略搜索是在完整数据集上进行的，而不是在减少的子集上，这也提升了最终结果。在自动化DA策略搜索领域，常识是使用更多的数据进行策略搜索将提供更多关于目标任务的信息，从而得到更好的最终策略。另一方面，大量数据会减慢搜索速度并引发时间问题。这导致大多数AutoDA模型在性能和效率之间存在权衡。然而，与先前的方法如AA
+    [cubuk2019autoaugment](#bib.bib20) 和 Fast AA [lim2019fast](#bib.bib21) 不同，DADA能够在资源受限的环境中很好地平衡模型准确性和搜索成本。由于其效率，DADA被认为是一种可行的AutoDA方法，适用于实际应用。
 - en: 6.1.4 Automated Dataset Optimization (AutoDO)
   id: totrans-315
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 6.1.4 自动数据集优化（AutoDO）
 - en: 'The majority of recent works in the AutoDA field focus on the reduction of
     the search cost, while Automated Dataset Optimization (AutoDO) [gudovskiy2021autodo](#bib.bib62)
     evolves in the direction of mitigating the negative impacts of noisy or imbalanced
@@ -3688,6 +3857,9 @@
   id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近在AutoDA领域的大多数研究专注于降低搜索成本，而**自动数据集优化（AutoDO）** [gudovskiy2021autodo](#bib.bib62)
+    则朝着减轻噪声或不平衡数据负面影响的方向发展。为了实现稳健的策略搜索，AutoDO在双层优化框架中采用了密度匹配的思想 [lim2019fast](#bib.bib21)。具体来说，AutoDO模型优化每个数据点的一组增强超参数，而不是一批数据，这使得调整变换数据分布时更加灵活。此外，AutoDO通过概括训练损失和软化原始标签来进一步细化策略估计。通过隐式微分，AutoDO联合优化来自三个子模型的结果：策略子模型、损失加权子模型和软标签子模型。此外，利用Fisher信息
+    [domingos2020every](#bib.bib93) ; [gudovskiy2020deep](#bib.bib94)，AutoDO提供了理论证明，AutoDA问题的复杂度随着数据集大小线性增长。
 - en: The proposal of AutoDO is mainly motivated by data problems present in training
     sets, including biased distributions and noisy labels. This issue becomes more
     predominant when existing approaches apply the same DA strategy on all data points
@@ -3710,6 +3882,9 @@
   id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: AutoDO的提案主要是受到训练集中存在的数据问题的激励，包括偏倚的分布和噪声标签。当现有方法对所有数据点应用相同的DA策略进行增强时，这个问题变得更为突出。例如，实践中不同类别的数据分布通常是不均匀的。然而，通过在整个训练集中共享相同的增强策略，各类别的数据样本被均匀增强以增加多样性。由于增强的强度保持不变，数据点较多的类别在变换后可能会过度增强，而少数类别可能会增强不足。在数据增强之后，由共享策略转换的不平衡或偏倚训练集可能会误导分类模型。因此，共享的DA策略对于存在失真的数据来说不够稳健。对于多类分类任务，过拟合问题可能会显著恶化
+    [terhorst2021comprehensive](#bib.bib95)，尤其是当原始数据标签存在噪声时 [zhang2021understanding](#bib.bib96)。这一现象在
+    [gudovskiy2021autodo](#bib.bib62) 中被定义为共享策略的困境。为了克服这一限制，AutoDO为每个训练数据点估计DA超参数，而不是整个数据集。此外，AutoDO算法考虑了损失权重来约束分布偏差，并使用软标签来解决标签噪声。
 - en: 'A complete AutoDO model is composed of three sub-models: augmentation, loss
     re-weighting and soft-labelling sub-models. The overall workflow of AutoDO can
     be described as follows. Firstly, data are sampled as input to the augmentation
@@ -3733,6 +3908,8 @@
   id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 完整的 AutoDO 模型由三个子模型组成：数据增强、损失重加权和软标签子模型。AutoDO 的整体工作流程如下。首先，数据被采样作为输入到数据增强子模型，其中原始数据点通过一系列逐点的数据增强操作进行转换。每个数据样本都通过一系列特定的变换函数进行单独增强。每张图像的数据增强超参数也在数据增强子模型中定义和更新。具体来说，应用概率是二进制值，而幅度则从连续的高斯分布中采样。数据增强之后，从增强块输出的扭曲数据用于训练分类网络。在训练过程中，损失重加权子模型和软标签子模型同时传播。具体来说，损失子模型用于在某一训练周期内规范化训练损失，抑制偏差分布的负面影响。至于软标签子模型，它基于无噪声的验证数据来软化变换数据的原始标签。AutoDO
+    中应用了软标签技术，以防止由于激进增强而导致的数据标注潜在噪声 [tanaka2018joint](#bib.bib97)；[yi2019probabilistic](#bib.bib98)。最后，损失重加权块产生的奖励信号以及来自软标签模型的软标签会被反向传播，以相应地更新数据增强超参数。
 - en: In AutoDO, the optimization of the classification network and augmentation policy
     are conducted simultaneously. Inspired by prior works [hataya2020faster](#bib.bib22)
     ; [li2020dada](#bib.bib57) ; [lin2019online](#bib.bib54) , AutoDO employs a bi-level
@@ -3755,6 +3932,13 @@
   id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 AutoDO 中，分类网络和增强策略的优化是同时进行的。受到先前工作的启发 [hataya2020faster](#bib.bib22) ; [li2020dada](#bib.bib57)
+    ; [lin2019online](#bib.bib54) ，AutoDO 采用了双层设置，其中内部目标是为目标任务寻找最佳网络权重，而外部目标是通过超参数优化来搜索最佳的
+    DA 策略。这种联合优化通过梯度微分 [lorraine2020optimizing](#bib.bib99) 实现。然而，直接解决双层问题通常在计算上是不可行的，尤其是当
+    AutoDO 旨在为每个数据点优化增强超参数时。为了适应大规模超参数的搜索，AutoDO 结合了密度匹配技术 [lim2019fast](#bib.bib21)
+    来开发一种隐式微分方法。更具体来说，AutoDO 搜索的主要目标是最小化增强数据与无偏且干净的验证集之间的分布差异。根据 [gudovskiy2021autodo](#bib.bib62)
+    中的分析，并使用 Fisher 信息，修改后的微分框架可以产生与先前方法 [hataya2020faster](#bib.bib22) ; [li2020dada](#bib.bib57)
+    的 DARTS 梯度近似器 [liu2018darts](#bib.bib56) 相同的结果。此外，使用 Fisher 信息表明 AutoDA 搜索的复杂性与任务数据的大小之间存在线性关系。
 - en: 'The effectiveness of AutoDO can be evaluated from two perspectives: class imbalance
     and label noise. Before being fed into AutoDO model, training data is distorted
     by adjusting the class distribution and associated labels. To display the strength
@@ -3769,6 +3953,10 @@
   id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: AutoDO 的有效性可以从两个方面进行评估：类别不平衡和标签噪声。在输入 AutoDO 模型之前，训练数据通过调整类别分布和相关标签进行扭曲。为了展示
+    DA 策略的强度，采用 t-SNE 聚类方法 [van2008visualizing](#bib.bib100) 来可视化分类模型中测试数据的嵌入特征。数据集群之间的距离表示模型视角下数据类别之间的差异。通常，集群之间的较大间距或清晰边界更为理想。与基于梯度的
+    Fast AA [lim2019fast](#bib.bib21) 相比，AutoDO 模型在 t-SNE 图中产生了数据集群之间更大的间距。这一结果表明，AutoDO
+    中的点对点增强可能实现了更好的性能。
 - en: The extensive experiments in [gudovskiy2021autodo](#bib.bib62) further confirms
     that AutoDO is more robust to distorted data. When compared with prior AutoDA
     approaches, AutoDO avoids overfitting to the majority data by optimizing point-wise
@@ -3787,11 +3975,13 @@
   id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[gudovskiy2021autodo](#bib.bib62)中的广泛实验进一步确认了AutoDO对失真数据的鲁棒性。与先前的AutoDA方法相比，AutoDO通过优化逐点超参数而不是单一共享策略，避免了对主要数据的过拟合。因此，AutoDO学习到的数据增强策略能够更好地区分不同类别的图像，减轻了偏斜类别分布的影响。噪声标签的问题通过使用重新加权的损失和软标签得到解决。从实验结果来看，当训练数据有噪声时，AutoDO相比其他AutoDA模型取得了优越的结果。此外，软标签子模型提供的平滑标签进一步扩大了t-SNE图中的数据簇之间的间隔，提高了模型的生成能力。更重要的是，这种改进在表现良好和表现不足的类别中都能体现，从而提高了少数类别的准确性。AutoDO的最大优势在于其对低质量数据的韧性。总体而言，AutoDO被认为更适合处理不完美数据的实际任务。
 - en: 7 Discussion
   id: totrans-322
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 7 讨论
 - en: Following the categorization in Fig. LABEL:Fig:_taxonomy, a wide range of AutoDA
     methods have been covered in this survey. However, automation of data augmentation
     is still a relatively new concept and has not been fully addressed. The development
@@ -3803,11 +3993,13 @@
   id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据图 LABEL:Fig:_taxonomy 中的分类，本次调查涵盖了广泛的AutoDA方法。然而，数据增强的自动化仍然是一个相对较新的概念，尚未得到充分解决。AutoDA技术的发展仍处于初期阶段。尽管AutoDA模型有潜力成为标准深度学习管道的核心组成部分，但未来仍面临许多困难。在这一部分，我们将讨论现有AutoDA方法中的当前挑战，以及我们认为未来工作中重要的一些方向。
 - en: 7.1 Search Space Formulation
   id: totrans-324
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.1 搜索空间的定义
 - en: The policy search space defined by AA [cubuk2019autoaugment](#bib.bib20) has
     been widely accepted as the standard setting. Most of the later AutoDA works reuse
     the same formulation as the basis of their search model. However, without any
@@ -3818,6 +4010,7 @@
   id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: 由AA[cubuk2019autoaugment](#bib.bib20)定义的策略搜索空间已被广泛接受为标准设置。大多数后来的AutoDA工作都重复使用了相同的公式作为其搜索模型的基础。然而，没有任何修改的情况下，AA中的参数化会导致巨大的搜索空间。即使在可用TF的范围有限的情况下，AA的搜索过程仍然需要大量的计算资源，因此在实践中不可行，并且在扩展到更大数据集或模型时存在严重问题。
 - en: As AutoDA techniques evolve, traditional settings of the search space in AA-based
     models is challenged by search-free approaches. These methods aim to avoid the
     search phase by re-parameterization. For example, in RandAugment (RA) [cubuk2020randaugment](#bib.bib31)
@@ -3829,6 +4022,8 @@
   id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着AutoDA技术的发展，传统AA模型中的搜索空间设置正受到无搜索方法的挑战。这些方法通过重新参数化来避免搜索阶段。例如，在RandAugment (RA)
+    [cubuk2020randaugment](#bib.bib31) 中，所有TF共享相同的全局概率值，而不是优化应用概率。此外，根据经验数据，幅度被设为所有变换的全局变量。RA中的最终搜索空间仅由两个超参数控制，即分类模型和训练集的大小。这些都不需要大量计算来优化。
 - en: UniformAugment (UA) [lingchen2020uniformaugment](#bib.bib58) also re-formulates
     the search space. Instead of optimizing hyper-parameters, UA proposes the invariance
     hypothesis. Sampling any policies from an invariant policy space can retain the
@@ -3840,6 +4035,8 @@
   id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: UniformAugment (UA) [lingchen2020uniformaugment](#bib.bib58) 也重新定义了搜索空间。UA提出了不变性假设，而不是优化超参数。
+    从不变政策空间中抽取任何策略可以保留大多数增强数据的原始标签信息。 UA的作者认为，如果增强空间大致上是不变的，那么在该空间内优化增强政策是没有必要的。因此，对不变空间的简单均匀抽样就足以有效提升模型性能，完全消除了搜索的必要性。
 - en: The emerge of RA and UA has been revolutionary. The removal of the search stage
     raises questions on the necessity and optimality of searching in traditional AutoDA
     methods. Particularly, the hypothesis of invariant augmentation space has the
@@ -3851,11 +4048,13 @@
   id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: RA和UA的出现具有革命性。去除搜索阶段引发了对传统AutoDA方法中搜索的必要性和最优性的质疑。特别是，不变增强空间的假设有可能完全解决基于搜索的方法当前的效率瓶颈。因此，我们认为未来研究的一个可行课题是发现某些领域中不变增强空间的发现方法。此外，值得尝试探索定义增强策略搜索的其他方法，以实现更简化的搜索空间。
 - en: 7.2 Optimal Augmentation Transformations
   id: totrans-329
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.2 最优增强变换
 - en: Though extensive efforts have been put into the search of the hyper-parameters
     that describe image transformation functions, less attention has been paid to
     the selection of TFs to be applied. Conventionally, the available image operations
@@ -3866,6 +4065,8 @@
   id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管在描述图像变换函数的超参数搜索上投入了大量精力，但对应用的TF选择关注较少。传统上，AutoDA模型中的可用图像操作来自PIL Python库。PIL中的几乎所有图像变换函数都在后续搜索阶段被考虑。在AA中，还使用了两种额外的增强技术：Cutout
+    [devries2017improved](#bib.bib45) 和 SamplePairing [inoue2018data](#bib.bib46)。
 - en: In the majority of later works, similar selections are made for fair comparison
     purposes. A few of them remove some image operations from the search list [tian2020improving](#bib.bib30)
     ; [ho2019population](#bib.bib23) while others add several new augmentation technique
@@ -3882,11 +4083,15 @@
   id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 在大多数后续研究中，为了公平比较，通常会做出类似的选择。其中一些从搜索列表中移除了某些图像操作 [tian2020improving](#bib.bib30)
+    ; [ho2019population](#bib.bib23)，而其他的则将几种新的增强技术添加到他们的模型中 [naghizadeh2020greedy](#bib.bib60)
+    ; [naghizadeh2021greedy](#bib.bib63)。图像操作的选择主要是基于经验的，理论上的选择策略很少。尽管有关于不同数据集或子区域中每种TF的不同影响的讨论，但尚未有人系统地研究AutoDA中最优的增强转换函数。我们认为，优化AutoDA中可用的图像操作以适应各种数据可能是研究人员可以探索的另一个有趣方向。在搜索增强策略时，未来的用户可能可以在不同的应用场景中选择开启或关闭某种类型的转换，以便使获得的增强策略能够更好地适应特定任务。
 - en: 7.3 Unsupervised Evaluation
   id: totrans-332
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.3 无监督评估
 - en: The existing AutoDA methods extensively use supervised evaluation to determine
     which augmentation policies to use for training. Normally, the most generalized
     model is trained by applying the best augmentation policy. The optimal DA policy
@@ -3902,11 +4107,16 @@
   id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 现有的AutoDA方法广泛使用监督评估来确定用于训练的增强策略。通常，通过应用最佳增强策略来训练最通用的模型。最优的DA策略应该在提供数据多样性和数量的同时，仍然保留显著的图像特征。然而，在实际操作中，获得准确标注的数据可能是困难的，尤其是对于敏感任务
+    [shin2011autoencoder](#bib.bib101)。这是现有AutoDA方法面临的重大挑战，并催生了自监督AutoDA的出现。这一可能性也在
+    [wei2020circumventing](#bib.bib59) 中进行了讨论。目前，只有少数AutoDA模型支持半监督学习，例如 SelfAugment
+    [reed2021selfaugment](#bib.bib102)。然而，随着AutoDA领域的快速发展，未来可能会有所不同。
 - en: 7.4 Biased or Noisy Data
   id: totrans-334
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.4 偏差或噪声数据
 - en: When evaluating the effectiveness of AutoDA models, most existing works presume
     that the training data is clean and balanced. This happens with no doubt when
     using benchmark datasets such as CIFAR-10/100 [krizhevsky2009learning](#bib.bib27)
@@ -3921,6 +4131,10 @@
   id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 在评估AutoDA模型的有效性时，大多数现有工作假设训练数据是干净且平衡的。在使用像 CIFAR-10/100 [krizhevsky2009learning](#bib.bib27)
+    和 ImageNet [deng2009imagenet](#bib.bib28) 这样的基准数据集时，这种情况毫无疑问是成立的。但在现实世界的场景中，情况可能完全不同。训练数据不仅不足，而且常常存在标签噪声，这是一种极其常见的情况。实验结果
+    [gudovskiy2021autodo](#bib.bib62) 显示，具有不平衡分布和噪声标签的失真训练数据可能对AutoDA模型产生负面影响，并最终导致过拟合问题。此外，
+    [wei2020circumventing](#bib.bib59) 的研究结果也表明，激进的增强转换可能会引入标签噪声，即使原始标注是正确的。
 - en: Dealing with biased or noisy data is a great challenge for AutoDA model. AA-KD
     [wei2020circumventing](#bib.bib59) is the first AutoDA work targeting this issue.
     By leveraging the idea of KD, a stand-alone model is applied in AA-KD to provide
@@ -3935,6 +4149,8 @@
   id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: 处理有偏或嘈杂的数据是AutoDA模型面临的重大挑战。AA-KD [wei2020circumventing](#bib.bib59) 是第一个针对这个问题的AutoDA工作。通过利用KD的思想，AA-KD应用了一个独立模型来为模型训练提供额外的指导。在训练过程中，该模型接受来自真实标签和教师信号的监督，以防在激进的数据增强过程中丢失判别信息。AutoDO
+    [gudovskiy2021autodo](#bib.bib62) 使用了类似KD的思想，通过软化原始标签来更好地训练模型。此外，AutoDO还包含另一个重新加权的子模型，用于归一化训练损失。这三个子模型的组合使AutoDO在处理有偏或嘈杂的数据时比其他AutoDA算法更具鲁棒性。
 - en: Overall, both methods outperform other AutoDA methods especially when dealing
     with imbalanced data with label noise. This further proves that AutoDA model can
     benefit from the extra handling of label noises. In the future, we expect that
@@ -3943,11 +4159,13 @@
   id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 总体而言，这两种方法在处理带标签噪声的失衡数据时优于其他AutoDA方法。这进一步证明了AutoDA模型可以通过额外处理标签噪声获得好处。未来，我们希望更多的研究能够解决这一话题。这些发展将大大提高AutoDA方法在实际任务中的适用性。
 - en: 7.5 Application Domains
   id: totrans-338
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.5 应用领域
 - en: Though the major focus of this paper is on the image classification tasks, we
     identify several other domains which might greatly benefit from the AutoDA technique.
     One is Object Detection (OD) tasks, which has already been partly explored in
@@ -3963,6 +4181,10 @@
   id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管本文的主要重点是图像分类任务，但我们识别出几个可能从AutoDA技术中受益的其他领域。其中之一是目标检测（OD）任务，最近的工作已经部分探讨了这一领域，包括针对OD的AutoAugment
+    [zoph2020learning](#bib.bib26) 、DADA [li2020dada](#bib.bib57) 、RandAugment [cubuk2020randaugment](#bib.bib31)
+    、SelfAugment [reed2021selfaugment](#bib.bib102) 和尺度感知AutoAugment (SA) [chen2021scale](#bib.bib103)
+    。数据增强对于OD任务可能更加重要，尤其是当注释工作更为耗时时。[zoph2020learning](#bib.bib26) 中的实验结果表明，即使直接转移从分类数据获得的DA策略也对OD任务有用。然而，根据他们的发现，这种改进可能是有限的。此外，极长的搜索时间也是适用性方面的一个严重问题。
 - en: To further improve the overall model performance, additional adjustment to the
     original AutoDA scheme must be done. Later works such as RA [cubuk2020randaugment](#bib.bib31)
     concentrate more on the improvement in efficiency, which provides competitive
@@ -3978,6 +4200,10 @@
   id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步提高整体模型性能，必须对原始AutoDA方案进行额外的调整。后续工作如RA [cubuk2020randaugment](#bib.bib31)
+    更加关注效率的提升，提供了与AA相当的准确性和更优的搜索速度。自监督评估在检测训练中也被发现非常有用 [reed2021selfaugment](#bib.bib102)
+    。DADA展示了另一种可能性，即调整用于检测的预训练骨干网络，而不是直接操作检测模型。[li2020dada](#bib.bib57) 的实验结果表明，使用DADA对骨干网络进行预训练可以提高模型在后续检测任务中的性能。Scale-aware
+    Augmentation [chen2021scale](#bib.bib103) 专门为检测任务设计，通过结合边界框级别的增强实现了更精细的设计，从而显著提高了各种OD网络的性能。
 - en: While the aforementioned research mainly focuses on computer vision tasks, Natural
     Language Processing (NLP) is another field that can greatly benefit from the application
     of AutoDA techniques. Traditional data augmentation has been used extensively
@@ -3991,11 +4217,15 @@
   id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管上述研究主要集中在计算机视觉任务上，自然语言处理（Natural Language Processing, NLP）也是一个可以从AutoDA技术应用中大大受益的领域。传统的数据增强已经在NLP研究中得到了广泛应用。在基于文本的任务中自动化增强过程可以成为另一个有前景的研究方向。一些研究已经在将AutoDA应用于语言学问题方面迈出了第一步，包括最早的TANDA
+    [ratner2017learning](#bib.bib52) 、Text AutoAugment [ren2021text](#bib.bib104)
+    和如 [niu2019automatically](#bib.bib61) ; [hu2019learning](#bib.bib66) 的工作。在NLP中采用AutoDA方法可以通过改善训练数据的数量和质量，带来竞争性的性能提升。
 - en: 8 Conclusion
   id: totrans-342
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 8 结论
 - en: With the increasing development of deep learning, training performant deep model
     efficiently largely depends on the quantity and quality of available training
     data. Data Augmentation (DA) is an essential tool for solving data problems, and
@@ -4008,6 +4238,8 @@
   id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着深度学习的不断发展，高效地训练表现优秀的深度模型在很大程度上依赖于可用训练数据的数量和质量。数据增强（Data Augmentation, DA）是解决数据问题的一个重要工具，已广泛应用于各种计算机视觉任务。然而，设计一个有效的DA策略仍然高度依赖于人工努力。在没有领域知识的情况下，选择最优的增强策略是困难的。因此，研究人员通过深度学习自动化搜索增强策略，以解决这一问题，这推动了自动数据增强（Automated
+    Data Augmentation, AutoDA）技术的发展。
 - en: This survey provides a comprehensive overview of AutoDA techniques for image
     classification tasks in the computer vision field. The focus of this paper is
     on various search algorithms in AutoDA. In order to describe and categorize approaches
@@ -4025,16 +4257,19 @@
   id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 本调查提供了AutoDA技术在计算机视觉领域图像分类任务中的全面概述。本文的重点是AutoDA中的各种搜索算法。为了描述和分类增强策略优化的方法，我们介绍了标准AutoDA管道的搜索和训练阶段。基于不同的优化方法，所有AutoDA方法可以分为两阶段或单阶段方法。AutoDA中的搜索过程可以进一步分类为无梯度、基于梯度或无搜索方法。相关的定性评估描述了AutoDA方法在搜索空间的复杂性、计算成本、可用的增强变换以及分类模型上报告的性能改进等方面的表现。未来，我们期望AutoDA领域能有更多的研究，旨在平衡提出模型的准确性和效率，并提供更好的解决方案，以权衡安全性和增强策略的多样性。
 - en: References
   id: totrans-345
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: \bibcommenthead
   id: totrans-346
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: \bibcommenthead
 - en: '(1) Krizhevsky, A., Sutskever, I., Hinton, G.E.: Imagenet classification with
     deep convolutional neural networks. Advances in neural information processing
     systems 25, 1097–1105 (2012)'
@@ -4042,6 +4277,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(1) Krizhevsky, A., Sutskever, I., Hinton, G.E.: 使用深度卷积神经网络进行Imagenet分类。神经信息处理系统进展
+    25, 1097–1105 (2012)'
 - en: '(2) Szegedy, C., Liu, W., Jia, Y., Sermanet, P., Reed, S., Anguelov, D., Erhan,
     D., Vanhoucke, V., Rabinovich, A.: Going deeper with convolutions. In: Proceedings
     of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 1–9 (2015)'
@@ -4049,12 +4286,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(2) Szegedy, C., Liu, W., Jia, Y., Sermanet, P., Reed, S., Anguelov, D., Erhan,
+    D., Vanhoucke, V., Rabinovich, A.: 通过卷积深入研究。发表于：IEEE计算机视觉与模式识别会议论文集, pp. 1–9 (2015)'
 - en: '(3) Simonyan, K., Zisserman, A.: Very deep convolutional networks for large-scale
     image recognition. arXiv preprint arXiv:1409.1556 (2014)'
   id: totrans-349
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(3) Simonyan, K., Zisserman, A.: 用于大规模图像识别的非常深的卷积网络。arXiv预印本 arXiv:1409.1556
+    (2014)'
 - en: '(4) He, K., Zhang, X., Ren, S., Sun, J.: Deep residual learning for image recognition.
     In: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
     pp. 770–778 (2016)'
@@ -4062,6 +4303,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(4) He, K., Zhang, X., Ren, S., Sun, J.: 图像识别的深度残差学习。发表于：IEEE计算机视觉与模式识别会议论文集,
+    pp. 770–778 (2016)'
 - en: '(5) Esteva, A., Kuprel, B., Novoa, R.A., Ko, J., Swetter, S.M., Blau, H.M.,
     Thrun, S.: Dermatologist-level classification of skin cancer with deep neural
     networks. nature 542(7639), 115–118 (2017)'
@@ -4069,6 +4312,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(5) Esteva, A., Kuprel, B., Novoa, R.A., Ko, J., Swetter, S.M., Blau, H.M.,
+    Thrun, S.: 通过深度神经网络进行皮肤癌的皮肤科医生级分类。自然 542(7639), 115–118 (2017)'
 - en: '(6) Shin, H.-C., Roth, H.R., Gao, M., Lu, L., Xu, Z., Nogues, I., Yao, J.,
     Mollura, D., Summers, R.M.: Deep convolutional neural networks for computer-aided
     detection: Cnn architectures, dataset characteristics and transfer learning. IEEE
@@ -4077,6 +4322,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(6) Shin, H.-C., Roth, H.R., Gao, M., Lu, L., Xu, Z., Nogues, I., Yao, J.,
+    Mollura, D., Summers, R.M.: 计算机辅助检测的深度卷积神经网络：CNN架构、数据集特征和迁移学习。IEEE医学影像学事务 35(5),
+    1285–1298 (2016)'
 - en: '(7) Zheng, Y.-Y., Kong, J.-L., Jin, X.-B., Wang, X.-Y., Su, T.-L., Zuo, M.:
     Cropdeep: The crop vision dataset for deep-learning-based classification and detection
     in precision agriculture. Sensors 19(5), 1058 (2019)'
@@ -4084,12 +4332,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(7) Zheng, Y.-Y., Kong, J.-L., Jin, X.-B., Wang, X.-Y., Su, T.-L., Zuo, M.:
+    Cropdeep: 精准农业中基于深度学习的分类与检测的作物视觉数据集。传感器 19(5), 1058 (2019)'
 - en: '(8) Kamilaris, A., Prenafeta-Boldú, F.X.: Deep learning in agriculture: A survey.
     Computers and electronics in agriculture 147, 70–90 (2018)'
   id: totrans-354
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(8) Kamilaris, A., Prenafeta-Boldú, F.X.: 农业中的深度学习：一项调查。农业计算机与电子学 147, 70–90
+    (2018)'
 - en: '(9) Shijie, J., Ping, W., Peiyi, J., Siping, H.: Research on data augmentation
     for image classification based on convolution neural networks. In: 2017 Chinese
     Automation Congress (CAC), pp. 4165–4170 (2017). IEEE'
@@ -4097,12 +4349,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(9) Shijie, J., Ping, W., Peiyi, J., Siping, H.: 基于卷积神经网络的图像分类数据增强研究。发表于：2017中国自动化大会（CAC），pp.
+    4165–4170 (2017). IEEE'
 - en: '(10) Lemley, J., Bazrafkan, S., Corcoran, P.: Smart augmentation learning an
     optimal data augmentation strategy. Ieee Access 5, 5858–5869 (2017)'
   id: totrans-356
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(10) Lemley, J., Bazrafkan, S., Corcoran, P.: 智能增强学习最优数据增强策略。IEEE Access 5,
+    5858–5869 (2017)'
 - en: '(11) Cireşan, D.C., Meier, U., Gambardella, L.M., Schmidhuber, J.: Deep, big,
     simple neural nets for handwritten digit recognition. Neural computation 22(12),
     3207–3220 (2010)'
@@ -4110,6 +4366,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(11) Cireşan, D.C., Meier, U., Gambardella, L.M., Schmidhuber, J.: 深度、大型、简单的神经网络用于手写数字识别。神经计算
+    22(12), 3207–3220 (2010)'
 - en: '(12) Dosovitskiy, A., Fischer, P., Springenberg, J.T., Riedmiller, M., Brox,
     T.: Discriminative unsupervised feature learning with exemplar convolutional neural
     networks. IEEE transactions on pattern analysis and machine intelligence 38(9),
@@ -4118,11 +4376,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(12) Dosovitskiy, A., Fischer, P., Springenberg, J.T., Riedmiller, M., Brox,
+    T.: 具有示例卷积神经网络的判别性无监督特征学习。IEEE 模式分析与机器智能学报 38(9), 1734–1747 (2015)'
 - en: '(13) Graham, B.: Fractional max-pooling. arXiv preprint arXiv:1412.6071 (2014)'
   id: totrans-359
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(13) Graham, B.: 分数最大池化。arXiv 预印本 arXiv:1412.6071 (2014)'
 - en: '(14) Sajjadi, M., Javanmardi, M., Tasdizen, T.: Regularization with stochastic
     transformations and perturbations for deep semi-supervised learning. Advances
     in neural information processing systems 29, 1163–1171 (2016)'
@@ -4130,6 +4391,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(14) Sajjadi, M., Javanmardi, M., Tasdizen, T.: 用随机变换和扰动进行深度半监督学习的正则化。神经信息处理系统进展
+    29, 1163–1171 (2016)'
 - en: '(15) Rios, A., Kavuluru, R.: Few-shot and zero-shot multi-label learning for
     structured label spaces. In: Proceedings of the Conference on Empirical Methods
     in Natural Language Processing. Conference on Empirical Methods in Natural Language
@@ -4138,6 +4401,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(15) Rios, A., Kavuluru, R.: 结构化标签空间的少样本和零样本多标签学习。自然语言处理经验方法会议论文集，第 2018 卷，第
+    3132 页 (2018)。NIH Public Access'
 - en: '(16) Bachman, P., Hjelm, R.D., Buchwalter, W.: Learning representations by
     maximizing mutual information across views. Advances in neural information processing
     systems 32 (2019)'
@@ -4145,6 +4410,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(16) Bachman, P., Hjelm, R.D., Buchwalter, W.: 通过最大化视图间的互信息学习表示。神经信息处理系统进展
+    32 (2019)'
 - en: '(17) Paschali, M., Simson, W., Roy, A.G., Naeem, M.F., Göbl, R., Wachinger,
     C., Navab, N.: Data augmentation with manifold exploring geometric transformations
     for increased performance and robustness. arXiv preprint arXiv:1901.04420 (2019)'
@@ -4152,12 +4419,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(17) Paschali, M., Simson, W., Roy, A.G., Naeem, M.F., Göbl, R., Wachinger,
+    C., Navab, N.: 通过流形探索几何变换进行数据扩增，以提高性能和鲁棒性。arXiv 预印本 arXiv:1901.04420 (2019)'
 - en: '(18) Wang, Y., Yao, Q., Kwok, J.T., Ni, L.M.: Generalizing from a few examples:
     A survey on few-shot learning. ACM computing surveys (csur) 53(3), 1–34 (2020)'
   id: totrans-364
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(18) Wang, Y., Yao, Q., Kwok, J.T., Ni, L.M.: 从少量示例中泛化：少样本学习的综述。ACM 计算调查（csur）
+    53(3), 1–34 (2020)'
 - en: '(19) Dao, T., Gu, A., Ratner, A., Smith, V., De Sa, C., Ré, C.: A kernel theory
     of modern data augmentation. In: International Conference on Machine Learning,
     pp. 1528–1537 (2019). PMLR'
@@ -4165,6 +4436,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(19) Dao, T., Gu, A., Ratner, A., Smith, V., De Sa, C., Ré, C.: 现代数据扩增的核理论。机器学习国际会议论文集，第
+    1528–1537 页 (2019)。PMLR'
 - en: '(20) Cubuk, E.D., Zoph, B., Mane, D., Vasudevan, V., Le, Q.V.: Autoaugment:
     Learning augmentation strategies from data. In: Proceedings of the IEEE/CVF Conference
     on Computer Vision and Pattern Recognition, pp. 113–123 (2019)'
@@ -4172,12 +4445,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(20) Cubuk, E.D., Zoph, B., Mane, D., Vasudevan, V., Le, Q.V.: 自动增强：从数据中学习增强策略。IEEE/CVF
+    计算机视觉与模式识别会议论文集，第 113–123 页 (2019)'
 - en: '(21) Lim, S., Kim, I., Kim, T., Kim, C., Kim, S.: Fast autoaugment. Advances
     in Neural Information Processing Systems 32, 6665–6675 (2019)'
   id: totrans-367
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(21) Lim, S., Kim, I., Kim, T., Kim, C., Kim, S.: 快速自动增强。神经信息处理系统进展 32, 6665–6675
+    (2019)'
 - en: '(22) Hataya, R., Zdenek, J., Yoshizoe, K., Nakayama, H.: Faster autoaugment:
     Learning augmentation strategies using backpropagation. In: European Conference
     on Computer Vision, pp. 1–16 (2020). Springer'
@@ -4185,6 +4462,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(22) Hataya, R., Zdenek, J., Yoshizoe, K., Nakayama, H.: 更快的自动增强：使用反向传播学习增强策略。欧洲计算机视觉会议论文集，第
+    1–16 页 (2020)。Springer'
 - en: '(23) Ho, D., Liang, E., Chen, X., Stoica, I., Abbeel, P.: Population based
     augmentation: Efficient learning of augmentation policy schedules. In: International
     Conference on Machine Learning, pp. 2731–2741 (2019). PMLR'
@@ -4192,6 +4471,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(23) Ho, D., Liang, E., Chen, X., Stoica, I., Abbeel, P.: 基于人群的增强：高效学习增强策略计划。机器学习国际会议论文集，第
+    2731–2741 页 (2019)。PMLR'
 - en: '(24) Tran, T., Pham, T., Carneiro, G., Palmer, L., Reid, I.: A bayesian data
     augmentation approach for learning deep models. arXiv preprint arXiv:1710.10564
     (2017)'
@@ -4199,12 +4480,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(24) Tran, T., Pham, T., Carneiro, G., Palmer, L., Reid, I.: 一种贝叶斯数据扩增方法用于学习深度模型。arXiv
+    预印本 arXiv:1710.10564 (2017)'
 - en: '(25) DeVries, T., Taylor, G.W.: Dataset augmentation in feature space. arXiv
     preprint arXiv:1702.05538 (2017)'
   id: totrans-371
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(25) DeVries, T., Taylor, G.W.: 特征空间中的数据集扩增。arXiv 预印本 arXiv:1702.05538 (2017)'
 - en: '(26) Zoph, B., Cubuk, E.D., Ghiasi, G., Lin, T.-Y., Shlens, J., Le, Q.V.: Learning
     data augmentation strategies for object detection. In: European Conference on
     Computer Vision, pp. 566–583 (2020). Springer'
@@ -4212,12 +4496,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(26) Zoph, B., Cubuk, E.D., Ghiasi, G., Lin, T.-Y., Shlens, J., Le, Q.V.: 学习对象检测的数据增强策略。见：欧洲计算机视觉会议，第566–583页（2020）。Springer'
 - en: '(27) Krizhevsky, A., Hinton, G., et al.: Learning multiple layers of features
     from tiny images (2009)'
   id: totrans-373
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(27) Krizhevsky, A., Hinton, G., 等: 从小图像中学习多个特征层次（2009）'
 - en: '(28) Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., Fei-Fei, L.: Imagenet:
     A large-scale hierarchical image database. In: 2009 IEEE Conference on Computer
     Vision and Pattern Recognition, pp. 248–255 (2009). Ieee'
@@ -4225,18 +4511,22 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(28) Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., Fei-Fei, L.: ImageNet：一个大规模层次图像数据库。见：2009
+    IEEE计算机视觉与模式识别会议，第248–255页（2009）。IEEE'
 - en: '(29) Netzer, Y., Wang, T., Coates, A., Bissacco, A., Wu, B., Ng, A.Y.: Reading
     digits in natural images with unsupervised feature learning (2011)'
   id: totrans-375
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(29) Netzer, Y., Wang, T., Coates, A., Bissacco, A., Wu, B., Ng, A.Y.: 用无监督特征学习读取自然图像中的数字（2011）'
 - en: '(30) Tian, K., Lin, C., Sun, M., Zhou, L., Yan, J., Ouyang, W.: Improving auto-augment
     via augmentation-wise weight sharing. arXiv preprint arXiv:2009.14737 (2020)'
   id: totrans-376
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(30) Tian, K., Lin, C., Sun, M., Zhou, L., Yan, J., Ouyang, W.: 通过增强-wise权重共享改进自动增强。arXiv预印本arXiv:2009.14737（2020）'
 - en: '(31) Cubuk, E.D., Zoph, B., Shlens, J., Le, Q.V.: Randaugment: Practical automated
     data augmentation with a reduced search space. In: Proceedings of the IEEE/CVF
     Conference on Computer Vision and Pattern Recognition Workshops, pp. 702–703 (2020)'
@@ -4244,12 +4534,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(31) Cubuk, E.D., Zoph, B., Shlens, J., Le, Q.V.: RandAugment：具有简化搜索空间的实用自动数据增强。见：IEEE/CVF计算机视觉与模式识别会议工作坊论文集，第702–703页（2020）'
 - en: '(32) LeCun, Y., Bottou, L., Bengio, Y., Haffner, P.: Gradient-based learning
     applied to document recognition. Proceedings of the IEEE 86(11), 2278–2324 (1998)'
   id: totrans-378
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(32) LeCun, Y., Bottou, L., Bengio, Y., Haffner, P.: 应用于文档识别的基于梯度的学习。IEEE期刊86(11)，2278–2324（1998）'
 - en: '(33) Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., Wojna, Z.: Rethinking
     the inception architecture for computer vision. In: Proceedings of the IEEE Conference
     on Computer Vision and Pattern Recognition, pp. 2818–2826 (2016)'
@@ -4257,6 +4549,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(33) Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., Wojna, Z.: 重新思考计算机视觉的Inception架构。见：IEEE计算机视觉与模式识别会议论文集，第2818–2826页（2016）'
 - en: '(34) Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D.,
     Ozair, S., Courville, A., Bengio, Y.: Generative adversarial nets. Advances in
     neural information processing systems 27, 2672–2680 (2014)'
@@ -4264,18 +4557,22 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(34) Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D.,
+    Ozair, S., Courville, A., Bengio, Y.: 生成对抗网络。神经信息处理系统进展27，第2672–2680页（2014）'
 - en: '(35) Zoph, B., Le, Q.V.: Neural architecture search with reinforcement learning.
     arXiv preprint arXiv:1611.01578 (2016)'
   id: totrans-381
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(35) Zoph, B., Le, Q.V.: 使用强化学习进行神经网络架构搜索。arXiv预印本arXiv:1611.01578（2016）'
 - en: '(36) Perez, L., Wang, J.: The effectiveness of data augmentation in image classification
     using deep learning. arXiv preprint arXiv:1712.04621 (2017)'
   id: totrans-382
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(36) Perez, L., Wang, J.: 使用深度学习进行图像分类的数据增强效果。arXiv预印本arXiv:1712.04621（2017）'
 - en: '(37) Redmon, J., Divvala, S., Girshick, R., Farhadi, A.: You only look once:
     Unified, real-time object detection. In: Proceedings of the IEEE Conference on
     Computer Vision and Pattern Recognition, pp. 779–788 (2016)'
@@ -4283,6 +4580,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(37) Redmon, J., Divvala, S., Girshick, R., Farhadi, A.: 你只需看一次：统一的实时目标检测。见：IEEE计算机视觉与模式识别会议论文集，第779–788页（2016）'
 - en: '(38) Girshick, R., Donahue, J., Darrell, T., Malik, J.: Rich feature hierarchies
     for accurate object detection and semantic segmentation. In: Proceedings of the
     IEEE Conference on Computer Vision and Pattern Recognition, pp. 580–587 (2014)'
@@ -4290,12 +4588,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(38) Girshick, R., Donahue, J., Darrell, T., Malik, J.: 用于准确目标检测和语义分割的丰富特征层次结构。见：IEEE计算机视觉与模式识别会议论文集，第580–587页（2014）'
 - en: '(39) Girshick, R.: Fast r-cnn. In: Proceedings of the IEEE International Conference
     on Computer Vision, pp. 1440–1448 (2015)'
   id: totrans-385
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(39) Girshick, R.: Fast R-CNN。见：IEEE国际计算机视觉会议论文集，第1440–1448页（2015）'
 - en: '(40) Ren, S., He, K., Girshick, R., Sun, J.: Faster r-cnn: Towards real-time
     object detection with region proposal networks. Advances in neural information
     processing systems 28 (2015)'
@@ -4303,6 +4603,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(40) Ren, S., He, K., Girshick, R., Sun, J.: Faster R-CNN：利用区域提议网络实现实时目标检测。神经信息处理系统进展28（2015）'
 - en: '(41) Long, J., Shelhamer, E., Darrell, T.: Fully convolutional networks for
     semantic segmentation. In: Proceedings of the IEEE Conference on Computer Vision
     and Pattern Recognition, pp. 3431–3440 (2015)'
@@ -4310,6 +4611,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(41) Long, J., Shelhamer, E., Darrell, T.: 用于语义分割的全卷积网络。见：IEEE计算机视觉与模式识别会议论文集，第3431–3440页（2015）'
 - en: '(42) Ronneberger, O., Fischer, P., Brox, T.: U-net: Convolutional networks
     for biomedical image segmentation. In: International Conference on Medical Image
     Computing and Computer-assisted Intervention, pp. 234–241 (2015). Springer'
@@ -4317,30 +4619,38 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (42) Ronneberger, O., Fischer, P., Brox, T.：U-net：用于生物医学图像分割的卷积网络。在：医学图像计算与计算机辅助干预国际会议，pp.
+    234–241 (2015). Springer
 - en: '(43) Shorten, C., Khoshgoftaar, T.M.: A survey on image data augmentation for
     deep learning. Journal of Big Data 6(1), 1–48 (2019)'
   id: totrans-389
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (43) Shorten, C., Khoshgoftaar, T.M.：深度学习中的图像数据增强综述。大数据期刊 6(1)，1–48 (2019)
 - en: '(44) Zhang, H., Cisse, M., Dauphin, Y.N., Lopez-Paz, D.: mixup: Beyond empirical
     risk minimization. arXiv preprint arXiv:1710.09412 (2017)'
   id: totrans-390
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (44) Zhang, H., Cisse, M., Dauphin, Y.N., Lopez-Paz, D.：mixup：超越经验风险最小化。arXiv预印本
+    arXiv:1710.09412 (2017)
 - en: '(45) DeVries, T., Taylor, G.W.: Improved regularization of convolutional neural
     networks with cutout. arXiv preprint arXiv:1708.04552 (2017)'
   id: totrans-391
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (45) DeVries, T., Taylor, G.W.：通过cutout改进卷积神经网络的正则化。arXiv预印本 arXiv:1708.04552
+    (2017)
 - en: '(46) Inoue, H.: Data augmentation by pairing samples for images classification.
     arXiv preprint arXiv:1801.02929 (2018)'
   id: totrans-392
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (46) Inoue, H.：通过配对样本进行图像分类的数据增强。arXiv预印本 arXiv:1801.02929 (2018)
 - en: '(47) Bagherinezhad, H., Horton, M., Rastegari, M., Farhadi, A.: Label refinery:
     Improving imagenet classification through label progression. arXiv preprint arXiv:1805.02641
     (2018)'
@@ -4348,23 +4658,30 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (47) Bagherinezhad, H., Horton, M., Rastegari, M., Farhadi, A.：标签精炼：通过标签进化改进imagenet分类。arXiv预印本
+    arXiv:1805.02641 (2018)
 - en: '(48) Umesh, P.: Image processing in python. CSI Communications 23 (2012)'
   id: totrans-394
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (48) Umesh, P.：Python中的图像处理。CSI通讯 23 (2012)
 - en: '(49) Zhong, Z., Zheng, L., Kang, G., Li, S., Yang, Y.: Random erasing data
     augmentation. In: AAAI, pp. 13001–13008 (2020)'
   id: totrans-395
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (49) Zhong, Z., Zheng, L., Kang, G., Li, S., Yang, Y.：随机擦除数据增强。在：AAAI，pp. 13001–13008
+    (2020)
 - en: '(50) Sato, I., Nishimura, H., Yokoi, K.: Apac: Augmented pattern classification
     with neural networks. arXiv preprint arXiv:1505.03229 (2015)'
   id: totrans-396
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (50) Sato, I., Nishimura, H., Yokoi, K.：Apac：使用神经网络的增强模式分类。arXiv预印本 arXiv:1505.03229
+    (2015)
 - en: '(51) Simard, P.Y., Steinkraus, D., Platt, J.C., et al.: Best practices for
     convolutional neural networks applied to visual document analysis. In: Icdar,
     vol. 3 (2003)'
@@ -4372,6 +4689,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (51) Simard, P.Y., Steinkraus, D., Platt, J.C., 等：应用于视觉文档分析的卷积神经网络最佳实践。在：Icdar，第3卷
+    (2003)
 - en: '(52) Ratner, A.J., Ehrenberg, H.R., Hussain, Z., Dunnmon, J., Ré, C.: Learning
     to compose domain-specific transformations for data augmentation. Advances in
     neural information processing systems 30, 3239 (2017)'
@@ -4379,12 +4698,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (52) Ratner, A.J., Ehrenberg, H.R., Hussain, Z., Dunnmon, J., Ré, C.：学习组合领域特定转换以进行数据增强。神经信息处理系统进展
+    30, 3239 (2017)
 - en: '(53) Zhang, X., Wang, Q., Zhang, J., Zhong, Z.: Adversarial autoaugment. arXiv
     preprint arXiv:1912.11188 (2019)'
   id: totrans-399
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (53) Zhang, X., Wang, Q., Zhang, J., Zhong, Z.：对抗性autoaugment。arXiv预印本 arXiv:1912.11188
+    (2019)
 - en: '(54) Lin, C., Guo, M., Li, C., Yuan, X., Wu, W., Yan, J., Lin, D., Ouyang,
     W.: Online hyper-parameter learning for auto-augmentation strategy. In: Proceedings
     of the IEEE/CVF International Conference on Computer Vision, pp. 6579–6588 (2019)'
@@ -4392,24 +4715,31 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (54) Lin, C., Guo, M., Li, C., Yuan, X., Wu, W., Yan, J., Lin, D., Ouyang, W.：用于自动增强策略的在线超参数学习。在：IEEE/CVF国际计算机视觉会议论文集中，pp.
+    6579–6588 (2019)
 - en: '(55) Williams, R.J.: Simple statistical gradient-following algorithms for connectionist
     reinforcement learning. Machine learning 8(3), 229–256 (1992)'
   id: totrans-401
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (55) Williams, R.J.：用于连接主义强化学习的简单统计梯度跟随算法。机器学习 8(3)，229–256 (1992)
 - en: '(56) Liu, H., Simonyan, K., Yang, Y.: Darts: Differentiable architecture search.
     arXiv preprint arXiv:1806.09055 (2018)'
   id: totrans-402
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (56) Liu, H., Simonyan, K., Yang, Y.：Darts：可微分架构搜索。arXiv预印本 arXiv:1806.09055
+    (2018)
 - en: '(57) Li, Y., Hu, G., Wang, Y., Hospedales, T., Robertson, N.M., Yang, Y.: Dada:
     Differentiable automatic data augmentation. arXiv preprint arXiv:2003.03780 (2020)'
   id: totrans-403
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (57) Li, Y., Hu, G., Wang, Y., Hospedales, T., Robertson, N.M., Yang, Y.：Dada：可微分自动数据增强。arXiv预印本
+    arXiv:2003.03780 (2020)
 - en: '(58) LingChen, T.C., Khonsari, A., Lashkari, A., Nazari, M.R., Sambee, J.S.,
     Nascimento, M.A.: Uniformaugment: A search-free probabilistic data augmentation
     approach. arXiv preprint arXiv:2003.14348 (2020)'
@@ -4417,6 +4747,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (58) LingChen, T.C., Khonsari, A., Lashkari, A., Nazari, M.R., Sambee, J.S.,
+    Nascimento, M.A.：Uniformaugment：一种无搜索的概率数据增强方法。arXiv预印本 arXiv:2003.14348 (2020)
 - en: '(59) Wei, L., Xiao, A., Xie, L., Zhang, X., Chen, X., Tian, Q.: Circumventing
     outliers of autoaugment with knowledge distillation. In: Computer Vision–ECCV
     2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings,
@@ -4425,18 +4757,23 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (59) Wei, L., Xiao, A., Xie, L., Zhang, X., Chen, X., Tian, Q.：通过知识蒸馏绕过autoaugment的异常值。在：计算机视觉–ECCV
+    2020：第16届欧洲会议，英国格拉斯哥，2020年8月23–28日，论文集，第III部分 16，pp. 608–625 (2020). Springer
 - en: '(60) Naghizadeh, A., Abavisani, M., Metaxas, D.N.: Greedy autoaugment. Pattern
     Recognition Letters 138, 624–630 (2020)'
   id: totrans-406
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (60) Naghizadeh, A., Abavisani, M., Metaxas, D.N.：贪婪自动增强。《模式识别通讯》 138，624–630
+    (2020)
 - en: '(61) Niu, T., Bansal, M.: Automatically learning data augmentation policies
     for dialogue tasks. arXiv preprint arXiv:1909.12868 (2019)'
   id: totrans-407
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (61) Niu, T., Bansal, M.：自动学习对话任务的数据增强策略。arXiv 预印本 arXiv:1909.12868 (2019)
 - en: '(62) Gudovskiy, D., Rigazio, L., Ishizaka, S., Kozuka, K., Tsukizawa, S.: Autodo:
     Robust autoaugment for biased data with label noise via scalable probabilistic
     implicit differentiation. In: Proceedings of the IEEE/CVF Conference on Computer
@@ -4445,12 +4782,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (62) Gudovskiy, D., Rigazio, L., Ishizaka, S., Kozuka, K., Tsukizawa, S.：Autodo：通过可扩展的概率隐式微分对带标签噪声的偏差数据进行稳健的自动增强。在：IEEE/CVF
+    计算机视觉与模式识别会议论文集，第 16601–16610 页 (2021)
 - en: '(63) Naghizadeh, A., Metaxas, D.N., Liu, D.: Greedy auto-augmentation for n-shot
     learning using deep neural networks. Neural Networks 135, 68–77 (2021)'
   id: totrans-409
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (63) Naghizadeh, A., Metaxas, D.N., Liu, D.：使用深度神经网络的贪婪自动增强用于 n-shot 学习。《神经网络》
+    135，68–77 (2021)
 - en: '(64) Russakovsky, O., Deng, J., Su, H., Krause, J., Satheesh, S., Ma, S., Huang,
     Z., Karpathy, A., Khosla, A., Bernstein, M., et al.: Imagenet large scale visual
     recognition challenge. International journal of computer vision 115(3), 211–252
@@ -4459,12 +4800,17 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (64) Russakovsky, O., Deng, J., Su, H., Krause, J., Satheesh, S., Ma, S., Huang,
+    Z., Karpathy, A., Khosla, A., Bernstein, M., 等：Imagenet 大规模视觉识别挑战。《计算机视觉国际期刊》
+    115(3)，211–252 (2015)
 - en: '(65) Lin, S., Yu, T., Feng, R., Li, X., Jin, X., Chen, Z.: Local patch autoaugment
     with multi-agent collaboration. arXiv preprint arXiv:2103.11099 (2021)'
   id: totrans-411
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (65) Lin, S., Yu, T., Feng, R., Li, X., Jin, X., Chen, Z.：局部补丁自增强与多智能体协作。arXiv
+    预印本 arXiv:2103.11099 (2021)
 - en: '(66) Hu, Z., Tan, B., Salakhutdinov, R., Mitchell, T., Xing, E.P.: Learning
     data manipulation for augmentation and weighting. arXiv preprint arXiv:1910.12795
     (2019)'
@@ -4472,6 +4818,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (66) Hu, Z., Tan, B., Salakhutdinov, R., Mitchell, T., Xing, E.P.：学习数据操作以进行增强和加权。arXiv
+    预印本 arXiv:1910.12795 (2019)
 - en: '(67) Jaderberg, M., Dalibard, V., Osindero, S., Czarnecki, W.M., Donahue, J.,
     Razavi, A., Vinyals, O., Green, T., Dunning, I., Simonyan, K., et al.: Population
     based training of neural networks. arXiv preprint arXiv:1711.09846 (2017)'
@@ -4479,30 +4827,39 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (67) Jaderberg, M., Dalibard, V., Osindero, S., Czarnecki, W.M., Donahue, J.,
+    Razavi, A., Vinyals, O., Green, T., Dunning, I., Simonyan, K., 等：基于人群的神经网络训练。arXiv
+    预印本 arXiv:1711.09846 (2017)
 - en: '(68) Terrell, G.R., Scott, D.W.: Variable kernel density estimation. The Annals
     of Statistics, 1236–1265 (1992)'
   id: totrans-414
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (68) Terrell, G.R., Scott, D.W.：变量核密度估计。《统计年鉴》，1236–1265 (1992)
 - en: '(69) Hinton, G., Vinyals, O., Dean, J.: Distilling the knowledge in a neural
     network. arXiv preprint arXiv:1503.02531 (2015)'
   id: totrans-415
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (69) Hinton, G., Vinyals, O., Dean, J.：提炼神经网络中的知识。arXiv 预印本 arXiv:1503.02531
+    (2015)
 - en: '(70) Jang, E., Gu, S., Poole, B.: Categorical reparameterization with gumbel-softmax.
     arXiv preprint arXiv:1611.01144 (2016)'
   id: totrans-416
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (70) Jang, E., Gu, S., Poole, B.：使用 gumbel-softmax 的类别重参数化。arXiv 预印本 arXiv:1611.01144
+    (2016)
 - en: '(71) Colson, B., Marcotte, P., Savard, G.: An overview of bilevel optimization.
     Annals of operations research 153(1), 235–256 (2007)'
   id: totrans-417
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (71) Colson, B., Marcotte, P., Savard, G.：双层优化概述。《运筹学年鉴》 153(1)，235–256 (2007)
 - en: '(72) Real, E., Aggarwal, A., Huang, Y., Le, Q.V.: Regularized evolution for
     image classifier architecture search. In: Proceedings of the Aaai Conference on
     Artificial Intelligence, vol. 33, pp. 4780–4789 (2019)'
@@ -4510,18 +4867,23 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (72) Real, E., Aggarwal, A., Huang, Y., Le, Q.V.：图像分类器架构搜索的正则化进化。在：AAAI 人工智能大会论文集，第
+    33 卷，第 4780–4789 页 (2019)
 - en: '(73) Bergstra, J., Bengio, Y.: Random search for hyper-parameter optimization.
     Journal of machine learning research 13(2) (2012)'
   id: totrans-419
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (73) Bergstra, J., Bengio, Y.：超参数优化的随机搜索。《机器学习研究杂志》 13(2) (2012)
 - en: '(74) Mania, H., Guy, A., Recht, B.: Simple random search provides a competitive
     approach to reinforcement learning. arXiv preprint arXiv:1803.07055 (2018)'
   id: totrans-420
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (74) Mania, H., Guy, A., Recht, B.：简单随机搜索提供了一个具有竞争力的强化学习方法。arXiv 预印本 arXiv:1803.07055
+    (2018)
 - en: '(75) Tarvainen, A., Valpola, H.: Mean teachers are better role models: Weight-averaged
     consistency targets improve semi-supervised deep learning results. arXiv preprint
     arXiv:1703.01780 (2017)'
@@ -4529,6 +4891,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (75) Tarvainen, A., Valpola, H.：平均教师是更好的榜样：加权平均一致性目标提高了半监督深度学习结果。arXiv 预印本 arXiv:1703.01780
+    (2017)
 - en: '(76) Thornton, C., Hutter, F., Hoos, H.H., Leyton-Brown, K.: Auto-weka: Combined
     selection and hyperparameter optimization of classification algorithms. In: Proceedings
     of the 19th ACM SIGKDD International Conference on Knowledge Discovery and Data
@@ -4537,6 +4901,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: (76) Thornton, C., Hutter, F., Hoos, H.H., Leyton-Brown, K.：Auto-weka：分类算法的组合选择与超参数优化。在：第
+    19 届 ACM SIGKDD 国际知识发现与数据挖掘会议论文集，第 847–855 页 (2013)
 - en: '(77) Xie, C., Tan, M., Gong, B., Wang, J., Yuille, A.L., Le, Q.V.: Adversarial
     examples improve image recognition. In: Proceedings of the IEEE/CVF Conference
     on Computer Vision and Pattern Recognition, pp. 819–828 (2020)'
@@ -4544,6 +4910,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(77) Xie, C., Tan, M., Gong, B., Wang, J., Yuille, A.L., Le, Q.V.: 对抗样本提升图像识别。在:
+    IEEE/CVF 计算机视觉与模式识别会议论文集, 页 819–828 (2020)'
 - en: '(78) Gontijo-Lopes, R., Smullin, S.J., Cubuk, E.D., Dyer, E.: Affinity and
     diversity: Quantifying mechanisms of data augmentation. arXiv preprint arXiv:2002.08973
     (2020)'
@@ -4551,12 +4919,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(78) Gontijo-Lopes, R., Smullin, S.J., Cubuk, E.D., Dyer, E.: 亲和力与多样性：量化数据增强的机制。arXiv
+    预印本 arXiv:2002.08973 (2020)'
 - en: '(79) Boutilier, C.: Planning, learning and coordination in multiagent decision
     processes. In: TARK, vol. 96, pp. 195–210 (1996). Citeseer'
   id: totrans-425
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(79) Boutilier, C.: 多智能体决策过程中的规划、学习与协调。在: TARK, 卷 96, 页 195–210 (1996). Citeseer'
 - en: '(80) Selvaraju, R.R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., Batra,
     D.: Grad-cam: Visual explanations from deep networks via gradient-based localization.
     In: Proceedings of the IEEE International Conference on Computer Vision, pp. 618–626
@@ -4565,6 +4936,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(80) Selvaraju, R.R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., Batra,
+    D.: Grad-cam: 通过基于梯度的定位从深度网络中获得的视觉解释。在: IEEE 国际计算机视觉会议论文集, 页 618–626 (2017)'
 - en: '(81) Bengio, Y., Léonard, N., Courville, A.: Estimating or propagating gradients
     through stochastic neurons for conditional computation. arXiv preprint arXiv:1308.3432
     (2013)'
@@ -4572,12 +4945,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(81) Bengio, Y., Léonard, N., Courville, A.: 估计或传播通过随机神经元的梯度以进行条件计算。arXiv 预印本
+    arXiv:1308.3432 (2013)'
 - en: '(82) Oord, A.v.d., Vinyals, O., Kavukcuoglu, K.: Neural discrete representation
     learning. arXiv preprint arXiv:1711.00937 (2017)'
   id: totrans-428
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(82) Oord, A.v.d., Vinyals, O., Kavukcuoglu, K.: 神经离散表示学习。arXiv 预印本 arXiv:1711.00937
+    (2017)'
 - en: '(83) Snoek, J., Larochelle, H., Adams, R.P.: Practical bayesian optimization
     of machine learning algorithms. Advances in neural information processing systems
     25 (2012)'
@@ -4585,6 +4962,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(83) Snoek, J., Larochelle, H., Adams, R.P.: 机器学习算法的实用贝叶斯优化。神经信息处理系统进展 25 (2012)'
 - en: '(84) Chen, S., Dobriban, E., Lee, J.: A group-theoretic framework for data
     augmentation. Advances in Neural Information Processing Systems 33, 21321–21333
     (2020)'
@@ -4592,6 +4970,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(84) Chen, S., Dobriban, E., Lee, J.: 用于数据增强的群论框架。神经信息处理系统进展 33, 21321–21333
+    (2020)'
 - en: '(85) Franceschi, L., Donini, M., Frasconi, P., Pontil, M.: Forward and reverse
     gradient-based hyperparameter optimization. In: International Conference on Machine
     Learning, pp. 1165–1173 (2017). PMLR'
@@ -4599,6 +4979,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(85) Franceschi, L., Donini, M., Frasconi, P., Pontil, M.: 前向和反向梯度优化超参数。在:
+    国际机器学习会议, 页 1165–1173 (2017). PMLR'
 - en: '(86) Wang, X., Shrivastava, A., Gupta, A.: A-fast-rcnn: Hard positive generation
     via adversary for object detection. In: Proceedings of the IEEE Conference on
     Computer Vision and Pattern Recognition, pp. 2606–2615 (2017)'
@@ -4606,6 +4988,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(86) Wang, X., Shrivastava, A., Gupta, A.: A-fast-rcnn: 通过对抗生成硬样本用于物体检测。在:
+    IEEE 计算机视觉与模式识别会议论文集, 页 2606–2615 (2017)'
 - en: '(87) Peng, X., Tang, Z., Yang, F., Feris, R.S., Metaxas, D.: Jointly optimize
     data augmentation and network training: Adversarial data augmentation in human
     pose estimation. In: Proceedings of the IEEE Conference on Computer Vision and
@@ -4614,6 +4998,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(87) Peng, X., Tang, Z., Yang, F., Feris, R.S., Metaxas, D.: 联合优化数据增强和网络训练：人类姿态估计中的对抗性数据增强。在:
+    IEEE 计算机视觉与模式识别会议论文集, 页 2226–2234 (2018)'
 - en: '(88) Dong, X., Yang, Y.: Searching for a robust neural architecture in four
     gpu hours. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
     Recognition, pp. 1761–1770 (2019)'
@@ -4621,18 +5007,24 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(88) Dong, X., Yang, Y.: 在四个 GPU 小时内寻找鲁棒的神经架构。在: IEEE/CVF 计算机视觉与模式识别会议论文集,
+    页 1761–1770 (2019)'
 - en: '(89) Mohamed, S., Rosca, M., Figurnov, M., Mnih, A.: Monte carlo gradient estimation
     in machine learning. J. Mach. Learn. Res. 21(132), 1–62 (2020)'
   id: totrans-435
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(89) Mohamed, S., Rosca, M., Figurnov, M., Mnih, A.: 机器学习中的蒙特卡洛梯度估计。J. Mach.
+    Learn. Res. 21(132), 1–62 (2020)'
 - en: '(90) Maddison, C.J., Mnih, A., Teh, Y.W.: The concrete distribution: A continuous
     relaxation of discrete random variables. arXiv preprint arXiv:1611.00712 (2016)'
   id: totrans-436
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(90) Maddison, C.J., Mnih, A., Teh, Y.W.: 具体分布：离散随机变量的连续放松。arXiv 预印本 arXiv:1611.00712
+    (2016)'
 - en: '(91) Grathwohl, W., Choi, D., Wu, Y., Roeder, G., Duvenaud, D.: Backpropagation
     through the void: Optimizing control variates for black-box gradient estimation.
     arXiv preprint arXiv:1711.00123 (2017)'
@@ -4640,18 +5032,23 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(91) Grathwohl, W., Choi, D., Wu, Y., Roeder, G., Duvenaud, D.: 穿越空白的反向传播：优化黑箱梯度估计的控制变量。arXiv
+    预印本 arXiv:1711.00123 (2017)'
 - en: '(92) Xie, S., Zheng, H., Liu, C., Lin, L.: Snas: stochastic neural architecture
     search. arXiv preprint arXiv:1812.09926 (2018)'
   id: totrans-438
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(92) Xie, S., Zheng, H., Liu, C., Lin, L.: Snas: 随机神经网络结构搜索。arXiv 预印本 arXiv:1812.09926
+    (2018)'
 - en: '(93) Domingos, P.: Every model learned by gradient descent is approximately
     a kernel machine. arXiv preprint arXiv:2012.00152 (2020)'
   id: totrans-439
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(93) Domingos, P.: 通过梯度下降学习的每个模型大致上是一个核机器。arXiv预印本 arXiv:2012.00152（2020年）'
 - en: '(94) Gudovskiy, D., Hodgkinson, A., Yamaguchi, T., Tsukizawa, S.: Deep active
     learning for biased datasets via fisher kernel self-supervision. In: Proceedings
     of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 9041–9049
@@ -4660,6 +5057,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(94) Gudovskiy, D., Hodgkinson, A., Yamaguchi, T., Tsukizawa, S.: 通过Fisher核自监督进行有偏数据集的深度主动学习。在：IEEE/CVF计算机视觉与模式识别会议论文集，页码9041–9049（2020年）'
 - en: '(95) Terhörst, P., Kolf, J.N., Huber, M., Kirchbuchner, F., Damer, N., Morales,
     A., Fierrez, J., Kuijper, A.: A comprehensive study on face recognition biases
     beyond demographics. arXiv preprint arXiv:2103.01592 (2021)'
@@ -4667,6 +5065,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(95) Terhörst, P., Kolf, J.N., Huber, M., Kirchbuchner, F., Damer, N., Morales,
+    A., Fierrez, J., Kuijper, A.: 关于面部识别偏差的全面研究，超越人口统计数据。arXiv预印本 arXiv:2103.01592（2021年）'
 - en: '(96) Zhang, C., Bengio, S., Hardt, M., Recht, B., Vinyals, O.: Understanding
     deep learning (still) requires rethinking generalization. Communications of the
     ACM 64(3), 107–115 (2021)'
@@ -4674,6 +5074,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(96) Zhang, C., Bengio, S., Hardt, M., Recht, B., Vinyals, O.: 理解深度学习（仍然）需要重新思考泛化。ACM通讯
+    64(3)，107–115（2021年）'
 - en: '(97) Tanaka, D., Ikami, D., Yamasaki, T., Aizawa, K.: Joint optimization framework
     for learning with noisy labels. In: Proceedings of the IEEE Conference on Computer
     Vision and Pattern Recognition, pp. 5552–5560 (2018)'
@@ -4681,6 +5083,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(97) Tanaka, D., Ikami, D., Yamasaki, T., Aizawa, K.: 带有噪声标签学习的联合优化框架。在：IEEE计算机视觉与模式识别会议论文集，页码5552–5560（2018年）'
 - en: '(98) Yi, K., Wu, J.: Probabilistic end-to-end noise correction for learning
     with noisy labels. In: Proceedings of the IEEE/CVF Conference on Computer Vision
     and Pattern Recognition, pp. 7017–7025 (2019)'
@@ -4688,6 +5091,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(98) Yi, K., Wu, J.: 用于有噪声标签学习的概率性端到端噪声校正。在：IEEE/CVF计算机视觉与模式识别会议论文集，页码7017–7025（2019年）'
 - en: '(99) Lorraine, J., Vicol, P., Duvenaud, D.: Optimizing millions of hyperparameters
     by implicit differentiation. In: International Conference on Artificial Intelligence
     and Statistics, pp. 1540–1552 (2020). PMLR'
@@ -4695,12 +5099,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(99) Lorraine, J., Vicol, P., Duvenaud, D.: 通过隐式微分优化数百万个超参数。在：国际人工智能与统计学会议，页码1540–1552（2020年）。PMLR'
 - en: '(100) Van der Maaten, L., Hinton, G.: Visualizing data using t-sne. Journal
     of machine learning research 9(11) (2008)'
   id: totrans-446
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(100) Van der Maaten, L., Hinton, G.: 使用t-SNE可视化数据。机器学习研究期刊 9(11)（2008年）'
 - en: '(101) Shin, H.-C., Orton, M., Collins, D.J., Doran, S., Leach, M.O.: Autoencoder
     in time-series analysis for unsupervised tissues characterisation in a large unlabelled
     medical image dataset. In: 2011 10th International Conference on Machine Learning
@@ -4709,6 +5115,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(101) Shin, H.-C., Orton, M., Collins, D.J., Doran, S., Leach, M.O.: 用于大规模未标记医学图像数据集的时间序列分析中的自编码器，以实现无监督组织特征化。在：2011年第10届国际机器学习与应用会议及研讨会，卷1，页码259–264（2011年）。IEEE'
 - en: '(102) Reed, C.J., Metzger, S., Srinivas, A., Darrell, T., Keutzer, K.: Selfaugment:
     Automatic augmentation policies for self-supervised learning. In: Proceedings
     of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 2674–2683
@@ -4717,6 +5124,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(102) Reed, C.J., Metzger, S., Srinivas, A., Darrell, T., Keutzer, K.: Selfaugment：用于自监督学习的自动增强策略。在：IEEE/CVF计算机视觉与模式识别会议论文集，页码2674–2683（2021年）'
 - en: '(103) Chen, Y., Li, Y., Kong, T., Qi, L., Chu, R., Li, L., Jia, J.: Scale-aware
     automatic augmentation for object detection. In: Proceedings of the IEEE/CVF Conference
     on Computer Vision and Pattern Recognition, pp. 9563–9572 (2021)'
@@ -4724,6 +5132,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(103) Chen, Y., Li, Y., Kong, T., Qi, L., Chu, R., Li, L., Jia, J.: 面向尺度的自动增强用于目标检测。在：IEEE/CVF计算机视觉与模式识别会议论文集，页码9563–9572（2021年）'
 - en: '(104) Ren, S., Zhang, J., Li, L., Sun, X., Zhou, J.: Text autoaugment: Learning
     compositional augmentation policy for text classification. arXiv preprint arXiv:2109.00523
     (2021)'
@@ -4731,3 +5140,5 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '(104) Ren, S., Zhang, J., Li, L., Sun, X., Zhou, J.: 文本自动增强：为文本分类学习组合增强策略。arXiv预印本
+    arXiv:2109.00523（2021年）'
