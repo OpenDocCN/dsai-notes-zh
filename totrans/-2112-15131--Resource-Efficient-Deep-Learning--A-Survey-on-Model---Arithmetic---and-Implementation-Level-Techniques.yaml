@@ -1489,19 +1489,26 @@
   id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用较低精度的算术运算可以减少内存占用以及在总线和互连间传输数据所花费的时间 [[49](#bib.bib49), [114](#bib.bib114),
+    [186](#bib.bib186), [172](#bib.bib172)]。为 DNN 应用采用最低足够的算术精度可以提高每单位内存占用的准确性和每次内存访问的准确性。我们将算术级别资源效率技术分为两类，如图
+    [7](#S4.F7 "图 7 ‣ 4 算术级别资源效率技术 ‣ 资源效率深度学习：关于模型、算术和实现级别技术的调查") 所示，分别为推理的算术级别技术和训练的算术级别技术。我们首先讨论不同的数字格式，然后讨论这些数字格式在
+    DNN 中的应用。
 - en: '![Refer to caption](img/f645d4e9b0cfbe8d677086ae5fe9270f.png)'
   id: totrans-152
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/f645d4e9b0cfbe8d677086ae5fe9270f.png)'
 - en: 'Figure 7: Categorization of arithmetic-level resource-efficient techniques.'
   id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7：算术级别资源效率技术的分类。
 - en: 4.1 Number Formats for Deep Learning
   id: totrans-154
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 4.1 深度学习的数字格式
 - en: This subsection describes various number formats for deep learning applications,
     as preparatory to explaining the arithmetic-level resource-efficient techniques.
     Fixed-Point (FiP) number format utilizes a binary fixed point between fraction
@@ -1513,6 +1520,9 @@
   id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 本小节描述了深度学习应用的各种数字格式，为解释算术级别资源效率技术做准备。定点（FiP）数字格式利用分数部分和整数部分之间的二进制定点。例如，8 位 FiP
+    格式“01.100000”表示 1.5（即 $...0\times 2^{1}+1\times 2^{0}+1\times 2^{-1}+0\times 2^{-2}...$）用于十进制表示，整数部分和分数部分之间的点在算术操作中是固定的。因此，它可以用简单的电路实现，但可用的数据范围非常有限
+    [[120](#bib.bib120)]。
 - en: 'We exemplify the IEEE-754 general-purpose floating-point standard [[4](#bib.bib4)]
     to explain Floating-Point (FP) format and its arithmetic, since this standard
     is used for most commercially available CPUs and GPUs. The IEEE 754 Floating-Point
@@ -1526,6 +1536,11 @@
   id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们以 IEEE-754 通用浮点标准 [[4](#bib.bib4)] 为例来解释浮点（FP）格式及其算术，因为这个标准被大多数商业可用的 CPU 和
+    GPU 采用。IEEE 754 浮点（IFP）数据格式 [[4](#bib.bib4)] 由符号、指数和有效位组成，如等式 ([5](#S4.E5 "在 4.1
+    深度学习的数字格式 ‣ 4 算术级别资源效率技术 ‣ 资源效率深度学习：关于模型、算术和实现级别技术的调查")) 所示。例如，一个浮点数具有一个 $(p+1)$
+    位的有效位（包括隐藏位）、一个 $e$ 位的指数和一个 $1$ 位的符号位。机器精度 $\epsilon_{mach}$ 被定义为 $2^{-(p+1)}$。FP
+    表示的值如下：
 - en: '|  | $y_{out}=\begin{cases}\text{normal mode:}&amp;(-1)^{sign}\times(1\times
     2^{0}+d_{1}\times 2^{-1}+...+d_{p}\times 2^{-p})\times 2^{exponent-bias}\\ \text{subnormal
     mode:}&amp;(-1)^{sign}\times(d_{1}\times 2^{-1}+...+d_{p}\times 2^{-p})\times
@@ -1533,6 +1548,9 @@
   id: totrans-157
   prefs: []
   type: TYPE_TB
+  zh: '|  | $y_{out}=\begin{cases}\text{正常模式:}&amp;(-1)^{sign}\times(1\times 2^{0}+d_{1}\times
+    2^{-1}+...+d_{p}\times 2^{-p})\times 2^{exponent-bias}\\ \text{非正常模式:}&amp;(-1)^{sign}\times(d_{1}\times
+    2^{-1}+...+d_{p}\times 2^{-p})\times 2^{1-bias},\end{cases}$ |  | (5) |'
 - en: 'where $d_{1}$, … , $d_{p}$ represent binary digits, the ‘$1$’ associated with
     the coefficient $2^{0}$ is referred to as the hidden ‘$1$’, the $exponent$ is
     stored in offset notation, and the $bias$ is a positive constant. If the absolute
@@ -1620,11 +1638,13 @@
   id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 在设计专用于DNN的特定FP格式的竞赛中，[[6](#bib.bib6), [158](#bib.bib158)]提出了另一种16位精度格式DLFloat，包括6位指数和9位尾数，与IFP16和BFloat16格式相比，在某些深度学习应用中提供了更好的动态数据范围和精度平衡。
 - en: '4.1.4 TensorFloat32 (TF32):'
   id: totrans-167
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: TensorFloat32（TF32）：
 - en: NVIDIA proposed a 19-bit data format, TF32, consisting of 1-bit sign, 8-bit
     exponent and 10-bit significand to accelerate deep learning applications on A100
     GPUs with the same dynamic range support as IFP32 [[48](#bib.bib48)]. TF32 Tensor
@@ -1633,21 +1653,25 @@
   id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: NVIDIA提出了一种19位数据格式TF32，由1位符号、8位指数和10位尾数组成，以加速A100 GPU上的深度学习应用，与IFP32具有相同的动态范围支持[[48](#bib.bib48)]。A100中的TF32张量核心将IFP32操作数截断为19位的TF32格式，但使用IFP32算术进行MAC操作累加。
 - en: 4.2 Arithmetic-Level Techniques for Inference
   id: totrans-169
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 推断的算术级技术：
 - en: This subsection discusses various resource-efficient arithmetic-level techniques
     based on the pre-trained DNNs for the inference tasks.
   id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 本小节讨论了基于预训练的DNN的各种资源高效算术级技术，用于推理任务。
 - en: '4.2.1 Lower Precision Arithmetic:'
   id: totrans-171
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 低精度算术：
 - en: Lower precision FiP arithmetic has been widely used to deploy DNNs on edge devices
     [[169](#bib.bib169)]. [[165](#bib.bib165), [159](#bib.bib159)] analyzed the effect
     of deploying various lower precision arithmetic on the DNN inference tasks in
@@ -1660,11 +1684,14 @@
   id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 低精度FiP算术已经被广泛用于在边缘设备上部署DNNs[[169](#bib.bib169)]. [[165](#bib.bib165), [159](#bib.bib159)]分析了部署各种低精度算术对DNN推理任务的影响，包括准确性和延迟。BitFusion方法通过根据不同层次动态使用可变位宽的FiP格式来加速DNN推理任务[[138](#bib.bib138)].
+    类似地，Tambe等人. [[146](#bib.bib146)]提出了AdaptiveFloat，根据不同层次调整FP数的动态范围，从而在满足相同准确性要求的情况下获得更高的能源效率。
 - en: '4.2.2 Encoding Weights and Using Lookup Table:'
   id: totrans-173
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 编码权重并使用查找表：
 - en: '[[21](#bib.bib21)] leveraged the fact that the exponent values of most of the
     weights were located within a narrow range and encoded the frequent exponent values
     of the weights with fewer bits using Huffman coding scheme, improving the accuracy
@@ -1674,11 +1701,13 @@
   id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: '[[21](#bib.bib21)]利用大多数权重的指数值在一个狭窄的范围内的事实，使用霍夫曼编码方案将权重的频繁指数值以更少的位数进行编码，从而提高了自然语言处理应用程序的精度与存储占用比。在内存和FP算术单元之间，使用查找表将编码的指数值转换为FP指数值。'
 - en: '4.2.3 Applying Various Number Format Quantizations to DNNs:'
   id: totrans-175
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 将各种数值格式量化应用到DNNs上：
 - en: The Residue Number System (RNS) is a parallel and carry-limited number system
     that transforms a big natural number to several smaller residues. Therefore, RNS
     was often used to perform parallel and independent calculations on residues without
@@ -2103,11 +2132,24 @@
   id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: '根据MAC操作的数据重用特性设计PE及其局部内存，提高了FPGA和ASIC上的能效 [[31](#bib.bib31), [32](#bib.bib32)]。例如，Google
+    TPU采用了一个脉动阵列架构，将数据直接发送到相邻的处理元素（PE），如图[9](#S5.F9 "Figure 9 ‣ 5.1 Leveraging Data
+    Reuse from Convolution ‣ 5 Implementation-Level Resource-Efficient Techniques
+    ‣ Resource-Efficient Deep Learning: A Survey on Model-, Arithmetic-, and Implementation-Level
+    Techniques").(c)所示。[[3](#bib.bib3)]。Chen 等人 [[31](#bib.bib31)] 注意到CNN的计算吞吐量和能耗主要取决于数据移动而非计算，并提出了一种“行驻留”空间架构（图[9](#S5.F9
+    "Figure 9 ‣ 5.1 Leveraging Data Reuse from Convolution ‣ 5 Implementation-Level
+    Resource-Efficient Techniques ‣ Resource-Efficient Deep Learning: A Survey on
+    Model-, Arithmetic-, and Implementation-Level Techniques").(c)的变体），Eyeriss，旨在通过充分利用数据重用特性来支持最小数据移动能耗的并行处理。例如，图[9](#S5.F9
+    "Figure 9 ‣ 5.1 Leveraging Data Reuse from Convolution ‣ 5 Implementation-Level
+    Resource-Efficient Techniques ‣ Resource-Efficient Deep Learning: A Survey on
+    Model-, Arithmetic-, and Implementation-Level Techniques").(c)中第一列的三个PE可以被分配来计算卷积输出的第一行，使用$3\times
+    3$滤波器——核的每一行上的三个元素被存储到每个PE的局部内存中（即“行驻留”结构 [[145](#bib.bib145)]），在卷积过程中所有核中的元素都被重用，生成输出的第一行。在这种情况下，部分求和值被存储回每个PE的局部内存中。'
 - en: '5.1.3 Circuit Optimization:'
   id: totrans-206
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.1.3 电路优化：
 - en: Exploring binary weights [[38](#bib.bib38)] with binary inputs offered the opportunity
     to explore XNOR gates for the efficient implementation of CNN [[123](#bib.bib123)],
     improving the accuracy per memory foot print and per Joule. In 2021, [[183](#bib.bib183)]
@@ -2117,11 +2159,14 @@
   id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 探索二值权重 [[38](#bib.bib38)] 与二值输入的结合，提供了探索XNOR门以高效实现CNN [[123](#bib.bib123)] 的机会，提高了每单位内存占用和每焦耳的准确率。在2021年，[[183](#bib.bib183)]
+    提出了基于统计的硬件友好量化单元和近数据处理引擎，通过最小化对高精度数据的访问次数来加速混合精度训练方案。
 - en: 5.2 Leveraging Sparsity of Weights and Activations
   id: totrans-208
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 5.2 利用权重和激活的稀疏性
 - en: In the forward pass, negative feature map values are converted to zeros after
     ReLU activation functions, making the activation data structure sparse. In addition,
     the trained weight values follow a sharp Gaussian distribution centered at zero,
@@ -2132,6 +2177,8 @@
   id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前向传播中，负的特征图值在ReLU激活函数后被转换为零，使得激活数据结构变得稀疏。此外，训练后的权重值遵循以零为中心的尖锐高斯分布，使大多数权重接近于零。量化这样的权重使得权重数据结构稀疏，从而可以充分利用量化网络，例如二值化的DNN
+    [[39](#bib.bib39), [38](#bib.bib38)] 和三值权重DNN [[98](#bib.bib98), [185](#bib.bib185)]。
 - en: '5.2.1 Skipping Operations during Runtime:'
   id: totrans-210
   prefs:
@@ -2308,11 +2355,23 @@
   id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 神经形态计算模仿大脑，包括神经元和突触等大脑组件；此外，生物神经系统还包括轴突、树突、胶质细胞和脉冲信号传递机制[[84](#bib.bib84)]。忆阻器，即“记忆电阻器”，是神经形态计算中最广泛使用的设备之一。ISAAC
+    [[136](#bib.bib136)] 将基于 DaDianNao 架构的 MAC 操作单元替换为忆阻器交叉阵列。在交叉阵列中，水平电线阵列中的每根电线都通过电阻连接到垂直电线阵列中的每根电线。不同电平的电压，$V=[v_{1},v_{2},...,v_{m}]$，施加到通过不同电阻$R=[1/g_{1},1/g_{2},...,1/g_{m}]$连接到垂直电线的水平电线。通过将$v_{i}$映射到输入元素，将$g_{i}$映射到权重，其中$i=1,...,m$，垂直电线的输出电流$I$可以表示为一层中的
+    MAC 操作$I=\Sigma_{i}^{m}(v_{i}\times g_{i})$，基于基尔霍夫定律。通过收集来自多个垂直电线的电流可以执行多个 MAC
+    操作。ISAAC 使用数模转换器接收输入元素并将其转换为适当的电压，同时使用模数转换器将电流值转换为数字特征图值。由于交叉阵列中电阻的不可重新编程性，ISAAC
+    架构仅适用于推断任务。与全面的 DaDianNao 相比，ISAAC 在每焦耳的准确度提高了 $5.5\times$。作为另一种神经形态计算方法，许多研究尝试在硬件模拟器中实现
+    Hodgkin-Huxley 和 Morris Lecar 模型[[75](#bib.bib75)]，这些模型使用非线性微分方程描述神经元的活动[[109](#bib.bib109),
+    [92](#bib.bib92), [129](#bib.bib129), [139](#bib.bib139), [142](#bib.bib142),
+    [140](#bib.bib140), [141](#bib.bib141), [56](#bib.bib56), [16](#bib.bib16), [15](#bib.bib15),
+    [46](#bib.bib46)]。几个研究在 ASIC 中实现了神经形态架构，包括 TrueNorth [[9](#bib.bib9)], SpiNNaker
+    [[117](#bib.bib117)], Neurogrid [[18](#bib.bib18)], BrainScaleS [[134](#bib.bib134)],
+    和 IFAT [[121](#bib.bib121)]。有关神经形态计算的全面调查，请参阅 [[135](#bib.bib135)]。
 - en: '5.4.2 In-Memory Processing:'
   id: totrans-222
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.4.2 内存处理：
 - en: Scaling down the size of transistors enables energy efficiency and high performance
     for Von-Neumann computing systems. However, it became very challenging in the
     era of sub-10nm technologies due to physical limitations [[51](#bib.bib51), [113](#bib.bib113),
@@ -2328,11 +2387,16 @@
   id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 缩小晶体管的尺寸能够提高冯·诺依曼计算系统的能效和性能。然而，在亚10nm技术时代，由于物理限制，这变得非常具有挑战性[[51](#bib.bib51),
+    [113](#bib.bib113), [11](#bib.bib11)]。为了解决这个挑战，研究人员提出了一种内存处理范式，通过将计算单元集成到内存设备中来提高性能和能效[[63](#bib.bib63),
+    [168](#bib.bib168), [101](#bib.bib101)]。一些研究提出了使内存处理能够加速DNNs[[12](#bib.bib12),
+    [43](#bib.bib43), [68](#bib.bib68), [88](#bib.bib88), [52](#bib.bib52), [175](#bib.bib175)]。例如，XNOR-SRAM[[175](#bib.bib175)]将XNOR门和累加逻辑集成到SRAM中，以便从SRAM中获取数据并在一个周期内执行MAC操作。请注意，这种方法适用于二值化DNNs，例如[[39](#bib.bib39)]。
 - en: 5.5 Adaptive Compute Resource Assignment
   id: totrans-224
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 5.5 自适应计算资源分配
 - en: This subsection comprises the methods assigning runtime compute resources adaptively
     to the DNN inference workload to improve resource efficiency. The implementation
     of the DNNs can be adapted to the accuracy requirements of the applications by
@@ -2340,11 +2404,13 @@
   id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 本小节包括了将运行时计算资源自适应分配给DNN推理负载的方法，以提高资源效率。DNN的实现可以通过使用各种运行时实现技术来适应应用程序的准确性要求，如下所示。
 - en: '5.5.1 Early Exiting:'
   id: totrans-226
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.5.1 早期退出：
 - en: The required depth of DNN depends on the problem complexity. The “early exiting”
     technique allows a DNN to classify an object as early as possible by having multiple
     exit classifier points in a single DNN [[118](#bib.bib118), [150](#bib.bib150),
@@ -2357,11 +2423,14 @@
   id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: DNN所需的深度取决于问题的复杂性。“早期退出”技术允许DNN在尽可能早的时间对对象进行分类，方法是在单个DNN中设置多个退出分类器点[[118](#bib.bib118),
+    [150](#bib.bib150), [151](#bib.bib151)]。早期退出技术被应用于分布式计算系统，以解决隐私、响应时间和更高质量体验的担忧[[151](#bib.bib151)]。这种早期退出方法减少了计算资源和推理延迟，提高了每焦耳、每操作和每核心的准确性。有关早期退出技术的详细信息，请参考[[111](#bib.bib111)]。
 - en: '5.5.2 Runtime Channel Width Adaptation:'
   id: totrans-228
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.5.2 运行时通道宽度自适应：
 - en: The runtime channel width adaptation pruned unimportant filters during runtime.
     In 2018, Fang et. al [[47](#bib.bib47)] presented a single DNN model, NestDNN,
     being able to switch between multiple capacities of the DNN during runtime according
@@ -2377,11 +2446,16 @@
   id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行时通道宽度自适应在运行时修剪了不重要的滤波器。2018 年，Fang 等人 [[47](#bib.bib47)] 提出了一个单一的 DNN 模型，NestDNN，该模型能够根据准确性和推理延迟需求在运行时切换多个
+    DNN 的容量。在训练期间，从原始模型中修剪了不重要的滤波器，以生成最小的模型，即“种子模型”。每次再训练时，将一些修剪的滤波器添加到种子模型中，同时固定先前训练中的滤波器参数。由于种子模型源自原始模型，因此
+    NestDNN 中每种容量的准确性高于从头开始训练的相同容量模型。类似地，Yu 等人 [[177](#bib.bib177)] 提出了另一种可在运行时切换的
+    DNN 模型——可缩放神经网络，其中较大容量的模型共享来自较小容量模型的滤波器参数。
 - en: '5.5.3 Runtime Model Switching:'
   id: totrans-230
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 5.5.3 运行时模型切换：
 - en: Lee et al. [[96](#bib.bib96)] selected the best performing object detectors
     between multiple DNN detectors during runtime according to dynamic video content
     to improve the accuracy per core utilization and per Joule. Lou et al. [[106](#bib.bib106)]
@@ -2394,22 +2468,30 @@
   id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: Lee 等人 [[96](#bib.bib96)] 根据动态视频内容在多个 DNN 检测器之间选择性能最佳的目标检测器，以提高每核利用率和每焦耳的准确性。Lou
+    等人 [[106](#bib.bib106)] 根据动态工作负载在运行时切换多个 DNN，这些 DNN 由 [[25](#bib.bib25)] 的 Once-For-All
+    NAS 生成。例如，当 DNN 的推理延迟由于新分配的工作负载而增加时，运行时决策者在运行时降级当前的 DNN，以满足延迟约束。这种运行时模型切换方法在内存资源充足的情况下是合适的，因为多个
+    DNN 需要预先加载到 DRAM 中。
 - en: 6 Interrelated Influences
   id: totrans-232
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 6 个相互关联的影响
 - en: 'This section discusses the influence from higher- to lower-level techniques
     as shown in Fig. [1](#S1.F1 "Figure 1 ‣ 1 Introduction ‣ Resource-Efficient Deep
     Learning: A Survey on Model-, Arithmetic-, and Implementation-Level Techniques").'
   id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节讨论了从较高级别到较低级别技术的影响，如图 [1](#S1.F1 "图 1 ‣ 1 引言 ‣ 资源高效的深度学习：关于模型、算术和实现层面技术的调查")
+    所示。
 - en: 6.1 Influences of Model-Level Techniques on Arithmetic-Level Techniques
   id: totrans-234
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 6.1 模型层面技术对算术层面技术的影响
 - en: 'Weight quantization [[38](#bib.bib38), [98](#bib.bib98), [185](#bib.bib185)]
     in model-level techniques influenced arithmetic-level techniques as shown in Fig. [7](#S4.F7
     "Figure 7 ‣ 4 Arithmetic-Level resource-efficient Techniques ‣ Resource-Efficient
@@ -2467,16 +2549,25 @@
   id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型级技术中的权重量化影响了实现级技术，如图[8](#S5.F8 "图 8 ‣ 5 实现级资源高效技术 ‣ 资源高效深度学习：关于模型级、算术级和实现级技术的调查")所示。权重剪枝可以在硬件架构中引入稀疏性，而剪枝过滤器[[107](#bib.bib107),
+    [99](#bib.bib99)]则保持密集结构。模型级技术中的权重量化使得深度神经网络（DNN）能够使用更少的位来存储权重，从而节省内存资源，并需要定制硬件。例如，EIE
+    [[64](#bib.bib64)] 是一个推理加速器，其权重通过4位量化。为了有效实施权重量化方法，EIE利用权重共享进一步减少了模型大小，并将压缩后的DNN适配到片上SRAM中。探索带有二值输入的二进制权重[[39](#bib.bib39)]提供了使用XNOR门来高效实现卷积神经网络（CNNs）[[123](#bib.bib123)]的机会，提高了每单位内存占用和每焦耳的准确性。在[[153](#bib.bib153)]中，三元神经网络[[98](#bib.bib98),
+    [185](#bib.bib185)]通过展开卷积操作在FPGA上实现。由于量化DNNs [[98](#bib.bib98), [185](#bib.bib185)]
+    增加了DNNs中重复权重的数量，UCNN [[71](#bib.bib71)] 利用量化DNNs中重复权重值的特性来提高资源效率，如每次内存访问和每次操作的准确性。作为主要限制，权重量化方法如[[38](#bib.bib38),
+    [185](#bib.bib185), [98](#bib.bib98)] 并不适用于商业上可用的CPU和GPU，因为这些计算平台在硬件中不支持二进制和三元权重。因此，在CPU或GPU上实现权重量化方法可能无法提高每焦耳的准确性，因为在训练和推理的数据路径中仍然需要更高精度的算术。由紧凑卷积在[[132](#bib.bib132),
+    [82](#bib.bib82)]中生成的瓶颈结构可以用于减少在本地设备和边缘服务器之间传输的数据大小，从而高效实现基于边缘的AI [[111](#bib.bib111)]。
 - en: 6.3 Influences of Arithmetic-Level Techniques on Implementation-Level Techniques
   id: totrans-238
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 6.3 算术级技术对实现级技术的影响
 - en: The arithmetic-level techniques influenced the implementation-level techniques
     as follows.
   id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 算术级技术对实现级技术的影响如下。
 - en: First, the research in arithmetic utilization acted as a catalyst for commodity
     CPUs and GPUs. For example, the mixed precision research [[114](#bib.bib114)]
     laid a foundation for tensor cores in latest NVIDIA GPUs, which can accelerate
@@ -2497,6 +2588,9 @@
   id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，算术利用研究推动了商品CPU和GPU的发展。例如，混合精度研究[[114](#bib.bib114)]为最新的NVIDIA GPU中的张量核心奠定了基础，这些张量核心通过支持融合的乘加操作和硬件中的混合精度训练能力来加速深度学习工作负载的性能[[19](#bib.bib19)]。Google设计的BFloat16格式[[24](#bib.bib24)]通过提供与IFP32相同的动态范围，克服了IFP16格式的有限精度问题，并在Intel
+    Cooper Lake Xeon处理器、NVIDIA A100 GPU和Google TPU的硬件中得到支持。在2016年，NVIDIA Pascal GPU支持硬件中的IFP16算术以加速DNN应用。在2017年，NVIDIA
+    Volta GPU支持IFP16张量核心。在2020年，NVIDIA Ampere架构支持硬件中的张量核心、TF32、BFloat16和稀疏性加速，以加速MACs[[2](#bib.bib2)]。Graphcore公司开发了智能处理单元（IPU），它利用分配给每个处理单元的本地内存，并支持大量独立操作的硬件线程[[85](#bib.bib85)]。IPU是一种高效的计算架构，定制用于“细粒度、不规则计算，具有不规则的数据访问”。
 - en: Secondly, the arithmetic-level techniques led to specialized custom accelerators
     for deep learning. There is ample evidence in the arithmetic-level literature
     such as [[49](#bib.bib49), [45](#bib.bib45), [21](#bib.bib21), [158](#bib.bib158),
@@ -2516,6 +2610,7 @@
   id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 其次，算术级技术导致了专用的定制加速器用于深度学习。算术级文献中有大量证据，如[[49](#bib.bib49)、[45](#bib.bib45)、[21](#bib.bib21)、[158](#bib.bib158)、[170](#bib.bib170)]，表明即使是更小的运算符（例如，16位或更少）对DNN的准确性几乎没有影响。例如，DianNao[[30](#bib.bib30)]和DaDianNao[[33](#bib.bib33)]被定制为16位定点运算符，而不是字大小（例如，32位）浮点运算符。ISAAC[[136](#bib.bib136)]是一种成熟的基于交叉开关的CNN加速器架构，它实现了基于电阻内存的忆阻器逻辑，适合16位的DNN工作负载算术。Wang等[[158](#bib.bib158)]在基于ASIC的硬件平台上设计了他们定制的8位浮点算术乘法与16位累加，使用$14nm$硅技术以支持能源高效的深度学习训练。Eyeriss[[31](#bib.bib31)]和SnaPEA[[8](#bib.bib8)]加速器被定制为16位算术。UCNN[[71](#bib.bib71)]使用了8位和16位定点配置。SCNN[[119](#bib.bib119)]使用了16位乘法和24位累加。
 - en: Lastly, the mixed precision training schemes were accelerated in hardware by
     minimizing the data conversion overhead between lower and higher precision formats
     in updating weights and activations [[183](#bib.bib183)]. Also, the stochastic
@@ -2526,34 +2621,42 @@
   id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，通过减少在更新权重和激活时在低精度和高精度格式之间的数据转换开销，混合精度训练方案在硬件上得到了加速[[183](#bib.bib183)]。此外，随机舍入方案在英特尔Loihi处理器[[40](#bib.bib40)]和Graphcore
+    IPU[[85](#bib.bib85)]中得到了硬件支持，因为在训练过程中通常需要对权重和激活进行量化[[166](#bib.bib166), [60](#bib.bib60),
+    [172](#bib.bib172)]。
 - en: 7 Future Trend for Resource-Efficient Deep Learning
   id: totrans-243
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 7 资源高效深度学习的未来趋势
 - en: Open research issues in resource-efficient deep learning emerge in an attempt
     to improve the resource efficiency further, compared to the state-of-the-art resource-efficient
     techniques discussed in this paper.
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步提升资源效率，相较于本文讨论的最先进资源高效技术，资源高效深度学习中的开放研究问题不断涌现。
 - en: 7.1 Future Trend for Model-Level Resource-Efficient Techniques
   id: totrans-245
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.1 模型级资源高效技术的未来趋势
 - en: Recently, edge-based computing has become pervasive, and fitting DNN models
     into such resource-constrained devices for inference tasks has become extremely
     challenging.
   id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近，边缘计算已变得普及，将DNN模型适配到这些资源受限的设备进行推理任务变得极具挑战性。
 - en: '7.1.1 Improving Physical Resource Efficiency under Very Low Compute Resource
     Budget:'
   id: totrans-247
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.1.1 在极低计算资源预算下提高物理资源效率：
 - en: Many researchers considered keeping dense network structures after pruning parameters,
     including pruning channels [[104](#bib.bib104), [53](#bib.bib53)], filters [[99](#bib.bib99),
     [107](#bib.bib107)], etc., to implement the pruned networks efficiently on commercially
@@ -2570,11 +2673,15 @@
   id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多研究者考虑在剪枝参数后保持稠密网络结构，包括剪枝通道[[104](#bib.bib104), [53](#bib.bib53)]、滤波器[[99](#bib.bib99),
+    [107](#bib.bib107)]等，以便在商业可用的CPU和GPU上有效实现剪枝网络。此后，提出了各种预算感知网络剪枝方法，考虑了资源预算，例如浮点运算次数[[57](#bib.bib57)]和神经元数量[[97](#bib.bib97)]，以用于推理任务。NetAdapt
+    [[171](#bib.bib171)] 在测量延迟、能耗、内存占用等物理资源后剪枝滤波器，以直接提高物理资源效率，而不是抽象资源效率。随着计算机网络和无线通信技术的快速发展，改善物理资源效率的研究尝试预计将继续部署适当的DNN模型于极低资源设备，如移动设备、物联网和边缘设备。
 - en: '7.1.2 Neural Network Search Methods Combined with Domain Specific Knowledge:'
   id: totrans-249
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.1.2 结合领域特定知识的神经网络搜索方法：
 - en: In 2016 and 2017, handcrafted compressed DNNs were presented such as SqueezeNet
     [[82](#bib.bib82)], MobileNet [[76](#bib.bib76)], ShuffleNet [[181](#bib.bib181)],
     and DenseNet [[79](#bib.bib79)], and they improved both abstract and physical
@@ -2594,11 +2701,18 @@
   id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 2016 年和 2017 年，出现了手工制作的压缩 DNN，例如 SqueezeNet [[82](#bib.bib82)]、MobileNet [[76](#bib.bib76)]、ShuffleNet
+    [[181](#bib.bib181)] 和 DenseNet [[79](#bib.bib79)]，它们在抽象和物理资源效率方面都有所提升。各种 NAS
+    方法 [[148](#bib.bib148)、[149](#bib.bib149)、[147](#bib.bib147)、[70](#bib.bib70)]
+    帮助通过根据训练数据集搜索候选空间来寻求优化的 DNN 模型（例如，最小充分模型），而 NAS 方法找到的压缩模型通常表现出比手工制作的压缩 DNN 更优越的物理资源效率。随着移动和边缘设备的普及，我们预计未来会更多关注与特定领域模型压缩方法集成的自动搜索方法。例如，自
+    2019 年以来，针对资源受限设备的性能感知 NAS 方法受到了广泛关注 [[13](#bib.bib13)、[147](#bib.bib147)、[149](#bib.bib149)、[148](#bib.bib148)、[171](#bib.bib171)]。这种性能感知
+    NAS 方法可以通过采用最近的特定领域模型级资源高效技术来增强，如 [[65](#bib.bib65)、[82](#bib.bib82)、[76](#bib.bib76)、[99](#bib.bib99)、[50](#bib.bib50)]。
 - en: '7.1.3 Theoretical Studies Behind Model-Level Resource-Efficient Techniques:'
   id: totrans-251
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.1.3 模型级资源高效技术背后的理论研究：
 - en: The bias-variance trade-off [[54](#bib.bib54)] is behind the model-level resource-efficient
     techniques. For example, compressed models having fewer parameters increase the
     regularization effect on the accuracy, minimizing overfitting issues [[65](#bib.bib65),
@@ -2614,11 +2728,16 @@
   id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 偏差-方差权衡 [[54](#bib.bib54)] 是模型级资源高效技术背后的基础。例如，参数较少的压缩模型会增加对准确性的正则化效果，从而减少过拟合问题
+    [[65](#bib.bib65)、[54](#bib.bib54)]。例如，[[50](#bib.bib50)] 提出了彩票票据假设，即在一个密集的、随机初始化的前馈
+    DNN 中存在表现更好（或相当）的子 DNN，这些子 DNN 使用的权重更少。为了寻求表现更好的稀疏子 DNN，即“中奖票”，通过将存活的权重替换为最初用于训练原始密集
+    DNN 的随机权重来重新训练权重剪枝后存活的权重。彩票票据假设意味着即使在压缩的密集 DNN 中，也可以找到这样的稀疏 DNN。我们预计未来会更多关注支持模型级资源高效技术的理论研究。
 - en: 7.2 Future Trend for Arithmetic-Level Resource-Efficient Techniques
   id: totrans-253
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.2 算术级资源高效技术的未来趋势
 - en: As edge- and mobile-based devices becomes pervasive for AI applications, open
     research issues emerge in the attempts to improve further physical resource efficiency
     on such resource-constrained devices, compared to state-of-the-art arithmetic-level
@@ -2626,11 +2745,13 @@
   id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着基于边缘和移动的设备在 AI 应用中变得普遍，出现了开放的研究问题，旨在进一步提高这些资源受限设备上的物理资源效率，相较于最先进的算术级技术。
 - en: 7.2.1 Adapting Arithmetic Precision Level to Numerical Properties of DNNs
   id: totrans-255
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.2.1 将算术精度水平调整为 DNN 的数值特性
 - en: In 2011, Vanhoucke et al. [[155](#bib.bib155)] demonstrated the feasibility
     of INT8 arithmetic for inference tasks using a shallow depth neural network on
     an Intel x86 architecture. In 2015, Gupta et al. [[60](#bib.bib60)] demonstrated
@@ -2646,11 +2767,17 @@
   id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 2011 年，Vanhoucke 等人 [[155](#bib.bib155)] 展示了在 Intel x86 架构上使用浅层神经网络进行推断任务的 INT8
+    算术的可行性。2015 年，Gupta 等人 [[60](#bib.bib60)] 演示了使用 FiP16 和随机舍入方案的浅层神经网络，在 MNIST 和
+    CIFAR10 数据集上的精度与使用 IFP32 相当。2018 年，[[114](#bib.bib114)] 提出了混合精度训练的指南。该指南包含了如何在
+    MAC 操作中在不同计算组件上部署不同级别算术精度的信息。该指南引发了在混合精度训练硬件优化方面的进一步研究 [[183](#bib.bib183)]。我们预计，未来将继续研究根据
+    DNN 计算组件的数值稳定性特征调整算术精度。
 - en: '7.2.2 Adapting Arithmetic Format to Problem Complexity:'
   id: totrans-257
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.2.2 根据问题复杂性调整算术格式：
 - en: Since floating point arithmetic is computationally intensive, several studies
     have removed floating point arithmetic in training tasks. For example, Wu et al. [[166](#bib.bib166)]
     demonstrated that quantized networks such as binary or ternary weight networks
@@ -2666,23 +2793,30 @@
   id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于浮点算术计算密集，若干研究已在训练任务中去除了浮点算术。例如，Wu 等人 [[166](#bib.bib166)] 展示了可以使用 INT8 算术、缩放和随机舍入方案训练二进制或三值权重网络。2020
+    年，Yang 等人 [[172](#bib.bib172)] 展示了量化权重和激活值为 INT8 格式，同时对权重更新应用 INT24 算术，可以加速各种
+    ResNet 模型在 ImageNet 上的训练和推断任务，且与使用 IFP32 相比，精度损失较小。最近，RNS 基于的量化被应用于各种 DNN [[131](#bib.bib131),
+    [130](#bib.bib130)]。未来将继续探索如何将数字格式适应给定 DNN 结构，以进一步提高资源受限设备上的资源效率。
 - en: 7.3 Future Trend for Implementation-Level Resource-Efficient Techniques
   id: totrans-259
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 7.3 实施级资源高效技术的未来趋势
 - en: In general, there are two ways to accelerate DNN computations. One is to optimize
     DNN computations on given compute architecture such as CPUs and GPUs. The other
     is to customize dataflow on FPGAs and ASIC.
   id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 一般来说，加速 DNN 计算有两种方式。一种是在给定的计算架构（如 CPU 和 GPU）上优化 DNN 计算。另一种是定制 FPGA 和 ASIC 上的数据流。
 - en: '7.3.1 Leveraging Spatial and Temporal Data Access Pattern with Lower Precision
     Arithmetic on CPUs and GPUs:'
   id: totrans-261
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.3.1 利用空间和时间数据访问模式，通过在 CPU 和 GPU 上使用较低精度的算术：
 - en: A decade ago, [[154](#bib.bib154)] accelerated DNN computations on a SIMD CPU
     by leveraging the data reuse property from MAC operations using SSE instructions
     and fast fixed point arithmetic. NVIDIA Tensor cores and Google TPUs support a
@@ -2694,12 +2828,16 @@
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 十年前，[[154](#bib.bib154)] 通过利用 MAC 操作的数据重用特性，使用 SSE 指令和快速定点算术加速了 SIMD CPU 上的
+    DNN 计算。NVIDIA Tensor 核心和 Google TPUs 支持定制的算术精度格式，如 IFP16、BFloat16 等，以及为深度学习应用定制的硬件数据路径
+    [[2](#bib.bib2), [3](#bib.bib3)]。未来的研究将继续探索如何在商业上可用的 CPU 和 GPU 上利用较低精度算术的空间和时间数据访问模式。
 - en: '7.3.2 Leveraging Spatial and Temporal Data Access Pattern with Lower Precision
     Arithmetic on FPGAs and ASIC:'
   id: totrans-263
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.3.2 在 FPGA 和 ASIC 上利用空间和时间数据访问模式进行低精度算术运算：
 - en: 'In 2014, [[30](#bib.bib30)] stressed the limitation of commercially available
     GPUs and CPUs for DNN applications: “While a cache is an excellent storage structure
     for a general-purpose processor, it is a sub-optimal way to exploit reuse because
@@ -2726,11 +2864,21 @@
   id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 2014 年，[[30](#bib.bib30)] 强调了商用 GPU 和 CPU 在 DNN 应用中的局限性：“虽然缓存是通用处理器的优秀存储结构，但由于缓存访问开销（标记检查、关联性、行大小、预测读取等）和缓存冲突，它并不是利用重用的最佳方式。”
+    为了克服这一局限性，[[30](#bib.bib30)] 提出了一个 SIMD 风格的硬件加速器 DianNao，它采用了三个独立的片上本地内存（SRAM）来通过充分利用数据重用特性来最大化性能。[[33](#bib.bib33)]
+    指出，DianNao 在访问卷积层中大量权重时，内存带宽仍然受限，并提出了 DaDianNao 架构，该架构使用具有四个银行的大型 eDRAM 来高效地存储和共享
+    eDRAM 中的权重。2016 年，[[31](#bib.bib31)] 指出，与 [[33](#bib.bib33)] 和 [[30](#bib.bib30)]
+    的 SIMD/SIMT 架构相比，数据移动成本仍然占主导地位，相对于计算成本，并提出了一种数据流架构，以最小化 DNN 应用中数据移动引起的能耗。自 2016
+    年以来，大多数实现级别的技术利用了 DNN 中权重和激活的稀疏性，以最小化运行时的算术操作数量 [[10](#bib.bib10), [103](#bib.bib103),
+    [87](#bib.bib87), [8](#bib.bib8), [41](#bib.bib41)]，以及存储和传输稀疏权重和激活所需的数据传输成本 [[64](#bib.bib64),
+    [7](#bib.bib7), [119](#bib.bib119), [125](#bib.bib125), [126](#bib.bib126)]。利用低精度算术运算通过空间和时间数据访问模式定制
+    DNN 数据流的研究工作预计将在未来继续。
 - en: '7.3.3 Resource-Efficient Implementation on Distributed AI Compute Platforms:'
   id: totrans-265
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.3.3 在分布式 AI 计算平台上的资源高效实现：
 - en: Resource-efficient techniques on distributed AI such as split federated learning
     [[62](#bib.bib62), [152](#bib.bib152)] and early exiting [[150](#bib.bib150),
     [151](#bib.bib151)] have recently attracted a great deal of attention thanks to
@@ -2750,11 +2898,17 @@
   id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于无线网络技术的发展，分布式 AI 中的资源高效技术如拆分联邦学习 [[62](#bib.bib62), [152](#bib.bib152)] 和提前退出
+    [[150](#bib.bib150), [151](#bib.bib151)] 最近引起了广泛关注。主要的开放研究问题包括边缘设备与云之间的数据通信开销和运行
+    DNNs 所需的能量，尤其是在低功耗（或电池）边缘设备上。例如，许多研究尝试利用 DNN 的瓶颈结构来节省数据通信带宽，但这种尝试可能会显著降低采用紧凑卷积的
+    DNNs 的准确性 [[111](#bib.bib111)]。因此，未来可以关注将这些模型压缩技术适应到分布式 AI 环境中，以节省边缘设备上的能量消耗和边缘设备与云之间的通信带宽。例如，将编码和解码从云端卸载到边缘设备或反之可以最小化数据通信开销
+    [[173](#bib.bib173)]。这些针对拆分学习（或推断）任务的资源高效编码/解码方案可能会在未来受到关注。
 - en: '7.3.4 Neuromorphic Computing for Deep Learning:'
   id: totrans-267
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 7.3.4 深度学习的神经形态计算：
 - en: Neuromorphic computing can lead to dramatic changes in energy efficiency for
     deep learning [[135](#bib.bib135)]. This expectation is based on the fact that
     neuromorphic computing is not an incremental improvement of existing von Neumann
@@ -2765,11 +2919,13 @@
   id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 神经形态计算可以在深度学习的能效方面带来显著变化 [[135](#bib.bib135)]。这一期望基于神经形态计算并非现有冯·诺依曼架构的增量改进（由于大量的指令获取/解码操作而需要大量能量），而是针对神经网络活动的完全优化的数据流优化。因此，未来可以关注神经形态计算研究，以最大化每焦耳的准确性。
 - en: 8 Conclusion
   id: totrans-269
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 8 结论
 - en: Our survey is the first to provide a comprehensive survey coverage of the recent
     resource-efficient deep learning techniques based on the three-level hierarchy
     including model-, arithmetic-, and implementation-level techniques. Our survey
@@ -2784,6 +2940,8 @@
   id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的调查是首个提供基于三层层次结构（包括模型层、算术层和实现层）全面覆盖的最新资源高效深度学习技术的调查。我们的调查还利用了多个资源效率指标，以明确每种技术可以改善的资源效率指标。例如，大多数模型层资源高效技术有助于改善抽象资源效率，而算术层和实现层技术通过采用降低精度的算术运算和/或优化
+    DNN 架构的数据流直接有助于提高物理资源效率。因此，在给定计算平台上有效实现模型层技术对于提高物理资源效率至关重要 [[145](#bib.bib145)]。
 - en: In the future, we expect that the three-level resource-efficient deep learning
     techniques can be adapted to distributed AI applications, along with fast wireless
     communication technology development. Since edge or mobile devices are subjected
@@ -2797,6 +2955,9 @@
   id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 未来，我们期望这三层资源高效的深度学习技术可以适应分布式 AI 应用，同时快速无线通信技术的发展也将推进。由于边缘或移动设备受到功耗、内存和推理速度等物理资源的限制，实施时应考虑这些限制。最先进的工作包括
+    NAS 变体[[147](#bib.bib147)、[133](#bib.bib133)、[115](#bib.bib115)]，这些变体寻求在资源受限的边缘设备上表现最佳的
+    DNN 模型。未来可以关注通过将这些 NAS 变体与各种模型、算术和实现层次的资源高效技术相结合来改进。
 - en: Finally, our survey suggests that the bias-variance trade-off [[54](#bib.bib54)]
     is behind the model-level resource-efficient techniques. According to the trade-off,
     a DNN having fewer parameters increases the regularization effect on the accuracy,
@@ -2814,10 +2975,14 @@
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们的调查表明，模型级资源高效技术背后是偏差-方差权衡[[54](#bib.bib54)]。根据这一权衡，参数较少的 DNN 增强了对准确性的正则化效果，从而减少了过拟合问题。因此，存在一个最小充分的模型尺寸，根据问题复杂性以及训练数据的数量和质量，能够在测试数据集上产生最佳准确性。同样，[[50](#bib.bib50)]
+    提出了彩票票据假设，即在密集的前馈 DNN 中存在具有更少权重的表现更好（或等效）的子 DNN。爱因斯坦曾说过：“一切都应尽可能简单，但不能更简单。”我们希望我们的调查将通过为机器学习、算术和系统社区提供有关各种资源高效深度学习技术的全面调查，作为寻找使用最少充分参数和最少充分精度算术的
+    DNN 结构的指南，从而为特定计算平台的解决方案提供帮助。
 - en: Acknowledgments
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 致谢
 - en: This project has received funding by the Engineering and Physical Sciences Research
     Council under the grant agreement No. EP/T022345/1 and by CHIST-ERA under the
     grant agreement No. CHIST-ERA-18-SDCDN-002 (DiPET). This research was also partially
@@ -2826,39 +2991,47 @@
   id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 本项目获得了工程与物理科学研究委员会的资助，资助协议编号为 EP/T022345/1，并且获得了 CHIST-ERA 的资助，资助协议编号为 CHIST-ERA-18-SDCDN-002（DiPET）。本研究还部分得到了国家研发计划的支持，通过韩国国家研究基金会（NRF）资助，由科学技术信息通信部（2021M3H2A1038042）提供资金。
 - en: References
   id: totrans-275
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '[1] Imagenet benchmark (image classification on imagenet). [https://paperswithcode.com/sota/image-classification-on-imagenet](https://paperswithcode.com/sota/image-classification-on-imagenet).'
   id: totrans-276
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[1] Imagenet 基准（在 Imagenet 上进行图像分类）。[https://paperswithcode.com/sota/image-classification-on-imagenet](https://paperswithcode.com/sota/image-classification-on-imagenet)。'
 - en: '[2] Nvidia ampere architecture white paper. [https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf).'
   id: totrans-277
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[2] Nvidia Ampere 架构白皮书。[https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf)。'
 - en: '[3] Quantifying the performance of the TPU, our first machine learning chip.
     [https://cloud.google.com/blog/products/gcp/quantifying-the-performance-of-the-tpu-our-first-machine-learning-chip](https://cloud.google.com/blog/products/gcp/quantifying-the-performance-of-the-tpu-our-first-machine-learning-chip).'
   id: totrans-278
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[3] 量化 TPU 的性能，我们的第一个机器学习芯片。 [https://cloud.google.com/blog/products/gcp/quantifying-the-performance-of-the-tpu-our-first-machine-learning-chip](https://cloud.google.com/blog/products/gcp/quantifying-the-performance-of-the-tpu-our-first-machine-learning-chip)。'
 - en: '[4] Ieee standard for floating-point arithmetic. IEEE Std 754-2019 (Revision
     of IEEE 754-2008), pages 1–84, 2019.'
   id: totrans-279
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[4] IEEE 浮点算术标准。IEEE Std 754-2019（IEEE 754-2008 的修订版），第 1–84 页，2019 年。'
 - en: '[5] Yaser S. Abu-Mostafa, Malik Magdon-Ismail, and Hsuan-Tien Lin. Learning
     From Data. AMLBook, 2012.'
   id: totrans-280
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[5] Yaser S. Abu-Mostafa, Malik Magdon-Ismail, 和 Hsuan-Tien Lin。《从数据中学习》。AMLBook，2012
+    年。'
 - en: '[6] A. Agrawal, S. M. Mueller, B. M. Fleischer, X. Sun, N. Wang, J. Choi, and
     K. Gopalakrishnan. Dlfloat: A 16-b floating point format designed for deep learning
     training and inference. In 2019 IEEE 26th Symposium on Computer Arithmetic (ARITH),
@@ -2867,6 +3040,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[6] A. Agrawal, S. M. Mueller, B. M. Fleischer, X. Sun, N. Wang, J. Choi, 和
+    K. Gopalakrishnan。Dlfloat：为深度学习训练和推理设计的 16 位浮点格式。发表于 2019 年 IEEE 第 26 届计算机算术研讨会（ARITH），第
+    92–95 页，2019 年。'
 - en: '[7] Alessandro Aimar, Hesham Mostafa, Enrico Calabrese, Antonio Rios-Navarro,
     Ricardo Tapiador-Morales, Iulia-Alexandra Lungu, Moritz B. Milde, Federico Corradi,
     Alejandro Linares-Barranco, Shih-Chii Liu, and Tobi Delbruck. Nullhop: A flexible
@@ -2877,6 +3053,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[7] Alessandro Aimar, Hesham Mostafa, Enrico Calabrese, Antonio Rios-Navarro,
+    Ricardo Tapiador-Morales, Iulia-Alexandra Lungu, Moritz B. Milde, Federico Corradi,
+    Alejandro Linares-Barranco, Shih-Chii Liu, 和 Tobi Delbruck。Nullhop：基于特征图稀疏表示的灵活卷积神经网络加速器。IEEE
+    神经网络与学习系统学报，30(3)：644–656，2019 年。'
 - en: '[8] V. Akhlaghi, A. Yazdanbakhsh, K. Samadi, R. K. Gupta, and H. Esmaeilzadeh.
     Snapea: Predictive early activation for reducing computation in deep convolutional
     neural networks. In 2018 ACM/IEEE 45th Annual International Symposium on Computer
@@ -2886,6 +3066,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[8] V. Akhlaghi, A. Yazdanbakhsh, K. Samadi, R. K. Gupta, 和 H. Esmaeilzadeh。Snapea：用于减少深度卷积神经网络计算的预测性早期激活。发表于
+    2018 年 ACM/IEEE 第 45 届国际计算机架构年会（ISCA），第 662–673 页，美国加州洛杉矶，2018 年 6 月。IEEE 计算机学会。'
 - en: '[9] Filipp Akopyan, Jun Sawada, Andrew Cassidy, Rodrigo Alvarez-Icaza, John
     Arthur, Paul Merolla, Nabil Imam, Yutaka Nakamura, Pallab Datta, Gi-Joon Nam,
     Brian Taba, Michael Beakes, Bernard Brezzo, Jente B. Kuang, Rajit Manohar, William P.
@@ -2897,6 +3079,11 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[9] Filipp Akopyan, Jun Sawada, Andrew Cassidy, Rodrigo Alvarez-Icaza, John
+    Arthur, Paul Merolla, Nabil Imam, Yutaka Nakamura, Pallab Datta, Gi-Joon Nam,
+    Brian Taba, Michael Beakes, Bernard Brezzo, Jente B. Kuang, Rajit Manohar, William
+    P. Risk, Bryan Jackson, 和 Dharmendra S. Modha。Truenorth：一个 65 毫瓦、100 万神经元可编程神经突触芯片的设计和工具流程。IEEE
+    集成电路和系统计算机辅助设计学报，34(10)：1537–1557，2015 年。'
 - en: '[10] Jorge Albericio, Patrick Judd, Tayler Hetherington, Tor Aamodt, Natalie Enright
     Jerger, and Andreas Moshovos. Cnvlutin: Ineffectual-neuron-free deep neural network
     computing. In 2016 ACM/IEEE 43rd Annual International Symposium on Computer Architecture
@@ -2905,6 +3092,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[10] Jorge Albericio, Patrick Judd, Tayler Hetherington, Tor Aamodt, Natalie
+    Enright Jerger, 和 Andreas Moshovos。Cnvlutin：无效神经元自由的深度神经网络计算。发表于 2016 年 ACM/IEEE
+    第 43 届国际计算机架构年会（ISCA），第 1–13 页，2016 年。'
 - en: '[11] Mustafa F. Ali, Robert Andrawis, and Kaushik Roy. Dynamic read current
     sensing with amplified bit-line voltage for stt-mrams. IEEE Transactions on Circuits
     and Systems II: Express Briefs, 67(3):551–555, 2020.'
@@ -2912,6 +3102,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[11] Mustafa F. Ali, Robert Andrawis, 和 Kaushik Roy。通过放大位线电压进行动态读电流检测，用于 STT-MRAMs。IEEE
+    电路与系统 II：简报，67(3)：551–555，2020 年。'
 - en: '[12] Mustafa F. Ali, Akhilesh Jaiswal, and Kaushik Roy. In-memory low-cost
     bit-serial addition using commodity dram technology. IEEE Transactions on Circuits
     and Systems I: Regular Papers, 67(1):155–165, 2020.'
@@ -2919,24 +3111,30 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[12] Mustafa F. Ali, Akhilesh Jaiswal, 和 Kaushik Roy。基于普通 DRAM 技术的内存低成本位序列加法。IEEE
+    电路与系统 I：常规论文，67(1)：155–165，2020 年。'
 - en: '[13] Andrew Anderson, Jing Su, Rozenn Dahyot, and David Gregg. Performance-oriented
     neural architecture search, 2020.'
   id: totrans-288
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[13] Andrew Anderson, Jing Su, Rozenn Dahyot, 和 David Gregg。面向性能的神经架构搜索，2020
+    年。'
 - en: '[14] Jimmy Ba and Rich Caruana. Do deep nets really need to be deep? In Advances
     in Neural Information Processing Systems (NeurIPS), 2014.'
   id: totrans-289
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[14] Jimmy Ba 和 Rich Caruana。深度网络真的需要那么深吗？发表于神经信息处理系统进展（NeurIPS），2014 年。'
 - en: '[15] Arindam Basu. Small-signal neural models and their applications. IEEE
     Transactions on Biomedical Circuits and Systems, 6(1):64–75, 2012.'
   id: totrans-290
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[15] Arindam Basu。《小信号神经模型及其应用》。IEEE 生物医学电路与系统学报，6(1)：64–75，2012 年。'
 - en: '[16] Arindam Basu, Csaba Petre, and Paul Hasler. Bifurcations in a silicon
     neuron. In 2008 IEEE International Symposium on Circuits and Systems, pages 428–431,
     2008.'
@@ -2944,6 +3142,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[16] Arindam Basu、Csaba Petre 和 Paul Hasler。《硅神经元的分岔现象》。见 2008 年 IEEE 国际电路与系统研讨会，页面
+    428–431，2008 年。'
 - en: '[17] Yoshua Bengio. Deep learning of representations for unsupervised and transfer
     learning. In Isabelle Guyon, Gideon Dror, Vincent Lemaire, Graham Taylor, and
     Daniel Silver, editors, Proceedings of ICML Workshop on Unsupervised and Transfer
@@ -2953,6 +3153,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[17] Yoshua Bengio。《无监督学习和迁移学习的表征深度学习》。见 Isabelle Guyon、Gideon Dror、Vincent
+    Lemaire、Graham Taylor 和 Daniel Silver 主编，《ICML 无监督学习与迁移学习研讨会论文集》，第 27 卷，机器学习研究论文集，页面
+    17–36，贝尔维尤，华盛顿州，美国，2012 年 7 月 2 日。PMLR。'
 - en: '[18] Ben Varkey Benjamin, Peiran Gao, Emmett McQuinn, Swadesh Choudhary, Anand R.
     Chandrasekaran, Jean-Marie Bussat, Rodrigo Alvarez-Icaza, John V. Arthur, Paul A.
     Merolla, and Kwabena Boahen. Neurogrid: A mixed-analog-digital multichip system
@@ -2961,6 +3164,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[18] Ben Varkey Benjamin、Peiran Gao、Emmett McQuinn、Swadesh Choudhary、Anand
+    R. Chandrasekaran、Jean-Marie Bussat、Rodrigo Alvarez-Icaza、John V. Arthur、Paul
+    A. Merolla 和 Kwabena Boahen。《Neurogrid：一种用于大规模神经模拟的混合模拟数字多芯片系统》。IEEE 期刊，102(5)：699–716，2014
+    年。'
 - en: '[19] Pierre Blanchard, Nicholas J Higham, Florent Lopez, Theo Mary, and Srikara
     Pranesh. Mixed precision block fused multiply-add: Error analysis and application
     to gpu tensor cores. SIAM Journal on Scientific Computing, 42(3):C124–C141, 2020.'
@@ -2968,24 +3175,31 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[19] Pierre Blanchard、Nicholas J Higham、Florent Lopez、Theo Mary 和 Srikara Pranesh。《混合精度块融合乘加：误差分析及其在
+    GPU 张量核心上的应用》。SIAM 科学计算杂志，42(3)：C124–C141，2020 年。'
 - en: '[20] Alexey Bochkovskiy, Chien-Yao Wang, and Hong-Yuan Mark Liao. Yolov4: Optimal
     speed and accuracy of object detection, 2020.'
   id: totrans-295
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[20] Alexey Bochkovskiy、Chien-Yao Wang 和 Hong-Yuan Mark Liao。《Yolov4：物体检测的最佳速度和准确性》，2020
+    年。'
 - en: '[21] R. Bordawekar, B. Abali, and M.H. Chen. Efloat: Entropy-coded floating
     point format for deep learning. arXiv:2102.02705, 2021.'
   id: totrans-296
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[21] R. Bordawekar、B. Abali 和 M.H. Chen。《Efloat：用于深度学习的熵编码浮点格式》。arXiv:2102.02705，2021
+    年。'
 - en: '[22] Léon Bottou and Yann Le Cun. Large scale online learning. In Advances
     in Neural Information Processing Systems 16. MIT Press, 2004.'
   id: totrans-297
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[22] Léon Bottou 和 Yann Le Cun。《大规模在线学习》。见《神经信息处理系统进展》第 16 卷。MIT 出版社，2004 年。'
 - en: '[23] Cristian Buciluă, Rich Caruana, and Alexandru Niculescu-Mizil. Model compression.
     In Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery
     and Data Mining, KDD ’06, page 535–541, New York, NY, USA, 2006\. Association
@@ -2994,6 +3208,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[23] Cristian Buciluă、Rich Caruana 和 Alexandru Niculescu-Mizil。《模型压缩》。见第 12
+    届 ACM SIGKDD 国际知识发现与数据挖掘大会论文集，KDD ’06，页面 535–541，纽约，NY，USA，2006 年。计算机协会。'
 - en: '[24] N. Burgess, J. Milanovic, N. Stephens, K. Monachopoulos, and D. Mansell.
     Bfloat16 processing for neural networks. In 2019 IEEE 26th Symposium on Computer
     Arithmetic (ARITH), pages 88–91, 2019.'
@@ -3001,6 +3217,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[24] N. Burgess、J. Milanovic、N. Stephens、K. Monachopoulos 和 D. Mansell。《神经网络的
+    Bfloat16 处理》。见 2019 年 IEEE 第 26 届计算机算术研讨会（ARITH），页面 88–91，2019 年。'
 - en: '[25] Han Cai, Chuang Gan, Tianzhe Wang, Zhekai Zhang, and Song Han. Once-for-all:
     Train one network and specialize it for efficient deployment. In ICLR ’20: International
     Conference on Learning Representations, 2020.'
@@ -3008,6 +3226,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[25] Han Cai、Chuang Gan、Tianzhe Wang、Zhekai Zhang 和 Song Han。《一次性：训练一个网络并为高效部署进行专门化》。见
+    ICLR ’20：国际学习表征会议，2020 年。'
 - en: '[26] Z. Carmichael, H. F. Langroudi, C. Khazanov, J. Lillie, J. L. Gustafson,
     and D. Kudithipudi. Deep positron: A deep neural network using the posit number
     system. In 2019 Design, Automation Test in Europe Conference Exhibition (DATE),
@@ -3016,6 +3236,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[26] Z. Carmichael、H. F. Langroudi、C. Khazanov、J. Lillie、J. L. Gustafson 和
+    D. Kudithipudi。《深度正电子：使用正数系统的深度神经网络》。见 2019 年设计、自动化与测试欧洲会议展览（DATE），页面 1421–1426，2019
+    年。'
 - en: '[27] Zachariah Carmichael, Hamed F. Langroudi, Char Khazanov, Jeffrey Lillie,
     John L. Gustafson, and Dhireesha Kudithipudi. Performance-efficiency trade-off
     of low-precision numerical formats in deep neural networks. In Proceedings of
@@ -3025,6 +3248,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[27] Zachariah Carmichael、Hamed F. Langroudi、Char Khazanov、Jeffrey Lillie、John
+    L. Gustafson 和 Dhireesha Kudithipudi。《深度神经网络中低精度数值格式的性能效率权衡》。见下一代算术会议 2019 论文集，CoNGA’19，纽约，NY，USA，2019
+    年。计算机协会。'
 - en: '[28] Chip-Hong Chang, Amir Sabbagh Molahosseini, Azadeh Alsadat Emrani Zarandi,
     and Tian Fatt Tay. Residue number systems: A new paradigm to datapath optimization
     for low-power and high-performance digital signal processing applications. IEEE
@@ -3033,6 +3259,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[28] Chip-Hong Chang，Amir Sabbagh Molahosseini，Azadeh Alsadat Emrani Zarandi，和
+    Tian Fatt Tay。残差数系统：一种用于低功耗和高性能数字信号处理应用的数据路径优化新范式。IEEE电路与系统杂志，15(4)：26–44，2015年。'
 - en: '[29] Guobin Chen, Wongun Choi, Xiang Yu, Tony Han, and Manmohan Chandraker.
     Learning efficient object detection models with knowledge distillation. In I. Guyon,
     U. V. Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett,
@@ -3042,6 +3270,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[29] Guobin Chen，Wongun Choi，Xiang Yu，Tony Han，和 Manmohan Chandraker。通过知识蒸馏学习高效的目标检测模型。在I.
+    Guyon，U. V. Luxburg，S. Bengio，H. Wallach，R. Fergus，S. Vishwanathan，和 R. Garnett，编辑的《神经信息处理系统进展30》中，页面742–751。Curran
+    Associates, Inc.，2017年。'
 - en: '[30] Tianshi Chen, Zidong Du, Ninghui Sun, Jia Wang, Chengyong Wu, Yunji Chen,
     and Olivier Temam. Diannao: A small-footprint high-throughput accelerator for
     ubiquitous machine-learning. SIGPLAN Not., 49(4):269–284, February 2014.'
@@ -3049,6 +3280,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[30] Tianshi Chen，Zidong Du，Ninghui Sun，Jia Wang，Chengyong Wu，Yunji Chen，和
+    Olivier Temam。Diannao：一种小型高吞吐量的普适机器学习加速器。SIGPLAN通知，49(4)：269–284，2014年2月。'
 - en: '[31] Y. Chen, J. Emer, and V. Sze. Eyeriss: A spatial architecture for energy-efficient
     dataflow for convolutional neural networks. In 2016 ACM/IEEE 43rd Annual International
     Symposium on Computer Architecture (ISCA), pages 367–379, 2016.'
@@ -3056,6 +3289,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[31] Y. 陈，J. Emer，和 V. Sze。Eyeriss：一种用于卷积神经网络的节能数据流空间架构。在2016年ACM/IEEE第43届国际计算机架构年会（ISCA）上，页面367–379，2016年。'
 - en: '[32] Yu-Hsin Chen, Tushar Krishna, Joel S. Emer, and Vivienne Sze. Eyeriss:
     An energy-efficient reconfigurable accelerator for deep convolutional neural networks.
     IEEE Journal of Solid-State Circuits, 52(1):127–138, 2017.'
@@ -3063,6 +3297,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[32] Yu-Hsin Chen，Tushar Krishna，Joel S. Emer，和 Vivienne Sze。Eyeriss：一种节能的可重配置加速器用于深度卷积神经网络。IEEE固态电路杂志，52(1)：127–138，2017年。'
 - en: '[33] Yunji Chen, Tao Luo, Shaoli Liu, Shijin Zhang, Liqiang He, Jia Wang, Ling
     Li, Tianshi Chen, Zhiwei Xu, Ninghui Sun, and Olivier Temam. Dadiannao: A machine-learning
     supercomputer. In Proceedings of the 47th Annual IEEE/ACM International Symposium
@@ -3072,6 +3307,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[33] Yunji Chen，Tao Luo，Shaoli Liu，Shijin Zhang，Liqiang He，Jia Wang，Ling Li，Tianshi
+    Chen，Zhiwei Xu，Ninghui Sun，和 Olivier Temam。Dadiannao：一种机器学习超级计算机。在第47届IEEE/ACM国际微架构年会（MICRO-47）的论文集中，页面609–622，美国华盛顿特区，2014年。IEEE计算机协会。'
 - en: '[34] Yunpeng Chen, Haoqi Fan, Bing Xu, Zhicheng Yan, Yannis Kalantidis, Marcus
     Rohrbach, Shuicheng Yan, and Jiashi Feng. Drop an octave: Reducing spatial redundancy
     in convolutional neural networks with octave convolution. In Proceedings of the
@@ -3080,6 +3317,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[34] Yunpeng Chen，Haoqi Fan，Bing Xu，Zhicheng Yan，Yannis Kalantidis，Marcus Rohrbach，Shuicheng
+    Yan，和 Jiashi Feng。Drop an octave：通过八度卷积减少卷积神经网络中的空间冗余。在IEEE/CVF国际计算机视觉会议（ICCV）上，2019年10月。'
 - en: '[35] Y. Cheng, D. Wang, P. Zhou, and T. Zhang. Model compression and acceleration
     for deep neural networks: The principles, progress, and challenges. IEEE Signal
     Processing Magazine, 35(1):126–136, 2018.'
@@ -3087,6 +3326,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[35] Y. Cheng，D. Wang，P. Zhou，和 T. Zhang。深度神经网络的模型压缩和加速：原理、进展与挑战。IEEE信号处理杂志，35(1)：126–136，2018年。'
 - en: '[36] Francois Chollet. Xception: Deep learning with depthwise separable convolutions.
     In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition
     (CVPR), July 2017.'
@@ -3094,11 +3334,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[36] Francois Chollet。Xception：使用深度可分卷积的深度学习。在IEEE计算机视觉与模式识别会议（CVPR）上，2017年7月。'
 - en: '[37] NVIDIA Corporation. NVIDIA Tesla V100 GPU architecture, 8 2017. WP-08608-001v1.1.'
   id: totrans-312
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[37] NVIDIA公司。NVIDIA Tesla V100 GPU架构，2017年8月。WP-08608-001v1.1。'
 - en: '[38] Matthieu Courbariaux, Yoshua Bengio, and Jean-Pierre David. Binaryconnect:
     Training deep neural networks with binary weights during propagations. In C. Cortes,
     N. D. Lawrence, D. D. Lee, M. Sugiyama, and R. Garnett, editors, Advances in Neural
@@ -3108,6 +3350,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[38] Matthieu Courbariaux，Yoshua Bengio，和 Jean-Pierre David。Binaryconnect：在传播过程中使用二进制权重训练深度神经网络。在C.
+    Cortes，N. D. Lawrence，D. D. Lee，M. Sugiyama，和 R. Garnett，编辑的《神经信息处理系统进展28》中，页面3123–3131。Curran
+    Associates, Inc.，2015年。'
 - en: '[39] Matthieu Courbariaux, Itay Hubara, Daniel Soudry, Ran El-Yaniv, and Yoshua
     Bengio. Binarized neural networks: Training deep neural networks with weights
     and activations constrained to +1 or -1, 2016.'
@@ -3115,6 +3360,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[39] 马修·库尔巴里亚、伊泰·胡巴拉、丹尼尔·苏德里、兰·艾尔-亚尼夫和约书亚·本吉奥。《二值化神经网络：使用约束为+1或-1的权重和激活训练深度神经网络》，2016年。'
 - en: '[40] Mike Davies, Narayan Srinivasa, Tsung-Han Lin, Gautham Chinya, Yongqiang
     Cao, Sri Harsha Choday, Georgios Dimou, Prasad Joshi, Nabil Imam, Shweta Jain,
     Yuyun Liao, Chit-Kwan Lin, Andrew Lines, Ruokun Liu, Deepak Mathaikutty, Steven
@@ -3125,6 +3371,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[40] 迈克·戴维斯、纳拉扬·斯里尼瓦萨、林宗汉、高塔姆·钦亚、曹永强、斯里·哈沙·乔代、乔治欧斯·迪穆、普拉萨德·乔希、纳比尔·伊玛目、什韦塔·贾因、柳雨云、连志坤、安德鲁·莱恩斯、刘若坤、迪帕克·玛泰库提、史蒂文·麦考伊、阿尔纳布·保罗、乔纳森·蔡、古鲁古汉南·文卡塔拉曼、翁怡欣、安德烈亚斯·怀尔德、杨允锡和王洪。《Loihi：一种具有片上学习的神经形态多核处理器》。IEEE
+    Micro, 38(1):82–99, 2018年。'
 - en: '[41] Chunhua Deng, Yang Sui, Siyu Liao, Xuehai Qian, and Bo Yuan. Gospa: An
     energy-efficient high-performance globally optimized sparse convolutional neural
     network accelerator. In 2021 ACM/IEEE 48th Annual International Symposium on Computer
@@ -3133,6 +3381,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[41] 陈华邓、杨隋、刘思宇、钱雪海和袁博。《Gospa：一种能效高性能的全球优化稀疏卷积神经网络加速器》。在2021年ACM/IEEE第48届计算机架构国际年会（ISCA），第1110–1123页，2021年。'
 - en: '[42] Lei Deng, Guoqi Li, Song Han, Luping Shi, and Yuan Xie. Model compression
     and hardware acceleration for neural networks: A comprehensive survey. Proceedings
     of the IEEE, 108(4):485–532, 2020.'
@@ -3140,6 +3389,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[42] 雷邓、李国奇、宋汉、石露平和谢远。《神经网络的模型压缩与硬件加速：综合调查》。IEEE学报，108(4):485–532, 2020年。'
 - en: '[43] Quan Deng, Lei Jiang, Youtao Zhang, Minxuan Zhang, and Jun Yang. Dracc:
     a dram based accelerator for accurate cnn inference. In 2018 55th ACM/ESDA/IEEE
     Design Automation Conference (DAC), pages 1–6, 2018.'
@@ -3147,6 +3397,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[43] 邝邓、雷江、张有涛、张敏轩和杨军。《Dracc：一种基于DRAM的准确CNN推断加速器》。在2018年第55届ACM/ESDA/IEEE设计自动化会议（DAC），第1–6页，2018年。'
 - en: '[44] Emily Denton, Wojciech Zaremba, Joan Bruna, Yann LeCun, and Rob Fergus.
     Exploiting linear structure within convolutional networks for efficient evaluation.
     In Proceedings of the 27th International Conference on Neural Information Processing
@@ -3156,6 +3407,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[44] 艾米莉·登顿、沃伊切赫·扎伦巴、琼·布鲁纳、扬·勒昆和罗布·费格斯。《利用卷积网络中的线性结构实现高效评估》。在第27届神经信息处理系统国际会议论文集中——卷1，NeurIPS’14，第1269–1277页，美国剑桥，2014年。MIT出版社。'
 - en: '[45] Mario Drumond, Tao Lin, Martin Jaggi, and Babak Falsafi. Training dnns
     with hybrid block floating point. In 32nd Conference on Neural Information Processing
     Systems, 2018.'
@@ -3163,6 +3415,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[45] 马里奥·德鲁蒙德、林涛、马丁·贾吉和巴巴克·法尔萨菲。《使用混合块浮点训练DNNs》。在第32届神经信息处理系统会议，2018年。'
 - en: '[46] D. Dupeyron, S. Le Masson, Y. Deval, G. Le Masson, and J.-P. Dom. A bicmos
     implementation of the hodgkin-huxley formalism. In Proceedings of Fifth International
     Conference on Microelectronics for Neural Networks, pages 311–316, 1996.'
@@ -3170,6 +3423,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[46] D. 杜佩隆、S. 勒·马森、Y. 德瓦尔、G. 勒·马森和J.-P. 多姆。《霍奇金-赫胥黎形式的BICMOS实现》。在第五届神经网络微电子国际会议论文集中，第311–316页，1996年。'
 - en: '[47] Biyi Fang, Xiao Zeng, and Mi Zhang. Nestdnn: Resource-aware multi-tenant
     on-device deep learning for continuous mobile vision. MobiCom ’18, New York, NY,
     USA, 2018\. Association for Computing Machinery.'
@@ -3177,12 +3431,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[47] 冯碧毅、曾晓和张蜜。《Nestdnn：资源感知的多租户设备深度学习以支持连续移动视觉》。MobiCom ’18，美国纽约，2018年。计算机协会。'
 - en: '[48] M. Fasi, N.J. Higham, M. Mikaitis, and S. Pranesh. Numerical behavior
     of nvidia tensor cores. PeerJ Computer Science, 7(e330):1–19, 2021.'
   id: totrans-323
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[48] M. Fasi、N.J. Higham、M. Mikaitis和S. Pranesh。《nvidia tensor cores的数值行为》。PeerJ计算机科学,
+    7(e330):1–19, 2021年。'
 - en: '[49] Sean Fox, Seyedramin Rasoulinezhad, Julian Faraone, David Boland, and
     Philip Leong. A block minifloat representation for training deep neural networks.
     In ICLR ’21: International Conference on Learning Representations, 2021.'
@@ -3190,6 +3447,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[49] 肖恩·福克斯、赛义德拉敏·拉苏林扎德、朱利安·法拉奥内、大卫·博兰和菲利普·梁。《一种用于训练深度神经网络的块小浮点表示》。在ICLR ’21：国际学习表征会议，2021年。'
 - en: '[50] Jonathan Frankle and Michael Carbin. The lottery ticket hypothesis: Finding
     sparse, trainable neural networks. In ICLR ’19: International Conference on Learning
     Representations, 2019.'
@@ -3197,6 +3455,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[50] 乔纳森·弗兰克尔和迈克尔·卡宾。《彩票票据假设：寻找稀疏的可训练神经网络》。在ICLR ’19：国际学习表征会议，2019年。'
 - en: '[51] Adi Fuchs and David Wentzlaff. The accelerator wall: Limits of chip specialization.
     In 2019 IEEE International Symposium on High Performance Computer Architecture
     (HPCA), pages 1–14, 2019.'
@@ -3204,6 +3463,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[51] Adi Fuchs 和 David Wentzlaff. 加速器墙：芯片专业化的限制。2019年IEEE国际高性能计算架构研讨会（HPCA）论文集，第1–14页，2019年。'
 - en: '[52] Mingyu Gao, Jing Pu, Xuan Yang, Mark Horowitz, and Christos Kozyrakis.
     Tetris: Scalable and efficient neural network acceleration with 3d memory. 45(1):751–764,
     April 2017.'
@@ -3211,6 +3471,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[52] Mingyu Gao, Jing Pu, Xuan Yang, Mark Horowitz, 和 Christos Kozyrakis. Tetris：具有
+    3D 内存的可扩展高效神经网络加速。45(1):751–764, 2017年4月。'
 - en: '[53] Xitong Gao, Yiren Zhao, Łukasz Dudziak, Robert Mullins, and Cheng zhong
     Xu. Dynamic channel pruning: Feature boosting and suppression. In ICLR ’19: International
     Conference on Learning Representations, 2019.'
@@ -3218,12 +3480,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[53] Xitong Gao, Yiren Zhao, Łukasz Dudziak, Robert Mullins, 和 Cheng zhong
+    Xu. 动态通道剪枝：特征增强与抑制。ICLR ’19: 国际表示学习大会，2019年。'
 - en: '[54] Stuart Geman, Elie Bienenstock, and René Doursat. Neural networks and
     the bias/variance dilemma. Neural Computation, 4(1):1–58, 1992.'
   id: totrans-329
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[54] Stuart Geman, Elie Bienenstock, 和 René Doursat. 神经网络与偏差/方差困境。神经计算, 4(1):1–58,
+    1992年。'
 - en: '[55] Amir Gholami, Kiseok Kwon, Bichen Wu, Zizheng Tai, Xiangyu Yue, Peter
     Jin, Sicheng Zhao, and Kurt Keutzer. Squeezenext: Hardware-aware neural network
     design. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition
@@ -3232,6 +3498,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[55] Amir Gholami, Kiseok Kwon, Bichen Wu, Zizheng Tai, Xiangyu Yue, Peter
+    Jin, Sicheng Zhao, 和 Kurt Keutzer. Squeezenext：硬件感知神经网络设计。在 IEEE 计算机视觉与模式识别大会（CVPR）研讨会论文集中，2018年6月。'
 - en: '[56] Meisam Gholami and Saeed Saeedi. Digital cellular implementation of morris-lecar
     neuron model. In 2015 23rd Iranian Conference on Electrical Engineering, pages
     1235–1239, 2015.'
@@ -3239,6 +3507,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[56] Meisam Gholami 和 Saeed Saeedi. Morris-Lecar 神经元模型的数字化实现。2015年第23届伊朗电气工程会议论文集，第1235–1239页，2015年。'
 - en: '[57] Ariel Gordon, Elad Eban, Ofir Nachum, Bo Chen, Hao Wu, Tien-Ju Yang, and
     Edward Choi. Morphnet: Fast amp; simple resource-constrained structure learning
     of deep networks. In 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition,
@@ -3247,6 +3516,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[57] Ariel Gordon, Elad Eban, Ofir Nachum, Bo Chen, Hao Wu, Tien-Ju Yang, 和
+    Edward Choi. Morphnet：快速且简单的资源受限深度网络结构学习。2018年IEEE/CVF计算机视觉与模式识别会议论文集，第1586–1595页，2018年。'
 - en: '[58] Yiwen Guo, Anbang Yao, and Yurong Chen. Dynamic network surgery for efficient
     dnns. In Proceedings of the 30th International Conference on Neural Information
     Processing Systems, NIPS’16, page 1387–1395, Red Hook, NY, USA, 2016\. Curran
@@ -3255,6 +3526,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[58] Yiwen Guo, Anbang Yao, 和 Yurong Chen. 高效 DNN 的动态网络手术。第30届神经信息处理系统国际会议论文集，NIPS’16，第1387–1395页，美国纽约，2016年。Curran
+    Associates Inc.'
 - en: '[59] Rishi Raj Gupta and Virender Ranga. Comparative study of different reduced
     precision techniques in deep neural network. In Shailesh Tiwari, Erma Suryani,
     Andrew Keong Ng, K. K. Mishra, and Nitin Singh, editors, Proceedings of International
@@ -3264,6 +3537,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[59] Rishi Raj Gupta 和 Virender Ranga. 深度神经网络中不同降低精度技术的比较研究。在 Shailesh Tiwari,
+    Erma Suryani, Andrew Keong Ng, K. K. Mishra, 和 Nitin Singh 主编的《国际大数据、机器学习及其应用会议论文集》，第123–136页，新加坡，2021年。Springer
+    Singapore。'
 - en: '[60] Suyog Gupta, Ankur Agrawal, Kailash Gopalakrishnan, and Pritish Narayanan.
     Deep learning with limited numerical precision. In Proceedings of the 32nd International
     Conference on International Conference on Machine Learning - Volume 37, ICML’15,
@@ -3272,12 +3548,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[60] Suyog Gupta, Ankur Agrawal, Kailash Gopalakrishnan, 和 Pritish Narayanan.
+    有限数值精度的深度学习。第32届国际机器学习会议论文集 - 第37卷，ICML’15，第1737–1746页。JMLR.org, 2015年。'
 - en: '[61] Gustafson and Yonemoto. Beating floating point at its own game: Posit
     arithmetic. Supercomput. Front. Innov.: Int. J., 4(2):71–86, June 2017.'
   id: totrans-336
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[61] Gustafson 和 Yonemoto. 在浮点运算中超越自身的游戏：Posit 算术。Supercomput. Front. Innov.:
+    Int. J., 4(2):71–86, 2017年6月。'
 - en: '[62] Yoo Jeong Ha, Minjae Yoo, Gusang Lee, Soyi Jung, Sae Won Choi, Joongheon
     Kim, and Seehwan Yoo. Spatio-temporal split learning for privacy-preserving medical
     platforms: Case studies with covid-19 ct, x-ray, and cholesterol data. IEEE Access,
@@ -3286,6 +3566,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[62] Yoo Jeong Ha, Minjae Yoo, Gusang Lee, Soyi Jung, Sae Won Choi, Joongheon
+    Kim, 和 Seehwan Yoo. 面向隐私保护医疗平台的时空分离学习：基于 COVID-19 CT、X 射线和胆固醇数据的案例研究。IEEE Access,
+    9:121046–121059, 2021。'
 - en: '[63] Nastaran Hajinazar, Geraldo F. Oliveira, Sven Gregorio, João Dinis Ferreira,
     Nika Mansouri Ghiasi, Minesh Patel, Mohammed Alser, Saugata Ghose, Juan Gómez-Luna,
     and Onur Mutlu. Simdram: A framework for bit-serial simd processing using dram.
@@ -3296,6 +3579,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[63] Nastaran Hajinazar, Geraldo F. Oliveira, Sven Gregorio, João Dinis Ferreira,
+    Nika Mansouri Ghiasi, Minesh Patel, Mohammed Alser, Saugata Ghose, Juan Gómez-Luna,
+    和 Onur Mutlu. Simdram: 一种用于 DRAM 的位串行 SIMD 处理框架。见第26届ACM国际编程语言和操作系统架构支持会议（ASPLOS
+    2021）论文集，第 329–345 页，美国纽约，2021年。计算机协会。'
 - en: '[64] Song Han, Xingyu Liu, Huizi Mao, Jing Pu, Ardavan Pedram, Mark A. Horowitz,
     and William J. Dally. Eie: Efficient inference engine on compressed deep neural
     network. In Proceedings of the 43rd International Symposium on Computer Architecture,
@@ -3304,6 +3591,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[64] Song Han, Xingyu Liu, Huizi Mao, Jing Pu, Ardavan Pedram, Mark A. Horowitz,
+    和 William J. Dally. EIE: 在压缩深度神经网络上的高效推理引擎。见第43届国际计算机体系结构研讨会（ISCA ’16）论文集，第 243–254
+    页。IEEE出版社，2016年。'
 - en: '[65] Song Han, Huizi Mao, and William J. Dally. Deep compression: Compressing
     deep neural networks with pruning, trained quantization and huffman coding. In
     ICLR ’16: International Conference on Learning Representations, 2016.'
@@ -3311,6 +3601,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[65] Song Han, Huizi Mao, 和 William J. Dally. 深度压缩：通过剪枝、训练量化和霍夫曼编码压缩深度神经网络。见
+    ICLR ’16：国际学习表征会议，2016年。'
 - en: '[66] Song Han, Jeff Pool, John Tran, and William Dally. Learning both weights
     and connections for efficient neural network. In C. Cortes, N. D. Lawrence, D. D.
     Lee, M. Sugiyama, and R. Garnett, editors, Advances in Neural Information Processing
@@ -3319,6 +3611,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[66] Song Han, Jeff Pool, John Tran, 和 William Dally. 学习权重和连接以实现高效神经网络。见 C.
+    Cortes, N. D. Lawrence, D. D. Lee, M. Sugiyama, 和 R. Garnett 编辑的《神经信息处理系统进展 28》，第
+    1135–1143 页。Curran Associates, Inc.，2015年。'
 - en: '[67] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning
     for image recognition. In 2016 IEEE Conference on Computer Vision and Pattern
     Recognition (CVPR), pages 770–778, 2016.'
@@ -3326,6 +3621,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[67] Kaiming He, Xiangyu Zhang, Shaoqing Ren, 和 Jian Sun. 深度残差学习用于图像识别。见 2016年IEEE计算机视觉与模式识别会议（CVPR），第
+    770–778 页，2016年。'
 - en: '[68] Mingxuan He, Choungki Song, Ilkon Kim, Chunseok Jeong, Seho Kim, Il Park,
     Mithuna Thottethodi, and T. N. Vijaykumar. Newton: A dram-maker’s accelerator-in-memory
     (aim) architecture for machine learning. In 2020 53rd Annual IEEE/ACM International
@@ -3334,6 +3631,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[68] Mingxuan He, Choungki Song, Ilkon Kim, Chunseok Jeong, Seho Kim, Il Park,
+    Mithuna Thottethodi, 和 T. N. Vijaykumar. Newton: 一种用于机器学习的内存加速器（aim）架构。见 2020年第53届IEEE/ACM国际微体系结构研讨会（MICRO），第
+    372–385 页，2020年。'
 - en: '[69] Y. He, X. Zhang, and J. Sun. Channel pruning for accelerating very deep
     neural networks. In 2017 IEEE International Conference on Computer Vision (ICCV),
     pages 1398–1406, 2017.'
@@ -3341,6 +3641,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[69] Y. He, X. Zhang, 和 J. Sun. 通道剪枝加速非常深的神经网络。见 2017年IEEE计算机视觉国际会议（ICCV），第
+    1398–1406 页，2017年。'
 - en: '[70] Yihui He, Ji Lin, Zhijian Liu, Hanrui Wang, Li-Jia Li, and Song Han. Amc:
     Automl for model compression and acceleration on mobile devices. In Proceedings
     of the European Conference on Computer Vision (ECCV), September 2018.'
@@ -3348,6 +3650,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[70] Yihui He, Ji Lin, Zhijian Liu, Hanrui Wang, Li-Jia Li, 和 Song Han. AMC:
+    移动设备上的模型压缩与加速的自动机器学习。见欧洲计算机视觉会议（ECCV）论文集，2018年9月。'
 - en: '[71] Kartik Hegde, Jiyong Yu, Rohit Agrawal, Mengjia Yan, Michael Pellauer,
     and Christopher W. Fletcher. Ucnn: Exploiting computational reuse in deep neural
     networks via weight repetition. In Proceedings of the 45th Annual International
@@ -3356,12 +3660,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[71] Kartik Hegde, Jiyong Yu, Rohit Agrawal, Mengjia Yan, Michael Pellauer,
+    和 Christopher W. Fletcher. UCNN: 通过权重重复在深度神经网络中利用计算重用。见第45届国际计算机体系结构年会（ISCA ’18）论文集，第
+    674–687 页。IEEE出版社，2018年。'
 - en: '[72] Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. Distilling the knowledge
     in a neural network, 2015.'
   id: totrans-347
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[72] Geoffrey Hinton, Oriol Vinyals, 和 Jeff Dean. 提炼神经网络中的知识，2015年。'
 - en: '[73] Nhut-Minh Ho and Weng-Fai Wong. Exploiting half precision arithmetic in
     nvidia gpus. In 2017 IEEE High Performance Extreme Computing Conference (HPEC),
     pages 1–7, 2017.'
@@ -3369,12 +3677,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[73] Nhut-Minh Ho 和 Weng-Fai Wong. 利用 NVIDIA GPU 中的半精度算术。见 2017年IEEE高性能极限计算会议（HPEC），第
+    1–7 页，2017年。'
 - en: '[74] Sepp Hochreiter and Jürgen Schmidhuber. Long short-term memory. Neural
     Comput., 9(8):1735–1780, nov 1997.'
   id: totrans-349
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[74] Sepp Hochreiter 和 Jürgen Schmidhuber. 长短期记忆。神经计算，9(8)：1735–1780，1997年11月。'
 - en: '[75] A. L. Hodgkin and A. F. Huxley. A quantitative description of membrane
     current and its application to conduction and excitation in nerve. The Journal
     of Physiology, 117(4):500–544, 1952.'
@@ -3382,6 +3693,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[75] A. L. Hodgkin 和 A. F. Huxley. 细胞膜电流的定量描述及其在神经传导和兴奋中的应用。《生理学杂志》，117(4):500–544，1952年。'
 - en: '[76] Andrew G. Howard, Menglong Zhu, Bo Chen, Dmitry Kalenichenko, Weijun Wang,
     Tobias Weyand, Marco Andreetto, and Hartwig Adam. Mobilenets: Efficient convolutional
     neural networks for mobile vision applications, 2017.'
@@ -3389,18 +3701,23 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[76] Andrew G. Howard, Menglong Zhu, Bo Chen, Dmitry Kalenichenko, Weijun Wang,
+    Tobias Weyand, Marco Andreetto 和 Hartwig Adam. Mobilenets：用于移动视觉应用的高效卷积神经网络，2017年。'
 - en: '[77] Hengyuan Hu, Rui Peng, Yu-Wing Tai, and Chi-Keung Tang. Network trimming:
     A data-driven neuron pruning approach towards efficient deep architectures, 2016.'
   id: totrans-352
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[77] Hengyuan Hu, Rui Peng, Yu-Wing Tai 和 Chi-Keung Tang. 网络修剪：一种数据驱动的神经元剪枝方法，用于高效的深度架构，2016年。'
 - en: '[78] Huiyi Hu, Ang Li, Daniele Calandriello, , and Dilan Gorur. One pass imagenet.
     In NeurIPS 2021 Workshop on Imagenet: past, present and future, 2021.'
   id: totrans-353
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[78] Huiyi Hu, Ang Li, Daniele Calandriello 和 Dilan Gorur. 一次通过ImageNet。见于NeurIPS
+    2021工作坊：ImageNet的过去、现在和未来，2021年。'
 - en: '[79] G. Huang, Z. Liu, L. Van Der Maaten, and K. Q. Weinberger. Densely connected
     convolutional networks. In 2017 IEEE Conference on Computer Vision and Pattern
     Recognition (CVPR), pages 2261–2269, 2017.'
@@ -3408,6 +3725,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[79] G. Huang, Z. Liu, L. Van Der Maaten 和 K. Q. Weinberger. 密集连接卷积网络。见于2017
+    IEEE计算机视觉与模式识别会议（CVPR），第2261–2269页，2017年。'
 - en: '[80] Gao Huang, Shichen Liu, Laurens van der Maaten, and Kilian Q. Weinberger.
     Condensenet: An efficient densenet using learned group convolutions. In Proceedings
     of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), June
@@ -3416,6 +3735,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[80] Gao Huang, Shichen Liu, Laurens van der Maaten 和 Kilian Q. Weinberger.
+    Condensenet：一种利用学习到的组卷积的高效densenet。见于IEEE计算机视觉与模式识别会议（CVPR）论文集，2018年6月。'
 - en: '[81] Itay Hubara, Matthieu Courbariaux, Daniel Soudry, Ran El-Yaniv, and Yoshua
     Bengio. Quantized neural networks: Training neural networks with low precision
     weights and activations. J. Mach. Learn. Res., 18(1):6869–6898, January 2017.'
@@ -3423,6 +3744,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[81] Itay Hubara, Matthieu Courbariaux, Daniel Soudry, Ran El-Yaniv 和 Yoshua
+    Bengio. 量化神经网络：使用低精度权重和激活训练神经网络。《机器学习研究杂志》，18(1):6869–6898，2017年1月。'
 - en: '[82] Forrest N. Iandola, Song Han, Matthew W. Moskewicz, Khalid Ashraf, William J.
     Dally, and Kurt Keutzer. Squeezenet: Alexnet-level accuracy with 50x fewer parameters
     and <0.5mb model size, 2016.'
@@ -3430,6 +3753,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[82] Forrest N. Iandola, Song Han, Matthew W. Moskewicz, Khalid Ashraf, William
+    J. Dally 和 Kurt Keutzer. Squeezenet：Alexnet级别的准确性，参数减少50倍且模型大小<0.5MB，2016年。'
 - en: '[83] Sergey Ioffe and Christian Szegedy. Batch normalization: Accelerating
     deep network training by reducing internal covariate shift. In Francis Bach and
     David Blei, editors, Proceedings of the 32nd International Conference on Machine
@@ -3439,12 +3764,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[83] Sergey Ioffe 和 Christian Szegedy. 批量归一化：通过减少内部协变量偏移加速深度网络训练。见于Francis
+    Bach 和 David Blei 主编的《第32届国际机器学习大会论文集》，机器学习研究第37卷，第448–456页，法国里尔，2015年7月7–9日。PMLR。'
 - en: '[84] E.M. Izhikevich. Which model to use for cortical spiking neurons? IEEE
     Transactions on Neural Networks, 15(5):1063–1070, 2004.'
   id: totrans-359
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[84] E.M. Izhikevich. 使用哪种模型来模拟皮层脉冲神经元？《IEEE神经网络学报》，15(5):1063–1070，2004年。'
 - en: '[85] Zhe Jia, Blake Tillman, Marco Maggioni, and Daniele Paolo Scarpazza. Dissecting
     the graphcore ipu architecture via microbenchmarking. arXiv preprint arXiv:1912.03413,
     2019.'
@@ -3452,6 +3780,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[85] Zhe Jia, Blake Tillman, Marco Maggioni 和 Daniele Paolo Scarpazza. 通过微基准测试剖析Graphcore
+    IPU架构。arXiv预印本 arXiv:1912.03413，2019年。'
 - en: '[86] Dhiraj Kalamkar, Dheevatsa Mudigere, Naveen Mellempudi, Dipankar Das,
     Kunal Banerjee, Sasikanth Avancha, Dharma Teja Vooturi, Nataraj Jammalamadaka,
     Jianyu Huang, Hector Yuen, et al. A study of bfloat16 for deep learning training.
@@ -3460,12 +3790,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[86] Dhiraj Kalamkar, Dheevatsa Mudigere, Naveen Mellempudi, Dipankar Das,
+    Kunal Banerjee, Sasikanth Avancha, Dharma Teja Vooturi, Nataraj Jammalamadaka,
+    Jianyu Huang, Hector Yuen 等。bfloat16在深度学习训练中的研究。arXiv预印本 arXiv:1905.12322，2019年。'
 - en: '[87] Dongyoung Kim, Junwhan Ahn, and Sungjoo Yoo. Zena: Zero-aware neural network
     accelerator. IEEE Design Test, 35(1):39–46, 2018.'
   id: totrans-362
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[87] Dongyoung Kim, Junwhan Ahn 和 Sungjoo Yoo. Zena：零感知神经网络加速器。《IEEE设计与测试》，35(1):39–46，2018年。'
 - en: '[88] Duckhwan Kim, Jaeha Kung, Sek Chai, Sudhakar Yalamanchili, and Saibal
     Mukhopadhyay. Neurocube: A programmable digital neuromorphic architecture with
     high-density 3d memory. In 2016 ACM/IEEE 43rd Annual International Symposium on
@@ -3474,6 +3808,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[88] Duckhwan Kim, Jaeha Kung, Sek Chai, Sudhakar Yalamanchili 和 Saibal Mukhopadhyay.
+    Neurocube：一种具有高密度3D内存的可编程数字神经形态架构。见于2016 ACM/IEEE 第43届年度国际计算机架构研讨会（ISCA），第380–392页，2016年。'
 - en: '[89] Yong-Deok Kim, Eunhyeok Park, Sungjoo Yoo, Taelim Choi, Lu Yang, and Dongjun
     Shin. Compression of deep convolutional neural networks for fast and low power
     mobile applications. In ICLR ’16: International Conference on Learning Representations,
@@ -3482,6 +3818,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[89] 金荣德，朴银赫，柳星珠，崔泰林，杨璐和辛东俊。用于快速和低功耗移动应用的深度卷积神经网络压缩。在ICLR’16：2016年国际学习表示大会上。'
 - en: '[90] Urs Köster, Tristan J. Webb, Xin Wang, Marcel Nassar, Arjun K. Bansal,
     William H. Constable, Oğuz H. Elibol, Scott Gray, Stewart Hall, Luke Hornof, Amir
     Khosrowshahi, Carey Kloss, Ruby J. Pai, and Naveen Rao. Flexpoint: An adaptive
@@ -3492,12 +3829,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[90] 乌尔斯·科斯特，特里斯坦J.韦伯，王鑫，马塞尔·纳萨尔，阿尔琼·K.班萨尔，威廉H.康斯特布尔，欧古兹·H.埃利博尔，斯科特·格雷，斯图尔特·霍尔，卢克·霍诺夫，阿米尔·科斯罗沙西，凯瑞克洛斯，Ruby
+    J.派和纳文·拉奥。Flexpoint：用于高效训练深度神经网络的自适应数值格式。在第31届神经信息处理系统国际会议NeurIPS’17上。-页面1740-1750，2017年纽约红钩，美国。Curran
+    Associates Inc.'
 - en: '[91] Alex Krizhevsky, Ilya Sutskever, and Geoffrey E. Hinton. Imagenet classification
     with deep convolutional neural networks. Commun. ACM, 60(6):84–90, May 2017.'
   id: totrans-366
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[91] 亚历克斯·克里兹赫夫斯基，伊利亚·苏茨凯弗和杰弗里E·欣顿。具有深度卷积神经网络的Imagenet分类。ACM通讯，60(6)：84-90，2017年5月。'
 - en: '[92] S. Le Masson, A. Laflaquiere, T. Bal, and G. Le Masson. Analog circuits
     for modeling biological neural networks: design and applications. IEEE Transactions
     on Biomedical Engineering, 46(6):638–645, 1999.'
@@ -3505,6 +3846,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[92] S.勒马松，A.拉弗拉奎尔，T.巴尔和G.勒马松。用于建模生物神经网络的模拟电路：设计和应用。IEEE生物医学工程交易，46(6)：638-645，1999年。'
 - en: '[93] Y. LeCun, B. Boser, J. S. Denker, D. Henderson, R. E. Howard, W. Hubbard,
     and L. D. Jackel. Backpropagation applied to handwritten zip code recognition.
     Neural Computation, 1(4):541–551, 1989.'
@@ -3512,6 +3854,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[93] Y.勒昆，B.波瑟，J.S.丹克尔，D.亨德森，R.E.霍华德，W.哈伯德和L.D.杰克尔。应用于手写邮政编码识别的反向传播。神经计算，1(4)：541-551，1989年。'
 - en: '[94] Yann LeCun, John Denker, and Sara Solla. Optimal brain damage. In D. Touretzky,
     editor, Advances in Neural Information Processing Systems 2, volume 2\. Morgan-Kaufmann,
     1990.'
@@ -3519,6 +3862,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[94] 亚恩·勒昆，约翰·丹克尔和萨拉·索拉。最佳脑损伤。在D.图雷茨基，编辑，神经信息处理系统第2卷中的进展，卷2。Morgan-Kaufmann出版社，1990年。'
 - en: '[95] JunKyu Lee, Gregory D. Peterson, Dimitrios S. Nikolopoulos, and Hans Vandierendonck.
     Air: Iterative refinement acceleration using arbitrary dynamic precision. Parallel
     Computing, 97:102663, 2020.'
@@ -3526,6 +3870,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[95] 李竣奎，格雷戈里D.彼得森，迪米特洛斯S.尼古洛普洛斯和汉斯·凡德伦敦克。Air：利用任意动态精度的迭代加速。并行计算，97：102663，2020年。'
 - en: '[96] JunKyu Lee, Blesson Varghese, Roger Woods, and Hans Vandierendonck. Tod:
     Transprecise object detection to maximise real-time accuracy on the edge. In IEEE
     International Conference on Fog and Edge Computing, pages 53–60, 2021.'
@@ -3533,6 +3878,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[96] 李竣奎，布莱森·瓦格斯，罗杰·伍兹和汉斯·凡德伦敦克。Tod：用于最大化边缘实时精度的跨精度目标检测。在2021年IEEE雾和边缘计算国际会议上。'
 - en: '[97] Carl Lemaire, Andrew Achkar, and Pierre-Marc Jodoin. Structured pruning
     of neural networks with budget-aware regularization. In 2019 IEEE/CVF Conference
     on Computer Vision and Pattern Recognition (CVPR), pages 9100–9108, 2019.'
@@ -3540,6 +3886,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[97] 卡尔·莱梅尔，安德鲁·阿克哈尔和皮埃尔-马克·乔多安。具有预算感知正则化的神经网络的结构化修剪。在2019年IEEE/CVF计算机视觉与模式识别大会上。'
 - en: '[98] Fengfu Li, Bo Zhang, and Bin Liu. Ternary weight networks. In Workshop
     on Efficient Methods for Deep Neural Networks in the 30th International Conference
     on Neural Information Processing Systems, NeurIPS’16, 2016.'
@@ -3547,6 +3894,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[98] 李峰甫，张波和刘滨。三元权重网络。在第30届神经信息处理系统国际会议的高效方法研讨会NeurIPS’16中。'
 - en: '[99] Hao Li, Asim Kadav, Igor Durdanovic, Hanan Samet, and Hans Peter Graf.
     Pruning filters for efficient convnets. In ICLR ’17: International Conference
     on Learning Representations, 2017.'
@@ -3554,6 +3902,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[99] 郝力，阿西姆·卡达夫，伊戈尔·杜尔达诺维奇，哈南·萨梅特和汉斯·彼得·格拉夫。对高效卷积网络进行滤波修剪。在ICLR’17：2017年国际学习表示大会上。'
 - en: '[100] Jiajun Li, Shuhao Jiang, Shijun Gong, Jingya Wu, Junchao Yan, Guihai
     Yan, and Xiaowei Li. Squeezeflow: A sparse cnn accelerator exploiting concise
     convolution rules. IEEE Transactions on Computers, 68(11):1663–1677, 2019.'
@@ -3561,6 +3910,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[100] 李佳俊，姜树浩，龚世军，吴景雅，闫俊超，岩贵海和李晓伟。Squeezeflow：利用简洁卷积规则的稀疏CNN加速器。IEEE计算机交易，68(11)：1663-1677，2019年。'
 - en: '[101] Shuangchen Li, Dimin Niu, Krishna T. Malladi, Hongzhong Zheng, Bob Brennan,
     and Yuan Xie. Drisa: A dram-based reconfigurable in-situ accelerator. In 2017
     50th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO), pages
@@ -3569,6 +3919,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[101] Shuangchen Li、Dimin Niu、Krishna T. Malladi、Hongzhong Zheng、Bob Brennan
+    和 Yuan Xie. Drisa：一种基于 DRAM 的可重构原位加速器。发表于 2017 第 50 届年度 IEEE/ACM 国际微架构研讨会（MICRO），第
+    288–301 页，2017 年。'
 - en: '[102] Ji Lin, Yongming Rao, Jiwen Lu, and Jie Zhou. Runtime neural pruning.
     In Proceedings of the 31st International Conference on Neural Information Processing
     Systems, NeurIPS’17, page 2178–2188, Red Hook, NY, USA, 2017\. Curran Associates
@@ -3577,6 +3930,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[102] Ji Lin、Yongming Rao、Jiwen Lu 和 Jie Zhou. 运行时神经剪枝。发表于第 31 届国际神经信息处理系统会议，NeurIPS’17，第
+    2178–2188 页，美国红钩，2017 年。Curran Associates Inc.'
 - en: '[103] S. Liu, Z. Du, J. Tao, D. Han, T. Luo, Y. Xie, Y. Chen, and T. Chen.
     Cambricon: An instruction set architecture for neural networks. In 2016 ACM/IEEE
     43rd Annual International Symposium on Computer Architecture (ISCA), pages 393–405,
@@ -3585,6 +3940,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[103] S. Liu、Z. Du、J. Tao、D. Han、T. Luo、Y. Xie、Y. Chen 和 T. Chen. Cambricon：一种神经网络指令集架构。发表于
+    2016 ACM/IEEE 第 43 届年度国际计算机架构研讨会（ISCA），第 393–405 页，2016 年。'
 - en: '[104] Z. Liu, J. Li, Z. Shen, G. Huang, S. Yan, and C. Zhang. Learning efficient
     convolutional networks through network slimming. In 2017 IEEE International Conference
     on Computer Vision (ICCV), pages 2755–2763, 2017.'
@@ -3592,6 +3949,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[104] Z. Liu、J. Li、Z. Shen、G. Huang、S. Yan 和 C. Zhang. 通过网络瘦身学习高效卷积网络。发表于 2017
+    IEEE 国际计算机视觉会议（ICCV），第 2755–2763 页，2017 年。'
 - en: '[105] Zhi-Gang Liu and Matthew Mattina. Efficient residue number system based
     winograd convolution. In European Conference on Computer Vision, pages 53–68.
     Springer, 2020.'
@@ -3599,6 +3958,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[105] Zhi-Gang Liu 和 Matthew Mattina. 基于残差数系统的 Winograd 卷积高效实现。发表于欧洲计算机视觉会议，第
+    53–68 页。施普林格，2020 年。'
 - en: '[106] Wei Lou, Lei Xun, Amin Sabet, Jia Bi, Jonathon Hare, and Geoff V. Merrett.
     Dynamic-ofa: Runtime dnn architecture switching for performance scaling on heterogeneous
     embedded platforms. In 2021 IEEE/CVF Conference on Computer Vision and Pattern
@@ -3607,6 +3968,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[106] Wei Lou、Lei Xun、Amin Sabet、Jia Bi、Jonathon Hare 和 Geoff V. Merrett. Dynamic-ofa：在异构嵌入式平台上用于性能扩展的运行时
+    DNN 架构切换。发表于 2021 IEEE/CVF 计算机视觉与模式识别研讨会（CVPRW），第 3104–3112 页，2021 年。'
 - en: '[107] J. Luo, J. Wu, and W. Lin. Thinet: A filter level pruning method for
     deep neural network compression. In 2017 IEEE International Conference on Computer
     Vision (ICCV), pages 5068–5076, 2017.'
@@ -3614,6 +3977,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[107] J. Luo、J. Wu 和 W. Lin. Thinet：一种用于深度神经网络压缩的滤波器级剪枝方法。发表于 2017 IEEE 国际计算机视觉会议（ICCV），第
+    5068–5076 页，2017 年。'
 - en: '[108] Ningning Ma, Xiangyu Zhang, Hai-Tao Zheng, and Jian Sun. Shufflenet v2:
     Practical guidelines for efficient cnn architecture design. In Proceedings of
     the European Conference on Computer Vision (ECCV), September 2018.'
@@ -3621,6 +3986,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[108] Ningning Ma、Xiangyu Zhang、Hai-Tao Zheng 和 Jian Sun. Shufflenet v2：高效
+    CNN 架构设计的实用指南。发表于欧洲计算机视觉会议（ECCV），2018 年 9 月。'
 - en: '[109] Qingyun Ma, Mohammad Rafiqul Haider, Vinaya Lal Shrestha, and Yehia Massoud.
     Bursting hodgkin—huxley model-based ultra-low-power neuromimetic silicon neuron.
     Analog Integr. Circuits Signal Process., 73(1):329–337, October 2012.'
@@ -3628,6 +3995,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[109] Qingyun Ma、Mohammad Rafiqul Haider、Vinaya Lal Shrestha 和 Yehia Massoud.
+    基于 Hodgkin-Huxley 模型的超低功耗神经仿生硅神经元。模拟集成电路与信号处理，第 73 卷，第 1 期：329–337，2012 年 10 月。'
 - en: '[110] Zelda Mariet and Suvrit Sra. Diversity networks: Neural network compression
     using determinantal point processes. In ICLR ’16: International Conference on
     Learning Representations, 2016.'
@@ -3635,6 +4004,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[110] Zelda Mariet 和 Suvrit Sra. 多样性网络：使用行列式点过程的神经网络压缩。发表于 ICLR ’16：国际学习表征会议，2016
+    年。'
 - en: '[111] Yoshitomo Matsubara, Marco Levorato, and Francesco Restuccia. Split computing
     and early exiting for deep learning applications: Survey and research challenges,
     2021.'
@@ -3642,12 +4013,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[111] Yoshitomo Matsubara、Marco Levorato 和 Francesco Restuccia. 深度学习应用中的分割计算和早期退出：调查与研究挑战，2021
+    年。'
 - en: '[112] Warren Mcculloch and Walter Pitts. A logical calculus of ideas immanent
     in nervous activity. Bulletin of Mathematical Biophysics, 5:127–147, 1943.'
   id: totrans-387
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[112] Warren Mcculloch 和 Walter Pitts. 神经活动中固有思想的逻辑演算。数学生物物理学公报，5:127–147，1943。'
 - en: '[113] Sally A. McKee. Reflections on the memory wall. In Proceedings of the
     1st Conference on Computing Frontiers, CF ’04, page 162, New York, NY, USA, 2004\.
     Association for Computing Machinery.'
@@ -3655,6 +4029,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[113] Sally A. McKee. 对记忆墙的反思。发表于第 1 届计算前沿会议，CF ’04，第 162 页，美国纽约，2004 年。计算机协会。'
 - en: '[114] Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich K
     Elsen, David Garcia, Boris Ginsburg, Michael Houston, Oleksii Kuchaiev, Ganesh
     Venkatesh, and Hao Wu. Mixed precision training. In ICLR ’18: International Conference
@@ -3663,6 +4038,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[114] Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich
+    K Elsen, David Garcia, Boris Ginsburg, Michael Houston, Oleksii Kuchaiev, Ganesh
+    Venkatesh, 和 Hao Wu. 混合精度训练。在ICLR ’18：国际学习表征会议，2018年。'
 - en: '[115] Umar Ibrahim Minhas, Lev Mukhanov, Georgios Karakonstantis, Hans Vandierendonck,
     and Roger Woods. Leveraging transprecision computing for machine vision applications
     at the edge. In 2021 IEEE Workshop on Signal Processing Systems (SiPS), pages
@@ -3671,11 +4049,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[115] Umar Ibrahim Minhas, Lev Mukhanov, Georgios Karakonstantis, Hans Vandierendonck,
+    和 Roger Woods. 利用转精度计算进行边缘机器视觉应用。在2021年IEEE信号处理系统研讨会（SiPS）上，第205–210页，2021年。'
 - en: '[116] Michael A. Nielsen. Neural networks and deep learning, 2018.'
   id: totrans-391
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[116] Michael A. Nielsen. 神经网络与深度学习，2018年。'
 - en: '[117] Eustace Painkras, Luis A. Plana, Jim Garside, Steve Temple, Francesco
     Galluppi, Cameron Patterson, David R. Lester, Andrew D. Brown, and Steve B. Furber.
     Spinnaker: A 1-w 18-core system-on-chip for massively-parallel neural network
@@ -3684,6 +4065,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[117] Eustace Painkras, Luis A. Plana, Jim Garside, Steve Temple, Francesco
+    Galluppi, Cameron Patterson, David R. Lester, Andrew D. Brown, 和 Steve B. Furber.
+    Spinnaker：一个1瓦特18核的片上系统，用于大规模并行神经网络模拟。IEEE固态电路杂志，48(8):1943–1953，2013年。'
 - en: '[118] Priyadarshini Panda, Abhronil Sengupta, and Kaushik Roy. Conditional
     deep learning for energy-efficient and enhanced pattern recognition. In 2016 Design,
     Automation Test in Europe Conference Exhibition (DATE), pages 475–480, 2016.'
@@ -3691,6 +4075,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[118] Priyadarshini Panda, Abhronil Sengupta, 和 Kaushik Roy. 条件深度学习用于节能和增强模式识别。在2016年欧洲设计、自动化与测试会议展览（DATE）上，第475–480页，2016年。'
 - en: '[119] Angshuman Parashar, Minsoo Rhu, Anurag Mukkara, Antonio Puglielli, Rangharajan
     Venkatesan, Brucek Khailany, Joel Emer, Stephen W. Keckler, and William J. Dally.
     Scnn: An accelerator for compressed-sparse convolutional neural networks. In Proceedings
@@ -3700,12 +4085,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[119] Angshuman Parashar, Minsoo Rhu, Anurag Mukkara, Antonio Puglielli, Rangharajan
+    Venkatesan, Brucek Khailany, Joel Emer, Stephen W. Keckler, 和 William J. Dally.
+    SCNN：一个用于压缩稀疏卷积神经网络的加速器。在第44届国际计算机体系结构年会（ISCA ’17）论文集，第27–40页，美国纽约，2017年。计算机协会。'
 - en: '[120] Behrooz Parhami. Computer Arithmetic: Algorithms and Hardware Designs.
     Oxford University Press, New York, 2010.'
   id: totrans-395
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[120] Behrooz Parhami. 计算机算术：算法与硬件设计。牛津大学出版社，纽约，2010年。'
 - en: '[121] Jongkil Park, Sohmyung Ha, Theodore Yu, Emre Neftci, and Gert Cauwenberghs.
     A 65k-neuron 73-mevents/s 22-pj/event asynchronous micro-pipelined integrate-and-fire
     array transceiver. In 2014 IEEE Biomedical Circuits and Systems Conference (BioCAS)
@@ -3714,6 +4103,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[121] Jongkil Park, Sohmyung Ha, Theodore Yu, Emre Neftci, 和 Gert Cauwenberghs.
+    一个65k神经元73-mevents/s 22-pj/event的异步微流水集成与发射阵列收发器。在2014年IEEE生物医学电路与系统会议（BioCAS）论文集，第675–678页，2014年。'
 - en: '[122] Z. Qin, Z. Zhang, X. Chen, C. Wang, and Y. Peng. Fd-mobilenet: Improved
     mobilenet with a fast downsampling strategy. In 2018 25th IEEE International Conference
     on Image Processing (ICIP), pages 1363–1367, 2018.'
@@ -3721,6 +4112,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[122] Z. Qin, Z. Zhang, X. Chen, C. Wang, 和 Y. Peng. FD-Mobilenet：具有快速下采样策略的改进Mobilenet。在2018年第25届IEEE国际图像处理会议（ICIP）上，第1363–1367页，2018年。'
 - en: '[123] Mohammad Rastegari, Vicente Ordonez, Joseph Redmon, and Ali Farhadi.
     Xnor-net: Imagenet classification using binary convolutional neural networks.
     In Bastian Leibe, Jiri Matas, Nicu Sebe, and Max Welling, editors, Computer Vision
@@ -3729,6 +4121,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[123] Mohammad Rastegari, Vicente Ordonez, Joseph Redmon, 和 Ali Farhadi. XNOR-Net：使用二值卷积神经网络进行ImageNet分类。在Bastian
+    Leibe, Jiri Matas, Nicu Sebe, 和 Max Welling 编辑的《计算机视觉 – ECCV 2016》中，第525–542页，Cham，2016年。Springer国际出版社。'
 - en: '[124] Arthur J Redfern, Lijun Zhu, and Molly K Newquist. Bcnn: A binary cnn
     with all matrix ops quantized to 1 bit precision. In Proceedings of the IEEE/CVF
     Conference on Computer Vision and Pattern Recognition, pages 4604–4612, 2021.'
@@ -3736,6 +4130,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[124] Arthur J Redfern, Lijun Zhu, 和 Molly K Newquist. BCNN：一个所有矩阵运算量化为1位精度的二值卷积神经网络。在IEEE/CVF计算机视觉与模式识别会议论文集，第4604–4612页，2021年。'
 - en: '[125] M. Rhu, M. O’Connor, N. Chatterjee, J. Pool, Y. Kwon, and S. W. Keckler.
     Compressing dma engine: Leveraging activation sparsity for training deep neural
     networks. In 2018 IEEE International Symposium on High Performance Computer Architecture
@@ -3744,6 +4139,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[125] M. Rhu, M. O’Connor, N. Chatterjee, J. Pool, Y. Kwon, 和 S. W. Keckler.
+    压缩 DMA 引擎：利用激活稀疏性来训练深度神经网络。在2018年IEEE国际高性能计算架构研讨会（HPCA）上，页78–91，2018年。'
 - en: '[126] Minsoo Rhu, Natalia Gimelshein, Jason Clemons, Arslan Zulfiqar, and Stephen W.
     Keckler. Vdnn: Virtualized deep neural networks for scalable, memory-efficient
     neural network design. In The 49th Annual IEEE/ACM International Symposium on
@@ -3752,6 +4149,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[126] Minsoo Rhu, Natalia Gimelshein, Jason Clemons, Arslan Zulfiqar, 和 Stephen
+    W. Keckler. Vdnn：虚拟化深度神经网络用于可扩展、内存高效的神经网络设计。在第49届年度IEEE/ACM国际微架构研讨会，MICRO-49\.
+    IEEE出版社，2016年。'
 - en: '[127] Adriana Romero, Nicolas Ballas, Samira Ebrahimi Kahou, Antoine Chassang,
     Carlo Gatta, and Yoshua Bengio. Fitnets: Hints for thin deep nets. In ICLR ’15:
     International Conference on Learning Representations, 2015.'
@@ -3759,12 +4159,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[127] Adriana Romero, Nicolas Ballas, Samira Ebrahimi Kahou, Antoine Chassang,
+    Carlo Gatta, 和 Yoshua Bengio. Fitnets：针对薄深度网络的提示。在ICLR ’15：国际学习表示会议上，2015年。'
 - en: '[128] F. Rosenblatt. The perceptron: A probabilistic model for information
     storage and organization in the brain. Psychological Review, 65(6):386–408, 1958.'
   id: totrans-403
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[128] F. Rosenblatt. 感知机：一种用于信息存储和组织的概率模型。心理学评论，65(6)：386–408，1958年。'
 - en: '[129] Sylvain Saighi, Laure Buhry, Yannick Bornat, Gilles N’Kaoua, Jean Tomas,
     and Sylvie Renaud. Adjusting the neurons models in neuromimetic ics using the
     voltage-clamp technique. In 2008 IEEE International Symposium on Circuits and
@@ -3773,6 +4176,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[129] Sylvain Saighi, Laure Buhry, Yannick Bornat, Gilles N’Kaoua, Jean Tomas,
+    和 Sylvie Renaud. 使用电压钳位技术调整神经形态集成电路中的神经元模型。在2008年IEEE国际电路与系统研讨会（ISCAS）上，页1564–1567，2008年。'
 - en: '[130] S. Salamat, M. Imani, S. Gupta, and T. Rosing. Rnsnet: In-memory neural
     network acceleration using residue number system. In 2018 IEEE International Conference
     on Rebooting Computing (ICRC), pages 1–12, 2018.'
@@ -3780,6 +4185,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[130] S. Salamat, M. Imani, S. Gupta, 和 T. Rosing. Rnsnet：使用剩余数系统的内存神经网络加速。在2018年IEEE国际计算重启会议（ICRC）上，页1–12，2018年。'
 - en: '[131] N. Samimi, M. Kamal, A. Afzali-Kusha, and M. Pedram. Res-dnn: A residue
     number system-based dnn accelerator unit. IEEE Transactions on Circuits and Systems
     I: Regular Papers, 67(2):658–671, 2020.'
@@ -3787,6 +4193,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[131] N. Samimi, M. Kamal, A. Afzali-Kusha, 和 M. Pedram. Res-dnn：一种基于剩余数系统的
+    DNN 加速单元。IEEE电路与系统学报 I：常规论文，67(2)：658–671，2020年。'
 - en: '[132] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, and Liang-Chieh
     Chen. Mobilenetv2: Inverted residuals and linear bottlenecks. In Proceedings of
     the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), June 2018.'
@@ -3794,6 +4202,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[132] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, 和 Liang-Chieh
+    Chen. Mobilenetv2：反向残差和线性瓶颈。在IEEE计算机视觉与模式识别会议（CVPR）论文集中，2018年6月。'
 - en: '[133] Florian Scheidegger, Luca Benini, Costas Bekas, and A. Cristiano I. Malossi.
     Constrained deep neural network architecture search for iot devices accounting
     for hardware calibration. In Advances in Neural Information Processing Systems
@@ -3802,6 +4212,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[133] Florian Scheidegger, Luca Benini, Costas Bekas, 和 A. Cristiano I. Malossi.
+    针对物联网设备的受限深度神经网络架构搜索，考虑硬件校准。在神经信息处理系统进展32中，页6056–6066，2019年。'
 - en: '[134] Johannes Schemmel, Andreas Grübl, Stephan Hartmann, Alexander Kononov,
     Christian Mayr, Karlheinz Meier, Sebastian Millner, Johannes Partzsch, Stefan
     Schiefer, Stefan Scholze, Rene Schüffny, and Marc-Olivier Schwartz. Live demonstration:
@@ -3811,6 +4223,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[134] Johannes Schemmel, Andreas Grübl, Stephan Hartmann, Alexander Kononov,
+    Christian Mayr, Karlheinz Meier, Sebastian Millner, Johannes Partzsch, Stefan
+    Schiefer, Stefan Scholze, Rene Schüffny, 和 Marc-Olivier Schwartz. 现场演示：一种缩小版的
+    BrainScales 晶圆级神经形态系统。在2012年IEEE国际电路与系统研讨会（ISCAS）上，页702–702，2012年。'
 - en: '[135] Catherine D Schuman, Thomas E Potok, Robert M Patton, J Douglas Birdwell,
     Mark E Dean, Garrett S Rose, and James S Plank. A survey of neuromorphic computing
     and neural networks in hardware. arXiv preprint arXiv:1705.06963, 2017.'
@@ -3818,6 +4234,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[135] Catherine D Schuman, Thomas E Potok, Robert M Patton, J Douglas Birdwell,
+    Mark E Dean, Garrett S Rose, 和 James S Plank. 神经形态计算和硬件中神经网络的调查。arXiv预印本 arXiv:1705.06963，2017年。'
 - en: '[136] A. Shafiee, A. Nag, N. Muralimanohar, R. Balasubramonian, J. P. Strachan,
     M. Hu, R. S. Williams, and V. Srikumar. Isaac: A convolutional neural network
     accelerator with in-situ analog arithmetic in crossbars. In 2016 ACM/IEEE 43rd
@@ -3826,6 +4244,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[136] A. Shafiee, A. Nag, N. Muralimanohar, R. Balasubramonian, J. P. Strachan,
+    M. Hu, R. S. Williams, 和 V. Srikumar. Isaac：一种在交叉点中进行原位模拟运算的卷积神经网络加速器. 见《2016年ACM/IEEE第43届年度国际计算机体系结构研讨会（ISCA）论文集》，页
+    14–26, 2016年。'
 - en: '[137] Li Shang, Alireza S. Kaviani, and Kusuma Bathala. Dynamic power consumption
     in virtex™-ii fpga family. In Proceedings of the 2002 ACM/SIGDA Tenth International
     Symposium on Field-programmable Gate Arrays, FPGA ’02, pages 157–164, New York,
@@ -3834,6 +4255,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[137] Li Shang, Alireza S. Kaviani, 和 Kusuma Bathala. Virtex™-ii FPGA 系列中的动态功耗.
+    见《2002年ACM/SIGDA第十届国际现场可编程门阵列研讨会（FPGA ’02）论文集》，页 157–164, 纽约, NY, USA, 2002年\.
+    ACM。'
 - en: '[138] Hardik Sharma, Jongse Park, Naveen Suda, Liangzhen Lai, Benson Chau,
     Vikas Chandra, and Hadi Esmaeilzadeh. Bit fusion: Bit-level dynamically composable
     architecture for accelerating deep neural networks. In Proceedings of the 45th
@@ -3843,6 +4267,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[138] Hardik Sharma, Jongse Park, Naveen Suda, Liangzhen Lai, Benson Chau,
+    Vikas Chandra, 和 Hadi Esmaeilzadeh. 位融合：用于加速深度神经网络的位级动态可组合架构. 见《第45届年度国际计算机体系结构研讨会（ISCA
+    ’18）》，页 764–775\. IEEE Press, 2018年。'
 - en: '[139] Jonghan Shin and C. Koch. Dynamic range and sensitivity adaptation in
     a silicon spiking neuron. IEEE Transactions on Neural Networks, 10(5):1232–1238,
     1999.'
@@ -3850,6 +4277,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[139] Jonghan Shin 和 C. Koch. 硅尖峰神经元中的动态范围和灵敏度适应. 《IEEE 神经网络汇刊》, 10(5):1232–1238,
+    1999年。'
 - en: '[140] Mario F. Simoni, Gennady S. Cymbalyuk, Michael Elliott Sorensen, Ronald L.
     Calabrese, and Stephen P. DeWeerth. Development of hybrid systems: Interfacing
     a silicon neuron to a leech heart interneuron. In Todd K. Leen, Thomas G. Dietterich,
@@ -3860,6 +4289,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[140] Mario F. Simoni, Gennady S. Cymbalyuk, Michael Elliott Sorensen, Ronald
+    L. Calabrese, 和 Stephen P. DeWeerth. 混合系统的发展：将硅神经元与蚂蟥心脏中间神经元连接. 见 Todd K. Leen,
+    Thomas G. Dietterich, 和 Volker Tresp 编著，《神经信息处理系统 13》，《神经信息处理系统（NeurIPS）2000》论文集,
+    丹佛, CO, USA, 页 173–179\. MIT Press, 2000年。'
 - en: '[141] M.F. Simoni, G.S. Cymbalyuk, M.E. Sorensen, R.L. Calabrese, and S.P.
     DeWeerth. A multiconductance silicon neuron with biologically matched dynamics.
     IEEE Transactions on Biomedical Engineering, 51(2):342–354, 2004.'
@@ -3867,6 +4300,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[141] M.F. Simoni, G.S. Cymbalyuk, M.E. Sorensen, R.L. Calabrese, 和 S.P. DeWeerth.
+    一种具有生物匹配动态的多导电硅神经元. 《IEEE 生物医学工程汇刊》, 51(2):342–354, 2004年。'
 - en: '[142] M.F. Simoni and S.P. DeWeerth. Adaptation in a vlsi model of a neuron.
     IEEE Transactions on Circuits and Systems II: Analog and Digital Signal Processing,
     46(7):967–970, 1999.'
@@ -3874,6 +4309,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[142] M.F. Simoni 和 S.P. DeWeerth. 神经元的 VLSI 模型中的适应性. 《IEEE 电路与系统 II: 模拟与数字信号处理》,
+    46(7):967–970, 1999年。'
 - en: '[143] Suraj Srinivas and R. Venkatesh Babu. Data-free parameter pruning for
     deep neural networks. In Proceedings of the British Machine Vision Conference
     (BMVC), pages 31.1–31.12\. BMVA Press, September 2015.'
@@ -3881,6 +4318,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[143] Suraj Srinivas 和 R. Venkatesh Babu. 无数据参数修剪用于深度神经网络. 见《英国机器视觉会议（BMVC）论文集》，页
+    31.1–31.12\. BMVA Press, 2015年9月。'
 - en: '[144] Xiao Sun, Jungwook Choi, Chia-Yu Chen, Naigang Wang, Swagath Venkataramani,
     Vijayalakshmi (Viji) Srinivasan, Xiaodong Cui, Wei Zhang, and Kailash Gopalakrishnan.
     Hybrid 8-bit floating point (hfp8) training and inference for deep neural networks.
@@ -3890,6 +4329,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[144] Xiao Sun, Jungwook Choi, Chia-Yu Chen, Naigang Wang, Swagath Venkataramani,
+    Vijayalakshmi (Viji) Srinivasan, Xiaodong Cui, Wei Zhang, 和 Kailash Gopalakrishnan.
+    深度神经网络的混合 8 位浮点 (hfp8) 训练和推断. 见《神经信息处理系统 32》，页 4900–4909\. Curran Associates,
+    Inc., 2019年。'
 - en: '[145] V. Sze, Y. Chen, T. Yang, and J. S. Emer. Efficient processing of deep
     neural networks: A tutorial and survey. Proceedings of the IEEE, 105(12):2295–2329,
     2017.'
@@ -3897,6 +4340,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[145] V. Sze, Y. Chen, T. Yang, 和 J. S. Emer. 高效处理深度神经网络：教程与调查. 《IEEE 汇刊》,
+    105(12):2295–2329, 2017年。'
 - en: '[146] Thierry Tambe, En-Yu Yang, Zishen Wan, Yuntian Deng, Vijay Janapa Reddi,
     Alexander Rush, David Brooks, and Gu-Yeon Wei. Algorithm-hardware co-design of
     adaptive floating-point encodings for resilient deep learning inference. In 2020
@@ -3905,6 +4350,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[146] Thierry Tambe, En-Yu Yang, Zishen Wan, Yuntian Deng, Vijay Janapa Reddi,
+    Alexander Rush, David Brooks, 和 Gu-Yeon Wei. 自适应浮点编码的算法-硬件协同设计以提高深度学习推断的鲁棒性. 见《2020年第57届ACM/IEEE设计自动化会议（DAC）》，页
+    1–6, 2020年。'
 - en: '[147] Mingxing Tan, Bo Chen, Ruoming Pang, Vijay Vasudevan, Mark Sandler, Andrew
     Howard, and Quoc V. Le. Mnasnet: Platform-aware neural architecture search for
     mobile. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
@@ -3913,6 +4361,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[147] Mingxing Tan, Bo Chen, Ruoming Pang, Vijay Vasudevan, Mark Sandler, Andrew
+    Howard, 和 Quoc V. Le。Mnasnet：针对移动设备的面向平台的神经架构搜索。在IEEE/CVF计算机视觉与模式识别会议（CVPR）论文集，2019年6月。'
 - en: '[148] Mingxing Tan and Quoc Le. EfficientNet: Rethinking model scaling for
     convolutional neural networks. volume 97 of Proceedings of Machine Learning Research,
     pages 6105–6114, Long Beach, California, USA, 09–15 Jun 2019\. PMLR.'
@@ -3920,6 +4370,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[148] Mingxing Tan 和 Quoc Le。EfficientNet：重新思考卷积神经网络的模型缩放。《机器学习研究会议论文集》第97卷，第6105–6114页，美国加利福尼亚州长滩，2019年6月9–15日。PMLR。'
 - en: '[149] Mingxing Tan, Ruoming Pang, and Quoc V. Le. Efficientdet: Scalable and
     efficient object detection. In Proceedings of the IEEE/CVF Conference on Computer
     Vision and Pattern Recognition (CVPR), June 2020.'
@@ -3927,6 +4378,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[149] Mingxing Tan, Ruoming Pang, 和 Quoc V. Le。Efficientdet：可扩展且高效的目标检测。在IEEE/CVF计算机视觉与模式识别会议（CVPR）论文集，2020年6月。'
 - en: '[150] Surat Teerapittayanon, Bradley McDanel, and H.T. Kung. Branchynet: Fast
     inference via early exiting from deep neural networks. In 2016 23rd International
     Conference on Pattern Recognition (ICPR), pages 2464–2469, 2016.'
@@ -3934,6 +4386,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[150] Surat Teerapittayanon, Bradley McDanel, 和 H.T. Kung。Branchynet：通过深度神经网络的早期退出实现快速推理。在2016年第23届国际模式识别大会（ICPR），第2464–2469页，2016年。'
 - en: '[151] Surat Teerapittayanon, Bradley McDanel, and H.T. Kung. Distributed deep
     neural networks over the cloud, the edge and end devices. In 2017 IEEE 37th International
     Conference on Distributed Computing Systems (ICDCS), pages 328–339, 2017.'
@@ -3941,12 +4394,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[151] Surat Teerapittayanon, Bradley McDanel, 和 H.T. Kung。云端、边缘及终端设备上的分布式深度神经网络。在2017年第37届IEEE国际分布式计算系统会议（ICDCS），第328–339页，2017年。'
 - en: '[152] Chandra Thapa, M. A. P. Chamikara, Seyit Camtepe, and Lichao Sun. Splitfed:
     When federated learning meets split learning, 2021.'
   id: totrans-427
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[152] Chandra Thapa, M. A. P. Chamikara, Seyit Camtepe, 和 Lichao Sun。Splitfed：当联邦学习遇到分割学习，2021年。'
 - en: '[153] Stephen Tridgell, Martin Kumm, Martin Hardieck, David Boland, Duncan
     Moss, Peter Zipf, and Philip H. W. Leong. Unrolling ternary neural networks. ACM
     Trans. Reconfigurable Technol. Syst., 12(4), October 2019.'
@@ -3954,12 +4409,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[153] Stephen Tridgell, Martin Kumm, Martin Hardieck, David Boland, Duncan
+    Moss, Peter Zipf, 和 Philip H. W. Leong。展开三元神经网络。《ACM可重构技术系统汇刊》，12(4)，2019年10月。'
 - en: '[154] Robert van de Geijn and Kazushige Goto. BLAS (Basic Linear Algebra Subprograms),
     pages 157–164. Springer US, Boston, MA, 2011.'
   id: totrans-429
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[154] Robert van de Geijn 和 Kazushige Goto。BLAS（基础线性代数子程序），第157–164页。Springer
+    US，波士顿，MA，2011年。'
 - en: '[155] Vincent Vanhoucke, Andrew Senior, and Mark Z. Mao. Improving the speed
     of neural networks on cpus. In Deep Learning and Unsupervised Feature Learning
     Workshop, NeurIPS 2011, 2011.'
@@ -3967,6 +4426,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[155] Vincent Vanhoucke, Andrew Senior, 和 Mark Z. Mao。在CPU上提高神经网络速度。在深度学习与无监督特征学习研讨会，NeurIPS
+    2011，2011年。'
 - en: '[156] S. Vogel, M. Liang, A. Guntoro, W. Stechele, and G. Ascheid. Efficient
     hardware acceleration of cnns using logarithmic data representation with arbitrary
     log-base. In 2018 IEEE/ACM International Conference on Computer-Aided Design (ICCAD),
@@ -3975,6 +4436,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[156] S. Vogel, M. Liang, A. Guntoro, W. Stechele, 和 G. Ascheid。使用任意对数基数的对数数据表示进行CNNs的高效硬件加速。在2018
+    IEEE/ACM国际计算机辅助设计会议（ICCAD），第1–8页，2018年。'
 - en: '[157] Erwei Wang, James J. Davis, Ruizhe Zhao, Ho-Cheung Ng, Xinyu Niu, Wayne
     Luk, Peter Y. K. Cheung, and George A. Constantinides. Deep neural network approximation
     for custom hardware: Where we’ve been, where we’re going. ACM Comput. Surv., 52(2),
@@ -3983,6 +4446,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[157] Erwei Wang, James J. Davis, Ruizhe Zhao, Ho-Cheung Ng, Xinyu Niu, Wayne
+    Luk, Peter Y. K. Cheung, 和 George A. Constantinides。定制硬件的深度神经网络逼近：我们曾经走过的路与未来的方向。《ACM计算机调查》，52(2)，2019年5月。'
 - en: '[158] Naigang Wang, Jungwook Choi, Daniel Brand, Chia-Yu Chen, and Kailash
     Gopalakrishnan. Training deep neural networks with 8-bit floating point numbers.
     In S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, and R. Garnett,
@@ -3992,6 +4457,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[158] Naigang Wang, Jungwook Choi, Daniel Brand, Chia-Yu Chen, 和 Kailash Gopalakrishnan。使用8位浮点数训练深度神经网络。在S.
+    Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, 和 R. Garnett主编的《神经信息处理系统进展31》中，第7675–7684页。Curran
+    Associates, Inc.，2018年。'
 - en: '[159] Peisong Wang, Xiangyu He, Qiang Chen, Anda Cheng, Qingshan Liu, and Jian
     Cheng. Unsupervised network quantization via fixed-point factorization. IEEE Transactions
     on Neural Networks and Learning Systems, 2020.'
@@ -3999,18 +4467,22 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[159] Peisong Wang, Xiangyu He, Qiang Chen, Anda Cheng, Qingshan Liu, 和 Jian
+    Cheng。通过定点分解进行无监督网络量化。《IEEE神经网络与学习系统汇刊》，2020年。'
 - en: '[160] P. J. Werbos. Backpropagation through time: what it does and how to do
     it. Proceedings of the IEEE, 78(10):1550–1560, 1990.'
   id: totrans-435
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[160] P. J. Werbos。时间反向传播：它的作用及如何实现。IEEE期刊，78(10):1550–1560，1990年。'
 - en: '[161] J. H. Wilkinson, editor. The Algebraic Eigenvalue Problem. Oxford University
     Press, Inc., New York, NY, USA, 1988.'
   id: totrans-436
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[161] J. H. Wilkinson，编辑。代数特征值问题。牛津大学出版社，纽约，美国，1988年。'
 - en: '[162] Samuel Williams, Andrew Waterman, and David Patterson. Roofline: An insightful
     visual performance model for multicore architectures. Commun. ACM, 52(4):65–76,
     April 2009.'
@@ -4018,12 +4490,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[162] 塞缪尔·威廉姆斯、安德鲁·沃特曼和大卫·帕特森。Roofline：一种深入的多核架构视觉性能模型。ACM通信，52(4):65–76，2009年4月。'
 - en: '[163] H. R. Wilson and Jack D. Cowan. Excitatory and inhibitory interactions
     in localized populations of model neurons. Biophysical Journal, 12:1–24, 1972.'
   id: totrans-438
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[163] H. R. Wilson和Jack D. Cowan。模型神经元局部群体中的兴奋性和抑制性交互。生物物理学期刊，12:1–24，1972年。'
 - en: '[164] Bichen Wu, Xiaoliang Dai, Peizhao Zhang, Yanghan Wang, Fei Sun, Yiming
     Wu, Yuandong Tian, Peter Vajda, Yangqing Jia, and Kurt Keutzer. Fbnet: Hardware-aware
     efficient convnet design via differentiable neural architecture search. In Proceedings
@@ -4033,6 +4507,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[164] 吴碧辰、戴晓亮、张佩昭、王杨汉、孙飞、吴易铭、田宇东、彼得·瓦伊达、贾阳清和库尔特·克佐特。Fbnet：通过可微分神经网络架构搜索的硬件感知高效卷积网络设计。发表于IEEE/CVF计算机视觉与模式识别会议论文集，2019年6月。'
 - en: '[165] Hao Wu, Patrick Judd, Xiaojie Zhang, Mikhail Isaev, and Paulius Micikevicius.
     Integer quantization for deep learning inference: Principles and empirical evaluation,
     2020.'
@@ -4040,12 +4515,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[165] 吴浩、帕特里克·贾德、张晓杰、米哈伊尔·伊萨耶夫和保柳斯·米奇凯维休斯。深度学习推理的整数量化：原理与实证评估，2020年。'
 - en: '[166] Shuang Wu, Guoqi Li, Feng Chen, and Luping Shi. Training and inference
     with integers in deep neural networks. arXiv preprint arXiv:1802.04680, 2018.'
   id: totrans-441
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[166] 吴双、李国琪、陈锋和石路平。在深度神经网络中使用整数进行训练和推理。arXiv预印本arXiv:1802.04680，2018年。'
 - en: '[167] Saining Xie, Ross Girshick, Piotr Dollár, Zhuowen Tu, and Kaiming He.
     Aggregated residual transformations for deep neural networks. In 2017 IEEE Conference
     on Computer Vision and Pattern Recognition (CVPR), pages 5987–5995, 2017.'
@@ -4053,6 +4530,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[167] 谢赛宁、罗斯·吉尔希克、皮奥特·多拉尔、屠卓文和何恺明。深度神经网络的聚合残差变换。发表于2017年IEEE计算机视觉与模式识别会议（CVPR）论文集，第5987–5995页，2017年。'
 - en: '[168] Xin Xin, Youtao Zhang, and Jun Yang. Elp2im: Efficient and low power
     bitwise operation processing in dram. In 2020 IEEE International Symposium on
     High Performance Computer Architecture (HPCA), pages 303–314, 2020.'
@@ -4060,6 +4538,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[168] 辛鑫、张友涛和杨俊。Elp2im：在DRAM中高效低功耗的逐位操作处理。发表于2020年IEEE国际高性能计算架构研讨会（HPCA）论文集，第303–314页，2020年。'
 - en: '[169] Jiwei Yang, Xu Shen, Jun Xing, Xinmei Tian, Houqiang Li, Bing Deng, Jianqiang
     Huang, and Xian-sheng Hua. Quantization networks. In Proceedings of the IEEE/CVF
     Conference on Computer Vision and Pattern Recognition, pages 7308–7316, 2019.'
@@ -4067,6 +4546,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[169] 杨季伟、沈旭、邢俊、田欣美、李厚强、邓冰、黄建强和华贤生。量化网络。发表于IEEE/CVF计算机视觉与模式识别会议论文集，第7308–7316页，2019年。'
 - en: '[170] Tien-Ju Yang, Yu-Hsin Chen, and Vivienne Sze. Designing energy-efficient
     convolutional neural networks using energy-aware pruning. In Proceedings of the
     IEEE Conference on Computer Vision and Pattern Recognition (CVPR), July 2017.'
@@ -4074,6 +4554,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[170] 杨天钧、陈玉欣和维维安·斯泽。利用能量感知剪枝设计节能卷积神经网络。发表于IEEE计算机视觉与模式识别会议（CVPR）论文集，2017年7月。'
 - en: '[171] Tien-Ju Yang, Andrew Howard, Bo Chen, Xiao Zhang, Alec Go, Mark Sandler,
     Vivienne Sze, and Hartwig Adam. Netadapt: Platform-aware neural network adaptation
     for mobile applications. In Vittorio Ferrari, Martial Hebert, Cristian Sminchisescu,
@@ -4083,6 +4564,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[171] 杨天钧、安德鲁·霍华德、陈博、张晓、亚历克·戈、马克·桑德勒、维维安·斯泽和哈特维格·亚当。Netadapt：针对移动应用的感知平台神经网络适配。编者：维托里奥·费拉里、马歇尔·赫伯特、克里斯蒂安·斯敏基塞斯库和亚伊尔·韦斯，计算机视觉—ECCV
+    2018，第289–304页，Cham，2018年。Springer国际出版公司。'
 - en: '[172] Yukuan Yang, Lei Deng, Shuang Wu, Tianyi Yan, Yuan Xie, and Guoqi Li.
     Training high-performance and large-scale deep neural networks with full 8-bit
     integers. Neural Networks, 125:70 – 82, 2020.'
@@ -4090,6 +4573,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[172] 杨雨泉、邓磊、吴双、阎天毅、谢元和李国琪。使用完整8位整数训练高性能大规模深度神经网络。神经网络，125:70–82，2020年。'
 - en: '[173] Shuochao Yao, Jinyang Li, Dongxin Liu, Tianshi Wang, Shengzhong Liu,
     Huajie Shao, and Tarek Abdelzaher. Deep compressive offloading: Speeding up neural
     network inference by trading edge computation for network latency. In Proceedings
@@ -4099,6 +4583,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[173] Shuochao Yao, Jinyang Li, Dongxin Liu, Tianshi Wang, Shengzhong Liu,
+    Huajie Shao, 和 Tarek Abdelzaher。深度压缩卸载：通过以边缘计算换取网络延迟来加速神经网络推断。发表于第18届嵌入式网络传感系统会议论文集，SenSys
+    ’20，第 476–488 页，纽约，NY，美国，2020年。计算机协会。'
 - en: '[174] Reza Yazdani, Marc Riera, Jose-Maria Arnau, and Antonio González. The
     dark side of dnn pruning. In Proceedings of the 45th Annual International Symposium
     on Computer Architecture, ISCA ’18, page 790–801\. IEEE Press, 2018.'
@@ -4106,6 +4593,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[174] Reza Yazdani, Marc Riera, Jose-Maria Arnau, 和 Antonio González。DNN 剪枝的黑暗面。发表于第45届国际计算机体系结构年会论文集，ISCA
+    ’18，第 790–801 页。IEEE Press，2018年。'
 - en: '[175] S. Yin, Z. Jiang, J. Seo, and M. Seok. Xnor-sram: In-memory computing
     sram macro for binary/ternary deep neural networks. IEEE Journal of Solid-State
     Circuits, 55(6):1733–1743, 2020.'
@@ -4113,12 +4602,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[175] S. Yin, Z. Jiang, J. Seo, 和 M. Seok。Xnor-sram：用于二进制/三元深度神经网络的内存计算 SRAM
+    宏。《IEEE 固态电路期刊》，55(6)：1733–1743，2020年。'
 - en: '[176] Chris Ying, Sameer Kumar, Dehao Chen, Tao Wang, and Youlong Cheng. Image
     classification at supercomputer scale. arXiv preprint arXiv:1811.06992, 2018.'
   id: totrans-451
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[176] Chris Ying, Sameer Kumar, Dehao Chen, Tao Wang, 和 Youlong Cheng。在超级计算机规模下的图像分类。arXiv
+    预印本 arXiv:1811.06992，2018年。'
 - en: '[177] Jiahui Yu, Linjie Yang, Ning Xu, Jianchao Yang, and Thomas Huang. Slimmable
     neural networks. In ICLR ’19: International Conference on Learning Representations,
     2019.'
@@ -4126,6 +4619,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[177] Jiahui Yu, Linjie Yang, Ning Xu, Jianchao Yang, 和 Thomas Huang。可缩放神经网络。发表于
+    ICLR ’19：国际学习表征会议，2019年。'
 - en: '[178] R. Yu, A. Li, C. Chen, J. Lai, V. I. Morariu, X. Han, M. Gao, C. Lin,
     and L. S. Davis. Nisp: Pruning networks using neuron importance score propagation.
     In 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages
@@ -4134,6 +4629,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[178] R. Yu, A. Li, C. Chen, J. Lai, V. I. Morariu, X. Han, M. Gao, C. Lin,
+    和 L. S. Davis。NISP：使用神经元重要性评分传播进行网络剪枝。发表于 2018 年 IEEE/CVF 计算机视觉与模式识别会议，第 9194–9203
+    页，2018年。'
 - en: '[179] Matthew D. Zeiler and Rob Fergus. Visualizing and understanding convolutional
     networks. In David Fleet, Tomas Pajdla, Bernt Schiele, and Tinne Tuytelaars, editors,
     Computer Vision – ECCV 2014, pages 818–833, Cham, 2014. Springer International
@@ -4142,6 +4640,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[179] Matthew D. Zeiler 和 Rob Fergus。可视化和理解卷积网络。发表于 David Fleet, Tomas Pajdla,
+    Bernt Schiele, 和 Tinne Tuytelaars 主编的《计算机视觉 – ECCV 2014》，第 818–833 页，Cham，2014年。Springer
+    International Publishing。'
 - en: '[180] C. Zhang, P. Patras, and H. Haddadi. Deep learning in mobile and wireless
     networking: A survey. IEEE Communications Surveys Tutorials, 21(3):2224–2287,
     2019.'
@@ -4149,6 +4650,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[180] C. Zhang, P. Patras, 和 H. Haddadi。移动和无线网络中的深度学习：综述。《IEEE通讯调查与教程》，21(3)：2224–2287，2019年。'
 - en: '[181] X. Zhang, X. Zhou, M. Lin, and J. Sun. Shufflenet: An extremely efficient
     convolutional neural network for mobile devices. In 2018 IEEE/CVF Conference on
     Computer Vision and Pattern Recognition, pages 6848–6856, 2018.'
@@ -4156,6 +4658,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[181] X. Zhang, X. Zhou, M. Lin, 和 J. Sun。Shufflenet：一种极其高效的移动设备卷积神经网络。发表于
+    2018 年 IEEE/CVF 计算机视觉与模式识别会议，第 6848–6856 页，2018年。'
 - en: '[182] Xishan Zhang, Shaoli Liu, Rui Zhang, Chang Liu, Di Huang, Shiyi Zhou,
     Jiaming Guo, Qi Guo, Zidong Du, Tian Zhi, and Yunji Chen. Fixed-point back-propagation
     training. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
@@ -4164,6 +4668,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[182] Xishan Zhang, Shaoli Liu, Rui Zhang, Chang Liu, Di Huang, Shiyi Zhou,
+    Jiaming Guo, Qi Guo, Zidong Du, Tian Zhi, 和 Yunji Chen。定点反向传播训练。发表于 IEEE/CVF 计算机视觉与模式识别会议（CVPR），2020年6月。'
 - en: '[183] Yongwei Zhao, Chang Liu, Zidong Du, Qi Guo, Xing Hu, Yimin Zhuang, Zhenxing
     Zhang, Xinkai Song, Wei Li, Xishan Zhang, Ling Li, Zhiwei Xu, and Tianshi Chen.
     Cambricon-q: A hybrid architecture for efficient training. In 2021 ACM/IEEE 48th
@@ -4173,6 +4679,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[183] Yongwei Zhao, Chang Liu, Zidong Du, Qi Guo, Xing Hu, Yimin Zhuang, Zhenxing
+    Zhang, Xinkai Song, Wei Li, Xishan Zhang, Ling Li, Zhiwei Xu, 和 Tianshi Chen。Cambricon-q：一种高效训练的混合架构。发表于
+    2021 年 ACM/IEEE 第48届国际计算机体系结构年会（ISCA），第 706–719 页，2021年。'
 - en: '[184] Shuchang Zhou, Yuxin Wu, Zekun Ni, Xinyu Zhou, He Wen, and Yuheng Zou.
     Dorefa-net: Training low bitwidth convolutional neural networks with low bitwidth
     gradients, 2018.'
@@ -4180,6 +4689,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[184] Shuchang Zhou, Yuxin Wu, Zekun Ni, Xinyu Zhou, He Wen, 和 Yuheng Zou。Dorefa-net：使用低位宽梯度训练低位宽卷积神经网络，2018年。'
 - en: '[185] Chenzhuo Zhu, Song Han, Huizi Mao, and William J. Dally. Trained ternary
     quantization. In ICLR ’17: International Conference on Learning Representations,
     2017.'
@@ -4187,6 +4697,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[185] Chenzhuo Zhu, Song Han, Huizi Mao, 和 William J. Dally。训练三元量化。发表于 ICLR
+    ’17：国际学习表征会议，2017年。'
 - en: '[186] Feng Zhu, Ruihao Gong, Fengwei Yu, Xianglong Liu, Yanfei Wang, Zhelong
     Li, Xiuqi Yang, and Junjie Yan. Towards unified int8 training for convolutional
     neural network. In 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition
@@ -4195,9 +4707,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[186] Feng Zhu, Ruihao Gong, Fengwei Yu, Xianglong Liu, Yanfei Wang, Zhelong
+    Li, Xiuqi Yang 和 Junjie Yan。朝着统一的 int8 训练卷积神经网络。在 2020 IEEE/CVF 计算机视觉与模式识别会议（CVPR），第
+    1966–1976 页，2020年。'
 - en: '[187] Barret Zoph and Quoc Le. Neural architecture search with reinforcement
     learning. In ICLR ’17: International Conference on Learning Representations, 2017.'
   id: totrans-462
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[187] Barret Zoph 和 Quoc Le。利用强化学习进行神经网络结构搜索。在 ICLR ’17：国际学习表征会议，2017年。'
