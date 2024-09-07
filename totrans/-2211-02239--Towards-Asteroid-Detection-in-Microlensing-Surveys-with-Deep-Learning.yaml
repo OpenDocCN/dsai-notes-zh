@@ -188,6 +188,15 @@
   id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: Zoghbi 等人 ([2017](#bib.bib41)) 成功地将卷积和递归架构应用于减少天文学家在 CAMS 数据中寻找长期周期彗星碎片时需要审查的数据量¹¹1http://cams.seti.org/。Lieu
+    等人 ([2018](#bib.bib20)) 将神经网络应用于 ESA 的欧几里得空间望远镜²²2https://sci.esa.int/web/euclid/
+    数据模拟中小型太阳系物体（SSO）的检测任务。他们成功使用了迁移学习，并重新训练了 TensorFlow 的 Keras Applications 库中的三个架构³³3https://keras.io/api/applications/，以区分小行星的邮票剪切图像与常被误认为是小行星的物体，如宇宙射线、星星和银河系。Duev
+    等人 ([2019](#bib.bib9)) 介绍了 DeepStreaks，以帮助 ZTF⁴⁴4https://www.ztf.caltech.edu/
+    在寻找近地小行星的过程中，该小行星在观测中呈现为条纹。他们的模型显著减少了需要审核的候选检测数量，同时没有牺牲检测灵敏度。Rabeendran 和 Denneau
+    ([2021](#bib.bib24)) 将深度学习应用于 ATLAS⁵⁵5https://atlas.fallingstar.com/home.php 流程，以寻找近地物体。这在捕捉近
+    90% 的假阳性检测中取得了成功，从而大大加快了后续观测的速度。Duev 等人 ([2021](#bib.bib8)) 介绍了 Tails，该方法包括训练一个物体检测器，以基于其独特的形态学发现彗星，并且现在已成为
+    ZTF 检测流程的一部分。最后，Kruk 等人 ([2022](#bib.bib18)) 使用深度学习在哈勃太空望远镜（HST）⁶⁶6https://hubblesite.org/
+    的档案数据中寻找小行星轨迹。他们使用复合 HST 图像来使小行星轨迹变长，从而更容易检测。他们的研究还展示了公民科学在标记数据方面的优点，以及利用基于深度学习的工具包挖掘档案数据中的小行星。
 - en: We have seen that an important aspect of finding asteroids in survey data is
     isolating the sources that indicate a candidate object. In the case of microlensing
     data, this task is all the more challenging because of the extremely dense star
@@ -198,6 +207,7 @@
   id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经看到，在调查数据中发现小行星的重要方面是隔离出指示候选对象的源。在引力微透镜数据的情况下，这一任务更加具有挑战性，因为观察到的星场极其密集，甚至参考减去的图像中也包含了大量伪影。因此，我们提出了一种技术，旨在提取可能代表小行星轨道弧一部分的源簇，而不是先提取源然后建立它们之间的联系。
 - en: We present the methodology to create labelled datasets suitable for supervised
     learning, followed by convolutional neural network-based architectures for finding
     asteroids tracklets in microlensing surveys. Our classification models facilitate
@@ -209,11 +219,13 @@
   id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们展示了创建适用于监督学习的标记数据集的方法，其后是基于卷积神经网络的架构，用于在微引力透镜调查中寻找小行星轨迹。我们的分类模型有助于减少需要审查的数据量，而目标检测模型则定位分类器候选检测中的潜在轨迹。目标检测器预测的边界框随后可以用来提取潜在源，这些源可以传递给轨道链接软件，如HeliolinC，以确定它们是否为有效的太阳系-bound物体。
 - en: '2 MOA: Microlensing Observations in Astrophysics'
   id: totrans-21
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '2 MOA: 微引力透镜天文学观察'
 - en: 'This research utilizes archival data from the MOA (Microlensing Observations
     in Astrophysics) project, which is a Japan/New Zealand collaboration specialising
     in the search for gravitational microlensing events. They have been operating
@@ -232,6 +244,11 @@
   id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: '本研究利用了 MOA（微引力透镜天文学观察）项目的档案数据，该项目是一个日本/新西兰合作项目，专门研究引力微透镜事件。自2004年起，他们在约翰山天文台运营1.8米MOA-II光学研究望远镜。该望远镜配备了一个名为
+    MOA-cam3（Sako et al. ([2008](#bib.bib30))) 的广角马赛克CCD相机，由10个CCD芯片组成。每个CCD芯片的尺寸为3厘米
+    x 6厘米，具有2048 x 4096像素，分辨率为每像素0.01角分/0.6角秒。每次曝光持续60秒，所有图像都在定制的广角MOA-R带（630-1000纳米）下拍摄。中位FWHM视距为1.7角秒。光度精度通常为0.01等或更好（对于I亮于16），以及0.02等（对于I18）。该望远镜的总视场为1.7
+    x 1.4平方度。图 [1](#S2.F1 "Figure 1 ‣ 2 MOA: Microlensing Observations in Astrophysics
+    ‣ Towards Asteroid Detection in Microlensing Surveys with Deep Learning") 展示了称为GB1的调查场。CCD芯片按顺时针方向编号1至10，从左上角开始。'
 - en: MOA-II surveys the Galactic Bulge (GB) and the Large Magellanic Cloud (LMC),
     both of which are regions of the sky that are densely packed with stars. It operates
     at a high sampling rate, with some fields surveyed as often as every 10 minutes,
@@ -251,20 +268,27 @@
   id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: MOA-II 调查了银河系膨胀体（GB）和大麦哲伦云（LMC），这两个区域的天空中星星密集。它以高采样率运行，一些区域的调查频率高达每`10 min`，这使得它特别适合观察短时事件。MOA
+    图像处理管道生成差异图像（Tomaney 和 Crotts ([1996](#bib.bib35))；Alard 和 Lupton ([1998](#bib.bib2))；Alard
+    ([2000](#bib.bib1))；Bramich ([2008](#bib.bib5))；Bond 等 ([2001](#bib.bib4))），其中将新观察图像从相同区域的参考图像中减去。生成的差异图像突出了自参考图像拍摄以来的变化。这些变化可能是瞬态天文现象（如微引力透镜事件或小行星）或噪声。噪声可能是由于过亮的饱和星、减法不完善、卫星轨迹、仪器误差、大气尘埃、差分折射或接近明亮天文物体（如月球）。由于
+    MOA-II 调查的区域非常密集，特别是微弱的小行星在原始观察图像中几乎无法识别。因此，MOA 差异图像成为本研究数据集的基础。
 - en: '![Refer to caption](img/b801f1a8e3e7ee626fe1a9c935f0f4c0.png)'
   id: totrans-24
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/b801f1a8e3e7ee626fe1a9c935f0f4c0.png)'
 - en: 'Figure 1: A single observation of the Galactic Bulge field, GB1, surveyed by
     MOA-II. North is right to left and east is bottom to top.'
   id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 1：MOA-II 调查的银河系膨胀体字段 GB1 的单次观察。北方为从右到左，东方为从下到上。
 - en: 3 Building the Dataset
   id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 3 构建数据集
 - en: The Galactic Bulge is visible in the Southern Hemisphere between February and
     October. A combination of long nights and Bulge elevation in the mid-winter months
     make them the best time for observation. On clear nights with good seeing conditions,
@@ -282,28 +306,38 @@
   id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 银河系膨胀体在南半球的可见时间为 2 月到 10 月。长夜和膨胀体在冬季中期的高度使得这个时间段最适合观察。在清晰的夜晚和良好的观测条件下，MOA-II
+    的多个区域被频繁调查，有时每`10 min`调查一次。这为观察我们太阳系的小行星提供了理想条件。图 [2](#S3.F2 "图 2 ‣ 3 构建数据集 ‣
+    使用深度学习进行微引力透镜调查中的小行星探测") 演示了这一点，对一个明亮的主带小行星（78153）2002 NX24 进行了六次观察，限界星等（V）为 17.5，拍摄间隔为
+    10-12 分钟，日期为 2006 年 6 月 23 日。这个小行星的光曲线可以在图 [3](#S3.F3 "图 3 ‣ 3 构建数据集 ‣ 使用深度学习进行微引力透镜调查中的小行星探测")
+    中看到。天空平面速度约为每分钟 0.5 弧秒，这代表了 MOA-II 捕捉到的小行星。
 - en: '![Refer to caption](img/b2a44eaec5e32b886ffa0df3483c4dd1.png)'
   id: totrans-28
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/b2a44eaec5e32b886ffa0df3483c4dd1.png)'
 - en: 'Figure 2: Six consecutive observations of the asteroid (78153) 2002 NX24 on
     23-June-2006, spanning 70 x 108 arcseconds.'
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2：2006 年 6 月 23 日，对小行星（78153）2002 NX24 的六次连续观察，跨度为 70 x 108 弧秒。
 - en: '![Refer to caption](img/cf625d3b4b0d5dc727960ff5d55f195c.png)'
   id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/cf625d3b4b0d5dc727960ff5d55f195c.png)'
 - en: 'Figure 3: Light curve of asteroid (78153) 2002 NX24 extracted from the MOA-II
     data.'
   id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 3：从 MOA-II 数据中提取的小行星（78153）2002 NX24 的光曲线。
 - en: '![Refer to caption](img/9ff2bfe14f1c0f60f77d99a7456e9e9d.png)'
   id: totrans-32
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/9ff2bfe14f1c0f60f77d99a7456e9e9d.png)'
 - en: 'Figure 4: Measured MOA flux vs the MPC V magnitude for asteroids recovered
     from GB5-R5\. The MPC value is reported to one decimal place and the results are
     binned in 0.1 magnitude bins. The red dots represents the median values of the
@@ -379,6 +413,9 @@
   id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 来自MPC的历书数据以及特定于MOA-II的天文测量校准被用来推断从减去的堆叠图像中小行星轨迹片段的最小和最大（x，y）位置。这被用来裁剪预期包含轨迹片段的堆叠图像的子区域。超出CCD芯片边界的小行星被忽略。此外，通过对轨迹片段的目视检查，确定只有20.5等或更亮的小行星在MOA-II曝光中可见。这也与我们在图[4](#S3.F4
+    "图4 ‣ 3 数据集构建 ‣ 利用深度学习进行微引力透镜调查中的小行星检测")中看到的情况一致，其中V 21周围的中位数通量趋于平坦，类似于测量背景。19.5到20.5等之间的对象通常处于可见性边缘，需要优良的观测条件和高信噪比才能在观测中显现。对图像的仔细检查结果是，在1178个不同的小行星中，获得了2073个轨迹片段，覆盖1078个不同的夜晚。图[6](#S3.F6
+    "图6 ‣ 3 数据集构建 ‣ 利用深度学习进行微引力透镜调查中的小行星检测")（374 x 387角秒）展示了2008年5月15日夜晚观测到的一些轨迹片段，其中一些轨迹片段非常微弱。
 - en: Tracklets come in a variety of sizes, but we need images of a uniform size for
     training neural networks. The original size of the observations was deemed too
     big to be used as is because of the computational cost as well as the potential
@@ -390,10 +427,13 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 轨迹片段有多种大小，但我们需要统一尺寸的图像来训练神经网络。由于计算成本以及轨迹片段可能在图像中被其他伪影掩盖，观察的原始大小被认为太大，不能直接使用。因此，决定将每张图像拆分为128
+    x 128的瓦片，每张图像产生512个瓦片。每个128x128的瓦片覆盖76 x 76角秒。对于GB5-R5，这使我们从1078个夜间堆叠图像中获得了总计551,936张图像，其中包含可见的小行星轨迹片段。
 - en: '![Refer to caption](img/265ba679a900ea03e0e6c38493aebc21.png)'
   id: totrans-38
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/265ba679a900ea03e0e6c38493aebc21.png)'
 - en: 'Figure 5: Stacking all of a night’s observations (23-June-2006) on one chip
     in one field gives us a clear tracklet for asteroid (78153) 2002 NX24\. In (a)
     the observations are stacked by brightest pixel; in (b) they are stacked by the
@@ -401,10 +441,12 @@
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 图5：将一个夜晚的所有观测数据（2006年6月23日）叠加在一个芯片上的一个场中，我们获得了小行星（78153）2002 NX24的清晰轨迹片段。在(a)中，观测数据按最亮像素叠加；在(b)中，按中位数像素叠加；在(c)中，我们看到将(b)从(a)中减去的结果。
 - en: '![Refer to caption](img/939750fc6c00b7e012226a67aed0e76c.png)'
   id: totrans-40
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/939750fc6c00b7e012226a67aed0e76c.png)'
 - en: 'Figure 6: A stack of all 51 observations from the night of 15-May-2008 reveals
     5 asteroid tracklets clearly visible in a sub-region of the stack image. Numbered
     in order of appearance, these are: 1 - (103842) 2000 DQ33 (19.5); 2 - (148657)
@@ -416,6 +458,10 @@
   id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6：2008年5月15日晚的51次观察叠加图清晰地显示了5条小行星轨迹，这些轨迹在叠加图像的子区域内可见。按出现顺序编号，它们是：1 - (103842)
+    2000 DQ33 (19.5)；2 - (148657) 2001 SX124 (19.6)；3 - (152083) 2004 RH30 (19.9)；4
+    - (582743) 2016 AT221 (20.4)；5 - (338789) 2005 SZ154 (20.4)。左上角的线条/条纹来自卫星。此图像已被反转和加亮以提高可见性（原图见图
+    [15](#A1.F15 "图 15 ‣ 附录 A 原始图像 ‣ 通过深度学习在微引力透镜调查中进行小行星检测")）。
 - en: 'The Cohen-Sutherland line clipping algorithm (W. M. Newman and R. F. Sproull
     ([1973](#bib.bib37))) was next used to locate the asteroid tracklets within these
     images. The algorithm involves dividing a rectangular space (in this case, an
@@ -434,22 +480,29 @@
   id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 科恩-萨瑟兰线裁剪算法（W. M. Newman 和 R. F. Sproull ([1973](#bib.bib37)))接着用于在这些图像中定位小行星轨迹。该算法涉及将矩形空间（在此为图像）划分为九个区域
+    - 八个“外部”区域和一个“内部”区域，如图 [7](#S3.F7 "图 7 ‣ 3 构建数据集 ‣ 通过深度学习在微引力透镜调查中进行小行星检测")所示
+    - 并确定哪些线段（轨迹）完全或部分在感兴趣区域（图像）内。每个九个区域都有相关的外码（4位数字），这些外码是通过在将线段/轨迹的起始和结束点与图像坐标进行比较后进行按位操作计算得出的。例如，外码
+    0001 表示端点在左中心，外码 1000 表示端点在上中心。这两个代码的按位或操作返回 1001，这是一个非零值，而按位与操作返回 0000，即零，这反过来表明轨迹部分在图像内。因此，任何线段有三种可能的解决方案：
 - en: '1.'
   id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '1.'
 - en: If both endpoints of the line are inside the area of interest, the bitwise OR
     computation returns 0 (trivial accept).
   id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如果线段的两个端点都在感兴趣区域内，按位或计算返回 0（简易接受）。
 - en: '2.'
   id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '2.'
 - en: If both endpoints of the line are outside the area of interest, they will share
     at least one outside region and the bitwise AND computation returns a non 0 value
     (trivial reject).
@@ -457,11 +510,13 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如果线段的两个端点都在感兴趣区域外，它们将共享至少一个外部区域，按位与计算返回非零值（简易拒绝）。
 - en: '3.'
   id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '3.'
 - en: If both endpoints are in different regions, at least one endpoint will be outside
     the image tile. In this case, the intersection point of the tracklet’s outside
     point and image tile boundary becomes the new endpoint for the tracklet and the
@@ -470,16 +525,19 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如果两个端点在不同区域，至少有一个端点会在图像瓷砖外部。在这种情况下，轨迹外部点和图像瓷砖边界的交点成为轨迹的新端点，算法重复直到按位操作返回简易接受或拒绝。
 - en: '![Refer to caption](img/93bb1495db9f560aaf0f870042674e34.png)'
   id: totrans-49
   prefs: []
   type: TYPE_IMG
+  zh: '![参见标题](img/93bb1495db9f560aaf0f870042674e34.png)'
 - en: 'Figure 7: The Cohen-Sutherland line clipping algorithm was used to reject tracklets
     outside the area of interest and determine intersection points of the ones partially
     inside.'
   id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7：科恩-萨瑟兰线裁剪算法用于拒绝感兴趣区域外的轨迹并确定部分在内部的轨迹的交点。
 - en: The application of this algorithm gave us 8341 tiles that potentially had visible
     tracklets and 543,595 without known asteroids. Once again these were meticulously
     scanned to ensure that a tracklet could clearly be seen. Any tile with less than
@@ -663,25 +721,34 @@
   id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们的工作中，试验了多种CNN分类架构，以确定最佳的滤波器和层的组合来满足我们的目的。在对VGG-16和VGG-19（Simonyan和Zisserman
+    ([2015](#bib.bib31)))、Inception（Szegedy等人 ([2015](#bib.bib33)))和ResNet50（He等人
+    ([2016](#bib.bib13)))等成熟架构进行了大量实验之后，构建了多种自定义模型，以确定是否能获得更好的性能。表[1](#S4.T1 "表 1
+    ‣ 4.1 分类 ‣ 4 深度学习框架 ‣ 通过深度学习在微引力透镜调查中探测小行星")描述了这五种自定义架构的结构，其中三种类似于VGG（MOA-12、MOA-14、MOA-15），两种由混合Inception-ResNet模块组成（Hybrid
+    A、Hybrid B）。所有自定义架构的参数数量显著少于它们的成熟对手。我们的研究发现，过度参数化的深度网络架构会导致训练数据的过拟合，因此我们减少了网络中的层数和滤波器数量，以减少涉及的神经元和权重数量。
 - en: '![Refer to caption](img/b67be68082485920d142533b6535ee80.png)'
   id: totrans-63
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/b67be68082485920d142533b6535ee80.png)'
 - en: 'Figure 9: Hybrid module combining salient features of a ResNet block and an
     Inception module'
   id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 图9：混合模块结合了ResNet块和Inception模块的显著特征
 - en: '![[Uncaptioned image]](img/9bfb7dce8bab29442f6d9cc64a6c6711.png)'
   id: totrans-65
   prefs: []
   type: TYPE_IMG
+  zh: '![[无说明的图像]](img/9bfb7dce8bab29442f6d9cc64a6c6711.png)'
 - en: 'Table 1: Configuration of custom classification architectures MOA-12, MOA-14,
     MOA-15, Hybrid A, and Hybrid B. ReLU activation is used in each layer and dropout
     is used after each fully connected layer.'
   id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 表1：自定义分类架构MOA-12、MOA-14、MOA-15、Hybrid A和Hybrid B的配置。每一层都使用了ReLU激活函数，并且在每个全连接层后使用了dropout。
 - en: The hybrid module (Figure [9](#S4.F9 "Figure 9 ‣ 4.1 Classification ‣ 4 Deep
     Learning Framework ‣ Towards Asteroid Detection in Microlensing Surveys with Deep
     Learning")) consists of four branches composed of convolutional layers, each of
@@ -695,6 +762,8 @@
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 混合模块（图[9](#S4.F9 "图 9 ‣ 4.1 分类 ‣ 4 深度学习框架 ‣ 通过深度学习在微引力透镜调查中探测小行星")）由四个分支组成，每个分支都由卷积层组成，这些卷积层使用ReLU激活函数（Glorot等人
+    ([2011](#bib.bib10)); Nair和Hinton ([2010](#bib.bib23)))，并通过“add”函数进行组合。最终分支将输入传递到“add”函数中，仅在前一层的滤波器数量与当前层的滤波器数量不相等时才使用卷积。混合模块中的许多1x1卷积看似多余，但即使去掉一个也会对网络性能产生负面影响。这可能是由于引入的有益复杂性所导致的。
 - en: All of the classification architectures were trained on a Linux machine running
     Ubuntu 18.04 with a NVIDIA Quadro M4000 GPU (8 GB, 2.5 TFLOPS). The code was written
     in Python 3.6 in the Jupyter Notebook environment. TensorFlow GPU 2.4.1 (CUDA
@@ -809,6 +878,8 @@
   id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: CNN自然获得金字塔状结构，随着每一层的图像从高分辨率到低分辨率。随着我们在CNN中变得更深，我们失去了输入的细粒度细节，这通常使得检测小对象更加困难。然而，随着分辨率降低，滤波器学习图像的更复杂的抽象，使特征图更富有语义。因此，结合来自较高分辨率层的特征图与更富有语义的特征图以便于在多个尺度上检测对象是可取的。这项任务交给特征聚合器，而YOLOv4使用了PANet建议的方法（Liu
+    et al. ([2018](#bib.bib21)））。特征图从自上而下的路径和自下而上的路径连接在一起，确保了富有语义的定位信息传播到网络的最后部分，在那里进行了类别概率和边界框预测。每个预测的边界框由五个元素组成：中心-x、中心-y、宽度、高度和置信度。($center-x,center-y$)坐标是相对于预测框的尺寸；宽度和高度是相对于整个图像的。置信度分数表示单元格包含对象的可能性以及模型对其预测的置信度。
 - en: 'YOLOv4 also updates the loss function to include Complete Intersection over
     Union (CIoU) loss (Zheng et al. ([2020](#bib.bib40))) to train the network to
     effectively determine the direction in which to shift the weights to better match
@@ -821,6 +892,9 @@
   id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: YOLOv4还更新了损失函数，包括完全交并集（CIoU）损失（Zheng et al. ([2020](#bib.bib40)）），以训练网络有效确定将权重移至何处以更好地匹配标记的边界框。最后，该模型还包括一系列新的添加：新激活函数MISH（Misra
+    ([2020](#bib.bib22)）提供更平滑的梯度；更新到空间注意力模块（Woo et al. ([2018](#bib.bib39)））和多输入加权残差连接（Tan
+    et al. ([2020](#bib.bib34)）以更好地适应架构；以及新的数据增强技术，Mosaic和自对抗训练。
 - en: The YOLO family of models are supported by Darknet (Redmon ([2013](#bib.bib26))),
     a custom framework written in C and CUDA and designed for fast object detection.
     The Darknet implementation of YOLOv4 was trained with the MOA-II dataset via the
@@ -834,11 +908,16 @@
   id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: YOLO系列模型由Darknet（Redmon ([2013](#bib.bib26)）支持，这是一个用C和CUDA编写的自定义框架，专门设计用于快速对象检测。
+    YOLOv4的Darknet实现是通过托管的GPU运行时环境在Google Colaboratory通过MOA-II数据集进行训练的。该模型首先使用默认的anchor
+    boxes进行训练，然后使用k-means聚类来发现更适合在天文数据中找到tracklets的anchor boxes。经过测试了多个变体后，最佳的anchor
+    boxes组合是通过手工构建各个聚类来发现的。学习率为0.001，批量大小为32，划分为8，最大批量为6000，步数设置为4800,5400。
 - en: 5 Results
   id: totrans-78
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 5 结果
 - en: 'To evaluate the classification networks, we rely on the metrics derived from
     a confusion matrix. A confusion matrix breaks down the predictions made by a classifier
     into 4 outcomes: True Positive (TP), True Negative (TN), False Positive (FP),
@@ -851,15 +930,19 @@
   id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了评估分类网络，我们依赖于从混淆矩阵得出的指标。混淆矩阵将分类器的预测结果分为四种结果：真正例（TP）、真负例（TN）、假正例（FP）和假负例（FN）。其中，“正”案例是指图像被分类为包含轨迹片段的情况，“负”案例是指没有检测到轨迹片段的情况。在这种情况下，理想的情形是尽量减少假负例，同时假正例的数量也应可控。在这里，网络根据其召回率、F2得分（精度和召回率的加权调和平均数）以及PR
+    AUC（精度-召回曲线下面积）进行评估。
 - en: '![[Uncaptioned image]](img/459c90a7913bf09bc63575d30f43a4c6.png)'
   id: totrans-80
   prefs: []
   type: TYPE_IMG
+  zh: '![[无标题图片]](img/459c90a7913bf09bc63575d30f43a4c6.png)'
 - en: 'Table 2: Evaluation metrics for the GB5-R5 test set taken at probability threshold
     0.5'
   id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '表 2: 在概率阈值0.5下，GB5-R5测试集的评估指标'
 - en: 'The evaluation metrics for each classifier for the GB5-R5 test set are in Table
     [2](#S5.T2 "Table 2 ‣ 5 Results ‣ Towards Asteroid Detection in Microlensing Surveys
     with Deep Learning") and for the GB-All (28-06-2013) test set are in Table [3](#S5.T3
@@ -876,15 +959,21 @@
   id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个分类器在GB5-R5测试集的评估指标见表 [2](#S5.T2 "Table 2 ‣ 5 Results ‣ Towards Asteroid Detection
+    in Microlensing Surveys with Deep Learning")，在GB-All (28-06-2013) 测试集的评估指标见表 [3](#S5.T3
+    "Table 3 ‣ 5 Results ‣ Towards Asteroid Detection in Microlensing Surveys with
+    Deep Learning")。所有指标均在0.5的置信度阈值下取得，值超过0.5表示图像中存在小行星轨迹片段。通过回顾PR AUC、F2得分和召回率的组合，我们可以看到自定义网络在对从未见过的数据进行预测时表现良好。与其从中选择一个单独的网络，不如将所有五个自定义分类器配置为一个集合。每个网络对输入图像进行预测，并试验了两种选择最佳预测的方法：对所有五个分类器的预测值取平均（avg）或选择最高的预测值（max）。
 - en: '![[Uncaptioned image]](img/89908d5ea782e26eec32b96e1da28468.png)'
   id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![[无标题图片]](img/89908d5ea782e26eec32b96e1da28468.png)'
 - en: 'Table 3: Evaluation metrics for the GB-ALL test set taken at probability threshold
     0.5'
   id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '表 3: 在概率阈值0.5下，GB-ALL测试集的评估指标'
 - en: We see that while the max-ensemble results in a greater number of false positives,
     it improves the recall by four points (Table [4](#S5.T4 "Table 4 ‣ 5 Results ‣
     Towards Asteroid Detection in Microlensing Surveys with Deep Learning")) to 94.33%
@@ -897,27 +986,37 @@
   id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们看到，虽然最大集合结果导致了更多的假正例，但它使召回率提高了四个百分点（表 [4](#S5.T4 "Table 4 ‣ 5 Results ‣ Towards
+    Asteroid Detection in Microlensing Surveys with Deep Learning")），GB5-R5 和 GB-All
+    测试集的召回率分别达到了94.33%和97.67%。平均集合的优势在于假正例远少于最大集合，并且通过明智地选择预测阈值，可以进一步减少假负例。集合的ROC曲线（图
+    [11](#S5.F11 "Figure 11 ‣ 5 Results ‣ Towards Asteroid Detection in Microlensing
+    Surveys with Deep Learning")）进一步说明了这一权衡。
 - en: '![[Uncaptioned image]](img/d16c08743c126d60fa09a195305c17f9.png)'
   id: totrans-86
   prefs: []
   type: TYPE_IMG
+  zh: '![[无标题图片]](img/d16c08743c126d60fa09a195305c17f9.png)'
 - en: 'Table 4: Evaluation metrics after configuring the five custom networks as an
     ensemble taken at probability threshold 0.5'
   id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: '表 4: 在将五个自定义网络配置为集合后，概率阈值0.5下的评估指标'
 - en: '![Refer to caption](img/0d76ff2513a873d9c757395962222022.png)'
   id: totrans-88
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/0d76ff2513a873d9c757395962222022.png)'
 - en: 'Figure 11: ROC curves for the CNN ensemble'
   id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 11：CNN 集成的 ROC 曲线
 - en: '![Refer to caption](img/a9df04d2adad205689a389bf4a19e9dc.png)'
   id: totrans-90
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/a9df04d2adad205689a389bf4a19e9dc.png)'
 - en: 'Figure 12: Tracklets localisation by YOLOv4, From left to right, these are:
     (538147)2016 BT90 (18.7); (67001) 1999 XN117 (19.2); (80667) 2000 BA15 (18.8);
     (206629) 2003 WT154 (19.0); and (281890) 2010 OA74 (20.1). Note that these images
@@ -927,6 +1026,10 @@
   id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 12：YOLOv4 的轨迹定位，从左到右分别为：（538147）2016 BT90 (18.7)；（67001）1999 XN117 (19.2)；（80667）2000
+    BA15 (18.8)；（206629）2003 WT154 (19.0)；以及（281890）2010 OA74 (20.1)。注意这些图像已被反转和加亮以提高可见性（原始图像见图
+    [17](#A1.F17 "Figure 17 ‣ Appendix A Original images ‣ Towards Asteroid Detection
+    in Microlensing Surveys with Deep Learning")）。
 - en: 'The performance of object detection models is typically quantified by the mean
     Average Precision or mAP. The average precision (AP) measures the trade-off between
     precision and recall and is calculated by integrating the area that falls under
@@ -938,55 +1041,67 @@
   id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标检测模型的性能通常通过平均精度均值（mAP）来量化。平均精度（AP）衡量了精度和召回率之间的权衡，通过对精度-召回曲线下的面积进行积分来计算，其中精度值降低。mAP
+    是模型可以检测的所有目标类别的 AP 的均值，这与数据集的 AP 相同。目标检测模型旨在使预测的边界框与真实边界框之间有较高的重叠（交并比或 IoU），预测结果分组如下：
 - en: '1.'
   id: totrans-93
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '1.'
 - en: 'True Positive: IoU $>$ 0.5'
   id: totrans-94
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 真阳性：IoU $>$ 0.5
 - en: '2.'
   id: totrans-95
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '2.'
 - en: 'False Positive: IoU $<$ 0.5 (or a duplicate)'
   id: totrans-96
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 假阳性：IoU $<$ 0.5（或重复）
 - en: '3.'
   id: totrans-97
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '3.'
 - en: 'False Negative: box not detected or the IoU $>$ 0.5 but the object is classified
     wrong'
   id: totrans-98
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 假阴性：未检测到的框或 IoU $>$ 0.5 但物体分类错误
 - en: 'The average precision is calculated as: Calculated as:'
   id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 平均精度的计算方法是：计算为：
 - en: '|  | $AP=\Sigma(r_{(n+1)}-r_{n})\tilde{p}(r_{(n+1)})$ |  |'
   id: totrans-100
   prefs: []
   type: TYPE_TB
+  zh: '|  | $AP=\Sigma(r_{(n+1)}-r_{n})\tilde{p}(r_{(n+1)})$ |  |'
 - en: '|  | $\tilde{p}(r_{(n+1)})=\max_{\tilde{r}\geq r_{(n+1)}}(p(\tilde{r})),$ |  |'
   id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\tilde{p}(r_{(n+1)})=\max_{\tilde{r}\geq r_{(n+1)}}(p(\tilde{r})),$ |  |'
 - en: where $r$ is the recall value, $n$ represents the locations where the precision
     decreases, and $\tilde{p}(r_{(n+1)})$ is the maximum precision where the $r$ value
     changes.
   id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 $r$ 是召回值，$n$ 代表精度降低的地点，$\tilde{p}(r_{(n+1)})$ 是 $r$ 值变化时的最大精度。
 - en: YOLOv4 achieved an mAP of 90.96% with default anchor boxes and 90.95% with custom
     anchor boxes on the GB5-R5 data. Neither network could detect tracklets in the
     GB-All data, indicating that YOLOv4 will need to be trained with labelled data
@@ -997,6 +1112,10 @@
   id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: YOLOv4 在 GB5-R5 数据上使用默认锚框取得了 90.96% 的 mAP，使用自定义锚框取得了 90.95% 的 mAP。两个网络在 GB-All
+    数据中都无法检测轨迹，这表明 YOLOv4 需要使用来自其他领域和芯片的标记数据进行训练，才能在这些数据中进行检测。YOLOv4 在 GB5-R5 数据集上的一些检测结果可以在图
+    [12](#S5.F12 "Figure 12 ‣ 5 Results ‣ Towards Asteroid Detection in Microlensing
+    Surveys with Deep Learning") 中看到。
 - en: The proposed model was applied towards discovering tracklets in the 543,595
     images tiles from GB5-R5 that had no known asteroid tracklets. The ensemble could
     analyse 10,000 images in an hour and took three days to analyse all the images
@@ -1007,11 +1126,14 @@
   id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 提出的模型应用于发现 GB5-R5 中 543,595 张图像切片中的轨迹，这些图像中没有已知的小行星轨迹。集成模型每小时可以分析 10,000 张图像，花费了三天时间分析所有图像，并提出了
+    50,227 个候选检测。然后，使用 YOLOv4 的两个版本对这些候选检测中的轨迹进行定位，每个版本花费了 1.5 天进行边界框预测。我们仍在分析这些候选检测以确定是否存在新的物体。
 - en: 6 Discussion
   id: totrans-105
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 6 讨论
 - en: Our classifier ensemble, trained with a relatively small amount of labelled
     data from just one chip in one survey field, was able to classify a set of images
     from unseen survey fields and chips, highlighting that it generalizes well. The
@@ -1026,6 +1148,9 @@
   id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的分类器集成模型，使用了来自一个调查领域的一个芯片上的相对少量标记数据进行训练，能够对来自未见过的调查领域和芯片的一组图像进行分类，这突显了其良好的泛化能力。定制的
+    CNN 架构成功的原因可能归结为两个方面。首先，这些网络可能在识别表示轨迹的模糊斑块的模式时达到了最佳深度。其次，输入图像的较小尺寸可能导致了较大模型的过拟合。此外，与其添加更多层，混合架构更倾向于通过多个
+    1x1 卷积增加复杂性。这可能导致网络学习到的表示最终提高了集成模型的性能。
 - en: The false negatives (Figure [14](#S6.F14 "Figure 14 ‣ 6 Discussion ‣ Towards
     Asteroid Detection in Microlensing Surveys with Deep Learning")) reported by the
     ensemble include instances where the tracklets resemble satellite streaks or where
@@ -1041,6 +1166,10 @@
   id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 集成模型报告的假阴性（见图 [14](#S6.F14 "Figure 14 ‣ 6 Discussion ‣ Towards Asteroid Detection
+    in Microlensing Surveys with Deep Learning")）包括轨迹类似于卫星拖尾的情况，或者点源稍微分散且被噪声遮掩的情况。在一些情况下，轨迹的部分位于其他图像上，这些图像被集成模型正确识别为候选探测结果。至于假阳性，它们大多是噪声和其他虚假伪影被误认为轨迹的情况，如图
+    [13](#S6.F13 "Figure 13 ‣ 6 Discussion ‣ Towards Asteroid Detection in Microlensing
+    Surveys with Deep Learning") 所示。这些情况也导致了物体检测器的假检测。我们认为，随着更多标记数据的可用，微调网络模型将有助于减少此类误分类。
 - en: The YOLOv4 object detector proved to be up to the task of localizing tracklets
     in the GB5-R5 dataset but does not generalize to unseen data. The results from
     the GB5-R5 set are promising and thus indicate that further training with data
@@ -1048,6 +1177,7 @@
   id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: YOLOv4 物体检测器证明能够完成 GB5-R5 数据集中轨迹定位的任务，但无法对未见过的数据进行泛化。来自 GB5-R5 数据集的结果令人鼓舞，因此表明进一步使用其他调查领域和芯片的数据进行训练将是有益的。
 - en: While both types of networks are currently limited by the high cadence observations
     they have been trained with, we are confident that, as the networks are retrained
     with data from other fields, they will learn to identity tracklets of slow objects
@@ -1058,10 +1188,12 @@
   id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然这两种类型的网络目前受到其训练时使用的高频观察数据的限制，但我们相信，随着网络使用来自其他领域的数据进行再训练，它们将能够识别缓慢移动的物体轨迹或观察间隔较长的轨迹。此外，其他调查可以将我们的网络及其预训练权重作为发现其数据中小行星的起点。在这种情况下，我们建议其他调查使用自己的数据对架构进行再训练/微调，以获得最佳结果。
 - en: '![Refer to caption](img/b0fe4be706c948b316f32dad3ca56d13.png)'
   id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/b0fe4be706c948b316f32dad3ca56d13.png)'
 - en: 'Figure 13: The false positives reported by the classification networks fall
     into four broad categories: (a) ghosts (short for ghosts of noise past), are the
     most common false positives and are a result of the additive noise from creating
@@ -1073,10 +1205,12 @@
   id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 图13：分类网络报告的假阳性分为四大类：（a）幽灵（ghosts，指噪声过去的幽灵），是最常见的假阳性，是由于生成合成图像时的附加噪声；（b）条纹是卫星或其他近地物体或宇宙射线；（c）奇美拉（chimera）是可能由过饱和星星引起的光学伪影；（d）洛基（loki）物体是从一次观测到下一次观测之间运动不规则的伪影。请注意，这些图像已经被翻转并加亮以提高可见性。
 - en: '![Refer to caption](img/736b852c0aec818eb5f9e255b5994641.png)'
   id: totrans-112
   prefs: []
   type: TYPE_IMG
+  zh: '![参见标题](img/736b852c0aec818eb5f9e255b5994641.png)'
 - en: 'Figure 14: The false negatives reported by the classification networks are
     mostly either faint objects or too much like streaks. It is likely that these
     sorts of tracklets were not well represented in the training set. Note that these
@@ -1084,11 +1218,13 @@
   id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 图14：分类网络报告的假阴性大多是微弱的物体或像条纹一样的物体。这些轨迹可能在训练集中表现得不好。请注意，这些图像已经被翻转并加亮以提高可见性。
 - en: 7 Conclusion
   id: totrans-114
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 7 结论
 - en: We have shown that it is possible to train both CNN-based classifiers as well
     as the YOLOv4 object detector to find asteroid tracklets in the MOA difference
     images. The classifier ensemble proved resilient to discovering tracklets in unseen
@@ -1101,6 +1237,7 @@
   id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经证明，可以训练基于CNN的分类器和YOLOv4目标检测器来在MOA差分图像中找到小行星轨迹。分类器集群在发现未知数据中的轨迹方面表现出韧性，将对扩展小行星搜索到MOA-II归档数据的其余部分具有重要价值。随着更多标记数据的可用，网络将进行微调或重新训练，我们将研究自动化YOLOv4所需的边界框。我们还将研究使用诸如HelioLinC的轨道链接软件，以确定YOLOv4所定位源簇的有效性。
 - en: While the classifiers performed well, there is potential for further improvement
     and development. Investigating effective denoising techniques for the stacked
     images or the difference images would lead to an immediate performance boost for
@@ -1115,6 +1252,7 @@
   id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管分类器表现良好，但仍有进一步改进和发展的潜力。研究有效的去噪技术对堆叠图像或差分图像进行去噪将立即提升分类和目标检测网络的性能。分类网络可能从两个输入中受益——也许是减法堆叠图像以及中位数堆叠图像。这将为模型提供额外的信息，以帮助区分有轨迹和无轨迹的图像。首先使用分类数据训练YOLO骨干特征提取器也可能会带来更好的结果。此外，由于大量显著信息包含在第一层中，基于DenseNet的小型CNN也有可能被成功训练为分类器。
 - en: Overall, we have presented an effective toolkit for finding asteroids tracklets
     in the archival data of ground-based telescopes. The code for our neural network
     models as well as the trained weights are available at https://github.com/pcowan-astro/MOA-Asteroids.
@@ -1124,11 +1262,14 @@
   id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 总体而言，我们提出了一种有效的工具包，用于在地面望远镜的归档数据中寻找小行星轨迹。我们神经网络模型的代码以及训练好的权重可以在 https://github.com/pcowan-astro/MOA-Asteroids
+    获取。我们的方法和网络架构可以用于在其他归档调查数据中发现和恢复小行星，并加强当前和未来调查的分析管道。
 - en: 8 Acknowledgements
   id: totrans-118
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 8 致谢
 - en: We thank the MOA collaboration for use of the MOA-II archival difference images.
     IAB acknowledges support from grant MAU1901 from the Royal Society of New Zealand
     - Marsden. This research has made use of data and/or services provided by the
@@ -1136,15 +1277,18 @@
   id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们感谢 MOA 合作组织提供 MOA-II 档案差分图像。IAB 感谢新西兰皇家学会 - Marsden 资助的 MAU1901 项目支持。本研究使用了国际天文学联合会小行星中心提供的数据和/或服务。
 - en: Appendix A Original images
   id: totrans-120
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 附录 A 原始图像
 - en: '![Refer to caption](img/ecac62755887456510bb088ffddefc61.png)'
   id: totrans-121
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/ecac62755887456510bb088ffddefc61.png)'
 - en: 'Figure 15: A stack of all 51 observations from the night of 15-May-2008 reveals
     5 asteroid tracklets clearly visible in a sub-region of the stack image. Numbered
     in order of appearance, these are: 1 - (103842) 2000 DQ33 (19.5); 2 - (148657)
@@ -1153,10 +1297,14 @@
   id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 15: 从 2008 年 5 月 15 日夜晚的所有 51 次观测中堆叠的图像显示了在堆叠图像的子区域中清晰可见的 5 条小行星轨迹。按出现顺序编号，它们是：1
+    - (103842) 2000 DQ33 (19.5); 2 - (148657) 2001 SX124 (19.6); 3 - (152083) 2004
+    RH30 (19.9); 4 - (582743) 2016 AT221 (20.4); 5 - (338789) 2005 SZ154 (20.4)。左上方的线/条纹来自卫星。'
 - en: '![Refer to caption](img/3ae9ddd1faa1837817b184ebb866011a.png)'
   id: totrans-123
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/3ae9ddd1faa1837817b184ebb866011a.png)'
 - en: 'Figure 16: Asteroid tracklets seen in 128x128 sub-regions from subtracted stack
     images. In (b), the tracklets are localized with bounding boxes. Asteroids in
     the top row, left to right: (38102) 1999 JM18 (18.4); (152083) 2004 RH30 (19.9);
@@ -1166,39 +1314,51 @@
   id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 16: 从减法叠加图像中看到的 128x128 子区域的小行星轨迹。在（b）中，这些轨迹用边界框进行标定。上排小行星，从左到右： (38102)
+    1999 JM18 (18.4); (152083) 2004 RH30 (19.9); (103842) 2000 DQ33 (19.5); (283261)
+    2011 FR142 (20.0); 和 (375674) 2009 HD5 (19.8)。下排小行星，从左到右： (48617) 1995 HR2 (19.5);
+    (148657) 2001 SX124 (19.6); (97948) 2000 QF124 (19.6); 和 (74978) 1999 TY234 (18.7)。'
 - en: '![Refer to caption](img/972c331f153ab278cc069da2e4caaf24.png)'
   id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/972c331f153ab278cc069da2e4caaf24.png)'
 - en: 'Figure 17: Tracklets localisation by YOLOv4, From left to right, these are:
     (538147)2016 BT90 (18.7); (67001) 1999 XN117 (19.2); (80667) 2000 BA15 (18.8);
     (206629) 2003 WT154 (19.0); and (281890) 2010 OA74 (20.1).'
   id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 17: YOLOv4 的轨迹定位，从左到右： (538147)2016 BT90 (18.7); (67001) 1999 XN117 (19.2);
+    (80667) 2000 BA15 (18.8); (206629) 2003 WT154 (19.0); 和 (281890) 2010 OA74 (20.1)。'
 - en: References
   id: totrans-127
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: Alard (2000) Alard, C., 2000. Image subtraction using a space-varying kernel.
     Astronomy and Astrophysics Supplement 144, 363–370.
   id: totrans-128
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Alard（2000）Alard, C., 2000. 使用空间变异核的图像减法。《天文学与天体物理学补刊》144, 363–370.
 - en: Alard and Lupton (1998) Alard, C., Lupton, R.H., 1998. A Method for Optimal
     Image Subtraction. The Astrophysical Journal 503, 325–331.
   id: totrans-129
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Alard 和 Lupton（1998）Alard, C., Lupton, R.H., 1998. 最佳图像减法方法。《天体物理学杂志》503, 325–331.
 - en: 'Bochkovskiy et al. (2020) Bochkovskiy, A., Wang, C.Y., Liao, H.Y.M., 2020.
     YOLOv4: Optimal Speed and Accuracy of Object Detection. ArXiv abs/2004.10934.'
   id: totrans-130
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Bochkovskiy 等（2020）Bochkovskiy, A., Wang, C.Y., Liao, H.Y.M., 2020. YOLOv4:
+    目标检测的最佳速度和精度。ArXiv abs/2004.10934.'
 - en: Bond et al. (2001) Bond, I., Abe, F., Dodd, R., Hearnshaw, J., Honda, M., Jugaku,
     J., Kilmartin, P., Marles, A., Masuda, K., Matsubara, Y., Muraki, Y., Nakamura,
     T., Nankivell, G., Noda, S., Noguchi, C., Ohnishi, K., Rattenbury, N., Reid, M.,
@@ -1210,12 +1370,19 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Bond 等（2001）Bond, I., Abe, F., Dodd, R., Hearnshaw, J., Honda, M., Jugaku, J.,
+    Kilmartin, P., Marles, A., Masuda, K., Matsubara, Y., Muraki, Y., Nakamura, T.,
+    Nankivell, G., Noda, S., Noguchi, C., Ohnishi, K., Rattenbury, N., Reid, M., Saito,
+    T., Sato, H., Sekiguchi, M., Skuljan, J., Sullivan, D., Sumi, T., Takeuti, M.,
+    Watase, Y., Wilkinson, S., Yamada, R., Yanagisawa, T., Yock, P., 2001. 实时差分成像分析
+    MOA 银河核区观测数据（2000年）。《皇家天文学会月刊》327, 868–880.
 - en: Bramich (2008) Bramich, D., 2008. A new algorithm for difference image analysis.
     Monthly Notices of the Royal Astronomical Society 386, L77–L81.
   id: totrans-132
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Bramich（2008）Bramich, D., 2008. 一种新的差分图像分析算法。《皇家天文学会月刊》386, L77–L81.
 - en: 'Cordwell et al. (2022) Cordwell, A.J., Rattenbury, N.J., Bannister, M.T., Cowan,
     P., Collaboration:, T.M., Abe, F., Barry, R., Bennett, D.P., Bhattacharya, A.,
     Bond, I.A., Fujii, H., Fukui, A., Itow, Y., Silva, S.I., Hirao, Y., Kirikawa,
@@ -1228,6 +1395,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Cordwell et al. (2022) Cordwell, A.J., Rattenbury, N.J., Bannister, M.T., Cowan,
+    P., Collaboration:, T.M., Abe, F., Barry, R., Bennett, D.P., Bhattacharya, A.,
+    Bond, I.A., Fujii, H., Fukui, A., Itow, Y., Silva, S.I., Hirao, Y., Kirikawa,
+    R., Kondo, I., Koshimoto, N., Matsubara, Y., Matsumoto, S., Muraki, Y., Miyazaki,
+    S., Okamura, A., Ranc, C., Satoh, Y., Sumi, T., Suzuki, D., Tristram, P.J., Toda,
+    T., Yama, H., Yonehara, A., 2022. MOA-II调查中的小行星光变曲线：一项初步研究。《皇家天文学会月刊》514, 3098–3112.
+    doi:[10.1093/mnras/stac674](http://dx.doi.org/10.1093/mnras/stac674).
 - en: Denneau et al. (2013) Denneau, L., Jedicke, R., Grav, T., Granvik, M., Kubica,
     J., Milani, A., Vereš, P., Wainscoat, R., Chang, D., Pierfederici, F., Kaiser,
     N., Chambers, K.C., Heasley, J.N., Magnier, E.A., Price, P.A., Myers, J., Kleyna,
@@ -1241,6 +1415,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Denneau et al. (2013) Denneau, L., Jedicke, R., Grav, T., Granvik, M., Kubica,
+    J., Milani, A., Vereš, P., Wainscoat, R., Chang, D., Pierfederici, F., Kaiser,
+    N., Chambers, K.C., Heasley, J.N., Magnier, E.A., Price, P.A., Myers, J., Kleyna,
+    J., Hsieh, H., Farnocchia, D., Waters, C., Sweeney, W.H., Green, D., Bolin, B.,
+    Burgett, W.S., Morgan, J.S., Tonry, J.L., Hodapp, K.W., Chastel, S., Chesley,
+    S., Fitzsimmons, A., Holman, M., Spahr, T., Tholen, D., Williams, G.V., Abe, S.,
+    Armstrong, J.D., Bressi, T.H., Holmes, R., Lister, T., McMillan, R.S., Micheli,
+    M., Ryan, E.V., Ryan, W.H., Scotti, J.V., 2013. Pan-STARRS移动物体处理系统。《太平洋天文学会出版物》125,
+    357–395.
 - en: 'Duev et al. (2021) Duev, D.A., Bolin, B.T., Graham, M.J., Kelley, M.S.P., Mahabal,
     A., Bellm, E.C., Coughlin, M.W., Dekany, R., Helou, G., Kulkarni, S.R., Masci,
     F.J., Prince, T.A., Riddle, R., Soumagnac, M.T., van der Walt, S.J., 2021. Tails:
@@ -1250,6 +1433,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Duev et al. (2021) Duev, D.A., Bolin, B.T., Graham, M.J., Kelley, M.S.P., Mahabal,
+    A., Bellm, E.C., Coughlin, M.W., Dekany, R., Helou, G., Kulkarni, S.R., Masci,
+    F.J., Prince, T.A., Riddle, R., Soumagnac, M.T., van der Walt, S.J., 2021. Tails:
+    使用Zwicky瞬态设施和深度学习追踪彗星。《天文学杂志》161, 218.'
 - en: 'Duev et al. (2019) Duev, D.A., Mahabal, A., Ye, Q., Tirumala, K., Belicki,
     J., Dekany, R., Frederick, S., Graham, M.J., Laher, R.R., Masci, F.J., Prince,
     T.A., Riddle, R., Rosnet, P., Soumagnac, M.T., 2019. DeepStreaks: Identifying
@@ -1259,18 +1446,23 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Duev et al. (2019) Duev, D.A., Mahabal, A., Ye, Q., Tirumala, K., Belicki,
+    J., Dekany, R., Frederick, S., Graham, M.J., Laher, R.R., Masci, F.J., Prince,
+    T.A., Riddle, R., Rosnet, P., Soumagnac, M.T., 2019. DeepStreaks: 在Zwicky瞬态设施数据中使用深度学习识别快速移动物体。《皇家天文学会月刊》，4158–4165.'
 - en: Glorot et al. (2011) Glorot, X., Bordes, A., Bengio, Y., 2011. Deep Sparse Rectifier
     Neural Networks. AISTATS .
   id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Glorot et al. (2011) Glorot, X., Bordes, A., Bengio, Y., 2011. 深度稀疏修正神经网络。AISTATS.
 - en: Gould and Yee (2013) Gould, A., Yee, J.C., 2013. Microlens surveys are a powerful
     probe of asteroids. Astrophysical Journal 767.
   id: totrans-138
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Gould and Yee (2013) Gould, A., Yee, J.C., 2013. 微透镜调查是探测小行星的强大工具。《天体物理学杂志》767.
 - en: He et al. (2014) He, K., Zhang, X., Ren, S., Sun, J., 2014. Spatial Pyramid
     Pooling in Deep Convolutional Networks for Visual Recognition. Lecture Notes in
     Computer Science (including subseries Lecture Notes in Artificial Intelligence
@@ -1279,6 +1471,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: He et al. (2014) He, K., Zhang, X., Ren, S., Sun, J., 2014. 深度卷积网络中的空间金字塔池化。计算机科学讲义（包括人工智能讲义和生物信息学讲义子系列）8691
+    LNCS, 346–361.
 - en: He et al. (2016) He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep Residual Learning
     for Image Recognition. IEEE Conference on Computer Vision and Pattern Recognition
     , 770–778.
@@ -1286,6 +1480,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: He et al. (2016) He, K., Zhang, X., Ren, S., Sun, J., 2016. 用于图像识别的深度残差学习。IEEE计算机视觉与模式识别会议,
+    770–778.
 - en: 'Holman et al. (2018) Holman, M., Payne, M., Blankley, P., Janssen, R., Kuindersma,
     S., 2018. Heliolinc: A novel approach to the minor planet linking problem. The
     Astronomical Journal 156, 135. doi:[10.3847/1538-3881/aad69a](http://dx.doi.org/10.3847/1538-3881/aad69a).'
@@ -1293,6 +1489,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Holman et al. (2018) Holman, M., Payne, M., Blankley, P., Janssen, R., Kuindersma,
+    S., 2018. Heliolinc: 解决小行星链接问题的新方法。天文杂志 156, 135. doi:[10.3847/1538-3881/aad69a](http://dx.doi.org/10.3847/1538-3881/aad69a)。'
 - en: Huang et al. (2016) Huang, G., Liu, Z., van der Maaten, L., Weinberger, K.Q.,
     2016. Densely Connected Convolutional Networks. Proceedings - 30th IEEE Conference
     on Computer Vision and Pattern Recognition, CVPR 2017 2017-January, 2261–2269.
@@ -1300,6 +1498,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Huang et al. (2016) Huang, G., Liu, Z., van der Maaten, L., Weinberger, K.Q.,
+    2016. 密集连接卷积网络。第30届IEEE计算机视觉与模式识别会议论文集，CVPR 2017 2017年1月，2261–2269。
 - en: 'Kim et al. (2016) Kim, S.L., Lee, C.U., Park, B.G., Kim, D.J., Cha, S.M., Lee,
     Y., Han, C., Chun, M.Y., Yuk, I., 2016. KMTNET: A Network of 1.6 m Wide-Field
     Optical Telescopes Installed at Three Southern Observatories. Journal of Korean
@@ -1308,6 +1508,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Kim et al. (2016) Kim, S.L., Lee, C.U., Park, B.G., Kim, D.J., Cha, S.M., Lee,
+    Y., Han, C., Chun, M.Y., Yuk, I., 2016. KMTNET: 一种在三个南方观测站安装的1.6米广场光学望远镜网络。韩国天文学会杂志
+    49, 37–44. doi:[10.5303/JKAS.2016.49.1.037](http://dx.doi.org/10.5303/JKAS.2016.49.1.037)。'
 - en: 'Kingma and Welling (2014) Kingma, D.P., Welling, M., 2014. Auto-encoding variational
     bayes, in: 2nd International Conference on Learning Representations, ICLR 2014
     - Conference Track Proceedings, International Conference on Learning Representations,
@@ -1316,6 +1519,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Kingma and Welling (2014) Kingma, D.P., Welling, M., 2014. 自编码变分贝叶斯，见：第二届国际学习表征会议，ICLR
+    2014 - 会议论文集，国际学习表征会议，ICLR。
 - en: Kruk et al. (2022) Kruk, S., García Martín, P., Popescu, M., Merín, B., Mahlke,
     M., Carry, B., Thomson, R., Karadağ, S., Durán, J., Racero, E., Giordano, F.,
     Baines, D., de Marchi, G., Laureijs, R., 2022. Hubble Asteroid Hunter. Astronomy
@@ -1324,6 +1529,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Kruk et al. (2022) Kruk, S., García Martín, P., Popescu, M., Merín, B., Mahlke,
+    M., Carry, B., Thomson, R., Karadağ, S., Durán, J., Racero, E., Giordano, F.,
+    Baines, D., de Marchi, G., Laureijs, R., 2022. 哈勃小行星猎人。天文学与天体物理学 661, A85。
 - en: Kubica et al. (2007) Kubica, J., Denneau Jr, L., Moore, A., Jedicke, Robert,
     Connolly, A., 2007. Efficient Algorithms for Large-Scale Asteroid Discovery. Astronomical
     Data Analysis Software and Systems XVI ASP Conference Series 376, 395–404.
@@ -1331,6 +1539,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Kubica et al. (2007) Kubica, J., Denneau Jr, L., Moore, A., Jedicke, Robert,
+    Connolly, A., 2007. 大规模小行星发现的高效算法。天文数据分析软件与系统第十六届ASP会议系列 376, 395–404。
 - en: Lieu et al. (2018) Lieu, M., Conversi, L., Altieri, B., Carry, B., 2018. Detecting
     solar system objects with convolutional neural networks. Monthly Notices of the
     Royal Astronomical Society 485, 5831–5842.
@@ -1338,6 +1548,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Lieu et al. (2018) Lieu, M., Conversi, L., Altieri, B., Carry, B., 2018. 使用卷积神经网络检测太阳系天体。皇家天文学会月刊
+    485, 5831–5842。
 - en: Liu et al. (2018) Liu, S., Qi, L., Qin, H., Shi, J., Jia, J., 2018. Path Aggregation
     Network for Instance Segmentation. Proceedings of the IEEE Computer Society Conference
     on Computer Vision and Pattern Recognition , 8759–8768.
@@ -1345,18 +1557,21 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Liu et al. (2018) Liu, S., Qi, L., Qin, H., Shi, J., Jia, J., 2018. 实例分割的路径聚合网络。IEEE计算机学会计算机视觉与模式识别会议论文集，8759–8768。
 - en: 'Misra (2020) Misra, D., 2020. Mish: A Self Regularized Non-Monotonic Activation
     Function. ArXiv abs/1908.08681.'
   id: totrans-149
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Misra (2020) Misra, D., 2020. Mish: 自我正则化非单调激活函数。ArXiv abs/1908.08681。'
 - en: Nair and Hinton (2010) Nair, V., Hinton, G.E., 2010. Rectified Linear Units
     Improve Restricted Boltzmann Machines. ICML .
   id: totrans-150
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Nair and Hinton (2010) Nair, V., Hinton, G.E., 2010. 修正线性单元改善限制玻尔兹曼机。ICML。
 - en: Rabeendran and Denneau (2021) Rabeendran, A.C., Denneau, L., 2021. A Two-Stage
     Deep Learning Detection Classifier for the ATLAS Asteroid Survey. Publications
     of the Astronomical Society of the Pacific 133.
@@ -1364,18 +1579,22 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Rabeendran and Denneau (2021) Rabeendran, A.C., Denneau, L., 2021. ATLAS小行星调查的双阶段深度学习检测分类器。太平洋天文学会出版物
+    133。
 - en: Rabinowitz (1991) Rabinowitz, D.L., 1991. Detection of earth-approaching asteroids
     in near real time. The Astronomical Journal 101, 1518.
   id: totrans-152
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Rabinowitz (1991) Rabinowitz, D.L., 1991. 实时检测接近地球的小行星。天文杂志 101, 1518。
 - en: 'Redmon (2013) Redmon, J., 2013. Darknet: Open source neural networks in c.
     URL: [https://pjreddie.com/darknet/](https://pjreddie.com/darknet/).'
   id: totrans-153
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Redmon (2013) Redmon, J., 2013. Darknet: 开源神经网络的C语言实现。网址：[https://pjreddie.com/darknet/](https://pjreddie.com/darknet/)。'
 - en: 'Redmon et al. (2016) Redmon, J., Divvala, S., Girshick, R., Farhadi, A., 2016.
     You Only Look Once: Unified, Real-Time Object Detection, in: IEEE Conference on
     Computer Vision and Pattern Recognition (CVPR), pp. 779–788.'
@@ -1383,6 +1602,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Redmon et al. (2016) Redmon, J., Divvala, S., Girshick, R., Farhadi, A., 2016.
+    你只看一次：统一的实时物体检测，见：IEEE计算机视觉与模式识别会议（CVPR），第779–788页。
 - en: 'Redmon and Farhadi (2017) Redmon, J., Farhadi, A., 2017. YOLO9000: Better,
     Faster, Stronger, in: IEEE Conference on Computer Vision and Pattern Recognition
     (CVPR), pp. 6517–6525.'
@@ -1390,12 +1611,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Redmon 和 Farhadi (2017) Redmon, J., Farhadi, A., 2017. YOLO9000: 更好、更快、更强，见：IEEE
+    计算机视觉与模式识别会议 (CVPR)，pp. 6517–6525。'
 - en: 'Redmon and Farhadi (2018) Redmon, J., Farhadi, A., 2018. YOLOv3: An Incremental
     Improvement. ArXiv abs/1804.02767.'
   id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Redmon 和 Farhadi (2018) Redmon, J., Farhadi, A., 2018. YOLOv3: 增量改进。ArXiv abs/1804.02767。'
 - en: 'Sako et al. (2008) Sako, T., Sekiguchi, T., Sasaki, M., Okajima, K., Abe, F.,
     Bond, I.A., Hearnshaw, J.B., Itow, Y., Kamiya, K., Kilmartin, P.M., Masuda, K.,
     Matsubara, Y., Muraki, Y., Rattenbury, N.J., Sullivan, D.J., Sumi, T., Tristram,
@@ -1406,6 +1630,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Sako 等人 (2008) Sako, T., Sekiguchi, T., Sasaki, M., Okajima, K., Abe, F., Bond,
+    I.A., Hearnshaw, J.B., Itow, Y., Kamiya, K., Kilmartin, P.M., Masuda, K., Matsubara,
+    Y., Muraki, Y., Rattenbury, N.J., Sullivan, D.J., Sumi, T., Tristram, P., Yanagisawa,
+    T., Yock, P.C., 2008. MOA-cam3: 用于新西兰引力微透镜调查的广域马赛克 CCD 相机。实验天文学 22, 51–66。'
 - en: 'Simonyan and Zisserman (2015) Simonyan, K., Zisserman, A., 2015. Very deep
     convolutional networks for large-scale image recognition, in: 3rd International
     Conference on Learning Representations, ICLR 2015 - Conference Track Proceedings.'
@@ -1413,6 +1641,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Simonyan 和 Zisserman (2015) Simonyan, K., Zisserman, A., 2015. 用于大规模图像识别的非常深度卷积网络，见：第三届国际学习表征会议，ICLR
+    2015 - 会议论文集。
 - en: Sumi et al. (2003) Sumi, T., Abe, F., Bond, I., Dodd, R., Hearnshaw, J., Honda,
     M., Honma, M., Kan-ya, Y., Kilmartin, P., Masuda, K., Matsubara, Y., Muraki, Y.,
     Nakamura, T., Nishi, R., Noda, S., Ohnishi, K., Petterson, O., Rattenbury, N.,
@@ -1425,6 +1655,12 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Sumi 等人 (2003) Sumi, T., Abe, F., Bond, I., Dodd, R., Hearnshaw, J., Honda,
+    M., Honma, M., Kan-ya, Y., Kilmartin, P., Masuda, K., Matsubara, Y., Muraki, Y.,
+    Nakamura, T., Nishi, R., Noda, S., Ohnishi, K., Petterson, O., Rattenbury, N.,
+    Reid, M., Saito, T., Saito, Y., Sato, H., Sekiguchi, M., Skuljan, J., Sullivan,
+    D., Takeuti, M., Tristram, P., Wilkinson, S., Yanagisawa, T., Yock, P., 2003.
+    通过天体物理学小组在 2000 年的差分图像分析观测，测量银河系核心方向的微透镜光学深度。《天体物理学杂志》 591, 204–227。
 - en: Szegedy et al. (2015) Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., Wojna,
     Z., 2015. Rethinking the Inception Architecture for Computer Vision. Proceedings
     of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition
@@ -1433,6 +1669,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Szegedy 等人 (2015) Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., Wojna,
+    Z., 2015. 重新思考计算机视觉中的 Inception 架构。IEEE 计算机学会计算机视觉与模式识别会议论文集 2016-Decem, 2818–2826。
 - en: 'Tan et al. (2020) Tan, M., Pang, R., Le, Q.V., 2020. EfficientDet: Scalable
     and efficient object detection, in: Proceedings of the IEEE Computer Society Conference
     on Computer Vision and Pattern Recognition, pp. 10778–10787.'
@@ -1440,6 +1678,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Tan 等人 (2020) Tan, M., Pang, R., Le, Q.V., 2020. EfficientDet: 可扩展且高效的目标检测，见：IEEE
+    计算机学会计算机视觉与模式识别会议论文集，pp. 10778–10787。'
 - en: Tomaney and Crotts (1996) Tomaney, A.B., Crotts, A.P., 1996. Expanding the Realm
     of Microlensing Surveys with Difference Image Photometry. Astronomical Journal
     112, 2872.
@@ -1447,6 +1687,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Tomaney 和 Crotts (1996) Tomaney, A.B., Crotts, A.P., 1996. 通过差分图像光度学扩展微透镜调查的范围。《天文学杂志》
+    112, 2872。
 - en: Udalski et al. (1993) Udalski, A., Szymanski, M., Kaluzny, J., Kubiak, M., Krzeminski,
     W., Mateo, M., Preston, G.W., Paczynski, B., 1993. The Optical Gravitational Lensing
     Experiment. Discovery of the First Candidate Microlensing Event in the Direction
@@ -1455,6 +1697,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Udalski 等人 (1993) Udalski, A., Szymanski, M., Kaluzny, J., Kubiak, M., Krzeminski,
+    W., Mateo, M., Preston, G.W., Paczynski, B., 1993. 光学引力透镜实验。发现银河系核心方向的第一个候选微透镜事件。天文学学报
+    43, 289–294。
 - en: 'W. M. Newman and R. F. Sproull (1973) W. M. Newman and R. F. Sproull, 1973.
     Cohen-Sutherland Algorithm, in: Principles of Interactive Computer Graphics. internatio
     ed.. McGraw–Hill Education, pp. 124, 252.'
@@ -1462,6 +1707,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: W. M. Newman 和 R. F. Sproull (1973) W. M. Newman 和 R. F. Sproull, 1973. Cohen-Sutherland
+    算法，见：互动计算机图形学原理。国际版。McGraw–Hill 教育，pp. 124, 252。
 - en: 'Wang et al. (2020) Wang, C.Y., Mark Liao, H.Y., Wu, Y.H., Chen, P.Y., Hsieh,
     J.W., Yeh, I.H., 2020. CSPNet: A new backbone that can enhance learning capability
     of CNN, in: IEEE Computer Society Conference on Computer Vision and Pattern Recognition
@@ -1470,6 +1717,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Wang 等人 (2020) Wang, C.Y., Mark Liao, H.Y., Wu, Y.H., Chen, P.Y., Hsieh, J.W.,
+    Yeh, I.H., 2020. CSPNet: 一种可以增强 CNN 学习能力的新型骨干网络，见：IEEE 计算机学会计算机视觉与模式识别研讨会，pp.
+    1571–1580。'
 - en: 'Woo et al. (2018) Woo, S., Park, J., Lee, J.Y., Kweon, I.S., 2018. CBAM: Convolutional
     Block Attention Module. Lecture Notes in Computer Science (including subseries
     Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics)
@@ -1478,6 +1728,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Woo 等人（2018）Woo, S., Park, J., Lee, J.Y., Kweon, I.S., 2018. CBAM: 卷积块注意力模块。计算机科学讲义（包括子系列人工智能讲义和生物信息学讲义）11211
+    LNCS, 3–19。'
 - en: Zheng et al. (2020) Zheng, Z., Wang, P., Ren, D., Liu, W., Ye, R., Hu, Q., Zuo,
     W., 2020. Enhancing Geometric Factors in Model Learning and Inference for Object
     Detection and Instance Segmentation. IEEE Transactions on Cybernetics .
@@ -1485,6 +1737,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Zheng 等人（2020）Zheng, Z., Wang, P., Ren, D., Liu, W., Ye, R., Hu, Q., Zuo, W.,
+    2020. 提升模型学习与推理中的几何因素以进行对象检测和实例分割。IEEE 网络学报。
 - en: 'Zoghbi et al. (2017) Zoghbi, S., Cicco, M.D., Ordonez, A.J., Stapper, A.P.,
     Collison, J., Gural, P.S., Ganju, S., Galache, J.l., Jenniskens, P., 2017. Searching
     for Long-Period Comets with Deep Learning Tools, in: Workshop on Deep Learning
@@ -1493,3 +1747,5 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Zoghbi 等人（2017）Zoghbi, S., Cicco, M.D., Ordonez, A.J., Stapper, A.P., Collison,
+    J., Gural, P.S., Ganju, S., Galache, J.l., Jenniskens, P., 2017. 使用深度学习工具搜索长周期彗星，见：物理科学深度学习研讨会。
