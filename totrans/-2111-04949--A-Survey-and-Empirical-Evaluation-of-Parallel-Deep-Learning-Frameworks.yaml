@@ -1745,6 +1745,8 @@
   id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于缺乏混合精度支持，PipeDream 和 TorchGPipe 在所有 GPU 数量下的每轮执行时间最长。相较于自身的单 GPU 执行，PipeDream
+    的扩展似乎不稳定。性能不佳可以归因于两个因素。首先，PipeDream 使用相对较慢的 Gloo 库作为其通信后端。其次，不稳定的扩展通常是负载不平衡的标志。我们的实验显示，他们的通信感知负载均衡算法在实践中表现不佳。
 - en: Along with these two major trends we also observe that Megatron-intra plateaus
     once it runs on multiple nodes. For larger GPU counts it scales worse than DDP,
     ZeRO and AxoNN. We observed that the communication overhead of Megatron-intra
@@ -1759,11 +1761,16 @@
   id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了这两个主要趋势外，我们还观察到当 Megatron-intra 在多个节点上运行时会出现平台效应。对于更大的 GPU 数量，它的扩展性能不如 DDP、ZeRO
+    和 AxoNN。我们观察到，随着 GPU 数量的增加，Megatron-intra 的通信开销迅速增加，*最终*在 16 个 GPU 上达到了总执行时间的
+    52.5%。根据我们的观察，我们建议希望在语言建模任务上训练大型变换器模型的研究人员，使用 Megatron-intra 进行单 GPU 的顺序实现。如果模型超出了单个
+    GPU 的内存容量，我们建议采用 Megatron 的层内并行性将模型适配到单节点的 GPU 中。要实现大规模 GPU 扩展，应通过将 Megatron 的层内并行性与数据并行性相结合来完成。
 - en: 5.2\. Statistical Efficiency
   id: totrans-210
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 5.2\. 统计效率
 - en: Figure [8](#S5.F8 "Figure 8 ‣ 5.2\. Statistical Efficiency ‣ 5\. Comparative
     Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
     illustrates the results of our statistical efficiency experiments. Following standard
@@ -1786,6 +1793,13 @@
   id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 [8](#S5.F8 "Figure 8 ‣ 5.2\. Statistical Efficiency ‣ 5\. Comparative Evaluation
+    ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks") 展示了我们统计效率实验的结果。按照标准实践，我们分别在每轮对图像分类和语言建模任务测量验证准确率和困惑度。我们报告了轮次编号以及总训练时间。在观察
+    PipeDream 在这两项任务上的表现时，很明显权重陈旧是寻求实现管道化而不刷新算法的巨大障碍。PipeDream 提出的权重暂存方法没有有效缓解这一问题。ZeRO、DDP
+    和 LBANN 的验证曲线几乎相同。验证曲线的轻微差异可能是由于这些框架中混合精度实现的差异。TorchGPipe 和 Megatron-intra 在语言建模任务中展现出了比数据并行框架更高的统计效率。我们将这些框架的快速收敛归因于它们的训练运行在较少的
+    GPU 数量上进行。数据并行框架在 64 个 GPU 上训练时，由于我们在第 [3.1.3](#S3.SS1.SSS3 "3.1.3\. Large Effective
+    Mini-Batch Sizes ‣ 3.1\. Data Parallelism ‣ 3\. Literature Survey ‣ A Survey and
+    Empirical Evaluation of Parallel Deep Learning Frameworks") 节中强调的有效小批量大小增加问题，其收敛速度略有下降。
 - en: Figure [8](#S5.F8 "Figure 8 ‣ 5.2\. Statistical Efficiency ‣ 5\. Comparative
     Evaluation ‣ A Survey and Empirical Evaluation of Parallel Deep Learning Frameworks")
     further details how the accuracies and perplexities behave over time rather than
@@ -2536,6 +2550,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Song 等人（2019）**L. Song**、**J. Mao**、**Y. Zhuo**、**X. Qian**、**H. Li** 和 **Y.
+    Chen**。2019。《HyPar: Towards Hybrid Parallelism for Deep Learning Accelerator Array》。在
+    *2019 IEEE高性能计算架构国际研讨会* (HPCA)。56–68。 [https://doi.org/10.1109/HPCA.2019.00027](https://doi.org/10.1109/HPCA.2019.00027)'
 - en: 'Steuwer et al. (2017) Michel Steuwer, Toomas Remmelg, and Christophe Dubach.
     2017. Lift: A Functional Data-Parallel IR for High-Performance GPU Code Generation.
     In *Proceedings of the 2017 International Symposium on Code Generation and Optimization*
@@ -2544,6 +2561,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Steuwer 等人（2017）**Michel Steuwer**、**Toomas Remmelg** 和 **Christophe Dubach**。2017。《Lift:
+    A Functional Data-Parallel IR for High-Performance GPU Code Generation》。在 *2017年国际代码生成与优化研讨会*（美国奥斯丁）
+    *(CGO ’17)*。IEEE出版社，74–85。'
 - en: 'Sze et al. (2017) V. Sze, Y. Chen, T. Yang, and J. S. Emer. 2017. Efficient
     Processing of Deep Neural Networks: A Tutorial and Survey. *Proc. IEEE* 105, 12
     (2017), 2295–2329. [https://doi.org/10.1109/JPROC.2017.2761740](https://doi.org/10.1109/JPROC.2017.2761740)'
@@ -2551,6 +2571,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Sze 等人（2017）**V. Sze**、**Y. Chen**、**T. Yang** 和 **J. S. Emer**。2017。《Efficient
+    Processing of Deep Neural Networks: A Tutorial and Survey》。*Proc. IEEE* 105，第12期（2017年），2295–2329。
+    [https://doi.org/10.1109/JPROC.2017.2761740](https://doi.org/10.1109/JPROC.2017.2761740)'
 - en: 'Tang et al. (2020) Zhenheng Tang, Shaohuai Shi, Xiaowen Chu, Wei Wang, and
     Bo Li. 2020. Communication-Efficient Distributed Deep Learning: A Comprehensive
     Survey. arXiv:2003.06307 [cs.DC]'
@@ -2558,12 +2581,17 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Tang 等人（2020）**Zhenheng Tang**、**Shaohuai Shi**、**Xiaowen Chu**、**Wei Wang**
+    和 **Bo Li**。2020。《Communication-Efficient Distributed Deep Learning: A Comprehensive
+    Survey》。arXiv:2003.06307 [cs.DC]'
 - en: Tao et al. (2020) Andrew Tao, Karan Sapra, and Bryan Catanzaro. 2020. Hierarchical
     Multi-Scale Attention for Semantic Segmentation. arXiv:2005.10821 [cs.CV]
   id: totrans-286
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Tao 等人（2020）**Andrew Tao**、**Karan Sapra** 和 **Bryan Catanzaro**。2020。《Hierarchical
+    Multi-Scale Attention for Semantic Segmentation》。arXiv:2005.10821 [cs.CV]
 - en: 'Thiagarajan et al. (2018a) Jayaraman J. Thiagarajan, Rushil Anirudh, Bhavya
     Kailkhura, Nikhil Jain, Tanzima Islam, Abhinav Bhatele, Jae-Seung Yeom, and Todd
     Gamblin. 2018a. PADDLE: Performance Analysis using a Data-driven Learning Environment.
@@ -2573,6 +2601,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Thiagarajan 等人（2018a）**Jayaraman J. Thiagarajan**、**Rushil Anirudh**、**Bhavya
+    Kailkhura**、**Nikhil Jain**、**Tanzima Islam**、**Abhinav Bhatele**、**Jae-Seung
+    Yeom** 和 **Todd Gamblin**。2018a。《PADDLE: Performance Analysis using a Data-driven
+    Learning Environment》。在 *IEEE国际并行与分布式处理研讨会* *(IPDPS ’18)*。IEEE计算机学会。 [http://doi.ieeecomputersociety.org/10.1109/IPDPS.2018.00088](http://doi.ieeecomputersociety.org/10.1109/IPDPS.2018.00088)'
 - en: Thiagarajan et al. (2018b) Jayaraman J. Thiagarajan, Nikhil Jain, Rushil Anirudh,
     Alfredo Giménez, Rahul Sridhar, Aniruddha Marathe, Tao Wang, Murali Emani, Abhinav
     Bhatele, and Todd Gamblin. 2018b. Bootstrapping Parameter Space Exploration for
@@ -2582,6 +2614,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Thiagarajan 等人（2018b）**Jayaraman J. Thiagarajan**、**Nikhil Jain**、**Rushil Anirudh**、**Alfredo
+    Giménez**、**Rahul Sridhar**、**Aniruddha Marathe**、**Tao Wang**、**Murali Emani**、**Abhinav
+    Bhatele** 和 **Todd Gamblin**。2018b。《Bootstrapping Parameter Space Exploration
+    for Fast Tuning》。在 *国际超级计算大会* *(ICS ’18)*。 [http://doi.acm.org/10.1145/3205289.3205321](http://doi.acm.org/10.1145/3205289.3205321)
 - en: 'Vijayanarasimhan et al. (2017) Sudheendra Vijayanarasimhan, Susanna Ricco,
     Cordelia Schmid, Rahul Sukthankar, and Katerina Fragkiadaki. 2017. SfM-Net: Learning
     of Structure and Motion from Video. arXiv:1704.07804 [cs.CV]'
@@ -2589,6 +2625,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Vijayanarasimhan 等人（2017）**Sudheendra Vijayanarasimhan**、**Susanna Ricco**、**Cordelia
+    Schmid**、**Rahul Sukthankar** 和 **Katerina Fragkiadaki**。2017。《SfM-Net: Learning
+    of Structure and Motion from Video》。arXiv:1704.07804 [cs.CV]'
 - en: Wahib et al. (2020) Mohamed Wahib, Haoyu Zhang, Truong Thao Nguyen, Aleksandr
     Drozd, Jens Domke, Lingqi Zhang, Ryousei Takano, and Satoshi Matsuoka. 2020. Scaling
     Distributed Deep Learning Workloads beyond the Memory Capacity with KARMA. In
@@ -2598,6 +2637,10 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Wahib 等人（2020）**Mohamed Wahib**、**Haoyu Zhang**、**Truong Thao Nguyen**、**Aleksandr
+    Drozd**、**Jens Domke**、**Lingqi Zhang**、**Ryousei Takano** 和 **Satoshi Matsuoka**。2020。《Scaling
+    Distributed Deep Learning Workloads beyond the Memory Capacity with KARMA》。在 *国际高性能计算、网络、存储与分析大会*（美国乔治亚州亚特兰大）
+    *(SC ’20)*。IEEE出版社，第19篇，15页。
 - en: 'Wu et al. (2016) Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V. Le, Mohammad
     Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Klaus Macherey, Jeff
     Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Łukasz Kaiser, Stephan Gouws,
