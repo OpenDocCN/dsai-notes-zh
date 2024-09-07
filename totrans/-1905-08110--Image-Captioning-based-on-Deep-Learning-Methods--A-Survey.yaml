@@ -332,6 +332,7 @@
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2：基于编码器-解码器结构的模型：展示与描述（顶部）。展示、关注与描述（底部）
 - en: This model first uses the CNN as the Encoder part, encodes the image into a
     fixed-length vector representation as the image feature map, and then sends the
     image feature map to the Decoder part of the RNN to decode and generate an image
@@ -340,20 +341,27 @@
   id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模型首先使用 CNN 作为编码器部分，将图像编码为固定长度的向量表示，即图像特征图，然后将图像特征图发送到 RNN 的解码器部分，以解码并生成图像描述。这可以表示为
+    Eq.(1)-Eq.(3)。编码器部分是 CNN，对应于 GoogLeNet（Inception V3）；解码器部分是 LSTM。
 - en: '|  | $\displaystyle x_{-1}$ | $\displaystyle={\rm Encoder}(I)$ |  | (1) |'
   id: totrans-41
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle x_{-1}$ | $\displaystyle={\rm Encoder}(I)$ |  | (1) |'
 - en: '|  | $\displaystyle x_{t}$ | $\displaystyle=W_{e}S_{t},$ | $\displaystyle t\in\{0,...,N-1\}$
     |  | (2) |'
   id: totrans-42
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle x_{t}$ | $\displaystyle=W_{e}S_{t},$ | $\displaystyle t\in\{0,...,N-1\}$
+    |  | (2) |'
 - en: '|  | $\displaystyle p_{t+1}$ | $\displaystyle={\rm Decoder}(x_{t}),$ | $\displaystyle
     t\in\{0,...,N-1\}$ |  | (3) |'
   id: totrans-43
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle p_{t+1}$ | $\displaystyle={\rm Decoder}(x_{t}),$ | $\displaystyle
+    t\in\{0,...,N-1\}$ |  | (3) |'
 - en: Suppose the vocabulary size is $D$, where $I$ represents the input image, $x_{-1}$
     is the feature map, which is only used to initialize the LSTM; $S_{t}$ is the
     one-hot vector in size $D$, representing the $t$-th word of the image description,
@@ -364,6 +372,9 @@
   id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设词汇表大小为 $D$，其中 $I$ 表示输入图像，$x_{-1}$ 是特征图，仅用于初始化 LSTM；$S_{t}$ 是大小为 $D$ 的 one-hot
+    向量，表示图像描述中的第 $t$ 个词，$S_{0}$ 是 $<$START$>$ 标签，$S_{N}$ 是 $<$END$>$ 标签；$W_{e}$ 是词嵌入矩阵；$p_{t+1}\in\mathbb{R}^{D}$
+    表示第 $t+1$ 时间步生成的概率向量，其中最可能的词对应于时间步词输出。
 - en: Show Attend and Tell Xu et al. ([2015](#bib.bib25)) is an extension of Vinyals
     et al. ([2015](#bib.bib23)), which introduces a visual attention mechanism based
     on the Encoder-Decoder structure, which can dynamically focus on the salient regions
@@ -372,6 +383,8 @@
   id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 展示、关注与描述 Xu 等人（[2015](#bib.bib25)）是 Vinyals 等人（[2015](#bib.bib23)）的扩展，引入了基于编码器-解码器结构的视觉注意机制，在解码器生成描述的过程中可以动态关注图像的显著区域。模型结构如图
+    2（底部）所示。
 - en: This model also uses a CNN as Encoder to extract $L$ vectors of $K$ dimensions
     from the image, each vector corresponds to a portion of the image. But unlike
     Vinyals et al. ([2015](#bib.bib23)), the model uses the underlying convolutional
@@ -380,10 +393,12 @@
   id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模型还使用 CNN 作为编码器，从图像中提取 $L$ 个 $K$ 维向量，每个向量对应图像的一部分。但与 Vinyals 等人（[2015](#bib.bib23)）不同，该模型使用底层卷积层的输出，而不是最终全连接层的输出作为图像特征向量。
 - en: '|  | $a=\{a_{1},...,a_{L}\},a_{i}\in\mathbb{R}^{K}$ |  | (4) |'
   id: totrans-47
   prefs: []
   type: TYPE_TB
+  zh: '|  | $a=\{a_{1},...,a_{L}\},a_{i}\in\mathbb{R}^{K}$ |  | (4) |'
 - en: In the Decoder part, Xu et al. ([2015](#bib.bib25)) also uses LSTM for description
     generation. But this model needs to use the image-based feature vector $a$ for
     each time step $t$ to generate the context vector $z_{t}=\sum_{i=1}^{L}\alpha_{ti}a_{i}$.
@@ -394,33 +409,46 @@
   id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 在解码器部分，Xu 等人（[2015](#bib.bib25)）还使用 LSTM 进行描述生成。但该模型需要在每个时间步 $t$ 使用基于图像的特征向量
+    $a$ 来生成上下文向量 $z_{t}=\sum_{i=1}^{L}\alpha_{ti}a_{i}$。这是注意力机制的体现，$\alpha_{t}\in\mathbb{R}^{L}$
+    是第 $t$ 时间步的注意力权重向量，满足 $\sum_{i=1}^{L}\alpha_{ti}=1$。$a$ 可以通过简单的神经网络 $f_{\rm att}$
+    和 Softmax 激活函数进行预测。
 - en: '|  | $\alpha_{ti}\propto\exp\{f_{\rm att}(a_{i},m_{t-1})\}$ |  | (5) |'
   id: totrans-49
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\alpha_{ti}\propto\exp\{f_{\rm att}(a_{i},m_{t-1})\}$ |  | (5) |'
 - en: Therefore, the attention Encoder-Decoder structure can be expressed as Eq.(6)-Eq.(9).
   id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，注意力编码器-解码器结构可以表示为 Eq.(6)-Eq.(9)。
 - en: '|  | $\displaystyle a$ | $\displaystyle={\rm Encoder}(I)$ |  | (6) |'
   id: totrans-51
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle a$ | $\displaystyle={\rm Encoder}(I)$ |  | (6) |'
 - en: '|  | $\displaystyle z_{t}$ | $\displaystyle=\sum_{i=1}^{L}\alpha_{ti}a_{i},$
     | $\displaystyle\alpha_{ti}\in\mathbb{R},a_{i}\in\mathbb{R}^{K}$ |  | (7) |'
   id: totrans-52
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle z_{t}$ | $\displaystyle=\sum_{i=1}^{L}\alpha_{ti}a_{i},$
+    | $\displaystyle\alpha_{ti}\in\mathbb{R},a_{i}\in\mathbb{R}^{K}$ |  | (7) |'
 - en: '|  | $\displaystyle x_{t}$ | $\displaystyle=W_{e}S_{t},$ | $\displaystyle t\in\{0,...,N-1\}$
     |  | (8) |'
   id: totrans-53
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle x_{t}$ | $\displaystyle=W_{e}S_{t},$ | $\displaystyle t\in\{0,...,N-1\}$
+    |  | (8) |'
 - en: '|  | $\displaystyle p_{t+1}$ | $\displaystyle={\rm Decoder}(x_{t},z_{t}),$
     | $\displaystyle t\in\{0,...,N-1\}$ |  | (9) |'
   id: totrans-54
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle p_{t+1}$ | $\displaystyle={\rm Decoder}(x_{t},z_{t}),$
+    | $\displaystyle t\in\{0,...,N-1\}$ |  | (9) |'
 - en: The above Eqs is the Soft attention mechanism proposed in the paper, details
     are shown in Figure 3 (left), and another Hard attention is also proposed. However,
     most of the improved models use Soft attention easy to implement, so only the
@@ -428,11 +456,13 @@
   id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述方程是论文中提出的**Soft**注意力机制，详细内容见图3（左），此外还提出了另一种**Hard**注意力机制。然而，大多数改进的模型使用易于实现的**Soft**注意力机制，因此这里仅介绍**Soft**注意力机制。
 - en: 3.2 Improvements in Encoder
   id: totrans-56
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 3.2 编码器的改进
 - en: You et al. ([2016](#bib.bib28)) proposes a semantic attention model, in addition
     to using CNN’s intermediate activation output as the global feature of the image
     $v$, and also using a set of attribute detectors to extract $\{A_{i}\}$ the most
@@ -443,25 +473,35 @@
   id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: You 等人 ([2016](#bib.bib28)) 提出了一个语义注意力模型，除了使用 CNN 的中间激活输出作为图像的全局特征 $v$，还使用一组属性检测器提取
+    $\{A_{i}\}$ 中最可能出现在图像中的属性。每个属性 $A_{i}$ 对应词汇表中的一个条目，因此模型将图像编码为视觉特征和语义特征的集合。然后自适应地处理
+    $\{A_{i}\}$ 以计算解码器输入 $x_{t}$ 并获得当前词输出 $p_{t}$。
 - en: '|  | $\displaystyle v$ | $\displaystyle={\rm Encoder}(I)$ |  | (10) |'
   id: totrans-58
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle v$ | $\displaystyle={\rm Encoder}(I)$ |  | (10) |'
 - en: '|  | $\displaystyle h_{t}$ | $\displaystyle={\rm Decoder}(h_{t-1},x_{t})$ |  |
     (11) |'
   id: totrans-59
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle h_{t}$ | $\displaystyle={\rm Decoder}(h_{t-1},x_{t})$ |  |
+    (11) |'
 - en: '|  | $\displaystyle p_{t}$ | $\displaystyle=\varphi(h_{t},\{A_{i}\})$ |  |
     (12) |'
   id: totrans-60
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle p_{t}$ | $\displaystyle=\varphi(h_{t},\{A_{i}\})$ |  |
+    (12) |'
 - en: '|  | $\displaystyle x_{t}$ | $\displaystyle=\phi(p_{t-1},\{A_{i}\})$ |  | (13)
     |'
   id: totrans-61
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle x_{t}$ | $\displaystyle=\phi(p_{t-1},\{A_{i}\})$ |  | (13)
+    |'
 - en: Liu et al. ([2017](#bib.bib16)) returns the image captioning problem back to
     machine translation, which first uses the object detector to represent the image
     $I$ as the sequence of detection objects $seq(I)=\{O_{1},O_{2},...,O_{T_{A}}\}$,
@@ -473,16 +513,23 @@
   id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: Liu 等人 ([2017](#bib.bib16)) 将图像描述问题回归到机器翻译中，首先使用对象检测器将图像 $I$ 表示为检测对象的序列 $seq(I)=\{O_{1},O_{2},...,O_{T_{A}}\}$，其中
+    $\{O_{1},...,O_{T_{A}-1}\}$ 是图像对象特征表示，最后一个项目 $O_{T_{A}}$ 是图像的全局特征；然后将机器翻译中的序列到序列框架应用于
+    $seq(I)$ 生成图像描述 $S=\{S_{1},S_{2},...,S_{T_{B}}\}$，编码器和解码器使用 LSTM 实现。
 - en: '|  | $\displaystyle h_{t_{E}}={\rm Encoder}(O_{t_{E}},h_{t_{E}-1}),t_{E}=1,2,...,T_{A}$
     |  | (14) |'
   id: totrans-63
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle h_{t_{E}}={\rm Encoder}(O_{t_{E}},h_{t_{E}-1}),t_{E}=1,2,...,T_{A}$
+    |  | (14) |'
 - en: '|  | $\displaystyle d_{t_{D}}={\rm Decoder}(S_{t_{D}},d_{t_{D}-1}),t_{D}=1,2,...,T_{B}$
     |  | (15) |'
   id: totrans-64
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle d_{t_{D}}={\rm Decoder}(S_{t_{D}},d_{t_{D}-1}),t_{D}=1,2,...,T_{B}$
+    |  | (15) |'
 - en: In addition, when $S_{T}$ is generated, the model applies the attention mechanism
     to generate $d_{t-1}^{\prime}$ on the Encoder hidden layer sequence output $h=\{h_{1},h_{2},...,h_{T_{A}}\}$.
     Then cocat $d_{t-1}^{\prime}$ and $d_{t}$ use the Softmax activation function
@@ -490,6 +537,9 @@
   id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，当生成 $S_{T}$ 时，模型应用注意力机制生成 Encoder 隐藏层序列输出 $h=\{h_{1},h_{2},...,h_{T_{A}}\}$
+    上的 $d_{t-1}^{\prime}$。然后将 $d_{t-1}^{\prime}$ 和 $d_{t}$ 连接起来，使用 **Softmax** 激活函数生成当前的
+    $S_{t}$。
 - en: Chen et al. ([2017](#bib.bib5)) believes that CNN’s kernels can be used as pattern
     detectors, and each channel of image feature map is activated by the corresponding
     convolution kernel. Therefore, the application of attention mechanism on the channel
@@ -502,6 +552,9 @@
   id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: Chen 等人 ([2017](#bib.bib5)) 认为 CNN 的卷积核可以用作模式检测器，每个图像特征图的通道由相应的卷积核激活。因此，对通道应用注意力机制可以看作是选择图像语义属性的过程。他们提出了
+    SCA-CNN，该方法将注意力机制应用于空间和通道。然而，与之前的注意力机制不同，在计算上下文向量时，他们只加权区域特征而不求和，这可以确保特征向量和上下文向量大小相同，因此
+    SCA-CNN 可以嵌入堆叠多次。
 - en: Fu et al. ([2017](#bib.bib8)) introduced advanced semantic information to improve
     image description based on attention. Firstly, the object detection generates
     a series of candidate regions, and a two-classifier is used to classify the candidate
@@ -514,6 +567,9 @@
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: Fu 等人 ([2017](#bib.bib8)) 引入了先进的语义信息来改进基于注意力的图像描述。首先，对象检测生成一系列候选区域，然后使用两个分类器对候选区域进行分类（好/坏）。最后，选择前
+    29 个区域和图像全局区域作为视觉特征信息。注意力机制生成上下文向量 $z_{t}$。此外，他们使用 LDA 对数据集中所有描述进行建模，将图像灵活地映射到
+    80 维主题向量（对应隐含的 80 个场景类别），然后训练一个多层感知机来预测场景上下文向量 $s$，以更好地生成图像描述。
 - en: Yao et al. ([2018](#bib.bib27)) believes that the semantic relationship and
     spatial relationship between image objects are helpful for image description generation.
     They first use the object detection module Faster R-CNN Ren et al. ([2015](#bib.bib20))
@@ -529,6 +585,10 @@
   id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: Yao 等人 ([2018](#bib.bib27)) 认为图像对象之间的语义关系和空间关系对图像描述生成有帮助。他们首先使用对象检测模块 Faster
+    R-CNN Ren 等人 ([2015](#bib.bib20)) 检测图像中的对象，并将图像表示为 $K$ 个包含对象的图像显著性区域 $V=\{v_{i}\}_{i=1}^{K}$；然后使用一个简单的分类网络预测对象之间的语义关系，并构建语义关系图
+    $\mathcal{G}_{sem}=(V,\varepsilon_{sem})$，并通过使用对象区域的位置关系构建空间关系图 $\mathcal{G}_{spa}=(V,\varepsilon_{spa})$。然后，他们设计了一个基于
+    [GCN] 的图像编码器，以融合对象之间的语义和空间关系，从而获得包含更多信息的视觉特征 $V^{(1)}=\{v_{i}^{(1)}\}_{i=1}^{K}$。
 - en: As can be seen from the above, the original intention of improving Encoder is
     mostly to extract more useful information from images, such as adding semantic
     information on the basis of visual information, replacing the original CNN response
@@ -540,6 +600,7 @@
   id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 从上述内容可以看出，改进编码器的原意主要是从图像中提取更多有用的信息，例如在视觉信息的基础上添加语义信息，或用对象检测模块替代原来的 CNN 响应激活区域。因此，这些方法提高了图像描述效果，但也存在一些固有的缺陷。一方面，对象检测可能会影响图像描述生成的效率，另一方面，难以有效解释隐式获得的图像语义信息的可靠性。
 - en: '![Refer to caption](img/84c437269faa531571c909aa4337d7a0.png)'
   id: totrans-70
   prefs: []
@@ -722,22 +783,29 @@
   id: totrans-90
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle\tilde{f}_{t}$ | $\displaystyle=\sum_{i=1}^{L}\alpha_{ti}a_{i}$
+    |  | (22) |'
 - en: '|  | $\displaystyle f_{t}$ | $\displaystyle={\rm LSTM_{R}}(\tilde{f}_{t},f_{t-1})$
     |  | (23) |'
   id: totrans-91
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle f_{t}$ | $\displaystyle={\rm LSTM_{R}}(\tilde{f}_{t},f_{t-1})$
+    |  | (23) |'
 - en: Another one is Attention Output Reviewer, which also applies attention mechanism
     to image region features, but uses zero vector as input of LSTM unit, fact vector
     is calculated as the sum of LSTM output and attention output,
   id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个是注意力输出审阅器，它也将注意力机制应用于图像区域特征，但使用零向量作为 LSTM 单元的输入，事实向量作为 LSTM 输出和注意力输出的总和进行计算，
 - en: '|  | $\displaystyle f_{t}$ | $\displaystyle={\rm LSTM_{R}}(0,f_{t-1})+W\tilde{f}_{t}$
     |  | (24) |'
   id: totrans-93
   prefs: []
   type: TYPE_TB
+  zh: '|  | $\displaystyle f_{t}$ | $\displaystyle={\rm LSTM_{R}}(0,f_{t-1})+W\tilde{f}_{t}$
+    |  | (24) |'
 - en: Inspired by Yang et al. ([2016](#bib.bib26)), Jiang et al. ([2018](#bib.bib11))
     designs a Guiding Network based on a simple neural network in Encoder and Decoder
     structure. The region feature set of the image is used as input to generate a
@@ -747,99 +815,135 @@
   id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 受到 Yang et al. ([2016](#bib.bib26)) 的启发，Jiang et al. ([2018](#bib.bib11)) 设计了一个基于编码器和解码器结构的简单神经网络的指导网络。图像的区域特征集作为输入生成一个包含图像全局信息的指导向量
+    $v$。然后，指导向量 $v$ 将与解码器的原始输入融合，以确保在生成图像描述时输入更丰富的图像信息。
 - en: '|  | Flickr30K | MS COCO |'
   id: totrans-95
   prefs: []
   type: TYPE_TB
+  zh: '|  | Flickr30K | MS COCO |'
 - en: '| --- | --- | --- |'
   id: totrans-96
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| Methods | B-1 | B-2 | B-3 | B-4 | MT | CD | B-1 | B-2 | B-3 | B-4 | MT |
     CD | SP |'
   id: totrans-97
   prefs: []
   type: TYPE_TB
+  zh: '| 方法 | B-1 | B-2 | B-3 | B-4 | MT | CD | B-1 | B-2 | B-3 | B-4 | MT | CD |
+    SP |'
 - en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
     | --- |'
   id: totrans-98
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+    | --- |'
 - en: '| Vinyals et al. ([2015](#bib.bib23)) | 66.3 | 42.3 | 27.7 | 18.3 | - | - |
     66.6 | 46.1 | 32.9 | 24.6 | - | - | - |'
   id: totrans-99
   prefs: []
   type: TYPE_TB
+  zh: '| Vinyals et al. ([2015](#bib.bib23)) | 66.3 | 42.3 | 27.7 | 18.3 | - | - |
+    66.6 | 46.1 | 32.9 | 24.6 | - | - | - |'
 - en: '| Xu et al. ([2015](#bib.bib25)) | 66.7 | 43.4 | 28.8 | 19.1 | 18.49 | - |
     70.7 | 49.2 | 34.4 | 24.3 | 23.9 | - | - |'
   id: totrans-100
   prefs: []
   type: TYPE_TB
+  zh: '| Xu et al. ([2015](#bib.bib25)) | 66.7 | 43.4 | 28.8 | 19.1 | 18.49 | - |
+    70.7 | 49.2 | 34.4 | 24.3 | 23.9 | - | - |'
 - en: '| You et al. ([2016](#bib.bib28)) | 64.7 | 46.0 | 32.4 | 23.0 | 18.9 | - |
     70.9 | 53.7 | 40.2 | 30.4 | 24.3 | - | - |'
   id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '| You et al. ([2016](#bib.bib28)) | 64.7 | 46.0 | 32.4 | 23.0 | 18.9 | - |
+    70.9 | 53.7 | 40.2 | 30.4 | 24.3 | - | - |'
 - en: '| Liu et al. ([2017](#bib.bib16)) | - | - | - | - | - | - | 73.1 | 56.7 | 42.9
     | 32.3 | 25.8 | 105.8 | 18.9 |'
   id: totrans-102
   prefs: []
   type: TYPE_TB
+  zh: '| Liu et al. ([2017](#bib.bib16)) | - | - | - | - | - | - | 73.1 | 56.7 | 42.9
+    | 32.3 | 25.8 | 105.8 | 18.9 |'
 - en: '| Chen et al. ([2017](#bib.bib5)) | 66.2 | 46.8 | 32.5 | 22.3 | 19.5 | - |
     71.9 | 54.8 | 41.1 | 31.1 | 25.0 | - | - |'
   id: totrans-103
   prefs: []
   type: TYPE_TB
+  zh: '| Chen et al. ([2017](#bib.bib5)) | 66.2 | 46.8 | 32.5 | 22.3 | 19.5 | - |
+    71.9 | 54.8 | 41.1 | 31.1 | 25.0 | - | - |'
 - en: '| Fu et al. ([2017](#bib.bib8)) | 64.9 | 46.2 | 32.4 | 22.4 | 19.4 | 47.2 |
     72.4 | 55.5 | 41.8 | 31.3 | 24.8 | 95.5 | - |'
   id: totrans-104
   prefs: []
   type: TYPE_TB
+  zh: '| Fu et al. ([2017](#bib.bib8)) | 64.9 | 46.2 | 32.4 | 22.4 | 19.4 | 47.2 |
+    72.4 | 55.5 | 41.8 | 31.3 | 24.8 | 95.5 | - |'
 - en: '| Yao et al. ([2018](#bib.bib27)) | - | - | - | - | - | - | 77.4 | - | - |
     37.1 | 28.1 | 117.1 | 21.1 |'
   id: totrans-105
   prefs: []
   type: TYPE_TB
+  zh: '| Yao et al. ([2018](#bib.bib27)) | - | - | - | - | - | - | 77.4 | - | - |
+    37.1 | 28.1 | 117.1 | 21.1 |'
 - en: '| Anderson et al. ([2018](#bib.bib2)) | - | - | - | - | - | - | 77.2 | - |
     - | 36.2 | 27.0 | 113.5 | 20.3 |'
   id: totrans-106
   prefs: []
   type: TYPE_TB
+  zh: '| Anderson et al. ([2018](#bib.bib2)) | - | - | - | - | - | - | 77.2 | - |
+    - | 36.2 | 27.0 | 113.5 | 20.3 |'
 - en: '| Zhou et al. ([2017](#bib.bib30)) | - | - | - | - | - | - | 71.6 | 54.5 |
     40.5 | 30.1 | 24.7 | 97.0 | - |'
   id: totrans-107
   prefs: []
   type: TYPE_TB
+  zh: '| Zhou et al. ([2017](#bib.bib30)) | - | - | - | - | - | - | 71.6 | 54.5 |
+    40.5 | 30.1 | 24.7 | 97.0 | - |'
 - en: '| Fang et al. ([2018](#bib.bib7)) | - | - | 32.8 | 23.4 | 18.7 | 43.7 | - |
     - | 44.2 | 34.0 | 26.4 | 105.6 | - |'
   id: totrans-108
   prefs: []
   type: TYPE_TB
+  zh: '| Fang et al. ([2018](#bib.bib7)) | - | - | 32.8 | 23.4 | 18.7 | 43.7 | - |
+    - | 44.2 | 34.0 | 26.4 | 105.6 | - |'
 - en: '| Aneja et al. ([2018](#bib.bib3)) | - | - | - | - | - | - | 71.1 | 53.8 |
     39.4 | 28.7 | 24.4 | 91.2 | 17.5 |'
   id: totrans-109
   prefs: []
   type: TYPE_TB
+  zh: '| Aneja et al. ([2018](#bib.bib3)) | - | - | - | - | - | - | 71.1 | 53.8 |
+    39.4 | 28.7 | 24.4 | 91.2 | 17.5 |'
 - en: '| Wang and Chan ([2018](#bib.bib24)) | 60.7 | 42.5 | 29.2 | 19.9 | 19.1 | 39.5
     | 68.5 | 51.1 | 36.9 | 26.7 | 23.4 | 84.4 | - |'
   id: totrans-110
   prefs: []
   type: TYPE_TB
+  zh: '| Wang and Chan ([2018](#bib.bib24)) | 60.7 | 42.5 | 29.2 | 19.9 | 19.1 | 39.5
+    | 68.5 | 51.1 | 36.9 | 26.7 | 23.4 | 84.4 | - |'
 - en: '| Dai et al. ([2018](#bib.bib6)) | - | - | - | 22.0 | - | 42.7 | - | - | -
     | 31.9 | - | 99.4 | 18.7 |'
   id: totrans-111
   prefs: []
   type: TYPE_TB
+  zh: '| Dai et al. ([2018](#bib.bib6)) | - | - | - | 22.0 | - | 42.7 | - | - | -
+    | 31.9 | - | 99.4 | 18.7 |'
 - en: 'Table 1: Evaluation results of some models. B-n, MT, CD, SP stand for BLEU-n,
     METEOR, CIDEr and SPICE respectively.'
   id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 表 1：一些模型的评估结果。B-n、MT、CD 和 SP 分别代表 BLEU-n、METEOR、CIDEr 和 SPICE。
 - en: 4 Datasets
   id: totrans-113
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 4 个数据集
 - en: 'Image captioning based on deep learning methods requires a lot of label data.
     Fortunately, many researchers and research organization have collected and tagged
     data sets. Here we mainly introduce four common data sets: Flickr 8K Hodosh et
@@ -1033,12 +1137,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Anderson 等人 [2018] P. Anderson, X. He, C. Buehler, D. Teney, M. Johnson, S.
+    Gould 和 L. Zhang. 图像描述和视觉问答的自下而上和自上而下注意力。载于 CVPR，第 6077–6086 页，2018 年。
 - en: Aneja et al. [2018] J. Aneja, A. Deshpande, and A. G. Schwing. Convolutional
     image captioning. In CVPR, pages 5561–5570, 2018.
   id: totrans-132
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Aneja 等人 [2018] J. Aneja, A. Deshpande 和 A. G. Schwing. 卷积图像描述。载于 CVPR，第 5561–5570
+    页，2018 年。
 - en: 'Banerjee and Lavie [2005] S. Banerjee and A. Lavie. METEOR: an automatic metric
     for MT evaluation with improved correlation with human judgments. In Proceedings
     of the Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine Translation,
@@ -1047,6 +1155,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Banerjee 和 Lavie [2005] S. Banerjee 和 A. Lavie. METEOR：一种改进了与人工评估相关性的自动化评估指标。载于机器翻译内在和外在评估度量研讨会论文集，第
+    65–72 页，2005 年。
 - en: 'Chen et al. [2017] L. Chen, H. Zhang, J. Xiao, L. Nie, J. Shao, W. Liu, and
     T. Chua. SCA-CNN: spatial and channel-wise attention in convolutional networks
     for image captioning. In CVPR, pages 6298–6306, 2017.'
@@ -1054,12 +1164,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Chen 等人 [2017] L. Chen, H. Zhang, J. Xiao, L. Nie, J. Shao, W. Liu 和 T. Chua.
+    SCA-CNN：用于图像描述的卷积网络中的空间和通道注意力。载于 CVPR，第 6298–6306 页，2017 年。
 - en: Dai et al. [2018] B. Dai, D. Ye, and D. Lin. Rethinking the form of latent states
     in image captioning. In ECCV, pages 294–310, 2018.
   id: totrans-135
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Dai 等人 [2018] B. Dai, D. Ye 和 D. Lin. 重新思考图像描述中的潜在状态形式。载于 ECCV，第 294–310 页，2018
+    年。
 - en: Fang et al. [2018] F. Fang, H. Wang, Y. Chen, and P. Tang. Looking deeper and
     transferring attention for image captioning. Multimedia Tools Appl., 77(23):31159–31175,
     2018.
@@ -1067,6 +1181,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Fang 等人 [2018] F. Fang, H. Wang, Y. Chen 和 P. Tang. 深度分析和转移注意力用于图像描述。Multimedia
+    Tools Appl., 77(23):31159–31175, 2018 年。
 - en: 'Fu et al. [2017] K. Fu, J. Jin, R. Cui, F. Sha, and C. Zhang. Aligning where
     to see and what to tell: Image captioning with region-based attention and scene-specific
     contexts. IEEE Trans. Pattern Anal. Mach. Intell., 39(12):2321–2334, 2017.'
@@ -1074,12 +1190,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Fu 等人 [2017] K. Fu, J. Jin, R. Cui, F. Sha 和 C. Zhang. 对齐观察位置和描述内容：基于区域的注意力和场景特定上下文的图像描述。IEEE
+    Trans. Pattern Anal. Mach. Intell., 39(12):2321–2334, 2017 年。
 - en: Hochreiter and Schmidhuber [1997] S. Hochreiter and J. Schmidhuber. Long short-term
     memory. Neural Computation, 9(8):1735–1780, 1997.
   id: totrans-138
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Hochreiter 和 Schmidhuber [1997] S. Hochreiter 和 J. Schmidhuber. 长短期记忆。神经计算，9(8):1735–1780，1997
+    年。
 - en: 'Hodosh et al. [2015] M. Hodosh, P. Young, and J. Hockenmaier. Framing image
     description as a ranking task: Data, models and evaluation metrics (extended abstract).
     In IJCAI, pages 4188–4192, 2015.'
@@ -1087,12 +1207,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Hodosh 等人 [2015] M. Hodosh, P. Young 和 J. Hockenmaier. 将图像描述框定为排序任务：数据、模型和评估指标（扩展摘要）。载于
+    IJCAI，第 4188–4192 页，2015 年。
 - en: Jiang et al. [2018] W. Jiang, L. Ma, X. Chen, H. Zhang, and W. Liu. Learning
     to guide decoding for image captioning. In AAAI, pages 6959–6966, 2018.
   id: totrans-140
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Jiang 等人 [2018] W. Jiang, L. Ma, X. Chen, H. Zhang 和 W. Liu. 学习引导图像描述的解码过程。载于
+    AAAI，第 6959–6966 页，2018 年。
 - en: 'Krishna et al. [2017] R. Krishna, Y. Zhu, O. Groth, J. Johnson, K. Hata, J. Kravitz,
     S. Chen, Y. Kalantidis, L. Li, D. A. Shamma, M. S. Bernstein, and L. Fei-Fei.
     Visual genome: Connecting language and vision using crowdsourced dense image annotations.
@@ -1101,6 +1225,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Krishna 等人 [2017] R. Krishna, Y. Zhu, O. Groth, J. Johnson, K. Hata, J. Kravitz,
+    S. Chen, Y. Kalantidis, L. Li, D. A. Shamma, M. S. Bernstein 和 L. Fei-Fei. 视觉基因组：使用众包密集图像注释连接语言和视觉。《计算机视觉国际期刊》，123(1):32–73,
+    2017 年。
 - en: 'Kulkarni et al. [2011] G. Kulkarni, V. Premraj, S. Dhar, S. Li, Y. Choi, A. C.
     Berg, and T. L. Berg. Baby talk: Understanding and generating simple image descriptions.
     In CVPR, pages 1601–1608, 2011.'
@@ -1108,12 +1235,16 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Kulkarni 等人 [2011] G. Kulkarni, V. Premraj, S. Dhar, S. Li, Y. Choi, A. C. Berg
+    和 T. L. Berg. 宝宝话：理解和生成简单的图像描述。载于 CVPR，第 1601–1608 页，2011 年。
 - en: Li et al. [2011] S. Li, G. Kulkarni, T. L. Berg, A. C. Berg, and Y. Choi. Composing
     simple image descriptions using web-scale n-grams. In CoNLL, pages 220–228, 2011.
   id: totrans-143
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Li 等人 [2011] S. Li, G. Kulkarni, T. L. Berg, A. C. Berg 和 Y. Choi. 使用网页规模 n-gram
+    生成简单的图像描述。载于 CoNLL，第 220–228 页，2011 年。
 - en: 'Lin et al. [2014] T. Lin, M. Maire, S. J. Belongie, J. Hays, P. Perona, D. Ramanan,
     P. Dollár, and C. L. Zitnick. Microsoft COCO: common objects in context. In ECCV,
     pages 740–755, 2014.'
@@ -1121,6 +1252,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Lin 等人 [2014] T. Lin, M. Maire, S. J. Belongie, J. Hays, P. Perona, D. Ramanan,
+    P. Dollár 和 C. L. Zitnick. Microsoft COCO：上下文中的常见对象。载于 ECCV，第 740–755 页，2014 年。
 - en: 'Liu et al. [2017] C. Liu, F. Sun, C. Wang, F. Wang, and A. L. Yuille. MAT:
     A multimodal attentive translator for image captioning. In IJCAI, pages 4033–4039,
     2017.'
@@ -1128,6 +1261,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Liu 等人 [2017] C. Liu, F. Sun, C. Wang, F. Wang 和 A. L. Yuille. MAT：一种多模态注意力翻译器用于图像描述。载于
+    IJCAI，第 4033–4039 页，2017 年。
 - en: 'Lu et al. [2017] J. Lu, C. Xiong, D. Parikh, and R. Socher. Knowing when to
     look: Adaptive attention via a visual sentinel for image captioning. In CVPR,
     pages 3242–3250, 2017.'
