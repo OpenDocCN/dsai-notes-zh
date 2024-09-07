@@ -368,19 +368,23 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 通信性能：深度模型具有分层结构，参数及其对应的梯度通常存储为数十到数百个张量。首先，这些张量在运算中逐层计算，从而产生内在的时间依赖性，限制了调度计算和通信任务设计空间。其次，张量的大小范围从千字节到兆字节不等。在交换小消息时，很难充分利用高网络带宽[[3](#bib.bib3)]。例如，在我们的测试环境中，通过10GbE（TCP/IP）、100GbE（TCP/IP）和100GbIB（RDMA）传输1MB的消息，分别实现了有效吞吐量为8.2Gbps、16.5Gbps和83.2Gbps；而在10GbE、100GbE和100GbIB之间传输较小的16KB消息时，只能实现较低的吞吐量，分别为1.2Gbps、4.6Gbps和16.7Gbps。在一组工作者之间优化地交换各种张量，需要同时考虑带宽和通信延迟的消息交换算法和网络系统架构的联合设计。
 - en: '![Refer to caption](img/9fbc35aa7d6682760dd8c7b93e7ba735.png)'
   id: totrans-38
   prefs: []
   type: TYPE_IMG
+  zh: '![参阅说明](img/9fbc35aa7d6682760dd8c7b93e7ba735.png)'
 - en: 'Figure 2: A three-level taxonomy of communication-efficient distributed DL.'
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 图2：通信高效的分布式深度学习的三级分类法。
 - en: 2.3 Solutions
   id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 2.3 解决方案
 - en: 'There have been three different directions taken to address the above challenges:
     1) reducing the C2C ratio, 2) overlapping the communication tasks with the computation
     tasks, and 3) improving the communication performance by the advanced design of
@@ -391,11 +395,14 @@
   id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了解决上述挑战，已经采取了三个不同的方向：1）减小C2C比率，2）将通信任务与计算任务重叠，3）通过先进的系统架构和通信原语的设计来改进通信性能。在图[2](#S2.F2
+    "图2 ‣ 2.2 通信问题 ‣ 2 通信问题和解决方案 ‣ 关于分布式深度学习通信优化的定量调查") 中，我们制定了一个三级分类法来描述通信高效的分布式深度学习。
 - en: 2.3.1 Learning Algorithms
   id: totrans-42
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 2.3.1 学习算法
 - en: 'At the top, there are high-level learning algorithms with different communication
     complexity (aiming to reduce the C2C ratio), which can be classified into two
     types: 1) increasing the workload of computation (e.g., large-batch training [[4](#bib.bib4)])
@@ -406,6 +413,7 @@
   id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 在顶层是具有不同通信复杂度的高级学习算法（旨在减小C2C比率），可分为两种类型：1）增加计算的工作量（例如，大批量训练[[4](#bib.bib4)））和2）通过量化和/或稀疏化减少通信复杂度。这些算法通常是有损的，因为它们产生与单工作者随机梯度下降不一致的结果。有损算法可能需要更多的迭代才能达到相同的收敛水平，尽管每次迭代完成得更快。
 - en: Large-batch training is an immediate way to reduce the C2C ratio by enlarging
     the batch size. With proper optimization tricks (e.g., layer-wise adaptive rate
     scaling), large-batch training can maintain the same generalization ability as
@@ -414,6 +422,7 @@
   id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 大批量训练是通过增大批量大小来减小C2C比率的一种直接方法。通过适当的优化技巧（例如，分层自适应率缩放），大批量训练可以保持与单工作者随机梯度下降相同的泛化能力。然而，本地批量大小受AI处理器内存大小的限制。
 - en: We can also relax the synchronization or reduce the communication frequency
     among workers (e.g., staled synchronized parallel (SSP) [[5](#bib.bib5)], local
     SGD [[4](#bib.bib4)], and asynchronous parallel (ASP) [[6](#bib.bib6)] SGD). SSP
@@ -555,6 +564,65 @@
   id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 总结来说，分布式训练方法可能涉及六个不同方面：<svg height="13.74" overflow="visible" version="1.1"
+    width="13.74"><g transform="translate(0,13.74) matrix(1 0 0 -1 0 0) translate(6.87,0)
+    translate(0,6.87)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+    通信同步，<svg height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg> 通信压缩，<svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> 系统架构，<svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg> 调度，<svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg> 通信协议，以及 <svg
+    height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">6</foreignobject></g></g></svg> 网络拓扑。这可以描述为“它利用
+    <svg height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg> 有/没有 <svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>，在 <svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> 上运行，或有/没有 <svg
+    height="13.74" overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>，在 <svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg> 和 <svg height="13.74"
+    overflow="visible" version="1.1" width="13.74"><g transform="translate(0,13.74)
+    matrix(1 0 0 -1 0 0) translate(6.87,0) translate(0,6.87)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject
 - en: 3 A Popular Communication Optimization Portfolio
   id: totrans-52
   prefs:
@@ -1245,11 +1313,13 @@
   id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 这项研究部分得到了香港RGC GRF资助（合同号HKBU 12200418，HKUST 16206417和16207818），以及中国国家自然科学基金资助（资助号62002240）。
 - en: References
   id: totrans-132
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '[1] J. Dean, G. Corrado, R. Monga, K. Chen, M. Devin, M. Mao, M. Ranzato, A. Senior,
     P. Tucker, K. Yang *et al.*, “Large scale distributed deep networks,” in *Advances
     in neural information processing systems*, 2012, pp. 1223–1231.'
@@ -1257,6 +1327,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[1] J. Dean, G. Corrado, R. Monga, K. Chen, M. Devin, M. Mao, M. Ranzato, A.
+    Senior, P. Tucker, K. Yang *等人*，“大规模分布式深度网络”，收录于 *《神经信息处理系统进展》*，2012年，第1223–1231页。'
 - en: '[2] C. Chen, W. Wang, and B. Li, “Round-robin synchronization: Mitigating communication
     bottlenecks in parameter servers,” in *IEEE INFOCOM 2019-IEEE Conference on Computer
     Communications*.   IEEE, 2019, pp. 532–540.'
@@ -1264,6 +1336,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[2] C. Chen, W. Wang, 和 B. Li，“轮询同步：缓解参数服务器中的通信瓶颈”，收录于 *IEEE INFOCOM 2019-IEEE计算机通信会议*。IEEE，2019年，第532–540页。'
 - en: '[3] S. Shi, X. Chu, and B. Li, “MG-WFBP: Efficient data communication for distributed
     synchronous SGD algorithms,” in *IEEE INFOCOM 2019-IEEE Conference on Computer
     Communications*.   IEEE, 2019, pp. 172–180.'
@@ -1271,12 +1344,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[3] S. Shi, X. Chu, 和 B. Li，“MG-WFBP：分布式同步SGD算法的高效数据通信”，收录于 *IEEE INFOCOM 2019-IEEE计算机通信会议*。IEEE，2019年，第172–180页。'
 - en: '[4] T. Lin, S. U. Stich, K. K. Patel, and M. Jaggi, “Don’t use large mini-batches,
     use local SGD,” in *International Conference on Learning Representations*, 2020.'
   id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[4] T. Lin, S. U. Stich, K. K. Patel, 和 M. Jaggi，“不要使用大批量，使用本地SGD”，收录于 *国际学习表征会议*，2020年。'
 - en: '[5] X. Zhao, A. An, J. Liu, and B. X. Chen, “Dynamic stale synchronous parallel
     distributed training for deep learning,” in *2019 IEEE 39th International Conference
     on Distributed Computing Systems (ICDCS)*.   IEEE, 2019, pp. 1507–1517.'
@@ -1284,6 +1359,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[5] X. Zhao, A. An, J. Liu, 和 B. X. Chen，“深度学习的动态过时同步并行分布式训练”，收录于 *2019 IEEE第39届国际分布式计算系统会议（ICDCS）*。IEEE，2019年，第1507–1517页。'
 - en: '[6] B. Recht, C. Re, S. Wright, and F. Niu, “Hogwild: A lock-free approach
     to parallelizing stochastic gradient descent,” in *Advances in neural information
     processing systems*, 2011, pp. 693–701.'
@@ -1291,6 +1367,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[6] B. Recht, C. Re, S. Wright, 和 F. Niu，“Hogwild：一种无锁的并行随机梯度下降方法”，收录于 *《神经信息处理系统进展》*，2011年，第693–701页。'
 - en: '[7] J. Bernstein, Y.-X. Wang, K. Azizzadenesheli, and A. Anandkumar, “signSGD:
     Compressed optimisation for non-convex problems,” in *International Conference
     on Machine Learning*, 2018, pp. 560–569.'
@@ -1298,6 +1375,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[7] J. Bernstein, Y.-X. Wang, K. Azizzadenesheli, 和 A. Anandkumar，“signSGD：非凸问题的压缩优化”，收录于
+    *国际机器学习大会*，2018年，第560–569页。'
 - en: '[8] S. Shi, Q. Wang, K. Zhao, Z. Tang, Y. Wang, X. Huang, and X. Chu, “A distributed
     synchronous SGD algorithm with global Top-k sparsification for low bandwidth networks,”
     in *2019 IEEE 39th International Conference on Distributed Computing Systems (ICDCS)*.   IEEE,
@@ -1306,6 +1385,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[8] S. Shi, Q. Wang, K. Zhao, Z. Tang, Y. Wang, X. Huang, 和 X. Chu，“一种具有全局Top-k稀疏化的分布式同步SGD算法，用于低带宽网络”，收录于
+    *2019 IEEE第39届国际分布式计算系统会议（ICDCS）*。IEEE，2019年，第2238–2247页。'
 - en: '[9] J. Xue, Y. Miao, C. Chen, M. Wu, L. Zhang, and L. Zhou, “Fast distributed
     deep learning over RDMA,” in *Proceedings of the Fourteenth EuroSys Conference
     2019*, 2019, pp. 1–14.'
@@ -1313,6 +1394,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[9] J. Xue, Y. Miao, C. Chen, M. Wu, L. Zhang, 和 L. Zhou，“通过RDMA进行快速分布式深度学习”，收录于
+    *第十四届EuroSys会议论文集2019*，2019年，第1–14页。'
 - en: '[10] S. Wang, D. Li, J. Geng, Y. Gu, and Y. Cheng, “Impact of network topology
     on the performance of DML: Theoretical analysis and practical factors,” in *IEEE
     INFOCOM 2019-IEEE Conference on Computer Communications*.   IEEE, 2019, pp. 1729–1737.'
@@ -1320,6 +1403,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[10] S. Wang, D. Li, J. Geng, Y. Gu, 和 Y. Cheng，“网络拓扑对DML性能的影响：理论分析和实际因素”，收录于
+    *IEEE INFOCOM 2019-IEEE计算机通信会议*。IEEE，2019年，第1729–1737页。'
 - en: '[11] P. Sanders, J. Speck, and J. L. Träff, “Two-tree algorithms for full bandwidth
     broadcast, reduction and scan,” *Parallel Computing*, vol. 35, no. 12, pp. 581–594,
     2009.'
@@ -1327,6 +1412,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[11] P. Sanders, J. Speck, 和 J. L. Träff，“用于全带宽广播、归约和扫描的双树算法”，*《并行计算》*，第35卷，第12期，第581–594页，2009年。'
 - en: '[12] M. Cho, U. Finkler, D. S. Kung, and H. C. Hunter, “BlueConnect: Decomposing
     all-reduce for deep learning on heterogeneous network hierarchy,” in *Proceedings
     of Machine Learning and Systems 2019, MLSys 2019, Stanford, CA, USA, March 31
@@ -1335,6 +1421,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[12] M. Cho, U. Finkler, D. S. Kung, 和 H. C. Hunter，“BlueConnect：在异构网络层级上分解全归约以进行深度学习”，收录于
+    *《2019年机器学习与系统会议论文集，MLSys 2019，斯坦福，加州，美国，2019年3月31日 - 4月2日》*，2019年。'
 - en: '[13] H. Zhang, Z. Zheng, S. Xu, W. Dai, Q. Ho, X. Liang, Z. Hu, J. Wei, P. Xie,
     and E. P. Xing, “Poseidon: An efficient communication architecture for distributed
     deep learning on GPU clusters,” in *2017 USENIX Annual Technical Conference (USENIX
@@ -1343,6 +1431,9 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[13] H. Zhang, Z. Zheng, S. Xu, W. Dai, Q. Ho, X. Liang, Z. Hu, J. Wei, P.
+    Xie, 和 E. P. Xing，“Poseidon：一种高效的 GPU 集群分布式深度学习通信架构”，发表于 *2017年 USENIX 年度技术会议（USENIX
+    ATC 17）*，2017，页码 181–193。'
 - en: '[14] Y. Peng, Y. Zhu, Y. Chen, Y. Bao, B. Yi, C. Lan, C. Wu, and C. Guo, “A
     generic communication scheduler for distributed DNN training acceleration,” in
     *Proceedings of the 27th ACM Symposium on Operating Systems Principles*.   ACM,
@@ -1351,6 +1442,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[14] Y. Peng, Y. Zhu, Y. Chen, Y. Bao, B. Yi, C. Lan, C. Wu, 和 C. Guo，"用于分布式
+    DNN 训练加速的通用通信调度器"，发表于 *第27届 ACM 操作系统原理研讨会论文集*。ACM，2019，页码 16–29。'
 - en: '[15] A. Jayarajan, J. Wei, G. Gibson, A. Fedorova, and G. Pekhimenko, “Priority-based
     parameter propagation for distributed DNN training,” in *Proceedings of Machine
     Learning and Systems 2019, MLSys 2019, Stanford, CA, USA, March 31 - April 2,
@@ -1359,11 +1452,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[15] A. Jayarajan, J. Wei, G. Gibson, A. Fedorova, 和 G. Pekhimenko，“基于优先级的分布式
+    DNN 训练参数传播”，发表于 *2019年机器学习与系统会议论文集，MLSys 2019，斯坦福，加州，美国，2019年3月31日至4月2日*，2019。'
 - en: Biographies
   id: totrans-148
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 传记
 - en: '|  | Shaohuai Shi (shaohuais@cse.ust.hk) received a B.E. degree in software
     engineering from South China University of Technology, P.R. China, in 2010, an
     MS degree in computer science from Harbin Institute of Technology, P.R. China
@@ -1375,6 +1471,8 @@
   id: totrans-149
   prefs: []
   type: TYPE_TB
+  zh: '|  | Shaohuai Shi (shaohuais@cse.ust.hk) 2010年获得华南理工大学软件工程学士学位，2013年获得哈尔滨工业大学计算机科学硕士学位，2020年获得香港浸会大学计算机科学博士学位。他目前是香港科技大学计算机科学与工程系的研究助理教授。他的研究兴趣包括
+    GPU 计算和机器学习系统。他是 IEEE 的会员。 |'
 - en: '|  | Zhenheng Tang (zhtang@comp.hkbu.edu.hk) received a B.E. degree in communication
     engineering from Huazhong University Of Science and Technology, P.R. China, in
     2018\. He is a Ph.D. student at Hong Kong Baptist University. His research interests
@@ -1382,6 +1480,8 @@
   id: totrans-150
   prefs: []
   type: TYPE_TB
+  zh: '|  | Zhenheng Tang (zhtang@comp.hkbu.edu.hk) 2018年获得华中科技大学通信工程学士学位。他是香港浸会大学的博士生。他的研究兴趣包括
+    GPU 计算和分布式深度学习。 |'
 - en: '|  | Xiaowen Chu (chxw@comp.hkbu.edu.hk) received a B.E. degree in computer
     science from Tsinghua University, P.R. China, in 1999, and a Ph.D. degree in computer
     science from The Hong Kong University of Science and Technology in 2003\. Currently,
@@ -1393,6 +1493,8 @@
   id: totrans-151
   prefs: []
   type: TYPE_TB
+  zh: '|  | Xiaowen Chu (chxw@comp.hkbu.edu.hk) 1999年获得清华大学计算机科学学士学位，2003年获得香港科技大学计算机科学博士学位。目前，他是香港浸会大学计算机科学系的全职教授。他的研究兴趣包括并行和分布式计算、云计算和无线网络。他担任
+    IEEE Access 和 IEEE Internet of Things Journal 的副编辑，是 IEEE 的高级会员。 |'
 - en: '|  | Chengjian Liu (liuchengjian@sztu.edu.cn) received his MS degree in College
     of Computer Science and Software Engineering, Shenzhen University, P.R. China,
     in 2013, and his Ph.D. degree in computer science from the Hong Kong Baptist University
@@ -1402,6 +1504,8 @@
   id: totrans-152
   prefs: []
   type: TYPE_TB
+  zh: '|  | Chengjian Liu (liuchengjian@sztu.edu.cn) 2013年在深圳大学计算机科学与软件工程学院获得硕士学位，2018年在香港浸会大学获得计算机科学博士学位。目前，他是深圳技术大学大数据与互联网学院的助理教授。他的研究兴趣包括分布式存储、区块链、通用
+    GPU 计算。 |'
 - en: '|  | Wei Wang (weiwa@cse.ust.hk) received his B.Eng. (Hons.) and M.Eng. degrees
     from Shanghai Jiao Tong University, and a Ph.D. degree from the University of
     Toronto in 2015, all in the Department of Electrical and Computer Engineering.
@@ -1413,6 +1517,8 @@
   id: totrans-153
   prefs: []
   type: TYPE_TB
+  zh: '|  | Wei Wang (weiwa@cse.ust.hk) 获得了上海交通大学电气与计算机工程学士（荣誉）学位和硕士学位，并于2015年获得了多伦多大学电气与计算机工程博士学位。他是香港科技大学计算机科学与工程系的助理教授。他还与香港科技大学大数据研究所相关联。他的研究兴趣涵盖了分布式系统的广泛领域，特别关注大数据和机器学习系统、云计算和计算机网络等方面。
+    |'
 - en: '|  | Bo Li (bli@cse.ust.hk) received a BEng in computer science from Tsinghua
     University, Beijing and a Ph.D. degree in electrical and computer engineering
     from the University of Massachusetts at Amherst. He is a professor in the Department
@@ -1435,3 +1541,8 @@
   id: totrans-154
   prefs: []
   type: TYPE_TB
+  zh: '|  | Bo Li (bli@cse.ust.hk) 获得了清华大学计算机科学学士学位和马萨诸塞大学安姆斯特分校电气与计算机工程博士学位。他是香港科技大学计算机科学与工程系的教授。他曾担任中国缓存公司（NASDAQ
+    CCIH）的首席技术顾问，该公司是中国最大的CDN运营商。他曾担任上海交通大学的长江学者访问讲座教授（2010-2013），以及微软亚洲研究院（1999-2007）和微软高级技术中心（2007-2009）的兼职研究员。他目前的研究兴趣包括：多媒体通信、互联网内容分发、数据中心网络、云计算和无线传感器网络。他在互联网视频广播领域做出了开创性贡献，其系统Coolstreaming被认为是世界上第一个大规模点对点实时视频流系统。这项工作发表在IEEE
+    INFOCOM（2005），并获得了IEEE INFOCOM 2015测试时间奖。他曾担任十多个IEEE期刊和杂志的编辑或特邀编辑。他是IEEE INFOCOM
+    2004的共同程序委员会主席。他获得了五次IEEE最佳论文奖。他于2005年获得了中国自然科学基金青年科学家奖，并于2011年获得了中国国家自然科学奖（二等奖）。他是IEEE的会士。
+    |'
