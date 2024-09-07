@@ -1,36 +1,46 @@
 - en: <!--yml
+  id: totrans-0
   prefs: []
   type: TYPE_NORMAL
 - en: 'category: 未分类'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
 - en: 'date: 2024-09-06 19:47:39'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
 - en: -->
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: '[2203.09040] A Survey of Multi-Tenant Deep Learning Inference on GPU'
+  id: totrans-4
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: 来源：[https://ar5iv.labs.arxiv.org/html/2203.09040](https://ar5iv.labs.arxiv.org/html/2203.09040)
+  id: totrans-5
   prefs:
   - PREF_BQ
   type: TYPE_NORMAL
 - en: A Survey of Multi-Tenant Deep Learning Inference on GPU
+  id: totrans-6
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: Fuxun Yu^†, Di Wang^‡, Longfei Shangguan^‡, Minjia Zhang^‡, Chenchen Liu^§,
     Tolga Soyata^†, Xiang Chen^†
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
 - en: ^†George Mason University, ^‡Microsoft, ^§University of Maryland, Baltimore
     County
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
 - en: Abstract
+  id: totrans-9
   prefs:
   - PREF_H6
   type: TYPE_NORMAL
@@ -50,9 +60,11 @@
     the recent technique advances, we hope that this survey could shed light on new
     optimization perspectives and motivate novel works in future large-scale DL inference
     system optimization.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
 - en: I Introduction
+  id: totrans-11
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -65,6 +77,7 @@
     many of which are featured with multi-modality, multi-tasking and substantial
     task complexity, as shown in Figure [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ A
     Survey of Multi-Tenant Deep Learning Inference on GPU") (a).
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
 - en: The emergence of such massive DL applications motivates the adoption of DL accelerators,
@@ -74,6 +87,7 @@
     applications, is also projected to grow from $920M in 2021 to $2,080M by 2026
     and the edge GPUs are also taking a steady growth to more than 50% market share
     with Nvidia Jetson, TX2, Xavier, Orin, etc.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
 - en: Within such trends, the capacity of recent generations of GPUs demonstrates
@@ -88,15 +102,21 @@
     single DL model execution schemes. Therefore, with such scaling trends in both
     application complexity and GPU capacity, single model execution cannot fulfill
     the needs of application scenarios nor fully utilizing the GPUs.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种趋势下，最近几代GPU的容量呈指数增长速度。¹¹1 详细的GPU容量扩展统计数据可以在[[37](#bib.bib37)]中找到。从K80、P40和P100到最近的T40、V100、A100架构，GPU保持了性能翻倍的趋势。上一代V100[[7](#bib.bib7)]提供了每秒120万次浮点运算（TFLOPS）和900
+    GB/s的内存带宽，而最新的A100[[6](#bib.bib6)]的数据进一步增加到312 TFLOPS和1.6TB/s的内存带宽。A100报告的ResNet50[[14](#bib.bib14)]推理速度为36,436张图像/秒，显示出超越传统单DL模型执行方案的计算能力。因此，随着应用复杂性和GPU容量的扩展趋势，单模型执行无法满足应用场景的需求，也无法充分利用GPU。
 - en: Multi-Tenant DL Inference, as shown in Figure [1](#S1.F1 "Figure 1 ‣ I Introduction
     ‣ A Survey of Multi-Tenant Deep Learning Inference on GPU") (b), is one promising
     solution to the aforementioned scenarios with multi-modality and multi-tasking
     needs by running mixed DL model workloads simultaneously on one powerful GPU to
     improve the utilization, throughput, and power efficiency, etc.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 多租户DL推理，如图[1](#S1.F1 "Figure 1 ‣ I Introduction ‣ A Survey of Multi-Tenant Deep
+    Learning Inference on GPU")（b）所示，是一种有前景的解决方案，通过在一个强大的GPU上同时运行混合DL模型负载，来提高利用率、吞吐量和电力效率等，满足上述多模态和多任务需求。
 - en: There are recently many emerging works that tackle the multi-tenant DL inference
     optimization on GPUs. These works usually take single optimization point of view
     drawing from traditional single-model optimization experiences, e.g., either from
@@ -107,22 +127,30 @@
     between single vs. multi-tenant DL inference, and requires multi-layer DL optimization
     or full-stack co-optimization. As so, there is a great need for a systematical
     review of opportunities and challenges on multi-tenant DL inference optimization.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近出现了许多处理多租户深度学习（DL）推理在GPU上优化的工作。这些工作通常从传统的单模型优化经验中借鉴单一优化点的视角，例如，从DL模型调度的角度[[44](#bib.bib44)、[10](#bib.bib10)、[2](#bib.bib2)]，或从GPU资源管理的角度[[9](#bib.bib9)、[38](#bib.bib38)、[19](#bib.bib19)]。然而，要实现多租户DL计算的*终极*效率更具挑战性，因为这需要彻底考虑单一与多租户DL推理之间的差异，并且需要多层次DL优化或全栈协同优化。因此，系统性回顾多租户DL推理优化的机会和挑战是非常必要的。
 - en: Our survey is the first work that thoroughly analyzes the multi-tenant GPU scheduling
     problem, summarizes the major differences in single- vs. multi-tenant computing
     optimization, and reveals the emerging opportunities and potential benefits of
     multi-tenant DL inference on GPUs. To ease the understanding, our work also draws
     some experience from pevious DL computing stacks, and compares single vs multi-tenant
     DL inference on GPU from a hierarchical perspective.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的调查是首个深入分析多租户GPU调度问题的工作，总结了单租户与多租户计算优化的主要差异，并揭示了多租户DL推理在GPU上出现的机会和潜在好处。为了便于理解，我们的工作还借鉴了以前的DL计算栈的一些经验，并从层次化的角度比较了GPU上的单租户与多租户DL推理。
 - en: '![Refer to caption](img/d4befbd6e9cd610372cd767d403d78d8.png)'
+  id: totrans-18
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/d4befbd6e9cd610372cd767d403d78d8.png)'
 - en: 'Figure 1: The Emerging Trend of Multi-Tenant DL Computing on GPU.'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 图1：多租户DL计算在GPU上的新兴趋势。
 - en: 'Single vs Multi-Tenant: A Hierarchical Comparison. Traditional single-tenant
     DL compilers (Figure [1](#S1.F1 "Figure 1 ‣ I Introduction ‣ A Survey of Multi-Tenant
     Deep Learning Inference on GPU") (c)) already include multi-layer optimization:
@@ -132,8 +160,13 @@
     [16](#bib.bib16), [11](#bib.bib11), [40](#bib.bib40)], etc. However, optimizations
     targeting at single-tenant are usually ill-fitted for multi-tenant inference with
     following examples.'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 单租户与多租户：分层比较。传统的单租户深度学习编译器（图 [1](#S1.F1 "图 1 ‣ I 介绍 ‣ 多租户深度学习推理在GPU上的调查") (c)）已经包括了多层次的优化：算法级压缩 [[45](#bib.bib45),
+    [29](#bib.bib29), [46](#bib.bib46)]，图级重写 [[15](#bib.bib15), [49](#bib.bib49),
+    [17](#bib.bib17)]，运行时调度 [[10](#bib.bib10), [34](#bib.bib34)]和内核调优 [[3](#bib.bib3),
+    [16](#bib.bib16), [11](#bib.bib11), [40](#bib.bib40)]等。然而，针对单租户的优化通常不适合于多租户推理，以下是一些例子。
 - en: From the top graph level, multi-tenant DL inference workloads represented in
     directed acyclic graphs (DAGs) come with significantly higher volume of multi-model
     operators than single model. This incurs many non-mergeable operators and exposes
@@ -145,8 +178,10 @@
     concurrent execution with partial resource available for each kernel. According
     to [[8](#bib.bib8)], the maximum throughput gap comparing single-tenant vs. multi-tenant
     tuned configurations for the same computing kernel could reach $5\times$ difference.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 从顶层图级来看，以有向无环图（DAGs）表示的多租户深度学习推理工作负载，其多模型操作的数量显著高于单模型。这导致许多不可合并的操作，并暴露出更大的调度空间。在较低的内核级别，TVM [[3](#bib.bib3)]是一个例子。作为最具竞争力的内核自动调优框架之一，TVM内置了单租户执行设置的假设，其调优配置旨在饱和GPU的所有SM和内存带宽。然而，这种假设以及单租户目标的调优不适用于每个内核部分资源可用的多内核并发执行。根据 [[8](#bib.bib8)]，相同计算内核的单租户与多租户调优配置之间的最大吞吐量差距可能达到$5\times$。
 - en: Further down to the GPU hardware, multi-tenant DL inference requires many scheduling
     support to address problems like inter-tenant interference, such as dedicated
     GPU hardware primitives for resource partitioning, isolation and allocation, etc.
@@ -156,13 +191,19 @@
     and virtual GPUs (vCS) [[26](#bib.bib26)] to support both runtime scheduling and
     resource management, which exposes new research opportunities for multi-tenant
     DL scheduling and optimization.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 更深入到GPU硬件层面，多租户深度学习推理需要大量调度支持来解决诸如租户间干扰等问题，例如用于资源分区、隔离和分配的专用GPU硬件原语等。随着多租户应用的当前趋势，GPU厂商如Nvidia最近发布了许多新功能，包括Multi-Stream [[22](#bib.bib22)]、Multi-Process
+    Service (MPS) [[25](#bib.bib25)]、Multi-Instance GPU (MIG) [[24](#bib.bib24)]和虚拟GPU
+    (vCS) [[26](#bib.bib26)]，以支持运行时调度和资源管理，这为多租户深度学习调度和优化提供了新的研究机会。
 - en: With such differences considered, this work will adopt such a view of optimization
     stack to thoroughly analyze the multi-tenant challenges and introduce emerging
     works.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑到这些差异，本研究将采用这种优化堆栈的视角，深入分析多租户面临的挑战，并介绍新兴的工作。
 - en: 'By reviewing the emerging challenges, opportunities, and research works on
     multi-tenant DL computing on the GPU, we hope this survey could motivate more
     design and innovations in this promising new domain. The remaining paper is organized
@@ -176,52 +217,67 @@
     "IV Towards Large-Scale DL Computing: Vision and Insights ‣ A Survey of Multi-Tenant
     Deep Learning Inference on GPU"). Section [V](#S5 "V Conclusion ‣ A Survey of
     Multi-Tenant Deep Learning Inference on GPU") concludes this paper.'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: '通过回顾在 GPU 上的多租户深度学习计算中出现的挑战、机遇和研究成果，我们希望这份调查能够激发更多的设计和创新，推动这一有前景的新领域的发展。剩余的论文组织如下：第[II](#S2
+    "II Challenges & Opportunities for Multi-Tenant Computing on GPU ‣ A Survey of
+    Multi-Tenant Deep Learning Inference on GPU")节介绍了多租户 GPU 计算堆栈中的新挑战和机遇，以及当前厂商 GPU
+    支持的高层次概述。第[III](#S3 "III Multi-Tenant Computing Optimization: Design and Innovations
+    ‣ A Survey of Multi-Tenant Deep Learning Inference on GPU")节详细总结了多租户计算的最新研究成果。然后我们在第[IV](#S4
+    "IV Towards Large-Scale DL Computing: Vision and Insights ‣ A Survey of Multi-Tenant
+    Deep Learning Inference on GPU")节中给出了我们的愿景和见解。第[V](#S5 "V Conclusion ‣ A Survey
+    of Multi-Tenant Deep Learning Inference on GPU")节总结了本文。'
 - en: II Challenges & Opportunities
+  id: totrans-25
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: II 挑战与机遇
 - en: for Multi-Tenant Computing on GPU
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于 GPU 上的多租户计算
 - en: In this section, we first characterize the major differences between single-
     vs. multi-tenant DL computing optimization through the full DL computing stack.
     We then introduce the recently-released GPU features, such as Stream, MPS, MIG,
     which provide important fundamental backend support for multi-tenant computing
     optimization.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们首先通过完整的深度学习计算堆栈来描述单租户与多租户深度学习计算优化之间的主要差异。接着介绍了最近发布的 GPU 特性，如 Stream、MPS、MIG，这些特性为多租户计算优化提供了重要的基础后端支持。
 - en: II-A Challenges for Multi-Tenant DL Computing
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
-- en: Traditional DL computing optimization in full stack often expands in <svg 
-     height="11.25" overflow="visible" version="1.1" width="11.25"><g
-    transform="translate(0,11.25) matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
-    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
-    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
-    service-level orchestration [[36](#bib.bib36)], <svg  
-    height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+  zh: II-A 多租户深度学习计算的挑战
+- en: Traditional DL computing optimization in full stack often expands in <svg height="11.25"
+    overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
     matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
     stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
     stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
-    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg> graph-level
-    optimization [[15](#bib.bib15), [43](#bib.bib43)], <svg 
-     height="11.25" overflow="visible" version="1.1" width="11.25"><g
-    transform="translate(0,11.25) matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg> service-level
+    orchestration [[36](#bib.bib36)], <svg height="11.25" overflow="visible" version="1.1"
+    width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0 0) translate(5.62,0)
+    translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
     0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
-    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg>
-    runtime-level scheduling [[10](#bib.bib10)], <svg  
-    height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+    graph-level optimization [[15](#bib.bib15), [43](#bib.bib43)], <svg height="11.25"
+    overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
     matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
     stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
     stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
-    0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg> kernel-level
-    tuning [[3](#bib.bib3), [39](#bib.bib39)] and <svg  
-    height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> runtime-level
+    scheduling [[10](#bib.bib10)], <svg height="11.25" overflow="visible" version="1.1"
+    width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0 0) translate(5.62,0)
+    translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+    kernel-level tuning [[3](#bib.bib3), [39](#bib.bib39)] and <svg height="11.25"
+    overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
     matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
     stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
     stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
@@ -236,47 +292,47 @@
     II-A Challenges for Multi-Tenant DL Computing ‣ II Challenges & Opportunities
     for Multi-Tenant Computing on GPU ‣ A Survey of Multi-Tenant Deep Learning Inference
     on GPU").
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: 'TABLE I: Challenges for Multi-Tenant Optimization.'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
-- en: Full Optimization Stack Single-Tenant Multi-Tenant Co-location No Yes <svg 
-     height="10.12" overflow="visible" version="1.1" width="10.12"><g
-    transform="translate(0,10.12) matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
-    0.0 0.0 1.0 -3.11 -4.01)" fill="#000000" stroke="#000000"><foreignobject width="6.23"
-    height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
-    Service-level Interference No High Interference <svg 
-     height="10.12" overflow="visible" version="1.1" width="10.12"><g
-    transform="translate(0,10.12) matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+- en: Full Optimization Stack Single-Tenant Multi-Tenant Co-location No Yes <svg height="10.12"
+    overflow="visible" version="1.1" width="10.12"><g transform="translate(0,10.12)
+    matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.11 -4.01)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.23" height="8.03" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg> Service-level
+    Interference No High Interference <svg height="10.12" overflow="visible" version="1.1"
+    width="10.12"><g transform="translate(0,10.12) matrix(1 0 0 -1 0 0) translate(5.06,0)
+    translate(0,5.06)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
     0.0 0.0 1.0 -3.11 -4.01)" fill="#000000" stroke="#000000"><foreignobject width="6.23"
     height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
     Graph-level DAG(s) Mostly Seq. Seq. + Parallel Parallelism Limited Extensive <svg
-      height="10.12" overflow="visible"
+    height="10.12" overflow="visible" version="1.1" width="10.12"><g transform="translate(0,10.12)
+    matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.11 -4.01)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.23" height="8.03" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg> Runtime-level
+    Complexity Low High Resource Usage Exclusive Shared <svg height="10.12" overflow="visible"
     version="1.1" width="10.12"><g transform="translate(0,10.12) matrix(1 0 0 -1 0
     0) translate(5.06,0) translate(0,5.06)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
     transform="matrix(1.0 0.0 0.0 1.0 -3.11 -4.01)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.23" height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg>
-    Runtime-level Complexity Low High Resource Usage Exclusive Shared <svg 
-     height="10.12" overflow="visible" version="1.1" width="10.12"><g
-    transform="translate(0,10.12) matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
-    0.0 0.0 1.0 -3.11 -4.01)" fill="#000000" stroke="#000000"><foreignobject width="6.23"
-    height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
-    Kernel-level Tuning Objective 100% util. $x$% partial util. <svg 
-     height="10.12" overflow="visible" version="1.1" width="10.12"><g
-    transform="translate(0,10.12) matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)"
-    fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
-    0.0 0.0 1.0 -3.11 -4.01)" fill="#000000" stroke="#000000"><foreignobject width="6.23"
-    height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg>
-    Resource-level Management No Resource Partition <svg  
-    height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
-    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
-    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
-    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
-    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+    width="6.23" height="8.03" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+    Kernel-level Tuning Objective 100% util. $x$% partial util. <svg height="10.12"
+    overflow="visible" version="1.1" width="10.12"><g transform="translate(0,10.12)
+    matrix(1 0 0 -1 0 0) translate(5.06,0) translate(0,5.06)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.11 -4.01)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.23" height="8.03" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg> Resource-level
+    Management No Resource Partition <svg height="11.25" overflow="visible" version="1.1"
+    width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0 0) translate(5.62,0)
+    translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g transform="matrix(1.0
+    0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject width="6.92"
+    height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
 - en: 'Service-level: AI-centric cloud services handle millions of service queries
@@ -287,8 +343,11 @@
     DL workloads, the service providers could potentially improve the GPU resource
     utilization and reduce cost of ownership (COO) like infrastructure and power cost
     especially for large-scale data centers [[24](#bib.bib24)].'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 服务级别：以 AI 为中心的云服务同时处理数百万个服务查询 [[41](#bib.bib41)]。凭借 GPU 的巨大计算能力，可以战略性地共置多个深度学习查询以实现高效的并发执行，这是多租户
+    GPU 计算与传统 CPU 多任务之间的一个关键区别。通过允许并发深度学习工作负载之间的资源共享，服务提供商可以潜在地提高 GPU 资源利用率，降低所有权成本（COO），如基础设施和电力成本，尤其是对于大型数据中心 [[24](#bib.bib24)]。
 - en: However, the challenges remains for strategic co-location like that the inter-tenant
     interference [[19](#bib.bib19)] could happen and degrade the quality of service
     such as service-level objectives (SLA) of tail latency and throughput. This could
@@ -297,28 +356,44 @@
     works [[19](#bib.bib19), [42](#bib.bib42), [5](#bib.bib5)] that design different
     heuristic-based, modeling-based or prediction-based mechanisms to conduct strategic
     co-location for efficient multi-tenant computing on GPUs.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，战略性共置仍面临挑战，比如可能发生的租户间干扰 [[19](#bib.bib19)]，这可能会降低服务质量，如尾延迟和吞吐量的服务级目标（SLA）。随着共置工作负载数量的增加，这种情况可能变得更糟，降低整体服务吞吐量。因此，近年来有许多服务级别协调工作 [[19](#bib.bib19),
+    [42](#bib.bib42), [5](#bib.bib5)]，设计了不同的启发式、建模或预测机制，以在 GPU 上进行高效的多租户计算。
 - en: '![Refer to caption](img/89d3ffff43d29e408a471f0eb56e9743.png)'
+  id: totrans-34
   prefs: []
   type: TYPE_IMG
+  zh: '![参见说明](img/89d3ffff43d29e408a471f0eb56e9743.png)'
 - en: 'Figure 2: Multi-Tenant DL Computing Challenges.'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  zh: 图 2：多租户深度学习计算挑战。
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
 - en: 'Graph-level: DNNs with many operators are commonly represented as directed
     acyclic graphs (DAGs), which use nodes to represent operators and edges to represent
     the data flow and dependency [[15](#bib.bib15)]. Single-model DAGs are usually
     sequential with limited parallelism like VGG, ResNets, MobileNets and EfficietNets,
     which have only one or two branches and thus exposes small scheduling space [[20](#bib.bib20)].'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 图层级：具有许多操作符的深度神经网络（DNNs）通常表示为有向无环图（DAGs），这些图使用节点表示操作符，边表示数据流和依赖关系 [[15](#bib.bib15)]。单模型的
+    DAG 通常是顺序的，具有有限的并行性，如 VGG、ResNets、MobileNets 和 EfficientNets，它们只有一个或两个分支，因此暴露出较小的调度空间 [[20](#bib.bib20)]。
 - en: By contrast, multi-tenant DL computing with multiple parallel DAGs usually have
     extensive inter-operator parallelism, as shown in Figure [2](#S2.F2 "Figure 2
     ‣ II-A Challenges for Multi-Tenant DL Computing ‣ II Challenges & Opportunities
@@ -327,13 +402,19 @@
     Certain challenges exist in such graph scheduling such as the increased complexity
     in larger number of operators and scheduling space, and the more complex GPU resource
     contention analysis, etc.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg>
+  zh: 相比之下，具有多个并行 DAG 的多租户深度学习计算通常具有广泛的操作符间并行性，如图 [2](#S2.F2 "Figure 2 ‣ II-A Challenges
+    for Multi-Tenant DL Computing ‣ II Challenges & Opportunities for Multi-Tenant
+    Computing on GPU ‣ A Survey of Multi-Tenant Deep Learning Inference on GPU") 所示，这使得租户间的操作调度更加灵活 [[44](#bib.bib44)]。此类图调度存在一定的挑战，如操作符和调度空间数量增加导致的复杂性增加，以及更复杂的
+    GPU 资源争用分析等。
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">3</foreignobject></g></g></svg>
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: 'Runtime-level: Previously due to the limited inter-operator parallelism, only
@@ -347,13 +428,15 @@
     of operators and scheduling complexity. Due to the increased attention in GPU
     multi-tenant scheduling, GPU vendors have recently released a series of important
     features such as CUDA graphs [[27](#bib.bib27)] to address such scheduling overheads.'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">4</foreignobject></g></g></svg>
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
 - en: 'Kernel-level: Kernel configurations such as loop tiling, thread blocking, memory
@@ -366,13 +449,15 @@
     should optimize kernel configurations according to its available resource ratio
     during practical execution [[8](#bib.bib8)], which shows a 5$\times$ throughput
     difference.'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg>
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">5</foreignobject></g></g></svg>
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
 - en: 'Resource-level: To achieve adaptive multi-tenant resource partitioning and
@@ -387,18 +472,28 @@
     that supports resource partitioning, the reconfiguration process requires non-negligible
     time (*e.g.*, several $ms$), which is a major limitation of the recent resource
     scheduling works [[9](#bib.bib9), [19](#bib.bib19)].'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 资源级别：为了实现自适应的多租户资源分区和配置，它需要战略设计和硬件支持。自适应资源配置面临的第一个挑战在于DL工作负载的动态性[[44](#bib.bib44)]。不同深度结构的多种DL模型具有高度不稳定的计算/内存需求，使得模型间的资源共享和竞争高度动态，因此难以确定最优资源分区。另一方面，自适应资源管理要求灵活的GPU重新配置能力。尽管存在某些支持资源分区的自适应资源配置功能（*例如*，Nvidia多进程服务，多实例GPU[[25](#bib.bib25),
+    [24](#bib.bib24)]），但重新配置过程需要不可忽视的时间（*例如*，几毫秒），这是近期资源调度工作的一大限制[[9](#bib.bib9),
+    [19](#bib.bib19)]。
 - en: '![Refer to caption](img/f9061b691eebee72ef2045b63b83e4e0.png)'
+  id: totrans-45
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/f9061b691eebee72ef2045b63b83e4e0.png)'
 - en: 'Figure 3: Multi-Stream, MPS and MIG Illustration.'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 图3：多流、MPS和MIG示意图。
 - en: II-B Emerging Multi-Tenant Computing Opportunities
+  id: totrans-47
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: II-B 新兴的多租户计算机会
 - en: 'Previously, one important reason that hinders the adoption and development
     of multi-tenant DL computing on GPU is the insufficient hardware scheduling mechanisms.
     But with the increasing attention in this topic, GPU vendors like Nvidia release
@@ -406,15 +501,23 @@
     provides great opportunities for multi-tenant scheduling. The multi-tenant GPU
     scheduling features could be categorized into two major types: software-level
     and hardware-level support.'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+  zh: 之前，阻碍GPU上多租户DL计算采用和发展的一个重要原因是硬件调度机制不足。但随着对这一话题关注的增加，像Nvidia这样的GPU供应商推出了某些新的GPU多租户功能，以支持多租户DL推理，这为多租户调度提供了很大的机会。这些多租户GPU调度功能可以分为两大类：软件级别和硬件级别支持。
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
 - en: 'Software Approach: The very first GPU multi-tasking feature is the Multi-Stream
     mechanism [[22](#bib.bib22)] supported in the Fermi GPU architecture (Figure [3](#S2.F3
     "Figure 3 ‣ II-A Challenges for Multi-Tenant DL Computing ‣ II Challenges & Opportunities
@@ -430,212 +533,354 @@
     APIs provide valuable multi-tenant GPU scheduling mechanisms, based on which many
     recent works have started to explore the fine-grained DL operator-level scheduling
     techniques [[44](#bib.bib44), [10](#bib.bib10)].'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 软件方法：第一个 GPU 多任务功能是 Fermi GPU 架构中支持的 Multi-Stream 机制 [[22](#bib.bib22)]（图 [3](#S2.F3
+    "图 3 ‣ II-A 多租户 DL 计算挑战 ‣ II GPU 上的多租户计算挑战与机会 ‣ 多租户深度学习推理调查") (a)）。作为一种基于软件的编程模型，一个流可以包含一系列在
+    GPU 上执行的操作。不同流中的操作可以并行运行并共享底层 GPU 资源，如 SMs [[22](#bib.bib22)]。类似的功能 Hyper-Q [[21](#bib.bib21)]
+    引入于 Kepler GPU 架构（2013），扩展了之前的 16 路硬件内核队列到 32 路，以支持更高的并发性。随着并发支持，CUDA 库还发布了一些调度
+    API，如 DeviceSync、StreamWait 等，以支持更细粒度的调度能力 [[23](#bib.bib23)]。这些软件级 API 提供了有价值的多租户
+    GPU 调度机制，许多近期工作开始探讨细粒度的 DL 操作级调度技术 [[44](#bib.bib44), [10](#bib.bib10)]。
 - en: 'TABLE II: GPU Support for Multi-Tenant Computing.'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: '表 II: GPU 对多租户计算的支持。'
 - en: Mechanisms Stream MPS MIG Partition Type No Logical Physical Max Partition Unlimited
     48 7 SM Isolation No By Percentage Yes Mem BW Isolation No No Yes Performance
     QoS No Partial Yes Reconfiguration Dynamic Process Launch When Idle
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 机制 流 MPS MIG 分区类型 无 逻辑 物理 最大分区 无限制 48 7 SM 隔离 无 按百分比 是 内存带宽隔离 无 无 是 性能 QoS 无
+    部分 是 重新配置 动态 进程启动 空闲时
 - en: 'TABLE III: Recent Works on Multi-Tenant Computing Optimization (JCT: job completion
     time, SLA: service-level agreement).'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '表 III: 多租户计算优化的近期工作（JCT: 任务完成时间，SLA: 服务级协议）。'
 - en: '| Ref. | Hardware | Perspective | Algorithm/Strategy | Improvement/Achievement
     |'
+  id: totrans-54
   prefs: []
   type: TYPE_TB
+  zh: '| 参考 | 硬件 | 视角 | 算法/策略 | 改进/成就 |'
 - en: '| --- | --- | --- | --- | --- |'
+  id: totrans-55
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- |'
 - en: '| Inter-Aware [[19](#bib.bib19)] | GPU | DL Service-level Orchestration |'
+  id: totrans-56
   prefs: []
   type: TYPE_TB
+  zh: '| Inter-Aware [[19](#bib.bib19)] | GPU | DL 服务级编排 |'
 - en: '&#124; $\bullet$ ML-based Interference Predictor &#124;'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于 ML 的干扰预测器 &#124;'
 - en: '&#124; $\bullet$ Proactive Query Scheduler &#124;'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 主动查询调度器 &#124;'
 - en: '|'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Reducing Job Interference &#124;'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 减少任务干扰 &#124;'
 - en: '&#124; $\bullet$ Enhancing Serving Throughout &#124;'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升服务吞吐量 &#124;'
 - en: '|'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| Irina [[42](#bib.bib42)] | GPU | DL Service-level Orchestration |'
+  id: totrans-63
   prefs: []
   type: TYPE_TB
+  zh: '| Irina [[42](#bib.bib42)] | GPU | DL 服务级编排 |'
 - en: '&#124; $\bullet$ Online Query Scheduler &#124;'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 在线查询调度器 &#124;'
 - en: '&#124; $\bullet$ Heuristic-based Preemption &#124;'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于启发式的抢占 &#124;'
 - en: '&#124; $\bullet$ Concurrent Execution & Batching &#124;'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 并发执行与批处理 &#124;'
 - en: '| $\bullet$ Reducing Client-Side JCT |'
+  id: totrans-67
   prefs: []
   type: TYPE_TB
+  zh: '| $\bullet$ 降低客户端 JCT |'
 - en: '| PREMA [[5](#bib.bib5)] | NPU | DL Service-level Orchestration |'
+  id: totrans-68
   prefs: []
   type: TYPE_TB
+  zh: '| PREMA [[5](#bib.bib5)] | NPU | DL 服务级编排 |'
 - en: '&#124; $\bullet$ Online Query Scheduler &#124;'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 在线查询调度器 &#124;'
 - en: '&#124; $\bullet$ Heuristic-based Preemption &#124;'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于启发式的抢占 &#124;'
 - en: '|'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Reduced High-Priority Job JCT &#124;'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 减少高优先级任务 JCT &#124;'
 - en: '&#124; $\bullet$ Maintaining Low-Priority SLA &#124;'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 维持低优先级 SLA &#124;'
 - en: '|'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| Runtime-Aware [[44](#bib.bib44)] | GPU | Graph & Runtime-level Scheduling
     |'
+  id: totrans-75
   prefs: []
   type: TYPE_TB
+  zh: '| 运行时感知 [[44](#bib.bib44)] | GPU | 图与运行时级调度 |'
 - en: '&#124; $\bullet$ Multi-Model DAG Rewriting &#124;'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 多模型 DAG 重写 &#124;'
 - en: '&#124; $\bullet$ ML-based Scheduling Search &#124;'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于 ML 的调度搜索 &#124;'
 - en: '&#124; $\bullet$ Multi-Stream Runtime Scheduling &#124;'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ Multi-Stream 运行时调度 &#124;'
 - en: '| $\bullet$ Reduced Inference Latency |'
+  id: totrans-79
   prefs: []
   type: TYPE_TB
+  zh: '| $\bullet$ 减少推理延迟 |'
 - en: '| Spatial-Tune [[8](#bib.bib8)] | GPU | Kernel-level Auto-Tuning |'
+  id: totrans-80
   prefs: []
   type: TYPE_TB
+  zh: '| Spatial-Tune [[8](#bib.bib8)] | GPU | 内核级自动调优 |'
 - en: '&#124; $\bullet$ MPS-based Resource Allocation &#124;'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于 MPS 的资源分配 &#124;'
 - en: '&#124; $\bullet$ Partial-Resource Kernel Tuning &#124;'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 部分资源内核调优 &#124;'
 - en: '|'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Enhanced Kernel Performance &#124;'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升的内核性能 &#124;'
 - en: '&#124; $\bullet$ Reduced Inter-kernel Interference &#124;'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 减少内核间干扰 &#124;'
 - en: '|'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| GSlice [[9](#bib.bib9)] | GPU | Resource-level Management |'
+  id: totrans-87
   prefs: []
   type: TYPE_TB
+  zh: '| GSlice [[9](#bib.bib9)] | GPU | 资源级管理 |'
 - en: '&#124; $\bullet$ MPS-based Resource Partitioning &#124;'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于MPS的资源分区 &#124;'
 - en: '&#124; $\bullet$ Adaptive Batching &#124;'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 自适应批处理 &#124;'
 - en: '|'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Enhanced Serving Throughput &#124;'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升的服务吞吐量 &#124;'
 - en: '&#124; $\bullet$ Maintaining SLA &#124;'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 维护SLA &#124;'
 - en: '|'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| Spatial-Partition [[4](#bib.bib4)] | GPU | Resource-level Management |'
+  id: totrans-94
   prefs: []
   type: TYPE_TB
+  zh: '| Spatial-Partition [[4](#bib.bib4)] | GPU | 资源级管理 |'
 - en: '&#124; $\bullet$ MPS-based Resource Partitioning &#124;'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于MPS的资源分区 &#124;'
 - en: '&#124; $\bullet$ Interference-aware Scheduling &#124;'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 考虑干扰的调度 &#124;'
 - en: '|'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Enhanced Serving Throughput &#124;'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升的服务吞吐量 &#124;'
 - en: '&#124; $\bullet$ Maintaining SLA &#124;'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 维护SLA &#124;'
 - en: '|'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| MIG-Serving [[38](#bib.bib38)] | GPU | Resource-level Management |'
+  id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '| MIG-Serving [[38](#bib.bib38)] | GPU | 资源级管理 |'
 - en: '&#124; $\bullet$ MIG-based Resource Reconfiguration &#124;'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 基于MIG的资源重新配置 &#124;'
 - en: '&#124; $\bullet$ Fast & Slow Query Scheduling &#124;'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 快速与慢查询调度 &#124;'
 - en: '|'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '&#124; $\bullet$ Enhanced Serving Throughput &#124;'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升的服务吞吐量 &#124;'
 - en: '&#124; $\bullet$ Maintaining SLA &#124;'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 维护SLA &#124;'
 - en: '|'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '|'
 - en: '| Planaria [[13](#bib.bib13)] |'
+  id: totrans-108
   prefs: []
   type: TYPE_TB
+  zh: '| Planaria [[13](#bib.bib13)] |'
 - en: '&#124; Systolic &#124;'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; 收缩型 &#124;'
 - en: '&#124; Arrays &#124;'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; 数组 &#124;'
 - en: '| Resource-level Management | $\bullet$ Architecture Reconfiguration |'
+  id: totrans-111
   prefs: []
   type: TYPE_TB
+  zh: '| 资源级管理 | $\bullet$ 架构重新配置 |'
 - en: '&#124; $\bullet$ Enhanced Serving Throughput &#124;'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 提升的服务吞吐量 &#124;'
 - en: '&#124; $\bullet$ Reduced Energy Consumption &#124;'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '&#124; $\bullet$ 减少能耗 &#124;'
 - en: '|'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  zh: '|'
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: <svg height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
 - en: 'Hardware Approach: Besides the software support, NVIDIA recently also releases
     advanced hardware-level resource management mechanisms to support flexible resource
     allocation, isolation and virtualization. These resource management methods can
@@ -663,15 +908,30 @@
     could be found in Table [II](#S2.T2 "TABLE II ‣ II-B Emerging Multi-Tenant Computing
     Opportunities ‣ II Challenges & Opportunities for Multi-Tenant Computing on GPU
     ‣ A Survey of Multi-Tenant Deep Learning Inference on GPU").'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 硬件方法：除了软件支持外，NVIDIA最近还发布了先进的硬件级资源管理机制，以支持灵活的资源分配、隔离和虚拟化。这些资源管理方法可以分为两种类型：逻辑和物理。多进程服务（MPS）[[25](#bib.bib25)]是一种逻辑资源分区机制（图[3](#S2.F3
+    "Figure 3 ‣ II-A Challenges for Multi-Tenant DL Computing ‣ II Challenges & Opportunities
+    for Multi-Tenant Computing on GPU ‣ A Survey of Multi-Tenant Deep Learning Inference
+    on GPU") (b)），允许用户将流式多处理器（SMs）划分并分配给不同的进程，例如，将30%和70%分配给两个并发进程。这种分区通过基于软件的进程到SM映射调度完成，因此被认为是逻辑性的。值得注意的是，尽管MPS支持逻辑SM分区，但其他GPU资源如内存带宽并未分区，因此MPS无法完全避免进程间资源竞争和干扰。为了解决这一问题，最近在安培架构上引入的多实例GPU（MIG）[[24](#bib.bib24)]通过专门的GPU架构设计实现了SMs和内存带宽的物理分区（图[3](#S2.F3
+    "Figure 3 ‣ II-A Challenges for Multi-Tenant DL Computing ‣ II Challenges & Opportunities
+    for Multi-Tenant Computing on GPU ‣ A Survey of Multi-Tenant Deep Learning Inference
+    on GPU") (c)）。这种物理分区确保了资源的完全隔离，因此不同进程之间不会发生干扰。MIG支持将一个A100 GPU拆分为七个完全隔离的GPU实例。同时，它在GPU完全或部分空闲时提供了某种重新配置能力。例如，一个A100可以被拆分为三个实例，比例为4:2:1，然后重新配置为3:3:1等[[24](#bib.bib24)]。关于Stream、MPS和MIG的更详细比较可以在表[II](#S2.T2
+    "TABLE II ‣ II-B Emerging Multi-Tenant Computing Opportunities ‣ II Challenges
+    & Opportunities for Multi-Tenant Computing on GPU ‣ A Survey of Multi-Tenant Deep
+    Learning Inference on GPU")中找到。
 - en: 'III Multi-Tenant Computing Optimization:'
+  id: totrans-117
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: III 多租户计算优化：
 - en: Design and Innovations
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 设计与创新
 - en: Based on the former challenges and opportunities, we review the emerging works
     tackling the multi-tenant scheduling optimization from different perspectives.
     We summarize these works in Table [III](#S2.T3 "TABLE III ‣ II-B Emerging Multi-Tenant
@@ -680,12 +940,18 @@
     view, these works are categorized into several levels, i.e., from DL service-level
     orchestration, graph & runtime-level scheduling, to kernel-level auto-tuing and
     then GPU resource-level management.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于前述挑战和机遇，我们从不同角度审视了应对多租户调度优化的新兴研究。我们在表[III](#S2.T3 "TABLE III ‣ II-B Emerging
+    Multi-Tenant Computing Opportunities ‣ II Challenges & Opportunities for Multi-Tenant
+    Computing on GPU ‣ A Survey of Multi-Tenant Deep Learning Inference on GPU")中总结了这些研究。从自上而下的视角来看，这些研究被分为几个层次，即从DL服务级别编排、图形和运行时级别调度，到内核级别的自动调优，再到GPU资源级别管理。
 - en: III-A Service-level Orchestration
+  id: totrans-120
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: III-A 服务级别编排
 - en: DL service-level orchestration is an important feature in large-scale data centers
     to improve the GPU utilization. As the top-most scheduling level, such orchestration
     usually regards one service query as the basic scheduling unit. This reduces the
@@ -696,8 +962,10 @@
     queries onto hosts through the service router. Therefore, it could maximize the
     served queries per second (QPS) while ensure little inter-query interference so
     as to maintain similar tail latency.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: DL服务级别的调度是大规模数据中心中提高GPU利用率的重要功能。作为最上层的调度级别，这种调度通常将一个服务查询视为基本调度单元。这减少了调度复杂性，因为无需考虑DNN模型结构细节（操作符和图）。一个例子是微软深度学习推理服务（DLIS）系统 [[36](#bib.bib36)]。服务调度器对不同模型的资源需求进行特征描述，然后通过服务路由器将一个或多个查询策略性地分配到主机上。因此，它可以最大化每秒服务的查询数（QPS），同时确保最小的查询间干扰，以维持类似的尾部延迟。
 - en: However, designing a proper co-location strategy or system is a non-trivial
     task. For example, one challenging factor is the serving dynamics, i.e., undetermined
     arrival rates and/or distribution of incoming DL queries, different RNN/LSTMs
@@ -707,8 +975,11 @@
     proposed a predictive multi-task DNN scheduling algorithm that combines off-line
     records and online token-based job scheduling to determine the best multi-tenant
     co-location strategy.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，设计一个适当的共置策略或系统并非易事。例如，一个具有挑战性的因素是服务动态，即未确定的到达率和/或传入DL查询的分布，不同的RNN/LSTM查询具有不同的输入和控制状态。不同于我们可以获得完整信息的静态工作负载，这种动态场景要求我们利用历史数据或预测未来的工作负载动态。PREMA [[5](#bib.bib5)]
+    提出了一个预测性的多任务DNN调度算法，该算法结合了离线记录和基于令牌的在线作业调度，以确定最佳的多租户共置策略。
 - en: Another challenge in multi-tenant co-location is how to accurately predict the
     inter-model resource interference. This is a critical factor in ensuring QoS such
     as tail latency. [[19](#bib.bib19)] trained a ML-based latency degradation predictor
@@ -716,20 +987,26 @@
     DRAM usage, PCIE read/write BW, buffer usage, etc. Then the latency degradation
     predictor is used to evaluate the model placement’s potential influence for each
     query.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 多租户共置的另一个挑战是如何准确预测模型间的资源干扰。这是确保QoS（例如尾部延迟）的关键因素。[[19](#bib.bib19)] 训练了一个基于ML的延迟退化预测器，利用离线剖析的硬件级特征，如SM和DRAM使用、PCIE读/写带宽、缓冲区使用等。然后，使用延迟退化预测器来评估模型放置对每个查询的潜在影响。
 - en: However, these works have certain scalability issues as they mostly targeted
     at static model types, hardware types, etc., which may not be suitable for dynamic
     workloads. Meanwhile, as each DNN can have many operators (*e.g.*, layers) that
     have fluctuated resource consumption, such coarse-grained scheduling (with one
     entire query as the basic unit) may suffer from resource under-utilization/contention
     occasionally and thus still hinders the QoS.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，这些工作存在一定的可扩展性问题，因为它们主要针对静态模型类型、硬件类型等，这些可能不适合动态工作负载。同时，由于每个DNN可能有许多操作符（*例如*，层），其资源消耗波动，这种粗粒度的调度（以一个完整查询作为基本单元）可能会偶尔遭遇资源不足或冲突，从而仍然阻碍QoS。
 - en: III-B Graph and Runtime-level Scheduling
+  id: totrans-125
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: III-B 图和运行时级调度
 - en: 'Graph and runtime-level scheduling could help address one of the aforementioned
     challenge of coarse-grained granularity by enabling more fine-grained scheduling,
     *e.g.*, the DNN operators. This could be done by leveraging the GPU software-level
@@ -743,19 +1020,28 @@
     space, profiling-guided latency cost model, and the ML search algorithm. Based
     on offline profiling records, the search algorithm could find the best scheduling
     for optimal GPU utilization and throughput.'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 图和运行时级调度可以通过启用更精细的调度（*例如*，DNN 操作符）来帮助解决上述粗粒度挑战。这可以通过利用 GPU 软件级支持，如多流机制和调度 API
+    来实现。例如，[[44](#bib.bib44)] 提出了一个基于 ML 的调度策略，用于多租户 DNN 执行加速。它首先将多个 DNN 的计算图及所有操作符抽象成一个全局中间表示（IR），这使得不同租户之间的资源共享更加灵活，从而提高了利用率。为了在巨大的调度空间中找到最佳的并发操作符执行策略，他们设计了一种基于
+    ML 的自动搜索方法，通过定义三个主要因素：调度搜索空间、基于分析的延迟成本模型以及 ML 搜索算法。基于离线分析记录，搜索算法可以找到最佳调度，以实现最佳的
+    GPU 利用率和吞吐量。
 - en: Such graph and runtime-level operator scheduling could usually achieve better
     performance due to the fine-grained design, but they also face more scalability
     issues, *e.g.*, when the number of co-located workloads increase to very large.
     Meanwhile, it also applies to static or known multi-tenant workload only, which
     cannot address dynamic model types.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 这样的图和运行时级操作符调度通常由于其精细化设计可以实现更好的性能，但它们也面临更多的可扩展性问题（*例如*，当共存工作负载的数量增加到非常大时）。与此同时，它也仅适用于静态或已知的多租户工作负载，无法处理动态模型类型。
 - en: III-C Resource-Level Management
+  id: totrans-128
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: III-C 资源级管理
 - en: Besides the aforementioned works, another optimization perspective to solve
     the inter-tenant inference is to conduct fine-grained resource managing [[9](#bib.bib9),
     [13](#bib.bib13)]. For example, spatial partitioning and allocation of GPU resources
@@ -766,8 +1052,12 @@
     of resource sharing and partitioning support like multi-streams, multi-process
     services (MPS [[25](#bib.bib25)]) and multi-instance GPU (MIG [[24](#bib.bib24)]).
     Most recent resource-level management works are built upon these technologies.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了前述工作外，解决跨租户推断问题的另一个优化视角是进行精细化资源管理[[9](#bib.bib9), [13](#bib.bib13)]。例如，将 GPU
+    资源进行空间划分并分配给不同的深度学习工作负载，可以将不同作业的资源（*例如*，流多处理器（SMs）、内存带宽）隔离，从而避免在硬件资源级别的作业干扰。然而，正如我们之前介绍的，直到最近
+    GPU 厂商发布了一系列资源共享和划分支持，如多流、多进程服务（MPS [[25](#bib.bib25)]）和多实例 GPU（MIG [[24](#bib.bib24)]），才能实现精细化资源划分。最新的资源级管理工作都建立在这些技术基础上。
 - en: For example, GSlice [[9](#bib.bib9)] uses MPS to conduct adaptive SM partitioning
     for different DNN jobs. They design a self-learning method to dynamically adjust
     the GPU resource allocation ratio for each workload and thus avoid interference
@@ -776,8 +1066,12 @@
     scheduling strategies. MIG-Serving [[38](#bib.bib38)] is the most recent work
     that adopts the newly-released MIG feature on A100 to achieve spatial resource
     management for multi-tenant scheduling.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，GSlice [[9](#bib.bib9)] 使用 MPS 对不同的 DNN 作业进行自适应 SM 划分。他们设计了一种自学习方法，以动态调整每个工作负载的
+    GPU 资源分配比例，从而避免共存深度学习工作负载之间的干扰并最大化吞吐量。[[4](#bib.bib4)] 通过 MPS 利用类似的空间划分机制，同时结合了时间调度策略。MIG-Serving
+    [[38](#bib.bib38)] 是最近期的工作，它采用了在 A100 上新发布的 MIG 功能，实现了多租户调度的空间资源管理。
 - en: However, such spatial resource partitioning solutions also have a intrinsic
     limitation that is the inflexible re-configuration when the workloads change and
     requires resource partitioning adjustment. For GPUs, re-configuring the resource
@@ -788,19 +1082,30 @@
     by reconfiguration time of MPS by utilizing a standby/shadow process. However,
     the minimum time for switching one partitioning configuration to another one still
     cost several seconds, which is still non-negligible in online serving.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，这种空间资源分区解决方案也存在一个固有的局限性，即当工作负载变化时，重新配置的灵活性不足，并且需要调整资源分区。对于GPU来说，重新配置资源分区需要一定时间（*例如*，几十毫秒或更长），这可能甚至超过一个深度学习推断工作负载的处理时间。因此，频繁重新配置并不实际，从而限制了这种解决方案在面对动态工作负载时的性能。[[9](#bib.bib9)]
+    试图通过利用备用/影子进程来减少由于MPS重新配置时间造成的停顿。然而，切换一个分区配置到另一个配置的最小时间仍然需要几秒钟，这在在线服务中仍然不可忽视。
 - en: III-D Potential Directions for Remaining Challenges
+  id: totrans-132
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+  zh: III-D 解决剩余挑战的潜在方向
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">1</foreignobject></g></g></svg>
 - en: 'ML-based Prediction and Online Learning: To address the problem of service
     dynamics, using ML-based predictive model (*e.g.*, reinforcement learning, LSTM,
     *etc.*) is one promising direction, which can potentially predict the future queries
@@ -809,8 +1114,11 @@
     learning and continual learning [[30](#bib.bib30), [28](#bib.bib28)] using the
     latency/throughput as feedback can be potentially utilized to improve the predictive
     accuracy and the scheduling effectiveness consistently.'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于ML的预测和在线学习：为了解决服务动态的问题，使用基于ML的预测模型（*例如*，强化学习、LSTM、*等等*）是一种有前景的方向，它可以潜在地预测未来查询趋势并指导整体调度。基于ML的模型可以通过历史服务记录在离线状态下进行初步训练。在在线服务过程中，可以利用延迟/吞吐量作为反馈来进行主动学习和持续学习[[30](#bib.bib30),
+    [28](#bib.bib28)]，从而持续提高预测准确性和调度效果。
 - en: Another way of leveraging ML-based prediction is to conduct light-weight modeling
     to predict the latency degradation under different multi-model and hardware combinations
     so that the scheduler can make better decision regarding the latency SLA constraints.
@@ -819,21 +1127,34 @@
     the final scheduling solution highly depends on the modeling accuracy, the scalability
     and generality issue across hardware/model types needs to be addressed, which
     can be also very challenging.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用基于ML的预测的另一种方法是进行轻量级建模，以预测在不同多模型和硬件组合下的延迟退化，以便调度器能够做出更好的关于延迟SLA约束的决策。例如，工作[[19](#bib.bib19)]
+    构建了一个ML模型，以预测不同机器上多模型推断情况的延迟。由于最终调度方案的有效性高度依赖于建模准确性，因此需要解决硬件/模型类型的可扩展性和普遍性问题，这也是非常具有挑战性的。
 - en: '![Refer to caption](img/2eac31c074b8318bbac45cb2091126c5.png)'
+  id: totrans-136
   prefs: []
   type: TYPE_IMG
+  zh: '![参考说明](img/2eac31c074b8318bbac45cb2091126c5.png)'
 - en: 'Figure 4: The future trends to a larger scale DL system.'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
-- en: <svg   height="11.25" overflow="visible"
-    version="1.1" width="11.25"><g transform="translate(0,11.25) matrix(1 0 0 -1 0
-    0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000" stroke-width="0.4pt"><g
-    transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000" stroke="#000000"><foreignobject
-    width="6.92" height="8.92" transform="matrix(1 0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  zh: 图 4：未来更大规模深度学习系统的发展趋势。
+- en: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: <svg   height="11.25" overflow="visible" version="1.1" width="11.25"><g transform="translate(0,11.25)
+    matrix(1 0 0 -1 0 0) translate(5.62,0) translate(0,5.62)" fill="#000000" stroke="#000000"
+    stroke-width="0.4pt"><g transform="matrix(1.0 0.0 0.0 1.0 -3.46 -4.46)" fill="#000000"
+    stroke="#000000"><foreignobject width="6.92" height="8.92" transform="matrix(1
+    0 0 -1 0 16.6)" overflow="visible">2</foreignobject></g></g></svg>
 - en: 'Software-Hardware Co-Scheduling: The software and hardware scheduling could
     be complementary to provide both high job scheduling flexibility and strict resource
     isolation. There are some recent works that adopt such a temporal-spatial combined
@@ -845,19 +1166,29 @@
     *e.g.*, combining multi-stream with MIG. In this way, fine-grained scheduling
     could be achieved without re-partitioning the entire GPU, avoiding the reconfiguration
     overhead.'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 软件-硬件协同调度：软件和硬件的调度可以相辅相成，提供高作业调度灵活性和严格的资源隔离。一些最近的研究采用了这种时空结合的视角。[[4](#bib.bib4)]
+    使用 MPS 进行资源分区，然后实现基于启发式的任务调度器，寻找 DNN 查询与 GPU 分区之间的适当映射。此外，软件-硬件调度还可以用于减轻某些重新配置的开销。例如，在分区的
+    GPU 切片内进行基于软件的调度是有潜力的，*例如*，将多流与 MIG 结合。在这种方式下，可以实现细粒度的调度，而无需重新划分整个 GPU，从而避免重新配置的开销。
 - en: 'IV Towards Large-Scale DL Computing:'
+  id: totrans-140
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: IV 面向大规模深度学习计算：
 - en: Vision and Insights
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 远景与洞察
 - en: IV-A Architecture Design with “Full Stack in the Loop”
+  id: totrans-142
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: IV-A 架构设计与“全栈循环”
 - en: The fast development of multi-tenant DL computing brings many challenges for
     the system stack optimizations. Besides for the GPU only, this also enlightens
     the other DL-oriented hardware architecture designers (*e.g.*, TPU, chiplet, neuromorphic
@@ -866,8 +1197,10 @@
     trend is the “full stack in the loop”, i.e., to remove the boundaries in the vertical
     DL system stack and conduct full-stack integration to strive for both optimal
     performance and flexibility.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 多租户深度学习计算的快速发展带来了许多系统栈优化的挑战。除了 GPU 之外，这也启发了其他面向深度学习的硬件架构设计师（*例如*，TPU、芯片组、神经形态和基于量子加速器）在面对快速变化的深度学习应用环境时优化灵活性和敏捷性。具体而言，一个重要的未来趋势是“全栈循环”，即去除垂直深度学习系统栈中的边界，并进行全栈集成，以追求最佳性能和灵活性。
 - en: 'One example in this line of efforts is the DL compiler renovation by tvm unity [[32](#bib.bib32)],
     as shown in Figure [4](#S3.F4 "Figure 4 ‣ III-D Potential Directions for Remaining
     Challenges ‣ III Multi-Tenant Computing Optimization: Design and Innovations ‣
@@ -878,8 +1211,14 @@
     hardware characteristics. Unifying the abstraction between layers would thus greatly
     facilitate the new full-stack optimization as a loop, not only for multi-tenant
     computing, but also for future wider DL application.'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '这一努力的一个例子是通过 tvm unity 进行的深度学习编译器改造 [[32](#bib.bib32)]，如图 [4](#S3.F4 "Figure
+    4 ‣ III-D Potential Directions for Remaining Challenges ‣ III Multi-Tenant Computing
+    Optimization: Design and Innovations ‣ A Survey of Multi-Tenant Deep Learning
+    Inference on GPU") (a) 所示。目前的深度学习计算栈进行的是分层优化（图形-运行时-内核-资源）和单向自上而下的部署。然而，这阻止了基于模型工作负载和硬件特性的
+    SW/HW 协同编译的反馈回路和跨层交互。因此，统一层之间的抽象将极大地促进新的全栈优化作为一个循环，不仅适用于多租户计算，也适用于未来更广泛的深度学习应用。'
 - en: Another example is the increasing attention in the versatile and flexible chiplet-based
     SW/HW co-design [[33](#bib.bib33), [48](#bib.bib48)] that uses multi-chip-modules
     (MCMs). Compared to traditional large monolithic die, such MCM combines smaller
@@ -887,9 +1226,11 @@
     costs. However, it requires thorough application awareness to optimize the chip
     design and overall performance. As so, such chiplet modules could also greatly
     benefit from the full-stack-in-the-loop architecture of DL computing.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: IV-B The Future Large-Scale DL System Landscape
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -901,6 +1242,7 @@
     distributed inference. If we take such model scaling into consideration, even
     more new DL computing modes could be observed and enrich the future DL & system
     landscape.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: 'We describe the future large-scale DL system landscape by using a taxonomy
@@ -912,6 +1254,7 @@
     the top-left quarter in the full spectrum. Multi-tenant computing emerges as the
     Multiple Instances Single Device (MISD) with the computing scaling trend, as we
     summarized in this servery.'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
 - en: Whereas diagonally, with the model scaling trend, the Single Instance Multiple
@@ -921,9 +1264,11 @@
     etc. Finally, Multiple Instances Multiple Devices (MIMD) computing would eventually
     combine all these modes and become a practical needs for future DL-centric data
     center optimization.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: V Conclusion
+  id: totrans-150
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -938,19 +1283,23 @@
     DL inference on GPU following a hierarchical comparison with traditional single-tenant
     optimization. We hope that this survey could shed lights on new perspectives and
     novel works in future large-scale DL system optimization.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: References
+  id: totrans-152
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: '[1]'
+  id: totrans-153
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Bai et al. [2021] Yang Bai, Xufeng Yao, Qi Sun, and Bei Yu. 2021. AutoGTCO:
     Graph and Tensor Co-Optimize for Image Recognition with Transformers on GPU. In
     *2021 IEEE/ACM International Conference On Computer Aided Design (ICCAD)*.'
+  id: totrans-154
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -959,58 +1308,68 @@
     2018. $\{$TVM$\}$: An automated end-to-end optimizing compiler for deep learning.
     In *13th $\{$USENIX$\}$ Symposium on Operating Systems Design and Implementation
     ($\{$OSDI$\}$ 18)*. 578–594.'
+  id: totrans-155
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Choi et al. [2021] Seungbeom Choi, Sunho Lee, Yeonjae Kim, Jongse Park, Youngjin
     Kwon, and Jaehyuk Huh. 2021. Multi-model Machine Learning Inference Serving with
     GPU Spatial Partitioning. *arXiv preprint arXiv:2109.01611* (2021).
+  id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Choi and Rhu [2020] Yujeong Choi and Minsoo Rhu. 2020. Prema: A predictive
     multi-task scheduling algorithm for preemptible neural processing units. In *2020
     IEEE International Symposium on High Performance Computer Architecture (HPCA)*.'
+  id: totrans-157
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Choquette et al. [2021] Jack Choquette, Wishwesh Gandhi, Olivier Giroux, Nick
     Stam, and Ronny Krashinsky. 2021. Nvidia a100 tensor core gpu: Performance and
     innovation. *IEEE Micro* 41, 2 (2021), 29–35.'
+  id: totrans-158
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Coorporation [2017] NVIDIA Coorporation. 2017. *NVIDIA Tesla V100 GPU Architecture*.
     Technical Report. [http://www.nvidia.com/object/volta-architecture](http://www.nvidia.com/object/volta-architecture).
+  id: totrans-159
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Dhakal et al. [2020a] Aditya Dhakal, Junguk Cho, Sameer G Kulkarni, KK Ramakrishnan,
     and Puneet Sharma. 2020a. Spatial Sharing of GPU for Autotuning DNN models. *arXiv
     preprint arXiv:2008.03602* (2020).
+  id: totrans-160
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Dhakal et al. [2020b] Aditya Dhakal, Sameer G Kulkarni, and KK Ramakrishnan.
     2020b. Gslice: controlled spatial sharing of gpus for a scalable inference platform.
     In *Proceedings of the 11th ACM Symposium on Cloud Computing*. 492–506.'
+  id: totrans-161
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Ding et al. [2020] Yaoyao Ding, Ligeng Zhu, Zhihao Jia, Gennady Pekhimenko,
     and Song Han. 2020. IOS: Inter-Operator Scheduler for CNN Acceleration. *arXiv
     preprint arXiv:2011.01302* (2020).'
+  id: totrans-162
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Dumoulin and Visin [2016] Vincent Dumoulin and Francesco Visin. 2016. A guide
     to convolution arithmetic for deep learning. *arXiv preprint arXiv:1603.07285*
     (2016).
+  id: totrans-163
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Fernandez [2022] Peter Fernandez. 2022. Facebook, Meta, the metaverse and libraries.
     *Library Hi Tech News* (2022).
+  id: totrans-164
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1019,12 +1378,14 @@
     Eiman Ebrahimi, Nam Sung Kim, et al. 2020. Planaria: Dynamic architecture fission
     for spatial multi-tenant acceleration of deep neural networks. In *2020 53rd Annual
     IEEE/ACM International Symposium on Microarchitecture (MICRO)*. IEEE, 681–697.'
+  id: totrans-165
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: He et al. [2016] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. 2016.
     Deep residual learning for image recognition. In *Proceedings of the IEEE conference
     on computer vision and pattern recognition*. 770–778.
+  id: totrans-166
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1032,18 +1393,21 @@
     Zaharia, and Alex Aiken. 2019. TASO: optimizing deep learning computation with
     automatic generation of graph substitutions. In *Proceedings of the 27th ACM Symposium
     on Operating Systems Principles*. 47–62.'
+  id: totrans-167
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Lavin and Gray [2016] Andrew Lavin and Scott Gray. 2016. Fast algorithms for
     convolutional neural networks. In *Proceedings of the IEEE Conference on Computer
     Vision and Pattern Recognition*. 4013–4021.
+  id: totrans-168
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Li et al. [2020] Ao Li, Bojian Zheng, Gennady Pekhimenko, and Fan Long. 2020.
     Automatic horizontal fusion for GPU kernels. *arXiv preprint arXiv:2007.01277*
     (2020).
+  id: totrans-169
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1051,12 +1415,14 @@
     Tsai, Carole-Jean Wu, and Mark Hempstead. 2021. Understanding capacity-driven
     scale-out neural recommendation inference. In *2021 IEEE International Symposium
     on Performance Analysis of Systems and Software (ISPASS)*. IEEE, 162–171.
+  id: totrans-170
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Mendoza et al. [2021] Daniel Mendoza, Francisco Romero, Qian Li, Neeraja J Yadwadkar,
     and Christos Kozyrakis. 2021. Interference-Aware Scheduling for Inference Serving.
     In *Proceedings of the 1st Workshop on Machine Learning and Systems*. 80–88.
+  id: totrans-171
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1064,62 +1430,75 @@
     Ren. 2021. DNNFusion: accelerating deep neural networks execution with advanced
     operator fusion. In *Proceedings of the 42nd ACM SIGPLAN International Conference
     on Programming Language Design and Implementation*. 883–898.'
+  id: totrans-172
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2013] NVIDIA. 2013. Hyper-Q. [https://developer.download.nvidia.com/compute/DevZone/C/html_x64/6_Advanced/simpleHyperQ/doc/HyperQ.pdf](https://developer.download.nvidia.com/compute/DevZone/C/html_x64/6_Advanced/simpleHyperQ/doc/HyperQ.pdf).
+  id: totrans-173
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2015] NVIDIA. 2015. CUDA Multi-Streams. [https://developer.nvidia.com/blog/gpu-pro-tip-cuda-7-streams-simplify-concurrency/](https://developer.nvidia.com/blog/gpu-pro-tip-cuda-7-streams-simplify-concurrency/).
+  id: totrans-174
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2020a] NVIDIA. 2020a. CUDA Programming Guide. [https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html).
+  id: totrans-175
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2020b] NVIDIA. 2020b. NVIDIA Multi Instance GPU (MIG). [https://docs.nvidia.com/datacenter/tesla/mig-user-guide/](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/).
+  id: totrans-176
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2020c] NVIDIA. 2020c. NVIDIA Multi Process Service (MPS). [https://docs.nvidia.com/deploy/pdf/CUDA-Multi-Process-Service-Overview.pdf](https://docs.nvidia.com/deploy/pdf/CUDA-Multi-Process-Service-Overview.pdf).
+  id: totrans-177
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2020d] NVIDIA. 2020d. NVIDIA Virtual Compute Server. [https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/solutions/resources/documents1/Technical-Brief-Multi-Instance-GPU-NVIDIA-Virtual-Compute-Server.pdf](https://www.nvidia.com/content/dam/en-zz/Solutions/design-visualization/solutions/resources/documents1/Technical-Brief-Multi-Instance-GPU-NVIDIA-Virtual-Compute-Server.pdf).
+  id: totrans-178
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: NVIDIA [2021] NVIDIA. 2021. CUDA Graphs. [https://developer.nvidia.com/blog/cuda-graphs/](https://developer.nvidia.com/blog/cuda-graphs/).
+  id: totrans-179
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Parisi et al. [2019] German I Parisi, Ronald Kemker, Jose L Part, Christopher
     Kanan, and Stefan Wermter. 2019. Continual lifelong learning with neural networks:
     A review. *Neural Networks* 113 (2019), 54–71.'
+  id: totrans-180
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Qin et al. [2018] Zhuwei Qin, Fuxun Yu, Chenchen Liu, and Xiang Chen. 2018.
     Functionality-oriented convolutional filter pruning. *arXiv preprint arXiv:1810.07322*
     (2018).
+  id: totrans-181
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Ren et al. [2021] Pengzhen Ren, Yun Xiao, Xiaojun Chang, Po-Yao Huang, Zhihui
     Li, Brij B Gupta, Xiaojiang Chen, and Xin Wang. 2021. A survey of deep active
     learning. *ACM Computing Surveys (CSUR)* 54, 9 (2021), 1–40.
+  id: totrans-182
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Reports [2021] Market Reports. 2021. Global Data Center Accelerator Market Size,
     Status and Forecast 2020-2025. [https://www.mynewsdesk.com/brandessence/pressreleases/data-center-accelerator-market-size-2021-cagr-38-dot-7-percent-3112488](https://www.mynewsdesk.com/brandessence/pressreleases/data-center-accelerator-market-size-2021-cagr-38-dot-7-percent-3112488).
+  id: totrans-183
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Sampson et al. [2022] Adrian Sampson, Tianqi Chen, and Jared Roesch. 2022.
     Apache TVM Unity: a vision for the ML software and hardware ecosystem. [https://tvm.apache.org/2021/12/15/tvm-unity](https://tvm.apache.org/2021/12/15/tvm-unity).'
+  id: totrans-184
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1128,12 +1507,14 @@
     Pinckney, Priyanka Raina, et al. 2019. Simba: Scaling deep-learning inference
     with multi-chip-module-based architecture. In *Proceedings of the 52nd Annual
     IEEE/ACM International Symposium on Microarchitecture*. 14–27.'
+  id: totrans-185
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Shen et al. [2021] Haichen Shen, Jared Roesch, Zhi Chen, Wei Chen, Yong Wu,
     Mu Li, Vin Sharma, Zachary Tatlock, and Yida Wang. 2021. Nimble: Efficiently compiling
     dynamic neural networks for model inference. *Proceedings of MLSys* (2021).'
+  id: totrans-186
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1142,6 +1523,7 @@
     Vijay Korthikanti, et al. 2022. Using DeepSpeed and Megatron to Train Megatron-Turing
     NLG 530B, A Large-Scale Generative Language Model. *arXiv preprint arXiv:2201.11990*
     (2022).
+  id: totrans-187
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1149,28 +1531,33 @@
     Li, Yuxiong He, Elton Zheng, Adi Oltean, Maya Mosyak, Chris Barnes, et al. 2019.
     Deep learning inference service at microsoft. In *2019 $\{$USENIX$\}$ Conference
     on Operational Machine Learning (OpML 19)*. 15–17.
+  id: totrans-188
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Sun et al. [2019] Yifan Sun, Nicolas Bohm Agostini, Shi Dong, and David Kaeli.
     2019. Summarizing CPU and GPU design trends with product data. *arXiv preprint
     arXiv:1911.11313* (2019).
+  id: totrans-189
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Tan et al. [2021] Cheng Tan, Zhichao Li, and et al. 2021. Serving DNN Models
     with Multi-Instance GPUs: A Case of the Reconfigurable Machine Scheduling Problem.
     *arXiv:2109.11067* (2021).'
+  id: totrans-190
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: TensorFlow [2020] TensorFlow. 2020. TensorFlow XLA (Accelerated Linear Algebra).
     [https://www.tensorflow.org/xla](https://www.tensorflow.org/xla).
+  id: totrans-191
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Vanholder [2016] Han Vanholder. 2016. Efficient inference with tensorrt. In
     *GPU Technology Conference*, Vol. 1\. 2.
+  id: totrans-192
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1178,24 +1565,28 @@
     Aziz, Gisle Dankel, Christopher Gregg, Xiaoqiao Meng, Cyril Meurillon, Denis Sheahan,
     Lei Tian, et al. 2021. Datacenter-Scale Analysis and Optimization of GPU Machine
     Learning Workloads. *IEEE Micro* 41, 5 (2021), 101–112.
+  id: totrans-193
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Wu et al. [2020] Xiaorui Wu, Hong Xu, and Yi Wang. 2020. Irina: Accelerating
     DNN Inference with Efficient Online Scheduling. In *4th Asia-Pacific Workshop
     on Networking*. 36–43.'
+  id: totrans-194
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Yang et al. [2021] Yichen Yang, Phitchaya Phothilimthana, Yisu Wang, Max Willsey,
     Sudip Roy, and Jacques Pienaar. 2021. Equality saturation for tensor graph superoptimization.
     *Proceedings of Machine Learning and Systems* 3 (2021), 255–268.
+  id: totrans-195
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Yu and et al. [2021] Fuxun Yu and et al. 2021. Automated Runtime-Aware Scheduling
     for Multi-Tenant DNN Inference on GPU. In *Proceedings of the 40th IEEE International
     Conference on Computer Aided Design (ICCAD)*.
+  id: totrans-196
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1203,6 +1594,7 @@
     2020a. AntiDote: Attention-based Dynamic Optimization for Neural Network Runtime
     Efficiency. In *2020 Design, Automation & Test in Europe Conference & Exhibition
     (DATE)*.'
+  id: totrans-197
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1210,6 +1602,7 @@
     Tian, and Xiang Chen. 2020b. Dc-cnn: computational flow redefinition for efficient
     cnn through structural decoupling. In *2020 Design, Automation & Test in Europe
     Conference & Exhibition (DATE)*. IEEE, 1097–1102.'
+  id: totrans-198
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1217,12 +1610,14 @@
     2018. Deepthings: Distributed adaptive deep learning inference on resource-constrained
     iot edge clusters. *IEEE Transactions on Computer-Aided Design of Integrated Circuits
     and Systems* 37, 11 (2018), 2348–2359.'
+  id: totrans-199
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Zheng et al. [2020b] Hao Zheng, Ke Wang, and Ahmed Louri. 2020b. A versatile
     and flexible chiplet-based system design for heterogeneous manycore architectures.
     In *2020 57th ACM/IEEE Design Automation Conference (DAC)*. IEEE, 1–6.
+  id: totrans-200
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1231,12 +1626,14 @@
     Ansor: Generating high-performance tensor programs for deep learning. In *14th
     $\{$USENIX$\}$ Symposium on Operating Systems Design and Implementation ($\{$OSDI$\}$
     20)*. 863–879.'
+  id: totrans-201
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Zhou et al. [2019] Li Zhou, Hao Wen, Radu Teodorescu, and David HC Du. 2019.
     Distributing deep neural networks with containerized partitions at the edge. In
     *2nd $\{$USENIX$\}$ Workshop on Hot Topics in Edge Computing (HotEdge 19)*.
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
